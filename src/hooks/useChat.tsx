@@ -130,15 +130,20 @@ export function useEventChat(eventId: string) {
 export function useSendMessage() {
   const { profile } = useAuth();
 
+  // Dev mode profile fallback
+  const isDev = true;
+  const devProfile = { id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890', display_name: 'Dev User' };
+  const activeProfile = profile || (isDev ? devProfile : null);
+
   return useMutation({
     mutationFn: async ({ chatId, content }: { chatId: string; content: string }) => {
-      if (!profile?.id) throw new Error('Not authenticated');
+      if (!activeProfile?.id) throw new Error('Not authenticated');
 
       const { data, error } = await supabase
         .from('messages')
         .insert({
           chat_id: chatId,
-          sender_id: profile.id,
+          sender_id: activeProfile.id,
           content: content.trim(),
         })
         .select()

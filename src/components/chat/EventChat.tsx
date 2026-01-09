@@ -21,6 +21,11 @@ export function EventChat({ eventId, eventTitle }: EventChatProps) {
   const { chat, messages, isLoading } = useEventChat(eventId);
   const sendMessage = useSendMessage();
 
+  // Dev mode profile fallback
+  const isDev = true;
+  const devProfile = { id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890', display_name: 'Dev User' };
+  const activeProfile = profile || (isDev ? devProfile : null);
+
   // Auto-scroll to bottom on new messages
   useEffect(() => {
     if (scrollRef.current) {
@@ -69,7 +74,7 @@ export function EventChat({ eventId, eventTitle }: EventChatProps) {
               <MessageBubble
                 key={message.id}
                 message={message}
-                isOwn={message.sender_id === profile?.id}
+                isOwn={message.sender_id === activeProfile?.id}
               />
             ))
           )}
