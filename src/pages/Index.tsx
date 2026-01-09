@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { EventCard } from '@/components/events/EventCard';
+import { PWAInstallPrompt } from '@/components/pwa/PWAInstallPrompt';
+import { QuickRallyDialog } from '@/components/events/QuickRallyDialog';
 import { useAuth } from '@/hooks/useAuth';
 import { useEvents } from '@/hooks/useEvents';
 import rallyLogo from '@/assets/rally-logo.png';
@@ -42,6 +44,9 @@ export default function Index() {
 
   return (
     <div className="min-h-screen pb-20 bg-background">
+      {/* PWA Install Prompt */}
+      <PWAInstallPrompt />
+      
       {/* Custom header matching Figma */}
       <header className="sticky top-0 z-40 bg-white shadow-sm">
         {/* Status bar placeholder */}
@@ -93,16 +98,18 @@ export default function Index() {
               </Card>
             </Link>
             
-            <Link to="/events">
-              <Card className="bg-white shadow-sm rounded-xl">
-                <CardContent className="p-6 flex flex-col items-center justify-center text-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-rally-light flex items-center justify-center">
-                    <Calendar className="h-6 w-6 text-primary" strokeWidth={2} />
-                  </div>
-                  <span className="font-bold text-sm text-rally-gray font-montserrat">Quick Rally</span>
-                </CardContent>
-              </Card>
-            </Link>
+            <QuickRallyDialog 
+              trigger={
+                <Card className="bg-white shadow-sm rounded-xl cursor-pointer hover:shadow-md transition-shadow">
+                  <CardContent className="p-6 flex flex-col items-center justify-center text-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-secondary/20 flex items-center justify-center">
+                      <Zap className="h-6 w-6 text-secondary" strokeWidth={2} />
+                    </div>
+                    <span className="font-bold text-sm text-rally-gray font-montserrat">Quick Rally</span>
+                  </CardContent>
+                </Card>
+              }
+            />
           </div>
         </section>
 
@@ -137,9 +144,7 @@ export default function Index() {
                 </div>
                 <h4 className="font-bold mb-2 text-rally-dark font-montserrat">No upcoming events</h4>
                 <p className="text-sm text-rally-gray mb-4 font-montserrat">Start one and rally your squad!</p>
-                <Button asChild className="bg-primary hover:bg-primary/90 rounded-full font-montserrat">
-                  <Link to="/events">Create Event</Link>
-                </Button>
+                <QuickRallyDialog />
               </CardContent>
             </Card>
           )}

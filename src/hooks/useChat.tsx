@@ -9,6 +9,8 @@ export interface Message {
   sender_id: string;
   content: string;
   created_at: string;
+  image_url?: string | null;
+  message_type?: string | null;
   sender?: {
     id: string;
     display_name: string | null;
@@ -41,7 +43,7 @@ export function useEventChat(eventId: string) {
         .from('chats')
         .select('*')
         .eq('event_id', eventId)
-        .single();
+        .maybeSingle();
 
       if (existingChat) return existingChat;
 
@@ -136,7 +138,17 @@ export function useSendMessage() {
   const activeProfile = profile || (isDev ? devProfile : null);
 
   return useMutation({
-    mutationFn: async ({ chatId, content }: { chatId: string; content: string }) => {
+    mutationFn: async ({ 
+      chatId, 
+      content, 
+      imageUrl, 
+      messageType = 'text' 
+    }: { 
+      chatId: string; 
+      content: string; 
+      imageUrl?: string;
+      messageType?: string;
+    }) => {
       if (!activeProfile?.id) throw new Error('Not authenticated');
 
       const { data, error } = await supabase
@@ -145,6 +157,8 @@ export function useSendMessage() {
           chat_id: chatId,
           sender_id: activeProfile.id,
           content: content.trim(),
+          image_url: imageUrl || null,
+          message_type: messageType,
         })
         .select()
         .single();
