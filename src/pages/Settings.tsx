@@ -70,7 +70,7 @@ export default function Settings() {
   const { user, loading } = useAuth();
   const { settings, updateSetting, resetSettings, isLoaded } = useAppSettings();
   const { triggerHaptic, isSupported: hapticsSupported } = useHaptics();
-  const [activeTab, setActiveTab] = useState('tracking');
+  const [activeTab, setActiveTab] = useState('privacy');
 
   if (loading || !isLoaded) {
     return (
@@ -112,7 +112,15 @@ export default function Settings() {
       
       <main className="container py-4 relative z-10">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-4">
+          <TabsList className="grid w-full grid-cols-5 mb-4">
+            <TabsTrigger value="privacy" className="text-xs">
+              <Shield className="h-3 w-3 mr-1" />
+              Privacy
+            </TabsTrigger>
+            <TabsTrigger value="notifications" className="text-xs">
+              <Bell className="h-3 w-3 mr-1" />
+              Notify
+            </TabsTrigger>
             <TabsTrigger value="tracking" className="text-xs">
               <MapPin className="h-3 w-3 mr-1" />
               Tracking
@@ -124,10 +132,6 @@ export default function Settings() {
             <TabsTrigger value="navigation" className="text-xs">
               <Navigation className="h-3 w-3 mr-1" />
               Nav
-            </TabsTrigger>
-            <TabsTrigger value="privacy" className="text-xs">
-              <Shield className="h-3 w-3 mr-1" />
-              Privacy
             </TabsTrigger>
           </TabsList>
 
@@ -510,13 +514,19 @@ export default function Settings() {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
 
+          {/* Notifications Settings */}
+          <TabsContent value="notifications" className="space-y-4">
             <Card className="card-rally">
               <CardHeader className="pb-2">
                 <CardTitle className="text-base flex items-center gap-2">
                   <Bell className="h-4 w-4 text-primary" />
-                  Notifications
+                  Push Notifications
                 </CardTitle>
+                <CardDescription>
+                  Control how you receive notifications
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
@@ -525,7 +535,7 @@ export default function Settings() {
                     <div>
                       <Label className="font-medium">Push Notifications</Label>
                       <p className="text-xs text-muted-foreground">
-                        Receive alerts on your device
+                        Enable all push notifications
                       </p>
                     </div>
                   </div>
@@ -534,43 +544,76 @@ export default function Settings() {
                     onCheckedChange={(checked) => updateSetting('pushNotifications', checked)}
                   />
                 </div>
+              </CardContent>
+            </Card>
 
-                {settings.pushNotifications && (
-                  <>
-                    <div className="flex items-center justify-between pl-8">
-                      <div className="flex items-center gap-3">
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <Label className="text-sm">Event Reminders</Label>
-                      </div>
-                      <Switch 
-                        checked={settings.eventReminders}
-                        onCheckedChange={(checked) => updateSetting('eventReminders', checked)}
-                      />
+            <Card className="card-rally">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-primary" />
+                  Event Notifications
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Calendar className="h-5 w-5 text-muted-foreground" />
+                    <div>
+                      <Label className="font-medium">Event Reminders</Label>
+                      <p className="text-xs text-muted-foreground">
+                        Get notified before events start
+                      </p>
                     </div>
+                  </div>
+                  <Switch 
+                    checked={settings.eventReminders}
+                    onCheckedChange={(checked) => updateSetting('eventReminders', checked)}
+                    disabled={!settings.pushNotifications}
+                  />
+                </div>
+              </CardContent>
+            </Card>
 
-                    <div className="flex items-center justify-between pl-8">
-                      <div className="flex items-center gap-3">
-                        <Users className="h-4 w-4 text-muted-foreground" />
-                        <Label className="text-sm">Friend Arrivals</Label>
-                      </div>
-                      <Switch 
-                        checked={settings.friendArrivals}
-                        onCheckedChange={(checked) => updateSetting('friendArrivals', checked)}
-                      />
+            <Card className="card-rally">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Users className="h-4 w-4 text-primary" />
+                  Social Notifications
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Users className="h-5 w-5 text-muted-foreground" />
+                    <div>
+                      <Label className="font-medium">Friend Arrivals</Label>
+                      <p className="text-xs text-muted-foreground">
+                        Know when friends arrive at rallies
+                      </p>
                     </div>
-
-                    <div className="flex items-center justify-between pl-8">
-                      <div className="flex items-center gap-3">
-                        <Car className="h-4 w-4 text-muted-foreground" />
-                        <Label className="text-sm">Ride Updates</Label>
-                      </div>
-                      <Switch 
-                        checked={settings.rideUpdates}
-                        onCheckedChange={(checked) => updateSetting('rideUpdates', checked)}
-                      />
+                  </div>
+                  <Switch 
+                    checked={settings.friendArrivals}
+                    onCheckedChange={(checked) => updateSetting('friendArrivals', checked)}
+                    disabled={!settings.pushNotifications}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Car className="h-5 w-5 text-muted-foreground" />
+                    <div>
+                      <Label className="font-medium">Ride Updates</Label>
+                      <p className="text-xs text-muted-foreground">
+                        Get updates on ride requests
+                      </p>
                     </div>
-                  </>
-                )}
+                  </div>
+                  <Switch 
+                    checked={settings.rideUpdates}
+                    onCheckedChange={(checked) => updateSetting('rideUpdates', checked)}
+                    disabled={!settings.pushNotifications}
+                  />
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

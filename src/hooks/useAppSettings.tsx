@@ -54,7 +54,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   voiceGuidance: true,
   voiceVolume: 80,
   autoRecenter: true,
-  showDistanceInFeet: false,
+  showDistanceInFeet: true,
   
   // Privacy
   shareLocationDefault: true,
