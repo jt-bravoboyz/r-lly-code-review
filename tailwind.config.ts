@@ -96,10 +96,10 @@ export default {
         },
         "pulse-glow": {
           "0%, 100%": { 
-            boxShadow: "0 0 20px hsl(25 100% 50% / 0.4)" 
+            boxShadow: "0 0 20px hsl(24 100% 50% / 0.4)" 
           },
           "50%": { 
-            boxShadow: "0 0 30px hsl(25 100% 50% / 0.6)" 
+            boxShadow: "0 0 30px hsl(24 100% 50% / 0.6)" 
           },
         },
         "slide-up": {
