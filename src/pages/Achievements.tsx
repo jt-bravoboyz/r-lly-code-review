@@ -4,7 +4,6 @@ import { BottomNav } from '@/components/layout/BottomNav';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { useAuth } from '@/hooks/useAuth';
-import { Navigate } from 'react-router-dom';
 import { BadgeIcon } from '@/components/badges/BadgeIcon';
 import { 
   BADGE_TIERS, 
@@ -52,11 +51,9 @@ export default function Achievements() {
     );
   }
 
-  if (!user) {
-    return <Navigate to="/auth" replace />;
-  }
-
-  const points = profile?.reward_points || 0;
+  // Use demo data if not logged in
+  const isDemo = !user;
+  const points = isDemo ? 200 : (profile?.reward_points || 0);
   const currentTier = getCurrentTier(points);
   const nextTier = getNextTier(points);
   const progress = getProgressToNextTier(points);
