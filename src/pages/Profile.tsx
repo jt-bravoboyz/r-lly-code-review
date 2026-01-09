@@ -77,10 +77,16 @@ export default function Profile() {
   };
 
   return (
-    <div className="min-h-screen pb-24 bg-background">
+    <div className="min-h-screen pb-28 bg-gradient-to-b from-secondary/30 via-background to-secondary/20 relative overflow-hidden">
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 -right-20 w-60 h-60 bg-primary/5 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute top-1/2 -left-20 w-80 h-80 bg-orange-400/5 rounded-full blur-3xl" />
+      </div>
+
       <Header title="Profile" />
       
-      <main className="container py-6 space-y-4">
+      <main className="container py-6 space-y-4 relative z-10">
         {/* Profile Header */}
         <Card className="card-rally">
           <CardContent className="pt-6">

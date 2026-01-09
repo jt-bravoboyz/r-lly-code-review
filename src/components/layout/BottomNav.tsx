@@ -14,8 +14,9 @@ export function BottomNav() {
   const location = useLocation();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-      <div className="container flex h-16 items-center justify-around">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-white via-white to-white/95 backdrop-blur-lg border-t border-primary/10 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+      {/* Extra padding for Android navigation buttons */}
+      <div className="container flex h-20 pb-4 items-center justify-around">
         {navItems.map(({ path, icon: Icon, label }) => {
           const isActive = location.pathname === path || 
             (path !== '/' && location.pathname.startsWith(path));
@@ -25,23 +26,33 @@ export function BottomNav() {
               key={path}
               to={path}
               className={cn(
-                "flex flex-col items-center gap-1 px-3 py-2 text-xs font-medium transition-all",
+                "flex flex-col items-center gap-1 px-3 py-2 text-xs font-medium transition-all duration-300",
                 isActive 
-                  ? "text-primary" 
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "text-primary scale-105" 
+                  : "text-muted-foreground hover:text-foreground hover:scale-105"
               )}
             >
               <div className={cn(
-                "p-2 rounded-lg transition-all",
-                isActive && "bg-primary/10"
+                "p-2.5 rounded-2xl transition-all duration-300",
+                isActive 
+                  ? "bg-gradient-to-br from-primary to-orange-500 shadow-lg shadow-primary/30" 
+                  : "bg-transparent hover:bg-muted"
               )}>
-                <Icon className={cn("h-5 w-5", isActive && "text-primary")} />
+                <Icon className={cn(
+                  "h-5 w-5 transition-all",
+                  isActive ? "text-white" : "text-current"
+                )} strokeWidth={isActive ? 2.5 : 2} />
               </div>
-              <span className={cn(isActive && "font-semibold")}>{label}</span>
+              <span className={cn(
+                "transition-all",
+                isActive ? "font-bold text-primary" : "font-medium"
+              )}>{label}</span>
             </Link>
           );
         })}
       </div>
+      {/* Safe area padding for devices with gesture navigation */}
+      <div className="h-safe-area-inset-bottom bg-white" />
     </nav>
   );
 }
