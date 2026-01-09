@@ -11,7 +11,7 @@ interface Position {
   timestamp: number;
 }
 
-interface MemberLocation {
+export interface MemberLocation {
   profileId: string;
   displayName: string;
   avatarUrl: string | null;
@@ -33,6 +33,8 @@ interface LocationContextType {
   stopTracking: () => void;
   getDistanceAndBearing: (targetLat: number, targetLng: number) => { distance: number; bearing: number };
   navigateToMember: (member: MemberLocation) => void;
+  selectedMemberForNav: MemberLocation | null;
+  setSelectedMemberForNav: (member: MemberLocation | null) => void;
   signalQuality: 'good' | 'fair' | 'poor';
 }
 
@@ -85,6 +87,7 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
   const [isTracking, setIsTracking] = useState(false);
   const [memberLocations, setMemberLocations] = useState<Map<string, MemberLocation>>(new Map());
   const [signalQuality, setSignalQuality] = useState<'good' | 'fair' | 'poor'>('good');
+  const [selectedMemberForNav, setSelectedMemberForNav] = useState<MemberLocation | null>(null);
   
   const watchIdRef = useRef<number | null>(null);
   const eventIdRef = useRef<string | null>(null);
@@ -308,13 +311,10 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
     setMemberLocations(new Map());
   }, [profile?.id]);
 
-  // Navigate to a member's location
+  // Navigate to a member's location - now opens the in-app FindFriendView
   const navigateToMember = useCallback((member: MemberLocation) => {
-    const url = `https://www.google.com/maps/dir/?api=1&destination=${member.lat},${member.lng}${
-      currentPosition ? `&origin=${currentPosition.lat},${currentPosition.lng}` : ''
-    }&travelmode=walking`;
-    window.open(url, '_blank');
-  }, [currentPosition]);
+    setSelectedMemberForNav(member);
+  }, []);
 
   // Update member distances when position changes
   useEffect(() => {
@@ -350,6 +350,8 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
         stopTracking,
         getDistanceAndBearing,
         navigateToMember,
+        selectedMemberForNav,
+        setSelectedMemberForNav,
         signalQuality,
       }}
     >
