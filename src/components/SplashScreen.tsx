@@ -1,13 +1,30 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 
 interface SplashScreenProps {
   onComplete: () => void;
   duration?: number;
 }
 
-type SplashPhase = "arc1" | "ready" | "arc2" | "set" | "fanfare" | "exit";
+interface Spark {
+  id: number;
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  opacity: number;
+  size: number;
+  lifetime: number;
+  maxLifetime: number;
+}
 
-interface Particle {
+interface AfterImagePoint {
+  x: number;
+  y: number;
+  opacity: number;
+  createdAt: number;
+}
+
+interface FanfareParticle {
   id: number;
   x: number;
   y: number;
@@ -17,354 +34,477 @@ interface Particle {
   size: number;
 }
 
-// Haptic feedback utility
+// Easing functions
+const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
+const easeInCubic = (t: number) => t * t * t;
+
+// Combined easing: EaseOut for first 40%, EaseIn for last 60%
+const arcEasing = (t: number) => {
+  if (t < 0.4) {
+    return easeOutCubic(t / 0.4) * 0.4;
+  } else {
+    return 0.4 + easeInCubic((t - 0.4) / 0.6) * 0.6;
+  }
+};
+
+// Quadratic bezier curve calculation
+const getQuadraticBezierPoint = (
+  t: number,
+  start: { x: number; y: number },
+  control: { x: number; y: number },
+  end: { x: number; y: number }
+) => {
+  const x = Math.pow(1 - t, 2) * start.x + 2 * (1 - t) * t * control.x + Math.pow(t, 2) * end.x;
+  const y = Math.pow(1 - t, 2) * start.y + 2 * (1 - t) * t * control.y + Math.pow(t, 2) * end.y;
+  return { x, y };
+};
+
+// Arc paths
+const ARC1 = {
+  start: { x: -25, y: 68 },
+  control: { x: 35, y: 26 },
+  end: { x: 125, y: 74 },
+};
+
+const ARC2 = {
+  start: { x: -25, y: 46 },
+  control: { x: 48, y: 14 },
+  end: { x: 125, y: 82 },
+};
+
+// Haptic feedback
 const triggerHaptic = () => {
   if ('vibrate' in navigator) {
     navigator.vibrate(50);
   }
 };
 
-export function SplashScreen({ onComplete, duration = 3000 }: SplashScreenProps) {
-  const [phase, setPhase] = useState<SplashPhase>("arc1");
-  const [arcProgress, setArcProgress] = useState(0);
-  const [trailPoints, setTrailPoints] = useState<{ x: number; y: number; opacity: number }[]>([]);
-  const [particles, setParticles] = useState<Particle[]>([]);
-  const [textScale, setTextScale] = useState(0.5);
-  const animationRef = useRef<number>();
+export function SplashScreen({ onComplete, duration = 5000 }: SplashScreenProps) {
+  const [startTime] = useState(() => Date.now());
+  const [currentTime, setCurrentTime] = useState(Date.now());
+  const [sparks, setSparks] = useState<Spark[]>([]);
+  const [afterImages, setAfterImages] = useState<AfterImagePoint[]>([]);
+  const [fanfareParticles, setFanfareParticles] = useState<FanfareParticle[]>([]);
+  const [hasTriggeredReady, setHasTriggeredReady] = useState(false);
+  const [hasTriggeredSet, setHasTriggeredSet] = useState(false);
+  const [hasTriggeredFanfare, setHasTriggeredFanfare] = useState(false);
+  const frameRef = useRef<number>();
+  const lastSparkTime = useRef(0);
 
-  // Calculate curved arc position (parabolic trajectory)
-  const getArcPosition = (t: number, isSecondArc: boolean = false) => {
-    const startY = isSecondArc ? 30 : 40; // Second arc starts higher
-    const peakY = isSecondArc ? 20 : 30; // Peak of the arc
-    const endY = isSecondArc ? 70 : 60; // Falls lower
-    
-    // X moves linearly with slight easing
-    const x = t * 100;
-    
-    // Y follows a parabolic arc: rises then falls with gravity
-    const peakT = 0.3; // Peak happens at 30% of the journey
-    let y;
-    if (t < peakT) {
-      // Rising phase
-      const riseProgress = t / peakT;
-      y = startY - (startY - peakY) * Math.sin(riseProgress * Math.PI / 2);
-    } else {
-      // Falling phase with gravity acceleration
-      const fallProgress = (t - peakT) / (1 - peakT);
-      const gravityEase = fallProgress * fallProgress; // Accelerating fall
-      y = peakY + (endY - peakY) * gravityEase;
+  const elapsed = (currentTime - startTime) / 1000;
+
+  // Generate sparks behind comet head
+  const generateSparks = useCallback((x: number, y: number, vx: number, vy: number) => {
+    const newSparks: Spark[] = [];
+    const count = 6 + Math.floor(Math.random() * 5);
+    for (let i = 0; i < count; i++) {
+      const angle = Math.atan2(vy, vx) + Math.PI + (Math.random() - 0.5) * 1.2;
+      const speed = 0.5 + Math.random() * 1.5;
+      const lifetime = 250 + Math.random() * 150;
+      newSparks.push({
+        id: Date.now() + i + Math.random(),
+        x,
+        y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        opacity: 0.8 + Math.random() * 0.2,
+        size: 1.5 + Math.random() * 2.5,
+        lifetime: 0,
+        maxLifetime: lifetime,
+      });
     }
-    
-    return { x, y };
-  };
+    return newSparks;
+  }, []);
 
-  // Generate particles for fanfare
-  const generateParticles = () => {
-    const newParticles: Particle[] = [];
-    for (let i = 0; i < 40; i++) {
-      const angle = (Math.PI * 2 * i) / 40 + Math.random() * 0.3;
-      const speed = 3 + Math.random() * 4;
-      newParticles.push({
+  // Generate fanfare particles
+  const generateFanfareParticles = useCallback(() => {
+    const particles: FanfareParticle[] = [];
+    for (let i = 0; i < 50; i++) {
+      const angle = (Math.PI * 2 * i) / 50 + (Math.random() - 0.5) * 0.4;
+      const speed = 2 + Math.random() * 5;
+      particles.push({
         id: i,
         x: 50,
         y: 50,
         vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed - 2, // Initial upward bias
+        vy: Math.sin(angle) * speed - 3,
         opacity: 1,
-        size: 2 + Math.random() * 4,
+        size: 2 + Math.random() * 5,
       });
     }
-    return newParticles;
-  };
+    return particles;
+  }, []);
 
-  // Animate particles with gravity
+  // Main animation loop
   useEffect(() => {
-    if (phase !== "fanfare" && phase !== "exit") return;
-    
-    let frame: number;
     const animate = () => {
-      setParticles(prev => 
+      const now = Date.now();
+      setCurrentTime(now);
+
+      // Update sparks
+      setSparks(prev => 
+        prev.map(s => ({
+          ...s,
+          x: s.x + s.vx,
+          y: s.y + s.vy,
+          lifetime: s.lifetime + 16,
+          opacity: Math.max(0, s.opacity * 0.94),
+        })).filter(s => s.lifetime < s.maxLifetime && s.opacity > 0.05)
+      );
+
+      // Update afterimages
+      setAfterImages(prev =>
+        prev.map(a => ({
+          ...a,
+          opacity: Math.max(0, a.opacity - 0.004),
+        })).filter(a => a.opacity > 0)
+      );
+
+      // Update fanfare particles
+      setFanfareParticles(prev =>
         prev.map(p => ({
           ...p,
-          x: p.x + p.vx * 0.3,
-          y: p.y + p.vy * 0.3,
-          vy: p.vy + 0.15, // Gravity
-          opacity: Math.max(0, p.opacity - 0.02),
+          x: p.x + p.vx * 0.25,
+          y: p.y + p.vy * 0.25,
+          vy: p.vy + 0.12,
+          opacity: Math.max(0, p.opacity - 0.015),
         })).filter(p => p.opacity > 0)
       );
-      frame = requestAnimationFrame(animate);
-    };
-    
-    frame = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(frame);
-  }, [phase]);
 
-  useEffect(() => {
-    // Timings for ~3 second sequence
-    const timings = {
-      arc1Duration: 500,
-      readyAt: 500,
-      readyHold: 350,
-      arc2At: 850,
-      setAt: 1350,
-      setHold: 350,
-      fanfareAt: 1700,
-      exitAt: 2700,
-      completeAt: duration,
+      frameRef.current = requestAnimationFrame(animate);
     };
 
-    // Arc 1 animation
-    let startTime = Date.now();
-    const animateArc1 = () => {
-      const elapsed = Date.now() - startTime;
-      const progress = Math.min(1, elapsed / timings.arc1Duration);
-      
-      // Ease-out for natural motion, speed up at the end
-      const eased = 1 - Math.pow(1 - progress, 2);
-      setArcProgress(eased);
-      
-      // Update trail
-      const pos = getArcPosition(eased, false);
-      setTrailPoints(prev => {
-        const newTrail = [...prev, { x: pos.x, y: pos.y, opacity: 1 }]
-          .slice(-20)
-          .map((p, i, arr) => ({ ...p, opacity: (i + 1) / arr.length }));
-        return newTrail;
-      });
-      
-      if (progress < 1) {
-        animationRef.current = requestAnimationFrame(animateArc1);
-      }
-    };
-    animationRef.current = requestAnimationFrame(animateArc1);
-
-    const readyTimer = setTimeout(() => {
-      setPhase("ready");
-      setTrailPoints([]);
-      setArcProgress(0);
-      setTextScale(0.5);
-      triggerHaptic();
-      // Animate text scale
-      let scale = 0.5;
-      const scaleInterval = setInterval(() => {
-        scale += 0.05;
-        setTextScale(Math.min(1, scale));
-        if (scale >= 1) clearInterval(scaleInterval);
-      }, 20);
-    }, timings.readyAt);
-
-    const arc2Timer = setTimeout(() => {
-      setPhase("arc2");
-      setTextScale(0.5);
-      startTime = Date.now();
-      
-      const animateArc2 = () => {
-        const elapsed = Date.now() - startTime;
-        const progress = Math.min(1, elapsed / timings.arc1Duration);
-        const eased = 1 - Math.pow(1 - progress, 2.5); // Faster fall
-        setArcProgress(eased);
-        
-        const pos = getArcPosition(eased, true);
-        setTrailPoints(prev => {
-          const newTrail = [...prev, { x: pos.x, y: pos.y, opacity: 1 }]
-            .slice(-25) // Longer trail
-            .map((p, i, arr) => ({ ...p, opacity: (i + 1) / arr.length }));
-          return newTrail;
-        });
-        
-        if (progress < 1) {
-          animationRef.current = requestAnimationFrame(animateArc2);
-        }
-      };
-      animationRef.current = requestAnimationFrame(animateArc2);
-    }, timings.arc2At);
-
-    const setTimer = setTimeout(() => {
-      setPhase("set");
-      setTrailPoints([]);
-      setArcProgress(0);
-      setTextScale(0.5);
-      triggerHaptic();
-      let scale = 0.5;
-      const scaleInterval = setInterval(() => {
-        scale += 0.06; // Slightly faster
-        setTextScale(Math.min(1, scale));
-        if (scale >= 1) clearInterval(scaleInterval);
-      }, 20);
-    }, timings.setAt);
-
-    const fanfareTimer = setTimeout(() => {
-      setPhase("fanfare");
-      setParticles(generateParticles());
-      triggerHaptic();
-    }, timings.fanfareAt);
-
-    const exitTimer = setTimeout(() => {
-      setPhase("exit");
-    }, timings.exitAt);
-
-    const completeTimer = setTimeout(onComplete, timings.completeAt);
-
+    frameRef.current = requestAnimationFrame(animate);
     return () => {
-      if (animationRef.current) cancelAnimationFrame(animationRef.current);
-      clearTimeout(readyTimer);
-      clearTimeout(arc2Timer);
-      clearTimeout(setTimer);
-      clearTimeout(fanfareTimer);
-      clearTimeout(exitTimer);
-      clearTimeout(completeTimer);
+      if (frameRef.current) cancelAnimationFrame(frameRef.current);
     };
+  }, []);
+
+  // Trigger haptics and fanfare
+  useEffect(() => {
+    if (elapsed >= 0.55 && !hasTriggeredReady) {
+      triggerHaptic();
+      setHasTriggeredReady(true);
+    }
+    if (elapsed >= 2.20 && !hasTriggeredSet) {
+      triggerHaptic();
+      setHasTriggeredSet(true);
+    }
+    if (elapsed >= 3.30 && !hasTriggeredFanfare) {
+      setFanfareParticles(generateFanfareParticles());
+      triggerHaptic();
+      setHasTriggeredFanfare(true);
+    }
+  }, [elapsed, hasTriggeredReady, hasTriggeredSet, hasTriggeredFanfare, generateFanfareParticles]);
+
+  // Completion
+  useEffect(() => {
+    const timer = setTimeout(onComplete, duration);
+    return () => clearTimeout(timer);
   }, [onComplete, duration]);
 
-  const currentArcPos = getArcPosition(arcProgress, phase === "arc2");
+  // Calculate arc positions and generate effects
+  const getArcState = (arcStartTime: number, arcDuration: number, arc: typeof ARC1, isSecondArc: boolean) => {
+    const arcElapsed = elapsed - arcStartTime;
+    if (arcElapsed < 0 || arcElapsed > arcDuration + 0.5) return null;
+
+    const t = Math.min(1, arcElapsed / arcDuration);
+    const easedT = arcEasing(t);
+    const headPos = getQuadraticBezierPoint(easedT, arc.start, arc.control, arc.end);
+
+    // Tail lags behind (80-140ms = 0.08-0.14s)
+    const tailLag = 0.11 / arcDuration;
+    const tailT = Math.max(0, easedT - tailLag);
+    const tailStartPos = getQuadraticBezierPoint(Math.max(0, tailT - (isSecondArc ? 0.45 : 0.40)), arc.start, arc.control, arc.end);
+
+    // Calculate velocity for spark direction
+    const nextT = Math.min(1, easedT + 0.01);
+    const nextPos = getQuadraticBezierPoint(nextT, arc.start, arc.control, arc.end);
+    const vx = nextPos.x - headPos.x;
+    const vy = nextPos.y - headPos.y;
+
+    return { headPos, tailStartPos, t, vx, vy };
+  };
+
+  // Arc 1: 0 - 1.65s
+  const arc1State = getArcState(0, 1.65, ARC1, false);
+  
+  // Arc 2: 1.65 - 3.30s
+  const arc2State = getArcState(1.65, 1.65, ARC2, true);
+
+  // Add afterimages and sparks
+  useEffect(() => {
+    const now = Date.now();
+    if (now - lastSparkTime.current < 30) return;
+    lastSparkTime.current = now;
+
+    if (arc1State && arc1State.t < 1) {
+      setAfterImages(prev => [...prev.slice(-60), {
+        x: arc1State.headPos.x,
+        y: arc1State.headPos.y,
+        opacity: 0.18,
+        createdAt: now,
+      }]);
+      if (Math.random() < 0.4) {
+        setSparks(prev => [...prev, ...generateSparks(arc1State.headPos.x, arc1State.headPos.y, arc1State.vx, arc1State.vy)]);
+      }
+    }
+
+    if (arc2State && arc2State.t < 1) {
+      setAfterImages(prev => [...prev.slice(-60), {
+        x: arc2State.headPos.x,
+        y: arc2State.headPos.y,
+        opacity: 0.22,
+        createdAt: now,
+      }]);
+      if (Math.random() < 0.5) {
+        setSparks(prev => [...prev, ...generateSparks(arc2State.headPos.x, arc2State.headPos.y, arc2State.vx, arc2State.vy)]);
+      }
+    }
+  }, [arc1State, arc2State, generateSparks]);
+
+  // READY animation: 0.55 - 1.45
+  const getReadyStyle = () => {
+    if (elapsed < 0.55 || elapsed > 1.45) return { opacity: 0, scale: 0.86 };
+    if (elapsed < 0.80) {
+      const t = (elapsed - 0.55) / 0.25;
+      return { opacity: easeOutCubic(t), scale: 0.86 + 0.14 * easeOutCubic(t) };
+    }
+    if (elapsed < 1.20) {
+      return { opacity: 1, scale: 1 };
+    }
+    const t = (elapsed - 1.20) / 0.25;
+    return { opacity: 1 - easeInCubic(t), scale: 1 + 0.06 * easeInCubic(t) };
+  };
+
+  // SET animation: 2.20 - 3.15
+  const getSetStyle = () => {
+    if (elapsed < 2.20 || elapsed > 3.15) return { opacity: 0, scale: 0.86 };
+    if (elapsed < 2.45) {
+      const t = (elapsed - 2.20) / 0.25;
+      return { opacity: easeOutCubic(t), scale: 0.86 + 0.14 * easeOutCubic(t) };
+    }
+    if (elapsed < 2.85) {
+      return { opacity: 1, scale: 1 };
+    }
+    const t = (elapsed - 2.85) / 0.30;
+    return { opacity: 1 - easeInCubic(t), scale: 1 + 0.07 * easeInCubic(t) };
+  };
+
+  // Logo animation: 3.30 - 5.00
+  const getLogoStyle = () => {
+    if (elapsed < 3.30) return { opacity: 0, scale: 0.94 };
+    if (elapsed < 3.55) {
+      const t = (elapsed - 3.30) / 0.25;
+      return { opacity: easeOutCubic(t), scale: 0.94 + 0.06 * easeOutCubic(t) };
+    }
+    if (elapsed < 4.25) {
+      return { opacity: 1, scale: 1 };
+    }
+    const t = (elapsed - 4.25) / 0.75;
+    return { opacity: 1, scale: 1 + 0.15 * easeOutCubic(t) };
+  };
+
+  // Glow pulse: 3.70 - 3.95
+  const getGlowPulseOpacity = () => {
+    if (elapsed < 3.70 || elapsed > 3.95) return 0;
+    const t = (elapsed - 3.70) / 0.25;
+    return Math.sin(t * Math.PI) * 0.6;
+  };
+
+  // Exit crossfade: 4.25 - 5.00
+  const getExitOpacity = () => {
+    if (elapsed < 4.50) return 1;
+    return 1 - easeInCubic((elapsed - 4.50) / 0.50);
+  };
+
+  const readyStyle = getReadyStyle();
+  const setStyle = getSetStyle();
+  const logoStyle = getLogoStyle();
+  const glowPulse = getGlowPulseOpacity();
+  const exitOpacity = getExitOpacity();
+
+  const renderComet = (state: ReturnType<typeof getArcState>, isSecondArc: boolean) => {
+    if (!state || state.t >= 1) return null;
+    const { headPos, tailStartPos } = state;
+    const headSize = isSecondArc ? 11 : 10;
+    const glowSize = isSecondArc ? 28.6 : 26;
+
+    return (
+      <g>
+        {/* Tapered tail gradient */}
+        <defs>
+          <linearGradient 
+            id={`tailGradient${isSecondArc ? '2' : '1'}`} 
+            x1={`${tailStartPos.x}%`} 
+            y1={`${tailStartPos.y}%`} 
+            x2={`${headPos.x}%`} 
+            y2={`${headPos.y}%`}
+          >
+            <stop offset="0%" stopColor="rgba(255, 106, 0, 0)" />
+            <stop offset="60%" stopColor="rgba(255, 106, 0, 0.25)" />
+            <stop offset="100%" stopColor="rgba(255, 106, 0, 0.45)" />
+          </linearGradient>
+        </defs>
+
+        {/* Tail */}
+        <line
+          x1={`${tailStartPos.x}%`}
+          y1={`${tailStartPos.y}%`}
+          x2={`${headPos.x}%`}
+          y2={`${headPos.y}%`}
+          stroke={`url(#tailGradient${isSecondArc ? '2' : '1'})`}
+          strokeWidth={isSecondArc ? 18 : 14}
+          strokeLinecap="round"
+          style={{ filter: "blur(28px)" }}
+        />
+
+        {/* Outer glow */}
+        <circle
+          cx={`${headPos.x}%`}
+          cy={`${headPos.y}%`}
+          r={glowSize}
+          fill="rgba(255, 106, 0, 0.35)"
+          style={{ filter: "blur(22px)" }}
+        />
+
+        {/* Bright core */}
+        <circle
+          cx={`${headPos.x}%`}
+          cy={`${headPos.y}%`}
+          r={headSize}
+          fill="#FFB347"
+        />
+        <circle
+          cx={`${headPos.x}%`}
+          cy={`${headPos.y}%`}
+          r={headSize * 0.6}
+          fill="#FFFFFF"
+          opacity="0.9"
+        />
+      </g>
+    );
+  };
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center transition-all duration-300 ease-out overflow-hidden ${
-        phase === "exit" ? "opacity-0 scale-110" : "opacity-100 scale-100"
-      }`}
-      style={{ backgroundColor: "#121212" }}
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden"
+      style={{ 
+        backgroundColor: "#121212",
+        opacity: exitOpacity,
+      }}
     >
-      {/* Curved arc with trail */}
-      {(phase === "arc1" || phase === "arc2") && (
-        <svg className="absolute inset-0 w-full h-full pointer-events-none">
-          {/* Trail segments */}
-          {trailPoints.map((point, index) => (
-            <circle
-              key={index}
-              cx={`${point.x}%`}
-              cy={`${point.y}%`}
-              r={phase === "arc2" ? 4 + index * 0.3 : 3 + index * 0.2}
-              fill={`rgba(255, 106, 0, ${point.opacity * 0.6})`}
-              style={{
-                filter: `blur(${2 + (1 - point.opacity) * 3}px)`,
-              }}
-            />
-          ))}
-          
-          {/* Main glowing orb */}
-          <defs>
-            <radialGradient id="orbGradient">
-              <stop offset="0%" stopColor="#FFB347" />
-              <stop offset="40%" stopColor="#FF8C00" />
-              <stop offset="70%" stopColor="#FF6A00" />
-              <stop offset="100%" stopColor="transparent" />
-            </radialGradient>
-            <filter id="glow">
-              <feGaussianBlur stdDeviation="4" result="coloredBlur" />
-              <feMerge>
-                <feMergeNode in="coloredBlur" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
-          </defs>
-          
+      <svg className="absolute inset-0 w-full h-full pointer-events-none">
+        {/* Afterimage trail */}
+        {afterImages.map((a, i) => (
           <circle
-            cx={`${currentArcPos.x}%`}
-            cy={`${currentArcPos.y}%`}
-            r={phase === "arc2" ? 10 : 8}
-            fill="url(#orbGradient)"
-            filter="url(#glow)"
+            key={i}
+            cx={`${a.x}%`}
+            cy={`${a.y}%`}
+            r={6}
+            fill={`rgba(255, 106, 0, ${a.opacity})`}
+            style={{ filter: "blur(34px)" }}
           />
-          
-          {/* Outer glow */}
-          <circle
-            cx={`${currentArcPos.x}%`}
-            cy={`${currentArcPos.y}%`}
-            r={phase === "arc2" ? 20 : 16}
-            fill="none"
-            stroke="rgba(255, 106, 0, 0.3)"
-            strokeWidth="2"
-            style={{ filter: "blur(8px)" }}
-          />
-        </svg>
-      )}
+        ))}
 
-      {/* READY text with scale forward */}
-      {phase === "ready" && (
-        <h1 
-          className="font-montserrat font-extrabold text-5xl sm:text-6xl tracking-widest"
-          style={{ 
+        {/* Sparks */}
+        {sparks.map(s => (
+          <circle
+            key={s.id}
+            cx={`${s.x}%`}
+            cy={`${s.y}%`}
+            r={s.size}
+            fill={`rgba(255, 179, 71, ${s.opacity})`}
+            style={{ filter: "blur(1px)" }}
+          />
+        ))}
+
+        {/* Arc 1 comet */}
+        {renderComet(arc1State, false)}
+
+        {/* Arc 2 comet */}
+        {renderComet(arc2State, true)}
+
+        {/* Fanfare particles */}
+        {fanfareParticles.map(p => (
+          <circle
+            key={p.id}
+            cx={`${p.x}%`}
+            cy={`${p.y}%`}
+            r={p.size}
+            fill={`rgba(255, 106, 0, ${p.opacity})`}
+            style={{ filter: "blur(2px)" }}
+          />
+        ))}
+      </svg>
+
+      {/* READY text */}
+      {readyStyle.opacity > 0 && (
+        <h1
+          className="absolute font-montserrat font-extrabold text-5xl sm:text-6xl tracking-widest"
+          style={{
             color: "rgba(255, 255, 255, 0.95)",
-            transform: `scale(${textScale}) translateZ(0)`,
-            textShadow: `0 0 ${30 * textScale}px rgba(255, 106, 0, 0.4)`,
-            transition: "transform 0.05s ease-out",
+            opacity: readyStyle.opacity,
+            transform: `scale(${readyStyle.scale})`,
+            textShadow: "0 0 40px rgba(255, 106, 0, 0.4)",
           }}
         >
           READY
         </h1>
       )}
 
-      {/* SET text with scale forward */}
-      {phase === "set" && (
-        <h1 
-          className="font-montserrat font-extrabold text-5xl sm:text-6xl tracking-widest"
-          style={{ 
+      {/* SET text */}
+      {setStyle.opacity > 0 && (
+        <h1
+          className="absolute font-montserrat font-extrabold text-5xl sm:text-6xl tracking-widest"
+          style={{
             color: "rgba(255, 255, 255, 0.95)",
-            transform: `scale(${textScale}) translateZ(0)`,
-            textShadow: `0 0 ${30 * textScale}px rgba(255, 106, 0, 0.4)`,
-            transition: "transform 0.05s ease-out",
+            opacity: setStyle.opacity,
+            transform: `scale(${setStyle.scale})`,
+            textShadow: "0 0 40px rgba(255, 106, 0, 0.4)",
           }}
         >
           SET
         </h1>
       )}
 
-      {/* Logo reveal with particle fanfare */}
-      {(phase === "fanfare" || phase === "exit") && (
-        <>
-          {/* Particle burst */}
-          <svg className="absolute inset-0 w-full h-full pointer-events-none">
-            <defs>
-              <radialGradient id="particleGradient">
-                <stop offset="0%" stopColor="#FFB347" />
-                <stop offset="60%" stopColor="#FF6A00" />
-                <stop offset="100%" stopColor="transparent" />
-              </radialGradient>
-            </defs>
-            {particles.map(p => (
-              <circle
-                key={p.id}
-                cx={`${p.x}%`}
-                cy={`${p.y}%`}
-                r={p.size}
-                fill={`rgba(255, 106, 0, ${p.opacity})`}
-                style={{ filter: "blur(1px)" }}
-              />
-            ))}
-          </svg>
+      {/* Logo with glow pulse */}
+      {logoStyle.opacity > 0 && (
+        <div className="relative flex flex-col items-center">
+          {/* Glow pulse */}
+          <div
+            className="absolute w-56 h-56 rounded-full"
+            style={{
+              background: `radial-gradient(circle, rgba(255, 106, 0, ${0.4 + glowPulse}) 0%, rgba(255, 106, 0, 0.1) 50%, transparent 70%)`,
+              transform: `scale(${1 + glowPulse * 0.3})`,
+            }}
+          />
 
-          {/* Orange pulse behind logo */}
-          <div 
-            className="absolute inset-0 flex items-center justify-center"
-          >
-            <div 
-              className="w-48 h-48 rounded-full animate-splash-pulse-once"
-              style={{
-                background: "radial-gradient(circle, rgba(255, 106, 0, 0.5) 0%, rgba(255, 106, 0, 0.15) 50%, transparent 70%)",
-              }}
-            />
-          </div>
-          
           {/* R@LLY wordmark */}
           <h1
-            className="font-montserrat font-extrabold text-6xl sm:text-7xl tracking-tight animate-splash-logo-scale relative z-10"
-            style={{ 
+            className="font-montserrat font-extrabold text-6xl sm:text-7xl tracking-tight relative z-10"
+            style={{
               color: "rgba(255, 255, 255, 0.95)",
+              opacity: logoStyle.opacity,
+              transform: `scale(${logoStyle.scale})`,
               textShadow: "0 0 60px rgba(255, 106, 0, 0.5), 0 0 100px rgba(255, 106, 0, 0.3)",
             }}
           >
             R@LLY
           </h1>
-          
+
           {/* Tagline */}
           <p
-            className="absolute mt-28 text-lg font-medium tracking-wide animate-splash-tagline-fade"
-            style={{ color: "rgba(255, 255, 255, 0.70)" }}
+            className="mt-4 text-lg font-medium tracking-wide"
+            style={{
+              color: "rgba(255, 255, 255, 0.70)",
+              opacity: logoStyle.opacity,
+              transform: `scale(${logoStyle.scale * 0.95})`,
+            }}
           >
-            Rally your people.
+            R@lly your troops.
           </p>
-        </>
+        </div>
       )}
     </div>
   );
