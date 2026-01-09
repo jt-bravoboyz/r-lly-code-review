@@ -1,10 +1,12 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
+import { Capacitor } from '@capacitor/core';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useBatteryOptimizedLocation, TrackingMode, MovementState, TRACKING_CONFIGS } from '@/hooks/useBatteryOptimizedLocation';
 import { useIndoorPositioning, BeaconInfo } from '@/hooks/useIndoorPositioning';
 import { useWifiPositioning, EnvironmentInfo } from '@/hooks/useWifiPositioning';
-
+import { useNativeCompass } from '@/hooks/useNativeCompass';
+import { useNativeGeolocation } from '@/hooks/useNativeGeolocation';
 interface Position {
   lat: number;
   lng: number;
@@ -86,9 +88,15 @@ interface LocationContextType {
   // Accuracy history
   accuracyHistory: AccuracyDataPoint[];
   clearAccuracyHistory: () => void;
+  // Native platform info
+  isNativePlatform: boolean;
+  compassAccuracy: 'high' | 'medium' | 'low' | 'unknown';
 }
 
 const LocationContext = createContext<LocationContextType | null>(null);
+
+// Check if running on native platform
+const isNativePlatform = Capacitor.isNativePlatform();
 
 // Smoothing factor for compass jitter reduction (0-1, lower = more smoothing)
 const COMPASS_SMOOTHING = 0.15;
@@ -155,6 +163,19 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
   
   // Wi-Fi positioning hook for indoor fallback
   const wifiPositioning = useWifiPositioning();
+  
+  // Native compass hook (uses Capacitor Motion on native, falls back to browser API)
+  const nativeCompass = useNativeCompass();
+  
+  // Native geolocation hook (uses Capacitor Geolocation on native)
+  const nativeGeolocation = useNativeGeolocation('balanced');
+
+  // Use native compass heading when available
+  useEffect(() => {
+    if (nativeCompass.heading !== null) {
+      setCompassHeading(nativeCompass.heading);
+    }
+  }, [nativeCompass.heading]);
 
   // Derived battery info
   const batteryInfo: BatteryInfo = {
@@ -173,8 +194,13 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
     beaconCount: indoorPositioning.nearbyBeacons.length,
   };
 
-  // Compass heading listener
+  // Compass heading listener - skip if native compass is handling it
   useEffect(() => {
+    // If native compass is active and supported, let it handle compass readings
+    if (nativeCompass.isNative && nativeCompass.isSupported) {
+      return;
+    }
+    
     const handleOrientation = (event: DeviceOrientationEvent) => {
       let heading: number | null = null;
       
@@ -209,7 +235,7 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
     return () => {
       window.removeEventListener('deviceorientation', handleOrientation, true);
     };
-  }, []);
+  }, [nativeCompass.isNative, nativeCompass.isSupported]);
 
   // Merge indoor position with GPS when available
   useEffect(() => {
@@ -266,17 +292,24 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
     }
   }, [batteryOptimization.updateInterval, profile?.id]);
 
-  // Start tracking location with adaptive intervals
+  // Start tracking location with adaptive intervals - uses native Capacitor on mobile
   const startTracking = useCallback((eventId: string) => {
-    if (!navigator.geolocation || !profile?.id) return;
+    if (!profile?.id) return;
 
     eventIdRef.current = eventId;
     setIsTracking(true);
 
     const config = batteryOptimization.getOptimalConfig();
 
-    const handlePosition = async (position: GeolocationPosition) => {
-      const { latitude, longitude, accuracy, heading, speed, altitude } = position.coords;
+    const handlePositionUpdate = async (coords: {
+      latitude: number;
+      longitude: number;
+      accuracy: number;
+      heading: number | null;
+      speed: number | null;
+      altitude: number | null;
+    }) => {
+      const { latitude, longitude, accuracy, heading, speed, altitude } = coords;
       
       // Update battery optimization with new position
       batteryOptimization.lastUpdate && batteryOptimization.setTrackingMode(batteryOptimization.currentMode);
@@ -350,26 +383,65 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
       await updateDatabase(finalLat, finalLng);
     };
 
-    const handleError = (error: GeolocationPositionError) => {
+    const handleError = (error: any) => {
       console.error('Geolocation error:', error);
       setSignalQuality('poor');
     };
 
-    // Initial position fetch
-    navigator.geolocation.getCurrentPosition(handlePosition, handleError, {
-      enableHighAccuracy: config.enableHighAccuracy,
-      maximumAge: config.maximumAge,
-      timeout: config.timeout,
-    });
+    // Use native Capacitor geolocation on mobile, browser API on web
+    if (isNativePlatform) {
+      // Start native tracking
+      nativeGeolocation.startTracking().then(() => {
+        console.log('Native geolocation tracking started');
+      }).catch(handleError);
+    } else {
+      // Web fallback using browser geolocation
+      if (!navigator.geolocation) {
+        console.error('Geolocation not supported');
+        return;
+      }
 
-    // Set up adaptive watching
-    const id = navigator.geolocation.watchPosition(handlePosition, handleError, {
-      enableHighAccuracy: config.enableHighAccuracy,
-      maximumAge: config.maximumAge,
-      timeout: config.timeout,
-    });
+      // Initial position fetch
+      navigator.geolocation.getCurrentPosition(
+        (position) => handlePositionUpdate({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          accuracy: position.coords.accuracy,
+          heading: position.coords.heading,
+          speed: position.coords.speed,
+          altitude: position.coords.altitude,
+        }),
+        handleError,
+        {
+          enableHighAccuracy: config.enableHighAccuracy,
+          maximumAge: config.maximumAge,
+          timeout: config.timeout,
+        }
+      );
 
-    watchIdRef.current = id;
+      // Set up adaptive watching
+      const id = navigator.geolocation.watchPosition(
+        (position) => handlePositionUpdate({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          accuracy: position.coords.accuracy,
+          heading: position.coords.heading,
+          speed: position.coords.speed,
+          altitude: position.coords.altitude,
+        }),
+        handleError,
+        {
+          enableHighAccuracy: config.enableHighAccuracy,
+          maximumAge: config.maximumAge,
+          timeout: config.timeout,
+        }
+      );
+
+      watchIdRef.current = id;
+    }
+    
+    // Sync native geolocation position updates to our state
+    // This effect is handled separately below
 
     // Subscribe to other members' locations via realtime
     const channel = supabase
@@ -450,8 +522,59 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
     };
   }, [profile?.id, batteryOptimization, updateDatabase]);
 
+  // Sync native geolocation position to our state when on native platform
+  useEffect(() => {
+    if (!isNativePlatform || !nativeGeolocation.position || !isTracking) return;
+    
+    const pos = nativeGeolocation.position;
+    
+    // Update Wi-Fi positioning with native GPS data
+    wifiPositioning.updateFromGps(pos.lat, pos.lng, pos.accuracy, pos.altitude);
+    
+    // Determine signal quality
+    if (pos.accuracy <= 10) {
+      setSignalQuality('good');
+    } else if (pos.accuracy <= 30) {
+      setSignalQuality('fair');
+    } else {
+      setSignalQuality('poor');
+    }
+    
+    // Create position update
+    const newPosition: Position = {
+      lat: pos.lat,
+      lng: pos.lng,
+      accuracy: pos.accuracy,
+      heading: pos.heading,
+      speed: pos.speed,
+      timestamp: pos.timestamp,
+      source: 'gps',
+      altitude: pos.altitude,
+    };
+    
+    setCurrentPosition(newPosition);
+    
+    // Add to accuracy history
+    setAccuracyHistory(prev => {
+      const newHistory = [...prev, {
+        timestamp: Date.now(),
+        accuracy: pos.accuracy,
+        source: 'gps' as const,
+      }];
+      return newHistory.slice(-100);
+    });
+    
+    // Update database
+    updateDatabase(pos.lat, pos.lng);
+  }, [nativeGeolocation.position, isTracking, updateDatabase]);
+
   // Stop tracking
   const stopTracking = useCallback(async () => {
+    // Stop native geolocation on mobile
+    if (isNativePlatform) {
+      nativeGeolocation.stopTracking();
+    }
+    
     if (watchIdRef.current !== null) {
       navigator.geolocation.clearWatch(watchIdRef.current);
       watchIdRef.current = null;
@@ -478,7 +601,7 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
     eventIdRef.current = null;
     setIsTracking(false);
     setMemberLocations(new Map());
-  }, [profile?.id, indoorPositioning]);
+  }, [profile?.id, indoorPositioning, nativeGeolocation]);
 
   // Navigate to a member's location - now opens the in-app FindFriendView
   const navigateToMember = useCallback((member: MemberLocation) => {
@@ -561,6 +684,9 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
         // Accuracy history
         accuracyHistory,
         clearAccuracyHistory,
+        // Native platform info
+        isNativePlatform,
+        compassAccuracy: nativeCompass.accuracy,
       }}
     >
       {children}
