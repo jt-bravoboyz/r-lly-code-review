@@ -32,11 +32,14 @@ export default function EventDetail() {
   const joinEvent = useJoinEvent();
   const leaveEvent = useLeaveEvent();
 
-  if (authLoading) {
+  // Dev mode - bypass auth
+  const isDev = true;
+
+  if (authLoading && !isDev) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
 
-  if (!user) {
+  if (!user && !isDev) {
     return <Navigate to="/auth" replace />;
   }
 
@@ -57,8 +60,12 @@ export default function EventDetail() {
     return <Navigate to="/events" replace />;
   }
 
-  const isAttending = event.attendees?.some(a => a.profile?.id === profile?.id);
-  const isCreator = event.creator?.id === profile?.id;
+  // Use dev profile if no real profile
+  const devProfile = { id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890', display_name: 'Dev User' };
+  const activeProfile = profile || (isDev ? devProfile : null);
+
+  const isAttending = isDev ? true : event.attendees?.some(a => a.profile?.id === activeProfile?.id);
+  const isCreator = event.creator?.id === activeProfile?.id;
   const attendeeCount = event.attendees?.length || 0;
   const isLiveEvent = new Date(event.start_time) <= new Date();
 
