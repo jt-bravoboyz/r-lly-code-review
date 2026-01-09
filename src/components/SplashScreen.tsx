@@ -7,44 +7,62 @@ interface SplashScreenProps {
 
 type SplashPhase = "line1" | "ready" | "line2" | "set" | "logo" | "exit";
 
-export function SplashScreen({ onComplete, duration = 3000 }: SplashScreenProps) {
+// Haptic feedback utility
+const triggerHaptic = () => {
+  if ('vibrate' in navigator) {
+    navigator.vibrate(50); // Short 50ms vibration
+  }
+};
+
+export function SplashScreen({ onComplete, duration = 6000 }: SplashScreenProps) {
   const [phase, setPhase] = useState<SplashPhase>("line1");
   const [linePosition, setLinePosition] = useState(0);
+  const [trailPositions, setTrailPositions] = useState<number[]>([]);
 
   useEffect(() => {
-    // Phase timings (total ~3 seconds)
+    // Phase timings (total ~6 seconds)
     const timings = {
-      line1Duration: 400,     // First line animation
-      readyAt: 400,           // Show READY
-      line2At: 900,           // Second line animation starts
-      setAt: 1300,            // Show SET
-      logoAt: 1800,           // Show logo
-      exitAt: 2700,           // Start exit transition
+      line1Duration: 800,     // First line animation
+      readyAt: 800,           // Show READY
+      line2At: 2000,          // Second line animation starts
+      setAt: 2800,            // Show SET
+      logoAt: 4000,           // Show logo
+      exitAt: 5500,           // Start exit transition
       completeAt: duration,   // Complete
     };
 
-    // Animate line position for line1
+    // Animate line position for line1 with trail
+    let trailArray: number[] = [];
     const lineInterval = setInterval(() => {
       setLinePosition(prev => {
-        if (prev >= 100) {
+        const newPos = prev + 2.5;
+        // Add to trail
+        trailArray = [...trailArray.slice(-15), newPos];
+        setTrailPositions([...trailArray]);
+        if (newPos >= 100) {
           clearInterval(lineInterval);
           return 100;
         }
-        return prev + 5;
+        return newPos;
       });
     }, 20);
 
     const readyTimer = setTimeout(() => {
       setPhase("ready");
       setLinePosition(0);
+      setTrailPositions([]);
+      triggerHaptic();
     }, timings.readyAt);
 
     const line2Timer = setTimeout(() => {
       setPhase("line2");
-      // Animate line again
+      // Animate line again with trail
       let pos = 0;
+      let trail2Array: number[] = [];
       const line2Interval = setInterval(() => {
-        pos += 5;
+        pos += 2.5;
+        trail2Array = [...trail2Array.slice(-15), pos];
+        setTrailPositions([...trail2Array]);
         setLinePosition(pos);
         if (pos >= 100) {
           clearInterval(line2Interval);
@@ -55,6 +73,8 @@ export function SplashScreen({ onComplete, duration = 3000 }: SplashScreenProps)
     const setTimer = setTimeout(() => {
       setPhase("set");
       setLinePosition(0);
+      setTrailPositions([]);
+      triggerHaptic();
     }, timings.setAt);
 
     const logoTimer = setTimeout(() => {
@@ -85,16 +105,47 @@ export function SplashScreen({ onComplete, duration = 3000 }: SplashScreenProps)
       }`}
       style={{ backgroundColor: "#121212" }}
     >
-      {/* Animated horizontal line */}
+      {/* Animated horizontal line with dramatic glow and trail */}
       {(phase === "line1" || phase === "line2") && (
-        <div 
-          className="absolute top-1/2 left-0 h-0.5 transition-none"
-          style={{
-            width: `${linePosition}%`,
-            background: "linear-gradient(90deg, transparent 0%, #FF6A00 50%, #FF6A00 100%)",
-            boxShadow: "0 0 20px rgba(255, 106, 0, 0.6), 0 0 40px rgba(255, 106, 0, 0.3)",
-          }}
-        />
+        <>
+          {/* Trail effect */}
+          {trailPositions.map((pos, index) => (
+            <div
+              key={index}
+              className="absolute top-1/2 left-0 h-0.5 pointer-events-none"
+              style={{
+                width: `${pos}%`,
+                opacity: (index + 1) / trailPositions.length * 0.4,
+                background: `linear-gradient(90deg, transparent 0%, rgba(255, 106, 0, ${(index + 1) / trailPositions.length * 0.3}) 100%)`,
+              }}
+            />
+          ))}
+          {/* Main glowing line */}
+          <div 
+            className="absolute top-1/2 left-0 h-1 transition-none"
+            style={{
+              width: `${linePosition}%`,
+              background: "linear-gradient(90deg, transparent 0%, #FF6A00 30%, #FF8C00 70%, #FFB347 100%)",
+              boxShadow: `
+                0 0 10px rgba(255, 106, 0, 1),
+                0 0 20px rgba(255, 106, 0, 0.9),
+                0 0 40px rgba(255, 106, 0, 0.7),
+                0 0 60px rgba(255, 106, 0, 0.5),
+                0 0 80px rgba(255, 106, 0, 0.3),
+                0 0 100px rgba(255, 140, 0, 0.2)
+              `,
+            }}
+          />
+          {/* Leading edge glow */}
+          <div
+            className="absolute top-1/2 h-4 w-4 -translate-y-1/2 rounded-full"
+            style={{
+              left: `${linePosition}%`,
+              background: "radial-gradient(circle, #FFB347 0%, #FF6A00 40%, transparent 70%)",
+              boxShadow: "0 0 30px rgba(255, 106, 0, 1), 0 0 60px rgba(255, 106, 0, 0.8)",
+            }}
+          />
+        </>
       )}
 
       {/* READY text */}
