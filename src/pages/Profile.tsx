@@ -8,12 +8,13 @@ import { Label } from '@/components/ui/label';
 import { Settings, LogOut, MapPin, Award, Camera, Users, Home, Shield } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useLocation } from '@/hooks/useLocation';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 export default function Profile() {
   const { user, profile, loading, signOut, refreshProfile } = useAuth();
   const { toggleLocationSharing } = useLocation();
+  const navigate = useNavigate();
 
   if (loading) {
     return (
@@ -67,7 +68,10 @@ export default function Profile() {
                 <p className="text-sm text-muted-foreground">{user.email}</p>
                 
                 {profile?.reward_points !== undefined && profile.reward_points > 0 && (
-                  <div className="flex items-center gap-2 mt-2">
+                  <div 
+                    className="flex items-center gap-2 mt-2 cursor-pointer"
+                    onClick={() => navigate('/achievements')}
+                  >
                     <div className="badge-rally">
                       <Award className="h-3 w-3" />
                       <span>{profile.reward_points} points</span>
@@ -88,23 +92,26 @@ export default function Profile() {
           </CardContent>
         </Card>
 
-        {/* Quick Stats */}
-        <div className="grid grid-cols-3 gap-3">
-          <Card className="card-rally">
+        {/* Quick Stats - Clickable to Achievements */}
+        <div 
+          className="grid grid-cols-3 gap-3 cursor-pointer"
+          onClick={() => navigate('/achievements')}
+        >
+          <Card className="card-rally hover:ring-2 hover:ring-primary/30 transition-all">
             <CardContent className="p-4 text-center">
               <Users className="h-5 w-5 text-primary mx-auto mb-1" />
               <div className="text-lg font-bold">0</div>
               <div className="text-xs text-muted-foreground">Rally</div>
             </CardContent>
           </Card>
-          <Card className="card-rally">
+          <Card className="card-rally hover:ring-2 hover:ring-primary/30 transition-all">
             <CardContent className="p-4 text-center">
               <Shield className="h-5 w-5 text-primary mx-auto mb-1" />
               <div className="text-lg font-bold">0</div>
               <div className="text-xs text-muted-foreground">DD Trips</div>
             </CardContent>
           </Card>
-          <Card className="card-rally">
+          <Card className="card-rally hover:ring-2 hover:ring-primary/30 transition-all">
             <CardContent className="p-4 text-center">
               <Home className="h-5 w-5 text-primary mx-auto mb-1" />
               <div className="text-lg font-bold">0</div>
