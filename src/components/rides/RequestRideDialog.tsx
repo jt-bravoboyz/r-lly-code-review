@@ -46,6 +46,15 @@ export function RequestRideDialog({ eventId, trigger }: RequestRideDialogProps) 
 
     setIsSubmitting(true);
     try {
+      // First, get all DDs who have offered rides for this event
+      const { data: availableRides } = await supabase
+        .from('rides')
+        .select('driver_id')
+        .eq('status', 'available')
+        .eq(eventId ? 'event_id' : 'id', eventId || '');
+
+      const driverIds = availableRides?.map(r => r.driver_id).filter(Boolean) || [];
+
       // Create a ride request notification for all DDs on this event
       const { error } = await supabase
         .from('notifications')
@@ -64,6 +73,28 @@ export function RequestRideDialog({ eventId, trigger }: RequestRideDialogProps) 
         });
 
       if (error) throw error;
+
+      // Send push notifications to all DDs with subscriptions
+      if (driverIds.length > 0) {
+        try {
+          await supabase.functions.invoke('send-push-notification', {
+            body: {
+              driverProfileIds: driverIds,
+              title: '🚗 New Ride Request!',
+              body: `${profile.display_name || 'Someone'} needs a ride from ${data.pickup_location}`,
+              data: {
+                url: '/rides',
+                event_id: eventId,
+                requester_id: profile.id
+              },
+              tag: 'ride-request'
+            }
+          });
+        } catch (pushError) {
+          console.error('Push notification failed:', pushError);
+          // Don't fail the request if push fails
+        }
+      }
       
       toast.success('Ride request sent! A R@lly DD will pick you up soon.');
       setOpen(false);

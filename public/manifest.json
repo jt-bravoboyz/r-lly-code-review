@@ -1,0 +1,17 @@
+{
+  "name": "R@lly",
+  "short_name": "R@lly",
+  "description": "Rally your squad for safe nights out",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#F97316",
+  "icons": [
+    {
+      "src": "/rally-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
