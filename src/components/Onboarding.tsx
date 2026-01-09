@@ -23,7 +23,7 @@ const slides: OnboardingSlide[] = [
   {
     icon: <Beer className="h-16 w-16 text-white" strokeWidth={1.5} />,
     title: "Bar Hopping & More",
-    description: "Plan multi-stop events with ease and keep track of your crew"
+    description: "Plan multi-stop events with ease and keep track of your squad"
   }
 ];
 

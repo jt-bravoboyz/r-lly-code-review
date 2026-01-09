@@ -74,7 +74,7 @@ export function CreateSquadDialog() {
             <Label htmlFor="squad-name" className="font-montserrat">Squad Name</Label>
             <Input
               id="squad-name"
-              placeholder="e.g., The Crew, Friday Night Gang"
+              placeholder="e.g., Friday Night Squad, Downtown Crew"
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="mt-1"

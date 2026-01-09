@@ -71,7 +71,7 @@ export function LiveMemberTracker({ eventId, isLive }: LiveMemberTrackerProps) {
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg flex items-center gap-2 font-montserrat">
             <Users className="h-5 w-5 text-primary" />
-            Crew Locations
+            Squad Locations
           </CardTitle>
           
           <div className="flex items-center gap-2">
@@ -146,11 +146,11 @@ export function LiveMemberTracker({ eventId, isLive }: LiveMemberTrackerProps) {
         ) : (
           <div className="text-center py-8 text-muted-foreground">
             <Users className="h-12 w-12 mx-auto mb-3 opacity-20" />
-            <p className="font-medium">No crew members sharing location</p>
+            <p className="font-medium">No squad members sharing location</p>
             <p className="text-sm mt-1">
               {isTracking 
                 ? "Waiting for others to share their location..." 
-                : "Start sharing to see your crew"
+                : "Start sharing to see your squad"
               }
             </p>
           </div>

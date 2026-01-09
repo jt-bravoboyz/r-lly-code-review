@@ -136,7 +136,7 @@ export default function Index() {
                   <Zap className="h-6 w-6 text-primary" />
                 </div>
                 <h4 className="font-bold mb-2 text-rally-dark font-montserrat">No upcoming events</h4>
-                <p className="text-sm text-rally-gray mb-4 font-montserrat">Start one and rally your crew!</p>
+                <p className="text-sm text-rally-gray mb-4 font-montserrat">Start one and rally your squad!</p>
                 <Button asChild className="bg-primary hover:bg-primary/90 rounded-full font-montserrat">
                   <Link to="/events">Create Event</Link>
                 </Button>
@@ -175,7 +175,7 @@ function LandingScreen() {
               Plan fast. Stay synced.
             </p>
             <p className="text-base text-rally-gray font-montserrat">
-              Rally your crew in seconds
+              Rally your squad in seconds
             </p>
           </div>
 

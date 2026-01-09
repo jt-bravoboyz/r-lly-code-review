@@ -85,7 +85,7 @@ export default function Events() {
           <CardContent className="p-4 flex items-center justify-between">
             <div>
               <h3 className="font-bold text-white text-lg font-montserrat">Start a Rally</h3>
-              <p className="text-white/80 text-sm font-montserrat">Get your crew together</p>
+              <p className="text-white/80 text-sm font-montserrat">Get your squad together</p>
             </div>
             <CreateEventDialog />
           </CardContent>
