@@ -35,9 +35,9 @@ import { cn } from '@/lib/utils';
 import { useTheme } from '@/contexts/ThemeContext';
 
 const themeOptions = [
-  { value: 'light', label: 'Light', icon: Sun },
-  { value: 'dark', label: 'Dark', icon: Moon },
-  { value: 'system', label: 'System', icon: Monitor },
+  { value: 'light', label: 'Light', icon: Sun, description: 'Always light' },
+  { value: 'dark', label: 'Dark', icon: Moon, description: 'Always dark' },
+  { value: 'system', label: 'System', icon: Monitor, description: 'Light 6AM-6PM' },
 ] as const;
 
 const trackingModeOptions = [
@@ -518,7 +518,7 @@ export default function SettingsPreview() {
                       key={option.value}
                       onClick={() => handleThemeChange(option.value)}
                       className={cn(
-                        "flex-1 flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all",
+                        "flex-1 flex flex-col items-center gap-1 p-3 rounded-xl border-2 transition-all",
                         theme === option.value
                           ? "border-primary bg-primary/5"
                           : "border-border hover:border-primary/50"
@@ -537,6 +537,9 @@ export default function SettingsPreview() {
                     </button>
                   ))}
                 </div>
+                <p className="text-xs text-muted-foreground text-center">
+                  System mode uses light theme during day (6 AM - 6 PM) and dark at night
+                </p>
               </CardContent>
             </Card>
 
