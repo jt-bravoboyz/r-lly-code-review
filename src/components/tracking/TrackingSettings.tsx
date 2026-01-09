@@ -1,5 +1,5 @@
 import React from 'react';
-import { Battery, BatteryCharging, BatteryLow, BatteryMedium, Wifi, Radio, Gauge, Zap, MapPin, Building2 } from 'lucide-react';
+import { Battery, BatteryCharging, BatteryLow, BatteryMedium, Wifi, Radio, Gauge, Zap, MapPin, Building2, Play, Square, TestTube } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -46,7 +46,10 @@ export function TrackingSettings() {
     indoorInfo,
     startIndoorPositioning,
     stopIndoorPositioning,
+    startIndoorSimulation,
+    stopIndoorSimulation,
     nearbyBeacons,
+    availableBeacons,
     isTracking,
   } = useLocationContext();
 
@@ -188,13 +191,14 @@ export function TrackingSettings() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          {!indoorInfo.isSupported ? (
+          {!indoorInfo.isSupported && !availableBeacons ? (
             <div className="text-sm text-muted-foreground">
-              <p>Indoor positioning requires Bluetooth support.</p>
-              <p className="text-xs mt-1">Use a compatible browser (Chrome, Edge) on a device with Bluetooth.</p>
+              <p>Indoor positioning requires Bluetooth support or registered beacons.</p>
+              <p className="text-xs mt-1">Use a compatible browser or register beacons in the venue management.</p>
             </div>
           ) : (
             <>
+              {/* Real Beacon Scanning */}
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label>Beacon Scanning</Label>
@@ -206,15 +210,47 @@ export function TrackingSettings() {
                   variant={indoorInfo.isActive ? 'destructive' : 'secondary'}
                   size="sm"
                   onClick={() => indoorInfo.isActive ? stopIndoorPositioning() : startIndoorPositioning()}
+                  disabled={indoorInfo.isSimulating}
                 >
+                  {indoorInfo.isActive ? <Square className="h-3 w-3 mr-1" /> : <Play className="h-3 w-3 mr-1" />}
                   {indoorInfo.isActive ? 'Stop' : 'Start'}
                 </Button>
               </div>
 
-              {indoorInfo.isActive && (
+              <Separator />
+
+              {/* Simulation Mode */}
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label className="flex items-center gap-2">
+                    <TestTube className="h-3 w-3" />
+                    Simulation Mode
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Test with {availableBeacons} registered beacon{availableBeacons !== 1 ? 's' : ''}
+                  </p>
+                </div>
+                <Button
+                  variant={indoorInfo.isSimulating ? 'destructive' : 'outline'}
+                  size="sm"
+                  onClick={() => indoorInfo.isSimulating ? stopIndoorSimulation() : startIndoorSimulation()}
+                  disabled={indoorInfo.isActive || availableBeacons === 0}
+                >
+                  {indoorInfo.isSimulating ? <Square className="h-3 w-3 mr-1" /> : <Play className="h-3 w-3 mr-1" />}
+                  {indoorInfo.isSimulating ? 'Stop' : 'Simulate'}
+                </Button>
+              </div>
+
+              {(indoorInfo.isActive || indoorInfo.isSimulating) && (
                 <>
                   <Separator />
                   <div className="space-y-2">
+                    {indoorInfo.isSimulating && (
+                      <Badge variant="outline" className="w-full justify-center bg-yellow-500/10 text-yellow-600 border-yellow-500/30">
+                        <TestTube className="h-3 w-3 mr-1" />
+                        Simulation Mode Active
+                      </Badge>
+                    )}
                     {indoorInfo.venueName && (
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-muted-foreground">Venue</span>
@@ -241,18 +277,30 @@ export function TrackingSettings() {
                       <Separator />
                       <div className="space-y-2">
                         <p className="text-xs text-muted-foreground">Nearby Beacons</p>
-                        {nearbyBeacons.slice(0, 3).map((beacon) => (
+                        {nearbyBeacons.slice(0, 4).map((beacon) => (
                           <div
                             key={beacon.id}
                             className="flex items-center justify-between p-2 bg-muted/50 rounded"
                           >
                             <div className="flex items-center gap-2">
                               <Radio className="h-3 w-3 text-primary" />
-                              <span className="text-xs font-medium">{beacon.name}</span>
+                              <div>
+                                <span className="text-xs font-medium">{beacon.name}</span>
+                                {beacon.zoneName && (
+                                  <span className="text-xs text-muted-foreground ml-1">
+                                    ({beacon.zoneName})
+                                  </span>
+                                )}
+                              </div>
                             </div>
-                            <span className="text-xs text-muted-foreground">
-                              {beacon.distance.toFixed(1)}m
-                            </span>
+                            <div className="text-right">
+                              <span className="text-xs font-medium">
+                                {beacon.distance.toFixed(1)}m
+                              </span>
+                              <span className="text-xs text-muted-foreground block">
+                                {beacon.rssi}dBm
+                              </span>
+                            </div>
                           </div>
                         ))}
                       </div>

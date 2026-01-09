@@ -52,10 +52,14 @@ interface UseIndoorPositioningResult {
   isSupported: boolean;
   isBleSupported: boolean;
   isScanning: boolean;
+  isSimulating: boolean;
   indoorPosition: IndoorPosition | null;
   nearbyBeacons: BeaconInfo[];
+  databaseBeacons: DatabaseBeacon[];
   startScanning: () => Promise<void>;
   stopScanning: () => void;
+  startSimulation: () => void;
+  stopSimulation: () => void;
   error: string | null;
   platformInfo: {
     platform: 'ios' | 'android' | 'web' | 'unknown';
@@ -64,6 +68,8 @@ interface UseIndoorPositioningResult {
     recommendation: string;
   };
 }
+
+export type { DatabaseBeacon };
 
 // Calculate distance from RSSI using log-distance path loss model
 function rssiToDistance(rssi: number, txPower: number = -59): number {
@@ -133,6 +139,7 @@ function detectPlatform(): 'ios' | 'android' | 'web' | 'unknown' {
 
 export function useIndoorPositioning(): UseIndoorPositioningResult {
   const [isScanning, setIsScanning] = useState(false);
+  const [isSimulating, setIsSimulating] = useState(false);
   const [indoorPosition, setIndoorPosition] = useState<IndoorPosition | null>(null);
   const [nearbyBeacons, setNearbyBeacons] = useState<BeaconInfo[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -140,6 +147,7 @@ export function useIndoorPositioning(): UseIndoorPositioningResult {
   const [bleInitialized, setBleInitialized] = useState(false);
   
   const scanIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const simulationIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const detectedDevicesRef = useRef<Map<string, { rssi: number; timestamp: number }>>(new Map());
   
   const platform = detectPlatform();
@@ -416,11 +424,87 @@ export function useIndoorPositioning(): UseIndoorPositioningResult {
     setIndoorPosition(null);
   }, [supportsNativeBle, bleInitialized]);
 
+  // Simulation mode - simulate beacon detection using database beacons
+  const startSimulation = useCallback(() => {
+    if (databaseBeacons.length === 0) {
+      setError('No beacons found in database. Add beacons to a venue first.');
+      return;
+    }
+    
+    setError(null);
+    setIsSimulating(true);
+    
+    // Simulate detecting beacons with varying signal strengths
+    simulationIntervalRef.current = setInterval(() => {
+      const simulatedDevices = databaseBeacons.map(beacon => {
+        // Simulate RSSI with some variation
+        const baseRssi = -50 - Math.random() * 40; // -50 to -90 dBm
+        return {
+          id: beacon.beacon_uuid,
+          rssi: baseRssi,
+          name: beacon.name,
+        };
+      });
+      
+      // Process as if these were real beacon detections
+      const beacons: BeaconInfo[] = simulatedDevices.map((device, index) => {
+        const dbBeacon = databaseBeacons[index];
+        const distance = rssiToDistance(device.rssi, dbBeacon.tx_power);
+        
+        return {
+          id: dbBeacon.id,
+          name: dbBeacon.name,
+          rssi: device.rssi,
+          distance,
+          lat: dbBeacon.lat,
+          lng: dbBeacon.lng,
+          floor: dbBeacon.floor,
+          venueName: dbBeacon.venue?.name,
+          venueId: dbBeacon.venue_id,
+          zoneName: dbBeacon.zone_name || undefined,
+        };
+      });
+      
+      // Sort by signal strength
+      beacons.sort((a, b) => b.rssi - a.rssi);
+      setNearbyBeacons(beacons);
+      
+      // Calculate position
+      const position = trilateratePosition(beacons);
+      if (position && beacons.length > 0) {
+        const primaryBeacon = beacons[0];
+        setIndoorPosition({
+          lat: position.lat,
+          lng: position.lng,
+          floor: primaryBeacon.floor || 1,
+          accuracy: position.accuracy,
+          source: 'simulated',
+          venueName: primaryBeacon.venueName,
+          venueId: primaryBeacon.venueId,
+          beaconCount: beacons.length,
+        });
+      }
+    }, 2000);
+  }, [databaseBeacons]);
+
+  const stopSimulation = useCallback(() => {
+    if (simulationIntervalRef.current) {
+      clearInterval(simulationIntervalRef.current);
+      simulationIntervalRef.current = null;
+    }
+    setIsSimulating(false);
+    setNearbyBeacons([]);
+    setIndoorPosition(null);
+  }, []);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (scanIntervalRef.current) {
         clearInterval(scanIntervalRef.current);
+      }
+      if (simulationIntervalRef.current) {
+        clearInterval(simulationIntervalRef.current);
       }
       if (supportsNativeBle && bleInitialized) {
         BleClient.stopLEScan().catch(() => {});
@@ -432,10 +516,14 @@ export function useIndoorPositioning(): UseIndoorPositioningResult {
     isSupported,
     isBleSupported,
     isScanning,
+    isSimulating,
     indoorPosition,
     nearbyBeacons,
+    databaseBeacons,
     startScanning,
     stopScanning,
+    startSimulation,
+    stopSimulation,
     error,
     platformInfo,
   };
