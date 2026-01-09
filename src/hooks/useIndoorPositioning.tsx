@@ -1,38 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-
-// Web Bluetooth API type declarations
-interface BluetoothDevice {
-  id: string;
-  name?: string;
-  gatt?: {
-    connected: boolean;
-    connect(): Promise<BluetoothRemoteGATTServer>;
-    disconnect(): void;
-  };
-}
-
-interface BluetoothRemoteGATTServer {
-  connected: boolean;
-  device: BluetoothDevice;
-}
-
-interface RequestDeviceOptions {
-  acceptAllDevices?: boolean;
-  filters?: Array<{ services?: string[]; name?: string; namePrefix?: string }>;
-  optionalServices?: string[];
-}
-
-interface Bluetooth {
-  requestDevice(options: RequestDeviceOptions): Promise<BluetoothDevice>;
-  getAvailability(): Promise<boolean>;
-}
-
-declare global {
-  interface Navigator {
-    bluetooth?: Bluetooth;
-  }
-}
+import { BleClient, ScanResult } from '@capacitor-community/bluetooth-le';
+import { Capacitor } from '@capacitor/core';
 
 export interface BeaconInfo {
   id: string;
@@ -149,8 +118,13 @@ function trilateratePosition(beacons: BeaconInfo[]): { lat: number; lng: number;
 
 // Detect platform
 function detectPlatform(): 'ios' | 'android' | 'web' | 'unknown' {
-  const ua = navigator.userAgent.toLowerCase();
+  if (Capacitor.isNativePlatform()) {
+    const platform = Capacitor.getPlatform();
+    if (platform === 'ios') return 'ios';
+    if (platform === 'android') return 'android';
+  }
   
+  const ua = navigator.userAgent.toLowerCase();
   if (/iphone|ipad|ipod/.test(ua)) return 'ios';
   if (/android/.test(ua)) return 'android';
   if (typeof window !== 'undefined') return 'web';
@@ -163,20 +137,23 @@ export function useIndoorPositioning(): UseIndoorPositioningResult {
   const [nearbyBeacons, setNearbyBeacons] = useState<BeaconInfo[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [databaseBeacons, setDatabaseBeacons] = useState<DatabaseBeacon[]>([]);
+  const [bleInitialized, setBleInitialized] = useState(false);
   
   const scanIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const bluetoothDeviceRef = useRef<BluetoothDevice | null>(null);
+  const detectedDevicesRef = useRef<Map<string, { rssi: number; timestamp: number }>>(new Map());
   
   const platform = detectPlatform();
+  const isNativePlatform = Capacitor.isNativePlatform();
+  
   const supportsWebBluetooth = typeof navigator !== 'undefined' && 
     'bluetooth' in navigator && 
     navigator.bluetooth !== undefined;
   
-  // Native BLE would be available through Capacitor plugins
-  const supportsNativeBle = typeof (window as any).Capacitor !== 'undefined';
+  // Native BLE is available through Capacitor on iOS/Android
+  const supportsNativeBle = isNativePlatform;
   
   const isSupported = supportsWebBluetooth || supportsNativeBle;
-  const isBleSupported = supportsWebBluetooth;
+  const isBleSupported = supportsWebBluetooth || supportsNativeBle;
 
   // Get platform-specific recommendation
   const getRecommendation = (): string => {
@@ -184,13 +161,16 @@ export function useIndoorPositioning(): UseIndoorPositioningResult {
       if (supportsNativeBle) {
         return 'For best indoor positioning, ensure Bluetooth is enabled and the app has permission to use it.';
       }
-      return 'Safari does not support Web Bluetooth. For indoor positioning on iOS, install the native app or use Chrome on Android.';
+      return 'Safari does not support Web Bluetooth. For indoor positioning on iOS, install the native app.';
     }
     if (platform === 'android') {
+      if (supportsNativeBle) {
+        return 'Enable Bluetooth and location permissions for best indoor positioning results.';
+      }
       if (supportsWebBluetooth) {
         return 'Bluetooth is supported. Enable location and Bluetooth permissions for best results.';
       }
-      return 'Use Chrome browser or install the native app for indoor positioning.';
+      return 'Install the native app for indoor positioning support.';
     }
     if (supportsWebBluetooth) {
       return 'Web Bluetooth is supported. Grant permission when prompted to enable beacon scanning.';
@@ -204,6 +184,24 @@ export function useIndoorPositioning(): UseIndoorPositioningResult {
     supportsNativeBle,
     recommendation: getRecommendation(),
   };
+
+  // Initialize BLE on native platforms
+  useEffect(() => {
+    const initBle = async () => {
+      if (supportsNativeBle && !bleInitialized) {
+        try {
+          await BleClient.initialize({ androidNeverForLocation: false });
+          setBleInitialized(true);
+          console.log('BLE initialized successfully');
+        } catch (err) {
+          console.error('Failed to initialize BLE:', err);
+          setError('Failed to initialize Bluetooth');
+        }
+      }
+    };
+    
+    initBle();
+  }, [supportsNativeBle, bleInitialized]);
 
   // Fetch beacons from database
   useEffect(() => {
@@ -234,22 +232,40 @@ export function useIndoorPositioning(): UseIndoorPositioningResult {
     fetchBeacons();
   }, []);
 
-  const processBeaconData = useCallback((detectedDevices: { id: string; rssi: number }[]) => {
+  const processBeaconData = useCallback((detectedDevices: { id: string; rssi: number; name?: string }[]) => {
     const beacons: BeaconInfo[] = [];
+    const now = Date.now();
     
+    // Update detected devices map with timestamps
     detectedDevices.forEach(device => {
-      // Find matching beacon in database
+      detectedDevicesRef.current.set(device.id.toLowerCase(), {
+        rssi: device.rssi,
+        timestamp: now,
+      });
+    });
+    
+    // Remove stale devices (older than 10 seconds)
+    detectedDevicesRef.current.forEach((value, key) => {
+      if (now - value.timestamp > 10000) {
+        detectedDevicesRef.current.delete(key);
+      }
+    });
+    
+    // Match detected devices with database beacons
+    detectedDevicesRef.current.forEach((deviceInfo, deviceId) => {
+      // Find matching beacon in database by UUID
       const dbBeacon = databaseBeacons.find(b => 
-        b.beacon_uuid.toLowerCase() === device.id.toLowerCase()
+        b.beacon_uuid.toLowerCase() === deviceId ||
+        b.beacon_uuid.toLowerCase().replace(/-/g, '') === deviceId.replace(/-/g, '')
       );
       
       if (dbBeacon) {
-        const distance = rssiToDistance(device.rssi, dbBeacon.tx_power);
+        const distance = rssiToDistance(deviceInfo.rssi, dbBeacon.tx_power);
         
         beacons.push({
           id: dbBeacon.id,
           name: dbBeacon.name,
-          rssi: device.rssi,
+          rssi: deviceInfo.rssi,
           distance,
           lat: dbBeacon.lat,
           lng: dbBeacon.lng,
@@ -282,77 +298,105 @@ export function useIndoorPositioning(): UseIndoorPositioningResult {
     }
   }, [databaseBeacons]);
 
+  const startNativeScanning = useCallback(async () => {
+    if (!bleInitialized) {
+      try {
+        await BleClient.initialize({ androidNeverForLocation: false });
+        setBleInitialized(true);
+      } catch (err) {
+        throw new Error('Failed to initialize Bluetooth');
+      }
+    }
+
+    // Request permissions on Android
+    if (platform === 'android') {
+      try {
+        await BleClient.requestLEScan(
+          { allowDuplicates: true },
+          (result: ScanResult) => {
+            const deviceId = result.device.deviceId;
+            const rssi = result.rssi ?? -100;
+            const name = result.device.name ?? result.localName;
+            
+            processBeaconData([{ id: deviceId, rssi, name: name ?? undefined }]);
+          }
+        );
+      } catch (err: any) {
+        if (err.message?.includes('denied')) {
+          throw new Error('Bluetooth permission denied. Please enable Bluetooth permissions in settings.');
+        }
+        throw err;
+      }
+    } else if (platform === 'ios') {
+      // iOS BLE scanning
+      try {
+        await BleClient.requestLEScan(
+          { allowDuplicates: true },
+          (result: ScanResult) => {
+            const deviceId = result.device.deviceId;
+            const rssi = result.rssi ?? -100;
+            const name = result.device.name ?? result.localName;
+            
+            processBeaconData([{ id: deviceId, rssi, name: name ?? undefined }]);
+          }
+        );
+      } catch (err: any) {
+        if (err.message?.includes('denied') || err.message?.includes('unauthorized')) {
+          throw new Error('Bluetooth permission denied. Please enable Bluetooth in Settings.');
+        }
+        throw err;
+      }
+    }
+  }, [bleInitialized, platform, processBeaconData]);
+
+  const startWebBluetoothScanning = useCallback(async () => {
+    if (!supportsWebBluetooth || !navigator.bluetooth) {
+      throw new Error(platformInfo.recommendation);
+    }
+
+    // Web Bluetooth requires user interaction and has limitations
+    // It's mainly for connecting to specific devices, not for beacon scanning
+    const device = await navigator.bluetooth.requestDevice({
+      acceptAllDevices: true,
+      optionalServices: ['battery_service', 'device_information'],
+    });
+    
+    // Simulate beacon discovery based on the connected device
+    // Note: Real beacon scanning isn't possible with Web Bluetooth
+    scanIntervalRef.current = setInterval(() => {
+      if (device) {
+        const simulatedRssi = -50 + Math.random() * 30;
+        processBeaconData([{ id: device.id, rssi: simulatedRssi, name: device.name }]);
+      }
+    }, 2000);
+  }, [supportsWebBluetooth, processBeaconData, platformInfo.recommendation]);
+
   const startScanning = useCallback(async () => {
     setError(null);
     
-    // Check for native Capacitor BLE first
-    if (supportsNativeBle && (window as any).Capacitor?.Plugins?.BleClient) {
-      try {
-        setIsScanning(true);
-        const BleClient = (window as any).Capacitor.Plugins.BleClient;
-        
-        // Initialize BLE
-        await BleClient.initialize();
-        
-        // Start scanning for beacons
-        await BleClient.startScan({}, (result: any) => {
-          const detectedDevices = [{
-            id: result.device.deviceId,
-            rssi: result.rssi || -70,
-          }];
-          processBeaconData(detectedDevices);
-        });
-        
-        return;
-      } catch (err) {
-        console.error('Native BLE error:', err);
-        setError('Failed to start native Bluetooth scanning');
-        setIsScanning(false);
-      }
-    }
-    
-    // Fall back to Web Bluetooth
-    if (!supportsWebBluetooth) {
-      setError(platformInfo.recommendation);
-      return;
-    }
-
     try {
       setIsScanning(true);
       
-      // Request Bluetooth device access
-      const device = await navigator.bluetooth!.requestDevice({
-        acceptAllDevices: true,
-        optionalServices: ['battery_service', 'device_information'],
-      });
-      
-      bluetoothDeviceRef.current = device;
-      
-      // Note: Web Bluetooth has limitations for beacon scanning
-      // It requires user interaction and doesn't support background scanning
-      // For production, use native apps with Capacitor BLE plugin
-      
-      // Simulate beacon discovery based on the connected device
-      scanIntervalRef.current = setInterval(() => {
-        if (device) {
-          // Match device ID against known beacons
-          const simulatedRssi = -50 + Math.random() * 30;
-          processBeaconData([{ id: device.id, rssi: simulatedRssi }]);
-        }
-      }, 2000);
-      
+      // Use native BLE on iOS/Android
+      if (supportsNativeBle) {
+        await startNativeScanning();
+      } else if (supportsWebBluetooth) {
+        await startWebBluetoothScanning();
+      } else {
+        throw new Error(platformInfo.recommendation);
+      }
     } catch (err) {
       console.error('Bluetooth scanning error:', err);
       setError(err instanceof Error ? err.message : 'Failed to start Bluetooth scanning');
       setIsScanning(false);
     }
-  }, [supportsWebBluetooth, supportsNativeBle, processBeaconData, platformInfo.recommendation]);
+  }, [supportsNativeBle, supportsWebBluetooth, startNativeScanning, startWebBluetoothScanning, platformInfo.recommendation]);
 
-  const stopScanning = useCallback(() => {
-    // Stop native scanning if available
-    if (supportsNativeBle && (window as any).Capacitor?.Plugins?.BleClient) {
+  const stopScanning = useCallback(async () => {
+    // Stop native scanning
+    if (supportsNativeBle && bleInitialized) {
       try {
-        (window as any).Capacitor.Plugins.BleClient.stopScan();
+        await BleClient.stopLEScan();
       } catch (err) {
         console.error('Error stopping native scan:', err);
       }
@@ -364,15 +408,13 @@ export function useIndoorPositioning(): UseIndoorPositioningResult {
       scanIntervalRef.current = null;
     }
     
-    // Disconnect web bluetooth
-    if (bluetoothDeviceRef.current?.gatt?.connected) {
-      bluetoothDeviceRef.current.gatt.disconnect();
-    }
+    // Clear detected devices
+    detectedDevicesRef.current.clear();
     
     setIsScanning(false);
     setNearbyBeacons([]);
     setIndoorPosition(null);
-  }, [supportsNativeBle]);
+  }, [supportsNativeBle, bleInitialized]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -380,8 +422,11 @@ export function useIndoorPositioning(): UseIndoorPositioningResult {
       if (scanIntervalRef.current) {
         clearInterval(scanIntervalRef.current);
       }
+      if (supportsNativeBle && bleInitialized) {
+        BleClient.stopLEScan().catch(() => {});
+      }
     };
-  }, []);
+  }, [supportsNativeBle, bleInitialized]);
 
   return {
     isSupported,
