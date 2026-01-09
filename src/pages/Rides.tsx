@@ -38,10 +38,10 @@ export default function Rides() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-primary">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary via-primary to-orange-600">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-24 h-24 rounded-full bg-rally-cream flex items-center justify-center">
-            <img src={rallyLogo} alt="R@lly" className="w-14 h-14 object-contain" />
+          <div className="w-28 h-28 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center animate-pulse shadow-2xl ring-4 ring-white/30">
+            <img src={rallyLogo} alt="R@lly" className="w-16 h-16 object-contain" />
           </div>
         </div>
       </div>
@@ -69,19 +69,31 @@ export default function Rides() {
   const myRides = rides?.filter(r => r.driver?.id === profile?.id) || [];
 
   return (
-    <div className="min-h-screen pb-24 bg-background">
-      {/* Custom Header */}
-      <header className="sticky top-0 z-40 bg-white shadow-sm">
+    <div className="min-h-screen pb-28 bg-gradient-to-b from-secondary/30 via-background to-secondary/20 relative overflow-hidden">
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 -right-20 w-60 h-60 bg-blue-400/5 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute top-1/2 -left-20 w-80 h-80 bg-primary/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-40 right-10 w-40 h-40 bg-orange-400/5 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '1s' }} />
+      </div>
+
+      {/* Modern gradient header */}
+      <header className="sticky top-0 z-40 bg-gradient-to-r from-primary via-primary to-orange-500 shadow-lg shadow-primary/20">
         <div className="h-6" />
         <div className="flex items-center justify-between px-4 py-3">
-          <Link to="/">
-            <img src={rallyLogo} alt="R@lly" className="h-10 w-10 object-contain" />
+          <Link to="/" className="relative">
+            <div className="absolute inset-0 bg-white/30 rounded-full blur-sm" />
+            <img src={rallyLogo} alt="R@lly" className="h-11 w-11 object-contain relative filter drop-shadow-lg brightness-0 invert" />
           </Link>
-          <h1 className="text-xl font-bold text-rally-dark font-montserrat">R@lly Ride</h1>
-          <Link to="/profile">
-            <Avatar className="h-10 w-10 ring-2 ring-primary/30 hover:ring-primary/50 transition-all">
+          <h1 className="text-xl font-bold text-white font-montserrat drop-shadow-sm flex items-center gap-2">
+            <Car className="h-5 w-5" strokeWidth={2.5} />
+            R@lly Ride
+          </h1>
+          <Link to="/profile" className="relative group">
+            <div className="absolute inset-0 bg-white/30 rounded-full blur-sm scale-110" />
+            <Avatar className="h-11 w-11 ring-2 ring-white/50 hover:ring-white transition-all relative shadow-lg">
               <AvatarImage src={profile?.avatar_url || undefined} />
-              <AvatarFallback className="bg-primary text-primary-foreground text-sm font-bold">
+              <AvatarFallback className="bg-white text-primary text-sm font-bold">
                 {profile?.display_name?.charAt(0)?.toUpperCase() || '?'}
               </AvatarFallback>
             </Avatar>
@@ -89,7 +101,7 @@ export default function Rides() {
         </div>
       </header>
       
-      <main className="px-4 py-6 space-y-6">
+      <main className="px-4 py-6 space-y-6 relative z-10">
         {/* Event Selector */}
         <div className="space-y-2">
           <label className="text-sm font-medium text-muted-foreground">Select Event</label>

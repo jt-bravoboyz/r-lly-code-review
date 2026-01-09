@@ -6,7 +6,7 @@ import { useEvents } from '@/hooks/useEvents';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Zap, Filter, Search, Link2 } from 'lucide-react';
+import { Zap, Filter, Search, Link2, Sparkles, Calendar } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
@@ -27,13 +27,13 @@ export default function Events() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-primary">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary via-primary to-orange-600">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-24 h-24 rounded-full bg-rally-cream flex items-center justify-center">
+          <div className="w-28 h-28 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center animate-pulse shadow-2xl ring-4 ring-white/30">
             <img 
               src={rallyLogo} 
               alt="R@lly" 
-              className="w-14 h-14 object-contain"
+              className="w-16 h-16 object-contain"
             />
           </div>
         </div>
@@ -48,19 +48,31 @@ export default function Events() {
   ) || [];
 
   return (
-    <div className="min-h-screen pb-24 bg-background">
-      {/* Custom Header */}
-      <header className="sticky top-0 z-40 bg-white shadow-sm">
+    <div className="min-h-screen pb-28 bg-gradient-to-b from-secondary/30 via-background to-secondary/20 relative overflow-hidden">
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 -right-20 w-60 h-60 bg-primary/5 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute top-1/2 -left-20 w-80 h-80 bg-orange-400/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-40 right-10 w-40 h-40 bg-yellow-400/5 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '1s' }} />
+      </div>
+
+      {/* Modern gradient header */}
+      <header className="sticky top-0 z-40 bg-gradient-to-r from-primary via-primary to-orange-500 shadow-lg shadow-primary/20">
         <div className="h-6" />
         <div className="flex items-center justify-between px-4 py-3">
-          <Link to="/">
-            <img src={rallyLogo} alt="R@lly" className="h-10 w-10 object-contain" />
+          <Link to="/" className="relative">
+            <div className="absolute inset-0 bg-white/30 rounded-full blur-sm" />
+            <img src={rallyLogo} alt="R@lly" className="h-11 w-11 object-contain relative filter drop-shadow-lg brightness-0 invert" />
           </Link>
-          <h1 className="text-xl font-bold text-rally-dark font-montserrat">Rally</h1>
-          <Link to="/profile">
-            <Avatar className="h-10 w-10 ring-2 ring-primary/30 hover:ring-primary/50 transition-all">
+          <h1 className="text-xl font-bold text-white font-montserrat drop-shadow-sm flex items-center gap-2">
+            <Zap className="h-5 w-5" strokeWidth={2.5} />
+            Rally
+          </h1>
+          <Link to="/profile" className="relative group">
+            <div className="absolute inset-0 bg-white/30 rounded-full blur-sm scale-110" />
+            <Avatar className="h-11 w-11 ring-2 ring-white/50 hover:ring-white transition-all relative shadow-lg">
               <AvatarImage src={profile?.avatar_url || undefined} />
-              <AvatarFallback className="bg-primary text-primary-foreground text-sm font-bold">
+              <AvatarFallback className="bg-white text-primary text-sm font-bold">
                 {profile?.display_name?.charAt(0)?.toUpperCase() || '?'}
               </AvatarFallback>
             </Avatar>
@@ -68,79 +80,98 @@ export default function Events() {
         </div>
       </header>
       
-      <main className="px-4 py-6 space-y-6">
+      <main className="px-4 py-6 space-y-6 relative z-10">
         {/* Search and Filter */}
-        <div className="flex gap-3">
+        <div className="flex gap-3 animate-fade-in">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input 
               placeholder="Search rally..." 
-              className="pl-10 rounded-full bg-white border-gray-200"
+              className="pl-11 rounded-full bg-white/80 backdrop-blur-sm border-primary/20 shadow-sm focus:shadow-md focus:border-primary/40 transition-all"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <Button variant="outline" size="icon" className="rounded-full shrink-0" asChild>
+          <Button variant="outline" size="icon" className="rounded-full shrink-0 bg-white/80 backdrop-blur-sm border-primary/20 hover:bg-primary hover:text-white hover:border-primary transition-all" asChild>
             <Link to="/join">
               <Link2 className="h-4 w-4" />
             </Link>
           </Button>
-          <Button variant="outline" size="icon" className="rounded-full shrink-0">
+          <Button variant="outline" size="icon" className="rounded-full shrink-0 bg-white/80 backdrop-blur-sm border-primary/20 hover:bg-primary hover:text-white hover:border-primary transition-all">
             <Filter className="h-4 w-4" />
           </Button>
         </div>
 
-        {/* Quick Rally Card - Prominent */}
-        <Card className="bg-gradient-to-r from-secondary to-secondary/80 border-0 shadow-lg">
-          <CardContent className="p-4 flex items-center justify-between">
-            <div>
-              <h3 className="font-bold text-white text-lg font-montserrat flex items-center gap-2">
-                <Zap className="h-5 w-5" />
+        {/* Quick Rally Card - BOLD & VIBRANT */}
+        <Card className="bg-gradient-to-r from-yellow-400 via-orange-500 to-primary border-0 shadow-xl shadow-orange-500/30 overflow-hidden group hover:shadow-2xl hover:shadow-orange-500/40 transition-all duration-300 hover:scale-[1.01] animate-fade-in" style={{ animationDelay: '0.1s' }}>
+          <CardContent className="p-5 flex items-center justify-between relative">
+            {/* Decorative elements */}
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 group-hover:scale-110 transition-transform" />
+            <div className="absolute bottom-0 left-10 w-20 h-20 bg-white/5 rounded-full translate-y-1/2" />
+            
+            <div className="relative z-10">
+              <h3 className="font-extrabold text-white text-xl font-montserrat flex items-center gap-2 drop-shadow-sm">
+                <div className="w-10 h-10 rounded-xl bg-white/25 backdrop-blur-sm flex items-center justify-center">
+                  <Zap className="h-6 w-6 text-white" strokeWidth={2.5} fill="currentColor" />
+                </div>
                 Quick R@lly
               </h3>
-              <p className="text-white/80 text-sm font-montserrat">Start rallying in seconds</p>
+              <p className="text-white/90 text-sm font-montserrat mt-1 ml-12">Start rallying in seconds</p>
             </div>
             <QuickRallyDialog preselectedSquad={preselectedSquad} />
           </CardContent>
         </Card>
 
         {/* Create Event Button */}
-        <Card className="bg-gradient-to-r from-primary to-primary/80 border-0 shadow-lg">
-          <CardContent className="p-4 flex items-center justify-between">
-            <div>
-              <h3 className="font-bold text-white text-lg font-montserrat">Plan a Rally</h3>
-              <p className="text-white/80 text-sm font-montserrat">Schedule for later</p>
+        <Card className="bg-gradient-to-r from-primary/90 via-primary to-orange-600 border-0 shadow-lg shadow-primary/20 overflow-hidden group hover:shadow-xl transition-all duration-300 hover:scale-[1.01] animate-fade-in" style={{ animationDelay: '0.2s' }}>
+          <CardContent className="p-5 flex items-center justify-between relative">
+            <div className="absolute top-0 right-20 w-24 h-24 bg-white/5 rounded-full -translate-y-1/2" />
+            
+            <div className="relative z-10">
+              <h3 className="font-bold text-white text-lg font-montserrat flex items-center gap-2">
+                <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center">
+                  <Calendar className="h-5 w-5 text-white" strokeWidth={2} />
+                </div>
+                Plan a Rally
+              </h3>
+              <p className="text-white/80 text-sm font-montserrat ml-11">Schedule for later</p>
             </div>
             <CreateEventDialog />
           </CardContent>
         </Card>
 
         {/* Section Header */}
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-bold text-rally-dark font-montserrat">Upcoming Rally</h2>
-          <span className="text-sm text-muted-foreground">{filteredEvents.length} events</span>
+        <div className="flex items-center justify-between animate-fade-in" style={{ animationDelay: '0.3s' }}>
+          <h2 className="text-xl font-bold text-foreground font-montserrat flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-primary" />
+            Upcoming Rally
+          </h2>
+          <span className="text-sm text-muted-foreground bg-white/60 backdrop-blur-sm px-3 py-1 rounded-full">{filteredEvents.length} events</span>
         </div>
 
         {/* Events List */}
         {isLoading ? (
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (
-              <Card key={i} className="h-28 animate-pulse bg-muted border-0 rounded-2xl" />
+              <Card key={i} className="h-28 animate-pulse bg-gradient-to-r from-muted to-muted/50 border-0 rounded-2xl" />
             ))}
           </div>
         ) : filteredEvents.length > 0 ? (
           <div className="space-y-4">
-            {filteredEvents.map((event) => (
-              <EventCard key={event.id} event={event} />
+            {filteredEvents.map((event, index) => (
+              <div key={event.id} className="animate-fade-in" style={{ animationDelay: `${0.3 + index * 0.1}s` }}>
+                <EventCard event={event} />
+              </div>
             ))}
           </div>
         ) : (
-          <Card className="bg-white shadow-sm rounded-2xl">
-            <CardContent className="p-8 text-center">
-              <div className="w-16 h-16 rounded-full bg-rally-light mx-auto mb-4 flex items-center justify-center">
-                <Zap className="h-8 w-8 text-primary" />
+          <Card className="bg-gradient-to-br from-white to-secondary/30 shadow-lg rounded-2xl border-0 overflow-hidden animate-fade-in" style={{ animationDelay: '0.3s' }}>
+            <CardContent className="p-8 text-center relative">
+              <div className="absolute top-0 left-1/2 w-32 h-32 bg-primary/5 rounded-full -translate-x-1/2 -translate-y-1/2" />
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-orange-400/20 mx-auto mb-4 flex items-center justify-center relative">
+                <Zap className="h-8 w-8 text-primary" strokeWidth={2} />
               </div>
-              <h3 className="text-lg font-bold mb-2 text-rally-dark font-montserrat">No rally yet</h3>
+              <h3 className="text-lg font-bold mb-2 text-foreground font-montserrat">No rally yet</h3>
               <p className="text-muted-foreground mb-6 font-montserrat">Be the first to start one!</p>
               <QuickRallyDialog />
             </CardContent>

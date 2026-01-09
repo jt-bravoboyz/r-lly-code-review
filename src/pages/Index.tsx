@@ -43,7 +43,13 @@ export default function Index() {
   const userInitials = userName.slice(0, 2).toUpperCase();
 
   return (
-    <div className="min-h-screen pb-20 bg-gradient-to-b from-background via-background to-secondary/30">
+    <div className="min-h-screen pb-28 bg-gradient-to-b from-background via-background to-secondary/30 relative overflow-hidden">
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-40 -right-20 w-60 h-60 bg-primary/5 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute top-1/3 -left-20 w-80 h-80 bg-orange-400/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-60 right-10 w-40 h-40 bg-yellow-400/5 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '1s' }} />
+      </div>
       {/* PWA Install Prompt */}
       <PWAInstallPrompt />
       
@@ -84,7 +90,7 @@ export default function Index() {
         </div>
       </header>
       
-      <main className="px-4 py-6 space-y-8">
+      <main className="px-4 py-6 space-y-8 relative z-10">
 
         {/* Ready to Rally Section - Bold & Vibrant */}
         <section className="space-y-5">
