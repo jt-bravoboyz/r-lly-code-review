@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useCreateEvent } from '@/hooks/useEvents';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { LocationSearch } from '@/components/location/LocationSearch';
 
 const eventSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters'),
@@ -20,6 +21,8 @@ const eventSchema = z.object({
   event_type: z.string(),
   start_time: z.string(),
   location_name: z.string().optional(),
+  location_lat: z.number().optional(),
+  location_lng: z.number().optional(),
   is_barhop: z.boolean(),
   max_attendees: z.string().optional()
 });
@@ -39,6 +42,8 @@ export function CreateEventDialog() {
       event_type: 'rally',
       start_time: '',
       location_name: '',
+      location_lat: undefined,
+      location_lng: undefined,
       is_barhop: false,
       max_attendees: ''
     }
@@ -58,6 +63,8 @@ export function CreateEventDialog() {
         event_type: data.event_type,
         start_time: new Date(data.start_time).toISOString(),
         location_name: data.location_name || null,
+        location_lat: data.location_lat || null,
+        location_lng: data.location_lng || null,
         is_barhop: data.is_barhop,
         max_attendees: data.max_attendees ? parseInt(data.max_attendees) : null
       });
@@ -175,10 +182,17 @@ export function CreateEventDialog() {
                 <FormItem>
                   <FormLabel>Location</FormLabel>
                   <FormControl>
-                    <div className="relative">
-                      <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input className="pl-9" placeholder="Enter venue or address" {...field} />
-                    </div>
+                    <LocationSearch
+                      value={field.value || ''}
+                      onChange={field.onChange}
+                      onLocationSelect={(loc) => {
+                        field.onChange(loc.name);
+                        form.setValue('location_lat', loc.lat);
+                        form.setValue('location_lng', loc.lng);
+                      }}
+                      placeholder="Search venue, restaurant, or address..."
+                      allowCustomName={true}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

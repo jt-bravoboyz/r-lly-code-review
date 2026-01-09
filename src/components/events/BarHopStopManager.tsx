@@ -11,11 +11,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { LocationSearch } from '@/components/location/LocationSearch';
 
 interface BarHopStop {
   id: string;
   name: string;
   address: string | null;
+  lat?: number | null;
+  lng?: number | null;
   stop_order: number;
   eta: string | null;
   arrived_at: string | null;
@@ -32,6 +35,8 @@ export function BarHopStopManager({ eventId, stops, canManage }: BarHopStopManag
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [newStopName, setNewStopName] = useState('');
   const [newStopAddress, setNewStopAddress] = useState('');
+  const [newStopLat, setNewStopLat] = useState<number | null>(null);
+  const [newStopLng, setNewStopLng] = useState<number | null>(null);
   const [newStopEta, setNewStopEta] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [editingEta, setEditingEta] = useState<string | null>(null);
@@ -55,6 +60,8 @@ export function BarHopStopManager({ eventId, stops, canManage }: BarHopStopManag
           event_id: eventId,
           name: newStopName.trim(),
           address: newStopAddress.trim() || null,
+          lat: newStopLat,
+          lng: newStopLng,
           stop_order: stops.length + 1,
           eta: newStopEta ? new Date(newStopEta).toISOString() : null,
         });
@@ -65,6 +72,8 @@ export function BarHopStopManager({ eventId, stops, canManage }: BarHopStopManag
       queryClient.invalidateQueries({ queryKey: ['event', eventId] });
       setNewStopName('');
       setNewStopAddress('');
+      setNewStopLat(null);
+      setNewStopLng(null);
       setNewStopEta('');
       setIsAddOpen(false);
     } catch (error) {
@@ -181,22 +190,18 @@ export function BarHopStopManager({ eventId, stops, canManage }: BarHopStopManag
 
               <form onSubmit={handleAddStop} className="space-y-4 pt-2">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Stop Name *</Label>
-                  <Input
-                    id="name"
-                    placeholder="e.g., The Local Pub"
+                  <Label>Search for a bar or venue</Label>
+                  <LocationSearch
                     value={newStopName}
-                    onChange={(e) => setNewStopName(e.target.value)}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="address">Address (optional)</Label>
-                  <Input
-                    id="address"
-                    placeholder="123 Main St, Austin TX"
-                    value={newStopAddress}
-                    onChange={(e) => setNewStopAddress(e.target.value)}
+                    onChange={setNewStopName}
+                    onLocationSelect={(loc) => {
+                      setNewStopName(loc.name);
+                      setNewStopAddress(loc.address);
+                      setNewStopLat(loc.lat);
+                      setNewStopLng(loc.lng);
+                    }}
+                    placeholder="Search bar, restaurant, or address..."
+                    allowCustomName={true}
                   />
                 </div>
 
