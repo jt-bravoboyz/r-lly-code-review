@@ -12,11 +12,11 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 const STORAGE_KEY = 'rally_theme';
 
-function getSystemTheme(): 'light' | 'dark' {
-  if (typeof window !== 'undefined' && window.matchMedia) {
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-  }
-  return 'light';
+// Time-based theme: Light mode during day (6 AM - 6 PM), dark mode at night
+function getTimeBasedTheme(): 'light' | 'dark' {
+  const hour = new Date().getHours();
+  // Day time: 6 AM (6) to 6 PM (18)
+  return hour >= 6 && hour < 18 ? 'light' : 'dark';
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
@@ -30,16 +30,16 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>(() => {
     if (theme === 'system') {
-      return getSystemTheme();
+      return getTimeBasedTheme();
     }
     return theme;
   });
 
-  // Update resolved theme when theme changes or system preference changes
+  // Update resolved theme when theme changes or time changes
   useEffect(() => {
     const updateResolvedTheme = () => {
       if (theme === 'system') {
-        setResolvedTheme(getSystemTheme());
+        setResolvedTheme(getTimeBasedTheme());
       } else {
         setResolvedTheme(theme);
       }
@@ -47,16 +47,25 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
     updateResolvedTheme();
 
-    // Listen for system theme changes
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleChange = () => {
-      if (theme === 'system') {
-        setResolvedTheme(getSystemTheme());
+    // For system theme, check every minute if we need to switch based on time
+    let intervalId: NodeJS.Timeout | null = null;
+    if (theme === 'system') {
+      intervalId = setInterval(() => {
+        const newTheme = getTimeBasedTheme();
+        setResolvedTheme(prev => {
+          if (prev !== newTheme) {
+            return newTheme;
+          }
+          return prev;
+        });
+      }, 60000); // Check every minute
+    }
+
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
       }
     };
-
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
   }, [theme]);
 
   // Apply theme to document
