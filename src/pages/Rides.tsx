@@ -9,8 +9,9 @@ import { useRides } from '@/hooks/useRides';
 import { useEvents } from '@/hooks/useEvents';
 import { useAuth } from '@/hooks/useAuth';
 import { useAwardDDPoints, POINT_VALUES } from '@/hooks/useRewardPoints';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Car, Shield, Navigation, Award } from 'lucide-react';
+import { Car, Shield, Navigation, Award, Bell, BellOff } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -18,6 +19,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Switch } from '@/components/ui/switch';
 import rallyLogo from '@/assets/rally-logo.png';
 
 export default function Rides() {
@@ -29,6 +31,7 @@ export default function Rides() {
   const [showDDDisclaimer, setShowDDDisclaimer] = useState(false);
   const [ddAccepted, setDDAccepted] = useState(false);
   const { awardRideComplete } = useAwardDDPoints();
+  const { isSupported: pushSupported, isSubscribed: pushEnabled, isLoading: pushLoading, subscribe: enablePush, unsubscribe: disablePush } = usePushNotifications();
 
   // Dev mode - bypass auth for preview
   const isDev = true;
@@ -222,6 +225,32 @@ export default function Rides() {
                     </div>
                   </CardContent>
                 </Card>
+
+                {/* Push Notification Toggle for DDs */}
+                {pushSupported && (
+                  <Card className="bg-white shadow-sm rounded-2xl">
+                    <CardContent className="p-4 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        {pushEnabled ? (
+                          <Bell className="h-5 w-5 text-primary" />
+                        ) : (
+                          <BellOff className="h-5 w-5 text-muted-foreground" />
+                        )}
+                        <div>
+                          <h3 className="font-bold text-rally-dark font-montserrat">Ride Alerts</h3>
+                          <p className="text-sm text-muted-foreground font-montserrat">
+                            Get notified when someone needs a ride
+                          </p>
+                        </div>
+                      </div>
+                      <Switch 
+                        checked={pushEnabled}
+                        onCheckedChange={(checked) => checked ? enablePush() : disablePush()}
+                        disabled={pushLoading}
+                      />
+                    </CardContent>
+                  </Card>
+                )}
 
                 <Card className="bg-white shadow-sm rounded-2xl">
                   <CardContent className="p-4 flex items-center justify-between">
