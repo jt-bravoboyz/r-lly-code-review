@@ -22,9 +22,10 @@ type RideFormData = z.infer<typeof rideSchema>;
 
 interface CreateRideDialogProps {
   eventId?: string;
+  trigger?: React.ReactNode;
 }
 
-export function CreateRideDialog({ eventId }: CreateRideDialogProps) {
+export function CreateRideDialog({ eventId, trigger }: CreateRideDialogProps) {
   const [open, setOpen] = useState(false);
   const { profile } = useAuth();
   const createRide = useCreateRide();
@@ -66,10 +67,12 @@ export function CreateRideDialog({ eventId }: CreateRideDialogProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="gradient-accent">
-          <Car className="h-4 w-4 mr-2" />
-          Offer Ride
-        </Button>
+        {trigger || (
+          <Button className="gradient-accent">
+            <Car className="h-4 w-4 mr-2" />
+            Offer Ride
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
