@@ -29,12 +29,20 @@ export function usePushNotifications() {
     setIsSupported('serviceWorker' in navigator && 'PushManager' in window);
   }, []);
 
-  // Fetch VAPID public key from edge function
+  // Get VAPID public key - prefer environment variable (no network call)
   useEffect(() => {
     if (!isSupported) return;
     
     const fetchVapidKey = async () => {
       try {
+        // First, try to get the key from environment variables (preferred - no network call)
+        const envVapidKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
+        if (envVapidKey) {
+          setVapidPublicKey(envVapidKey);
+          return;
+        }
+
+        // Fallback: fetch from edge function if env var not set
         const { data, error } = await supabase.functions.invoke('get-vapid-key');
         if (error) throw error;
         if (data?.vapidPublicKey) {
