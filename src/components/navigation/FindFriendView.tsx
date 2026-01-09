@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, Navigation, Compass, Target, MapPin, Building2, TreePine, Wifi, Signal, AlertTriangle, CheckCircle2, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -9,6 +9,8 @@ import { TurnByTurnNav } from './TurnByTurnNav';
 import { AccuracyIndicator, EnvironmentBadge } from '@/components/tracking/AccuracyIndicator';
 import { PoorSignalAlert } from '@/components/tracking/PoorSignalAlert';
 import { AccuracyHistoryChart } from '@/components/tracking/AccuracyHistoryChart';
+import { useHaptics } from '@/hooks/useHaptics';
+import { useAppSettings } from '@/hooks/useAppSettings';
 
 interface MemberLocation {
   profileId: string;
@@ -30,6 +32,10 @@ export function FindFriendView({ member, onClose }: FindFriendViewProps) {
   const [showTurnByTurn, setShowTurnByTurn] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const { compassHeading, currentPosition, signalQuality, environmentInfo, accuracyHistory } = useLocationContext();
+  const { triggerCompassChange, triggerProximityAlert, resetProximityTracking, triggerNavigationCue } = useHaptics();
+  const { settings } = useAppSettings();
+  
+  const lastHeadingRef = useRef<number | null>(null);
 
   // Calculate the arrow rotation relative to device heading
   const getArrowRotation = () => {
@@ -37,9 +43,49 @@ export function FindFriendView({ member, onClose }: FindFriendViewProps) {
     return member.bearing - compassHeading;
   };
 
+  // Trigger haptic feedback for compass changes
+  useEffect(() => {
+    if (compassHeading === null || !settings.hapticCompassChange) return;
+    
+    if (lastHeadingRef.current !== null) {
+      // Calculate how much the relative direction has changed
+      const currentRotation = getArrowRotation();
+      const prevRotation = member.bearing !== undefined && lastHeadingRef.current !== null
+        ? member.bearing - lastHeadingRef.current
+        : 0;
+      
+      let diff = Math.abs(currentRotation - prevRotation);
+      if (diff > 180) diff = 360 - diff;
+      
+      // Trigger haptic when direction changes significantly (45+ degrees)
+      if (diff >= 45) {
+        triggerCompassChange(compassHeading);
+      }
+    }
+    
+    lastHeadingRef.current = compassHeading;
+  }, [compassHeading, member.bearing, settings.hapticCompassChange, triggerCompassChange]);
+
+  // Trigger haptic feedback for proximity alerts
+  useEffect(() => {
+    if (member.distance === undefined || !settings.hapticProximityAlerts) return;
+    
+    triggerProximityAlert(member.distance, member.displayName);
+  }, [member.distance, member.displayName, settings.hapticProximityAlerts, triggerProximityAlert]);
+
+  // Reset proximity tracking when component mounts
+  useEffect(() => {
+    resetProximityTracking();
+  }, [resetProximityTracking]);
+
   // Format distance for display
   const formatDistance = (meters: number | undefined) => {
     if (meters === undefined) return '--';
+    if (settings.showDistanceInFeet) {
+      const feet = meters * 3.28084;
+      if (feet < 5280) return `${Math.round(feet)} ft`;
+      return `${(feet / 5280).toFixed(1)} mi`;
+    }
     if (meters < 1000) return `${Math.round(meters)}m`;
     return `${(meters / 1000).toFixed(1)}km`;
   };
@@ -66,6 +112,11 @@ export function FindFriendView({ member, onClose }: FindFriendViewProps) {
   const freshness = getFreshness();
   const rotation = getArrowRotation();
 
+  const handleStartNavigation = () => {
+    triggerNavigationCue('start');
+    setShowTurnByTurn(true);
+  };
+
   if (showTurnByTurn) {
     return (
       <TurnByTurnNav
@@ -76,7 +127,10 @@ export function FindFriendView({ member, onClose }: FindFriendViewProps) {
           lat: member.lat,
           lng: member.lng,
         }}
-        onClose={() => setShowTurnByTurn(false)}
+        onClose={() => {
+          triggerNavigationCue('arrived');
+          setShowTurnByTurn(false);
+        }}
       />
     );
   }
@@ -235,7 +289,7 @@ export function FindFriendView({ member, onClose }: FindFriendViewProps) {
         <div className="space-y-3">
           <Button 
             className="w-full h-14 text-lg gradient-primary rounded-xl"
-            onClick={() => setShowTurnByTurn(true)}
+            onClick={handleStartNavigation}
           >
             <Navigation className="h-5 w-5 mr-2" />
             Start Turn-by-Turn Navigation

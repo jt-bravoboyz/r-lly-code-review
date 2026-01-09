@@ -213,7 +213,7 @@ export default function Profile() {
               Settings
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-2">
             <div className="flex items-center justify-between py-2">
               <div className="flex items-center gap-3">
                 <MapPin className="h-5 w-5 text-muted-foreground" />
@@ -241,6 +241,25 @@ export default function Profile() {
                 </div>
               </div>
             )}
+
+            <div className="pt-3 border-t border-border">
+              <button
+                onClick={() => navigate('/settings')}
+                className="w-full flex items-center justify-between py-2 hover:bg-muted/50 rounded-lg px-1 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <Settings className="h-5 w-5 text-muted-foreground" />
+                  <div className="text-left">
+                    <span className="font-medium">App Settings</span>
+                    <p className="text-xs text-muted-foreground">
+                      Tracking, Haptics, Privacy
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight className="h-5 w-5 text-muted-foreground" />
+              </button>
+            </div>
+
             <div className="pt-3 border-t border-border">
               <button
                 onClick={() => navigate('/legal')}
