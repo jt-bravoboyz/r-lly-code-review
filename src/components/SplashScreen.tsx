@@ -72,11 +72,17 @@ const ARC2 = {
   end: { x: 130, y: 82 },
 };
 
-// Third arc - smaller, appears during fanfare behind logo
-const ARC3 = {
-  start: { x: 20, y: 65 },
-  control: { x: 50, y: 35 },
-  end: { x: 80, y: 55 },
+// Third arc - circular orbit around logo
+const ARC3_CENTER = { x: 50, y: 50 };
+const ARC3_RADIUS = 18; // Percentage of screen
+
+// Get circular orbit position
+const getCircularOrbitPosition = (t: number, center: { x: number; y: number }, radius: number) => {
+  // Start from top, go clockwise for 1.2 full rotations
+  const angle = -Math.PI / 2 + t * Math.PI * 2.4;
+  const x = center.x + Math.cos(angle) * radius;
+  const y = center.y + Math.sin(angle) * radius * 0.6; // Slightly elliptical for perspective
+  return { x, y };
 };
 
 // Haptic feedback
@@ -243,8 +249,34 @@ export function SplashScreen({ onComplete, duration = 5000 }: SplashScreenProps)
   // Arc 2: 1.65 - 3.55s (1.9s duration - slower and bigger)
   const arc2State = getArcState(1.65, 1.9, ARC2, true, false);
 
-  // Arc 3: 3.60 - 4.30s (0.7s duration - small accent arc during fanfare)
-  const arc3State = getArcState(3.60, 0.7, ARC3, false, true);
+  // Arc 3: 3.60 - 4.50s (0.9s duration - circular orbit around logo during fanfare)
+  const getArc3State = () => {
+    const arcStartTime = 3.60;
+    const arcDuration = 0.9;
+    const arcElapsed = elapsed - arcStartTime;
+    if (arcElapsed < 0 || arcElapsed > arcDuration + 0.3) return null;
+
+    const t = Math.min(1, arcElapsed / arcDuration);
+    const easedT = easeOutCubic(t); // Smooth deceleration
+    const headPos = getCircularOrbitPosition(easedT, ARC3_CENTER, ARC3_RADIUS);
+
+    // Tail follows behind
+    const tailT = Math.max(0, easedT - 0.15);
+    const tailStartPos = getCircularOrbitPosition(Math.max(0, tailT - 0.2), ARC3_CENTER, ARC3_RADIUS);
+
+    // Calculate velocity for spark direction
+    const nextT = Math.min(1, easedT + 0.02);
+    const nextPos = getCircularOrbitPosition(nextT, ARC3_CENTER, ARC3_RADIUS);
+    const vx = nextPos.x - headPos.x;
+    const vy = nextPos.y - headPos.y;
+
+    // Fade out as it completes the orbit
+    const fadeOpacity = t > 0.7 ? 1 - ((t - 0.7) / 0.3) : 1;
+
+    return { headPos, tailStartPos, t, vx, vy, isVisible: fadeOpacity > 0.05, fadeOpacity };
+  };
+
+  const arc3State = getArc3State();
 
   // Add afterimages and sparks
   useEffect(() => {
@@ -338,7 +370,7 @@ export function SplashScreen({ onComplete, duration = 5000 }: SplashScreenProps)
   const glowPulse = getGlowPulseOpacity();
   const exitOpacity = getExitOpacity();
 
-  const renderComet = (state: ReturnType<typeof getArcState>, isSecondArc: boolean, isThirdArc: boolean = false, id: string = "1") => {
+  const renderComet = (state: ReturnType<typeof getArcState>, isSecondArc: boolean, isThirdArc: boolean = false, id: string = "1", fadeOpacity: number = 1) => {
     if (!state || !state.isVisible) return null;
     const { headPos, tailStartPos } = state;
     const headSize = isThirdArc ? 6 : (isSecondArc ? 14 : 10);
@@ -357,8 +389,8 @@ export function SplashScreen({ onComplete, duration = 5000 }: SplashScreenProps)
             y2={`${headPos.y}%`}
           >
             <stop offset="0%" stopColor="rgba(255, 106, 0, 0)" />
-            <stop offset="60%" stopColor={`rgba(255, 106, 0, ${isThirdArc ? 0.15 : 0.25})`} />
-            <stop offset="100%" stopColor={`rgba(255, 106, 0, ${isThirdArc ? 0.30 : 0.45})`} />
+            <stop offset="60%" stopColor={`rgba(255, 106, 0, ${(isThirdArc ? 0.15 : 0.25) * fadeOpacity})`} />
+            <stop offset="100%" stopColor={`rgba(255, 106, 0, ${(isThirdArc ? 0.30 : 0.45) * fadeOpacity})`} />
           </linearGradient>
         </defs>
 
@@ -379,7 +411,7 @@ export function SplashScreen({ onComplete, duration = 5000 }: SplashScreenProps)
           cx={`${headPos.x}%`}
           cy={`${headPos.y}%`}
           r={glowSize}
-          fill={`rgba(255, 106, 0, ${isThirdArc ? 0.25 : 0.35})`}
+          fill={`rgba(255, 106, 0, ${(isThirdArc ? 0.25 : 0.35) * fadeOpacity})`}
           style={{ filter: `blur(${isThirdArc ? 14 : 22}px)` }}
         />
 
@@ -389,13 +421,14 @@ export function SplashScreen({ onComplete, duration = 5000 }: SplashScreenProps)
           cy={`${headPos.y}%`}
           r={headSize}
           fill="#FFB347"
+          opacity={fadeOpacity}
         />
         <circle
           cx={`${headPos.x}%`}
           cy={`${headPos.y}%`}
           r={headSize * 0.6}
           fill="#FFFFFF"
-          opacity="0.9"
+          opacity={0.9 * fadeOpacity}
         />
       </g>
     );
@@ -440,8 +473,8 @@ export function SplashScreen({ onComplete, duration = 5000 }: SplashScreenProps)
         {/* Arc 2 comet */}
         {renderComet(arc2State, true, false, "2")}
 
-        {/* Arc 3 comet (fanfare accent) */}
-        {renderComet(arc3State, false, true, "3")}
+        {/* Arc 3 comet (circular orbit around logo) */}
+        {arc3State && renderComet(arc3State as any, false, true, "3", arc3State.fadeOpacity)}
 
         {/* Fanfare particles */}
         {fanfareParticles.map(p => (
