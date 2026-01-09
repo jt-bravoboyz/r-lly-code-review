@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { useParams, Navigate, Link } from 'react-router-dom';
-import { ArrowLeft, Calendar, MapPin, Users, Beer, Share2, Check, X, MessageCircle, Navigation, Home } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Users, Beer, Share2, Check, X, MessageCircle, Navigation, Home, Plus } from 'lucide-react';
 import { format } from 'date-fns';
 import { Header } from '@/components/layout/Header';
 import { BottomNav } from '@/components/layout/BottomNav';
@@ -9,7 +10,9 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useEvent, useJoinEvent, useLeaveEvent } from '@/hooks/useEvents';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { useEvent, useJoinEvent, useLeaveEvent, useUpdateEvent } from '@/hooks/useEvents';
 import { useRides } from '@/hooks/useRides';
 import { useAuth } from '@/hooks/useAuth';
 import { RideCard } from '@/components/rides/RideCard';
@@ -20,6 +23,7 @@ import { LiveMemberTracker } from '@/components/tracking/LiveMemberTracker';
 import { LiveUpdates } from '@/components/events/LiveUpdates';
 import { RallyHomeButton } from '@/components/home/RallyHomeButton';
 import { GoingHomeTracker } from '@/components/home/GoingHomeTracker';
+import { AddBarHopStopDialog } from '@/components/events/AddBarHopStopDialog';
 import { useEventRealtime } from '@/hooks/useEventRealtime';
 import { toast } from 'sonner';
 
@@ -31,6 +35,7 @@ export default function EventDetail() {
   const { updates } = useEventRealtime(id);
   const joinEvent = useJoinEvent();
   const leaveEvent = useLeaveEvent();
+  const updateEvent = useUpdateEvent();
 
   // Dev mode - bypass auth
   const isDev = true;
@@ -243,6 +248,43 @@ export default function EventDetail() {
           </TabsList>
 
           <TabsContent value="details" className="space-y-4 mt-4">
+            {/* Bar Hop Mode Toggle - Only for event creators */}
+            {isCreator && (
+              <Card className="border-secondary/50 bg-secondary/5">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-secondary/20 flex items-center justify-center">
+                        <Beer className="h-5 w-5 text-secondary" />
+                      </div>
+                      <div>
+                        <Label htmlFor="barhop-mode" className="font-semibold">Bar Hop Mode</Label>
+                        <p className="text-sm text-muted-foreground">
+                          Add stops and track your crew's bar crawl
+                        </p>
+                      </div>
+                    </div>
+                    <Switch
+                      id="barhop-mode"
+                      checked={event.is_barhop || false}
+                      onCheckedChange={async (checked) => {
+                        try {
+                          await updateEvent.mutateAsync({
+                            eventId: event.id,
+                            updates: { is_barhop: checked }
+                          });
+                          toast.success(checked ? 'Bar Hop Mode enabled! 🍺' : 'Bar Hop Mode disabled');
+                        } catch (error) {
+                          toast.error('Failed to update');
+                        }
+                      }}
+                      disabled={updateEvent.isPending}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Attendees */}
             {event.attendees && event.attendees.length > 0 && (
               <Card>
@@ -269,31 +311,43 @@ export default function EventDetail() {
               </Card>
             )}
 
-            {/* Bar Hop Stops */}
-            {event.is_barhop && event.stops && event.stops.length > 0 && (
+            {/* Bar Hop Stops - Show when bar hop mode is enabled */}
+            {event.is_barhop && (
               <Card>
-                <CardHeader>
+                <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle className="text-lg flex items-center gap-2">
                     <Beer className="h-5 w-5 text-secondary" />
                     Bar Hop Stops
                   </CardTitle>
+                  {isCreator && (
+                    <AddBarHopStopDialog 
+                      eventId={event.id} 
+                      currentStopCount={event.stops?.length || 0} 
+                    />
+                  )}
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-3">
-                    {event.stops.sort((a, b) => a.stop_order - b.stop_order).map((stop, index) => (
-                      <div key={stop.id} className="flex items-center gap-3">
-                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center text-sm font-medium">
-                          {index + 1}
+                  {event.stops && event.stops.length > 0 ? (
+                    <div className="space-y-3">
+                      {event.stops.sort((a, b) => a.stop_order - b.stop_order).map((stop, index) => (
+                        <div key={stop.id} className="flex items-center gap-3">
+                          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center text-sm font-medium">
+                            {index + 1}
+                          </div>
+                          <div>
+                            <p className="font-medium">{stop.name}</p>
+                            {stop.address && (
+                              <p className="text-sm text-muted-foreground">{stop.address}</p>
+                            )}
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-medium">{stop.name}</p>
-                          {stop.address && (
-                            <p className="text-sm text-muted-foreground">{stop.address}</p>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-center text-muted-foreground py-4">
+                      No stops added yet. {isCreator && 'Add your first stop!'}
+                    </p>
+                  )}
                 </CardContent>
               </Card>
             )}
