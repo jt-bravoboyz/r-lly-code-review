@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { X, Navigation, RefreshCw, Volume2, VolumeX, Locate } from 'lucide-react';
+import { X, Navigation, RefreshCw, Volume2, VolumeX, Locate, Play, FastForward } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useLocationContext } from '@/contexts/LocationContext';
@@ -48,12 +48,15 @@ export function TurnByTurnNav({ target, onClose }: TurnByTurnNavProps) {
   const [mapInitialized, setMapInitialized] = useState(false);
   const [triggeredAlerts, setTriggeredAlerts] = useState<Set<number>>(new Set());
   const [pulseAlert, setPulseAlert] = useState<{ label: string; color: string } | null>(null);
+  const [simulatedDistance, setSimulatedDistance] = useState<number | null>(null);
+  const [isSimulating, setIsSimulating] = useState(false);
+  const audioContext = useRef<AudioContext | null>(null);
 
   // Proximity thresholds in meters (50ft ≈ 15m, 20ft ≈ 6m, 10ft ≈ 3m)
   const PROXIMITY_ALERTS = [
-    { distance: 15, label: '50 feet', vibrationPattern: [100], color: 'bg-yellow-500' },
-    { distance: 6, label: '20 feet', vibrationPattern: [100, 50, 100], color: 'bg-orange-500' },
-    { distance: 3, label: '10 feet', vibrationPattern: [100, 50, 100, 50, 200], color: 'bg-green-500' },
+    { distance: 15, label: '50 feet', vibrationPattern: [100], color: 'bg-yellow-500', frequency: 440 },
+    { distance: 6, label: '20 feet', vibrationPattern: [100, 50, 100], color: 'bg-orange-500', frequency: 660 },
+    { distance: 3, label: '10 feet', vibrationPattern: [100, 50, 100, 50, 200], color: 'bg-green-500', frequency: 880 },
   ];
 
   // Trigger haptic feedback
@@ -61,6 +64,52 @@ export function TurnByTurnNav({ target, onClose }: TurnByTurnNavProps) {
     if ('vibrate' in navigator) {
       navigator.vibrate(pattern);
     }
+  }, []);
+
+  // Play proximity sound effect
+  const playProximitySound = useCallback((frequency: number, duration: number = 200) => {
+    try {
+      if (!audioContext.current) {
+        audioContext.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      }
+      
+      const ctx = audioContext.current;
+      const oscillator = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(ctx.destination);
+      
+      oscillator.frequency.value = frequency;
+      oscillator.type = 'sine';
+      
+      gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration / 1000);
+      
+      oscillator.start(ctx.currentTime);
+      oscillator.stop(ctx.currentTime + duration / 1000);
+    } catch (error) {
+      console.error('Failed to play sound:', error);
+    }
+  }, []);
+
+  // Simulate walking toward target
+  const startSimulation = useCallback(() => {
+    setIsSimulating(true);
+    setSimulatedDistance(20); // Start at 20 meters
+    setTriggeredAlerts(new Set()); // Reset alerts
+  }, []);
+
+  const stepSimulation = useCallback(() => {
+    setSimulatedDistance(prev => {
+      if (prev === null) return null;
+      const newDistance = prev - 5; // Move 5 meters closer
+      if (newDistance <= 0) {
+        setIsSimulating(false);
+        return null;
+      }
+      return newDistance;
+    });
   }, []);
 
   // Format distance for display
@@ -286,6 +335,9 @@ export function TurnByTurnNav({ target, onClose }: TurnByTurnNavProps) {
           // Trigger haptic feedback
           triggerHaptic(alert.vibrationPattern);
           
+          // Play sound effect
+          playProximitySound(alert.frequency, 300);
+          
           // Show visual pulse
           setPulseAlert({ label: alert.label, color: alert.color });
           setTimeout(() => setPulseAlert(null), 2000);
@@ -308,6 +360,42 @@ export function TurnByTurnNav({ target, onClose }: TurnByTurnNavProps) {
       }
     }
   }, [currentPosition, compassHeading, isFollowing, steps, currentStepIndex, target, speak, triggeredAlerts, triggerHaptic, PROXIMITY_ALERTS]);
+
+  // Handle simulated proximity alerts
+  useEffect(() => {
+    if (simulatedDistance === null) return;
+    
+    PROXIMITY_ALERTS.forEach((alert) => {
+      if (simulatedDistance <= alert.distance && !triggeredAlerts.has(alert.distance)) {
+        // Trigger haptic feedback
+        triggerHaptic(alert.vibrationPattern);
+        
+        // Play sound effect
+        playProximitySound(alert.frequency, 300);
+        
+        // Show visual pulse
+        setPulseAlert({ label: alert.label, color: alert.color });
+        setTimeout(() => setPulseAlert(null), 2000);
+        
+        // Announce proximity
+        speak(`${target.displayName} is within ${alert.label}!`);
+        toast.success(`[SIMULATION] ${target.displayName} is within ${alert.label}!`, {
+          duration: 3000,
+        });
+        
+        // Mark this alert as triggered
+        setTriggeredAlerts(prev => new Set([...prev, alert.distance]));
+      }
+    });
+    
+    // Check if arrived
+    if (simulatedDistance <= 2) {
+      speak(`You have arrived at ${target.displayName}'s location`);
+      toast.success(`[SIMULATION] You've found ${target.displayName}!`);
+      setIsSimulating(false);
+      setSimulatedDistance(null);
+    }
+  }, [simulatedDistance, triggeredAlerts, triggerHaptic, playProximitySound, speak, target.displayName, PROXIMITY_ALERTS]);
 
   // Refresh route periodically
   useEffect(() => {
@@ -481,6 +569,38 @@ export function TurnByTurnNav({ target, onClose }: TurnByTurnNavProps) {
               ))}
             </div>
           )}
+
+          {/* Debug simulation controls */}
+          <div className="bg-muted/50 rounded-lg p-3 mt-4">
+            <p className="text-xs text-muted-foreground mb-2 font-medium">🧪 Debug: Simulate Walk</p>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1"
+                onClick={startSimulation}
+                disabled={isSimulating}
+              >
+                <Play className="h-4 w-4 mr-1" />
+                Start (20m)
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1"
+                onClick={stepSimulation}
+                disabled={!isSimulating}
+              >
+                <FastForward className="h-4 w-4 mr-1" />
+                Step (-5m)
+              </Button>
+            </div>
+            {simulatedDistance !== null && (
+              <p className="text-xs text-center mt-2 text-primary font-medium">
+                Simulated distance: {simulatedDistance}m
+              </p>
+            )}
+          </div>
 
           {/* External maps button */}
           <Button
