@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
-import { MapPin, Search, Loader2, X, Home, Building, Star, Utensils } from 'lucide-react';
+import { MapPin, Loader2, X, Home, Building, Star, Utensils, Edit2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useMapboxToken } from '@/hooks/useMapboxToken';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
+import { LocationMapPreview } from './LocationMapPreview';
 
 interface GooglePlaceResult {
   id: string;
@@ -51,6 +52,7 @@ interface LocationSearchProps {
   }) => void;
   placeholder?: string;
   allowCustomName?: boolean;
+  showMapPreview?: boolean;
   className?: string;
 }
 
@@ -60,6 +62,7 @@ export function LocationSearch({
   onLocationSelect,
   placeholder = "Search for a place or address...",
   allowCustomName = true,
+  showMapPreview = true,
   className,
 }: LocationSearchProps) {
   const { token: mapboxToken, isLoading: tokenLoading } = useMapboxToken();
@@ -243,31 +246,31 @@ export function LocationSearch({
     }, 300);
   };
 
-  // Handle location selection
+  // Handle location selection - always select first, then allow rename
   const handleSelectLocation = (result: SearchResult) => {
     setSelectedLocation(result);
     setShowResults(false);
-
-    // Check if this is an address (from Mapbox) that might need a custom name
-    const isAddress = result.source === 'mapbox' && result.types.includes('address');
+    setCustomName('');
     
-    if (allowCustomName && isAddress) {
-      // Show custom name input for addresses (like someone's house)
+    // Set the location immediately
+    setQuery(result.name);
+    onChange(result.name);
+    
+    if (onLocationSelect) {
+      onLocationSelect({
+        name: result.name,
+        address: result.address,
+        lat: result.lat,
+        lng: result.lng,
+      });
+    }
+  };
+
+  // Enable custom name editing
+  const handleEditName = () => {
+    if (selectedLocation) {
+      setCustomName(selectedLocation.name);
       setShowCustomNameInput(true);
-      setQuery(result.address);
-    } else {
-      // Use the place name directly for businesses/POIs
-      setQuery(result.name);
-      onChange(result.name);
-      
-      if (onLocationSelect) {
-        onLocationSelect({
-          name: result.name,
-          address: result.address,
-          lat: result.lat,
-          lng: result.lng,
-        });
-      }
     }
   };
 
@@ -330,7 +333,7 @@ export function LocationSearch({
   }
 
   return (
-    <div ref={containerRef} className={cn("relative", className)}>
+    <div ref={containerRef} className={cn("relative space-y-2", className)}>
       {/* Custom name input overlay */}
       {showCustomNameInput && selectedLocation ? (
         <div className="space-y-3">
@@ -358,9 +361,6 @@ export function LocationSearch({
               variant="ghost"
               onClick={() => {
                 setShowCustomNameInput(false);
-                setSelectedLocation(null);
-                setQuery('');
-                onChange('');
               }}
             >
               <X className="h-4 w-4" />
@@ -452,6 +452,29 @@ export function LocationSearch({
             <div className="absolute z-50 w-full mt-1 bg-popover border rounded-lg shadow-lg p-4 text-center">
               <p className="text-sm text-muted-foreground">No locations found</p>
               <p className="text-xs text-muted-foreground mt-1">Try a different search term</p>
+            </div>
+          )}
+
+          {/* Map Preview with Rename Option - Show after selection */}
+          {selectedLocation && showMapPreview && !showResults && (
+            <div className="space-y-2">
+              <LocationMapPreview
+                lat={selectedLocation.lat}
+                lng={selectedLocation.lng}
+                name={selectedLocation.name}
+              />
+              {allowCustomName && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="w-full text-muted-foreground hover:text-foreground"
+                  onClick={handleEditName}
+                >
+                  <Edit2 className="h-3 w-3 mr-1.5" />
+                  Rename this location
+                </Button>
+              )}
             </div>
           )}
         </>
