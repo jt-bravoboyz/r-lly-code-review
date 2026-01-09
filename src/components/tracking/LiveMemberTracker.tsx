@@ -2,9 +2,10 @@ import { useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Navigation, Users, Locate, Signal, SignalLow, SignalZero, Compass } from 'lucide-react';
+import { Navigation, Users, Locate, Signal, SignalLow, SignalZero, Compass, Building2, TreePine, Wifi } from 'lucide-react';
 import { useLocationContext } from '@/contexts/LocationContext';
 import { MemberLocationCard } from './MemberLocationCard';
+import { AccuracyIndicator, EnvironmentBadge } from './AccuracyIndicator';
 import { toast } from 'sonner';
 
 interface LiveMemberTrackerProps {
@@ -21,6 +22,8 @@ export function LiveMemberTracker({ eventId, isLive }: LiveMemberTrackerProps) {
     startTracking,
     stopTracking,
     signalQuality,
+    environmentInfo,
+    isWifiPositioningActive,
   } = useLocationContext();
 
   // Sort members by distance
@@ -121,15 +124,42 @@ export function LiveMemberTracker({ eventId, isLive }: LiveMemberTrackerProps) {
           )}
         </div>
 
-        {/* Current position info */}
+        {/* Current position info with enhanced accuracy */}
         {isTracking && currentPosition && (
-          <div className="bg-primary/5 rounded-xl p-3 text-sm">
-            <div className="flex items-center justify-between text-muted-foreground">
-              <span>Your location is being shared</span>
-              <span className="font-mono text-xs">
-                ±{Math.round(currentPosition.accuracy)}m
-              </span>
+          <div className="bg-primary/5 rounded-xl p-3 space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Your location is being shared</span>
+                <EnvironmentBadge 
+                  isIndoor={environmentInfo.isIndoor} 
+                  confidence={environmentInfo.confidence} 
+                />
+              </div>
             </div>
+            <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center gap-2">
+                {getSignalIcon()}
+                <span className="font-mono">±{Math.round(currentPosition.accuracy)}m</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                {currentPosition.source === 'wifi' || currentPosition.source === 'network' ? (
+                  <>
+                    <Wifi className="h-3 w-3" />
+                    <span>Wi-Fi enhanced</span>
+                  </>
+                ) : (
+                  <>
+                    <Signal className="h-3 w-3" />
+                    <span>GPS</span>
+                  </>
+                )}
+              </div>
+            </div>
+            {environmentInfo.isIndoor && environmentInfo.confidence > 0.5 && (
+              <p className="text-xs text-muted-foreground">
+                {environmentInfo.recommendation}
+              </p>
+            )}
           </div>
         )}
 

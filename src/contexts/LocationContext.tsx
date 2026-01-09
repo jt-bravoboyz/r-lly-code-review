@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useBatteryOptimizedLocation, TrackingMode, MovementState, TRACKING_CONFIGS } from '@/hooks/useBatteryOptimizedLocation';
 import { useIndoorPositioning, BeaconInfo } from '@/hooks/useIndoorPositioning';
+import { useWifiPositioning, EnvironmentInfo } from '@/hooks/useWifiPositioning';
 
 interface Position {
   lat: number;
@@ -11,8 +12,9 @@ interface Position {
   heading: number | null;
   speed: number | null;
   timestamp: number;
-  source: 'gps' | 'indoor' | 'hybrid';
+  source: 'gps' | 'indoor' | 'hybrid' | 'wifi' | 'network';
   floor?: number;
+  altitude?: number | null;
 }
 
 export interface MemberLocation {
@@ -24,7 +26,7 @@ export interface MemberLocation {
   lastUpdate: number;
   distance?: number;
   bearing?: number;
-  proximitySignal?: 'gps' | 'ble';
+  proximitySignal?: 'gps' | 'ble' | 'wifi';
   bleRssi?: number;
   floor?: number;
 }
@@ -72,6 +74,9 @@ interface LocationContextType {
   stopIndoorSimulation: () => void;
   nearbyBeacons: BeaconInfo[];
   availableBeacons: number;
+  // Environment detection
+  environmentInfo: EnvironmentInfo;
+  isWifiPositioningActive: boolean;
 }
 
 const LocationContext = createContext<LocationContextType | null>(null);
@@ -137,6 +142,9 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
   
   // Indoor positioning hook
   const indoorPositioning = useIndoorPositioning();
+  
+  // Wi-Fi positioning hook for indoor fallback
+  const wifiPositioning = useWifiPositioning();
 
   // Derived battery info
   const batteryInfo: BatteryInfo = {
@@ -258,10 +266,13 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
     const config = batteryOptimization.getOptimalConfig();
 
     const handlePosition = async (position: GeolocationPosition) => {
-      const { latitude, longitude, accuracy, heading, speed } = position.coords;
+      const { latitude, longitude, accuracy, heading, speed, altitude } = position.coords;
       
       // Update battery optimization with new position
       batteryOptimization.lastUpdate && batteryOptimization.setTrackingMode(batteryOptimization.currentMode);
+      
+      // Update Wi-Fi positioning with GPS data for environment detection
+      wifiPositioning.updateFromGps(latitude, longitude, accuracy, altitude);
       
       // Apply position smoothing
       let smoothedLat = latitude;
@@ -273,7 +284,8 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
       }
       smoothedPositionRef.current = { lat: smoothedLat, lng: smoothedLng };
 
-      // Determine signal quality based on accuracy
+      // Determine signal quality based on accuracy and environment
+      const isLikelyIndoor = wifiPositioning.environmentInfo.isIndoor;
       if (accuracy <= 10) {
         setSignalQuality('good');
       } else if (accuracy <= 30) {
@@ -282,20 +294,39 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
         setSignalQuality('poor');
       }
 
+      // Determine best position source
+      let bestSource: 'gps' | 'wifi' | 'network' = 'gps';
+      let finalLat = smoothedLat;
+      let finalLng = smoothedLng;
+      let finalAccuracy = accuracy;
+      
+      // If we're indoors and Wi-Fi positioning has a better estimate, use it
+      if (isLikelyIndoor && wifiPositioning.wifiPosition) {
+        if (wifiPositioning.wifiPosition.confidence !== 'low') {
+          bestSource = wifiPositioning.wifiPosition.source;
+          // Blend GPS with Wi-Fi position for smoother indoor tracking
+          const wifiWeight = wifiPositioning.wifiPosition.confidence === 'high' ? 0.6 : 0.4;
+          finalLat = smoothedLat * (1 - wifiWeight) + wifiPositioning.wifiPosition.lat * wifiWeight;
+          finalLng = smoothedLng * (1 - wifiWeight) + wifiPositioning.wifiPosition.lng * wifiWeight;
+          finalAccuracy = Math.min(accuracy, wifiPositioning.wifiPosition.accuracy);
+        }
+      }
+
       const newPosition: Position = {
-        lat: smoothedLat,
-        lng: smoothedLng,
-        accuracy,
+        lat: finalLat,
+        lng: finalLng,
+        accuracy: finalAccuracy,
         heading: heading ?? null,
         speed: speed ?? null,
         timestamp: Date.now(),
-        source: 'gps',
+        source: bestSource,
+        altitude,
       };
 
       setCurrentPosition(newPosition);
 
       // Update database with throttling
-      await updateDatabase(smoothedLat, smoothedLng);
+      await updateDatabase(finalLat, finalLng);
     };
 
     const handleError = (error: GeolocationPositionError) => {
@@ -459,6 +490,15 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
+  // Start Wi-Fi positioning when tracking starts
+  useEffect(() => {
+    if (isTracking && !wifiPositioning.isScanning) {
+      wifiPositioning.startScanning(currentPosition?.accuracy);
+    } else if (!isTracking && wifiPositioning.isScanning) {
+      wifiPositioning.stopScanning();
+    }
+  }, [isTracking]);
+
   return (
     <LocationContext.Provider
       value={{
@@ -489,6 +529,9 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
         stopIndoorSimulation: indoorPositioning.stopSimulation,
         nearbyBeacons: indoorPositioning.nearbyBeacons,
         availableBeacons: indoorPositioning.databaseBeacons.length,
+        // Environment detection
+        environmentInfo: wifiPositioning.environmentInfo,
+        isWifiPositioningActive: wifiPositioning.isScanning,
       }}
     >
       {children}
