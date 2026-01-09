@@ -5,8 +5,7 @@ import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Mail, Lock, User } from 'lucide-react';
-import rallyLogo from '@/assets/rally-logo.png';
+import { Mail, Lock, User, ChevronRight } from 'lucide-react';
 
 export default function Auth() {
   const [isLoading, setIsLoading] = useState(false);
@@ -90,42 +89,106 @@ export default function Auth() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-rally-light relative overflow-hidden">
-      {/* Orange header with just the white logo */}
-      <div className="relative bg-primary pt-10 pb-16">
-        {/* White R@lly logo - centered and larger */}
+    <div 
+      className="min-h-screen flex flex-col relative overflow-hidden"
+      style={{ backgroundColor: "#121212" }}
+    >
+      {/* Radial gradient glow */}
+      <div 
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: "radial-gradient(ellipse at center top, rgba(255, 106, 0, 0.12) 0%, rgba(255, 106, 0, 0.04) 50%, transparent 70%)",
+        }}
+      />
+
+      {/* Ambient glow orbs */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div 
-          className={`flex flex-col items-center transition-all duration-500 ${showContent ? 'opacity-100 scale-100' : 'opacity-0 scale-90'}`}
+          className="absolute -top-20 -right-20 w-64 h-64 rounded-full blur-3xl opacity-15"
+          style={{ backgroundColor: "#FF6A00" }}
+        />
+        <div 
+          className="absolute -bottom-32 -left-32 w-80 h-80 rounded-full blur-3xl opacity-10"
+          style={{ backgroundColor: "#FF6A00" }}
+        />
+      </div>
+
+      {/* Header with Logo and Tagline */}
+      <div className="pt-12 pb-6 px-8 text-center relative z-10">
+        {/* R@LLY Wordmark */}
+        <h1
+          className={`font-montserrat font-extrabold text-5xl tracking-tight transition-all duration-500 ${
+            showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+          }`}
+          style={{ 
+            color: "rgba(255, 255, 255, 0.95)",
+            textShadow: "0 0 40px rgba(255, 106, 0, 0.3)",
+          }}
         >
-          <img 
-            src={rallyLogo} 
-            alt="R@lly" 
-            className="w-48 h-48 object-contain filter brightness-0 invert drop-shadow-lg"
-          />
+          R@LLY
+        </h1>
+        
+        {/* Tagline */}
+        <div 
+          className={`flex items-center justify-center gap-2 mt-4 transition-all duration-500 delay-150 ${
+            showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+          }`}
+        >
+          <span style={{ color: "rgba(255, 255, 255, 0.7)" }} className="font-montserrat text-lg">
+            Ready.
+          </span>
+          <span style={{ color: "rgba(255, 255, 255, 0.7)" }} className="font-montserrat text-lg">
+            Set.
+          </span>
+          <span 
+            className="font-montserrat text-lg font-bold"
+            style={{ 
+              background: "linear-gradient(135deg, #FF6A00 0%, #FFB366 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+            }}
+          >
+            R@lly!
+          </span>
         </div>
       </div>
 
       {/* Form section */}
-      <div className="flex-1 flex flex-col items-center justify-start px-4 pt-8 relative z-10 -mt-8">
+      <div className="flex-1 flex flex-col items-center justify-start px-6 pt-6 relative z-10">
         <div 
-          className={`w-full max-w-sm bg-rally-light rounded-t-3xl pt-8 transition-all duration-500 delay-150 ${showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+          className={`w-full max-w-sm transition-all duration-500 delay-200 ${
+            showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+          }`}
         >
           {/* Form title */}
-          <h2 className="text-2xl font-semibold text-rally-dark text-center mb-6 font-montserrat">
-            {isSignUp ? 'Create Your Account' : 'Login To Your Account'}
+          <h2 
+            className="text-xl font-semibold text-center mb-6 font-montserrat"
+            style={{ color: "rgba(255, 255, 255, 0.90)" }}
+          >
+            {isSignUp ? 'Create Your Account' : 'Welcome Back'}
           </h2>
 
           <form onSubmit={isSignUp ? handleSignUp : handleSignIn} className="space-y-4">
             {/* Name field - only for signup */}
             {isSignUp && (
               <div className="relative">
-                <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-primary" strokeWidth={1.5} />
+                <User 
+                  className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5" 
+                  strokeWidth={1.5} 
+                  style={{ color: "#FF6A00" }}
+                />
                 <Input
                   type="text"
                   placeholder="Name"
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
-                  className="pl-12 h-13 rounded-md border-rally-gray bg-transparent text-rally-dark placeholder:text-rally-light-gray font-montserrat"
+                  className="pl-12 h-14 rounded-xl font-montserrat text-base"
+                  style={{
+                    backgroundColor: "#1E1E1E",
+                    borderColor: "rgba(255, 106, 0, 0.2)",
+                    color: "rgba(255, 255, 255, 0.90)",
+                  }}
                   required
                 />
               </div>
@@ -133,26 +196,44 @@ export default function Auth() {
 
             {/* Email field */}
             <div className="relative">
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-primary" strokeWidth={1.5} />
+              <Mail 
+                className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5" 
+                strokeWidth={1.5}
+                style={{ color: "#FF6A00" }}
+              />
               <Input
                 type="email"
                 placeholder="Email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="pl-12 h-13 rounded-md border-rally-gray bg-transparent text-rally-dark placeholder:text-rally-light-gray font-montserrat"
+                className="pl-12 h-14 rounded-xl font-montserrat text-base"
+                style={{
+                  backgroundColor: "#1E1E1E",
+                  borderColor: "rgba(255, 106, 0, 0.2)",
+                  color: "rgba(255, 255, 255, 0.90)",
+                }}
                 required
               />
             </div>
 
             {/* Password field */}
             <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-primary" strokeWidth={1.5} />
+              <Lock 
+                className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5" 
+                strokeWidth={1.5}
+                style={{ color: "#FF6A00" }}
+              />
               <Input
                 type="password"
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="pl-12 h-13 rounded-md border-rally-gray bg-transparent text-rally-dark placeholder:text-rally-light-gray font-montserrat"
+                className="pl-12 h-14 rounded-xl font-montserrat text-base"
+                style={{
+                  backgroundColor: "#1E1E1E",
+                  borderColor: "rgba(255, 106, 0, 0.2)",
+                  color: "rgba(255, 255, 255, 0.90)",
+                }}
                 minLength={6}
                 required
               />
@@ -161,13 +242,22 @@ export default function Auth() {
             {/* Confirm Password - only for signup */}
             {isSignUp && (
               <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-primary" strokeWidth={1.5} />
+                <Lock 
+                  className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5" 
+                  strokeWidth={1.5}
+                  style={{ color: "#FF6A00" }}
+                />
                 <Input
                   type="password"
                   placeholder="Confirm Password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="pl-12 h-13 rounded-md border-rally-gray bg-transparent text-rally-dark placeholder:text-rally-light-gray font-montserrat"
+                  className="pl-12 h-14 rounded-xl font-montserrat text-base"
+                  style={{
+                    backgroundColor: "#1E1E1E",
+                    borderColor: "rgba(255, 106, 0, 0.2)",
+                    color: "rgba(255, 255, 255, 0.90)",
+                  }}
                   minLength={6}
                   required
                 />
@@ -177,7 +267,11 @@ export default function Auth() {
             {/* Forgot password - only for login */}
             {!isSignUp && (
               <div className="text-right">
-                <button type="button" className="text-primary text-base font-montserrat hover:underline">
+                <button 
+                  type="button" 
+                  className="text-base font-montserrat hover:underline"
+                  style={{ color: "#FF6A00" }}
+                >
                   Forgot Password?
                 </button>
               </div>
@@ -186,28 +280,44 @@ export default function Auth() {
             {/* Submit button */}
             <Button 
               type="submit" 
-              className="w-full h-13 rounded-lg bg-primary hover:bg-primary/90 text-white font-medium text-base font-montserrat mt-6"
+              className="w-full h-14 rounded-xl font-bold text-lg font-montserrat mt-2 group transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
+              style={{
+                background: "linear-gradient(135deg, #FF6A00 0%, #FF8C42 100%)",
+                color: "#FFFFFF",
+                boxShadow: "0 8px 32px rgba(255, 106, 0, 0.35)",
+              }}
               disabled={isLoading}
             >
               {isLoading 
                 ? (isSignUp ? 'Creating account...' : 'Signing in...') 
                 : (isSignUp ? 'Sign Up' : 'Login')
               }
+              <ChevronRight className="h-5 w-5 ml-1 group-hover:translate-x-1 transition-transform" />
             </Button>
           </form>
 
           {/* Divider */}
           <div className="flex items-center my-6">
-            <div className="flex-1 border-t border-rally-gray"></div>
-            <span className="px-4 text-rally-light-gray text-sm font-montserrat">or continue with</span>
-            <div className="flex-1 border-t border-rally-gray"></div>
+            <div className="flex-1 border-t" style={{ borderColor: "rgba(255, 255, 255, 0.15)" }}></div>
+            <span 
+              className="px-4 text-sm font-montserrat"
+              style={{ color: "rgba(255, 255, 255, 0.5)" }}
+            >
+              or continue with
+            </span>
+            <div className="flex-1 border-t" style={{ borderColor: "rgba(255, 255, 255, 0.15)" }}></div>
           </div>
 
           {/* Google Sign In */}
           <Button 
             type="button"
             variant="outline"
-            className="w-full h-13 rounded-lg border-rally-gray font-medium text-base font-montserrat flex items-center justify-center gap-3"
+            className="w-full h-14 rounded-xl font-medium text-base font-montserrat flex items-center justify-center gap-3 transition-all duration-300 hover:scale-[1.02]"
+            style={{
+              backgroundColor: "rgba(255, 255, 255, 0.05)",
+              borderColor: "rgba(255, 255, 255, 0.15)",
+              color: "rgba(255, 255, 255, 0.90)",
+            }}
             onClick={handleGoogleSignIn}
             disabled={isLoading}
           >
@@ -236,11 +346,15 @@ export default function Auth() {
 
       {/* Bottom toggle link */}
       <div className="py-8 text-center relative z-10">
-        <p className="text-rally-light-gray text-base font-montserrat">
+        <p 
+          className="text-base font-montserrat"
+          style={{ color: "rgba(255, 255, 255, 0.5)" }}
+        >
           {isSignUp ? "Already have an account? " : "Don't have an account? "}
           <button 
             onClick={() => setIsSignUp(!isSignUp)}
-            className="text-primary font-medium hover:underline"
+            className="font-semibold hover:underline"
+            style={{ color: "#FF6A00" }}
           >
             {isSignUp ? 'Sign in' : 'Sign up'}
           </button>

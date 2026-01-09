@@ -179,48 +179,96 @@ export default function Index() {
 
 function LandingScreen() {
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-primary via-orange-500 to-yellow-500 overflow-hidden relative">
-      {/* Decorative elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-20 -left-20 w-60 h-60 bg-white/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-40 -right-20 w-80 h-80 bg-yellow-400/20 rounded-full blur-3xl" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-white/5 rounded-full blur-3xl" />
+    <div 
+      className="min-h-screen flex flex-col relative overflow-hidden"
+      style={{ backgroundColor: "#121212" }}
+    >
+      {/* Radial gradient glow */}
+      <div 
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: "radial-gradient(circle at center, rgba(255, 106, 0, 0.10) 0%, rgba(255, 106, 0, 0.04) 40%, transparent 70%)",
+        }}
+      />
+
+      {/* Ambient glow orbs */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div 
+          className="absolute top-1/4 -right-20 w-64 h-64 rounded-full blur-3xl opacity-20"
+          style={{ backgroundColor: "#FF6A00" }}
+        />
+        <div 
+          className="absolute bottom-1/4 -left-20 w-80 h-80 rounded-full blur-3xl opacity-15"
+          style={{ backgroundColor: "#FF6A00" }}
+        />
       </div>
       
       {/* Main Content */}
       <div className="flex-1 flex flex-col items-center justify-center p-6 text-center relative z-10">
         <div className="max-w-sm w-full space-y-8">
-          {/* Logo with glow effect */}
+          {/* Logo wordmark */}
           <div className="relative">
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-40 h-40 bg-white/20 rounded-full blur-2xl animate-pulse" />
-            </div>
-            <div className="w-32 h-32 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 mx-auto flex items-center justify-center shadow-2xl relative">
-              <img 
-                src={rallyLogo} 
-                alt="R@lly" 
-                className="w-20 h-20 object-contain filter drop-shadow-lg"
-              />
-            </div>
-            <h1 className="text-5xl font-black text-white font-montserrat mt-6 tracking-tight drop-shadow-lg">R@LLY</h1>
+            <h1 
+              className="text-6xl font-extrabold font-montserrat tracking-tight animate-splash-logo-fade"
+              style={{ 
+                color: "rgba(255, 255, 255, 0.95)",
+                textShadow: "0 0 60px rgba(255, 106, 0, 0.4)",
+              }}
+            >
+              R@LLY
+            </h1>
           </div>
           
           {/* Tagline */}
           <div className="space-y-3">
-            <p className="text-2xl font-bold text-white/95 font-montserrat drop-shadow-sm">
-              Plan fast. Stay synced.
-            </p>
-            <p className="text-lg text-white/80 font-montserrat">
+            <div className="flex items-center justify-center gap-2">
+              <span 
+                className="text-2xl font-bold font-montserrat"
+                style={{ color: "rgba(255, 255, 255, 0.85)" }}
+              >
+                Ready.
+              </span>
+              <span 
+                className="text-2xl font-bold font-montserrat"
+                style={{ color: "rgba(255, 255, 255, 0.85)" }}
+              >
+                Set.
+              </span>
+              <span 
+                className="text-2xl font-extrabold font-montserrat"
+                style={{ 
+                  background: "linear-gradient(135deg, #FF6A00 0%, #FFB366 100%)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                }}
+              >
+                R@lly!
+              </span>
+            </div>
+            <p 
+              className="text-lg font-montserrat"
+              style={{ color: "rgba(255, 255, 255, 0.60)" }}
+            >
               Rally your squad in seconds
             </p>
           </div>
 
           {/* CTA Button */}
           <div className="pt-8">
-            <Button asChild size="lg" className="w-full rounded-full bg-white hover:bg-white/90 text-primary text-lg h-14 font-bold font-montserrat shadow-2xl hover:shadow-white/30 transition-all hover:scale-[1.02]">
+            <Button 
+              asChild 
+              size="lg" 
+              className="w-full rounded-full text-lg h-14 font-bold font-montserrat transition-all hover:scale-[1.02] active:scale-[0.98] group"
+              style={{
+                background: "linear-gradient(135deg, #FF6A00 0%, #FF8C42 100%)",
+                color: "#FFFFFF",
+                boxShadow: "0 8px 32px rgba(255, 106, 0, 0.4)",
+              }}
+            >
               <Link to="/auth">
                 Get Started 
-                <ArrowRight className="ml-2 h-5 w-5" />
+                <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </Link>
             </Button>
           </div>

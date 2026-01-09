@@ -6,8 +6,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { LocationProvider } from "@/contexts/LocationContext";
 import { NavigationPortal } from "@/components/navigation/NavigationPortal";
+import { AppEntry } from "@/components/AppEntry";
 import Index from "./pages/Index";
-import Auth from "./pages/Auth";
 import Events from "./pages/Events";
 import EventDetail from "./pages/EventDetail";
 import Rides from "./pages/Rides";
@@ -32,7 +32,7 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
-              <Route path="/auth" element={<Auth />} />
+              <Route path="/auth" element={<AppEntry />} />
               <Route path="/events" element={<Events />} />
               <Route path="/events/:id" element={<EventDetail />} />
               <Route path="/join" element={<JoinRally />} />
