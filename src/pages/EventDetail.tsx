@@ -1,5 +1,5 @@
 import { useParams, Navigate, Link } from 'react-router-dom';
-import { ArrowLeft, Calendar, MapPin, Users, Beer, Share2, Check, X, MessageCircle, Navigation } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Users, Beer, Share2, Check, X, MessageCircle, Navigation, Home } from 'lucide-react';
 import { format } from 'date-fns';
 import { Header } from '@/components/layout/Header';
 import { BottomNav } from '@/components/layout/BottomNav';
@@ -18,6 +18,8 @@ import { EventChat } from '@/components/chat/EventChat';
 import { LiveTracking } from '@/components/tracking/LiveTracking';
 import { AttendeeMap } from '@/components/tracking/AttendeeMap';
 import { LiveUpdates } from '@/components/events/LiveUpdates';
+import { RallyHomeButton } from '@/components/home/RallyHomeButton';
+import { GoingHomeTracker } from '@/components/home/GoingHomeTracker';
 import { useEventRealtime } from '@/hooks/useEventRealtime';
 import { toast } from 'sonner';
 
@@ -58,6 +60,7 @@ export default function EventDetail() {
   const isAttending = event.attendees?.some(a => a.profile?.id === profile?.id);
   const isCreator = event.creator?.id === profile?.id;
   const attendeeCount = event.attendees?.length || 0;
+  const isLiveEvent = new Date(event.start_time) <= new Date();
 
   const handleJoin = async () => {
     if (!profile) return;
@@ -189,6 +192,33 @@ export default function EventDetail() {
             </div>
           )}
         </div>
+
+        {/* R@lly Home Button - Only show during live events for attendees */}
+        {isLiveEvent && isAttending && (
+          <section className="space-y-4">
+            <RallyHomeButton 
+              eventId={event.id}
+              trigger={
+                <Card className="bg-gradient-to-r from-secondary to-secondary/80 border-0 shadow-lg cursor-pointer hover:shadow-xl transition-shadow">
+                  <CardContent className="p-4 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                        <Home className="h-6 w-6 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-white text-lg font-montserrat">R@lly Home</h3>
+                        <p className="text-white/80 text-sm font-montserrat">Let your crew know you're heading out</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              }
+            />
+          </section>
+        )}
+
+        {/* Going Home Tracker - Show who's heading home */}
+        {isLiveEvent && <GoingHomeTracker eventId={event.id} />}
 
         {/* Tabs for Details, Chat, Tracking, Rides */}
         <Tabs defaultValue="details" className="w-full">
