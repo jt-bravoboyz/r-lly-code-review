@@ -1,4 +1,4 @@
-import { Bell, Menu } from 'lucide-react';
+import { Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -9,28 +9,36 @@ interface HeaderProps {
   showBack?: boolean;
 }
 
-export function Header({ title = 'Rally' }: HeaderProps) {
+export function Header({ title }: HeaderProps) {
   const { profile } = useAuth();
 
   return (
-    <header className="sticky top-0 z-40 border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
+    <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
       <div className="container flex h-14 items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
-          <span className="text-xl font-bold text-gradient">🎉 {title}</span>
+          <span className="text-2xl font-black tracking-tighter">
+            <span className="text-primary">R</span>
+            <span className="text-foreground">@</span>
+            <span className="text-primary">LLY</span>
+          </span>
+          {title && title !== 'Rally' && (
+            <span className="text-sm text-muted-foreground">/ {title}</span>
+          )}
         </Link>
         
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" asChild>
+          <Button variant="ghost" size="icon" asChild className="relative">
             <Link to="/notifications">
               <Bell className="h-5 w-5" />
+              <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full" />
             </Link>
           </Button>
           
           {profile && (
             <Link to="/profile">
-              <Avatar className="h-8 w-8 ring-2 ring-primary/20">
+              <Avatar className="h-8 w-8 ring-2 ring-primary/30 hover:ring-primary transition-all">
                 <AvatarImage src={profile.avatar_url || undefined} />
-                <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                <AvatarFallback className="bg-primary text-primary-foreground text-xs font-bold">
                   {profile.display_name?.charAt(0)?.toUpperCase() || '?'}
                 </AvatarFallback>
               </Avatar>
