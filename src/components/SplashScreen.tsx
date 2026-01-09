@@ -1,85 +1,203 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 interface SplashScreenProps {
   onComplete: () => void;
   duration?: number;
 }
 
-type SplashPhase = "line1" | "ready" | "line2" | "set" | "logo" | "exit";
+type SplashPhase = "arc1" | "ready" | "arc2" | "set" | "fanfare" | "exit";
+
+interface Particle {
+  id: number;
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  opacity: number;
+  size: number;
+}
 
 // Haptic feedback utility
 const triggerHaptic = () => {
   if ('vibrate' in navigator) {
-    navigator.vibrate(50); // Short 50ms vibration
+    navigator.vibrate(50);
   }
 };
 
-export function SplashScreen({ onComplete, duration = 6000 }: SplashScreenProps) {
-  const [phase, setPhase] = useState<SplashPhase>("line1");
-  const [linePosition, setLinePosition] = useState(0);
-  const [trailPositions, setTrailPositions] = useState<number[]>([]);
+export function SplashScreen({ onComplete, duration = 3000 }: SplashScreenProps) {
+  const [phase, setPhase] = useState<SplashPhase>("arc1");
+  const [arcProgress, setArcProgress] = useState(0);
+  const [trailPoints, setTrailPoints] = useState<{ x: number; y: number; opacity: number }[]>([]);
+  const [particles, setParticles] = useState<Particle[]>([]);
+  const [textScale, setTextScale] = useState(0.5);
+  const animationRef = useRef<number>();
+
+  // Calculate curved arc position (parabolic trajectory)
+  const getArcPosition = (t: number, isSecondArc: boolean = false) => {
+    const startY = isSecondArc ? 30 : 40; // Second arc starts higher
+    const peakY = isSecondArc ? 20 : 30; // Peak of the arc
+    const endY = isSecondArc ? 70 : 60; // Falls lower
+    
+    // X moves linearly with slight easing
+    const x = t * 100;
+    
+    // Y follows a parabolic arc: rises then falls with gravity
+    const peakT = 0.3; // Peak happens at 30% of the journey
+    let y;
+    if (t < peakT) {
+      // Rising phase
+      const riseProgress = t / peakT;
+      y = startY - (startY - peakY) * Math.sin(riseProgress * Math.PI / 2);
+    } else {
+      // Falling phase with gravity acceleration
+      const fallProgress = (t - peakT) / (1 - peakT);
+      const gravityEase = fallProgress * fallProgress; // Accelerating fall
+      y = peakY + (endY - peakY) * gravityEase;
+    }
+    
+    return { x, y };
+  };
+
+  // Generate particles for fanfare
+  const generateParticles = () => {
+    const newParticles: Particle[] = [];
+    for (let i = 0; i < 40; i++) {
+      const angle = (Math.PI * 2 * i) / 40 + Math.random() * 0.3;
+      const speed = 3 + Math.random() * 4;
+      newParticles.push({
+        id: i,
+        x: 50,
+        y: 50,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed - 2, // Initial upward bias
+        opacity: 1,
+        size: 2 + Math.random() * 4,
+      });
+    }
+    return newParticles;
+  };
+
+  // Animate particles with gravity
+  useEffect(() => {
+    if (phase !== "fanfare" && phase !== "exit") return;
+    
+    let frame: number;
+    const animate = () => {
+      setParticles(prev => 
+        prev.map(p => ({
+          ...p,
+          x: p.x + p.vx * 0.3,
+          y: p.y + p.vy * 0.3,
+          vy: p.vy + 0.15, // Gravity
+          opacity: Math.max(0, p.opacity - 0.02),
+        })).filter(p => p.opacity > 0)
+      );
+      frame = requestAnimationFrame(animate);
+    };
+    
+    frame = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(frame);
+  }, [phase]);
 
   useEffect(() => {
-    // Phase timings (total ~6 seconds)
+    // Timings for ~3 second sequence
     const timings = {
-      line1Duration: 800,     // First line animation
-      readyAt: 800,           // Show READY
-      line2At: 2000,          // Second line animation starts
-      setAt: 2800,            // Show SET
-      logoAt: 4000,           // Show logo
-      exitAt: 5500,           // Start exit transition
-      completeAt: duration,   // Complete
+      arc1Duration: 500,
+      readyAt: 500,
+      readyHold: 350,
+      arc2At: 850,
+      setAt: 1350,
+      setHold: 350,
+      fanfareAt: 1700,
+      exitAt: 2700,
+      completeAt: duration,
     };
 
-    // Animate line position for line1 with trail
-    let trailArray: number[] = [];
-    const lineInterval = setInterval(() => {
-      setLinePosition(prev => {
-        const newPos = prev + 2.5;
-        // Add to trail
-        trailArray = [...trailArray.slice(-15), newPos];
-        setTrailPositions([...trailArray]);
-        if (newPos >= 100) {
-          clearInterval(lineInterval);
-          return 100;
-        }
-        return newPos;
+    // Arc 1 animation
+    let startTime = Date.now();
+    const animateArc1 = () => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(1, elapsed / timings.arc1Duration);
+      
+      // Ease-out for natural motion, speed up at the end
+      const eased = 1 - Math.pow(1 - progress, 2);
+      setArcProgress(eased);
+      
+      // Update trail
+      const pos = getArcPosition(eased, false);
+      setTrailPoints(prev => {
+        const newTrail = [...prev, { x: pos.x, y: pos.y, opacity: 1 }]
+          .slice(-20)
+          .map((p, i, arr) => ({ ...p, opacity: (i + 1) / arr.length }));
+        return newTrail;
       });
-    }, 20);
+      
+      if (progress < 1) {
+        animationRef.current = requestAnimationFrame(animateArc1);
+      }
+    };
+    animationRef.current = requestAnimationFrame(animateArc1);
 
     const readyTimer = setTimeout(() => {
       setPhase("ready");
-      setLinePosition(0);
-      setTrailPositions([]);
+      setTrailPoints([]);
+      setArcProgress(0);
+      setTextScale(0.5);
       triggerHaptic();
+      // Animate text scale
+      let scale = 0.5;
+      const scaleInterval = setInterval(() => {
+        scale += 0.05;
+        setTextScale(Math.min(1, scale));
+        if (scale >= 1) clearInterval(scaleInterval);
+      }, 20);
     }, timings.readyAt);
 
-    const line2Timer = setTimeout(() => {
-      setPhase("line2");
-      // Animate line again with trail
-      let pos = 0;
-      let trail2Array: number[] = [];
-      const line2Interval = setInterval(() => {
-        pos += 2.5;
-        trail2Array = [...trail2Array.slice(-15), pos];
-        setTrailPositions([...trail2Array]);
-        setLinePosition(pos);
-        if (pos >= 100) {
-          clearInterval(line2Interval);
+    const arc2Timer = setTimeout(() => {
+      setPhase("arc2");
+      setTextScale(0.5);
+      startTime = Date.now();
+      
+      const animateArc2 = () => {
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min(1, elapsed / timings.arc1Duration);
+        const eased = 1 - Math.pow(1 - progress, 2.5); // Faster fall
+        setArcProgress(eased);
+        
+        const pos = getArcPosition(eased, true);
+        setTrailPoints(prev => {
+          const newTrail = [...prev, { x: pos.x, y: pos.y, opacity: 1 }]
+            .slice(-25) // Longer trail
+            .map((p, i, arr) => ({ ...p, opacity: (i + 1) / arr.length }));
+          return newTrail;
+        });
+        
+        if (progress < 1) {
+          animationRef.current = requestAnimationFrame(animateArc2);
         }
-      }, 20);
-    }, timings.line2At);
+      };
+      animationRef.current = requestAnimationFrame(animateArc2);
+    }, timings.arc2At);
 
     const setTimer = setTimeout(() => {
       setPhase("set");
-      setLinePosition(0);
-      setTrailPositions([]);
+      setTrailPoints([]);
+      setArcProgress(0);
+      setTextScale(0.5);
       triggerHaptic();
+      let scale = 0.5;
+      const scaleInterval = setInterval(() => {
+        scale += 0.06; // Slightly faster
+        setTextScale(Math.min(1, scale));
+        if (scale >= 1) clearInterval(scaleInterval);
+      }, 20);
     }, timings.setAt);
 
-    const logoTimer = setTimeout(() => {
-      setPhase("logo");
-    }, timings.logoAt);
+    const fanfareTimer = setTimeout(() => {
+      setPhase("fanfare");
+      setParticles(generateParticles());
+      triggerHaptic();
+    }, timings.fanfareAt);
 
     const exitTimer = setTimeout(() => {
       setPhase("exit");
@@ -88,97 +206,142 @@ export function SplashScreen({ onComplete, duration = 6000 }: SplashScreenProps)
     const completeTimer = setTimeout(onComplete, timings.completeAt);
 
     return () => {
-      clearInterval(lineInterval);
+      if (animationRef.current) cancelAnimationFrame(animationRef.current);
       clearTimeout(readyTimer);
-      clearTimeout(line2Timer);
+      clearTimeout(arc2Timer);
       clearTimeout(setTimer);
-      clearTimeout(logoTimer);
+      clearTimeout(fanfareTimer);
       clearTimeout(exitTimer);
       clearTimeout(completeTimer);
     };
   }, [onComplete, duration]);
 
+  const currentArcPos = getArcPosition(arcProgress, phase === "arc2");
+
   return (
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center transition-all duration-300 ease-out ${
+      className={`fixed inset-0 z-50 flex items-center justify-center transition-all duration-300 ease-out overflow-hidden ${
         phase === "exit" ? "opacity-0 scale-110" : "opacity-100 scale-100"
       }`}
       style={{ backgroundColor: "#121212" }}
     >
-      {/* Animated horizontal line with dramatic glow and trail */}
-      {(phase === "line1" || phase === "line2") && (
-        <>
-          {/* Trail effect */}
-          {trailPositions.map((pos, index) => (
-            <div
+      {/* Curved arc with trail */}
+      {(phase === "arc1" || phase === "arc2") && (
+        <svg className="absolute inset-0 w-full h-full pointer-events-none">
+          {/* Trail segments */}
+          {trailPoints.map((point, index) => (
+            <circle
               key={index}
-              className="absolute top-1/2 left-0 h-0.5 pointer-events-none"
+              cx={`${point.x}%`}
+              cy={`${point.y}%`}
+              r={phase === "arc2" ? 4 + index * 0.3 : 3 + index * 0.2}
+              fill={`rgba(255, 106, 0, ${point.opacity * 0.6})`}
               style={{
-                width: `${pos}%`,
-                opacity: (index + 1) / trailPositions.length * 0.4,
-                background: `linear-gradient(90deg, transparent 0%, rgba(255, 106, 0, ${(index + 1) / trailPositions.length * 0.3}) 100%)`,
+                filter: `blur(${2 + (1 - point.opacity) * 3}px)`,
               }}
             />
           ))}
-          {/* Main glowing line */}
-          <div 
-            className="absolute top-1/2 left-0 h-1 transition-none"
-            style={{
-              width: `${linePosition}%`,
-              background: "linear-gradient(90deg, transparent 0%, #FF6A00 30%, #FF8C00 70%, #FFB347 100%)",
-              boxShadow: `
-                0 0 10px rgba(255, 106, 0, 1),
-                0 0 20px rgba(255, 106, 0, 0.9),
-                0 0 40px rgba(255, 106, 0, 0.7),
-                0 0 60px rgba(255, 106, 0, 0.5),
-                0 0 80px rgba(255, 106, 0, 0.3),
-                0 0 100px rgba(255, 140, 0, 0.2)
-              `,
-            }}
+          
+          {/* Main glowing orb */}
+          <defs>
+            <radialGradient id="orbGradient">
+              <stop offset="0%" stopColor="#FFB347" />
+              <stop offset="40%" stopColor="#FF8C00" />
+              <stop offset="70%" stopColor="#FF6A00" />
+              <stop offset="100%" stopColor="transparent" />
+            </radialGradient>
+            <filter id="glow">
+              <feGaussianBlur stdDeviation="4" result="coloredBlur" />
+              <feMerge>
+                <feMergeNode in="coloredBlur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
+          
+          <circle
+            cx={`${currentArcPos.x}%`}
+            cy={`${currentArcPos.y}%`}
+            r={phase === "arc2" ? 10 : 8}
+            fill="url(#orbGradient)"
+            filter="url(#glow)"
           />
-          {/* Leading edge glow */}
-          <div
-            className="absolute top-1/2 h-4 w-4 -translate-y-1/2 rounded-full"
-            style={{
-              left: `${linePosition}%`,
-              background: "radial-gradient(circle, #FFB347 0%, #FF6A00 40%, transparent 70%)",
-              boxShadow: "0 0 30px rgba(255, 106, 0, 1), 0 0 60px rgba(255, 106, 0, 0.8)",
-            }}
+          
+          {/* Outer glow */}
+          <circle
+            cx={`${currentArcPos.x}%`}
+            cy={`${currentArcPos.y}%`}
+            r={phase === "arc2" ? 20 : 16}
+            fill="none"
+            stroke="rgba(255, 106, 0, 0.3)"
+            strokeWidth="2"
+            style={{ filter: "blur(8px)" }}
           />
-        </>
+        </svg>
       )}
 
-      {/* READY text */}
+      {/* READY text with scale forward */}
       {phase === "ready" && (
         <h1 
-          className="font-montserrat font-extrabold text-5xl sm:text-6xl tracking-widest animate-splash-text-pop"
-          style={{ color: "rgba(255, 255, 255, 0.95)" }}
+          className="font-montserrat font-extrabold text-5xl sm:text-6xl tracking-widest"
+          style={{ 
+            color: "rgba(255, 255, 255, 0.95)",
+            transform: `scale(${textScale}) translateZ(0)`,
+            textShadow: `0 0 ${30 * textScale}px rgba(255, 106, 0, 0.4)`,
+            transition: "transform 0.05s ease-out",
+          }}
         >
           READY
         </h1>
       )}
 
-      {/* SET text */}
+      {/* SET text with scale forward */}
       {phase === "set" && (
         <h1 
-          className="font-montserrat font-extrabold text-5xl sm:text-6xl tracking-widest animate-splash-text-pop"
-          style={{ color: "rgba(255, 255, 255, 0.95)" }}
+          className="font-montserrat font-extrabold text-5xl sm:text-6xl tracking-widest"
+          style={{ 
+            color: "rgba(255, 255, 255, 0.95)",
+            transform: `scale(${textScale}) translateZ(0)`,
+            textShadow: `0 0 ${30 * textScale}px rgba(255, 106, 0, 0.4)`,
+            transition: "transform 0.05s ease-out",
+          }}
         >
           SET
         </h1>
       )}
 
-      {/* Logo reveal */}
-      {(phase === "logo" || phase === "exit") && (
-        <div className="relative flex flex-col items-center">
+      {/* Logo reveal with particle fanfare */}
+      {(phase === "fanfare" || phase === "exit") && (
+        <>
+          {/* Particle burst */}
+          <svg className="absolute inset-0 w-full h-full pointer-events-none">
+            <defs>
+              <radialGradient id="particleGradient">
+                <stop offset="0%" stopColor="#FFB347" />
+                <stop offset="60%" stopColor="#FF6A00" />
+                <stop offset="100%" stopColor="transparent" />
+              </radialGradient>
+            </defs>
+            {particles.map(p => (
+              <circle
+                key={p.id}
+                cx={`${p.x}%`}
+                cy={`${p.y}%`}
+                r={p.size}
+                fill={`rgba(255, 106, 0, ${p.opacity})`}
+                style={{ filter: "blur(1px)" }}
+              />
+            ))}
+          </svg>
+
           {/* Orange pulse behind logo */}
           <div 
             className="absolute inset-0 flex items-center justify-center"
           >
             <div 
-              className="w-40 h-40 rounded-full animate-splash-pulse-once"
+              className="w-48 h-48 rounded-full animate-splash-pulse-once"
               style={{
-                background: "radial-gradient(circle, rgba(255, 106, 0, 0.4) 0%, rgba(255, 106, 0, 0.1) 50%, transparent 70%)",
+                background: "radial-gradient(circle, rgba(255, 106, 0, 0.5) 0%, rgba(255, 106, 0, 0.15) 50%, transparent 70%)",
               }}
             />
           </div>
@@ -188,7 +351,7 @@ export function SplashScreen({ onComplete, duration = 6000 }: SplashScreenProps)
             className="font-montserrat font-extrabold text-6xl sm:text-7xl tracking-tight animate-splash-logo-scale relative z-10"
             style={{ 
               color: "rgba(255, 255, 255, 0.95)",
-              textShadow: "0 0 60px rgba(255, 106, 0, 0.4)",
+              textShadow: "0 0 60px rgba(255, 106, 0, 0.5), 0 0 100px rgba(255, 106, 0, 0.3)",
             }}
           >
             R@LLY
@@ -196,30 +359,12 @@ export function SplashScreen({ onComplete, duration = 6000 }: SplashScreenProps)
           
           {/* Tagline */}
           <p
-            className="mt-4 text-lg font-medium tracking-wide animate-splash-tagline-fade"
+            className="absolute mt-28 text-lg font-medium tracking-wide animate-splash-tagline-fade"
             style={{ color: "rgba(255, 255, 255, 0.70)" }}
           >
             Rally your people.
           </p>
-        </div>
-      )}
-
-      {/* Subtle ambient particles */}
-      {(phase === "logo" || phase === "exit") && (
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div 
-            className="absolute top-1/4 left-1/4 w-1 h-1 rounded-full animate-splash-particle"
-            style={{ backgroundColor: "rgba(255, 106, 0, 0.5)" }}
-          />
-          <div 
-            className="absolute top-1/3 right-1/4 w-1.5 h-1.5 rounded-full animate-splash-particle-delayed"
-            style={{ backgroundColor: "rgba(255, 106, 0, 0.4)" }}
-          />
-          <div 
-            className="absolute bottom-1/3 left-1/3 w-1 h-1 rounded-full animate-splash-particle-delayed-2"
-            style={{ backgroundColor: "rgba(255, 106, 0, 0.45)" }}
-          />
-        </div>
+        </>
       )}
     </div>
   );
