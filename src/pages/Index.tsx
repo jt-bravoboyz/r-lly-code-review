@@ -1,10 +1,9 @@
 import { Link } from 'react-router-dom';
-import { Zap, ArrowRight, Plus, Calendar, Bell, Home as HomeIcon } from 'lucide-react';
+import { Zap, ArrowRight, Plus, Calendar, Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { EventCard } from '@/components/events/EventCard';
-import { RallyHomeDialog } from '@/components/home/RallyHomeDialog';
 import { useAuth } from '@/hooks/useAuth';
 import { useEvents } from '@/hooks/useEvents';
 import rallyLogo from '@/assets/rally-logo.png';
@@ -74,27 +73,6 @@ export default function Index() {
       </header>
       
       <main className="px-4 py-6 space-y-6">
-        {/* R@lly Home - One Tap */}
-        <section>
-          <RallyHomeDialog
-            trigger={
-              <Card className="bg-gradient-to-r from-secondary to-secondary/80 border-0 shadow-lg cursor-pointer hover:shadow-xl transition-shadow">
-                <CardContent className="p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
-                      <HomeIcon className="h-6 w-6 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-white text-lg font-montserrat">R@lly Home</h3>
-                      <p className="text-white/80 text-sm font-montserrat">One tap to get home safe</p>
-                    </div>
-                  </div>
-                  <ArrowRight className="h-5 w-5 text-white" />
-                </CardContent>
-              </Card>
-            }
-          />
-        </section>
 
         {/* Ready to Rally Section */}
         <section className="space-y-4">

@@ -134,9 +134,15 @@ export type Database = {
       }
       event_attendees: {
         Row: {
+          arrived_at: string | null
+          arrived_home: boolean | null
           current_lat: number | null
           current_lng: number | null
+          destination_lat: number | null
+          destination_lng: number | null
+          destination_name: string | null
           event_id: string
+          going_home_at: string | null
           id: string
           joined_at: string | null
           last_location_update: string | null
@@ -145,9 +151,15 @@ export type Database = {
           status: string | null
         }
         Insert: {
+          arrived_at?: string | null
+          arrived_home?: boolean | null
           current_lat?: number | null
           current_lng?: number | null
+          destination_lat?: number | null
+          destination_lng?: number | null
+          destination_name?: string | null
           event_id: string
+          going_home_at?: string | null
           id?: string
           joined_at?: string | null
           last_location_update?: string | null
@@ -156,9 +168,15 @@ export type Database = {
           status?: string | null
         }
         Update: {
+          arrived_at?: string | null
+          arrived_home?: boolean | null
           current_lat?: number | null
           current_lng?: number | null
+          destination_lat?: number | null
+          destination_lng?: number | null
+          destination_name?: string | null
           event_id?: string
+          going_home_at?: string | null
           id?: string
           joined_at?: string | null
           last_location_update?: string | null
