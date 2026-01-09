@@ -14,7 +14,7 @@ interface MemberLocationCardProps {
   lastUpdate: number;
   distance?: number;
   bearing?: number;
-  proximitySignal?: 'gps' | 'ble';
+  proximitySignal?: 'gps' | 'ble' | 'wifi';
 }
 
 export function MemberLocationCard({
@@ -91,6 +91,12 @@ export function MemberLocationCard({
             <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4">
               <Wifi className="h-2.5 w-2.5 mr-0.5" />
               BLE
+            </Badge>
+          )}
+          {proximitySignal === 'wifi' && (
+            <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 text-blue-600 border-blue-200">
+              <Wifi className="h-2.5 w-2.5 mr-0.5" />
+              WiFi
             </Badge>
           )}
         </div>

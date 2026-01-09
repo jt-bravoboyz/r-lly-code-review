@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { ArrowLeft, Navigation, Compass, Target, MapPin } from 'lucide-react';
+import { ArrowLeft, Navigation, Compass, Target, MapPin, Building2, TreePine, Wifi, Signal, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useLocationContext } from '@/contexts/LocationContext';
 import { TurnByTurnNav } from './TurnByTurnNav';
+import { AccuracyIndicator, EnvironmentBadge } from '@/components/tracking/AccuracyIndicator';
 
 interface MemberLocation {
   profileId: string;
@@ -25,7 +26,7 @@ interface FindFriendViewProps {
 
 export function FindFriendView({ member, onClose }: FindFriendViewProps) {
   const [showTurnByTurn, setShowTurnByTurn] = useState(false);
-  const { compassHeading, currentPosition } = useLocationContext();
+  const { compassHeading, currentPosition, signalQuality, environmentInfo } = useLocationContext();
 
   // Calculate the arrow rotation relative to device heading
   const getArrowRotation = () => {
@@ -173,19 +174,18 @@ export function FindFriendView({ member, onClose }: FindFriendViewProps) {
           </Card>
         )}
 
-        {/* Location accuracy */}
+        {/* Location accuracy with enhanced display */}
         {currentPosition && (
           <Card>
             <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
-                  <Target className="h-5 w-5 text-green-600" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">GPS Accuracy</p>
-                  <p className="font-bold">±{Math.round(currentPosition.accuracy)}m</p>
-                </div>
-              </div>
+              <AccuracyIndicator
+                accuracy={currentPosition.accuracy}
+                signalQuality={signalQuality}
+                isIndoor={environmentInfo.isIndoor}
+                indoorConfidence={environmentInfo.confidence}
+                source={currentPosition.source}
+                showDetails={true}
+              />
             </CardContent>
           </Card>
         )}
@@ -215,14 +215,28 @@ export function FindFriendView({ member, onClose }: FindFriendViewProps) {
           </Button>
         </div>
 
-        {/* Tips */}
+        {/* Tips based on environment */}
         <div className="bg-muted/50 rounded-xl p-4 space-y-2">
           <p className="text-sm font-medium">Tips for finding your friend:</p>
           <ul className="text-sm text-muted-foreground space-y-1">
             <li>• Point your phone in the direction of the arrow</li>
             <li>• Walk towards the arrow to get closer</li>
             <li>• The distance updates in real-time</li>
-            <li>• If indoors, GPS may be less accurate</li>
+            {environmentInfo.isIndoor && environmentInfo.confidence > 0.5 ? (
+              <>
+                <li className="flex items-center gap-1.5 text-orange-600">
+                  <Building2 className="h-3.5 w-3.5" />
+                  You appear to be indoors - accuracy may be reduced
+                </li>
+                <li>• Try moving near windows for better GPS signal</li>
+                <li>• Consider using turn-by-turn navigation</li>
+              </>
+            ) : (
+              <li className="flex items-center gap-1.5 text-green-600">
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                Good GPS signal for accurate tracking
+              </li>
+            )}
           </ul>
         </div>
       </div>
