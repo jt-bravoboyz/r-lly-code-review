@@ -52,11 +52,8 @@ export default function Index() {
         {/* Header content */}
         <div className="flex items-center justify-between px-4 py-3">
           {/* Logo */}
-          <div className="flex items-center gap-2">
-            <img src={rallyLogo} alt="R@lly" className="h-4 w-auto" />
-            <div className="w-4 h-4 rounded-full bg-rally-cream flex items-center justify-center">
-              <img src={rallyLogo} alt="" className="w-2.5 h-2.5" />
-            </div>
+          <div className="flex items-center">
+            <img src={rallyLogo} alt="R@lly" className="h-6 w-6 object-contain" />
           </div>
 
           {/* Right side - notifications & avatar */}
