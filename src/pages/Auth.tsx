@@ -63,7 +63,7 @@ export default function Auth() {
   return (
     <div className="min-h-screen flex flex-col bg-rally-light relative overflow-hidden">
       {/* Orange header with just the white logo */}
-      <div className="relative bg-primary pt-12 pb-20">
+      <div className="relative bg-primary pt-10 pb-16">
         {/* White R@lly logo - centered and larger */}
         <div 
           className={`flex flex-col items-center transition-all duration-500 ${showContent ? 'opacity-100 scale-100' : 'opacity-0 scale-90'}`}
@@ -71,7 +71,7 @@ export default function Auth() {
           <img 
             src={rallyLogo} 
             alt="R@lly" 
-            className="w-32 h-32 object-contain filter brightness-0 invert drop-shadow-lg"
+            className="w-48 h-48 object-contain filter brightness-0 invert drop-shadow-lg"
           />
         </div>
       </div>
