@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useBatteryOptimizedLocation, TrackingMode, MovementState, TRACKING_CONFIGS } from '@/hooks/useBatteryOptimizedLocation';
+import { useIndoorPositioning, BeaconInfo } from '@/hooks/useIndoorPositioning';
 
 interface Position {
   lat: number;
@@ -9,6 +11,8 @@ interface Position {
   heading: number | null;
   speed: number | null;
   timestamp: number;
+  source: 'gps' | 'indoor' | 'hybrid';
+  floor?: number;
 }
 
 export interface MemberLocation {
@@ -22,6 +26,21 @@ export interface MemberLocation {
   bearing?: number;
   proximitySignal?: 'gps' | 'ble';
   bleRssi?: number;
+  floor?: number;
+}
+
+interface BatteryInfo {
+  level: number | null;
+  charging: boolean;
+  estimatedImpact: 'low' | 'medium' | 'high';
+}
+
+interface IndoorInfo {
+  isSupported: boolean;
+  isActive: boolean;
+  venueName?: string;
+  floor?: number;
+  beaconCount: number;
 }
 
 interface LocationContextType {
@@ -36,6 +55,19 @@ interface LocationContextType {
   selectedMemberForNav: MemberLocation | null;
   setSelectedMemberForNav: (member: MemberLocation | null) => void;
   signalQuality: 'good' | 'fair' | 'poor';
+  // Battery optimization
+  trackingMode: TrackingMode;
+  setTrackingMode: (mode: TrackingMode) => void;
+  movementState: MovementState;
+  updateInterval: number;
+  batteryInfo: BatteryInfo;
+  isAdaptiveBatteryEnabled: boolean;
+  setAdaptiveBatteryEnabled: (enabled: boolean) => void;
+  // Indoor positioning
+  indoorInfo: IndoorInfo;
+  startIndoorPositioning: () => Promise<void>;
+  stopIndoorPositioning: () => void;
+  nearbyBeacons: BeaconInfo[];
 }
 
 const LocationContext = createContext<LocationContextType | null>(null);
@@ -93,6 +125,30 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
   const eventIdRef = useRef<string | null>(null);
   const smoothedHeadingRef = useRef<number>(0);
   const smoothedPositionRef = useRef<{ lat: number; lng: number } | null>(null);
+  const updateIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const lastDbUpdateRef = useRef<number>(0);
+
+  // Battery optimization hook
+  const batteryOptimization = useBatteryOptimizedLocation('balanced');
+  
+  // Indoor positioning hook
+  const indoorPositioning = useIndoorPositioning();
+
+  // Derived battery info
+  const batteryInfo: BatteryInfo = {
+    level: batteryOptimization.batteryStatus?.level ?? null,
+    charging: batteryOptimization.batteryStatus?.charging ?? false,
+    estimatedImpact: batteryOptimization.estimatedBatteryImpact,
+  };
+
+  // Derived indoor info
+  const indoorInfo: IndoorInfo = {
+    isSupported: indoorPositioning.isSupported,
+    isActive: indoorPositioning.isScanning,
+    venueName: indoorPositioning.indoorPosition?.venueName,
+    floor: indoorPositioning.indoorPosition?.floor,
+    beaconCount: indoorPositioning.nearbyBeacons.length,
+  };
 
   // Compass heading listener
   useEffect(() => {
@@ -132,6 +188,23 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
+  // Merge indoor position with GPS when available
+  useEffect(() => {
+    if (indoorPositioning.indoorPosition && currentPosition) {
+      // If indoor position has better accuracy, use it
+      if (indoorPositioning.indoorPosition.accuracy < currentPosition.accuracy) {
+        setCurrentPosition(prev => ({
+          ...prev!,
+          lat: indoorPositioning.indoorPosition!.lat,
+          lng: indoorPositioning.indoorPosition!.lng,
+          accuracy: indoorPositioning.indoorPosition!.accuracy,
+          source: 'indoor',
+          floor: indoorPositioning.indoorPosition!.floor,
+        }));
+      }
+    }
+  }, [indoorPositioning.indoorPosition]);
+
   // Get distance and bearing from current position to a target
   const getDistanceAndBearing = useCallback((targetLat: number, targetLng: number) => {
     if (!currentPosition) {
@@ -144,71 +217,100 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
     return { distance, bearing };
   }, [currentPosition]);
 
-  // Start tracking location
+  // Throttled database update based on movement state
+  const updateDatabase = useCallback(async (lat: number, lng: number) => {
+    const now = Date.now();
+    const minInterval = batteryOptimization.updateInterval;
+    
+    // Only update database at the adaptive interval
+    if (now - lastDbUpdateRef.current < minInterval) {
+      return;
+    }
+    
+    lastDbUpdateRef.current = now;
+    
+    if (eventIdRef.current && profile?.id) {
+      await supabase
+        .from('event_attendees')
+        .update({
+          current_lat: lat,
+          current_lng: lng,
+          last_location_update: new Date().toISOString(),
+          share_location: true,
+        })
+        .eq('event_id', eventIdRef.current)
+        .eq('profile_id', profile.id);
+    }
+  }, [batteryOptimization.updateInterval, profile?.id]);
+
+  // Start tracking location with adaptive intervals
   const startTracking = useCallback((eventId: string) => {
     if (!navigator.geolocation || !profile?.id) return;
 
     eventIdRef.current = eventId;
     setIsTracking(true);
 
-    const id = navigator.geolocation.watchPosition(
-      async (position) => {
-        const { latitude, longitude, accuracy, heading, speed } = position.coords;
-        
-        // Apply position smoothing
-        let smoothedLat = latitude;
-        let smoothedLng = longitude;
-        
-        if (smoothedPositionRef.current) {
-          smoothedLat = smoothedPositionRef.current.lat + (latitude - smoothedPositionRef.current.lat) * POSITION_SMOOTHING;
-          smoothedLng = smoothedPositionRef.current.lng + (longitude - smoothedPositionRef.current.lng) * POSITION_SMOOTHING;
-        }
-        smoothedPositionRef.current = { lat: smoothedLat, lng: smoothedLng };
+    const config = batteryOptimization.getOptimalConfig();
 
-        // Determine signal quality based on accuracy
-        if (accuracy <= 10) {
-          setSignalQuality('good');
-        } else if (accuracy <= 30) {
-          setSignalQuality('fair');
-        } else {
-          setSignalQuality('poor');
-        }
-
-        const newPosition: Position = {
-          lat: smoothedLat,
-          lng: smoothedLng,
-          accuracy,
-          heading: heading ?? null,
-          speed: speed ?? null,
-          timestamp: Date.now(),
-        };
-
-        setCurrentPosition(newPosition);
-
-        // Update location in database
-        if (eventIdRef.current) {
-          await supabase
-            .from('event_attendees')
-            .update({
-              current_lat: smoothedLat,
-              current_lng: smoothedLng,
-              last_location_update: new Date().toISOString(),
-              share_location: true,
-            })
-            .eq('event_id', eventIdRef.current)
-            .eq('profile_id', profile.id);
-        }
-      },
-      (error) => {
-        console.error('Geolocation error:', error);
-        setSignalQuality('poor');
-      },
-      {
-        enableHighAccuracy: true,
-        maximumAge: 5000,
-        timeout: 10000,
+    const handlePosition = async (position: GeolocationPosition) => {
+      const { latitude, longitude, accuracy, heading, speed } = position.coords;
+      
+      // Update battery optimization with new position
+      batteryOptimization.lastUpdate && batteryOptimization.setTrackingMode(batteryOptimization.currentMode);
+      
+      // Apply position smoothing
+      let smoothedLat = latitude;
+      let smoothedLng = longitude;
+      
+      if (smoothedPositionRef.current) {
+        smoothedLat = smoothedPositionRef.current.lat + (latitude - smoothedPositionRef.current.lat) * POSITION_SMOOTHING;
+        smoothedLng = smoothedPositionRef.current.lng + (longitude - smoothedPositionRef.current.lng) * POSITION_SMOOTHING;
       }
-    );
+      smoothedPositionRef.current = { lat: smoothedLat, lng: smoothedLng };
+
+      // Determine signal quality based on accuracy
+      if (accuracy <= 10) {
+        setSignalQuality('good');
+      } else if (accuracy <= 30) {
+        setSignalQuality('fair');
+      } else {
+        setSignalQuality('poor');
+      }
+
+      const newPosition: Position = {
+        lat: smoothedLat,
+        lng: smoothedLng,
+        accuracy,
+        heading: heading ?? null,
+        speed: speed ?? null,
+        timestamp: Date.now(),
+        source: 'gps',
+      };
+
+      setCurrentPosition(newPosition);
+
+      // Update database with throttling
+      await updateDatabase(smoothedLat, smoothedLng);
+    };
+
+    const handleError = (error: GeolocationPositionError) => {
+      console.error('Geolocation error:', error);
+      setSignalQuality('poor');
+    };
+
+    // Initial position fetch
+    navigator.geolocation.getCurrentPosition(handlePosition, handleError, {
+      enableHighAccuracy: config.enableHighAccuracy,
+      maximumAge: config.maximumAge,
+      timeout: config.timeout,
+    });
+
+    // Set up adaptive watching
+    const id = navigator.geolocation.watchPosition(handlePosition, handleError, {
+      enableHighAccuracy: config.enableHighAccuracy,
+      maximumAge: config.maximumAge,
+      timeout: config.timeout,
+    });
 
     watchIdRef.current = id;
 
@@ -289,13 +391,18 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [profile?.id]);
+  }, [profile?.id, batteryOptimization, updateDatabase]);
 
   // Stop tracking
   const stopTracking = useCallback(async () => {
     if (watchIdRef.current !== null) {
       navigator.geolocation.clearWatch(watchIdRef.current);
       watchIdRef.current = null;
+    }
+
+    if (updateIntervalRef.current) {
+      clearInterval(updateIntervalRef.current);
+      updateIntervalRef.current = null;
     }
 
     if (eventIdRef.current && profile?.id) {
@@ -306,10 +413,15 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
         .eq('profile_id', profile.id);
     }
 
+    // Stop indoor positioning if active
+    if (indoorPositioning.isScanning) {
+      indoorPositioning.stopScanning();
+    }
+
     eventIdRef.current = null;
     setIsTracking(false);
     setMemberLocations(new Map());
-  }, [profile?.id]);
+  }, [profile?.id, indoorPositioning]);
 
   // Navigate to a member's location - now opens the in-app FindFriendView
   const navigateToMember = useCallback((member: MemberLocation) => {
@@ -336,6 +448,9 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
       if (watchIdRef.current !== null) {
         navigator.geolocation.clearWatch(watchIdRef.current);
       }
+      if (updateIntervalRef.current) {
+        clearInterval(updateIntervalRef.current);
+      }
     };
   }, []);
 
@@ -353,6 +468,19 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
         selectedMemberForNav,
         setSelectedMemberForNav,
         signalQuality,
+        // Battery optimization
+        trackingMode: batteryOptimization.currentMode,
+        setTrackingMode: batteryOptimization.setTrackingMode,
+        movementState: batteryOptimization.movementState,
+        updateInterval: batteryOptimization.updateInterval,
+        batteryInfo,
+        isAdaptiveBatteryEnabled: batteryOptimization.isAdaptiveEnabled,
+        setAdaptiveBatteryEnabled: batteryOptimization.setAdaptiveEnabled,
+        // Indoor positioning
+        indoorInfo,
+        startIndoorPositioning: indoorPositioning.startScanning,
+        stopIndoorPositioning: indoorPositioning.stopScanning,
+        nearbyBeacons: indoorPositioning.nearbyBeacons,
       }}
     >
       {children}
