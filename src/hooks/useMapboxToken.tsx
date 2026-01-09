@@ -9,6 +9,15 @@ export function useMapboxToken() {
   useEffect(() => {
     const fetchToken = async () => {
       try {
+        // First, try to get the token from environment variables (preferred - no network call)
+        const envToken = import.meta.env.VITE_MAPBOX_PUBLIC_TOKEN;
+        if (envToken) {
+          setToken(envToken);
+          setIsLoading(false);
+          return;
+        }
+
+        // Fallback: fetch from edge function if env var not set
         const { data, error } = await supabase.functions.invoke('get-mapbox-token');
         
         if (error) {
