@@ -210,7 +210,9 @@ export type Database = {
           event_type: string
           id: string
           image_url: string | null
+          invite_code: string | null
           is_barhop: boolean | null
+          is_quick_rally: boolean | null
           location_lat: number | null
           location_lng: number | null
           location_name: string | null
@@ -227,7 +229,9 @@ export type Database = {
           event_type?: string
           id?: string
           image_url?: string | null
+          invite_code?: string | null
           is_barhop?: boolean | null
+          is_quick_rally?: boolean | null
           location_lat?: number | null
           location_lng?: number | null
           location_name?: string | null
@@ -244,7 +248,9 @@ export type Database = {
           event_type?: string
           id?: string
           image_url?: string | null
+          invite_code?: string | null
           is_barhop?: boolean | null
+          is_quick_rally?: boolean | null
           location_lat?: number | null
           location_lng?: number | null
           location_name?: string | null

@@ -41,6 +41,9 @@ export function useEvent(eventId: string | undefined) {
             share_location,
             current_lat,
             current_lng,
+            going_home_at,
+            destination_name,
+            arrived_home,
             profile:profiles(id, display_name, avatar_url)
           ),
           stops:barhop_stops(*)
@@ -59,7 +62,7 @@ export function useCreateEvent() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (event: EventInsert) => {
+    mutationFn: async (event: EventInsert & { is_quick_rally?: boolean }) => {
       const { data, error } = await supabase
         .from('events')
         .insert(event)
@@ -135,5 +138,27 @@ export function useUpdateEvent() {
       queryClient.invalidateQueries({ queryKey: ['event', variables.eventId] });
       queryClient.invalidateQueries({ queryKey: ['events'] });
     }
+  });
+}
+
+export function useEventByInviteCode(inviteCode: string | undefined) {
+  return useQuery({
+    queryKey: ['event-invite', inviteCode],
+    queryFn: async () => {
+      if (!inviteCode) return null;
+      const { data, error } = await supabase
+        .from('events')
+        .select(`
+          *,
+          creator:profiles!events_creator_id_fkey(id, display_name, avatar_url),
+          attendees:event_attendees(count)
+        `)
+        .eq('invite_code', inviteCode.toUpperCase())
+        .maybeSingle();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!inviteCode && inviteCode.length >= 6
   });
 }
