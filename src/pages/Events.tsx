@@ -1,14 +1,15 @@
 import { BottomNav } from '@/components/layout/BottomNav';
 import { EventCard } from '@/components/events/EventCard';
 import { CreateEventDialog } from '@/components/events/CreateEventDialog';
+import { QuickRallyDialog } from '@/components/events/QuickRallyDialog';
 import { useEvents } from '@/hooks/useEvents';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Zap, Filter, Search } from 'lucide-react';
+import { Zap, Filter, Search, Link2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import rallyLogo from '@/assets/rally-logo.png';
 
@@ -16,6 +17,10 @@ export default function Events() {
   const { user, profile, loading: authLoading } = useAuth();
   const { data: events, isLoading } = useEvents();
   const [searchQuery, setSearchQuery] = useState('');
+  const location = useLocation();
+  
+  // Get preselected squad from navigation state (from Squads page Quick Rally)
+  const preselectedSquad = location.state?.inviteSquad;
 
   // Dev mode - bypass auth
   const isDev = true;
@@ -75,17 +80,36 @@ export default function Events() {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
+          <Button variant="outline" size="icon" className="rounded-full shrink-0" asChild>
+            <Link to="/join">
+              <Link2 className="h-4 w-4" />
+            </Link>
+          </Button>
           <Button variant="outline" size="icon" className="rounded-full shrink-0">
             <Filter className="h-4 w-4" />
           </Button>
         </div>
 
-        {/* Create Event Button - Prominent */}
+        {/* Quick Rally Card - Prominent */}
+        <Card className="bg-gradient-to-r from-secondary to-secondary/80 border-0 shadow-lg">
+          <CardContent className="p-4 flex items-center justify-between">
+            <div>
+              <h3 className="font-bold text-white text-lg font-montserrat flex items-center gap-2">
+                <Zap className="h-5 w-5" />
+                Quick R@lly
+              </h3>
+              <p className="text-white/80 text-sm font-montserrat">Start rallying in seconds</p>
+            </div>
+            <QuickRallyDialog preselectedSquad={preselectedSquad} />
+          </CardContent>
+        </Card>
+
+        {/* Create Event Button */}
         <Card className="bg-gradient-to-r from-primary to-primary/80 border-0 shadow-lg">
           <CardContent className="p-4 flex items-center justify-between">
             <div>
-              <h3 className="font-bold text-white text-lg font-montserrat">Start a Rally</h3>
-              <p className="text-white/80 text-sm font-montserrat">Get your squad together</p>
+              <h3 className="font-bold text-white text-lg font-montserrat">Plan a Rally</h3>
+              <p className="text-white/80 text-sm font-montserrat">Schedule for later</p>
             </div>
             <CreateEventDialog />
           </CardContent>
@@ -118,7 +142,7 @@ export default function Events() {
               </div>
               <h3 className="text-lg font-bold mb-2 text-rally-dark font-montserrat">No rally yet</h3>
               <p className="text-muted-foreground mb-6 font-montserrat">Be the first to start one!</p>
-              <CreateEventDialog />
+              <QuickRallyDialog />
             </CardContent>
           </Card>
         )}

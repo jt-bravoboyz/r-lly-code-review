@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, Navigate, Link } from 'react-router-dom';
-import { ArrowLeft, Calendar, MapPin, Users, Beer, Share2, Check, X, MessageCircle, Navigation, Home, Plus } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Users, Beer, Share2, Check, X, MessageCircle, Navigation, Home, Plus, Copy, Zap } from 'lucide-react';
 import { format } from 'date-fns';
 import { Header } from '@/components/layout/Header';
 import { BottomNav } from '@/components/layout/BottomNav';
@@ -12,6 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useEvent, useJoinEvent, useLeaveEvent, useUpdateEvent } from '@/hooks/useEvents';
 import { useRides } from '@/hooks/useRides';
 import { useAuth } from '@/hooks/useAuth';
@@ -36,6 +37,7 @@ export default function EventDetail() {
   const joinEvent = useJoinEvent();
   const leaveEvent = useLeaveEvent();
   const updateEvent = useUpdateEvent();
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
 
   // Dev mode - bypass auth
   const isDev = true;
@@ -128,12 +130,68 @@ export default function EventDetail() {
 
           <div className="flex items-start justify-between gap-4">
             <div>
-              <Badge variant="outline" className="mb-2">{event.event_type}</Badge>
+              <div className="flex items-center gap-2 mb-2">
+                <Badge variant="outline">{event.event_type}</Badge>
+                {event.is_quick_rally && (
+                  <Badge className="bg-secondary/20 text-secondary border-0">
+                    <Zap className="h-3 w-3 mr-1" />
+                    Quick
+                  </Badge>
+                )}
+              </div>
               <h1 className="text-2xl font-bold">{event.title}</h1>
             </div>
-            <Button variant="ghost" size="icon">
-              <Share2 className="h-5 w-5" />
-            </Button>
+            <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Share2 className="h-5 w-5" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Share This Rally</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="text-center space-y-2">
+                    <p className="text-sm text-muted-foreground">Invite Code</p>
+                    <div className="bg-muted rounded-xl p-4">
+                      <p className="text-3xl font-bold tracking-widest font-montserrat text-primary">
+                        {event.invite_code || 'N/A'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => {
+                        navigator.clipboard.writeText(`${window.location.origin}/join/${event.invite_code}`);
+                        toast.success('Link copied!');
+                      }}
+                    >
+                      <Copy className="h-4 w-4 mr-2" />
+                      Copy Link
+                    </Button>
+                    <Button 
+                      onClick={async () => {
+                        if (navigator.share) {
+                          await navigator.share({
+                            title: `Join ${event.title}`,
+                            text: `Join my R@lly! Code: ${event.invite_code}`,
+                            url: `${window.location.origin}/join/${event.invite_code}`,
+                          });
+                        } else {
+                          navigator.clipboard.writeText(`${window.location.origin}/join/${event.invite_code}`);
+                          toast.success('Link copied!');
+                        }
+                      }}
+                    >
+                      <Share2 className="h-4 w-4 mr-2" />
+                      Share
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
 
           {event.description && (
