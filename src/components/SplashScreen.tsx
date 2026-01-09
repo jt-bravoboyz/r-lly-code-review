@@ -10,11 +10,11 @@ export function SplashScreen({ onComplete, duration = 2500 }: SplashScreenProps)
   const [phase, setPhase] = useState<'enter' | 'wave' | 'exit'>('enter');
 
   useEffect(() => {
-    // Phase 1: Enter animation (0-500ms)
-    const enterTimer = setTimeout(() => setPhase('wave'), 500);
+    // Phase 1: Enter animation (0-400ms)
+    const enterTimer = setTimeout(() => setPhase('wave'), 400);
     
-    // Phase 2: Wave animation (500ms - duration-500ms)
-    const exitTimer = setTimeout(() => setPhase('exit'), duration - 500);
+    // Phase 2: Wave animation (400ms - duration-400ms)
+    const exitTimer = setTimeout(() => setPhase('exit'), duration - 400);
     
     // Phase 3: Exit and complete
     const completeTimer = setTimeout(onComplete, duration);
@@ -28,86 +28,59 @@ export function SplashScreen({ onComplete, duration = 2500 }: SplashScreenProps)
 
   return (
     <div 
-      className={`fixed inset-0 z-50 flex flex-col items-center justify-center bg-background transition-opacity duration-500 ${
+      className={`fixed inset-0 z-50 flex flex-col items-center justify-center bg-primary transition-opacity duration-400 ${
         phase === 'exit' ? 'opacity-0' : 'opacity-100'
       }`}
     >
-      {/* Background Effects */}
+      {/* Decorative pill shapes - matching Figma */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {/* Radial glow */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] gradient-radial opacity-50" />
-        
-        {/* Animated rings */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-          <div className={`w-48 h-48 rounded-full border border-primary/20 transition-all duration-1000 ${phase !== 'enter' ? 'scale-100 opacity-100' : 'scale-50 opacity-0'}`} />
-        </div>
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-          <div className={`w-72 h-72 rounded-full border border-primary/10 transition-all duration-1000 delay-200 ${phase !== 'enter' ? 'scale-100 opacity-100' : 'scale-50 opacity-0'}`} />
-        </div>
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-          <div className={`w-96 h-96 rounded-full border border-primary/5 transition-all duration-1000 delay-300 ${phase !== 'enter' ? 'scale-100 opacity-100' : 'scale-50 opacity-0'}`} />
-        </div>
-        
-        {/* Floating particles */}
-        <div className="absolute top-1/4 left-1/4 w-2 h-2 rounded-full bg-primary/40 animate-float" />
-        <div className="absolute top-1/3 right-1/4 w-3 h-3 rounded-full bg-primary/30 animate-float-delayed" />
-        <div className="absolute bottom-1/3 left-1/3 w-2 h-2 rounded-full bg-primary/35 animate-float" />
-        <div className="absolute bottom-1/4 right-1/3 w-2 h-2 rounded-full bg-primary/25 animate-float-delayed" />
+        {/* Top decorative pills */}
+        <div className="absolute w-12 h-80 bg-white/5 rounded-3xl -top-40 left-4 transform -rotate-3" />
+        <div className="absolute w-12 h-80 bg-white/5 rounded-3xl -top-52 left-20 transform rotate-2" />
+        <div className="absolute w-12 h-80 bg-white/5 rounded-3xl -top-28 left-36 transform -rotate-1" />
+        <div className="absolute w-12 h-80 bg-white/5 rounded-3xl -top-40 left-52 transform rotate-3" />
+        <div className="absolute w-12 h-80 bg-white/5 rounded-3xl -top-60 left-68 transform -rotate-2" />
+        <div className="absolute w-12 h-80 bg-white/5 rounded-3xl -top-40 right-4 transform rotate-1" />
       </div>
 
       {/* Main Content */}
       <div className="relative z-10 flex flex-col items-center">
-        {/* Logo with Flag Animation */}
+        {/* Logo with cream circle background - matching Figma */}
         <div 
-          className={`relative transition-all duration-700 ease-out ${
+          className={`relative transition-all duration-600 ease-out ${
             phase === 'enter' ? 'scale-50 opacity-0' : 'scale-100 opacity-100'
           }`}
         >
-          {/* Glow behind logo */}
-          <div className={`absolute inset-0 w-36 h-36 -m-2 rounded-full bg-primary/25 blur-2xl transition-all duration-1000 ${
-            phase === 'wave' ? 'animate-pulse-glow scale-110' : 'scale-100'
-          }`} />
-          
-          {/* Logo with wave animation */}
-          <div className={`relative ${phase === 'wave' ? 'animate-flag-wave' : ''}`}>
-            <img 
-              src={rallyLogo} 
-              alt="R@lly" 
-              className="w-32 h-32 object-contain drop-shadow-2xl"
-            />
+          {/* Cream circle behind logo */}
+          <div className="w-24 h-24 rounded-full bg-rally-cream flex items-center justify-center shadow-xl">
+            {/* Logo with wave animation */}
+            <div className={`relative ${phase === 'wave' ? 'animate-flag-wave' : ''}`}>
+              <img 
+                src={rallyLogo} 
+                alt="R@lly" 
+                className="w-14 h-14 object-contain"
+              />
+            </div>
           </div>
-          
-          {/* Sparkle effects during wave */}
-          {phase === 'wave' && (
-            <>
-              <div className="absolute -top-2 -right-2 w-3 h-3 bg-primary rounded-full animate-sparkle" />
-              <div className="absolute top-4 -right-4 w-2 h-2 bg-primary/70 rounded-full animate-sparkle-delayed" />
-              <div className="absolute -top-4 right-4 w-2 h-2 bg-primary/50 rounded-full animate-sparkle-delayed-2" />
-            </>
-          )}
         </div>
 
-        {/* Text */}
-        <div 
-          className={`mt-6 text-center transition-all duration-700 delay-300 ${
+        {/* R@LLY Text */}
+        <h1 
+          className={`mt-4 text-3xl font-bold text-white tracking-tight transition-all duration-500 delay-100 ${
+            phase === 'enter' ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'
+          }`}
+        >
+          R@LLY
+        </h1>
+
+        {/* Tagline */}
+        <p 
+          className={`mt-4 text-base text-white/90 font-montserrat tracking-wide transition-all duration-500 delay-200 ${
             phase === 'enter' ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'
           } ${phase === 'exit' ? 'opacity-0 -translate-y-4' : ''}`}
         >
-          <p className="text-lg font-medium text-muted-foreground">
-            Rally your crew
-          </p>
-        </div>
-
-        {/* Loading dots */}
-        <div 
-          className={`flex gap-1.5 mt-8 transition-all duration-500 delay-500 ${
-            phase === 'enter' || phase === 'exit' ? 'opacity-0' : 'opacity-100'
-          }`}
-        >
-          <div className="w-2 h-2 rounded-full bg-primary animate-loading-dot" />
-          <div className="w-2 h-2 rounded-full bg-primary animate-loading-dot" style={{ animationDelay: '0.15s' }} />
-          <div className="w-2 h-2 rounded-full bg-primary animate-loading-dot" style={{ animationDelay: '0.3s' }} />
-        </div>
+          READY. SET. RALLY
+        </p>
       </div>
     </div>
   );

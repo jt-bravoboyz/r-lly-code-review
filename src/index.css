@@ -1,41 +1,50 @@
+@import '@fontsource/montserrat/400.css';
+@import '@fontsource/montserrat/500.css';
+@import '@fontsource/montserrat/600.css';
+@import '@fontsource/montserrat/700.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* R@lly App Design System - Vibrant orange nightlife theme */
+/* R@lly App Design System - Matching Figma exactly */
+/* Primary: #F26C15 | Cream: #FFF3E9 | Light accent: #FFD0C2 */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 5%;
+    /* Core backgrounds */
+    --background: 0 0% 98%;
+    --foreground: 0 0% 13%;
 
-    --card: 0 0% 98%;
-    --card-foreground: 0 0% 5%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 13%;
 
-    --popover: 0 0% 98%;
-    --popover-foreground: 0 0% 5%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 13%;
 
-    /* Vibrant R@lly Orange - matching logo */
-    --primary: 27 96% 54%;
+    /* R@lly Orange - #F26C15 = hsl(22, 90%, 52%) */
+    --primary: 22 90% 52%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 8%;
-    --secondary-foreground: 0 0% 100%;
+    /* Light cream background - #FFF3E9 */
+    --secondary: 27 100% 96%;
+    --secondary-foreground: 0 0% 27%;
 
-    --muted: 30 10% 94%;
-    --muted-foreground: 0 0% 40%;
+    --muted: 27 40% 95%;
+    --muted-foreground: 0 0% 45%;
 
-    --accent: 27 100% 48%;
+    --accent: 22 90% 52%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 30 10% 88%;
-    --input: 30 10% 88%;
-    --ring: 27 96% 54%;
+    /* Border matching Figma - light gray */
+    --border: 0 0% 73%;
+    --input: 0 0% 73%;
+    --ring: 22 90% 52%;
 
-    --radius: 0.875rem;
+    --radius: 0.5rem;
 
     --success: 152 76% 45%;
     --success-foreground: 0 0% 100%;
@@ -45,12 +54,12 @@
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 0 0% 20%;
-    --sidebar-primary: 27 96% 54%;
+    --sidebar-primary: 22 90% 52%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 27 100% 95%;
-    --sidebar-accent-foreground: 27 100% 40%;
+    --sidebar-accent: 27 100% 96%;
+    --sidebar-accent-foreground: 22 90% 40%;
     --sidebar-border: 0 0% 90%;
-    --sidebar-ring: 27 96% 54%;
+    --sidebar-ring: 22 90% 52%;
   }
 
   .dark {
@@ -64,7 +73,7 @@
     --popover-foreground: 0 0% 98%;
 
     /* Vibrant R@lly Orange - even brighter in dark mode */
-    --primary: 27 100% 55%;
+    --primary: 22 95% 54%;
     --primary-foreground: 0 0% 0%;
 
     --secondary: 0 0% 12%;
@@ -73,7 +82,7 @@
     --muted: 0 0% 14%;
     --muted-foreground: 0 0% 55%;
 
-    --accent: 27 100% 58%;
+    --accent: 22 95% 56%;
     --accent-foreground: 0 0% 0%;
 
     --destructive: 0 62% 50%;
@@ -81,7 +90,7 @@
 
     --border: 0 0% 16%;
     --input: 0 0% 16%;
-    --ring: 27 100% 55%;
+    --ring: 22 95% 54%;
 
     --success: 152 76% 50%;
     --success-foreground: 0 0% 0%;
@@ -91,12 +100,12 @@
 
     --sidebar-background: 0 0% 5%;
     --sidebar-foreground: 0 0% 90%;
-    --sidebar-primary: 27 100% 55%;
+    --sidebar-primary: 22 95% 54%;
     --sidebar-primary-foreground: 0 0% 0%;
-    --sidebar-accent: 27 100% 12%;
-    --sidebar-accent-foreground: 27 100% 70%;
+    --sidebar-accent: 22 100% 12%;
+    --sidebar-accent-foreground: 22 100% 70%;
     --sidebar-border: 0 0% 16%;
-    --sidebar-ring: 27 100% 55%;
+    --sidebar-ring: 22 95% 54%;
   }
 }
 
@@ -107,8 +116,17 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: 'Montserrat', 'Inter', system-ui, -apple-system, sans-serif;
   }
+
+  /* Custom R@lly colors for direct use */
+  .bg-rally-cream { background-color: #FFF3E9; }
+  .bg-rally-light { background-color: #FFEFEB; }
+  .bg-rally-light-accent { background-color: #FFD0C2; }
+  .text-rally-dark { color: #222222; }
+  .text-rally-gray { color: #444444; }
+  .text-rally-light-gray { color: #666666; }
+  .border-rally-gray { border-color: #737373; }
 }
 
 @layer utilities {
