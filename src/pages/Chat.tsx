@@ -23,7 +23,7 @@ export default function Chat() {
       <main className="container py-6 space-y-6">
         <div>
           <h1 className="text-2xl font-bold">Messages</h1>
-          <p className="text-muted-foreground">Chat with your crew</p>
+          <p className="text-muted-foreground">Chat with your squad</p>
         </div>
 
         <Card>

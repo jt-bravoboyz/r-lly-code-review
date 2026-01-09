@@ -4,13 +4,16 @@ import { RideCard } from '@/components/rides/RideCard';
 import { CreateRideDialog } from '@/components/rides/CreateRideDialog';
 import { DDDisclaimerDialog } from '@/components/rides/DDDisclaimerDialog';
 import { RequestRideDialog } from '@/components/rides/RequestRideDialog';
+import { RideRequestManager } from '@/components/rides/RideRequestManager';
 import { useRides } from '@/hooks/useRides';
 import { useEvents } from '@/hooks/useEvents';
 import { useAuth } from '@/hooks/useAuth';
+import { useAwardDDPoints, POINT_VALUES } from '@/hooks/useRewardPoints';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Car, Shield, Navigation, Users, ChevronRight } from 'lucide-react';
+import { Car, Shield, Navigation, Award } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -25,6 +28,7 @@ export default function Rides() {
   const { data: rides, isLoading } = useRides(selectedEventId);
   const [showDDDisclaimer, setShowDDDisclaimer] = useState(false);
   const [ddAccepted, setDDAccepted] = useState(false);
+  const { awardRideComplete } = useAwardDDPoints();
 
   // Dev mode - bypass auth for preview
   const isDev = true;
@@ -53,6 +57,13 @@ export default function Rides() {
   const handleDDAccept = () => {
     setDDAccepted(true);
   };
+
+  const handleRideComplete = async (rideId: string, passengerId: string) => {
+    await awardRideComplete();
+  };
+
+  // Get my rides (where I'm the driver)
+  const myRides = rides?.filter(r => r.driver?.id === profile?.id) || [];
 
   return (
     <div className="min-h-screen pb-24 bg-background">
@@ -167,7 +178,7 @@ export default function Rides() {
                   </div>
                   <div className="flex-1">
                     <h2 className="text-xl font-bold text-white font-montserrat">Be a R@lly DD</h2>
-                    <p className="text-white/80 text-sm font-montserrat">Help your crew get home safe tonight</p>
+                    <p className="text-white/80 text-sm font-montserrat">Help your squad get home safe tonight</p>
                   </div>
                 </div>
               </CardContent>
@@ -180,9 +191,15 @@ export default function Rides() {
                     <Shield className="h-8 w-8 text-primary" />
                   </div>
                   <h3 className="text-lg font-bold mb-2 text-rally-dark font-montserrat">Become a Designated Driver</h3>
-                  <p className="text-muted-foreground mb-4 text-sm font-montserrat">
-                    Take the pledge to stay sober and help others get home safely. You'll earn reward points for every ride!
+                  <p className="text-muted-foreground mb-2 text-sm font-montserrat">
+                    Take the pledge to stay sober and help others get home safely.
                   </p>
+                  <div className="flex items-center justify-center gap-2 mb-4">
+                    <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
+                      <Award className="h-3 w-3 mr-1" />
+                      Earn {POINT_VALUES.DD_RIDE_COMPLETE} pts per ride
+                    </Badge>
+                  </div>
                   <Button 
                     className="gradient-accent"
                     onClick={() => setShowDDDisclaimer(true)}
@@ -201,7 +218,7 @@ export default function Rides() {
                     </div>
                     <div className="flex-1">
                       <p className="font-semibold text-green-800 font-montserrat">DD Mode Active</p>
-                      <p className="text-sm text-green-600">You're committed to being a safe driver tonight</p>
+                      <p className="text-sm text-green-600">Earn {POINT_VALUES.DD_RIDE_COMPLETE}+ points per completed ride</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -216,6 +233,19 @@ export default function Rides() {
                   </CardContent>
                 </Card>
 
+                {/* Ride Request Manager */}
+                {myRides.length > 0 && (
+                  <>
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-bold text-rally-dark font-montserrat">Ride Requests</h3>
+                    </div>
+                    <RideRequestManager 
+                      rides={myRides} 
+                      onRideComplete={handleRideComplete}
+                    />
+                  </>
+                )}
+
                 {/* My Offered Rides */}
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-bold text-rally-dark font-montserrat">My Ride Offers</h3>
@@ -223,9 +253,9 @@ export default function Rides() {
 
                 {isLoading ? (
                   <Skeleton className="h-32 w-full rounded-2xl" />
-                ) : rides && rides.filter(r => r.driver?.id === profile?.id).length > 0 ? (
+                ) : myRides.length > 0 ? (
                   <div className="space-y-4">
-                    {rides.filter(r => r.driver?.id === profile?.id).map((ride) => (
+                    {myRides.map((ride) => (
                       <RideCard key={ride.id} ride={ride} />
                     ))}
                   </div>

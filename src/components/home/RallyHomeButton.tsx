@@ -96,7 +96,7 @@ export function RallyHomeButton({ eventId, trigger }: RallyHomeButtonProps) {
 
       setIsGoingHome(true);
       toast.success(`You're heading ${destinationType === 'home' ? 'home' : 'to ' + finalAddress}!`, {
-        description: 'Your crew can track your journey 🏠',
+        description: 'Your squad can track your journey 🏠',
         action: {
           label: 'Get Directions',
           onClick: () => {
@@ -134,7 +134,7 @@ export function RallyHomeButton({ eventId, trigger }: RallyHomeButtonProps) {
 
       setHasArrived(true);
       toast.success('You made it! 🎉', {
-        description: 'Your crew knows you arrived safely',
+        description: 'Your squad knows you arrived safely',
       });
     } catch (error) {
       console.error('Error:', error);
@@ -255,7 +255,7 @@ export function RallyHomeButton({ eventId, trigger }: RallyHomeButtonProps) {
 
           <div className="bg-secondary/10 rounded-lg p-3">
             <p className="text-sm text-muted-foreground">
-              📍 Your crew will be able to see when you arrive safely
+              📍 Your squad will be able to see when you arrive safely
             </p>
           </div>
 
