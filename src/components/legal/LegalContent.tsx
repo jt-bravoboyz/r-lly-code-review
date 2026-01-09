@@ -165,46 +165,68 @@ export function CommunityGuidelines() {
 export function AlcoholLiabilityRelease() {
   return (
     <div className="space-y-6">
-      <LegalSection title="Personal Responsibility">
+      <LegalSection title="Acknowledgment of Risks">
         <p>
-          <strong className="text-foreground">Users agree they are responsible for:</strong>
+          <strong className="text-foreground">ALCOHOL CONSUMPTION ACKNOWLEDGMENT:</strong> By using R@lly to coordinate events where alcohol may be present, I hereby acknowledge and understand that the consumption of alcoholic beverages carries inherent risks including, but not limited to, impaired judgment, reduced motor function, health complications, and potential legal consequences.
         </p>
-        <ul className="list-disc pl-5 space-y-1">
-          <li>Their alcohol consumption</li>
-          <li>Their impairment level</li>
-          <li>Their transportation choices</li>
-          <li>Their safety</li>
+      </LegalSection>
+
+      <LegalSection title="Personal Responsibility & Conduct">
+        <p>
+          I understand and acknowledge that:
+        </p>
+        <ul className="list-disc pl-5 space-y-2">
+          <li>I am solely responsible for my alcohol consumption, level of impairment, and all decisions I make while under the influence of alcohol.</li>
+          <li>I am of legal drinking age in my jurisdiction if I choose to consume alcohol.</li>
+          <li>I will monitor my own alcohol intake and make responsible decisions regarding my safety and the safety of others.</li>
+          <li>I will not operate a motor vehicle or engage in any dangerous activities while impaired.</li>
+          <li>I am responsible for arranging safe transportation if I become impaired.</li>
         </ul>
       </LegalSection>
 
-      <LegalSection title="No Supervision">
+      <LegalSection title="No Supervision or Monitoring">
         <p>
-          <strong className="text-foreground">Bravo Boyz LLC does not monitor drinking behavior or supervise in-person drinking activities.</strong>
+          <strong className="text-foreground">R@lly and Bravo Boyz LLC do not monitor, supervise, or control:</strong>
         </p>
+        <ul className="list-disc pl-5 space-y-2">
+          <li>Individual drinking behavior or alcohol consumption levels</li>
+          <li>In-person activities at events coordinated through the app</li>
+          <li>The actions, decisions, or conduct of any user while impaired</li>
+          <li>The safety or sobriety of any event attendee</li>
+        </ul>
       </LegalSection>
 
       <LegalSection title="Assumption of Risk">
         <p>
-          Users assume all risks associated with alcohol including:
+          I voluntarily assume all risks associated with alcohol consumption and events where alcohol is present, including but not limited to:
         </p>
-        <ul className="list-disc pl-5 space-y-1">
-          <li>Injury</li>
-          <li>Accidents</li>
-          <li>Impaired judgment</li>
-          <li>Interactions with impaired individuals</li>
+        <ul className="list-disc pl-5 space-y-2">
+          <li>Personal injury or illness resulting from alcohol consumption</li>
+          <li>Accidents, falls, or physical harm while impaired</li>
+          <li>Impaired judgment leading to poor decision-making</li>
+          <li>Interactions with other impaired individuals</li>
+          <li>Property damage or loss</li>
+          <li>Legal consequences arising from my conduct</li>
         </ul>
       </LegalSection>
 
       <LegalSection title="Release of Liability">
         <p>
-          <strong className="text-foreground">Users release Bravo Boyz LLC from liability for:</strong>
+          <strong className="text-foreground">I hereby release, waive, and forever discharge R@lly, Bravo Boyz LLC, their officers, directors, employees, agents, affiliates, successors, and assigns (collectively, the "Released Parties") from any and all claims, demands, damages, costs, expenses, actions, and causes of action, whether in law or equity, arising out of or related to:</strong>
         </p>
-        <ul className="list-disc pl-5 space-y-1">
-          <li>Alcohol consumption</li>
-          <li>Incidents during travel</li>
-          <li>Injuries during barhopping</li>
-          <li>Actions of impaired users</li>
+        <ul className="list-disc pl-5 space-y-2">
+          <li>My consumption of alcohol at any event coordinated through R@lly</li>
+          <li>Any injury, illness, or harm I suffer while impaired</li>
+          <li>Any incident occurring during barhopping or multi-venue events</li>
+          <li>Actions of other impaired users or event attendees</li>
+          <li>Any transportation-related incidents while impaired</li>
         </ul>
+      </LegalSection>
+
+      <LegalSection title="Indemnification">
+        <p>
+          I agree to indemnify, defend, and hold harmless the Released Parties from and against any and all claims, liabilities, damages, losses, costs, and expenses (including reasonable attorney's fees) arising out of or related to my alcohol consumption, impairment, or any actions I take while under the influence of alcohol during events coordinated through R@lly.
+        </p>
       </LegalSection>
     </div>
   );
@@ -215,45 +237,78 @@ export function RideCoordinationWaiver() {
     <div className="space-y-6">
       <LegalSection title="Service Clarification">
         <p>
-          <strong className="text-foreground">R@lly does not provide transportation.</strong> It only helps users coordinate rides.
+          <strong className="text-foreground">RIDE COORDINATION ACKNOWLEDGMENT:</strong> I understand and acknowledge that R@lly is a coordination platform only. R@lly does NOT provide transportation services, employ drivers, own vehicles, or operate as a transportation company in any capacity.
         </p>
         <p>
-          Bravo Boyz LLC does not verify driving ability, sobriety, or safety of any driver.
+          R@lly merely facilitates communication between users who wish to coordinate rides. All transportation arrangements are made directly between users at their own discretion and risk.
         </p>
+      </LegalSection>
+
+      <LegalSection title="No Driver Verification">
+        <p>
+          <strong className="text-foreground">I understand and acknowledge that Bravo Boyz LLC does NOT verify, screen, or validate:</strong>
+        </p>
+        <ul className="list-disc pl-5 space-y-2">
+          <li>The driving ability, experience, or skill of any user offering rides</li>
+          <li>The sobriety or impairment level of any driver</li>
+          <li>The validity of any driver's license or insurance</li>
+          <li>The safety, condition, or roadworthiness of any vehicle</li>
+          <li>The criminal background or history of any user</li>
+        </ul>
       </LegalSection>
 
       <LegalSection title="User Responsibilities">
         <p>
-          Users are responsible for all transportation decisions. Users agree:
+          I understand and acknowledge that:
         </p>
-        <ul className="list-disc pl-5 space-y-1">
-          <li>Not to ride with impaired drivers</li>
-          <li>To follow all traffic laws</li>
+        <ul className="list-disc pl-5 space-y-2">
+          <li>I am solely responsible for evaluating the safety of any ride I accept or offer.</li>
+          <li>I will not accept rides from drivers who appear impaired, fatigued, or otherwise unfit to drive.</li>
+          <li>I will not offer rides if I am impaired, fatigued, or otherwise unfit to drive safely.</li>
+          <li>I will comply with all applicable traffic laws, regulations, and safety requirements.</li>
+          <li>I am responsible for ensuring I have proper vehicle insurance if offering rides.</li>
+          <li>I will use appropriate safety equipment including seatbelts at all times.</li>
         </ul>
       </LegalSection>
 
       <LegalSection title="Assumption of Risk">
         <p>
-          Users assume all risks related to transportation arranged through the app including:
+          I voluntarily assume all risks associated with ride coordination through R@lly, including but not limited to:
         </p>
-        <ul className="list-disc pl-5 space-y-1">
-          <li>Accidents</li>
-          <li>Injury</li>
-          <li>Unsafe drivers</li>
-          <li>Vehicle issues</li>
+        <ul className="list-disc pl-5 space-y-2">
+          <li>Motor vehicle accidents, collisions, or crashes</li>
+          <li>Personal injury, disability, or death</li>
+          <li>Property damage or loss</li>
+          <li>Rides with impaired, unlicensed, or unsafe drivers</li>
+          <li>Vehicle mechanical failures or breakdowns</li>
+          <li>Delays, route changes, or failure to arrive at destination</li>
+          <li>Criminal acts or misconduct by other users</li>
         </ul>
       </LegalSection>
 
       <LegalSection title="Release of Liability">
         <p>
-          <strong className="text-foreground">Users release Bravo Boyz LLC from liability for:</strong>
+          <strong className="text-foreground">I hereby release, waive, and forever discharge R@lly, Bravo Boyz LLC, their officers, directors, employees, agents, affiliates, successors, and assigns (collectively, the "Released Parties") from any and all claims, demands, damages, costs, expenses, actions, and causes of action, whether in law or equity, arising out of or related to:</strong>
         </p>
-        <ul className="list-disc pl-5 space-y-1">
-          <li>Accidents</li>
-          <li>Delays</li>
-          <li>Driver impairment</li>
-          <li>Injuries connected to ride coordination</li>
+        <ul className="list-disc pl-5 space-y-2">
+          <li>Any accident, injury, or harm occurring during rides coordinated through R@lly</li>
+          <li>The conduct, actions, or negligence of any driver or passenger</li>
+          <li>Driver impairment, recklessness, or violation of traffic laws</li>
+          <li>Vehicle condition, maintenance, or mechanical failures</li>
+          <li>Any delays, cancellations, or failures in transportation</li>
         </ul>
+      </LegalSection>
+
+      <LegalSection title="Indemnification">
+        <p>
+          I agree to indemnify, defend, and hold harmless the Released Parties from and against any and all claims, liabilities, damages, losses, costs, and expenses (including reasonable attorney's fees) arising out of or related to my participation in ride coordination through R@lly, whether as a driver or passenger.
+        </p>
+      </LegalSection>
+
+      <LegalSection title="Acknowledgment">
+        <p>
+          I understand that R@lly and Bravo Boyz LLC provide this platform solely as a means to connect users for ride coordination purposes. <strong className="text-foreground">The Released Parties do not assume any responsibility for the conduct of any driver, the outcome of any ride, or any incident that may occur during transportation arranged through this platform.</strong>
+        </p>
       </LegalSection>
     </div>
   );
