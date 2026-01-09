@@ -186,11 +186,11 @@ export function SplashScreen({ onComplete, duration = 5000 }: SplashScreenProps)
       triggerHaptic();
       setHasTriggeredReady(true);
     }
-    if (elapsed >= 2.20 && !hasTriggeredSet) {
+    if (elapsed >= 2.35 && !hasTriggeredSet) {
       triggerHaptic();
       setHasTriggeredSet(true);
     }
-    if (elapsed >= 3.30 && !hasTriggeredFanfare) {
+    if (elapsed >= 3.55 && !hasTriggeredFanfare) {
       setFanfareParticles(generateFanfareParticles());
       triggerHaptic();
       setHasTriggeredFanfare(true);
@@ -229,8 +229,8 @@ export function SplashScreen({ onComplete, duration = 5000 }: SplashScreenProps)
   // Arc 1: 0 - 1.65s
   const arc1State = getArcState(0, 1.65, ARC1, false);
   
-  // Arc 2: 1.65 - 3.30s
-  const arc2State = getArcState(1.65, 1.65, ARC2, true);
+  // Arc 2: 1.65 - 3.55s (1.9s duration - slower and bigger)
+  const arc2State = getArcState(1.65, 1.9, ARC2, true);
 
   // Add afterimages and sparks
   useEffect(() => {
@@ -277,45 +277,45 @@ export function SplashScreen({ onComplete, duration = 5000 }: SplashScreenProps)
     return { opacity: 1 - easeInCubic(t), scale: 1 + 0.06 * easeInCubic(t) };
   };
 
-  // SET animation: 2.20 - 3.15
+  // SET animation: 2.35 - 3.40 (adjusted for slower arc 2)
   const getSetStyle = () => {
-    if (elapsed < 2.20 || elapsed > 3.15) return { opacity: 0, scale: 0.86 };
-    if (elapsed < 2.45) {
-      const t = (elapsed - 2.20) / 0.25;
+    if (elapsed < 2.35 || elapsed > 3.40) return { opacity: 0, scale: 0.86 };
+    if (elapsed < 2.60) {
+      const t = (elapsed - 2.35) / 0.25;
       return { opacity: easeOutCubic(t), scale: 0.86 + 0.14 * easeOutCubic(t) };
     }
-    if (elapsed < 2.85) {
+    if (elapsed < 3.05) {
       return { opacity: 1, scale: 1 };
     }
-    const t = (elapsed - 2.85) / 0.30;
+    const t = (elapsed - 3.05) / 0.35;
     return { opacity: 1 - easeInCubic(t), scale: 1 + 0.07 * easeInCubic(t) };
   };
 
-  // Logo animation: 3.30 - 5.00
+  // Logo animation: 3.55 - 5.25
   const getLogoStyle = () => {
-    if (elapsed < 3.30) return { opacity: 0, scale: 0.94 };
-    if (elapsed < 3.55) {
-      const t = (elapsed - 3.30) / 0.25;
+    if (elapsed < 3.55) return { opacity: 0, scale: 0.94 };
+    if (elapsed < 3.80) {
+      const t = (elapsed - 3.55) / 0.25;
       return { opacity: easeOutCubic(t), scale: 0.94 + 0.06 * easeOutCubic(t) };
     }
-    if (elapsed < 4.25) {
+    if (elapsed < 4.50) {
       return { opacity: 1, scale: 1 };
     }
-    const t = (elapsed - 4.25) / 0.75;
+    const t = (elapsed - 4.50) / 0.75;
     return { opacity: 1, scale: 1 + 0.15 * easeOutCubic(t) };
   };
 
-  // Glow pulse: 3.70 - 3.95
+  // Glow pulse: 3.95 - 4.20
   const getGlowPulseOpacity = () => {
-    if (elapsed < 3.70 || elapsed > 3.95) return 0;
-    const t = (elapsed - 3.70) / 0.25;
+    if (elapsed < 3.95 || elapsed > 4.20) return 0;
+    const t = (elapsed - 3.95) / 0.25;
     return Math.sin(t * Math.PI) * 0.6;
   };
 
-  // Exit crossfade: 4.25 - 5.00
+  // Exit crossfade: 4.75 - 5.25
   const getExitOpacity = () => {
-    if (elapsed < 4.50) return 1;
-    return 1 - easeInCubic((elapsed - 4.50) / 0.50);
+    if (elapsed < 4.75) return 1;
+    return 1 - easeInCubic((elapsed - 4.75) / 0.50);
   };
 
   const readyStyle = getReadyStyle();
@@ -327,8 +327,8 @@ export function SplashScreen({ onComplete, duration = 5000 }: SplashScreenProps)
   const renderComet = (state: ReturnType<typeof getArcState>, isSecondArc: boolean) => {
     if (!state || state.t >= 1) return null;
     const { headPos, tailStartPos } = state;
-    const headSize = isSecondArc ? 11 : 10;
-    const glowSize = isSecondArc ? 28.6 : 26;
+    const headSize = isSecondArc ? 14 : 10;
+    const glowSize = isSecondArc ? 36 : 26;
 
     return (
       <g>
@@ -354,7 +354,7 @@ export function SplashScreen({ onComplete, duration = 5000 }: SplashScreenProps)
           x2={`${headPos.x}%`}
           y2={`${headPos.y}%`}
           stroke={`url(#tailGradient${isSecondArc ? '2' : '1'})`}
-          strokeWidth={isSecondArc ? 18 : 14}
+          strokeWidth={isSecondArc ? 24 : 14}
           strokeLinecap="round"
           style={{ filter: "blur(28px)" }}
         />
