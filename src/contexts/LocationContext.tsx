@@ -46,6 +46,12 @@ interface IndoorInfo {
   beaconCount: number;
 }
 
+export interface AccuracyDataPoint {
+  timestamp: number;
+  accuracy: number;
+  source: 'gps' | 'wifi' | 'network' | 'indoor' | 'hybrid';
+}
+
 interface LocationContextType {
   currentPosition: Position | null;
   compassHeading: number | null;
@@ -77,6 +83,9 @@ interface LocationContextType {
   // Environment detection
   environmentInfo: EnvironmentInfo;
   isWifiPositioningActive: boolean;
+  // Accuracy history
+  accuracyHistory: AccuracyDataPoint[];
+  clearAccuracyHistory: () => void;
 }
 
 const LocationContext = createContext<LocationContextType | null>(null);
@@ -129,6 +138,7 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
   const [memberLocations, setMemberLocations] = useState<Map<string, MemberLocation>>(new Map());
   const [signalQuality, setSignalQuality] = useState<'good' | 'fair' | 'poor'>('good');
   const [selectedMemberForNav, setSelectedMemberForNav] = useState<MemberLocation | null>(null);
+  const [accuracyHistory, setAccuracyHistory] = useState<AccuracyDataPoint[]>([]);
   
   const watchIdRef = useRef<number | null>(null);
   const eventIdRef = useRef<string | null>(null);
@@ -324,6 +334,17 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
       };
 
       setCurrentPosition(newPosition);
+      
+      // Add to accuracy history (keep last 100 readings)
+      setAccuracyHistory(prev => {
+        const newHistory = [...prev, {
+          timestamp: Date.now(),
+          accuracy: finalAccuracy,
+          source: bestSource,
+        }];
+        // Keep last 100 readings (roughly 5-10 minutes at normal update rates)
+        return newHistory.slice(-100);
+      });
 
       // Update database with throttling
       await updateDatabase(finalLat, finalLng);
@@ -499,6 +520,11 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
     }
   }, [isTracking]);
 
+  // Clear accuracy history
+  const clearAccuracyHistory = useCallback(() => {
+    setAccuracyHistory([]);
+  }, []);
+
   return (
     <LocationContext.Provider
       value={{
@@ -532,6 +558,9 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
         // Environment detection
         environmentInfo: wifiPositioning.environmentInfo,
         isWifiPositioningActive: wifiPositioning.isScanning,
+        // Accuracy history
+        accuracyHistory,
+        clearAccuracyHistory,
       }}
     >
       {children}

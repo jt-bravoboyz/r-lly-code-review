@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, Navigation, Compass, Target, MapPin, Building2, TreePine, Wifi, Signal, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Navigation, Compass, Target, MapPin, Building2, TreePine, Wifi, Signal, AlertTriangle, CheckCircle2, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -7,6 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { useLocationContext } from '@/contexts/LocationContext';
 import { TurnByTurnNav } from './TurnByTurnNav';
 import { AccuracyIndicator, EnvironmentBadge } from '@/components/tracking/AccuracyIndicator';
+import { PoorSignalAlert } from '@/components/tracking/PoorSignalAlert';
+import { AccuracyHistoryChart } from '@/components/tracking/AccuracyHistoryChart';
 
 interface MemberLocation {
   profileId: string;
@@ -26,7 +28,8 @@ interface FindFriendViewProps {
 
 export function FindFriendView({ member, onClose }: FindFriendViewProps) {
   const [showTurnByTurn, setShowTurnByTurn] = useState(false);
-  const { compassHeading, currentPosition, signalQuality, environmentInfo } = useLocationContext();
+  const [showHistory, setShowHistory] = useState(false);
+  const { compassHeading, currentPosition, signalQuality, environmentInfo, accuracyHistory } = useLocationContext();
 
   // Calculate the arrow rotation relative to device heading
   const getArrowRotation = () => {
@@ -174,10 +177,20 @@ export function FindFriendView({ member, onClose }: FindFriendViewProps) {
           </Card>
         )}
 
+        {/* Poor signal alert */}
+        {currentPosition && (
+          <PoorSignalAlert
+            accuracy={currentPosition.accuracy}
+            isIndoor={environmentInfo.isIndoor}
+            indoorConfidence={environmentInfo.confidence}
+            signalQuality={signalQuality}
+          />
+        )}
+
         {/* Location accuracy with enhanced display */}
         {currentPosition && (
           <Card>
-            <CardContent className="p-4">
+            <CardContent className="p-4 space-y-3">
               <AccuracyIndicator
                 accuracy={currentPosition.accuracy}
                 signalQuality={signalQuality}
@@ -186,6 +199,34 @@ export function FindFriendView({ member, onClose }: FindFriendViewProps) {
                 source={currentPosition.source}
                 showDetails={true}
               />
+              
+              {/* Toggle accuracy history */}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full h-8 text-xs"
+                onClick={() => setShowHistory(!showHistory)}
+              >
+                {showHistory ? (
+                  <>
+                    <ChevronUp className="h-3 w-3 mr-1" />
+                    Hide signal history
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="h-3 w-3 mr-1" />
+                    Show signal history
+                  </>
+                )}
+              </Button>
+              
+              {showHistory && (
+                <AccuracyHistoryChart 
+                  data={accuracyHistory}
+                  showTitle={false}
+                  height={100}
+                />
+              )}
             </CardContent>
           </Card>
         )}
