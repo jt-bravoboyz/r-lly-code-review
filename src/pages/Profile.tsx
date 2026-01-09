@@ -94,7 +94,7 @@ export default function Profile() {
             <CardContent className="p-4 text-center">
               <Users className="h-5 w-5 text-primary mx-auto mb-1" />
               <div className="text-lg font-bold">0</div>
-              <div className="text-xs text-muted-foreground">Rallies</div>
+              <div className="text-xs text-muted-foreground">Rally</div>
             </CardContent>
           </Card>
           <Card className="card-rally">
