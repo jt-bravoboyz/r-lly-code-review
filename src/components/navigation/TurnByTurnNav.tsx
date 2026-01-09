@@ -47,12 +47,13 @@ export function TurnByTurnNav({ target, onClose }: TurnByTurnNavProps) {
   const [isFollowing, setIsFollowing] = useState(true);
   const [mapInitialized, setMapInitialized] = useState(false);
   const [triggeredAlerts, setTriggeredAlerts] = useState<Set<number>>(new Set());
+  const [pulseAlert, setPulseAlert] = useState<{ label: string; color: string } | null>(null);
 
   // Proximity thresholds in meters (50ft ≈ 15m, 20ft ≈ 6m, 10ft ≈ 3m)
   const PROXIMITY_ALERTS = [
-    { distance: 15, label: '50 feet', vibrationPattern: [100] },
-    { distance: 6, label: '20 feet', vibrationPattern: [100, 50, 100] },
-    { distance: 3, label: '10 feet', vibrationPattern: [100, 50, 100, 50, 200] },
+    { distance: 15, label: '50 feet', vibrationPattern: [100], color: 'bg-yellow-500' },
+    { distance: 6, label: '20 feet', vibrationPattern: [100, 50, 100], color: 'bg-orange-500' },
+    { distance: 3, label: '10 feet', vibrationPattern: [100, 50, 100, 50, 200], color: 'bg-green-500' },
   ];
 
   // Trigger haptic feedback
@@ -285,6 +286,10 @@ export function TurnByTurnNav({ target, onClose }: TurnByTurnNavProps) {
           // Trigger haptic feedback
           triggerHaptic(alert.vibrationPattern);
           
+          // Show visual pulse
+          setPulseAlert({ label: alert.label, color: alert.color });
+          setTimeout(() => setPulseAlert(null), 2000);
+          
           // Announce proximity
           speak(`${target.displayName} is within ${alert.label}!`);
           toast.success(`${target.displayName} is within ${alert.label}!`, {
@@ -349,6 +354,18 @@ export function TurnByTurnNav({ target, onClose }: TurnByTurnNavProps) {
 
   return (
     <div className="fixed inset-0 z-50 bg-background">
+      {/* Proximity pulse overlay */}
+      {pulseAlert && (
+        <div className="absolute inset-0 z-[60] pointer-events-none animate-pulse">
+          <div className={`absolute inset-0 ${pulseAlert.color} opacity-30`} />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className={`${pulseAlert.color} text-white px-8 py-4 rounded-2xl text-2xl font-bold font-montserrat shadow-2xl animate-bounce`}>
+              {pulseAlert.label} away!
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* Map */}
       <div ref={mapContainer} className="absolute inset-0" />
       
