@@ -201,6 +201,52 @@ export type Database = {
           },
         ]
       }
+      event_cohosts: {
+        Row: {
+          added_at: string | null
+          added_by: string | null
+          event_id: string
+          id: string
+          profile_id: string
+        }
+        Insert: {
+          added_at?: string | null
+          added_by?: string | null
+          event_id: string
+          id?: string
+          profile_id: string
+        }
+        Update: {
+          added_at?: string | null
+          added_by?: string | null
+          event_id?: string
+          id?: string
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_cohosts_added_by_fkey"
+            columns: ["added_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_cohosts_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_cohosts_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       events: {
         Row: {
           created_at: string | null
@@ -359,6 +405,7 @@ export type Database = {
         Row: {
           avatar_url: string | null
           badges: string[] | null
+          bio: string | null
           created_at: string | null
           current_lat: number | null
           current_lng: number | null
@@ -375,6 +422,7 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           badges?: string[] | null
+          bio?: string | null
           created_at?: string | null
           current_lat?: number | null
           current_lng?: number | null
@@ -391,6 +439,7 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           badges?: string[] | null
+          bio?: string | null
           created_at?: string | null
           current_lat?: number | null
           current_lng?: number | null
