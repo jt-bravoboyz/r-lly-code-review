@@ -14,7 +14,482 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      barhop_stops: {
+        Row: {
+          address: string | null
+          arrived_at: string | null
+          created_at: string | null
+          departed_at: string | null
+          eta: string | null
+          event_id: string
+          id: string
+          lat: number | null
+          lng: number | null
+          name: string
+          stop_order: number
+        }
+        Insert: {
+          address?: string | null
+          arrived_at?: string | null
+          created_at?: string | null
+          departed_at?: string | null
+          eta?: string | null
+          event_id: string
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          name: string
+          stop_order: number
+        }
+        Update: {
+          address?: string | null
+          arrived_at?: string | null
+          created_at?: string | null
+          departed_at?: string | null
+          eta?: string | null
+          event_id?: string
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          name?: string
+          stop_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "barhop_stops_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_participants: {
+        Row: {
+          chat_id: string
+          id: string
+          joined_at: string | null
+          profile_id: string
+        }
+        Insert: {
+          chat_id: string
+          id?: string
+          joined_at?: string | null
+          profile_id: string
+        }
+        Update: {
+          chat_id?: string
+          id?: string
+          joined_at?: string | null
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_participants_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "chats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_participants_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chats: {
+        Row: {
+          created_at: string | null
+          event_id: string | null
+          id: string
+          is_group: boolean | null
+          name: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_id?: string | null
+          id?: string
+          is_group?: boolean | null
+          name?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          event_id?: string | null
+          id?: string
+          is_group?: boolean | null
+          name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chats_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_attendees: {
+        Row: {
+          current_lat: number | null
+          current_lng: number | null
+          event_id: string
+          id: string
+          joined_at: string | null
+          last_location_update: string | null
+          profile_id: string
+          share_location: boolean | null
+          status: string | null
+        }
+        Insert: {
+          current_lat?: number | null
+          current_lng?: number | null
+          event_id: string
+          id?: string
+          joined_at?: string | null
+          last_location_update?: string | null
+          profile_id: string
+          share_location?: boolean | null
+          status?: string | null
+        }
+        Update: {
+          current_lat?: number | null
+          current_lng?: number | null
+          event_id?: string
+          id?: string
+          joined_at?: string | null
+          last_location_update?: string | null
+          profile_id?: string
+          share_location?: boolean | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_attendees_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_attendees_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      events: {
+        Row: {
+          created_at: string | null
+          creator_id: string
+          description: string | null
+          end_time: string | null
+          event_type: string
+          id: string
+          image_url: string | null
+          is_barhop: boolean | null
+          location_lat: number | null
+          location_lng: number | null
+          location_name: string | null
+          max_attendees: number | null
+          start_time: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          creator_id: string
+          description?: string | null
+          end_time?: string | null
+          event_type?: string
+          id?: string
+          image_url?: string | null
+          is_barhop?: boolean | null
+          location_lat?: number | null
+          location_lng?: number | null
+          location_name?: string | null
+          max_attendees?: number | null
+          start_time: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          creator_id?: string
+          description?: string | null
+          end_time?: string | null
+          event_type?: string
+          id?: string
+          image_url?: string | null
+          is_barhop?: boolean | null
+          location_lat?: number | null
+          location_lng?: number | null
+          location_name?: string | null
+          max_attendees?: number | null
+          start_time?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "events_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          chat_id: string
+          content: string
+          created_at: string | null
+          id: string
+          sender_id: string
+        }
+        Insert: {
+          chat_id: string
+          content: string
+          created_at?: string | null
+          id?: string
+          sender_id: string
+        }
+        Update: {
+          chat_id?: string
+          content?: string
+          created_at?: string | null
+          id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "chats"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          body: string | null
+          created_at: string | null
+          data: Json | null
+          id: string
+          profile_id: string
+          read: boolean | null
+          title: string
+          type: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string | null
+          data?: Json | null
+          id?: string
+          profile_id: string
+          read?: boolean | null
+          title: string
+          type: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string | null
+          data?: Json | null
+          id?: string
+          profile_id?: string
+          read?: boolean | null
+          title?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          badges: string[] | null
+          created_at: string | null
+          current_lat: number | null
+          current_lng: number | null
+          display_name: string | null
+          home_address: string | null
+          id: string
+          last_location_update: string | null
+          location_sharing_enabled: boolean | null
+          phone: string | null
+          reward_points: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          badges?: string[] | null
+          created_at?: string | null
+          current_lat?: number | null
+          current_lng?: number | null
+          display_name?: string | null
+          home_address?: string | null
+          id?: string
+          last_location_update?: string | null
+          location_sharing_enabled?: boolean | null
+          phone?: string | null
+          reward_points?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          badges?: string[] | null
+          created_at?: string | null
+          current_lat?: number | null
+          current_lng?: number | null
+          display_name?: string | null
+          home_address?: string | null
+          id?: string
+          last_location_update?: string | null
+          location_sharing_enabled?: boolean | null
+          phone?: string | null
+          reward_points?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ride_passengers: {
+        Row: {
+          id: string
+          passenger_id: string
+          pickup_lat: number | null
+          pickup_lng: number | null
+          pickup_location: string | null
+          requested_at: string | null
+          ride_id: string
+          status: string | null
+        }
+        Insert: {
+          id?: string
+          passenger_id: string
+          pickup_lat?: number | null
+          pickup_lng?: number | null
+          pickup_location?: string | null
+          requested_at?: string | null
+          ride_id: string
+          status?: string | null
+        }
+        Update: {
+          id?: string
+          passenger_id?: string
+          pickup_lat?: number | null
+          pickup_lng?: number | null
+          pickup_location?: string | null
+          requested_at?: string | null
+          ride_id?: string
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ride_passengers_passenger_id_fkey"
+            columns: ["passenger_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ride_passengers_ride_id_fkey"
+            columns: ["ride_id"]
+            isOneToOne: false
+            referencedRelation: "rides"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rides: {
+        Row: {
+          available_seats: number | null
+          created_at: string | null
+          departure_time: string | null
+          destination: string | null
+          destination_lat: number | null
+          destination_lng: number | null
+          driver_id: string
+          event_id: string | null
+          id: string
+          pickup_lat: number | null
+          pickup_lng: number | null
+          pickup_location: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          available_seats?: number | null
+          created_at?: string | null
+          departure_time?: string | null
+          destination?: string | null
+          destination_lat?: number | null
+          destination_lng?: number | null
+          driver_id: string
+          event_id?: string | null
+          id?: string
+          pickup_lat?: number | null
+          pickup_lng?: number | null
+          pickup_location?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          available_seats?: number | null
+          created_at?: string | null
+          departure_time?: string | null
+          destination?: string | null
+          destination_lat?: number | null
+          destination_lng?: number | null
+          driver_id?: string
+          event_id?: string | null
+          id?: string
+          pickup_lat?: number | null
+          pickup_lng?: number | null
+          pickup_location?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rides_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rides_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
