@@ -18,6 +18,7 @@ import Notifications from "./pages/Notifications";
 import Squads from "./pages/Squads";
 import Achievements from "./pages/Achievements";
 import JoinRally from "./pages/JoinRally";
+import JoinSquad from "./pages/JoinSquad";
 import Legal from "./pages/Legal";
 import Settings from "./pages/Settings";
 import SettingsPreview from "./pages/SettingsPreview";
@@ -53,7 +54,7 @@ const App = () => (
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/settings-preview" element={<SettingsPreview />} />
                 <Route path="/app-flowchart" element={<AppFlowchart />} />
-                <Route path="/join-squad/:code" element={<Squads />} />
+                <Route path="/join-squad/:code" element={<JoinSquad />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>

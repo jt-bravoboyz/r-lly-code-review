@@ -30,6 +30,7 @@ import { BarHopStopsMap } from '@/components/tracking/BarHopStopsMap';
 import { BarHopControls } from '@/components/events/BarHopControls';
 import { BarHopStopManager } from '@/components/events/BarHopStopManager';
 import { useEventRealtime } from '@/hooks/useEventRealtime';
+import { useBarHopStopsRealtime } from '@/hooks/useBarHopStopsRealtime';
 import { toast } from 'sonner';
 
 export default function EventDetail() {
@@ -38,6 +39,7 @@ export default function EventDetail() {
   const { data: event, isLoading } = useEvent(id);
   const { data: rides } = useRides(id);
   const { updates } = useEventRealtime(id);
+  useBarHopStopsRealtime(id); // Real-time updates for bar hop stops
   const joinEvent = useJoinEvent();
   const leaveEvent = useLeaveEvent();
   const updateEvent = useUpdateEvent();
