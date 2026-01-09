@@ -177,7 +177,7 @@ export function RallyHomeButton({ eventId, trigger }: RallyHomeButtonProps) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger || (
-          <Button className="w-full bg-secondary hover:bg-secondary/90 rounded-full font-montserrat h-14 text-lg">
+          <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white rounded-full font-montserrat h-14 text-lg shadow-lg shadow-orange-500/30">
             <Home className="h-5 w-5 mr-2" />
             I'm Going Home
           </Button>
