@@ -81,8 +81,8 @@ const documentConfig: Record<LegalDocumentType, {
     icon: Wine,
     iconBg: 'bg-amber-500/10',
     content: AlcoholLiabilityRelease,
-    acceptanceText: 'I accept full responsibility for my alcohol consumption, impairment level, and safety.',
-    acknowledgmentText: 'I release Bravo Boyz LLC from all liability related to alcohol consumption and its effects.',
+    acceptanceText: 'I have read and understand the terms above. I accept full responsibility for my alcohol consumption, impairment level, transportation choices, and personal safety. I voluntarily assume all risks associated with alcohol.',
+    acknowledgmentText: 'I hereby release, waive, and forever discharge R@lly, Bravo Boyz LLC, and all Released Parties from any and all claims, damages, or liability arising from my alcohol consumption or impairment.',
   },
   ride: {
     title: 'Ride Coordination Waiver',
@@ -90,8 +90,8 @@ const documentConfig: Record<LegalDocumentType, {
     icon: Car,
     iconBg: 'bg-cyan-500/10',
     content: RideCoordinationWaiver,
-    acceptanceText: 'I understand that R@lly does not provide transportation and assume all risks related to ride coordination.',
-    acknowledgmentText: 'I release Bravo Boyz LLC from all liability for accidents, injuries, or issues connected to ride coordination.',
+    acceptanceText: 'I have read and understand the terms above. I acknowledge that R@lly does not provide transportation and I assume all risks related to ride coordination, including accidents, injury, or harm.',
+    acknowledgmentText: 'I hereby release, waive, and forever discharge R@lly, Bravo Boyz LLC, and all Released Parties from any and all claims, damages, or liability arising from rides coordinated through this platform.',
   },
   acceptance: {
     title: 'Acceptance of Policies',
