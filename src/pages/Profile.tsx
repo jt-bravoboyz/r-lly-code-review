@@ -67,17 +67,15 @@ export default function Profile() {
                 <h2 className="text-xl font-bold">{profile?.display_name || 'Anonymous'}</h2>
                 <p className="text-sm text-muted-foreground">{user.email}</p>
                 
-                {profile?.reward_points !== undefined && profile.reward_points > 0 && (
-                  <div 
-                    className="flex items-center gap-2 mt-2 cursor-pointer"
-                    onClick={() => navigate('/achievements')}
-                  >
-                    <div className="badge-rally">
-                      <Award className="h-3 w-3" />
-                      <span>{profile.reward_points} points</span>
-                    </div>
+                <div 
+                  className="flex items-center gap-2 mt-2 cursor-pointer"
+                  onClick={() => navigate('/achievements')}
+                >
+                  <div className="badge-rally">
+                    <Award className="h-3 w-3" />
+                    <span>{profile?.reward_points || 0} points</span>
                   </div>
-                )}
+                </div>
               </div>
             </div>
 
