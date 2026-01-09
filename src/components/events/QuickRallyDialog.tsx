@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Zap, MapPin, Copy, Share2, Users, Beer, Check } from 'lucide-react';
+import { Zap, MapPin, Copy, Share2, Users, Beer, Check, PartyPopper } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -17,6 +17,7 @@ import { useNavigate } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useConfetti } from '@/hooks/useConfetti';
 
 const quickRallySchema = z.object({
   title: z.string().min(1, 'Give your rally a name'),
@@ -43,6 +44,7 @@ export function QuickRallyDialog({ trigger, preselectedSquad }: QuickRallyDialog
   const createEvent = useCreateEvent();
   const joinEvent = useJoinEvent();
   const navigate = useNavigate();
+  const { fireRallyConfetti } = useConfetti();
 
   const form = useForm<QuickRallyFormData>({
     resolver: zodResolver(quickRallySchema),
@@ -90,6 +92,10 @@ export function QuickRallyDialog({ trigger, preselectedSquad }: QuickRallyDialog
         title: result.title
       });
       setStep('invite');
+      
+      // Fire confetti celebration!
+      setTimeout(() => fireRallyConfetti(), 100);
+      
       toast.success('Quick Rally started! 🎉');
     } catch (error: any) {
       toast.error(error.message || 'Failed to create rally');
@@ -268,9 +274,13 @@ export function QuickRallyDialog({ trigger, preselectedSquad }: QuickRallyDialog
         ) : (
           <>
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2 font-montserrat text-center justify-center">
-                <Check className="h-5 w-5 text-green-500" />
-                Rally Started!
+              <DialogTitle className="flex items-center gap-2 font-montserrat text-center justify-center text-xl">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center animate-bounce">
+                  <PartyPopper className="h-5 w-5 text-white" />
+                </div>
+                <span className="bg-gradient-to-r from-green-500 to-primary bg-clip-text text-transparent font-bold">
+                  Rally Started!
+                </span>
               </DialogTitle>
             </DialogHeader>
 
@@ -278,8 +288,8 @@ export function QuickRallyDialog({ trigger, preselectedSquad }: QuickRallyDialog
               {/* Invite Code Display */}
               <div className="text-center space-y-2">
                 <p className="text-sm text-muted-foreground">Share this code with your squad</p>
-                <div className="bg-muted rounded-xl p-4">
-                  <p className="text-3xl font-bold tracking-widest font-montserrat text-primary">
+                <div className="bg-gradient-to-br from-primary/10 via-orange-100 to-yellow-50 rounded-xl p-4 border-2 border-primary/20 shadow-lg shadow-primary/10">
+                  <p className="text-3xl font-bold tracking-widest font-montserrat bg-gradient-to-r from-primary to-orange-500 bg-clip-text text-transparent animate-pulse">
                     {createdEvent?.invite_code}
                   </p>
                 </div>
