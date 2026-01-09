@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { LocationProvider } from "@/contexts/LocationContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import { NavigationPortal } from "@/components/navigation/NavigationPortal";
 import { AppEntry } from "@/components/AppEntry";
 import Index from "./pages/Index";
@@ -26,35 +27,37 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <LocationProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <NavigationPortal />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/auth" element={<AppEntry />} />
-              <Route path="/events" element={<Events />} />
-              <Route path="/events/:id" element={<EventDetail />} />
-              <Route path="/join" element={<JoinRally />} />
-              <Route path="/join/:code" element={<JoinRally />} />
-              <Route path="/rides" element={<Rides />} />
-              <Route path="/chat" element={<Chat />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/notifications" element={<Notifications />} />
-              <Route path="/squads" element={<Squads />} />
-              <Route path="/achievements" element={<Achievements />} />
-              <Route path="/legal" element={<Legal />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/settings-preview" element={<SettingsPreview />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </LocationProvider>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <LocationProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <NavigationPortal />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/auth" element={<AppEntry />} />
+                <Route path="/events" element={<Events />} />
+                <Route path="/events/:id" element={<EventDetail />} />
+                <Route path="/join" element={<JoinRally />} />
+                <Route path="/join/:code" element={<JoinRally />} />
+                <Route path="/rides" element={<Rides />} />
+                <Route path="/chat" element={<Chat />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/notifications" element={<Notifications />} />
+                <Route path="/squads" element={<Squads />} />
+                <Route path="/achievements" element={<Achievements />} />
+                <Route path="/legal" element={<Legal />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="/settings-preview" element={<SettingsPreview />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
+        </LocationProvider>
+      </AuthProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 

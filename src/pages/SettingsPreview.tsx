@@ -25,10 +25,20 @@ import {
   Radio,
   Target,
   Hand,
-  Bell
+  Bell,
+  Sun,
+  Moon,
+  Monitor
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { useTheme } from '@/contexts/ThemeContext';
+
+const themeOptions = [
+  { value: 'light', label: 'Light', icon: Sun },
+  { value: 'dark', label: 'Dark', icon: Moon },
+  { value: 'system', label: 'System', icon: Monitor },
+] as const;
 
 const trackingModeOptions = [
   { 
@@ -113,6 +123,7 @@ const defaultSettings: DemoSettings = {
 export default function SettingsPreview() {
   const [settings, setSettings] = useState<DemoSettings>(defaultSettings);
   const [activeTab, setActiveTab] = useState('privacy');
+  const { theme, setTheme } = useTheme();
 
   const updateSetting = <K extends keyof DemoSettings>(key: K, value: DemoSettings[K]) => {
     setSettings(prev => ({ ...prev, [key]: value }));
@@ -123,8 +134,14 @@ export default function SettingsPreview() {
     toast.success(`Tracking mode set to ${mode.replace('_', ' ')}`);
   };
 
+  const handleThemeChange = (newTheme: 'light' | 'dark' | 'system') => {
+    setTheme(newTheme);
+    toast.success(`Theme set to ${newTheme}`);
+  };
+
   const handleResetSettings = () => {
     setSettings(defaultSettings);
+    setTheme('system');
     toast.success('Settings reset to defaults');
   };
 
@@ -484,6 +501,45 @@ export default function SettingsPreview() {
 
           {/* Privacy Settings */}
           <TabsContent value="privacy" className="space-y-4">
+            <Card className="card-rally">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Sun className="h-4 w-4 text-primary" />
+                  Appearance
+                </CardTitle>
+                <CardDescription>
+                  Choose your preferred theme
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex gap-2">
+                  {themeOptions.map((option) => (
+                    <button
+                      key={option.value}
+                      onClick={() => handleThemeChange(option.value)}
+                      className={cn(
+                        "flex-1 flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all",
+                        theme === option.value
+                          ? "border-primary bg-primary/5"
+                          : "border-border hover:border-primary/50"
+                      )}
+                    >
+                      <option.icon className={cn(
+                        "h-5 w-5",
+                        theme === option.value ? "text-primary" : "text-muted-foreground"
+                      )} />
+                      <span className={cn(
+                        "text-xs font-medium",
+                        theme === option.value ? "text-primary" : "text-muted-foreground"
+                      )}>
+                        {option.label}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
             <Card className="card-rally">
               <CardHeader className="pb-2">
                 <CardTitle className="text-base flex items-center gap-2">
