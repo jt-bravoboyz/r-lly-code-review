@@ -598,6 +598,71 @@
 .stagger-4 { animation-delay: 0.4s; }
 .stagger-5 { animation-delay: 0.5s; }
 
+/* ===== R@LLY SPLASH SCREEN ANIMATIONS ===== */
+
+/* Logo fade in - 600ms as specified */
+@keyframes splash-logo-fade {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-splash-logo-fade {
+  animation: splash-logo-fade 600ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Single pulse ripple - expands once and fades */
+@keyframes splash-ripple {
+  0% {
+    transform: translate(-50%, -50%) scale(0.5);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(3);
+    opacity: 0;
+  }
+}
+
+.animate-splash-ripple {
+  animation: splash-ripple 1000ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Subtle floating particles */
+@keyframes splash-particle {
+  0% {
+    opacity: 0;
+    transform: translateY(0) scale(0);
+  }
+  20% {
+    opacity: 1;
+    transform: translateY(-10px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-40px) scale(0.5);
+  }
+}
+
+.animate-splash-particle {
+  animation: splash-particle 1.5s ease-out forwards;
+  animation-delay: 0.3s;
+}
+
+.animate-splash-particle-delayed {
+  animation: splash-particle 1.5s ease-out forwards;
+  animation-delay: 0.5s;
+}
+
+.animate-splash-particle-delayed-2 {
+  animation: splash-particle 1.5s ease-out forwards;
+  animation-delay: 0.7s;
+}
+
 /* Button press effects */
 @keyframes button-press {
   0% { transform: scale(1); }
