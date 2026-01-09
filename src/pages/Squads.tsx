@@ -59,7 +59,7 @@ export default function Squads() {
         {/* Header with create button */}
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-bold text-rally-dark font-montserrat">Your Crews</h2>
+            <h2 className="text-lg font-bold text-rally-dark font-montserrat">Your Squads</h2>
             <p className="text-sm text-muted-foreground">Save your favorite groups for quick invites</p>
           </div>
           <CreateSquadDialog />
@@ -86,7 +86,7 @@ export default function Squads() {
               </div>
               <h3 className="text-lg font-bold mb-2 text-rally-dark font-montserrat">No squads yet</h3>
               <p className="text-muted-foreground mb-6 font-montserrat">
-                Create a squad to quickly invite your crew to rallies!
+                Create a squad to quickly invite your squad to rallies!
               </p>
               <CreateSquadDialog />
             </CardContent>
