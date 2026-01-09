@@ -235,8 +235,10 @@ export default function EventDetail() {
               lat={event.location_lat}
               lng={event.location_lng}
               name={event.location_name || undefined}
+              address={event.location_name || undefined}
               height="h-40"
               interactive={true}
+              showDirections={true}
             />
           )}
 

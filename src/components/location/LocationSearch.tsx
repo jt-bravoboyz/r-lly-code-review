@@ -462,6 +462,8 @@ export function LocationSearch({
                 lat={selectedLocation.lat}
                 lng={selectedLocation.lng}
                 name={selectedLocation.name}
+                address={selectedLocation.address}
+                showDirections={false}
               />
               {allowCustomName && (
                 <Button
