@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Zap, MapPin, Users, ChevronRight } from 'lucide-react';
 
@@ -27,22 +26,26 @@ const slides: OnboardingSlide[] = [
   }
 ];
 
-export function Onboarding() {
+interface OnboardingProps {
+  onComplete?: () => void;
+}
+
+export function Onboarding({ onComplete }: OnboardingProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
-  const navigate = useNavigate();
 
   const handleNext = () => {
     if (currentSlide < slides.length - 1) {
       setCurrentSlide(currentSlide + 1);
     } else {
+      // Mark onboarding as complete and call callback
       localStorage.setItem('rally-onboarding-complete', 'true');
-      navigate('/auth');
+      onComplete?.();
     }
   };
 
   const handleSkip = () => {
     localStorage.setItem('rally-onboarding-complete', 'true');
-    navigate('/auth');
+    onComplete?.();
   };
 
   const slide = slides[currentSlide];
