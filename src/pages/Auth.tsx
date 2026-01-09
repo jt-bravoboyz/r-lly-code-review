@@ -5,7 +5,28 @@ import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Mail, Lock, User, ChevronRight } from 'lucide-react';
+import { Mail, Lock, User, ChevronRight, AlertCircle } from 'lucide-react';
+import { z } from 'zod';
+
+// Validation schemas
+const emailSchema = z.string().trim().email('Please enter a valid email address').max(255, 'Email is too long');
+const passwordSchema = z.string().min(6, 'Password must be at least 6 characters').max(128, 'Password is too long');
+const displayNameSchema = z.string().trim().min(1, 'Name is required').max(100, 'Name is too long');
+
+const signInSchema = z.object({
+  email: emailSchema,
+  password: passwordSchema,
+});
+
+const signUpSchema = z.object({
+  email: emailSchema,
+  password: passwordSchema,
+  confirmPassword: z.string(),
+  displayName: displayNameSchema,
+}).refine(data => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
 
 export default function Auth() {
   const [isLoading, setIsLoading] = useState(false);
@@ -15,6 +36,7 @@ export default function Auth() {
   const [displayName, setDisplayName] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
   const [showContent, setShowContent] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
 
@@ -36,15 +58,59 @@ export default function Auth() {
     }
   }, [user, navigate]);
 
+  const clearErrors = () => setErrors({});
+
+  const getAuthErrorMessage = (error: any): string => {
+    const message = error?.message?.toLowerCase() || '';
+    
+    if (message.includes('invalid login credentials') || message.includes('invalid_credentials')) {
+      return 'Invalid email or password. Please check your credentials and try again.';
+    }
+    if (message.includes('email not confirmed')) {
+      return 'Please confirm your email before signing in. Check your inbox.';
+    }
+    if (message.includes('user already registered') || message.includes('already registered')) {
+      return 'An account with this email already exists. Try signing in instead.';
+    }
+    if (message.includes('signup disabled')) {
+      return 'Sign ups are currently disabled. Please contact support.';
+    }
+    if (message.includes('rate limit') || message.includes('too many requests')) {
+      return 'Too many attempts. Please wait a moment and try again.';
+    }
+    if (message.includes('network') || message.includes('fetch')) {
+      return 'Network error. Please check your connection and try again.';
+    }
+    
+    return error?.message || 'An unexpected error occurred. Please try again.';
+  };
+
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    clearErrors();
+
+    // Validate inputs
+    const result = signInSchema.safeParse({ email, password });
+    if (!result.success) {
+      const fieldErrors: Record<string, string> = {};
+      result.error.errors.forEach(err => {
+        if (err.path[0]) {
+          fieldErrors[err.path[0] as string] = err.message;
+        }
+      });
+      setErrors(fieldErrors);
+      return;
+    }
+
     setIsLoading(true);
     try {
-      const { error } = await signIn(email, password);
+      const { error } = await signIn(email.trim(), password);
       if (error) throw error;
       toast.success("You're in! Let's rally.");
     } catch (error: any) {
-      toast.error(error.message || 'Failed to sign in');
+      const errorMessage = getAuthErrorMessage(error);
+      toast.error(errorMessage);
+      setErrors({ form: errorMessage });
     } finally {
       setIsLoading(false);
     }
@@ -52,17 +118,30 @@ export default function Auth() {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password !== confirmPassword) {
-      toast.error('Passwords do not match');
+    clearErrors();
+
+    // Validate inputs
+    const result = signUpSchema.safeParse({ email, password, confirmPassword, displayName });
+    if (!result.success) {
+      const fieldErrors: Record<string, string> = {};
+      result.error.errors.forEach(err => {
+        if (err.path[0]) {
+          fieldErrors[err.path[0] as string] = err.message;
+        }
+      });
+      setErrors(fieldErrors);
       return;
     }
+
     setIsLoading(true);
     try {
-      const { error } = await signUp(email, password, displayName);
+      const { error } = await signUp(email.trim(), password, displayName.trim());
       if (error) throw error;
       toast.success('Account created! Welcome to R@lly.');
     } catch (error: any) {
-      toast.error(error.message || 'Failed to sign up');
+      const errorMessage = getAuthErrorMessage(error);
+      toast.error(errorMessage);
+      setErrors({ form: errorMessage });
     } finally {
       setIsLoading(false);
     }
@@ -79,7 +158,8 @@ export default function Auth() {
       });
       if (error) throw error;
     } catch (error: any) {
-      toast.error(error.message || 'Failed to sign in with Google');
+      const errorMessage = getAuthErrorMessage(error);
+      toast.error(errorMessage);
       setIsLoading(false);
     }
   };
