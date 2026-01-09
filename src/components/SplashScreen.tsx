@@ -59,17 +59,24 @@ const getQuadraticBezierPoint = (
   return { x, y };
 };
 
-// Arc paths
+// Arc paths - extended to ensure full screen coverage
 const ARC1 = {
-  start: { x: -25, y: 68 },
-  control: { x: 35, y: 26 },
-  end: { x: 125, y: 74 },
+  start: { x: -30, y: 68 },
+  control: { x: 40, y: 22 },
+  end: { x: 130, y: 74 },
 };
 
 const ARC2 = {
-  start: { x: -25, y: 46 },
-  control: { x: 48, y: 14 },
-  end: { x: 125, y: 82 },
+  start: { x: -30, y: 46 },
+  control: { x: 52, y: 10 },
+  end: { x: 130, y: 82 },
+};
+
+// Third arc - smaller, appears during fanfare behind logo
+const ARC3 = {
+  start: { x: 20, y: 65 },
+  control: { x: 50, y: 35 },
+  end: { x: 80, y: 55 },
 };
 
 // Haptic feedback
@@ -204,18 +211,19 @@ export function SplashScreen({ onComplete, duration = 5000 }: SplashScreenProps)
   }, [onComplete, duration]);
 
   // Calculate arc positions and generate effects
-  const getArcState = (arcStartTime: number, arcDuration: number, arc: typeof ARC1, isSecondArc: boolean) => {
+  const getArcState = (arcStartTime: number, arcDuration: number, arc: typeof ARC1, isSecondArc: boolean, isThirdArc: boolean = false) => {
     const arcElapsed = elapsed - arcStartTime;
-    if (arcElapsed < 0 || arcElapsed > arcDuration + 0.5) return null;
+    if (arcElapsed < 0 || arcElapsed > arcDuration + 0.8) return null;
 
     const t = Math.min(1, arcElapsed / arcDuration);
     const easedT = arcEasing(t);
     const headPos = getQuadraticBezierPoint(easedT, arc.start, arc.control, arc.end);
 
-    // Tail lags behind (80-140ms = 0.08-0.14s)
-    const tailLag = 0.11 / arcDuration;
+    // Tail lags behind
+    const tailLag = isThirdArc ? 0.08 : (isSecondArc ? 0.11 : 0.11) / arcDuration;
+    const tailLength = isThirdArc ? 0.25 : (isSecondArc ? 0.50 : 0.45);
     const tailT = Math.max(0, easedT - tailLag);
-    const tailStartPos = getQuadraticBezierPoint(Math.max(0, tailT - (isSecondArc ? 0.45 : 0.40)), arc.start, arc.control, arc.end);
+    const tailStartPos = getQuadraticBezierPoint(Math.max(0, tailT - tailLength), arc.start, arc.control, arc.end);
 
     // Calculate velocity for spark direction
     const nextT = Math.min(1, easedT + 0.01);
@@ -223,14 +231,20 @@ export function SplashScreen({ onComplete, duration = 5000 }: SplashScreenProps)
     const vx = nextPos.x - headPos.x;
     const vy = nextPos.y - headPos.y;
 
-    return { headPos, tailStartPos, t, vx, vy };
+    // Check if head is still on screen
+    const isVisible = headPos.x < 105 && headPos.x > -5;
+
+    return { headPos, tailStartPos, t, vx, vy, isVisible };
   };
 
   // Arc 1: 0 - 1.65s
-  const arc1State = getArcState(0, 1.65, ARC1, false);
+  const arc1State = getArcState(0, 1.65, ARC1, false, false);
   
   // Arc 2: 1.65 - 3.55s (1.9s duration - slower and bigger)
-  const arc2State = getArcState(1.65, 1.9, ARC2, true);
+  const arc2State = getArcState(1.65, 1.9, ARC2, true, false);
+
+  // Arc 3: 3.60 - 4.30s (0.7s duration - small accent arc during fanfare)
+  const arc3State = getArcState(3.60, 0.7, ARC3, false, true);
 
   // Add afterimages and sparks
   useEffect(() => {
@@ -324,26 +338,27 @@ export function SplashScreen({ onComplete, duration = 5000 }: SplashScreenProps)
   const glowPulse = getGlowPulseOpacity();
   const exitOpacity = getExitOpacity();
 
-  const renderComet = (state: ReturnType<typeof getArcState>, isSecondArc: boolean) => {
-    if (!state || state.t >= 1) return null;
+  const renderComet = (state: ReturnType<typeof getArcState>, isSecondArc: boolean, isThirdArc: boolean = false, id: string = "1") => {
+    if (!state || !state.isVisible) return null;
     const { headPos, tailStartPos } = state;
-    const headSize = isSecondArc ? 14 : 10;
-    const glowSize = isSecondArc ? 36 : 26;
+    const headSize = isThirdArc ? 6 : (isSecondArc ? 14 : 10);
+    const glowSize = isThirdArc ? 16 : (isSecondArc ? 36 : 26);
+    const tailWidth = isThirdArc ? 8 : (isSecondArc ? 24 : 14);
 
     return (
       <g>
         {/* Tapered tail gradient */}
         <defs>
           <linearGradient 
-            id={`tailGradient${isSecondArc ? '2' : '1'}`} 
+            id={`tailGradient${id}`} 
             x1={`${tailStartPos.x}%`} 
             y1={`${tailStartPos.y}%`} 
             x2={`${headPos.x}%`} 
             y2={`${headPos.y}%`}
           >
             <stop offset="0%" stopColor="rgba(255, 106, 0, 0)" />
-            <stop offset="60%" stopColor="rgba(255, 106, 0, 0.25)" />
-            <stop offset="100%" stopColor="rgba(255, 106, 0, 0.45)" />
+            <stop offset="60%" stopColor={`rgba(255, 106, 0, ${isThirdArc ? 0.15 : 0.25})`} />
+            <stop offset="100%" stopColor={`rgba(255, 106, 0, ${isThirdArc ? 0.30 : 0.45})`} />
           </linearGradient>
         </defs>
 
@@ -353,10 +368,10 @@ export function SplashScreen({ onComplete, duration = 5000 }: SplashScreenProps)
           y1={`${tailStartPos.y}%`}
           x2={`${headPos.x}%`}
           y2={`${headPos.y}%`}
-          stroke={`url(#tailGradient${isSecondArc ? '2' : '1'})`}
-          strokeWidth={isSecondArc ? 24 : 14}
+          stroke={`url(#tailGradient${id})`}
+          strokeWidth={tailWidth}
           strokeLinecap="round"
-          style={{ filter: "blur(28px)" }}
+          style={{ filter: `blur(${isThirdArc ? 16 : 28}px)` }}
         />
 
         {/* Outer glow */}
@@ -364,8 +379,8 @@ export function SplashScreen({ onComplete, duration = 5000 }: SplashScreenProps)
           cx={`${headPos.x}%`}
           cy={`${headPos.y}%`}
           r={glowSize}
-          fill="rgba(255, 106, 0, 0.35)"
-          style={{ filter: "blur(22px)" }}
+          fill={`rgba(255, 106, 0, ${isThirdArc ? 0.25 : 0.35})`}
+          style={{ filter: `blur(${isThirdArc ? 14 : 22}px)` }}
         />
 
         {/* Bright core */}
@@ -420,10 +435,13 @@ export function SplashScreen({ onComplete, duration = 5000 }: SplashScreenProps)
         ))}
 
         {/* Arc 1 comet */}
-        {renderComet(arc1State, false)}
+        {renderComet(arc1State, false, false, "1")}
 
         {/* Arc 2 comet */}
-        {renderComet(arc2State, true)}
+        {renderComet(arc2State, true, false, "2")}
+
+        {/* Arc 3 comet (fanfare accent) */}
+        {renderComet(arc3State, false, true, "3")}
 
         {/* Fanfare particles */}
         {fanfareParticles.map(p => (
