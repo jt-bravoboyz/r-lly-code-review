@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Header } from '@/components/layout/Header';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -5,13 +6,20 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Settings, LogOut, MapPin, Award, Camera, Users, Home, Shield } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Settings, LogOut, MapPin, Award, Camera, Users, Home, Shield, Pencil, Save, X } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useLocation } from '@/hooks/useLocation';
+import { supabase } from '@/integrations/supabase/client';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 export default function Profile() {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editBio, setEditBio] = useState('');
+  const [editName, setEditName] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
   const { user, profile, loading, signOut, refreshProfile } = useAuth();
   const { toggleLocationSharing } = useLocation();
   const navigate = useNavigate();
@@ -39,6 +47,35 @@ export default function Profile() {
     toast.success(enabled ? 'Location sharing enabled' : 'Location sharing disabled');
   };
 
+  const handleStartEdit = () => {
+    setEditName(profile?.display_name || '');
+    setEditBio((profile as any)?.bio || '');
+    setIsEditing(true);
+  };
+
+  const handleSaveProfile = async () => {
+    if (!profile?.id) return;
+    setIsSaving(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ 
+          display_name: editName.trim(),
+          bio: editBio.trim() || null 
+        })
+        .eq('id', profile.id);
+
+      if (error) throw error;
+      await refreshProfile();
+      setIsEditing(false);
+      toast.success('Profile updated!');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to update profile');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <div className="min-h-screen pb-24 bg-background">
       <Header title="Profile" />
@@ -64,7 +101,16 @@ export default function Profile() {
               </div>
               
               <div className="flex-1">
-                <h2 className="text-xl font-bold">{profile?.display_name || 'Anonymous'}</h2>
+                {isEditing ? (
+                  <Input
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    className="text-xl font-bold mb-1"
+                    placeholder="Your name"
+                  />
+                ) : (
+                  <h2 className="text-xl font-bold">{profile?.display_name || 'Anonymous'}</h2>
+                )}
                 <p className="text-sm text-muted-foreground">{user.email}</p>
                 
                 <div 
@@ -77,6 +123,41 @@ export default function Profile() {
                   </div>
                 </div>
               </div>
+
+              {/* Edit button */}
+              {!isEditing ? (
+                <Button variant="ghost" size="icon" onClick={handleStartEdit}>
+                  <Pencil className="h-4 w-4" />
+                </Button>
+              ) : (
+                <div className="flex gap-1">
+                  <Button variant="ghost" size="icon" onClick={() => setIsEditing(false)} disabled={isSaving}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" onClick={handleSaveProfile} disabled={isSaving}>
+                    <Save className="h-4 w-4 text-primary" />
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            {/* Bio section */}
+            <div className="mt-4 pt-4 border-t border-border">
+              {isEditing ? (
+                <Textarea
+                  value={editBio}
+                  onChange={(e) => setEditBio(e.target.value)}
+                  placeholder="Tell us about yourself..."
+                  className="resize-none"
+                  rows={3}
+                />
+              ) : (
+                (profile as any)?.bio ? (
+                  <p className="text-sm text-muted-foreground">{(profile as any).bio}</p>
+                ) : (
+                  <p className="text-sm text-muted-foreground italic">No bio yet. Tap edit to add one!</p>
+                )
+              )}
             </div>
 
             {/* Badges */}

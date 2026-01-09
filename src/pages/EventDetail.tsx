@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, Navigate, Link } from 'react-router-dom';
-import { ArrowLeft, Calendar, MapPin, Users, Beer, Share2, Check, X, MessageCircle, Navigation, Home, Plus, Copy, Zap } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Users, Beer, Share2, Check, X, MessageCircle, Navigation, Home, Plus, Copy, Zap, Crown } from 'lucide-react';
 import { format } from 'date-fns';
 import { Header } from '@/components/layout/Header';
 import { BottomNav } from '@/components/layout/BottomNav';
@@ -16,6 +16,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useEvent, useJoinEvent, useLeaveEvent, useUpdateEvent } from '@/hooks/useEvents';
 import { useRides } from '@/hooks/useRides';
 import { useAuth } from '@/hooks/useAuth';
+import { useCohosts, useIsCohost } from '@/hooks/useCohosts';
 import { RideCard } from '@/components/rides/RideCard';
 import { CreateRideDialog } from '@/components/rides/CreateRideDialog';
 import { EventChat } from '@/components/chat/EventChat';
@@ -25,6 +26,8 @@ import { LiveUpdates } from '@/components/events/LiveUpdates';
 import { RallyHomeButton } from '@/components/home/RallyHomeButton';
 import { GoingHomeTracker } from '@/components/home/GoingHomeTracker';
 import { AddBarHopStopDialog } from '@/components/events/AddBarHopStopDialog';
+import { AddCohostDialog } from '@/components/events/AddCohostDialog';
+import { BarHopStopsMap } from '@/components/tracking/BarHopStopsMap';
 import { useEventRealtime } from '@/hooks/useEventRealtime';
 import { toast } from 'sonner';
 
@@ -73,6 +76,8 @@ export default function EventDetail() {
 
   const isAttending = isDev ? true : event.attendees?.some(a => a.profile?.id === activeProfile?.id);
   const isCreator = event.creator?.id === activeProfile?.id;
+  const isCohost = useIsCohost(event.id);
+  const canManage = isCreator || isCohost;
   const attendeeCount = event.attendees?.length || 0;
   const isLiveEvent = new Date(event.start_time) <= new Date();
 
@@ -220,19 +225,34 @@ export default function EventDetail() {
             </div>
           </div>
 
-          {/* Host */}
+          {/* Host and Co-hosts */}
           {event.creator && (
-            <div className="flex items-center gap-3 pt-2">
-              <Avatar>
-                <AvatarImage src={event.creator.avatar_url || undefined} />
-                <AvatarFallback>
-                  {event.creator.display_name?.charAt(0)?.toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <p className="text-sm text-muted-foreground">Hosted by</p>
-                <p className="font-medium">{event.creator.display_name}</p>
+            <div className="flex items-center justify-between pt-2">
+              <div className="flex items-center gap-3">
+                <Avatar>
+                  <AvatarImage src={event.creator.avatar_url || undefined} />
+                  <AvatarFallback>
+                    {event.creator.display_name?.charAt(0)?.toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="text-sm text-muted-foreground">Hosted by</p>
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium">{event.creator.display_name}</p>
+                    <Badge variant="secondary" className="text-[10px]">
+                      <Crown className="h-2.5 w-2.5 mr-1" />
+                      Host
+                    </Badge>
+                  </div>
+                </div>
               </div>
+              {isCreator && event.attendees && (
+                <AddCohostDialog 
+                  eventId={event.id} 
+                  creatorId={event.creator.id} 
+                  attendees={event.attendees} 
+                />
+              )}
             </div>
           )}
 
@@ -306,8 +326,8 @@ export default function EventDetail() {
           </TabsList>
 
           <TabsContent value="details" className="space-y-4 mt-4">
-            {/* Bar Hop Mode Toggle - Only for event creators */}
-            {isCreator && (
+            {/* Bar Hop Mode Toggle - Only for event managers */}
+            {canManage && (
               <Card className="border-secondary/50 bg-secondary/5">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
@@ -377,7 +397,7 @@ export default function EventDetail() {
                     <Beer className="h-5 w-5 text-secondary" />
                     Bar Hop Stops
                   </CardTitle>
-                  {isCreator && (
+                  {canManage && (
                     <AddBarHopStopDialog 
                       eventId={event.id} 
                       currentStopCount={event.stops?.length || 0} 
@@ -403,11 +423,23 @@ export default function EventDetail() {
                     </div>
                   ) : (
                     <p className="text-center text-muted-foreground py-4">
-                      No stops added yet. {isCreator && 'Add your first stop!'}
+                      No stops added yet. {canManage && 'Add your first stop!'}
                     </p>
                   )}
                 </CardContent>
               </Card>
+            )}
+
+            {/* Bar Hop Map - Show when stops have coordinates */}
+            {event.is_barhop && event.stops && event.stops.length > 0 && (
+              <BarHopStopsMap 
+                stops={event.stops}
+                eventLocation={{
+                  lat: event.location_lat,
+                  lng: event.location_lng,
+                  name: event.location_name,
+                }}
+              />
             )}
           </TabsContent>
 

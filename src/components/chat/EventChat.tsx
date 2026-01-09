@@ -212,6 +212,19 @@ export function EventChat({ eventId, eventTitle }: EventChatProps) {
 }
 
 function MessageBubble({ message, isOwn }: { message: Message; isOwn: boolean }) {
+  // System messages have a special layout
+  const isSystemMessage = message.message_type === 'system';
+  
+  if (isSystemMessage) {
+    return (
+      <div className="flex justify-center my-2">
+        <div className="bg-muted/50 text-muted-foreground text-xs px-3 py-1.5 rounded-full">
+          {message.content}
+        </div>
+      </div>
+    );
+  }
+
   // Parse URLs in content
   const renderContent = (content: string) => {
     const parts = content.split(URL_REGEX);
