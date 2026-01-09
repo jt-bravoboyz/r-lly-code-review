@@ -18,6 +18,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useConfetti } from '@/hooks/useConfetti';
+import { LocationSearch } from '@/components/location/LocationSearch';
 
 const quickRallySchema = z.object({
   title: z.string().min(1, 'Give your rally a name'),
@@ -37,6 +38,7 @@ export function QuickRallyDialog({ trigger, preselectedSquad }: QuickRallyDialog
   const [step, setStep] = useState<'create' | 'invite'>('create');
   const [createdEvent, setCreatedEvent] = useState<{ id: string; invite_code: string; title: string } | null>(null);
   const [selectedSquad, setSelectedSquad] = useState<Squad | null>(preselectedSquad || null);
+  const [selectedLocationCoords, setSelectedLocationCoords] = useState<{ lat: number; lng: number } | null>(null);
   
   const { profile } = useAuth();
   const { data: squads } = useSquads();
@@ -77,8 +79,8 @@ export function QuickRallyDialog({ trigger, preselectedSquad }: QuickRallyDialog
         event_type: 'rally',
         start_time: new Date().toISOString(),
         location_name: data.location_name || 'Current Location',
-        location_lat: location.lat,
-        location_lng: location.lng,
+        location_lat: selectedLocationCoords?.lat || location.lat,
+        location_lng: selectedLocationCoords?.lng || location.lng,
         is_barhop: data.is_barhop,
         is_quick_rally: true,
       });
@@ -139,6 +141,7 @@ export function QuickRallyDialog({ trigger, preselectedSquad }: QuickRallyDialog
     setStep('create');
     setCreatedEvent(null);
     setSelectedSquad(null);
+    setSelectedLocationCoords(null);
     form.reset();
   };
 
@@ -194,14 +197,16 @@ export function QuickRallyDialog({ trigger, preselectedSquad }: QuickRallyDialog
                     <FormItem>
                       <FormLabel>Where at?</FormLabel>
                       <FormControl>
-                        <div className="relative">
-                          <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                          <Input 
-                            className="pl-9" 
-                            placeholder="Location (optional)" 
-                            {...field} 
-                          />
-                        </div>
+                        <LocationSearch
+                          value={field.value || ''}
+                          onChange={field.onChange}
+                          onLocationSelect={(loc) => {
+                            field.onChange(loc.name);
+                            setSelectedLocationCoords({ lat: loc.lat, lng: loc.lng });
+                          }}
+                          placeholder="Search restaurant, bar, or address..."
+                          allowCustomName={true}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
