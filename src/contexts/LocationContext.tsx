@@ -38,6 +38,7 @@ interface BatteryInfo {
 interface IndoorInfo {
   isSupported: boolean;
   isActive: boolean;
+  isSimulating: boolean;
   venueName?: string;
   floor?: number;
   beaconCount: number;
@@ -67,7 +68,10 @@ interface LocationContextType {
   indoorInfo: IndoorInfo;
   startIndoorPositioning: () => Promise<void>;
   stopIndoorPositioning: () => void;
+  startIndoorSimulation: () => void;
+  stopIndoorSimulation: () => void;
   nearbyBeacons: BeaconInfo[];
+  availableBeacons: number;
 }
 
 const LocationContext = createContext<LocationContextType | null>(null);
@@ -145,6 +149,7 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
   const indoorInfo: IndoorInfo = {
     isSupported: indoorPositioning.isSupported,
     isActive: indoorPositioning.isScanning,
+    isSimulating: indoorPositioning.isSimulating,
     venueName: indoorPositioning.indoorPosition?.venueName,
     floor: indoorPositioning.indoorPosition?.floor,
     beaconCount: indoorPositioning.nearbyBeacons.length,
@@ -480,7 +485,10 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
         indoorInfo,
         startIndoorPositioning: indoorPositioning.startScanning,
         stopIndoorPositioning: indoorPositioning.stopScanning,
+        startIndoorSimulation: indoorPositioning.startSimulation,
+        stopIndoorSimulation: indoorPositioning.stopSimulation,
         nearbyBeacons: indoorPositioning.nearbyBeacons,
+        availableBeacons: indoorPositioning.databaseBeacons.length,
       }}
     >
       {children}
