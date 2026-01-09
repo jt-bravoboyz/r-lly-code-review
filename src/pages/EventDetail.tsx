@@ -1,5 +1,5 @@
 import { useParams, Navigate, Link } from 'react-router-dom';
-import { ArrowLeft, Calendar, MapPin, Users, Beer, Share2, Check, X } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Users, Beer, Share2, Check, X, MessageCircle, Navigation } from 'lucide-react';
 import { format } from 'date-fns';
 import { Header } from '@/components/layout/Header';
 import { BottomNav } from '@/components/layout/BottomNav';
@@ -8,11 +8,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useEvent, useJoinEvent, useLeaveEvent } from '@/hooks/useEvents';
 import { useRides } from '@/hooks/useRides';
 import { useAuth } from '@/hooks/useAuth';
 import { RideCard } from '@/components/rides/RideCard';
 import { CreateRideDialog } from '@/components/rides/CreateRideDialog';
+import { EventChat } from '@/components/chat/EventChat';
+import { LiveTracking } from '@/components/tracking/LiveTracking';
+import { AttendeeMap } from '@/components/tracking/AttendeeMap';
+import { LiveUpdates } from '@/components/events/LiveUpdates';
+import { useEventRealtime } from '@/hooks/useEventRealtime';
 import { toast } from 'sonner';
 
 export default function EventDetail() {
@@ -20,6 +26,7 @@ export default function EventDetail() {
   const { user, profile, loading: authLoading } = useAuth();
   const { data: event, isLoading } = useEvent(id);
   const { data: rides } = useRides(id);
+  const { updates } = useEventRealtime(id);
   const joinEvent = useJoinEvent();
   const leaveEvent = useLeaveEvent();
 
@@ -83,6 +90,9 @@ export default function EventDetail() {
             <ArrowLeft className="h-4 w-4 mr-2" /> Back to Events
           </Link>
         </Button>
+
+        {/* Live Updates Banner */}
+        {updates.length > 0 && <LiveUpdates updates={updates} />}
 
         {/* Event Header */}
         <div className="space-y-4">
@@ -180,81 +190,125 @@ export default function EventDetail() {
           )}
         </div>
 
-        {/* Attendees */}
-        {event.attendees && event.attendees.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Who's Going</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-3">
-                {event.attendees.map((attendee) => (
-                  <div key={attendee.id} className="flex flex-col items-center gap-1">
-                    <Avatar className="h-12 w-12">
-                      <AvatarImage src={attendee.profile?.avatar_url || undefined} />
-                      <AvatarFallback>
-                        {attendee.profile?.display_name?.charAt(0)?.toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="text-xs text-muted-foreground truncate max-w-16">
-                      {attendee.profile?.display_name}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        {/* Tabs for Details, Chat, Tracking, Rides */}
+        <Tabs defaultValue="details" className="w-full">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="details">Details</TabsTrigger>
+            <TabsTrigger value="chat" className="flex items-center gap-1">
+              <MessageCircle className="h-3.5 w-3.5" />
+              Chat
+            </TabsTrigger>
+            <TabsTrigger value="tracking" className="flex items-center gap-1">
+              <Navigation className="h-3.5 w-3.5" />
+              Track
+            </TabsTrigger>
+            <TabsTrigger value="rides">Rides</TabsTrigger>
+          </TabsList>
 
-        {/* Bar Hop Stops */}
-        {event.is_barhop && event.stops && event.stops.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Beer className="h-5 w-5 text-secondary" />
-                Bar Hop Stops
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {event.stops.sort((a, b) => a.stop_order - b.stop_order).map((stop, index) => (
-                  <div key={stop.id} className="flex items-center gap-3">
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center text-sm font-medium">
-                      {index + 1}
-                    </div>
-                    <div>
-                      <p className="font-medium">{stop.name}</p>
-                      {stop.address && (
-                        <p className="text-sm text-muted-foreground">{stop.address}</p>
-                      )}
-                    </div>
+          <TabsContent value="details" className="space-y-4 mt-4">
+            {/* Attendees */}
+            {event.attendees && event.attendees.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Who's Going</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap gap-3">
+                    {event.attendees.map((attendee) => (
+                      <div key={attendee.id} className="flex flex-col items-center gap-1">
+                        <Avatar className="h-12 w-12">
+                          <AvatarImage src={attendee.profile?.avatar_url || undefined} />
+                          <AvatarFallback>
+                            {attendee.profile?.display_name?.charAt(0)?.toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="text-xs text-muted-foreground truncate max-w-16">
+                          {attendee.profile?.display_name}
+                        </span>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Rides Section */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-lg">Rides (DD Mode)</CardTitle>
-            <CreateRideDialog eventId={event.id} />
-          </CardHeader>
-          <CardContent>
-            {rides && rides.length > 0 ? (
-              <div className="space-y-4">
-                {rides.map((ride) => (
-                  <RideCard key={ride.id} ride={ride} />
-                ))}
-              </div>
-            ) : (
-              <p className="text-center text-muted-foreground py-4">
-                No rides offered yet. Be the first!
-              </p>
+                </CardContent>
+              </Card>
             )}
-          </CardContent>
-        </Card>
+
+            {/* Bar Hop Stops */}
+            {event.is_barhop && event.stops && event.stops.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Beer className="h-5 w-5 text-secondary" />
+                    Bar Hop Stops
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {event.stops.sort((a, b) => a.stop_order - b.stop_order).map((stop, index) => (
+                      <div key={stop.id} className="flex items-center gap-3">
+                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center text-sm font-medium">
+                          {index + 1}
+                        </div>
+                        <div>
+                          <p className="font-medium">{stop.name}</p>
+                          {stop.address && (
+                            <p className="text-sm text-muted-foreground">{stop.address}</p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          <TabsContent value="chat" className="mt-4">
+            <Card className="h-[400px] overflow-hidden">
+              <EventChat eventId={event.id} eventTitle={event.title} />
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="tracking" className="space-y-4 mt-4">
+            {/* Live Tracking Component */}
+            <LiveTracking
+              eventId={event.id}
+              destination={{
+                name: event.location_name || event.title,
+                address: event.location_name,
+                lat: event.location_lat ?? undefined,
+                lng: event.location_lng ?? undefined,
+              }}
+              isLive={new Date(event.start_time) <= new Date()}
+            />
+
+            {/* Attendee Locations */}
+            {event.attendees && event.attendees.length > 0 && (
+              <AttendeeMap eventId={event.id} attendees={event.attendees} />
+            )}
+          </TabsContent>
+
+          <TabsContent value="rides" className="mt-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-lg">Rides (DD Mode)</CardTitle>
+                <CreateRideDialog eventId={event.id} />
+              </CardHeader>
+              <CardContent>
+                {rides && rides.length > 0 ? (
+                  <div className="space-y-4">
+                    {rides.map((ride) => (
+                      <RideCard key={ride.id} ride={ride} />
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-center text-muted-foreground py-4">
+                    No rides offered yet. Be the first!
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </main>
 
       <BottomNav />
