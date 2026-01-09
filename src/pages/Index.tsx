@@ -6,8 +6,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Header } from '@/components/layout/Header';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { EventCard } from '@/components/events/EventCard';
-import { SplashScreen } from '@/components/SplashScreen';
-import { Onboarding } from '@/components/Onboarding';
 import { useAuth } from '@/hooks/useAuth';
 import { useEvents } from '@/hooks/useEvents';
 import rallyLogo from '@/assets/rally-logo.png';
@@ -15,46 +13,9 @@ import rallyLogo from '@/assets/rally-logo.png';
 export default function Index() {
   const { user, profile, loading } = useAuth();
   const { data: events, isLoading: eventsLoading } = useEvents();
-  const [showSplash, setShowSplash] = useState(true);
-  const [showOnboarding, setShowOnboarding] = useState(false);
-  const [showContent, setShowContent] = useState(false);
 
-  useEffect(() => {
-    // Check if we've already shown splash this session
-    const hasSeenSplash = sessionStorage.getItem('rally-splash-shown');
-    const hasCompletedOnboarding = localStorage.getItem('rally-onboarding-complete');
-    
-    if (hasSeenSplash) {
-      setShowSplash(false);
-      if (!hasCompletedOnboarding && !user) {
-        setShowOnboarding(true);
-      } else {
-        setShowContent(true);
-      }
-    }
-  }, [user]);
-
-  const handleSplashComplete = () => {
-    sessionStorage.setItem('rally-splash-shown', 'true');
-    setShowSplash(false);
-    
-    const hasCompletedOnboarding = localStorage.getItem('rally-onboarding-complete');
-    if (!hasCompletedOnboarding && !user) {
-      setShowOnboarding(true);
-    } else {
-      setTimeout(() => setShowContent(true), 100);
-    }
-  };
-
-  // Show splash screen on first visit (only for non-authenticated users)
-  if (showSplash && !loading && !user) {
-    return <SplashScreen onComplete={handleSplashComplete} duration={2500} />;
-  }
-
-  // Show onboarding after splash
-  if (showOnboarding && !user) {
-    return <Onboarding />;
-  }
+  // For development: bypass auth check to see all screens
+  const isDev = true; // Set to false to re-enable auth
 
   if (loading) {
     return (
@@ -64,7 +25,7 @@ export default function Index() {
             <img 
               src={rallyLogo} 
               alt="R@lly" 
-              className="w-14 h-14 object-contain animate-flag-wave"
+              className="w-14 h-14 object-contain"
             />
           </div>
         </div>
@@ -72,12 +33,13 @@ export default function Index() {
     );
   }
 
-  if (!user) {
-    return <LandingScreen showContent={showContent} />;
+  // Skip auth check in dev mode
+  if (!user && !isDev) {
+    return <LandingScreen />;
   }
 
   const upcomingEvents = events?.slice(0, 3) || [];
-  const userName = profile?.display_name || 'there';
+  const userName = profile?.display_name || 'Dev User';
   const userInitials = userName.slice(0, 2).toUpperCase();
 
   return (
@@ -193,16 +155,14 @@ export default function Index() {
   );
 }
 
-function LandingScreen({ showContent }: { showContent: boolean }) {
+function LandingScreen() {
   return (
     <div className="min-h-screen flex flex-col bg-rally-cream overflow-hidden relative">
       {/* Main Content */}
       <div className="flex-1 flex flex-col items-center justify-center p-6 text-center relative z-10">
         <div className="max-w-sm w-full space-y-8">
           {/* Logo */}
-          <div 
-            className={`transition-all duration-700 ease-out ${showContent ? 'opacity-100 scale-100' : 'opacity-0 scale-90'}`}
-          >
+          <div>
             <div className="w-24 h-24 rounded-full bg-rally-cream border-4 border-primary/20 mx-auto flex items-center justify-center shadow-xl mb-4">
               <img 
                 src={rallyLogo} 
@@ -214,9 +174,7 @@ function LandingScreen({ showContent }: { showContent: boolean }) {
           </div>
           
           {/* Tagline */}
-          <div 
-            className={`space-y-3 transition-all duration-700 delay-200 ${showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
-          >
+          <div className="space-y-3">
             <p className="text-xl font-semibold text-rally-dark font-montserrat">
               Plan fast. Stay synced.
             </p>
@@ -226,9 +184,7 @@ function LandingScreen({ showContent }: { showContent: boolean }) {
           </div>
 
           {/* CTA Button */}
-          <div 
-            className={`pt-8 transition-all duration-700 delay-400 ${showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
-          >
+          <div className="pt-8">
             <Button asChild size="lg" className="w-full rounded-full bg-primary hover:bg-primary/90 text-white text-base h-12 font-medium font-montserrat shadow-lg">
               <Link to="/auth">
                 Get Started 
