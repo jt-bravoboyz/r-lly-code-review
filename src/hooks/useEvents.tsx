@@ -115,3 +115,25 @@ export function useLeaveEvent() {
     }
   });
 }
+
+export function useUpdateEvent() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ eventId, updates }: { eventId: string; updates: Partial<Event> }) => {
+      const { data, error } = await supabase
+        .from('events')
+        .update(updates)
+        .eq('id', eventId)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['event', variables.eventId] });
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+    }
+  });
+}
