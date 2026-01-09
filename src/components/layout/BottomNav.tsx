@@ -1,12 +1,12 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Zap, Car, MessageCircle, User } from 'lucide-react';
+import { Home, Zap, Car, Users, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { path: '/', icon: Home, label: 'Home' },
   { path: '/events', icon: Zap, label: 'Rally' },
   { path: '/rides', icon: Car, label: 'Rides' },
-  { path: '/chat', icon: MessageCircle, label: 'Chat' },
+  { path: '/squads', icon: Users, label: 'Squads' },
   { path: '/profile', icon: User, label: 'Profile' },
 ];
 

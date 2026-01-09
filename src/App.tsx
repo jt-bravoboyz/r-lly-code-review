@@ -12,6 +12,7 @@ import Rides from "./pages/Rides";
 import Chat from "./pages/Chat";
 import Profile from "./pages/Profile";
 import Notifications from "./pages/Notifications";
+import Squads from "./pages/Squads";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ const App = () => (
             <Route path="/chat" element={<Chat />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/notifications" element={<Notifications />} />
+            <Route path="/squads" element={<Squads />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
