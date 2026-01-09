@@ -1,11 +1,13 @@
-import { useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Navigation, Users, Locate, Signal, SignalLow, SignalZero, Compass, Building2, TreePine, Wifi } from 'lucide-react';
+import { Navigation, Users, Locate, Signal, SignalLow, SignalZero, Compass, Building2, TreePine, Wifi, ChevronDown, ChevronUp } from 'lucide-react';
 import { useLocationContext } from '@/contexts/LocationContext';
 import { MemberLocationCard } from './MemberLocationCard';
 import { AccuracyIndicator, EnvironmentBadge } from './AccuracyIndicator';
+import { PoorSignalAlert } from './PoorSignalAlert';
+import { AccuracyHistoryChart } from './AccuracyHistoryChart';
 import { toast } from 'sonner';
 
 interface LiveMemberTrackerProps {
@@ -14,6 +16,8 @@ interface LiveMemberTrackerProps {
 }
 
 export function LiveMemberTracker({ eventId, isLive }: LiveMemberTrackerProps) {
+  const [showHistory, setShowHistory] = useState(false);
+  
   const {
     currentPosition,
     compassHeading,
@@ -24,6 +28,7 @@ export function LiveMemberTracker({ eventId, isLive }: LiveMemberTrackerProps) {
     signalQuality,
     environmentInfo,
     isWifiPositioningActive,
+    accuracyHistory,
   } = useLocationContext();
 
   // Sort members by distance
@@ -124,6 +129,16 @@ export function LiveMemberTracker({ eventId, isLive }: LiveMemberTrackerProps) {
           )}
         </div>
 
+        {/* Poor signal alert */}
+        {isTracking && currentPosition && (
+          <PoorSignalAlert
+            accuracy={currentPosition.accuracy}
+            isIndoor={environmentInfo.isIndoor}
+            indoorConfidence={environmentInfo.confidence}
+            signalQuality={signalQuality}
+          />
+        )}
+
         {/* Current position info with enhanced accuracy */}
         {isTracking && currentPosition && (
           <div className="bg-primary/5 rounded-xl p-3 space-y-2">
@@ -160,7 +175,36 @@ export function LiveMemberTracker({ eventId, isLive }: LiveMemberTrackerProps) {
                 {environmentInfo.recommendation}
               </p>
             )}
+            
+            {/* Toggle accuracy history */}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full h-8 text-xs mt-2"
+              onClick={() => setShowHistory(!showHistory)}
+            >
+              {showHistory ? (
+                <>
+                  <ChevronUp className="h-3 w-3 mr-1" />
+                  Hide signal history
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="h-3 w-3 mr-1" />
+                  Show signal history
+                </>
+              )}
+            </Button>
           </div>
+        )}
+        
+        {/* Accuracy history chart */}
+        {isTracking && showHistory && (
+          <AccuracyHistoryChart 
+            data={accuracyHistory}
+            showTitle={true}
+            height={120}
+          />
         )}
 
         {/* Member list */}
