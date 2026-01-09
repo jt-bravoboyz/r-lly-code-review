@@ -1,162 +1,145 @@
-export type StatKey = 'rallies_attended' | 'dd_trips' | 'safe_homes' | 'rides_given' | 'squads_created' | 'messages_sent';
-
-export type UserStats = {
-  [K in StatKey]: number;
-};
-
-export interface BadgeDefinition {
+// Badge tier system - users progress through tiers based on reward points
+export interface BadgeTier {
   id: string;
   name: string;
-  description: string;
-  icon: string;
-  requirement: number;
-  category: 'rally' | 'safety' | 'social' | 'special';
-  statKey: 'rallies_attended' | 'dd_trips' | 'safe_homes' | 'rides_given' | 'squads_created' | 'messages_sent';
+  pointsRequired: number;
+  gradient: string;
+  accentColor: string;
 }
 
-export const BADGES: BadgeDefinition[] = [
-  // Rally badges
+export const BADGE_TIERS: BadgeTier[] = [
   {
-    id: 'first_rally',
-    name: 'First Rally',
-    description: 'Attend your first rally event',
-    icon: '🎉',
-    requirement: 1,
-    category: 'rally',
-    statKey: 'rallies_attended'
+    id: 'bronze',
+    name: 'Bronze',
+    pointsRequired: 0,
+    gradient: 'linear-gradient(135deg, #B95B39 0%, #99412F 40%, #FFA14F 100%)',
+    accentColor: '#B95B39',
   },
   {
-    id: 'rally_regular',
-    name: 'Rally Regular',
-    description: 'Attend 5 rally events',
-    icon: '🔥',
-    requirement: 5,
-    category: 'rally',
-    statKey: 'rallies_attended'
+    id: 'silver',
+    name: 'Silver',
+    pointsRequired: 100,
+    gradient: 'linear-gradient(135deg, #8890A6 0%, #D7EDF0 40%, #6E7796 70%, #C4E2FF 100%)',
+    accentColor: '#8890A6',
   },
   {
-    id: 'rally_veteran',
-    name: 'Rally Veteran',
-    description: 'Attend 25 rally events',
-    icon: '⭐',
-    requirement: 25,
-    category: 'rally',
-    statKey: 'rallies_attended'
+    id: 'gold',
+    name: 'Gold',
+    pointsRequired: 300,
+    gradient: 'linear-gradient(135deg, #FFC64F 0%, #E06919 40%, #FFC640 70%, #FFA02B 100%)',
+    accentColor: '#FFC64F',
   },
   {
-    id: 'rally_legend',
-    name: 'Rally Legend',
-    description: 'Attend 100 rally events',
-    icon: '👑',
-    requirement: 100,
-    category: 'rally',
-    statKey: 'rallies_attended'
-  },
-
-  // Safety badges
-  {
-    id: 'designated_hero',
-    name: 'Designated Hero',
-    description: 'Complete your first DD trip',
-    icon: '🦸',
-    requirement: 1,
-    category: 'safety',
-    statKey: 'dd_trips'
+    id: 'emerald',
+    name: 'Emerald',
+    pointsRequired: 600,
+    gradient: 'linear-gradient(135deg, #39F1B3 0%, #03823C 50%, #E0FE60 100%)',
+    accentColor: '#39F1B3',
   },
   {
-    id: 'dd_champion',
-    name: 'DD Champion',
-    description: 'Complete 5 DD trips',
-    icon: '🏆',
-    requirement: 5,
-    category: 'safety',
-    statKey: 'dd_trips'
+    id: 'sapphire',
+    name: 'Sapphire',
+    pointsRequired: 1000,
+    gradient: 'linear-gradient(135deg, #FF5522 0%, #A84E33 50%, #FFAB92 100%)',
+    accentColor: '#FF5522',
   },
   {
-    id: 'safety_star',
-    name: 'Safety Star',
-    description: 'Complete 25 DD trips',
-    icon: '🌟',
-    requirement: 25,
-    category: 'safety',
-    statKey: 'dd_trips'
+    id: 'ruby',
+    name: 'Ruby',
+    pointsRequired: 1500,
+    gradient: 'linear-gradient(135deg, #F73F36 0%, #F00300 40%, #FFECA1 100%)',
+    accentColor: '#F73F36',
   },
   {
-    id: 'home_safe',
-    name: 'Home Safe',
-    description: 'Mark yourself safe at home',
-    icon: '🏠',
-    requirement: 1,
-    category: 'safety',
-    statKey: 'safe_homes'
+    id: 'amethyst',
+    name: 'Amethyst',
+    pointsRequired: 2500,
+    gradient: 'linear-gradient(135deg, #6941BF 0%, #A35CCA 50%, #E5CFFF 100%)',
+    accentColor: '#A35CCA',
   },
   {
-    id: 'always_home',
-    name: 'Always Home Safe',
-    description: 'Mark safe at home 10 times',
-    icon: '🏡',
-    requirement: 10,
-    category: 'safety',
-    statKey: 'safe_homes'
-  },
-
-  // Social badges
-  {
-    id: 'ride_giver',
-    name: 'Ride Giver',
-    description: 'Give your first ride',
-    icon: '🚗',
-    requirement: 1,
-    category: 'social',
-    statKey: 'rides_given'
+    id: 'diamond',
+    name: 'Diamond',
+    pointsRequired: 4000,
+    gradient: 'linear-gradient(135deg, #57ADDD 0%, #70BBEF 50%, #9CD7F2 100%)',
+    accentColor: '#70BBEF',
   },
   {
-    id: 'ride_master',
-    name: 'Ride Master',
-    description: 'Give 10 rides',
-    icon: '🚕',
-    requirement: 10,
-    category: 'social',
-    statKey: 'rides_given'
+    id: 'pink_diamond',
+    name: 'Pink Diamond',
+    pointsRequired: 6000,
+    gradient: 'linear-gradient(135deg, #EA4E7F 0%, #DD2F61 50%, #FF94B3 100%)',
+    accentColor: '#EA4E7F',
   },
   {
-    id: 'squad_leader',
-    name: 'Squad Leader',
-    description: 'Create your first squad',
-    icon: '👥',
-    requirement: 1,
-    category: 'social',
-    statKey: 'squads_created'
+    id: 'galaxy_opal',
+    name: 'Galaxy Opal',
+    pointsRequired: 9000,
+    gradient: 'linear-gradient(135deg, #836CD9 0%, #86D8FC 50%, #B5B0F7 100%)',
+    accentColor: '#836CD9',
   },
   {
-    id: 'social_butterfly',
-    name: 'Social Butterfly',
-    description: 'Send 50 messages',
-    icon: '🦋',
-    requirement: 50,
-    category: 'social',
-    statKey: 'messages_sent'
-  },
-  {
-    id: 'life_of_party',
-    name: 'Life of the Party',
-    description: 'Send 500 messages',
-    icon: '🎊',
-    requirement: 500,
-    category: 'social',
-    statKey: 'messages_sent'
+    id: 'dark_matter',
+    name: 'Dark Matter',
+    pointsRequired: 15000,
+    gradient: 'linear-gradient(135deg, #19305C 0%, #2B3894 30%, #865CB2 60%, #FF50B5 100%)',
+    accentColor: '#FF50B5',
   },
 ];
 
-export const getBadgesByCategory = (category: BadgeDefinition['category']) => {
-  return BADGES.filter(badge => badge.category === category);
+export const getCurrentTier = (points: number): BadgeTier => {
+  let currentTier = BADGE_TIERS[0];
+  for (const tier of BADGE_TIERS) {
+    if (points >= tier.pointsRequired) {
+      currentTier = tier;
+    } else {
+      break;
+    }
+  }
+  return currentTier;
 };
 
-export const checkBadgeEarned = (badge: BadgeDefinition, stats: UserStats): boolean => {
-  return (stats[badge.statKey] || 0) >= badge.requirement;
+export const getNextTier = (points: number): BadgeTier | null => {
+  for (const tier of BADGE_TIERS) {
+    if (points < tier.pointsRequired) {
+      return tier;
+    }
+  }
+  return null; // Max tier reached
 };
 
-export const getBadgeProgress = (badge: BadgeDefinition, stats: UserStats): number => {
-  const current = stats[badge.statKey] || 0;
-  return Math.min(100, (current / badge.requirement) * 100);
+export const getProgressToNextTier = (points: number): { current: number; next: number; progress: number } => {
+  const currentTier = getCurrentTier(points);
+  const nextTier = getNextTier(points);
+  
+  if (!nextTier) {
+    return { current: points, next: points, progress: 100 };
+  }
+  
+  const pointsInCurrentTier = points - currentTier.pointsRequired;
+  const pointsNeededForNext = nextTier.pointsRequired - currentTier.pointsRequired;
+  const progress = (pointsInCurrentTier / pointsNeededForNext) * 100;
+  
+  return {
+    current: points,
+    next: nextTier.pointsRequired,
+    progress: Math.min(100, progress),
+  };
+};
+
+export const getMotivationalMessage = (tierName: string): string => {
+  const messages: Record<string, string> = {
+    bronze: "Look at you, just getting started! Keep rallying with your crew and you'll level up in no time. The journey to the top starts here!",
+    silver: "You're making moves! We're definitely seeing your potential but there's more work to be done if you want to be a champion.",
+    gold: "Now we're talking! You're shining bright and showing everyone what rally life is all about. Keep that momentum going!",
+    emerald: "Wow, you're really standing out! Your dedication to safe nights out is inspiring. You're becoming a legend!",
+    sapphire: "Absolutely crushing it! You've proven you're committed to the crew. The elite badges are within reach!",
+    ruby: "Fire! You're blazing through the ranks like a true rally veteran. Not many make it this far!",
+    amethyst: "Royal status achieved! You're in rare company now. Keep going and you'll reach the pinnacle!",
+    diamond: "Brilliant! You're sparkling at the top tiers. Only the most dedicated ralliers make it here!",
+    pink_diamond: "Extraordinary! You're one of the elite few. Your commitment is truly remarkable!",
+    galaxy_opal: "Cosmic level unlocked! You're among the stars now. The ultimate badge awaits!",
+    dark_matter: "LEGENDARY! You've reached the highest tier. You are the embodiment of rally excellence!",
+  };
+  return messages[tierName] || messages.bronze;
 };

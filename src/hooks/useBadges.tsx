@@ -1,14 +1,19 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
-import { BADGES, checkBadgeEarned, type UserStats } from '@/lib/badges';
-import { toast } from 'sonner';
+import { getCurrentTier, getNextTier, getProgressToNextTier, BADGE_TIERS } from '@/lib/badges';
 
-export type { UserStats } from '@/lib/badges';
+export interface UserStats {
+  rallies_attended: number;
+  dd_trips: number;
+  safe_homes: number;
+  rides_given: number;
+  squads_created: number;
+  messages_sent: number;
+}
 
 export function useBadges() {
   const { profile } = useAuth();
-  const queryClient = useQueryClient();
 
   // Fetch user stats from various tables
   const { data: stats, isLoading: statsLoading } = useQuery({
@@ -62,65 +67,10 @@ export function useBadges() {
     enabled: !!profile?.id,
   });
 
-  // Check and award new badges
-  const checkAndAwardBadges = useMutation({
-    mutationFn: async () => {
-      if (!profile?.id || !stats) return [];
-
-      const currentBadges = profile.badges || [];
-      const newBadges: string[] = [];
-
-      for (const badge of BADGES) {
-        const isEarned = checkBadgeEarned(badge, stats);
-        const alreadyHas = currentBadges.includes(badge.id);
-
-        if (isEarned && !alreadyHas) {
-          newBadges.push(badge.id);
-        }
-      }
-
-      if (newBadges.length > 0) {
-        const updatedBadges = [...currentBadges, ...newBadges];
-        const pointsToAdd = newBadges.length * 10; // 10 points per badge
-
-        const { error } = await supabase
-          .from('profiles')
-          .update({
-            badges: updatedBadges,
-            reward_points: (profile.reward_points || 0) + pointsToAdd,
-          })
-          .eq('id', profile.id);
-
-        if (error) throw error;
-
-        return newBadges;
-      }
-
-      return [];
-    },
-    onSuccess: (newBadges) => {
-      if (newBadges.length > 0) {
-        queryClient.invalidateQueries({ queryKey: ['user-profile'] });
-        
-        newBadges.forEach(badgeId => {
-          const badge = BADGES.find(b => b.id === badgeId);
-          if (badge) {
-            toast.success(`🏆 New Badge: ${badge.name}!`, {
-              description: badge.description,
-            });
-          }
-        });
-      }
-    },
-  });
-
-  const earnedBadges = BADGES.filter(badge => 
-    (profile?.badges || []).includes(badge.id)
-  );
-
-  const unearnedBadges = BADGES.filter(badge => 
-    !(profile?.badges || []).includes(badge.id)
-  );
+  const points = profile?.reward_points || 0;
+  const currentTier = getCurrentTier(points);
+  const nextTier = getNextTier(points);
+  const progress = getProgressToNextTier(points);
 
   return {
     stats: stats || {
@@ -132,9 +82,10 @@ export function useBadges() {
       messages_sent: 0,
     },
     statsLoading,
-    earnedBadges,
-    unearnedBadges,
-    allBadges: BADGES,
-    checkAndAwardBadges: checkAndAwardBadges.mutate,
+    points,
+    currentTier,
+    nextTier,
+    progress,
+    allTiers: BADGE_TIERS,
   };
 }
