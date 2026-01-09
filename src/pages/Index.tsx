@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Zap, ArrowRight, Plus, Calendar, Bell } from 'lucide-react';
+import { Zap, ArrowRight, Plus, Calendar, Bell, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { BottomNav } from '@/components/layout/BottomNav';
@@ -19,13 +19,13 @@ export default function Index() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-primary">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary via-primary to-orange-600">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-24 h-24 rounded-full bg-rally-cream flex items-center justify-center">
+          <div className="w-28 h-28 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center animate-pulse shadow-2xl ring-4 ring-white/30">
             <img 
               src={rallyLogo} 
               alt="R@lly" 
-              className="w-14 h-14 object-contain"
+              className="w-16 h-16 object-contain"
             />
           </div>
         </div>
@@ -43,69 +43,82 @@ export default function Index() {
   const userInitials = userName.slice(0, 2).toUpperCase();
 
   return (
-    <div className="min-h-screen pb-20 bg-background">
+    <div className="min-h-screen pb-20 bg-gradient-to-b from-background via-background to-secondary/30">
       {/* PWA Install Prompt */}
       <PWAInstallPrompt />
       
-      {/* Custom header matching Figma */}
-      <header className="sticky top-0 z-40 bg-white shadow-sm">
+      {/* Modern gradient header */}
+      <header className="sticky top-0 z-40 bg-gradient-to-r from-primary via-primary to-orange-500 shadow-lg shadow-primary/20">
         {/* Status bar placeholder */}
         <div className="h-6" />
         
         {/* Header content */}
         <div className="flex items-center justify-between px-4 py-3">
-          {/* Logo */}
+          {/* Logo with glow */}
           <div className="flex items-center">
-            <img src={rallyLogo} alt="R@lly" className="h-10 w-10 object-contain" />
+            <div className="relative">
+              <div className="absolute inset-0 bg-white/30 rounded-full blur-md" />
+              <img src={rallyLogo} alt="R@lly" className="h-11 w-11 object-contain relative filter drop-shadow-lg brightness-0 invert" />
+            </div>
           </div>
 
           {/* Right side - notifications & avatar */}
           <div className="flex items-center gap-4">
             {/* Notification bell */}
-            <Link to="/notifications" className="relative">
-              <Bell className="h-6 w-6 text-gray-600" strokeWidth={1.5} />
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary rounded-full flex items-center justify-center text-[10px] text-white font-medium">
+            <Link to="/notifications" className="relative group">
+              <div className="absolute inset-0 bg-white/20 rounded-full blur-sm group-hover:bg-white/30 transition-all" />
+              <Bell className="h-6 w-6 text-white relative" strokeWidth={2} />
+              <span className="absolute -top-1 -right-1 w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center text-[10px] text-black font-bold shadow-lg animate-pulse">
                 3
               </span>
             </Link>
             
-            {/* User avatar */}
-            <Link to="/profile" className="w-10 h-10 rounded-full bg-primary flex items-center justify-center ring-2 ring-primary/30 hover:ring-primary/50 transition-all">
-              <span className="text-sm font-bold text-white">{userInitials}</span>
+            {/* User avatar with ring */}
+            <Link to="/profile" className="relative group">
+              <div className="absolute inset-0 bg-white/30 rounded-full blur-sm scale-110" />
+              <div className="w-11 h-11 rounded-full bg-white flex items-center justify-center ring-2 ring-white/50 hover:ring-white transition-all relative shadow-lg">
+                <span className="text-sm font-bold text-primary">{userInitials}</span>
+              </div>
             </Link>
           </div>
         </div>
       </header>
       
-      <main className="px-4 py-6 space-y-6">
+      <main className="px-4 py-6 space-y-8">
 
-        {/* Ready to Rally Section */}
-        <section className="space-y-4">
-          <h2 className="text-xl font-semibold text-rally-dark font-montserrat">
-            Ready to R@lly?
-          </h2>
+        {/* Ready to Rally Section - Bold & Vibrant */}
+        <section className="space-y-5">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-primary" />
+            <h2 className="text-2xl font-bold text-foreground font-montserrat tracking-tight">
+              Ready to R@lly?
+            </h2>
+          </div>
           
-          {/* Quick action cards - matching Figma */}
+          {/* Quick action cards - Bold gradient style */}
           <div className="grid grid-cols-2 gap-4">
             <Link to="/events">
-              <Card className="bg-white shadow-sm rounded-xl">
-                <CardContent className="p-6 flex flex-col items-center justify-center text-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-rally-light flex items-center justify-center">
-                    <Plus className="h-6 w-6 text-primary" strokeWidth={2} />
+              <Card className="group bg-gradient-to-br from-white to-secondary/50 shadow-lg hover:shadow-xl rounded-2xl border-0 overflow-hidden transition-all duration-300 hover:scale-[1.02]">
+                <CardContent className="p-6 flex flex-col items-center justify-center text-center gap-4 relative">
+                  <div className="absolute top-0 right-0 w-20 h-20 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform shadow-inner">
+                    <Plus className="h-7 w-7 text-primary" strokeWidth={2.5} />
                   </div>
-                  <span className="font-bold text-sm text-rally-gray font-montserrat">Create Event</span>
+                  <span className="font-bold text-base text-foreground font-montserrat">Create Event</span>
                 </CardContent>
               </Card>
             </Link>
             
             <QuickRallyDialog 
               trigger={
-                <Card className="bg-white shadow-sm rounded-xl cursor-pointer hover:shadow-md transition-shadow">
-                  <CardContent className="p-6 flex flex-col items-center justify-center text-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-secondary/20 flex items-center justify-center">
-                      <Zap className="h-6 w-6 text-secondary" strokeWidth={2} />
+                <Card className="group bg-gradient-to-br from-yellow-400 via-orange-400 to-primary shadow-lg hover:shadow-2xl hover:shadow-orange-500/30 rounded-2xl border-0 overflow-hidden cursor-pointer transition-all duration-300 hover:scale-[1.02]">
+                  <CardContent className="p-6 flex flex-col items-center justify-center text-center gap-4 relative">
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+                    <div className="absolute bottom-0 left-0 w-16 h-16 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2" />
+                    <div className="w-14 h-14 rounded-2xl bg-white/25 backdrop-blur-sm flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg">
+                      <Zap className="h-8 w-8 text-white drop-shadow-lg" strokeWidth={2.5} fill="currentColor" />
                     </div>
-                    <span className="font-bold text-sm text-rally-gray font-montserrat">Quick Rally</span>
+                    <span className="font-extrabold text-base text-white font-montserrat drop-shadow-sm">Quick R@lly</span>
                   </CardContent>
                 </Card>
               }
@@ -116,10 +129,11 @@ export default function Index() {
         {/* Upcoming Events Section */}
         <section className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-bold text-rally-dark font-montserrat">Upcoming Events</h3>
-            <Button variant="ghost" size="sm" asChild className="text-primary hover:text-primary/80 font-medium font-montserrat">
-              <Link to="/events">
+            <h3 className="text-xl font-bold text-foreground font-montserrat">Upcoming Events</h3>
+            <Button variant="ghost" size="sm" asChild className="text-primary hover:text-primary/80 font-bold font-montserrat hover:bg-primary/10">
+              <Link to="/events" className="flex items-center gap-1">
                 See All
+                <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
           </div>
@@ -127,7 +141,7 @@ export default function Index() {
           {eventsLoading ? (
             <div className="space-y-3">
               {[1, 2].map((i) => (
-                <Card key={i} className="h-72 animate-pulse bg-muted border-0 rounded-2xl" />
+                <Card key={i} className="h-72 animate-pulse bg-gradient-to-r from-muted to-muted/50 border-0 rounded-2xl" />
               ))}
             </div>
           ) : upcomingEvents.length > 0 ? (
@@ -137,13 +151,14 @@ export default function Index() {
               ))}
             </div>
           ) : (
-            <Card className="bg-white shadow-sm rounded-2xl">
-              <CardContent className="p-8 text-center">
-                <div className="w-12 h-12 rounded-full bg-rally-light mx-auto mb-4 flex items-center justify-center">
-                  <Zap className="h-6 w-6 text-primary" />
+            <Card className="bg-gradient-to-br from-white to-secondary/30 shadow-lg rounded-2xl border-0 overflow-hidden">
+              <CardContent className="p-8 text-center relative">
+                <div className="absolute top-0 left-1/2 w-32 h-32 bg-primary/5 rounded-full -translate-x-1/2 -translate-y-1/2" />
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10 mx-auto mb-4 flex items-center justify-center relative">
+                  <Zap className="h-8 w-8 text-primary" strokeWidth={2} />
                 </div>
-                <h4 className="font-bold mb-2 text-rally-dark font-montserrat">No upcoming events</h4>
-                <p className="text-sm text-rally-gray mb-4 font-montserrat">Start one and rally your squad!</p>
+                <h4 className="font-bold text-lg mb-2 text-foreground font-montserrat">No upcoming events</h4>
+                <p className="text-sm text-muted-foreground mb-6 font-montserrat">Start one and rally your squad!</p>
                 <QuickRallyDialog />
               </CardContent>
             </Card>
@@ -158,35 +173,45 @@ export default function Index() {
 
 function LandingScreen() {
   return (
-    <div className="min-h-screen flex flex-col bg-rally-cream overflow-hidden relative">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-primary via-orange-500 to-yellow-500 overflow-hidden relative">
+      {/* Decorative elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute top-20 -left-20 w-60 h-60 bg-white/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-40 -right-20 w-80 h-80 bg-yellow-400/20 rounded-full blur-3xl" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-white/5 rounded-full blur-3xl" />
+      </div>
+      
       {/* Main Content */}
       <div className="flex-1 flex flex-col items-center justify-center p-6 text-center relative z-10">
         <div className="max-w-sm w-full space-y-8">
-          {/* Logo */}
-          <div>
-            <div className="w-24 h-24 rounded-full bg-rally-cream border-4 border-primary/20 mx-auto flex items-center justify-center shadow-xl mb-4">
+          {/* Logo with glow effect */}
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-40 h-40 bg-white/20 rounded-full blur-2xl animate-pulse" />
+            </div>
+            <div className="w-32 h-32 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 mx-auto flex items-center justify-center shadow-2xl relative">
               <img 
                 src={rallyLogo} 
                 alt="R@lly" 
-                className="w-14 h-14 object-contain"
+                className="w-20 h-20 object-contain filter drop-shadow-lg"
               />
             </div>
-            <h1 className="text-3xl font-bold text-rally-dark font-montserrat">R@LLY</h1>
+            <h1 className="text-5xl font-black text-white font-montserrat mt-6 tracking-tight drop-shadow-lg">R@LLY</h1>
           </div>
           
           {/* Tagline */}
           <div className="space-y-3">
-            <p className="text-xl font-semibold text-rally-dark font-montserrat">
+            <p className="text-2xl font-bold text-white/95 font-montserrat drop-shadow-sm">
               Plan fast. Stay synced.
             </p>
-            <p className="text-base text-rally-gray font-montserrat">
+            <p className="text-lg text-white/80 font-montserrat">
               Rally your squad in seconds
             </p>
           </div>
 
           {/* CTA Button */}
           <div className="pt-8">
-            <Button asChild size="lg" className="w-full rounded-full bg-primary hover:bg-primary/90 text-white text-base h-12 font-medium font-montserrat shadow-lg">
+            <Button asChild size="lg" className="w-full rounded-full bg-white hover:bg-white/90 text-primary text-lg h-14 font-bold font-montserrat shadow-2xl hover:shadow-white/30 transition-all hover:scale-[1.02]">
               <Link to="/auth">
                 Get Started 
                 <ArrowRight className="ml-2 h-5 w-5" />

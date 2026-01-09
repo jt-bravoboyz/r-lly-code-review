@@ -143,8 +143,8 @@ export function QuickRallyDialog({ trigger, preselectedSquad }: QuickRallyDialog
     }}>
       <DialogTrigger asChild>
         {trigger || (
-          <Button className="bg-secondary text-secondary-foreground hover:bg-secondary/90 rounded-full shadow-md font-montserrat font-bold">
-            <Zap className="h-4 w-4 mr-2" />
+          <Button className="bg-gradient-to-r from-yellow-400 via-orange-400 to-primary text-white hover:opacity-90 rounded-full shadow-lg shadow-orange-500/30 font-montserrat font-extrabold px-6 transition-all hover:scale-105">
+            <Zap className="h-5 w-5 mr-2" strokeWidth={2.5} fill="currentColor" />
             Quick R@lly
           </Button>
         )}
@@ -153,9 +153,11 @@ export function QuickRallyDialog({ trigger, preselectedSquad }: QuickRallyDialog
         {step === 'create' ? (
           <>
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2 font-montserrat">
-                <Zap className="h-5 w-5 text-secondary" />
-                Quick R@lly
+              <DialogTitle className="flex items-center gap-3 font-montserrat text-xl">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-yellow-400 to-primary flex items-center justify-center">
+                  <Zap className="h-5 w-5 text-white" strokeWidth={2.5} fill="currentColor" />
+                </div>
+                <span className="font-bold">Quick R@lly</span>
               </DialogTitle>
             </DialogHeader>
             
