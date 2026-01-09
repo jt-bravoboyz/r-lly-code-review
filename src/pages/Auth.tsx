@@ -344,8 +344,8 @@ export default function Auth() {
         </div>
       </div>
 
-      {/* Bottom toggle link */}
-      <div className="py-8 text-center relative z-10">
+      {/* Bottom links */}
+      <div className="py-8 text-center relative z-10 space-y-3">
         <p 
           className="text-base font-montserrat"
           style={{ color: "rgba(255, 255, 255, 0.5)" }}
@@ -359,6 +359,14 @@ export default function Auth() {
             {isSignUp ? 'Sign in' : 'Sign up'}
           </button>
         </p>
+
+        <button
+          type="button"
+          onClick={() => navigate('/settings-preview')}
+          className="text-sm underline text-primary"
+        >
+          View settings preview (no login)
+        </button>
       </div>
     </div>
   );
