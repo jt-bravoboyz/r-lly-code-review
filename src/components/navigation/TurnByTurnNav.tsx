@@ -46,6 +46,21 @@ export function TurnByTurnNav({ target, onClose }: TurnByTurnNavProps) {
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [isFollowing, setIsFollowing] = useState(true);
   const [mapInitialized, setMapInitialized] = useState(false);
+  const [triggeredAlerts, setTriggeredAlerts] = useState<Set<number>>(new Set());
+
+  // Proximity thresholds in meters (50ft ≈ 15m, 20ft ≈ 6m, 10ft ≈ 3m)
+  const PROXIMITY_ALERTS = [
+    { distance: 15, label: '50 feet', vibrationPattern: [100] },
+    { distance: 6, label: '20 feet', vibrationPattern: [100, 50, 100] },
+    { distance: 3, label: '10 feet', vibrationPattern: [100, 50, 100, 50, 200] },
+  ];
+
+  // Trigger haptic feedback
+  const triggerHaptic = useCallback((pattern: number[]) => {
+    if ('vibrate' in navigator) {
+      navigator.vibrate(pattern);
+    }
+  }, []);
 
   // Format distance for display
   const formatDistance = (meters: number) => {
@@ -264,13 +279,30 @@ export function TurnByTurnNav({ target, onClose }: TurnByTurnNavProps) {
         Math.pow((target.lng - currentPosition.lng) * 111000 * Math.cos(currentPosition.lat * Math.PI / 180), 2)
       );
       
-      // If we're very close to target
-      if (directDistance < 20) {
+      // Check proximity alerts (from farthest to closest)
+      PROXIMITY_ALERTS.forEach((alert) => {
+        if (directDistance <= alert.distance && !triggeredAlerts.has(alert.distance)) {
+          // Trigger haptic feedback
+          triggerHaptic(alert.vibrationPattern);
+          
+          // Announce proximity
+          speak(`${target.displayName} is within ${alert.label}!`);
+          toast.success(`${target.displayName} is within ${alert.label}!`, {
+            duration: 3000,
+          });
+          
+          // Mark this alert as triggered
+          setTriggeredAlerts(prev => new Set([...prev, alert.distance]));
+        }
+      });
+      
+      // If we're very close to target (arrived)
+      if (directDistance < 3) {
         speak(`You have arrived at ${target.displayName}'s location`);
         toast.success(`You've found ${target.displayName}!`);
       }
     }
-  }, [currentPosition, compassHeading, isFollowing, steps, currentStepIndex, target, speak]);
+  }, [currentPosition, compassHeading, isFollowing, steps, currentStepIndex, target, speak, triggeredAlerts, triggerHaptic, PROXIMITY_ALERTS]);
 
   // Refresh route periodically
   useEffect(() => {
