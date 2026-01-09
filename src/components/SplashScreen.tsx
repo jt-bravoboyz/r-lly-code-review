@@ -249,31 +249,57 @@ export function SplashScreen({ onComplete, duration = 5000 }: SplashScreenProps)
   // Arc 2: 1.65 - 3.55s (1.9s duration - slower and bigger)
   const arc2State = getArcState(1.65, 1.9, ARC2, true, false);
 
-  // Arc 3: 3.60 - 4.50s (0.9s duration - circular orbit around logo during fanfare)
+  // Arc 3: 3.60 - 4.60s - circular orbit then shoot toward screen
   const getArc3State = () => {
     const arcStartTime = 3.60;
-    const arcDuration = 0.9;
+    const orbitDuration = 0.65; // Time for orbit
+    const shootDuration = 0.35; // Time for shooting toward screen
+    const totalDuration = orbitDuration + shootDuration;
     const arcElapsed = elapsed - arcStartTime;
-    if (arcElapsed < 0 || arcElapsed > arcDuration + 0.3) return null;
+    if (arcElapsed < 0 || arcElapsed > totalDuration + 0.2) return null;
 
-    const t = Math.min(1, arcElapsed / arcDuration);
-    const easedT = easeOutCubic(t); // Smooth deceleration
-    const headPos = getCircularOrbitPosition(easedT, ARC3_CENTER, ARC3_RADIUS);
+    const isOrbiting = arcElapsed < orbitDuration;
+    
+    if (isOrbiting) {
+      // Orbiting phase
+      const t = arcElapsed / orbitDuration;
+      const easedT = easeOutCubic(t);
+      const headPos = getCircularOrbitPosition(easedT, ARC3_CENTER, ARC3_RADIUS);
 
-    // Tail follows behind
-    const tailT = Math.max(0, easedT - 0.15);
-    const tailStartPos = getCircularOrbitPosition(Math.max(0, tailT - 0.2), ARC3_CENTER, ARC3_RADIUS);
+      const tailT = Math.max(0, easedT - 0.15);
+      const tailStartPos = getCircularOrbitPosition(Math.max(0, tailT - 0.2), ARC3_CENTER, ARC3_RADIUS);
 
-    // Calculate velocity for spark direction
-    const nextT = Math.min(1, easedT + 0.02);
-    const nextPos = getCircularOrbitPosition(nextT, ARC3_CENTER, ARC3_RADIUS);
-    const vx = nextPos.x - headPos.x;
-    const vy = nextPos.y - headPos.y;
+      const nextT = Math.min(1, easedT + 0.02);
+      const nextPos = getCircularOrbitPosition(nextT, ARC3_CENTER, ARC3_RADIUS);
+      const vx = nextPos.x - headPos.x;
+      const vy = nextPos.y - headPos.y;
 
-    // Fade out as it completes the orbit
-    const fadeOpacity = t > 0.7 ? 1 - ((t - 0.7) / 0.3) : 1;
+      return { headPos, tailStartPos, t, vx, vy, isVisible: true, fadeOpacity: 1, scale: 1, isShootingPhase: false };
+    } else {
+      // Shooting toward screen phase
+      const shootT = (arcElapsed - orbitDuration) / shootDuration;
+      const easedShootT = easeInCubic(shootT);
+      
+      // Start from end of orbit position, scale up rapidly
+      const orbitEndPos = getCircularOrbitPosition(1, ARC3_CENTER, ARC3_RADIUS);
+      
+      // Move toward center and scale up
+      const headPos = {
+        x: orbitEndPos.x + (50 - orbitEndPos.x) * easedShootT * 0.5,
+        y: orbitEndPos.y + (50 - orbitEndPos.y) * easedShootT * 0.5,
+      };
+      
+      const tailStartPos = {
+        x: orbitEndPos.x,
+        y: orbitEndPos.y,
+      };
 
-    return { headPos, tailStartPos, t, vx, vy, isVisible: fadeOpacity > 0.05, fadeOpacity };
+      // Scale increases dramatically as it "shoots" toward viewer
+      const scale = 1 + easedShootT * 8;
+      const fadeOpacity = 1 - easedShootT;
+
+      return { headPos, tailStartPos, t: shootT, vx: 0, vy: -1, isVisible: fadeOpacity > 0.05, fadeOpacity, scale, isShootingPhase: true };
+    }
   };
 
   const arc3State = getArc3State();
@@ -309,31 +335,31 @@ export function SplashScreen({ onComplete, duration = 5000 }: SplashScreenProps)
     }
   }, [arc1State, arc2State, generateSparks]);
 
-  // READY animation: 0.55 - 1.45
+  // READY animation: 0.45 - 1.35 (faster, less hold time)
   const getReadyStyle = () => {
-    if (elapsed < 0.55 || elapsed > 1.45) return { opacity: 0, scale: 0.86 };
-    if (elapsed < 0.80) {
-      const t = (elapsed - 0.55) / 0.25;
+    if (elapsed < 0.45 || elapsed > 1.35) return { opacity: 0, scale: 0.86 };
+    if (elapsed < 0.65) {
+      const t = (elapsed - 0.45) / 0.20;
       return { opacity: easeOutCubic(t), scale: 0.86 + 0.14 * easeOutCubic(t) };
     }
-    if (elapsed < 1.20) {
+    if (elapsed < 1.05) {
       return { opacity: 1, scale: 1 };
     }
-    const t = (elapsed - 1.20) / 0.25;
+    const t = (elapsed - 1.05) / 0.30;
     return { opacity: 1 - easeInCubic(t), scale: 1 + 0.06 * easeInCubic(t) };
   };
 
-  // SET animation: 2.35 - 3.40 (adjusted for slower arc 2)
+  // SET animation: 2.10 - 3.10 (faster, less hold time)
   const getSetStyle = () => {
-    if (elapsed < 2.35 || elapsed > 3.40) return { opacity: 0, scale: 0.86 };
-    if (elapsed < 2.60) {
-      const t = (elapsed - 2.35) / 0.25;
+    if (elapsed < 2.10 || elapsed > 3.10) return { opacity: 0, scale: 0.86 };
+    if (elapsed < 2.30) {
+      const t = (elapsed - 2.10) / 0.20;
       return { opacity: easeOutCubic(t), scale: 0.86 + 0.14 * easeOutCubic(t) };
     }
-    if (elapsed < 3.05) {
+    if (elapsed < 2.75) {
       return { opacity: 1, scale: 1 };
     }
-    const t = (elapsed - 3.05) / 0.35;
+    const t = (elapsed - 2.75) / 0.35;
     return { opacity: 1 - easeInCubic(t), scale: 1 + 0.07 * easeInCubic(t) };
   };
 
@@ -370,12 +396,14 @@ export function SplashScreen({ onComplete, duration = 5000 }: SplashScreenProps)
   const glowPulse = getGlowPulseOpacity();
   const exitOpacity = getExitOpacity();
 
-  const renderComet = (state: ReturnType<typeof getArcState>, isSecondArc: boolean, isThirdArc: boolean = false, id: string = "1", fadeOpacity: number = 1) => {
+  const renderComet = (state: ReturnType<typeof getArcState>, isSecondArc: boolean, isThirdArc: boolean = false, id: string = "1", fadeOpacity: number = 1, scale: number = 1) => {
     if (!state || !state.isVisible) return null;
     const { headPos, tailStartPos } = state;
-    const headSize = isThirdArc ? 6 : (isSecondArc ? 14 : 10);
-    const glowSize = isThirdArc ? 16 : (isSecondArc ? 36 : 26);
-    const tailWidth = isThirdArc ? 8 : (isSecondArc ? 24 : 14);
+    const baseHeadSize = isThirdArc ? 6 : (isSecondArc ? 14 : 10);
+    const baseGlowSize = isThirdArc ? 16 : (isSecondArc ? 36 : 26);
+    const headSize = baseHeadSize * scale;
+    const glowSize = baseGlowSize * scale;
+    const tailWidth = (isThirdArc ? 8 : (isSecondArc ? 24 : 14)) * Math.min(scale, 2);
 
     return (
       <g>
@@ -473,8 +501,8 @@ export function SplashScreen({ onComplete, duration = 5000 }: SplashScreenProps)
         {/* Arc 2 comet */}
         {renderComet(arc2State, true, false, "2")}
 
-        {/* Arc 3 comet (circular orbit around logo) */}
-        {arc3State && renderComet(arc3State as any, false, true, "3", arc3State.fadeOpacity)}
+        {/* Arc 3 comet (circular orbit then shoots toward screen) */}
+        {arc3State && renderComet(arc3State as any, false, true, "3", arc3State.fadeOpacity, arc3State.scale)}
 
         {/* Fanfare particles */}
         {fanfareParticles.map(p => (
