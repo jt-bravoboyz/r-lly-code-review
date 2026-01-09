@@ -53,7 +53,7 @@ export default function Index() {
         <div className="flex items-center justify-between px-4 py-3">
           {/* Logo */}
           <div className="flex items-center">
-            <img src={rallyLogo} alt="R@lly" className="h-[60px] w-[60px] object-contain" />
+            <img src={rallyLogo} alt="R@lly" className="h-10 w-10 object-contain" />
           </div>
 
           {/* Right side - notifications & avatar */}
@@ -67,8 +67,8 @@ export default function Index() {
             </Link>
             
             {/* User avatar */}
-            <Link to="/profile" className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
-              <span className="text-xs font-bold text-white">{userInitials}</span>
+            <Link to="/profile" className="w-10 h-10 rounded-full bg-primary flex items-center justify-center ring-2 ring-primary/30 hover:ring-primary/50 transition-all">
+              <span className="text-sm font-bold text-white">{userInitials}</span>
             </Link>
           </div>
         </div>
