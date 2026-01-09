@@ -68,3 +68,11 @@ export async function sendLocationChangeMessage(chatId: string, newLocation: str
 export async function sendCohostMessage(chatId: string, cohostName: string) {
   await sendSystemMessage(chatId, `👑 ${cohostName} is now a co-host`);
 }
+
+export async function sendMovingToNextStopMessage(chatId: string, currentStop: string, nextStop: string, hostName: string) {
+  await sendSystemMessage(chatId, `🍺 ${hostName} says: Time to move! Leaving ${currentStop} → heading to ${nextStop}`);
+}
+
+export async function sendArrivedAtStopMessage(chatId: string, stopName: string) {
+  await sendSystemMessage(chatId, `🎉 We've arrived at ${stopName}!`);
+}
