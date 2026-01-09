@@ -6,14 +6,14 @@ interface SplashScreenProps {
   duration?: number;
 }
 
-export function SplashScreen({ onComplete, duration = 3000 }: SplashScreenProps) {
+export function SplashScreen({ onComplete, duration = 4500 }: SplashScreenProps) {
   const [phase, setPhase] = useState<'flag' | 'logo' | 'exit'>('flag');
 
   useEffect(() => {
-    // Phase 1: Flag waving (0-1200ms)
-    const logoTimer = setTimeout(() => setPhase('logo'), 1200);
+    // Phase 1: Flag waving (0-2000ms)
+    const logoTimer = setTimeout(() => setPhase('logo'), 2000);
     
-    // Phase 2: Logo appears boldly (1200ms - duration-400ms)
+    // Phase 2: Logo appears boldly (2000ms - duration-400ms)
     const exitTimer = setTimeout(() => setPhase('exit'), duration - 400);
     
     // Phase 3: Exit and complete
@@ -34,42 +34,80 @@ export function SplashScreen({ onComplete, duration = 3000 }: SplashScreenProps)
     >
       {/* Main Content */}
       <div className="relative z-10 flex flex-col items-center">
-        {/* White Flag - waving patriotically */}
+        {/* White Flag - American style waving dramatically */}
         <div 
           className={`relative transition-all duration-700 ease-out ${
             phase === 'flag' ? 'scale-100 opacity-100' : 'scale-75 opacity-0 -translate-y-8'
           }`}
         >
           {/* Flag pole */}
-          <div className="absolute left-1/2 -translate-x-1/2 top-full w-1 h-16 bg-white/80 rounded-full" />
+          <div className="absolute left-0 top-0 bottom-0 w-2 bg-white/90 rounded-full shadow-lg" style={{ height: 'calc(100% + 80px)' }} />
           
-          {/* White flag waving */}
-          <div className="animate-flag-wave">
+          {/* White American-style flag waving dramatically */}
+          <div className="animate-flag-wave-dramatic ml-2">
             <svg 
-              width="120" 
-              height="80" 
-              viewBox="0 0 120 80" 
+              width="200" 
+              height="130" 
+              viewBox="0 0 200 130" 
               fill="none" 
               xmlns="http://www.w3.org/2000/svg"
-              className="drop-shadow-lg"
+              className="drop-shadow-2xl"
             >
-              {/* Flag shape with wave effect */}
+              {/* Flag with wave ripples - American flag proportions */}
+              <defs>
+                <linearGradient id="flagWave" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="white" stopOpacity="1" />
+                  <stop offset="25%" stopColor="white" stopOpacity="0.95" />
+                  <stop offset="50%" stopColor="white" stopOpacity="1" />
+                  <stop offset="75%" stopColor="white" stopOpacity="0.92" />
+                  <stop offset="100%" stopColor="white" stopOpacity="0.98" />
+                </linearGradient>
+                <filter id="flagShadow" x="-20%" y="-20%" width="140%" height="140%">
+                  <feDropShadow dx="2" dy="4" stdDeviation="4" floodOpacity="0.3"/>
+                </filter>
+              </defs>
+              
+              {/* Main flag body with wave effect - American flag shape */}
               <path 
-                d="M0 8C0 3.58172 3.58172 0 8 0H100C106.627 0 112 5.37258 112 12V68C112 74.6274 106.627 80 100 80H8C3.58172 80 0 76.4183 0 72V8Z" 
-                fill="white"
+                d="M0 5C0 2.23858 2.23858 0 5 0H190C195.523 0 200 4.47715 200 10V120C200 125.523 195.523 130 190 130H5C2.23858 130 0 127.761 0 125V5Z" 
+                fill="url(#flagWave)"
+                filter="url(#flagShadow)"
+                className="animate-flag-ripple"
               />
-              {/* R@lly flag icon inside */}
+              
+              {/* Subtle wave lines to give depth */}
               <path 
-                d="M56 20L72 40L56 60V45H40V35H56V20Z" 
-                fill="#F26C15"
+                d="M0 30 Q50 25, 100 32 T200 28" 
+                stroke="rgba(0,0,0,0.03)" 
+                strokeWidth="1" 
+                fill="none"
+              />
+              <path 
+                d="M0 60 Q50 55, 100 62 T200 58" 
+                stroke="rgba(0,0,0,0.03)" 
+                strokeWidth="1" 
+                fill="none"
+              />
+              <path 
+                d="M0 90 Q50 85, 100 92 T200 88" 
+                stroke="rgba(0,0,0,0.03)" 
+                strokeWidth="1" 
+                fill="none"
+              />
+              <path 
+                d="M0 120 Q50 115, 100 122 T200 118" 
+                stroke="rgba(0,0,0,0.03)" 
+                strokeWidth="1" 
+                fill="none"
               />
             </svg>
           </div>
           
-          {/* Sparkles around flag */}
-          <div className="absolute -top-2 -right-4 w-2 h-2 bg-white rounded-full animate-sparkle opacity-80" />
-          <div className="absolute top-6 -right-6 w-1.5 h-1.5 bg-white/70 rounded-full animate-sparkle-delayed" />
-          <div className="absolute -top-4 left-4 w-1.5 h-1.5 bg-white/60 rounded-full animate-sparkle-delayed-2" />
+          {/* Wind effect particles */}
+          <div className="absolute -top-4 right-0 w-3 h-3 bg-white/60 rounded-full animate-wind-particle" />
+          <div className="absolute top-8 -right-6 w-2 h-2 bg-white/50 rounded-full animate-wind-particle-delayed" />
+          <div className="absolute top-20 -right-4 w-2.5 h-2.5 bg-white/40 rounded-full animate-wind-particle-delayed-2" />
+          <div className="absolute -top-2 right-12 w-1.5 h-1.5 bg-white/50 rounded-full animate-wind-particle" />
         </div>
 
         {/* R@LLY Logo - appears boldly */}
@@ -84,12 +122,12 @@ export function SplashScreen({ onComplete, duration = 3000 }: SplashScreenProps)
           <img 
             src={rallyLogo} 
             alt="R@lly" 
-            className="w-24 h-24 object-contain filter brightness-0 invert drop-shadow-2xl"
+            className="w-28 h-28 object-contain filter brightness-0 invert drop-shadow-2xl"
           />
           
           {/* R@LLY Text - bold entrance */}
           <h1 
-            className={`mt-4 text-4xl font-bold text-white tracking-tight transition-all duration-500 delay-200 ${
+            className={`mt-4 text-5xl font-bold text-white tracking-tight transition-all duration-500 delay-200 ${
               phase === 'logo' || phase === 'exit' ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
             }`}
             style={{ textShadow: '0 4px 20px rgba(0,0,0,0.3)' }}
