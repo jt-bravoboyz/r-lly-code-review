@@ -21,6 +21,7 @@ import JoinRally from "./pages/JoinRally";
 import Legal from "./pages/Legal";
 import Settings from "./pages/Settings";
 import SettingsPreview from "./pages/SettingsPreview";
+import AppFlowchart from "./pages/AppFlowchart";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -51,6 +52,8 @@ const App = () => (
                 <Route path="/legal" element={<Legal />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/settings-preview" element={<SettingsPreview />} />
+                <Route path="/app-flowchart" element={<AppFlowchart />} />
+                <Route path="/join-squad/:code" element={<Squads />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>

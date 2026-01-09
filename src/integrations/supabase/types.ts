@@ -398,6 +398,56 @@ export type Database = {
           },
         ]
       }
+      notification_preferences: {
+        Row: {
+          arrival_confirmations: boolean
+          bar_hop_transitions: boolean
+          created_at: string
+          event_updates: boolean
+          going_home_alerts: boolean
+          id: string
+          profile_id: string
+          ride_offers: boolean
+          ride_requests: boolean
+          squad_invites: boolean
+          updated_at: string
+        }
+        Insert: {
+          arrival_confirmations?: boolean
+          bar_hop_transitions?: boolean
+          created_at?: string
+          event_updates?: boolean
+          going_home_alerts?: boolean
+          id?: string
+          profile_id: string
+          ride_offers?: boolean
+          ride_requests?: boolean
+          squad_invites?: boolean
+          updated_at?: string
+        }
+        Update: {
+          arrival_confirmations?: boolean
+          bar_hop_transitions?: boolean
+          created_at?: string
+          event_updates?: boolean
+          going_home_alerts?: boolean
+          id?: string
+          profile_id?: string
+          ride_offers?: boolean
+          ride_requests?: boolean
+          squad_invites?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_preferences_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           body: string | null
@@ -641,6 +691,57 @@ export type Database = {
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      squad_invites: {
+        Row: {
+          contact_value: string
+          created_at: string
+          expires_at: string
+          id: string
+          invite_code: string
+          invite_type: string
+          invited_by: string
+          squad_id: string
+          status: string
+        }
+        Insert: {
+          contact_value: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          invite_code?: string
+          invite_type: string
+          invited_by: string
+          squad_id: string
+          status?: string
+        }
+        Update: {
+          contact_value?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          invite_code?: string
+          invite_type?: string
+          invited_by?: string
+          squad_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "squad_invites_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "squad_invites_squad_id_fkey"
+            columns: ["squad_id"]
+            isOneToOne: false
+            referencedRelation: "squads"
             referencedColumns: ["id"]
           },
         ]
