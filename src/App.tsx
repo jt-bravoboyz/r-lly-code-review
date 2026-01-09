@@ -19,6 +19,7 @@ import Achievements from "./pages/Achievements";
 import JoinRally from "./pages/JoinRally";
 import Legal from "./pages/Legal";
 import Settings from "./pages/Settings";
+import SettingsPreview from "./pages/SettingsPreview";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -47,6 +48,7 @@ const App = () => (
               <Route path="/achievements" element={<Achievements />} />
               <Route path="/legal" element={<Legal />} />
               <Route path="/settings" element={<Settings />} />
+              <Route path="/settings-preview" element={<SettingsPreview />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
