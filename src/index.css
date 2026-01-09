@@ -600,7 +600,81 @@
 
 /* ===== R@LLY SPLASH SCREEN ANIMATIONS ===== */
 
-/* Logo fade in - 600ms as specified */
+/* Text pop for READY/SET */
+@keyframes splash-text-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-splash-text-pop {
+  animation: splash-text-pop 350ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Logo scale in */
+@keyframes splash-logo-scale {
+  0% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-splash-logo-scale {
+  animation: splash-logo-scale 500ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Single pulse behind logo */
+@keyframes splash-pulse-once {
+  0% {
+    transform: scale(0.5);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(2.5);
+    opacity: 0;
+  }
+}
+
+.animate-splash-pulse-once {
+  animation: splash-pulse-once 800ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Tagline fade in */
+@keyframes splash-tagline-fade {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-splash-tagline-fade {
+  animation: splash-tagline-fade 400ms ease-out forwards;
+  animation-delay: 200ms;
+  opacity: 0;
+}
+
+/* Logo fade in - legacy */
 @keyframes splash-logo-fade {
   0% {
     opacity: 0;
@@ -650,17 +724,17 @@
 
 .animate-splash-particle {
   animation: splash-particle 1.5s ease-out forwards;
-  animation-delay: 0.3s;
+  animation-delay: 0.1s;
 }
 
 .animate-splash-particle-delayed {
   animation: splash-particle 1.5s ease-out forwards;
-  animation-delay: 0.5s;
+  animation-delay: 0.3s;
 }
 
 .animate-splash-particle-delayed-2 {
   animation: splash-particle 1.5s ease-out forwards;
-  animation-delay: 0.7s;
+  animation-delay: 0.5s;
 }
 
 /* ===== ONBOARDING ANIMATIONS ===== */
