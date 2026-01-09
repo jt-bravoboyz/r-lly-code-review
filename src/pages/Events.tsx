@@ -1,4 +1,3 @@
-import { Header } from '@/components/layout/Header';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { EventCard } from '@/components/events/EventCard';
 import { CreateEventDialog } from '@/components/events/CreateEventDialog';
@@ -6,13 +5,15 @@ import { useEvents } from '@/hooks/useEvents';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Zap, Plus, Filter, Search } from 'lucide-react';
+import { Zap, Filter, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import rallyLogo from '@/assets/rally-logo.png';
 
 export default function Events() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, profile, loading: authLoading } = useAuth();
   const { data: events, isLoading } = useEvents();
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -47,9 +48,18 @@ export default function Events() {
       <header className="sticky top-0 z-40 bg-white shadow-sm">
         <div className="h-6" />
         <div className="flex items-center justify-between px-4 py-3">
-          <img src={rallyLogo} alt="R@lly" className="h-10 w-10 object-contain" />
-          <h1 className="text-xl font-bold text-rally-dark font-montserrat">Rallies</h1>
-          <div className="w-10" /> {/* Spacer for centering */}
+          <Link to="/">
+            <img src={rallyLogo} alt="R@lly" className="h-10 w-10 object-contain" />
+          </Link>
+          <h1 className="text-xl font-bold text-rally-dark font-montserrat">Rally</h1>
+          <Link to="/profile">
+            <Avatar className="h-10 w-10 ring-2 ring-primary/30 hover:ring-primary/50 transition-all">
+              <AvatarImage src={profile?.avatar_url || undefined} />
+              <AvatarFallback className="bg-primary text-primary-foreground text-sm font-bold">
+                {profile?.display_name?.charAt(0)?.toUpperCase() || '?'}
+              </AvatarFallback>
+            </Avatar>
+          </Link>
         </div>
       </header>
       
@@ -59,7 +69,7 @@ export default function Events() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input 
-              placeholder="Search rallies..." 
+              placeholder="Search rally..." 
               className="pl-10 rounded-full bg-white border-gray-200"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -83,7 +93,7 @@ export default function Events() {
 
         {/* Section Header */}
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-bold text-rally-dark font-montserrat">Upcoming Rallies</h2>
+          <h2 className="text-lg font-bold text-rally-dark font-montserrat">Upcoming Rally</h2>
           <span className="text-sm text-muted-foreground">{filteredEvents.length} events</span>
         </div>
 
@@ -106,7 +116,7 @@ export default function Events() {
               <div className="w-16 h-16 rounded-full bg-rally-light mx-auto mb-4 flex items-center justify-center">
                 <Zap className="h-8 w-8 text-primary" />
               </div>
-              <h3 className="text-lg font-bold mb-2 text-rally-dark font-montserrat">No rallies yet</h3>
+              <h3 className="text-lg font-bold mb-2 text-rally-dark font-montserrat">No rally yet</h3>
               <p className="text-muted-foreground mb-6 font-montserrat">Be the first to start one!</p>
               <CreateEventDialog />
             </CardContent>
