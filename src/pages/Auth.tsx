@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
@@ -61,41 +61,27 @@ export default function Auth() {
   };
 
   return (
-    <div className={`min-h-screen flex flex-col ${isSignUp ? 'bg-rally-light' : 'bg-rally-light'} relative overflow-hidden`}>
-      {/* Orange header wave - matching Figma */}
-      <div className="absolute top-0 left-0 right-0 h-64 bg-primary">
-        {/* Decorative pills in header */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute w-12 h-80 bg-white/5 rounded-3xl -top-40 left-4" />
-          <div className="absolute w-12 h-80 bg-white/5 rounded-3xl -top-52 left-20" />
-          <div className="absolute w-12 h-80 bg-white/5 rounded-3xl -top-32 left-36" />
-          <div className="absolute w-12 h-80 bg-white/5 rounded-3xl -top-40 left-52" />
-          <div className="absolute w-12 h-80 bg-white/5 rounded-3xl -top-56 left-68" />
-          <div className="absolute w-12 h-80 bg-white/5 rounded-3xl -top-40 right-4" />
-        </div>
-      </div>
-
-      {/* Logo section in header */}
-      <div className="relative z-10 flex flex-col items-center pt-24 pb-8">
+    <div className="min-h-screen flex flex-col bg-rally-light relative overflow-hidden">
+      {/* Orange header with just the white logo */}
+      <div className="relative bg-primary pt-16 pb-24">
+        {/* White R@lly logo - centered */}
         <div 
-          className={`transition-all duration-500 ${showContent ? 'opacity-100 scale-100' : 'opacity-0 scale-90'}`}
+          className={`flex flex-col items-center transition-all duration-500 ${showContent ? 'opacity-100 scale-100' : 'opacity-0 scale-90'}`}
         >
-          {/* Cream circle with logo */}
-          <div className="w-20 h-20 rounded-full bg-rally-cream flex items-center justify-center shadow-lg mb-3">
-            <img 
-              src={rallyLogo} 
-              alt="R@lly" 
-              className="w-12 h-12 object-contain"
-            />
-          </div>
-          <h1 className="text-2xl font-bold text-white text-center">R@LLY</h1>
+          {/* Logo with white filter and transparent circle effect */}
+          <img 
+            src={rallyLogo} 
+            alt="R@lly" 
+            className="w-20 h-20 object-contain filter brightness-0 invert drop-shadow-lg"
+          />
+          <h1 className="mt-2 text-2xl font-bold text-white tracking-tight">R@LLY</h1>
         </div>
       </div>
 
       {/* Form section */}
-      <div className="flex-1 flex flex-col items-center justify-center px-4 pt-8 relative z-10">
+      <div className="flex-1 flex flex-col items-center justify-start px-4 pt-8 relative z-10 -mt-8">
         <div 
-          className={`w-full max-w-sm transition-all duration-500 delay-150 ${showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+          className={`w-full max-w-sm bg-rally-light rounded-t-3xl pt-8 transition-all duration-500 delay-150 ${showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
         >
           {/* Form title */}
           <h2 className="text-2xl font-semibold text-rally-dark text-center mb-6 font-montserrat">
@@ -112,7 +98,7 @@ export default function Auth() {
                   placeholder="Name"
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
-                  className="pl-12 h-13 rounded-md border-rally-gray bg-transparent text-rally-gray placeholder:text-rally-light-gray font-montserrat"
+                  className="pl-12 h-13 rounded-md border-rally-gray bg-transparent text-rally-dark placeholder:text-rally-light-gray font-montserrat"
                   required
                 />
               </div>
@@ -126,7 +112,7 @@ export default function Auth() {
                 placeholder="Email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="pl-12 h-13 rounded-md border-rally-gray bg-transparent text-rally-gray placeholder:text-rally-light-gray font-montserrat"
+                className="pl-12 h-13 rounded-md border-rally-gray bg-transparent text-rally-dark placeholder:text-rally-light-gray font-montserrat"
                 required
               />
             </div>
@@ -139,7 +125,7 @@ export default function Auth() {
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="pl-12 h-13 rounded-md border-rally-gray bg-transparent text-rally-gray placeholder:text-rally-light-gray font-montserrat"
+                className="pl-12 h-13 rounded-md border-rally-gray bg-transparent text-rally-dark placeholder:text-rally-light-gray font-montserrat"
                 minLength={6}
                 required
               />
@@ -154,7 +140,7 @@ export default function Auth() {
                   placeholder="Confirm Password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="pl-12 h-13 rounded-md border-rally-gray bg-transparent text-rally-gray placeholder:text-rally-light-gray font-montserrat"
+                  className="pl-12 h-13 rounded-md border-rally-gray bg-transparent text-rally-dark placeholder:text-rally-light-gray font-montserrat"
                   minLength={6}
                   required
                 />
