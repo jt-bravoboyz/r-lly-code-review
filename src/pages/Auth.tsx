@@ -1,21 +1,19 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import { ArrowLeft } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Mail, Lock, User } from 'lucide-react';
 import rallyLogo from '@/assets/rally-logo.png';
 
 export default function Auth() {
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
+  const [isSignUp, setIsSignUp] = useState(false);
   const [showContent, setShowContent] = useState(false);
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
@@ -46,6 +44,10 @@ export default function Auth() {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (password !== confirmPassword) {
+      toast.error('Passwords do not match');
+      return;
+    }
     setIsLoading(true);
     try {
       await signUp(email, password, displayName);
@@ -59,147 +61,141 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col p-4 bg-background relative overflow-hidden">
-      {/* Background Effects */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[500px] h-[500px] gradient-radial opacity-40" />
-        <div className="absolute top-16 left-8 w-2 h-2 rounded-full bg-primary/30 float-animation" />
-        <div className="absolute top-32 right-12 w-3 h-3 rounded-full bg-primary/20 float-animation-delayed" />
+    <div className={`min-h-screen flex flex-col ${isSignUp ? 'bg-rally-light' : 'bg-rally-light'} relative overflow-hidden`}>
+      {/* Orange header wave - matching Figma */}
+      <div className="absolute top-0 left-0 right-0 h-64 bg-primary">
+        {/* Decorative pills in header */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute w-12 h-80 bg-white/5 rounded-3xl -top-40 left-4" />
+          <div className="absolute w-12 h-80 bg-white/5 rounded-3xl -top-52 left-20" />
+          <div className="absolute w-12 h-80 bg-white/5 rounded-3xl -top-32 left-36" />
+          <div className="absolute w-12 h-80 bg-white/5 rounded-3xl -top-40 left-52" />
+          <div className="absolute w-12 h-80 bg-white/5 rounded-3xl -top-56 left-68" />
+          <div className="absolute w-12 h-80 bg-white/5 rounded-3xl -top-40 right-4" />
+        </div>
       </div>
 
-      <Link 
-        to="/" 
-        className={`flex items-center gap-2 text-muted-foreground hover:text-foreground transition-all z-10 ${showContent ? 'opacity-100' : 'opacity-0'}`}
-      >
-        <ArrowLeft className="h-4 w-4" />
-        <span className="text-sm font-medium">Back</span>
-      </Link>
-
-      <div className="flex-1 flex flex-col items-center justify-center max-w-md mx-auto w-full relative z-10">
-        {/* Logo */}
+      {/* Logo section in header */}
+      <div className="relative z-10 flex flex-col items-center pt-24 pb-8">
         <div 
-          className={`text-center mb-8 transition-all duration-500 ${showContent ? 'opacity-100 scale-100' : 'opacity-0 scale-90'}`}
+          className={`transition-all duration-500 ${showContent ? 'opacity-100 scale-100' : 'opacity-0 scale-90'}`}
         >
-          <div className="relative inline-block">
+          {/* Cream circle with logo */}
+          <div className="w-20 h-20 rounded-full bg-rally-cream flex items-center justify-center shadow-lg mb-3">
             <img 
               src={rallyLogo} 
               alt="R@lly" 
-              className="w-24 h-24 mx-auto object-contain"
+              className="w-12 h-12 object-contain"
             />
-            <div className="absolute inset-0 w-24 h-24 mx-auto rounded-full bg-primary/15 blur-xl -z-10" />
           </div>
-          <p className="text-muted-foreground mt-3 font-medium">Join your crew</p>
+          <h1 className="text-2xl font-bold text-white text-center">R@LLY</h1>
         </div>
+      </div>
 
-        <Card 
-          className={`w-full card-rally transition-all duration-500 delay-150 ${showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+      {/* Form section */}
+      <div className="flex-1 flex flex-col items-center justify-center px-4 pt-8 relative z-10">
+        <div 
+          className={`w-full max-w-sm transition-all duration-500 delay-150 ${showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
         >
-          <Tabs defaultValue="signin" className="w-full">
-            <CardContent className="pt-6 pb-0">
-              <TabsList className="grid w-full grid-cols-2 bg-muted h-12 rounded-xl p-1">
-                <TabsTrigger 
-                  value="signin" 
-                  className="font-semibold rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm"
-                >
-                  Sign In
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="signup" 
-                  className="font-semibold rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm"
-                >
-                  Sign Up
-                </TabsTrigger>
-              </TabsList>
-            </CardContent>
-            
-            <CardContent className="pt-6">
-              <TabsContent value="signin" className="mt-0">
-                <form onSubmit={handleSignIn} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="email-signin" className="text-sm font-medium">Email</Label>
-                    <Input
-                      id="email-signin"
-                      type="email"
-                      placeholder="you@email.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="input-rally h-12"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="password-signin" className="text-sm font-medium">Password</Label>
-                    <Input
-                      id="password-signin"
-                      type="password"
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="input-rally h-12"
-                      required
-                    />
-                  </div>
-                  <Button 
-                    type="submit" 
-                    className="w-full btn-rally h-12 text-base mt-2"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? 'Signing in...' : "Let's Go"}
-                  </Button>
-                </form>
-              </TabsContent>
-              
-              <TabsContent value="signup" className="mt-0">
-                <form onSubmit={handleSignUp} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name-signup" className="text-sm font-medium">Name</Label>
-                    <Input
-                      id="name-signup"
-                      type="text"
-                      placeholder="What should we call you?"
-                      value={displayName}
-                      onChange={(e) => setDisplayName(e.target.value)}
-                      className="input-rally h-12"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email-signup" className="text-sm font-medium">Email</Label>
-                    <Input
-                      id="email-signup"
-                      type="email"
-                      placeholder="you@email.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="input-rally h-12"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="password-signup" className="text-sm font-medium">Password</Label>
-                    <Input
-                      id="password-signup"
-                      type="password"
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="input-rally h-12"
-                      minLength={6}
-                      required
-                    />
-                  </div>
-                  <Button 
-                    type="submit" 
-                    className="w-full btn-rally h-12 text-base mt-2"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? 'Creating account...' : 'Join the Rally'}
-                  </Button>
-                </form>
-              </TabsContent>
-            </CardContent>
-          </Tabs>
-        </Card>
+          {/* Form title */}
+          <h2 className="text-2xl font-semibold text-rally-dark text-center mb-6 font-montserrat">
+            {isSignUp ? 'Create Your Account' : 'Login To Your Account'}
+          </h2>
+
+          <form onSubmit={isSignUp ? handleSignUp : handleSignIn} className="space-y-4">
+            {/* Name field - only for signup */}
+            {isSignUp && (
+              <div className="relative">
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-primary" strokeWidth={1.5} />
+                <Input
+                  type="text"
+                  placeholder="Name"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  className="pl-12 h-13 rounded-md border-rally-gray bg-transparent text-rally-gray placeholder:text-rally-light-gray font-montserrat"
+                  required
+                />
+              </div>
+            )}
+
+            {/* Email field */}
+            <div className="relative">
+              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-primary" strokeWidth={1.5} />
+              <Input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="pl-12 h-13 rounded-md border-rally-gray bg-transparent text-rally-gray placeholder:text-rally-light-gray font-montserrat"
+                required
+              />
+            </div>
+
+            {/* Password field */}
+            <div className="relative">
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-primary" strokeWidth={1.5} />
+              <Input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="pl-12 h-13 rounded-md border-rally-gray bg-transparent text-rally-gray placeholder:text-rally-light-gray font-montserrat"
+                minLength={6}
+                required
+              />
+            </div>
+
+            {/* Confirm Password - only for signup */}
+            {isSignUp && (
+              <div className="relative">
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-primary" strokeWidth={1.5} />
+                <Input
+                  type="password"
+                  placeholder="Confirm Password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="pl-12 h-13 rounded-md border-rally-gray bg-transparent text-rally-gray placeholder:text-rally-light-gray font-montserrat"
+                  minLength={6}
+                  required
+                />
+              </div>
+            )}
+
+            {/* Forgot password - only for login */}
+            {!isSignUp && (
+              <div className="text-right">
+                <button type="button" className="text-primary text-base font-montserrat hover:underline">
+                  Forgot Password?
+                </button>
+              </div>
+            )}
+
+            {/* Submit button */}
+            <Button 
+              type="submit" 
+              className="w-full h-13 rounded-lg bg-primary hover:bg-primary/90 text-white font-medium text-base font-montserrat mt-6"
+              disabled={isLoading}
+            >
+              {isLoading 
+                ? (isSignUp ? 'Creating account...' : 'Signing in...') 
+                : (isSignUp ? 'Sign Up' : 'Login')
+              }
+            </Button>
+          </form>
+        </div>
+      </div>
+
+      {/* Bottom toggle link */}
+      <div className="py-8 text-center relative z-10">
+        <p className="text-rally-light-gray text-base font-montserrat">
+          {isSignUp ? "Already have an account? " : "Don't have an account? "}
+          <button 
+            onClick={() => setIsSignUp(!isSignUp)}
+            className="text-primary font-medium hover:underline"
+          >
+            {isSignUp ? 'Sign in' : 'Sign up'}
+          </button>
+        </p>
       </div>
     </div>
   );

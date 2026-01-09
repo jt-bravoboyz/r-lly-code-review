@@ -70,7 +70,11 @@ export default {
         },
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        sans: ['Montserrat', 'Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        montserrat: ['Montserrat', 'sans-serif'],
+      },
+      height: {
+        '13': '3.25rem',
       },
       letterSpacing: {
         tighter: '-0.05em',
