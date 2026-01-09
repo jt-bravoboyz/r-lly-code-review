@@ -695,6 +695,53 @@ export type Database = {
           },
         ]
       }
+      saved_locations: {
+        Row: {
+          address: string
+          created_at: string
+          icon: string | null
+          id: string
+          is_default: boolean | null
+          lat: number
+          lng: number
+          name: string
+          profile_id: string
+          updated_at: string
+        }
+        Insert: {
+          address: string
+          created_at?: string
+          icon?: string | null
+          id?: string
+          is_default?: boolean | null
+          lat: number
+          lng: number
+          name: string
+          profile_id: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          icon?: string | null
+          id?: string
+          is_default?: boolean | null
+          lat?: number
+          lng?: number
+          name?: string
+          profile_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_locations_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       squad_invites: {
         Row: {
           contact_value: string

@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
-import { MapPin, Loader2, X, Home, Building, Star, Utensils, Edit2 } from 'lucide-react';
+import { MapPin, Loader2, X, Home, Building, Star, Utensils, Edit2, Heart, Briefcase, BookmarkPlus } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useMapboxToken } from '@/hooks/useMapboxToken';
+import { useSavedLocations, SavedLocation } from '@/hooks/useSavedLocations';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { LocationMapPreview } from './LocationMapPreview';
@@ -35,10 +36,11 @@ type SearchResult = {
   address: string;
   lat: number;
   lng: number;
-  source: 'google' | 'mapbox';
+  source: 'google' | 'mapbox' | 'saved';
   types: string[];
   rating?: number;
   isOpen?: boolean;
+  icon?: string;
 };
 
 interface LocationSearchProps {
@@ -66,10 +68,12 @@ export function LocationSearch({
   className,
 }: LocationSearchProps) {
   const { token: mapboxToken, isLoading: tokenLoading } = useMapboxToken();
+  const { savedLocations, saveLocation } = useSavedLocations();
   const [query, setQuery] = useState(value);
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showResults, setShowResults] = useState(false);
+  const [showSavedLocations, setShowSavedLocations] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<SearchResult | null>(null);
   const [customName, setCustomName] = useState('');
   const [showCustomNameInput, setShowCustomNameInput] = useState(false);
@@ -293,8 +297,15 @@ export function LocationSearch({
     }
   };
 
-  // Get icon based on place type
+  // Get icon based on place type or saved location
   const getPlaceIcon = (result: SearchResult) => {
+    // Saved locations use their stored icon
+    if (result.source === 'saved') {
+      if (result.icon === 'home') return <Home className="h-4 w-4 text-secondary" />;
+      if (result.icon === 'work') return <Briefcase className="h-4 w-4 text-secondary" />;
+      if (result.icon === 'heart') return <Heart className="h-4 w-4 text-secondary" />;
+      return <Star className="h-4 w-4 text-secondary fill-secondary" />;
+    }
     if (result.source === 'google') {
       // Check for restaurant/food types
       if (result.types.some(t => ['restaurant', 'food', 'meal_delivery', 'meal_takeaway', 'cafe', 'bar'].includes(t))) {
@@ -306,6 +317,34 @@ export function LocationSearch({
       return <Home className="h-4 w-4 text-muted-foreground" />;
     }
     return <MapPin className="h-4 w-4 text-muted-foreground" />;
+  };
+
+  // Handle selecting a saved location
+  const handleSelectSavedLocation = (saved: SavedLocation) => {
+    const result: SearchResult = {
+      id: `saved-${saved.id}`,
+      name: saved.name,
+      address: saved.address,
+      lat: saved.lat,
+      lng: saved.lng,
+      source: 'saved',
+      types: [],
+      icon: saved.icon,
+    };
+    handleSelectLocation(result);
+    setShowSavedLocations(false);
+  };
+
+  // Save current location as favorite
+  const handleSaveCurrentLocation = () => {
+    if (!selectedLocation) return;
+    saveLocation.mutate({
+      name: selectedLocation.name,
+      address: selectedLocation.address,
+      lat: selectedLocation.lat,
+      lng: selectedLocation.lng,
+      icon: 'pin',
+    });
   };
 
   // Get distance text if user location is available
@@ -369,6 +408,26 @@ export function LocationSearch({
         </div>
       ) : (
         <>
+          {/* Saved Locations Quick Access */}
+          {savedLocations.length > 0 && !query && !selectedLocation && (
+            <div className="flex flex-wrap gap-2 mb-2">
+              {savedLocations.slice(0, 4).map((saved) => (
+                <button
+                  key={saved.id}
+                  type="button"
+                  onClick={() => handleSelectSavedLocation(saved)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary/10 hover:bg-secondary/20 text-secondary text-sm font-medium transition-colors"
+                >
+                  {saved.icon === 'home' && <Home className="h-3 w-3" />}
+                  {saved.icon === 'work' && <Briefcase className="h-3 w-3" />}
+                  {saved.icon === 'heart' && <Heart className="h-3 w-3" />}
+                  {!['home', 'work', 'heart'].includes(saved.icon) && <Star className="h-3 w-3 fill-current" />}
+                  {saved.name}
+                </button>
+              ))}
+            </div>
+          )}
+
           {/* Search input */}
           <div className="relative">
             <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -377,7 +436,10 @@ export function LocationSearch({
               placeholder={placeholder}
               value={query}
               onChange={(e) => handleInputChange(e.target.value)}
-              onFocus={() => results.length > 0 && setShowResults(true)}
+              onFocus={() => {
+                if (results.length > 0) setShowResults(true);
+                else if (!query && savedLocations.length > 0) setShowSavedLocations(true);
+              }}
             />
             {isSearching && (
               <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin text-muted-foreground" />
@@ -397,6 +459,36 @@ export function LocationSearch({
               </button>
             )}
           </div>
+
+          {/* Saved Locations Dropdown */}
+          {showSavedLocations && savedLocations.length > 0 && !showResults && (
+            <div className="absolute z-50 w-full mt-1 bg-popover border rounded-lg shadow-lg overflow-hidden">
+              <div className="p-2 border-b bg-muted/50">
+                <p className="text-xs font-medium text-muted-foreground">Saved Locations</p>
+              </div>
+              <ScrollArea className="max-h-48">
+                {savedLocations.map((saved) => (
+                  <button
+                    key={saved.id}
+                    type="button"
+                    onClick={() => handleSelectSavedLocation(saved)}
+                    className="w-full flex items-start gap-3 p-3 hover:bg-muted transition-colors text-left"
+                  >
+                    <div className="mt-0.5">
+                      {saved.icon === 'home' && <Home className="h-4 w-4 text-secondary" />}
+                      {saved.icon === 'work' && <Briefcase className="h-4 w-4 text-secondary" />}
+                      {saved.icon === 'heart' && <Heart className="h-4 w-4 text-secondary" />}
+                      {!['home', 'work', 'heart'].includes(saved.icon) && <Star className="h-4 w-4 text-secondary fill-secondary" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate">{saved.name}</p>
+                      <p className="text-sm text-muted-foreground truncate">{saved.address}</p>
+                    </div>
+                  </button>
+                ))}
+              </ScrollArea>
+            </div>
+          )}
 
           {/* Results dropdown */}
           {showResults && results.length > 0 && (
@@ -455,8 +547,8 @@ export function LocationSearch({
             </div>
           )}
 
-          {/* Map Preview with Rename Option - Show after selection */}
-          {selectedLocation && showMapPreview && !showResults && (
+          {/* Map Preview with Rename and Save Options - Show after selection */}
+          {selectedLocation && showMapPreview && !showResults && !showSavedLocations && (
             <div className="space-y-2">
               <LocationMapPreview
                 lat={selectedLocation.lat}
@@ -465,18 +557,33 @@ export function LocationSearch({
                 address={selectedLocation.address}
                 showDirections={false}
               />
-              {allowCustomName && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="w-full text-muted-foreground hover:text-foreground"
-                  onClick={handleEditName}
-                >
-                  <Edit2 className="h-3 w-3 mr-1.5" />
-                  Rename this location
-                </Button>
-              )}
+              <div className="flex gap-2">
+                {allowCustomName && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="flex-1 text-muted-foreground hover:text-foreground"
+                    onClick={handleEditName}
+                  >
+                    <Edit2 className="h-3 w-3 mr-1.5" />
+                    Rename
+                  </Button>
+                )}
+                {selectedLocation.source !== 'saved' && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="flex-1 text-muted-foreground hover:text-secondary"
+                    onClick={handleSaveCurrentLocation}
+                    disabled={saveLocation.isPending}
+                  >
+                    <BookmarkPlus className="h-3 w-3 mr-1.5" />
+                    Save
+                  </Button>
+                )}
+              </div>
             </div>
           )}
         </>
