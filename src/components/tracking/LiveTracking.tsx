@@ -2,10 +2,13 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Navigation, MapPin, Clock, ExternalLink, RefreshCw } from 'lucide-react';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Navigation, MapPin, ExternalLink, RefreshCw, Settings, Battery, BatteryLow, BatteryMedium, BatteryCharging, Wifi } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useLocationContext } from '@/contexts/LocationContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { TrackingSettings } from './TrackingSettings';
 
 interface LiveTrackingProps {
   eventId: string;
@@ -19,10 +22,26 @@ interface LiveTrackingProps {
 }
 
 export function LiveTracking({ eventId, destination, isLive }: LiveTrackingProps) {
-  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [isTracking, setIsTracking] = useState(false);
-  const [watchId, setWatchId] = useState<number | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const { profile } = useAuth();
+  
+  const {
+    currentPosition,
+    startTracking: startLocationTracking,
+    stopTracking: stopLocationTracking,
+    isTracking: isContextTracking,
+    movementState,
+    updateInterval,
+    batteryInfo,
+    trackingMode,
+    indoorInfo,
+  } = useLocationContext();
+
+  // Sync local state with context
+  useEffect(() => {
+    setIsTracking(isContextTracking);
+  }, [isContextTracking]);
 
   const startTracking = () => {
     if (!navigator.geolocation) {
@@ -30,69 +49,14 @@ export function LiveTracking({ eventId, destination, isLive }: LiveTrackingProps
       return;
     }
 
-    setIsTracking(true);
-    
-    const id = navigator.geolocation.watchPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords;
-        setUserLocation({ lat: latitude, lng: longitude });
-
-        // Update location in database
-        if (profile?.id) {
-          await supabase
-            .from('event_attendees')
-            .update({
-              current_lat: latitude,
-              current_lng: longitude,
-              last_location_update: new Date().toISOString(),
-              share_location: true,
-            })
-            .eq('event_id', eventId)
-            .eq('profile_id', profile.id);
-        }
-      },
-      (error) => {
-        console.error('Error getting location:', error);
-        toast.error('Unable to get your location');
-        setIsTracking(false);
-      },
-      {
-        enableHighAccuracy: true,
-        maximumAge: 10000,
-        timeout: 5000,
-      }
-    );
-
-    setWatchId(id);
+    startLocationTracking(eventId);
     toast.success('Location tracking started');
   };
 
   const stopTracking = async () => {
-    if (watchId !== null) {
-      navigator.geolocation.clearWatch(watchId);
-      setWatchId(null);
-    }
-    setIsTracking(false);
-
-    // Update database
-    if (profile?.id) {
-      await supabase
-        .from('event_attendees')
-        .update({ share_location: false })
-        .eq('event_id', eventId)
-        .eq('profile_id', profile.id);
-    }
-
+    await stopLocationTracking();
     toast.success('Location tracking stopped');
   };
-
-  useEffect(() => {
-    return () => {
-      if (watchId !== null) {
-        navigator.geolocation.clearWatch(watchId);
-      }
-    };
-  }, [watchId]);
 
   const openDirections = () => {
     let url: string;
@@ -105,11 +69,36 @@ export function LiveTracking({ eventId, destination, isLive }: LiveTrackingProps
       url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(destination.name)}`;
     }
 
-    if (userLocation) {
-      url += `&origin=${userLocation.lat},${userLocation.lng}`;
+    if (currentPosition) {
+      url += `&origin=${currentPosition.lat},${currentPosition.lng}`;
     }
 
     window.open(url, '_blank');
+  };
+
+  const getBatteryIcon = () => {
+    if (batteryInfo.charging) return <BatteryCharging className="h-3 w-3 text-green-500" />;
+    if (batteryInfo.level === null) return <Battery className="h-3 w-3" />;
+    if (batteryInfo.level < 0.2) return <BatteryLow className="h-3 w-3 text-red-500" />;
+    if (batteryInfo.level < 0.5) return <BatteryMedium className="h-3 w-3 text-yellow-500" />;
+    return <Battery className="h-3 w-3 text-green-500" />;
+  };
+
+  const getTrackingModeLabel = () => {
+    switch (trackingMode) {
+      case 'high_accuracy': return 'High';
+      case 'balanced': return 'Balanced';
+      case 'battery_saver': return 'Saver';
+    }
+  };
+
+  const getMovementLabel = () => {
+    switch (movementState) {
+      case 'stationary': return 'Still';
+      case 'walking': return 'Walking';
+      case 'running': return 'Running';
+      case 'driving': return 'Driving';
+    }
   };
 
   return (
@@ -120,12 +109,29 @@ export function LiveTracking({ eventId, destination, isLive }: LiveTrackingProps
             <Navigation className="h-5 w-5 text-primary" />
             <h3 className="font-bold text-rally-dark font-montserrat">Live Tracking</h3>
           </div>
-          {isLive && (
-            <Badge className="bg-green-500 text-white">
-              <span className="w-2 h-2 rounded-full bg-white animate-pulse mr-1.5" />
-              LIVE
-            </Badge>
-          )}
+          <div className="flex items-center gap-2">
+            {isLive && (
+              <Badge className="bg-green-500 text-white">
+                <span className="w-2 h-2 rounded-full bg-white animate-pulse mr-1.5" />
+                LIVE
+              </Badge>
+            )}
+            <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <Settings className="h-4 w-4" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="bottom" className="h-[80vh] rounded-t-3xl">
+                <SheetHeader>
+                  <SheetTitle>Tracking Settings</SheetTitle>
+                </SheetHeader>
+                <div className="mt-4 overflow-y-auto max-h-[calc(80vh-80px)] pb-8">
+                  <TrackingSettings />
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
         </div>
 
         {/* Current Destination */}
@@ -141,10 +147,32 @@ export function LiveTracking({ eventId, destination, isLive }: LiveTrackingProps
         </div>
 
         {/* Tracking Status */}
-        {isTracking && userLocation && (
-          <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 rounded-lg p-2">
-            <RefreshCw className="h-4 w-4 animate-spin" />
-            <span>Sharing your location with the group</span>
+        {isTracking && currentPosition && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 rounded-lg p-2">
+              <RefreshCw className="h-4 w-4 animate-spin" />
+              <span className="flex-1">Sharing your location with the group</span>
+            </div>
+            
+            {/* Quick Stats */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <Badge variant="secondary" className="text-xs">
+                {getBatteryIcon()}
+                <span className="ml-1">{getTrackingModeLabel()}</span>
+              </Badge>
+              <Badge variant="outline" className="text-xs">
+                {getMovementLabel()}
+              </Badge>
+              <Badge variant="outline" className="text-xs">
+                {updateInterval < 1000 ? `${updateInterval}ms` : `${Math.round(updateInterval / 1000)}s`} updates
+              </Badge>
+              {indoorInfo.isActive && (
+                <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-700">
+                  <Wifi className="h-3 w-3 mr-1" />
+                  Indoor ({indoorInfo.beaconCount})
+                </Badge>
+              )}
+            </div>
           </div>
         )}
 
