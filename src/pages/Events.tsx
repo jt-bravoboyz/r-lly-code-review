@@ -4,57 +4,110 @@ import { EventCard } from '@/components/events/EventCard';
 import { CreateEventDialog } from '@/components/events/CreateEventDialog';
 import { useEvents } from '@/hooks/useEvents';
 import { useAuth } from '@/hooks/useAuth';
-import { Navigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
-import { Zap } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Zap, Plus, Filter, Search } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { useState } from 'react';
+import rallyLogo from '@/assets/rally-logo.png';
 
 export default function Events() {
   const { user, loading: authLoading } = useAuth();
   const { data: events, isLoading } = useEvents();
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Dev mode - bypass auth
+  const isDev = true;
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen flex items-center justify-center bg-primary">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-24 h-24 rounded-full bg-rally-cream flex items-center justify-center">
+            <img 
+              src={rallyLogo} 
+              alt="R@lly" 
+              className="w-14 h-14 object-contain"
+            />
+          </div>
+        </div>
       </div>
     );
   }
 
-  if (!user) {
-    return <Navigate to="/auth" replace />;
-  }
+  // Filter events based on search
+  const filteredEvents = events?.filter(event => 
+    event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    event.location_name?.toLowerCase().includes(searchQuery.toLowerCase())
+  ) || [];
 
   return (
     <div className="min-h-screen pb-24 bg-background">
-      <Header title="Rallies" />
+      {/* Custom Header */}
+      <header className="sticky top-0 z-40 bg-white shadow-sm">
+        <div className="h-6" />
+        <div className="flex items-center justify-between px-4 py-3">
+          <img src={rallyLogo} alt="R@lly" className="h-10 w-10 object-contain" />
+          <h1 className="text-xl font-bold text-rally-dark font-montserrat">Rallies</h1>
+          <div className="w-10" /> {/* Spacer for centering */}
+        </div>
+      </header>
       
-      <main className="container py-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Rallies</h1>
-            <p className="text-sm text-muted-foreground">Find or create your next adventure</p>
+      <main className="px-4 py-6 space-y-6">
+        {/* Search and Filter */}
+        <div className="flex gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input 
+              placeholder="Search rallies..." 
+              className="pl-10 rounded-full bg-white border-gray-200"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </div>
-          <CreateEventDialog />
+          <Button variant="outline" size="icon" className="rounded-full shrink-0">
+            <Filter className="h-4 w-4" />
+          </Button>
         </div>
 
+        {/* Create Event Button - Prominent */}
+        <Card className="bg-gradient-to-r from-primary to-primary/80 border-0 shadow-lg">
+          <CardContent className="p-4 flex items-center justify-between">
+            <div>
+              <h3 className="font-bold text-white text-lg font-montserrat">Start a Rally</h3>
+              <p className="text-white/80 text-sm font-montserrat">Get your crew together</p>
+            </div>
+            <CreateEventDialog />
+          </CardContent>
+        </Card>
+
+        {/* Section Header */}
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-bold text-rally-dark font-montserrat">Upcoming Rallies</h2>
+          <span className="text-sm text-muted-foreground">{filteredEvents.length} events</span>
+        </div>
+
+        {/* Events List */}
         {isLoading ? (
-          <div className="space-y-3">
+          <div className="space-y-4">
             {[1, 2, 3].map((i) => (
-              <Card key={i} className="h-28 animate-pulse bg-muted border-0" />
+              <Card key={i} className="h-28 animate-pulse bg-muted border-0 rounded-2xl" />
             ))}
           </div>
-        ) : events && events.length > 0 ? (
-          <div className="space-y-3">
-            {events.map((event) => (
+        ) : filteredEvents.length > 0 ? (
+          <div className="space-y-4">
+            {filteredEvents.map((event) => (
               <EventCard key={event.id} event={event} />
             ))}
           </div>
         ) : (
-          <Card className="card-rally">
-            <CardContent className="p-12 text-center">
-              <Zap className="h-12 w-12 mx-auto text-primary/50 mb-4" />
-              <h3 className="text-lg font-bold mb-2">No rallies yet</h3>
-              <p className="text-muted-foreground mb-6">Be the first to start one!</p>
+          <Card className="bg-white shadow-sm rounded-2xl">
+            <CardContent className="p-8 text-center">
+              <div className="w-16 h-16 rounded-full bg-rally-light mx-auto mb-4 flex items-center justify-center">
+                <Zap className="h-8 w-8 text-primary" />
+              </div>
+              <h3 className="text-lg font-bold mb-2 text-rally-dark font-montserrat">No rallies yet</h3>
+              <p className="text-muted-foreground mb-6 font-montserrat">Be the first to start one!</p>
               <CreateEventDialog />
             </CardContent>
           </Card>
