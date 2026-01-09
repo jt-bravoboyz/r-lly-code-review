@@ -98,7 +98,7 @@ const defaultSettings: DemoSettings = {
   voiceGuidance: true,
   voiceVolume: 80,
   autoRecenter: true,
-  showDistanceInFeet: false,
+  showDistanceInFeet: true,
   shareLocationDefault: true,
   showOnMap: true,
   allowFriendRequests: true,
@@ -111,7 +111,7 @@ const defaultSettings: DemoSettings = {
 
 export default function SettingsPreview() {
   const [settings, setSettings] = useState<DemoSettings>(defaultSettings);
-  const [activeTab, setActiveTab] = useState('tracking');
+  const [activeTab, setActiveTab] = useState('privacy');
 
   const updateSetting = <K extends keyof DemoSettings>(key: K, value: DemoSettings[K]) => {
     setSettings(prev => ({ ...prev, [key]: value }));
@@ -146,6 +146,10 @@ export default function SettingsPreview() {
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-4 mb-4">
+            <TabsTrigger value="privacy" className="text-xs">
+              <Shield className="h-3 w-3 mr-1" />
+              Privacy
+            </TabsTrigger>
             <TabsTrigger value="tracking" className="text-xs">
               <MapPin className="h-3 w-3 mr-1" />
               Tracking
@@ -157,10 +161,6 @@ export default function SettingsPreview() {
             <TabsTrigger value="navigation" className="text-xs">
               <Navigation className="h-3 w-3 mr-1" />
               Nav
-            </TabsTrigger>
-            <TabsTrigger value="privacy" className="text-xs">
-              <Shield className="h-3 w-3 mr-1" />
-              Privacy
             </TabsTrigger>
           </TabsList>
 
