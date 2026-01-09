@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'app.lovable.30a08aa7cdeb4250a60c0605f836113c',
+  appId: 'com.bravoboyz.rally',
   appName: 'Rally',
   webDir: 'dist',
   server: {
