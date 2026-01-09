@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      arrival_notification_settings: {
+        Row: {
+          created_at: string
+          id: string
+          notify_on_friend_arrival: boolean | null
+          notify_on_friend_departure: boolean | null
+          notify_only_same_event: boolean | null
+          profile_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notify_on_friend_arrival?: boolean | null
+          notify_on_friend_departure?: boolean | null
+          notify_only_same_event?: boolean | null
+          profile_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notify_on_friend_arrival?: boolean | null
+          notify_on_friend_departure?: boolean | null
+          notify_only_same_event?: boolean | null
+          profile_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "arrival_notification_settings_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       barhop_stops: {
         Row: {
           address: string | null
@@ -669,6 +707,180 @@ export type Database = {
           {
             foreignKeyName: "squads_owner_id_fkey"
             columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      venue_beacons: {
+        Row: {
+          beacon_uuid: string
+          created_at: string
+          floor: number | null
+          id: string
+          is_active: boolean | null
+          lat: number
+          lng: number
+          major: number | null
+          minor: number | null
+          name: string
+          tx_power: number | null
+          updated_at: string
+          venue_id: string
+          zone_name: string | null
+        }
+        Insert: {
+          beacon_uuid: string
+          created_at?: string
+          floor?: number | null
+          id?: string
+          is_active?: boolean | null
+          lat: number
+          lng: number
+          major?: number | null
+          minor?: number | null
+          name: string
+          tx_power?: number | null
+          updated_at?: string
+          venue_id: string
+          zone_name?: string | null
+        }
+        Update: {
+          beacon_uuid?: string
+          created_at?: string
+          floor?: number | null
+          id?: string
+          is_active?: boolean | null
+          lat?: number
+          lng?: number
+          major?: number | null
+          minor?: number | null
+          name?: string
+          tx_power?: number | null
+          updated_at?: string
+          venue_id?: string
+          zone_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "venue_beacons_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      venue_presence: {
+        Row: {
+          beacon_id: string | null
+          entered_at: string
+          event_id: string | null
+          exited_at: string | null
+          floor: number | null
+          id: string
+          last_seen_at: string
+          profile_id: string
+          venue_id: string
+        }
+        Insert: {
+          beacon_id?: string | null
+          entered_at?: string
+          event_id?: string | null
+          exited_at?: string | null
+          floor?: number | null
+          id?: string
+          last_seen_at?: string
+          profile_id: string
+          venue_id: string
+        }
+        Update: {
+          beacon_id?: string | null
+          entered_at?: string
+          event_id?: string | null
+          exited_at?: string | null
+          floor?: number | null
+          id?: string
+          last_seen_at?: string
+          profile_id?: string
+          venue_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "venue_presence_beacon_id_fkey"
+            columns: ["beacon_id"]
+            isOneToOne: false
+            referencedRelation: "venue_beacons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "venue_presence_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "venue_presence_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "venue_presence_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      venues: {
+        Row: {
+          address: string | null
+          created_at: string
+          created_by: string | null
+          floor_count: number | null
+          id: string
+          image_url: string | null
+          lat: number
+          lng: number
+          name: string
+          updated_at: string
+          venue_type: string | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          created_by?: string | null
+          floor_count?: number | null
+          id?: string
+          image_url?: string | null
+          lat: number
+          lng: number
+          name: string
+          updated_at?: string
+          venue_type?: string | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          created_by?: string | null
+          floor_count?: number | null
+          id?: string
+          image_url?: string | null
+          lat?: number
+          lng?: number
+          name?: string
+          updated_at?: string
+          venue_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "venues_created_by_fkey"
+            columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
