@@ -1,9 +1,10 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Users, Trash2, Zap } from 'lucide-react';
+import { Users, Trash2, Zap, UserPlus } from 'lucide-react';
 import { Squad, useDeleteSquad } from '@/hooks/useSquads';
 import { toast } from 'sonner';
+import { SquadInviteDialog } from './SquadInviteDialog';
 
 interface SquadCardProps {
   squad: Squad;
@@ -66,16 +67,34 @@ export function SquadCard({ squad, onQuickRally }: SquadCardProps) {
           </div>
         </div>
 
-        {/* Quick Rally button */}
-        {onQuickRally && (
-          <Button
-            className="w-full bg-primary hover:bg-primary/90 rounded-full font-montserrat"
-            onClick={() => onQuickRally(squad)}
-          >
-            <Zap className="h-4 w-4 mr-2" />
-            Quick Rally
-          </Button>
-        )}
+        {/* Action buttons */}
+        <div className="flex gap-2">
+          {/* Invite Friends button */}
+          <SquadInviteDialog 
+            squadId={squad.id} 
+            squadName={squad.name}
+            trigger={
+              <Button
+                variant="outline"
+                className="flex-1 rounded-full font-montserrat"
+              >
+                <UserPlus className="h-4 w-4 mr-2" />
+                Invite
+              </Button>
+            }
+          />
+
+          {/* Quick Rally button */}
+          {onQuickRally && (
+            <Button
+              className="flex-1 bg-primary hover:bg-primary/90 rounded-full font-montserrat"
+              onClick={() => onQuickRally(squad)}
+            >
+              <Zap className="h-4 w-4 mr-2" />
+              Rally
+            </Button>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

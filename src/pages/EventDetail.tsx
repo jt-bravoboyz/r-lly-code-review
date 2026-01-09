@@ -25,10 +25,10 @@ import { LiveMemberTracker } from '@/components/tracking/LiveMemberTracker';
 import { LiveUpdates } from '@/components/events/LiveUpdates';
 import { RallyHomeButton } from '@/components/home/RallyHomeButton';
 import { GoingHomeTracker } from '@/components/home/GoingHomeTracker';
-import { AddBarHopStopDialog } from '@/components/events/AddBarHopStopDialog';
 import { AddCohostDialog } from '@/components/events/AddCohostDialog';
 import { BarHopStopsMap } from '@/components/tracking/BarHopStopsMap';
 import { BarHopControls } from '@/components/events/BarHopControls';
+import { BarHopStopManager } from '@/components/events/BarHopStopManager';
 import { useEventRealtime } from '@/hooks/useEventRealtime';
 import { toast } from 'sonner';
 
@@ -401,53 +401,12 @@ export default function EventDetail() {
                   hostName={activeProfile?.display_name || 'Host'}
                 />
 
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between">
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <Beer className="h-5 w-5 text-secondary" />
-                      Bar Hop Stops
-                    </CardTitle>
-                    {canManage && (
-                      <AddBarHopStopDialog 
-                        eventId={event.id} 
-                        currentStopCount={event.stops?.length || 0} 
-                      />
-                    )}
-                  </CardHeader>
-                  <CardContent>
-                    {event.stops && event.stops.length > 0 ? (
-                      <div className="space-y-3">
-                        {event.stops.sort((a, b) => a.stop_order - b.stop_order).map((stop, index) => (
-                          <div key={stop.id} className="flex items-center gap-3">
-                            <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                              stop.arrived_at 
-                                ? 'bg-green-500 text-white' 
-                                : 'bg-secondary text-secondary-foreground'
-                            }`}>
-                              {stop.arrived_at ? <Check className="h-4 w-4" /> : index + 1}
-                            </div>
-                            <div className="flex-1">
-                              <p className="font-medium">{stop.name}</p>
-                              {stop.address && (
-                                <p className="text-sm text-muted-foreground">{stop.address}</p>
-                              )}
-                            </div>
-                            {stop.arrived_at && !stop.departed_at && (
-                              <Badge variant="secondary" className="text-xs">Current</Badge>
-                            )}
-                            {stop.departed_at && (
-                              <Badge variant="outline" className="text-xs text-muted-foreground">Visited</Badge>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-center text-muted-foreground py-4">
-                        No stops added yet. {canManage && 'Add your first stop!'}
-                      </p>
-                    )}
-                  </CardContent>
-                </Card>
+                {/* Full Stop Manager with reorder, remove, ETA */}
+                <BarHopStopManager
+                  eventId={event.id}
+                  stops={event.stops || []}
+                  canManage={canManage}
+                />
               </>
             )}
 

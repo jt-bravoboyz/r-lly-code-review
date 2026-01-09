@@ -39,6 +39,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { Navigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { NotificationSettings } from '@/components/settings/NotificationSettings';
 
 const themeOptions = [
   { value: 'light', label: 'Light', icon: Sun, description: 'Always light' },
@@ -578,104 +579,7 @@ export default function Settings() {
 
           {/* Notifications Settings */}
           <TabsContent value="notifications" className="space-y-4">
-            <Card className="card-rally">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Bell className="h-4 w-4 text-primary" />
-                  Push Notifications
-                </CardTitle>
-                <CardDescription>
-                  Control how you receive notifications
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Bell className="h-5 w-5 text-muted-foreground" />
-                    <div>
-                      <Label className="font-medium">Push Notifications</Label>
-                      <p className="text-xs text-muted-foreground">
-                        Enable all push notifications
-                      </p>
-                    </div>
-                  </div>
-                  <Switch 
-                    checked={settings.pushNotifications}
-                    onCheckedChange={(checked) => updateSetting('pushNotifications', checked)}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="card-rally">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-primary" />
-                  Event Notifications
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Calendar className="h-5 w-5 text-muted-foreground" />
-                    <div>
-                      <Label className="font-medium">Event Reminders</Label>
-                      <p className="text-xs text-muted-foreground">
-                        Get notified before events start
-                      </p>
-                    </div>
-                  </div>
-                  <Switch 
-                    checked={settings.eventReminders}
-                    onCheckedChange={(checked) => updateSetting('eventReminders', checked)}
-                    disabled={!settings.pushNotifications}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="card-rally">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Users className="h-4 w-4 text-primary" />
-                  Social Notifications
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Users className="h-5 w-5 text-muted-foreground" />
-                    <div>
-                      <Label className="font-medium">Friend Arrivals</Label>
-                      <p className="text-xs text-muted-foreground">
-                        Know when friends arrive at rallies
-                      </p>
-                    </div>
-                  </div>
-                  <Switch 
-                    checked={settings.friendArrivals}
-                    onCheckedChange={(checked) => updateSetting('friendArrivals', checked)}
-                    disabled={!settings.pushNotifications}
-                  />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Car className="h-5 w-5 text-muted-foreground" />
-                    <div>
-                      <Label className="font-medium">Ride Updates</Label>
-                      <p className="text-xs text-muted-foreground">
-                        Get updates on ride requests
-                      </p>
-                    </div>
-                  </div>
-                  <Switch 
-                    checked={settings.rideUpdates}
-                    onCheckedChange={(checked) => updateSetting('rideUpdates', checked)}
-                    disabled={!settings.pushNotifications}
-                  />
-                </div>
-              </CardContent>
-            </Card>
+            <NotificationSettings />
           </TabsContent>
         </Tabs>
 
