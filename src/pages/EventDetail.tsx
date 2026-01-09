@@ -31,6 +31,7 @@ import { BarHopControls } from '@/components/events/BarHopControls';
 import { BarHopStopManager } from '@/components/events/BarHopStopManager';
 import { useEventRealtime } from '@/hooks/useEventRealtime';
 import { useBarHopStopsRealtime } from '@/hooks/useBarHopStopsRealtime';
+import { LocationMapPreview } from '@/components/location/LocationMapPreview';
 import { toast } from 'sonner';
 
 export default function EventDetail() {
@@ -227,6 +228,17 @@ export default function EventDetail() {
               </span>
             </div>
           </div>
+
+          {/* Location Map Preview - Show if event has coordinates */}
+          {event.location_lat && event.location_lng && !event.is_barhop && (
+            <LocationMapPreview
+              lat={event.location_lat}
+              lng={event.location_lng}
+              name={event.location_name || undefined}
+              height="h-40"
+              interactive={true}
+            />
+          )}
 
           {/* Host and Co-hosts */}
           {event.creator && (
