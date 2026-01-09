@@ -16,7 +16,7 @@ import { RideCard } from '@/components/rides/RideCard';
 import { CreateRideDialog } from '@/components/rides/CreateRideDialog';
 import { EventChat } from '@/components/chat/EventChat';
 import { LiveTracking } from '@/components/tracking/LiveTracking';
-import { AttendeeMap } from '@/components/tracking/AttendeeMap';
+import { LiveMemberTracker } from '@/components/tracking/LiveMemberTracker';
 import { LiveUpdates } from '@/components/events/LiveUpdates';
 import { RallyHomeButton } from '@/components/home/RallyHomeButton';
 import { GoingHomeTracker } from '@/components/home/GoingHomeTracker';
@@ -308,13 +308,11 @@ export default function EventDetail() {
                 lat: event.location_lat ?? undefined,
                 lng: event.location_lng ?? undefined,
               }}
-              isLive={new Date(event.start_time) <= new Date()}
+              isLive={isLiveEvent}
             />
 
-            {/* Attendee Locations */}
-            {event.attendees && event.attendees.length > 0 && (
-              <AttendeeMap eventId={event.id} attendees={event.attendees} />
-            )}
+            {/* Live Member Tracker with GPS, compass, and distance/bearing */}
+            <LiveMemberTracker eventId={event.id} isLive={isLiveEvent} />
           </TabsContent>
 
           <TabsContent value="rides" className="mt-4">
