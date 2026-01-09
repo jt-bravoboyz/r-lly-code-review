@@ -8,21 +8,46 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Settings, LogOut, MapPin, Award, Camera, Users, Home, Shield, Pencil, Save, X, FileText, ChevronRight } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Settings, LogOut, MapPin, Award, Camera, Users, Home, Shield, Pencil, Save, X, FileText, ChevronRight, Navigation } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useLocation } from '@/hooks/useLocation';
 import { supabase } from '@/integrations/supabase/client';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { LocationSearch } from '@/components/location/LocationSearch';
 
 export default function Profile() {
   const [isEditing, setIsEditing] = useState(false);
   const [editBio, setEditBio] = useState('');
   const [editName, setEditName] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [isHomeDialogOpen, setIsHomeDialogOpen] = useState(false);
+  const [isSavingHome, setIsSavingHome] = useState(false);
+  const [homeSearchValue, setHomeSearchValue] = useState('');
   const { user, profile, loading, signOut, refreshProfile } = useAuth();
   const { toggleLocationSharing } = useLocation();
   const navigate = useNavigate();
+
+  const handleSaveHomeAddress = async (location: { name: string; address: string; lat: number; lng: number }) => {
+    if (!profile?.id) return;
+    setIsSavingHome(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ home_address: location.address })
+        .eq('id', profile.id);
+
+      if (error) throw error;
+      await refreshProfile();
+      setIsHomeDialogOpen(false);
+      toast.success('Home address saved!');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to save home address');
+    } finally {
+      setIsSavingHome(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -230,17 +255,54 @@ export default function Profile() {
               />
             </div>
 
-            {profile?.home_address && (
-              <div className="pt-3 border-t border-border">
-                <div className="flex items-center gap-3">
-                  <Home className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <Label className="font-medium">Home Address</Label>
-                    <p className="text-sm text-muted-foreground">{profile.home_address}</p>
+            <div className="pt-3 border-t border-border">
+              <Dialog open={isHomeDialogOpen} onOpenChange={setIsHomeDialogOpen}>
+                <DialogTrigger asChild>
+                  <button className="w-full flex items-center justify-between py-2 hover:bg-muted/50 rounded-lg px-1 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <Home className="h-5 w-5 text-muted-foreground" />
+                      <div className="text-left">
+                        <span className="font-medium">Home Address</span>
+                        <p className="text-xs text-muted-foreground line-clamp-1">
+                          {profile?.home_address || 'Set your home for R@lly Home'}
+                        </p>
+                      </div>
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                  </button>
+                </DialogTrigger>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                      <Navigation className="h-5 w-5 text-primary" />
+                      Set Home Address
+                    </DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <p className="text-sm text-muted-foreground">
+                      Your home address is used for the R@lly Home feature to help you get home safely after events.
+                    </p>
+                    <LocationSearch
+                      value={homeSearchValue}
+                      onChange={setHomeSearchValue}
+                      onLocationSelect={handleSaveHomeAddress}
+                      placeholder="Search for your home address..."
+                    />
+                    {isSavingHome && (
+                      <div className="flex items-center justify-center py-4">
+                        <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                      </div>
+                    )}
+                    {profile?.home_address && (
+                      <div className="p-3 bg-muted/50 rounded-lg">
+                        <p className="text-xs text-muted-foreground mb-1">Current home address:</p>
+                        <p className="text-sm font-medium">{profile.home_address}</p>
+                      </div>
+                    )}
                   </div>
-                </div>
-              </div>
-            )}
+                </DialogContent>
+              </Dialog>
+            </div>
 
             <div className="pt-3 border-t border-border">
               <button
