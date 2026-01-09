@@ -17,6 +17,7 @@ import Notifications from "./pages/Notifications";
 import Squads from "./pages/Squads";
 import Achievements from "./pages/Achievements";
 import JoinRally from "./pages/JoinRally";
+import Legal from "./pages/Legal";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -43,6 +44,7 @@ const App = () => (
               <Route path="/notifications" element={<Notifications />} />
               <Route path="/squads" element={<Squads />} />
               <Route path="/achievements" element={<Achievements />} />
+              <Route path="/legal" element={<Legal />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

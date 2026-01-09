@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Zap, MapPin, Users, ChevronRight } from 'lucide-react';
+import { PolicyAcceptanceDialog } from '@/components/legal/PolicyAcceptanceDialog';
 
 interface OnboardingSlide {
   icon: React.ReactNode;
@@ -32,20 +33,26 @@ interface OnboardingProps {
 
 export function Onboarding({ onComplete }: OnboardingProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [showPolicyDialog, setShowPolicyDialog] = useState(false);
 
   const handleNext = () => {
     if (currentSlide < slides.length - 1) {
       setCurrentSlide(currentSlide + 1);
     } else {
-      // Mark onboarding as complete and call callback
-      localStorage.setItem('rally-onboarding-complete', 'true');
-      onComplete?.();
+      // Show policy acceptance dialog on last slide
+      setShowPolicyDialog(true);
     }
   };
 
-  const handleSkip = () => {
+  const handlePolicyAccepted = () => {
+    // Mark onboarding as complete and call callback
     localStorage.setItem('rally-onboarding-complete', 'true');
     onComplete?.();
+  };
+
+  const handleSkip = () => {
+    // Still need to accept policies even when skipping
+    setShowPolicyDialog(true);
   };
 
   const slide = slides[currentSlide];
@@ -208,6 +215,12 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           <ChevronRight className="h-5 w-5 ml-1 group-hover:translate-x-1 transition-transform" />
         </Button>
       </div>
+
+      <PolicyAcceptanceDialog
+        open={showPolicyDialog}
+        onOpenChange={setShowPolicyDialog}
+        onAccept={handlePolicyAccepted}
+      />
     </div>
   );
 }
