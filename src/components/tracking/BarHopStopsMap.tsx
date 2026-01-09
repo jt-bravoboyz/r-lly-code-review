@@ -4,7 +4,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Beer, MapPin, Navigation } from 'lucide-react';
 import { useMapboxToken } from '@/hooks/useMapboxToken';
-
+import { escapeHtml } from '@/lib/sanitize';
 interface BarHopStop {
   id: string;
   name: string;
@@ -70,6 +70,10 @@ export function BarHopStopsMap({ stops, eventLocation, currentStopIndex = 0 }: B
         const isCurrentStop = index === currentStopIndex;
         const isPastStop = index < currentStopIndex;
         
+        // Use escapeHtml to prevent XSS attacks from user-controlled stop names
+        const escapedName = escapeHtml(stop.name);
+        const escapedAddress = escapeHtml(stop.address);
+        
         el.innerHTML = `
           <div class="relative">
             <div class="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg ${
@@ -84,7 +88,7 @@ export function BarHopStopsMap({ stops, eventLocation, currentStopIndex = 0 }: B
             ${isCurrentStop ? '<div class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-secondary rounded-full animate-ping"></div>' : ''}
           </div>
           <div class="mt-1 px-2 py-0.5 bg-background/90 rounded text-xs font-medium max-w-24 truncate shadow">
-            ${stop.name}
+            ${escapedName}
           </div>
         `;
 
@@ -92,11 +96,11 @@ export function BarHopStopsMap({ stops, eventLocation, currentStopIndex = 0 }: B
           .setLngLat([stop.lng!, stop.lat!])
           .addTo(map.current!);
 
-        // Add popup
+        // Add popup with sanitized content
         const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
           <div class="p-2">
-            <p class="font-bold">Stop ${stop.stop_order}: ${stop.name}</p>
-            ${stop.address ? `<p class="text-sm text-gray-600">${stop.address}</p>` : ''}
+            <p class="font-bold">Stop ${stop.stop_order}: ${escapedName}</p>
+            ${stop.address ? `<p class="text-sm text-gray-600">${escapedAddress}</p>` : ''}
             ${stop.arrived_at ? '<p class="text-xs text-green-600 mt-1">✓ Visited</p>' : ''}
           </div>
         `);

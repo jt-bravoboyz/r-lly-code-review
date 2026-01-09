@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useLocationContext } from '@/contexts/LocationContext';
 import { useMapboxToken } from '@/hooks/useMapboxToken';
 import { toast } from 'sonner';
-
+import { escapeHtml } from '@/lib/sanitize';
 interface NavigationTarget {
   profileId: string;
   displayName: string;
@@ -266,9 +266,10 @@ export function TurnByTurnNav({ target, onClose }: TurnByTurnNavProps) {
         .setLngLat(initialCenter)
         .addTo(map.current!);
 
-      // Create target marker
+      // Create target marker with sanitized display name
       const targetEl = document.createElement('div');
       targetEl.className = 'target-marker';
+      const safeInitial = escapeHtml(target.displayName?.charAt(0)?.toUpperCase() || '?');
       targetEl.innerHTML = `
         <div style="
           width: 40px;
@@ -283,7 +284,7 @@ export function TurnByTurnNav({ target, onClose }: TurnByTurnNavProps) {
           font-weight: bold;
           color: white;
           font-size: 16px;
-        ">${target.displayName?.charAt(0)?.toUpperCase() || '?'}</div>
+        ">${safeInitial}</div>
       `;
       
       targetMarker.current = new mapboxgl.Marker({ element: targetEl })
