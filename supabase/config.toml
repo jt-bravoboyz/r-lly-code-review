@@ -1,5 +1,8 @@
 project_id = "lovzfxppnxictkvymyot"
 
+[functions.search-places]
+verify_jwt = false
+
 [functions.send-push-notification]
 verify_jwt = false
 
