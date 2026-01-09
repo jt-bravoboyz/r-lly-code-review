@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Zap, Car, Users, ArrowRight, Navigation, Home as HomeIcon, Beer, MapPin, Sparkles } from 'lucide-react';
+import { Zap, Car, ArrowRight, Navigation, Home as HomeIcon, Beer, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Header } from '@/components/layout/Header';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { EventCard } from '@/components/events/EventCard';
+import { SplashScreen } from '@/components/SplashScreen';
 import { useAuth } from '@/hooks/useAuth';
 import { useEvents } from '@/hooks/useEvents';
 import rallyLogo from '@/assets/rally-logo.png';
@@ -13,13 +14,28 @@ import rallyLogo from '@/assets/rally-logo.png';
 export default function Index() {
   const { user, profile, loading } = useAuth();
   const { data: events, isLoading: eventsLoading } = useEvents();
+  const [showSplash, setShowSplash] = useState(true);
   const [showContent, setShowContent] = useState(false);
 
   useEffect(() => {
-    // Trigger content reveal after logo animation
-    const timer = setTimeout(() => setShowContent(true), 300);
-    return () => clearTimeout(timer);
+    // Check if we've already shown splash this session
+    const hasSeenSplash = sessionStorage.getItem('rally-splash-shown');
+    if (hasSeenSplash) {
+      setShowSplash(false);
+      setShowContent(true);
+    }
   }, []);
+
+  const handleSplashComplete = () => {
+    sessionStorage.setItem('rally-splash-shown', 'true');
+    setShowSplash(false);
+    setTimeout(() => setShowContent(true), 100);
+  };
+
+  // Show splash screen on first visit (only for non-authenticated users)
+  if (showSplash && !loading && !user) {
+    return <SplashScreen onComplete={handleSplashComplete} duration={2800} />;
+  }
 
   if (loading) {
     return (
@@ -28,7 +44,7 @@ export default function Index() {
           <img 
             src={rallyLogo} 
             alt="R@lly" 
-            className="w-20 h-20 object-contain animate-pulse-glow rounded-full"
+            className="w-20 h-20 object-contain animate-flag-wave"
           />
         </div>
       </div>
@@ -159,10 +175,10 @@ function LandingScreen({ showContent }: { showContent: boolean }) {
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] gradient-radial opacity-60" />
         
         {/* Floating decorative elements */}
-        <div className="absolute top-20 left-10 w-3 h-3 rounded-full bg-primary/30 float-animation" />
-        <div className="absolute top-40 right-16 w-2 h-2 rounded-full bg-primary/40 float-animation-delayed" />
-        <div className="absolute bottom-40 left-20 w-4 h-4 rounded-full bg-primary/20 float-animation" />
-        <div className="absolute bottom-60 right-10 w-2 h-2 rounded-full bg-primary/30 float-animation-delayed" />
+        <div className="absolute top-20 left-10 w-3 h-3 rounded-full bg-primary/30 animate-float" />
+        <div className="absolute top-40 right-16 w-2 h-2 rounded-full bg-primary/40 animate-float-delayed" />
+        <div className="absolute bottom-40 left-20 w-4 h-4 rounded-full bg-primary/20 animate-float" />
+        <div className="absolute bottom-60 right-10 w-2 h-2 rounded-full bg-primary/30 animate-float-delayed" />
         
         {/* Animated ring */}
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 rounded-full border border-primary/10 animate-rotate-slow" />
