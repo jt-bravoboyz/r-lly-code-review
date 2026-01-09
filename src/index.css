@@ -338,82 +338,153 @@
   }
 }
 
-/* Dramatic flag wave animation - more intense waving */
-@keyframes flag-wave-dramatic {
+/* READY phase - Large dramatic single swoop */
+@keyframes flag-swoop-ready {
   0% { 
-    transform: rotate(0deg) scale(1) skewX(0deg);
+    transform: rotate(-15deg) scale(0.8) translateX(-30px);
+    opacity: 0;
   }
-  8% { 
-    transform: rotate(-5deg) scale(1.03) skewX(-2deg);
+  15% { 
+    transform: rotate(20deg) scale(1.1) translateX(20px);
+    opacity: 1;
   }
-  16% { 
-    transform: rotate(7deg) scale(1.05) skewX(3deg);
-  }
-  24% { 
-    transform: rotate(-8deg) scale(1.04) skewX(-4deg);
-  }
-  32% { 
-    transform: rotate(9deg) scale(1.06) skewX(4deg);
-  }
-  40% { 
-    transform: rotate(-6deg) scale(1.04) skewX(-3deg);
-  }
-  48% { 
-    transform: rotate(8deg) scale(1.05) skewX(3deg);
-  }
-  56% { 
-    transform: rotate(-7deg) scale(1.04) skewX(-3deg);
-  }
-  64% { 
-    transform: rotate(6deg) scale(1.03) skewX(2deg);
-  }
-  72% { 
-    transform: rotate(-5deg) scale(1.02) skewX(-2deg);
-  }
-  80% { 
-    transform: rotate(4deg) scale(1.02) skewX(1deg);
-  }
-  88% { 
-    transform: rotate(-3deg) scale(1.01) skewX(-1deg);
-  }
-  100% { 
-    transform: rotate(0deg) scale(1) skewX(0deg);
-  }
-}
-
-/* Flag ripple effect */
-@keyframes flag-ripple {
-  0%, 100% { 
-    transform: scaleX(1) translateX(0);
-  }
-  25% { 
-    transform: scaleX(1.02) translateX(2px);
+  30% { 
+    transform: rotate(-12deg) scale(1.05) translateX(-10px);
   }
   50% { 
-    transform: scaleX(0.98) translateX(-1px);
+    transform: rotate(15deg) scale(1.08) translateX(15px);
   }
-  75% { 
-    transform: scaleX(1.01) translateX(1px);
+  70% { 
+    transform: rotate(-8deg) scale(1.03) translateX(-5px);
+  }
+  85% { 
+    transform: rotate(10deg) scale(1.05) translateX(8px);
+  }
+  100% { 
+    transform: rotate(-5deg) scale(1.02) translateX(-3px);
   }
 }
 
-/* Wind particle animation */
-@keyframes wind-particle {
+/* SET phase - Another dramatic swoop with different timing */
+@keyframes flag-swoop-set {
+  0% { 
+    transform: rotate(15deg) scale(0.8) translateX(30px);
+    opacity: 0;
+  }
+  15% { 
+    transform: rotate(-20deg) scale(1.12) translateX(-20px);
+    opacity: 1;
+  }
+  30% { 
+    transform: rotate(14deg) scale(1.06) translateX(12px);
+  }
+  50% { 
+    transform: rotate(-16deg) scale(1.1) translateX(-18px);
+  }
+  70% { 
+    transform: rotate(10deg) scale(1.04) translateX(8px);
+  }
+  85% { 
+    transform: rotate(-8deg) scale(1.06) translateX(-6px);
+  }
+  100% { 
+    transform: rotate(5deg) scale(1.03) translateX(4px);
+  }
+}
+
+/* Slow wind particles */
+@keyframes wind-slow {
   0% { 
     opacity: 0;
     transform: translateX(0) translateY(0) scale(0.5);
   }
-  20% { 
-    opacity: 0.8;
-    transform: translateX(20px) translateY(-5px) scale(1);
+  30% { 
+    opacity: 0.7;
+    transform: translateX(40px) translateY(-10px) scale(1);
   }
-  60% { 
-    opacity: 0.5;
-    transform: translateX(60px) translateY(5px) scale(0.8);
+  70% { 
+    opacity: 0.4;
+    transform: translateX(100px) translateY(5px) scale(0.7);
   }
   100% { 
     opacity: 0;
-    transform: translateX(100px) translateY(-10px) scale(0.3);
+    transform: translateX(150px) translateY(-15px) scale(0.3);
+  }
+}
+
+/* Text fade in */
+@keyframes text-fade-in {
+  0% { 
+    opacity: 0;
+    transform: translateY(20px) scale(0.9);
+  }
+  100% { 
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Logo bold entrance */
+@keyframes logo-entrance {
+  0% { 
+    opacity: 0;
+    transform: scale(0.3) translateY(50px);
+  }
+  50% { 
+    opacity: 1;
+    transform: scale(1.15) translateY(-10px);
+  }
+  70% { 
+    transform: scale(0.95) translateY(5px);
+  }
+  85% { 
+    transform: scale(1.05) translateY(-3px);
+  }
+  100% { 
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Text bold entrance */
+@keyframes text-entrance {
+  0% { 
+    opacity: 0;
+    transform: translateY(30px) scale(0.8);
+    letter-spacing: 0.5em;
+  }
+  60% { 
+    opacity: 1;
+    transform: translateY(-5px) scale(1.05);
+    letter-spacing: 0.1em;
+  }
+  100% { 
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    letter-spacing: 0.05em;
+  }
+}
+
+/* Tagline entrance */
+@keyframes tagline-entrance {
+  0% { 
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Slow pulse for background */
+@keyframes pulse-slow {
+  0%, 100% { 
+    opacity: 0.05;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% { 
+    opacity: 0.1;
+    transform: translate(-50%, -50%) scale(1.1);
   }
 }
 
@@ -422,27 +493,54 @@
   transform-origin: center bottom;
 }
 
-.animate-flag-wave-dramatic {
-  animation: flag-wave-dramatic 1.2s ease-in-out infinite;
+.animate-flag-swoop-ready {
+  animation: flag-swoop-ready 1.8s ease-out forwards;
   transform-origin: left center;
 }
 
-.animate-flag-ripple {
-  animation: flag-ripple 0.8s ease-in-out infinite;
+.animate-flag-swoop-set {
+  animation: flag-swoop-set 1.8s ease-out forwards;
+  transform-origin: left center;
 }
 
-.animate-wind-particle {
-  animation: wind-particle 1.5s ease-out infinite;
+.animate-wind-slow {
+  animation: wind-slow 2.5s ease-out infinite;
 }
 
-.animate-wind-particle-delayed {
-  animation: wind-particle 1.5s ease-out infinite;
+.animate-wind-slow-delayed {
+  animation: wind-slow 2.5s ease-out infinite;
+  animation-delay: 0.5s;
+}
+
+.animate-wind-slow-delayed-2 {
+  animation: wind-slow 2.5s ease-out infinite;
+  animation-delay: 1s;
+}
+
+.animate-text-fade-in {
+  animation: text-fade-in 0.8s ease-out forwards;
   animation-delay: 0.3s;
+  opacity: 0;
 }
 
-.animate-wind-particle-delayed-2 {
-  animation: wind-particle 1.5s ease-out infinite;
+.animate-logo-entrance {
+  animation: logo-entrance 1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.animate-text-entrance {
+  animation: text-entrance 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation-delay: 0.2s;
+  opacity: 0;
+}
+
+.animate-tagline-entrance {
+  animation: tagline-entrance 0.7s ease-out forwards;
   animation-delay: 0.6s;
+  opacity: 0;
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 4s ease-in-out infinite;
 }
 
 .animate-sparkle {

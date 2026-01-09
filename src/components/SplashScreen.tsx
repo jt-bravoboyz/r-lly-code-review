@@ -6,21 +6,25 @@ interface SplashScreenProps {
   duration?: number;
 }
 
-export function SplashScreen({ onComplete, duration = 4500 }: SplashScreenProps) {
-  const [phase, setPhase] = useState<'flag' | 'logo' | 'exit'>('flag');
+export function SplashScreen({ onComplete, duration = 7000 }: SplashScreenProps) {
+  const [phase, setPhase] = useState<'ready' | 'set' | 'rally' | 'exit'>('ready');
 
   useEffect(() => {
-    // Phase 1: Flag waving (0-2000ms)
-    const logoTimer = setTimeout(() => setPhase('logo'), 2000);
+    // Phase 1: READY - First dramatic flag swoop (0-2000ms)
+    const setTimer = setTimeout(() => setPhase('set'), 2000);
     
-    // Phase 2: Logo appears boldly (2000ms - duration-400ms)
-    const exitTimer = setTimeout(() => setPhase('exit'), duration - 400);
+    // Phase 2: SET - Second dramatic flag swoop (2000-4000ms)
+    const rallyTimer = setTimeout(() => setPhase('rally'), 4000);
     
-    // Phase 3: Exit and complete
+    // Phase 3: RALLY - Logo enters boldly (4000ms - duration-800ms)
+    const exitTimer = setTimeout(() => setPhase('exit'), duration - 800);
+    
+    // Phase 4: Slow exit transition
     const completeTimer = setTimeout(onComplete, duration);
 
     return () => {
-      clearTimeout(logoTimer);
+      clearTimeout(setTimer);
+      clearTimeout(rallyTimer);
       clearTimeout(exitTimer);
       clearTimeout(completeTimer);
     };
@@ -28,127 +32,177 @@ export function SplashScreen({ onComplete, duration = 4500 }: SplashScreenProps)
 
   return (
     <div 
-      className={`fixed inset-0 z-50 flex flex-col items-center justify-center bg-primary transition-opacity duration-400 ${
+      className={`fixed inset-0 z-50 flex flex-col items-center justify-center bg-primary transition-opacity duration-700 ease-out ${
         phase === 'exit' ? 'opacity-0' : 'opacity-100'
       }`}
     >
       {/* Main Content */}
-      <div className="relative z-10 flex flex-col items-center">
-        {/* White Flag - American style waving dramatically */}
+      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen">
+        
+        {/* READY Phase - First Flag Swoop */}
         <div 
-          className={`relative transition-all duration-700 ease-out ${
-            phase === 'flag' ? 'scale-100 opacity-100' : 'scale-75 opacity-0 -translate-y-8'
+          className={`absolute inset-0 flex flex-col items-center justify-center transition-all duration-700 ease-out ${
+            phase === 'ready' ? 'opacity-100 scale-100' : 'opacity-0 scale-90 pointer-events-none'
           }`}
         >
-          {/* Flag pole */}
-          <div className="absolute left-0 top-0 bottom-0 w-2 bg-white/90 rounded-full shadow-lg" style={{ height: 'calc(100% + 80px)' }} />
-          
-          {/* White American-style flag waving dramatically */}
-          <div className="animate-flag-wave-dramatic ml-2">
-            <svg 
-              width="200" 
-              height="130" 
-              viewBox="0 0 200 130" 
-              fill="none" 
-              xmlns="http://www.w3.org/2000/svg"
-              className="drop-shadow-2xl"
-            >
-              {/* Flag with wave ripples - American flag proportions */}
-              <defs>
-                <linearGradient id="flagWave" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="white" stopOpacity="1" />
-                  <stop offset="25%" stopColor="white" stopOpacity="0.95" />
-                  <stop offset="50%" stopColor="white" stopOpacity="1" />
-                  <stop offset="75%" stopColor="white" stopOpacity="0.92" />
-                  <stop offset="100%" stopColor="white" stopOpacity="0.98" />
-                </linearGradient>
-                <filter id="flagShadow" x="-20%" y="-20%" width="140%" height="140%">
-                  <feDropShadow dx="2" dy="4" stdDeviation="4" floodOpacity="0.3"/>
-                </filter>
-              </defs>
-              
-              {/* Main flag body with wave effect - American flag shape */}
-              <path 
-                d="M0 5C0 2.23858 2.23858 0 5 0H190C195.523 0 200 4.47715 200 10V120C200 125.523 195.523 130 190 130H5C2.23858 130 0 127.761 0 125V5Z" 
-                fill="url(#flagWave)"
-                filter="url(#flagShadow)"
-                className="animate-flag-ripple"
-              />
-              
-              {/* Subtle wave lines to give depth */}
-              <path 
-                d="M0 30 Q50 25, 100 32 T200 28" 
-                stroke="rgba(0,0,0,0.03)" 
-                strokeWidth="1" 
-                fill="none"
-              />
-              <path 
-                d="M0 60 Q50 55, 100 62 T200 58" 
-                stroke="rgba(0,0,0,0.03)" 
-                strokeWidth="1" 
-                fill="none"
-              />
-              <path 
-                d="M0 90 Q50 85, 100 92 T200 88" 
-                stroke="rgba(0,0,0,0.03)" 
-                strokeWidth="1" 
-                fill="none"
-              />
-              <path 
-                d="M0 120 Q50 115, 100 122 T200 118" 
-                stroke="rgba(0,0,0,0.03)" 
-                strokeWidth="1" 
-                fill="none"
-              />
-            </svg>
+          {/* Large dramatic flag */}
+          <div className="relative">
+            {/* Flag pole */}
+            <div className="absolute left-0 top-0 w-3 bg-white/90 rounded-full shadow-xl" style={{ height: '320px' }} />
+            
+            {/* Giant white flag with dramatic swoop */}
+            <div className="ml-3 animate-flag-swoop-ready">
+              <svg 
+                width="280" 
+                height="180" 
+                viewBox="0 0 280 180" 
+                fill="none" 
+                xmlns="http://www.w3.org/2000/svg"
+                className="drop-shadow-2xl"
+              >
+                <defs>
+                  <linearGradient id="flagGradientReady" x1="0%" y1="0%" x2="100%" y2="50%">
+                    <stop offset="0%" stopColor="white" stopOpacity="1" />
+                    <stop offset="40%" stopColor="white" stopOpacity="0.95" />
+                    <stop offset="70%" stopColor="white" stopOpacity="1" />
+                    <stop offset="100%" stopColor="white" stopOpacity="0.9" />
+                  </linearGradient>
+                  <filter id="flagShadowReady" x="-30%" y="-30%" width="160%" height="160%">
+                    <feDropShadow dx="4" dy="8" stdDeviation="8" floodOpacity="0.4"/>
+                  </filter>
+                </defs>
+                
+                <path 
+                  d="M0 8C0 3.58 3.58 0 8 0H260C270 0 280 10 280 20V160C280 170 270 180 260 180H8C3.58 180 0 176.42 0 172V8Z" 
+                  fill="url(#flagGradientReady)"
+                  filter="url(#flagShadowReady)"
+                />
+                
+                {/* Subtle fabric texture lines */}
+                <path d="M0 45 Q70 40, 140 48 T280 42" stroke="rgba(0,0,0,0.04)" strokeWidth="1.5" fill="none"/>
+                <path d="M0 90 Q70 85, 140 93 T280 87" stroke="rgba(0,0,0,0.04)" strokeWidth="1.5" fill="none"/>
+                <path d="M0 135 Q70 130, 140 138 T280 132" stroke="rgba(0,0,0,0.04)" strokeWidth="1.5" fill="none"/>
+              </svg>
+            </div>
+            
+            {/* Wind particles */}
+            <div className="absolute -top-6 right-0 w-4 h-4 bg-white/50 rounded-full animate-wind-slow" />
+            <div className="absolute top-12 -right-8 w-3 h-3 bg-white/40 rounded-full animate-wind-slow-delayed" />
+            <div className="absolute top-28 -right-4 w-3 h-3 bg-white/35 rounded-full animate-wind-slow-delayed-2" />
           </div>
           
-          {/* Wind effect particles */}
-          <div className="absolute -top-4 right-0 w-3 h-3 bg-white/60 rounded-full animate-wind-particle" />
-          <div className="absolute top-8 -right-6 w-2 h-2 bg-white/50 rounded-full animate-wind-particle-delayed" />
-          <div className="absolute top-20 -right-4 w-2.5 h-2.5 bg-white/40 rounded-full animate-wind-particle-delayed-2" />
-          <div className="absolute -top-2 right-12 w-1.5 h-1.5 bg-white/50 rounded-full animate-wind-particle" />
+          {/* READY Text */}
+          <h2 
+            className="mt-12 text-5xl font-bold text-white tracking-widest animate-text-fade-in"
+            style={{ textShadow: '0 4px 30px rgba(0,0,0,0.4)' }}
+          >
+            READY
+          </h2>
         </div>
 
-        {/* R@LLY Logo - appears boldly */}
+        {/* SET Phase - Second Flag Swoop */}
         <div 
-          className={`flex flex-col items-center transition-all duration-700 ease-out ${
-            phase === 'logo' || phase === 'exit' 
-              ? 'opacity-100 scale-100 translate-y-0' 
-              : 'opacity-0 scale-50 translate-y-12'
+          className={`absolute inset-0 flex flex-col items-center justify-center transition-all duration-700 ease-out ${
+            phase === 'set' ? 'opacity-100 scale-100' : 'opacity-0 scale-90 pointer-events-none'
           }`}
         >
-          {/* White logo */}
-          <img 
-            src={rallyLogo} 
-            alt="R@lly" 
-            className="w-28 h-28 object-contain filter brightness-0 invert drop-shadow-2xl"
-          />
+          {/* Large dramatic flag */}
+          <div className="relative">
+            {/* Flag pole */}
+            <div className="absolute left-0 top-0 w-3 bg-white/90 rounded-full shadow-xl" style={{ height: '320px' }} />
+            
+            {/* Giant white flag with dramatic swoop */}
+            <div className="ml-3 animate-flag-swoop-set">
+              <svg 
+                width="280" 
+                height="180" 
+                viewBox="0 0 280 180" 
+                fill="none" 
+                xmlns="http://www.w3.org/2000/svg"
+                className="drop-shadow-2xl"
+              >
+                <defs>
+                  <linearGradient id="flagGradientSet" x1="0%" y1="0%" x2="100%" y2="50%">
+                    <stop offset="0%" stopColor="white" stopOpacity="1" />
+                    <stop offset="40%" stopColor="white" stopOpacity="0.95" />
+                    <stop offset="70%" stopColor="white" stopOpacity="1" />
+                    <stop offset="100%" stopColor="white" stopOpacity="0.9" />
+                  </linearGradient>
+                  <filter id="flagShadowSet" x="-30%" y="-30%" width="160%" height="160%">
+                    <feDropShadow dx="4" dy="8" stdDeviation="8" floodOpacity="0.4"/>
+                  </filter>
+                </defs>
+                
+                <path 
+                  d="M0 8C0 3.58 3.58 0 8 0H260C270 0 280 10 280 20V160C280 170 270 180 260 180H8C3.58 180 0 176.42 0 172V8Z" 
+                  fill="url(#flagGradientSet)"
+                  filter="url(#flagShadowSet)"
+                />
+                
+                {/* Subtle fabric texture lines */}
+                <path d="M0 45 Q70 40, 140 48 T280 42" stroke="rgba(0,0,0,0.04)" strokeWidth="1.5" fill="none"/>
+                <path d="M0 90 Q70 85, 140 93 T280 87" stroke="rgba(0,0,0,0.04)" strokeWidth="1.5" fill="none"/>
+                <path d="M0 135 Q70 130, 140 138 T280 132" stroke="rgba(0,0,0,0.04)" strokeWidth="1.5" fill="none"/>
+              </svg>
+            </div>
+            
+            {/* Wind particles */}
+            <div className="absolute -top-6 right-0 w-4 h-4 bg-white/50 rounded-full animate-wind-slow" />
+            <div className="absolute top-12 -right-8 w-3 h-3 bg-white/40 rounded-full animate-wind-slow-delayed" />
+            <div className="absolute top-28 -right-4 w-3 h-3 bg-white/35 rounded-full animate-wind-slow-delayed-2" />
+          </div>
+          
+          {/* SET Text */}
+          <h2 
+            className="mt-12 text-5xl font-bold text-white tracking-widest animate-text-fade-in"
+            style={{ textShadow: '0 4px 30px rgba(0,0,0,0.4)' }}
+          >
+            SET
+          </h2>
+        </div>
+
+        {/* RALLY Phase - Logo Bold Entrance */}
+        <div 
+          className={`absolute inset-0 flex flex-col items-center justify-center transition-all duration-700 ease-out ${
+            phase === 'rally' || phase === 'exit' 
+              ? 'opacity-100 scale-100' 
+              : 'opacity-0 scale-50 pointer-events-none'
+          }`}
+        >
+          {/* White logo - bold entrance */}
+          <div className={`${phase === 'rally' || phase === 'exit' ? 'animate-logo-entrance' : ''}`}>
+            <img 
+              src={rallyLogo} 
+              alt="R@lly" 
+              className="w-36 h-36 object-contain filter brightness-0 invert drop-shadow-2xl"
+            />
+          </div>
           
           {/* R@LLY Text - bold entrance */}
           <h1 
-            className={`mt-4 text-5xl font-bold text-white tracking-tight transition-all duration-500 delay-200 ${
-              phase === 'logo' || phase === 'exit' ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+            className={`mt-6 text-6xl font-bold text-white tracking-tight ${
+              phase === 'rally' || phase === 'exit' ? 'animate-text-entrance' : 'opacity-0'
             }`}
-            style={{ textShadow: '0 4px 20px rgba(0,0,0,0.3)' }}
+            style={{ textShadow: '0 6px 30px rgba(0,0,0,0.4)' }}
           >
             R@LLY
           </h1>
 
-          {/* Tagline */}
+          {/* RALLY! Tagline */}
           <p 
-            className={`mt-3 text-lg text-white/90 font-medium tracking-wide transition-all duration-500 delay-300 ${
-              phase === 'logo' ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+            className={`mt-4 text-2xl text-white/95 font-semibold tracking-widest ${
+              phase === 'rally' ? 'animate-tagline-entrance' : 'opacity-0'
             }`}
+            style={{ textShadow: '0 4px 20px rgba(0,0,0,0.3)' }}
           >
-            READY. SET. RALLY.
+            RALLY!
           </p>
         </div>
       </div>
 
-      {/* Subtle background glow */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-white/5 rounded-full blur-3xl" />
+      {/* Ambient background glow */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-white/5 rounded-full blur-3xl animate-pulse-slow" />
       </div>
     </div>
   );
