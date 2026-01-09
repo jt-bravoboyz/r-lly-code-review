@@ -1,186 +1,206 @@
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-
-const authSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-  displayName: z.string().optional()
-});
-
-type AuthFormData = z.infer<typeof authSchema>;
+import { ArrowLeft } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import rallyLogo from '@/assets/rally-logo.png';
 
 export default function Auth() {
   const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [displayName, setDisplayName] = useState('');
+  const [showContent, setShowContent] = useState(false);
   const { signIn, signUp, user } = useAuth();
+  const navigate = useNavigate();
 
-  // Redirect if already logged in
+  useEffect(() => {
+    const timer = setTimeout(() => setShowContent(true), 100);
+    return () => clearTimeout(timer);
+  }, []);
+
   if (user) {
     navigate('/');
     return null;
   }
 
-  const loginForm = useForm<AuthFormData>({
-    resolver: zodResolver(authSchema),
-    defaultValues: { email: '', password: '' }
-  });
-
-  const signupForm = useForm<AuthFormData>({
-    resolver: zodResolver(authSchema.extend({
-      displayName: z.string().min(2, 'Display name must be at least 2 characters')
-    })),
-    defaultValues: { email: '', password: '', displayName: '' }
-  });
-
-  const handleLogin = async (data: AuthFormData) => {
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
     setIsLoading(true);
     try {
-      const { error } = await signIn(data.email, data.password);
-      if (error) {
-        if (error.message.includes('Invalid login')) {
-          toast.error('Invalid email or password');
-        } else {
-          toast.error(error.message);
-        }
-      } else {
-        toast.success('Welcome back!');
-        navigate('/');
-      }
+      await signIn(email, password);
+      toast.success("You're in! Let's rally.");
+      navigate('/');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to sign in');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSignup = async (data: AuthFormData) => {
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
     setIsLoading(true);
     try {
-      const { error } = await signUp(data.email, data.password, data.displayName || '');
-      if (error) {
-        if (error.message.includes('already registered')) {
-          toast.error('An account with this email already exists');
-        } else {
-          toast.error(error.message);
-        }
-      } else {
-        toast.success('Account created! You can now sign in.');
-        navigate('/');
-      }
+      await signUp(email, password, displayName);
+      toast.success('Account created! Welcome to R@lly.');
+      navigate('/');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to sign up');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-background to-primary/5">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-3xl font-bold text-gradient">🎉 Rally</CardTitle>
-          <CardDescription>Join the party, find your crew</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="login">
-            <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="login">Sign In</TabsTrigger>
-              <TabsTrigger value="signup">Sign Up</TabsTrigger>
-            </TabsList>
+    <div className="min-h-screen flex flex-col p-4 bg-background relative overflow-hidden">
+      {/* Background Effects */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[500px] h-[500px] gradient-radial opacity-40" />
+        <div className="absolute top-16 left-8 w-2 h-2 rounded-full bg-primary/30 float-animation" />
+        <div className="absolute top-32 right-12 w-3 h-3 rounded-full bg-primary/20 float-animation-delayed" />
+      </div>
 
-            <TabsContent value="login">
-              <Form {...loginForm}>
-                <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-4">
-                  <FormField
-                    control={loginForm.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                          <Input type="email" placeholder="you@example.com" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={loginForm.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Password</FormLabel>
-                        <FormControl>
-                          <Input type="password" placeholder="••••••••" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <Button type="submit" className="w-full gradient-primary" disabled={isLoading}>
-                    {isLoading ? 'Signing in...' : 'Sign In'}
+      <Link 
+        to="/" 
+        className={`flex items-center gap-2 text-muted-foreground hover:text-foreground transition-all z-10 ${showContent ? 'opacity-100' : 'opacity-0'}`}
+      >
+        <ArrowLeft className="h-4 w-4" />
+        <span className="text-sm font-medium">Back</span>
+      </Link>
+
+      <div className="flex-1 flex flex-col items-center justify-center max-w-md mx-auto w-full relative z-10">
+        {/* Logo */}
+        <div 
+          className={`text-center mb-8 transition-all duration-500 ${showContent ? 'opacity-100 scale-100' : 'opacity-0 scale-90'}`}
+        >
+          <div className="relative inline-block">
+            <img 
+              src={rallyLogo} 
+              alt="R@lly" 
+              className="w-24 h-24 mx-auto object-contain"
+            />
+            <div className="absolute inset-0 w-24 h-24 mx-auto rounded-full bg-primary/15 blur-xl -z-10" />
+          </div>
+          <p className="text-muted-foreground mt-3 font-medium">Join your crew</p>
+        </div>
+
+        <Card 
+          className={`w-full card-rally transition-all duration-500 delay-150 ${showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+        >
+          <Tabs defaultValue="signin" className="w-full">
+            <CardContent className="pt-6 pb-0">
+              <TabsList className="grid w-full grid-cols-2 bg-muted h-12 rounded-xl p-1">
+                <TabsTrigger 
+                  value="signin" 
+                  className="font-semibold rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm"
+                >
+                  Sign In
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="signup" 
+                  className="font-semibold rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-sm"
+                >
+                  Sign Up
+                </TabsTrigger>
+              </TabsList>
+            </CardContent>
+            
+            <CardContent className="pt-6">
+              <TabsContent value="signin" className="mt-0">
+                <form onSubmit={handleSignIn} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="email-signin" className="text-sm font-medium">Email</Label>
+                    <Input
+                      id="email-signin"
+                      type="email"
+                      placeholder="you@email.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="input-rally h-12"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="password-signin" className="text-sm font-medium">Password</Label>
+                    <Input
+                      id="password-signin"
+                      type="password"
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="input-rally h-12"
+                      required
+                    />
+                  </div>
+                  <Button 
+                    type="submit" 
+                    className="w-full btn-rally h-12 text-base mt-2"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? 'Signing in...' : "Let's Go"}
                   </Button>
                 </form>
-              </Form>
-            </TabsContent>
-
-            <TabsContent value="signup">
-              <Form {...signupForm}>
-                <form onSubmit={signupForm.handleSubmit(handleSignup)} className="space-y-4">
-                  <FormField
-                    control={signupForm.control}
-                    name="displayName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Display Name</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Your name" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={signupForm.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                          <Input type="email" placeholder="you@example.com" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={signupForm.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Password</FormLabel>
-                        <FormControl>
-                          <Input type="password" placeholder="••••••••" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <Button type="submit" className="w-full gradient-primary" disabled={isLoading}>
-                    {isLoading ? 'Creating account...' : 'Create Account'}
+              </TabsContent>
+              
+              <TabsContent value="signup" className="mt-0">
+                <form onSubmit={handleSignUp} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name-signup" className="text-sm font-medium">Name</Label>
+                    <Input
+                      id="name-signup"
+                      type="text"
+                      placeholder="What should we call you?"
+                      value={displayName}
+                      onChange={(e) => setDisplayName(e.target.value)}
+                      className="input-rally h-12"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email-signup" className="text-sm font-medium">Email</Label>
+                    <Input
+                      id="email-signup"
+                      type="email"
+                      placeholder="you@email.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="input-rally h-12"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="password-signup" className="text-sm font-medium">Password</Label>
+                    <Input
+                      id="password-signup"
+                      type="password"
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="input-rally h-12"
+                      minLength={6}
+                      required
+                    />
+                  </div>
+                  <Button 
+                    type="submit" 
+                    className="w-full btn-rally h-12 text-base mt-2"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? 'Creating account...' : 'Join the Rally'}
                   </Button>
                 </form>
-              </Form>
-            </TabsContent>
+              </TabsContent>
+            </CardContent>
           </Tabs>
-        </CardContent>
-      </Card>
+        </Card>
+      </div>
     </div>
   );
 }

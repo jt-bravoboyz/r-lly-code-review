@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Link } from 'react-router-dom';
+import rallyLogo from '@/assets/rally-logo.png';
 
 interface HeaderProps {
   title?: string;
@@ -16,13 +17,9 @@ export function Header({ title }: HeaderProps) {
     <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
       <div className="container flex h-14 items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
-          <span className="text-2xl font-black tracking-tighter">
-            <span className="text-primary">R</span>
-            <span className="text-foreground">@</span>
-            <span className="text-primary">LLY</span>
-          </span>
+          <img src={rallyLogo} alt="R@lly" className="h-8 w-8 object-contain" />
           {title && title !== 'Rally' && (
-            <span className="text-sm text-muted-foreground">/ {title}</span>
+            <span className="text-sm font-medium text-muted-foreground">/ {title}</span>
           )}
         </Link>
         
@@ -36,7 +33,7 @@ export function Header({ title }: HeaderProps) {
           
           {profile && (
             <Link to="/profile">
-              <Avatar className="h-8 w-8 ring-2 ring-primary/30 hover:ring-primary transition-all">
+              <Avatar className="h-8 w-8 ring-2 ring-primary/30 hover:ring-primary/50 transition-all">
                 <AvatarImage src={profile.avatar_url || undefined} />
                 <AvatarFallback className="bg-primary text-primary-foreground text-xs font-bold">
                   {profile.display_name?.charAt(0)?.toUpperCase() || '?'}
