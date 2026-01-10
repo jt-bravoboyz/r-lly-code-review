@@ -4,12 +4,25 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Home, User, Building2, MapPin, Navigation, CheckCircle2 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Home, User, Building2, MapPin, Navigation, CheckCircle2, Lock, Users, UserCheck, Globe } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 type DestinationType = 'home' | 'friend' | 'hotel' | 'custom';
+type VisibilityType = 'none' | 'squad' | 'selected' | 'all';
+
+interface EventAttendee {
+  profile_id: string;
+  profile: {
+    id: string;
+    display_name: string | null;
+    avatar_url: string | null;
+  };
+}
 
 interface RallyHomeButtonProps {
   eventId: string;
@@ -23,6 +36,9 @@ export function RallyHomeButton({ eventId, trigger }: RallyHomeButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isGoingHome, setIsGoingHome] = useState(false);
   const [hasArrived, setHasArrived] = useState(false);
+  const [visibility, setVisibility] = useState<VisibilityType>('squad');
+  const [selectedPeople, setSelectedPeople] = useState<string[]>([]);
+  const [eventAttendees, setEventAttendees] = useState<EventAttendee[]>([]);
   const { profile } = useAuth();
 
   // Check if user is already going home
@@ -35,7 +51,7 @@ export function RallyHomeButton({ eventId, trigger }: RallyHomeButtonProps) {
         .select('going_home_at, arrived_home')
         .eq('event_id', eventId)
         .eq('profile_id', profile.id)
-        .single();
+        .maybeSingle();
 
       if (data) {
         setIsGoingHome(!!data.going_home_at);
@@ -46,11 +62,42 @@ export function RallyHomeButton({ eventId, trigger }: RallyHomeButtonProps) {
     checkStatus();
   }, [eventId, profile?.id]);
 
+  // Fetch event attendees for "selected" option
+  useEffect(() => {
+    const fetchAttendees = async () => {
+      if (!profile?.id) return;
+      
+      const { data } = await supabase
+        .from('event_attendees')
+        .select(`
+          profile_id,
+          profile:profiles(id, display_name, avatar_url)
+        `)
+        .eq('event_id', eventId)
+        .neq('profile_id', profile.id);
+
+      if (data) {
+        setEventAttendees(data as unknown as EventAttendee[]);
+      }
+    };
+
+    if (open) {
+      fetchAttendees();
+    }
+  }, [eventId, profile?.id, open]);
+
   const destinations = [
     { value: 'home', label: 'Home', icon: Home, address: profile?.home_address },
     { value: 'friend', label: "Friend's House", icon: User, address: null },
     { value: 'hotel', label: 'Hotel', icon: Building2, address: null },
     { value: 'custom', label: 'Custom', icon: MapPin, address: null },
+  ];
+
+  const visibilityOptions = [
+    { value: 'none', label: 'Only Me', icon: Lock, description: 'Keep destination private' },
+    { value: 'squad', label: 'My Squad', icon: Users, description: 'Squad members only' },
+    { value: 'selected', label: 'Select People', icon: UserCheck, description: 'Choose specific people' },
+    { value: 'all', label: 'All Attendees', icon: Globe, description: 'Everyone at this event' },
   ];
 
   const handleGoHome = async () => {
@@ -80,12 +127,14 @@ export function RallyHomeButton({ eventId, trigger }: RallyHomeButtonProps) {
         finalAddress = customAddress.trim();
       }
 
-      // Update attendee record with going home status
+      // Update attendee record with going home status and privacy settings
       const { error } = await supabase
         .from('event_attendees')
         .update({
           going_home_at: new Date().toISOString(),
           destination_name: finalAddress,
+          destination_visibility: visibility,
+          destination_shared_with: visibility === 'selected' ? selectedPeople : [],
           arrived_home: false,
           arrived_at: null,
         })
@@ -95,8 +144,17 @@ export function RallyHomeButton({ eventId, trigger }: RallyHomeButtonProps) {
       if (error) throw error;
 
       setIsGoingHome(true);
+      
+      const visibilityMessage = visibility === 'none' 
+        ? 'Your destination is private' 
+        : visibility === 'squad' 
+          ? 'Your squad can see your destination' 
+          : visibility === 'selected' 
+            ? `${selectedPeople.length} people can see your destination`
+            : 'All attendees can see your destination';
+      
       toast.success(`You're heading ${destinationType === 'home' ? 'home' : 'to ' + finalAddress}!`, {
-        description: 'Your squad can track your journey 🏠',
+        description: visibilityMessage + ' 🏠',
         action: {
           label: 'Get Directions',
           onClick: () => {
@@ -144,6 +202,14 @@ export function RallyHomeButton({ eventId, trigger }: RallyHomeButtonProps) {
     }
   };
 
+  const togglePersonSelection = (profileId: string) => {
+    setSelectedPeople(prev => 
+      prev.includes(profileId) 
+        ? prev.filter(id => id !== profileId)
+        : [...prev, profileId]
+    );
+  };
+
   const needsAddress = destinationType !== 'home' || !profile?.home_address;
 
   // Show "I've Arrived" button if already going home
@@ -183,7 +249,7 @@ export function RallyHomeButton({ eventId, trigger }: RallyHomeButtonProps) {
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 font-montserrat text-xl">
             <Navigation className="h-6 w-6 text-primary" />
@@ -253,16 +319,93 @@ export function RallyHomeButton({ eventId, trigger }: RallyHomeButtonProps) {
             </div>
           )}
 
+          {/* Privacy Settings */}
+          <div>
+            <Label className="font-montserrat text-base mb-3 block flex items-center gap-2">
+              <Lock className="h-4 w-4" />
+              Who can see your destination?
+            </Label>
+            <RadioGroup
+              value={visibility}
+              onValueChange={(v) => setVisibility(v as VisibilityType)}
+              className="space-y-2"
+            >
+              {visibilityOptions.map((option) => (
+                <div key={option.value}>
+                  <RadioGroupItem
+                    value={option.value}
+                    id={`visibility-${option.value}`}
+                    className="peer sr-only"
+                  />
+                  <Label
+                    htmlFor={`visibility-${option.value}`}
+                    className="flex items-center gap-3 rounded-xl border-2 border-muted bg-popover p-3 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 cursor-pointer transition-all"
+                  >
+                    <option.icon className="h-5 w-5 text-primary" />
+                    <div className="flex-1">
+                      <span className="text-sm font-medium">{option.label}</span>
+                      <p className="text-xs text-muted-foreground">{option.description}</p>
+                    </div>
+                  </Label>
+                </div>
+              ))}
+            </RadioGroup>
+          </div>
+
+          {/* People Selection */}
+          {visibility === 'selected' && eventAttendees.length > 0 && (
+            <div>
+              <Label className="font-montserrat text-sm mb-2 block">
+                Select people ({selectedPeople.length} selected)
+              </Label>
+              <ScrollArea className="h-40 rounded-lg border p-2">
+                <div className="space-y-2">
+                  {eventAttendees.map((attendee) => (
+                    <div
+                      key={attendee.profile_id}
+                      className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted cursor-pointer"
+                      onClick={() => togglePersonSelection(attendee.profile_id)}
+                    >
+                      <Checkbox
+                        checked={selectedPeople.includes(attendee.profile_id)}
+                        onCheckedChange={() => togglePersonSelection(attendee.profile_id)}
+                      />
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={attendee.profile?.avatar_url || undefined} />
+                        <AvatarFallback className="bg-secondary text-secondary-foreground text-xs">
+                          {attendee.profile?.display_name?.charAt(0)?.toUpperCase() || '?'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="text-sm">{attendee.profile?.display_name || 'Unknown'}</span>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            </div>
+          )}
+
+          {visibility === 'selected' && eventAttendees.length === 0 && (
+            <p className="text-sm text-muted-foreground text-center py-2">
+              No other attendees to select
+            </p>
+          )}
+
           <div className="bg-secondary/10 rounded-lg p-3">
             <p className="text-sm text-muted-foreground">
-              📍 Your squad will be able to see when you arrive safely
+              📍 {visibility === 'none' 
+                ? 'Only you will see your destination' 
+                : visibility === 'squad' 
+                  ? 'Your squad members will see when you arrive safely'
+                  : visibility === 'selected'
+                    ? `${selectedPeople.length} selected people will see your destination`
+                    : 'All event attendees will see your destination'}
             </p>
           </div>
 
           <Button
             className="w-full bg-primary hover:bg-primary/90 rounded-full font-montserrat h-12 text-base"
             onClick={handleGoHome}
-            disabled={isLoading}
+            disabled={isLoading || (visibility === 'selected' && selectedPeople.length === 0)}
           >
             {isLoading ? 'Starting...' : (
               <>
