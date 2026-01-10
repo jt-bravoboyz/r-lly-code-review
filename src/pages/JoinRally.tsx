@@ -47,35 +47,46 @@ export default function JoinRally() {
     if (!inviteCode || inviteCode.length < 6) return;
     
     setLoading(true);
-    const { data, error } = await supabase
-      .from('events')
-      .select(`
-        id,
-        title,
-        description,
-        start_time,
-        location_name,
-        is_barhop,
-        is_quick_rally,
-        invite_code,
-        creator:profiles!events_creator_id_fkey(id, display_name, avatar_url),
-        attendees:event_attendees(count)
-      `)
-      .eq('invite_code', inviteCode.toUpperCase())
-      .maybeSingle();
+    
+    // Use the security definer function which allows public access for invite code lookups
+    const { data: rpcData, error: rpcError } = await supabase
+      .rpc('get_event_preview_by_invite_code', { invite_code_param: inviteCode });
 
-    if (error) {
+    if (rpcError) {
+      console.error('Error fetching event:', rpcError);
       toast.error('Failed to find rally');
       setEvent(null);
-    } else if (data) {
-      setEvent(data as EventPreview);
+      setLoading(false);
+      return;
+    }
+
+    if (rpcData && rpcData.length > 0) {
+      const eventData = rpcData[0];
+      // Transform the flat response into the expected structure
+      const transformedEvent: EventPreview = {
+        id: eventData.id,
+        title: eventData.title,
+        description: eventData.description,
+        start_time: eventData.start_time,
+        location_name: eventData.location_name,
+        is_barhop: eventData.is_barhop,
+        is_quick_rally: eventData.is_quick_rally,
+        invite_code: eventData.invite_code,
+        creator: {
+          id: eventData.creator_id,
+          display_name: eventData.creator_display_name,
+          avatar_url: eventData.creator_avatar_url,
+        },
+        attendees: [{ count: Number(eventData.attendee_count) }],
+      };
+      setEvent(transformedEvent);
       
-      // Check if already attending
+      // Check if already attending (only if authenticated)
       if (profile) {
         const { data: attendance } = await supabase
           .from('event_attendees')
           .select('id')
-          .eq('event_id', data.id)
+          .eq('event_id', eventData.id)
           .eq('profile_id', profile.id)
           .maybeSingle();
         

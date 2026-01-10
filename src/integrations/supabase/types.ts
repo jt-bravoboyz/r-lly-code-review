@@ -1504,6 +1504,23 @@ export type Database = {
         Returns: boolean
       }
       generate_secure_invite_code: { Args: never; Returns: string }
+      get_event_preview_by_invite_code: {
+        Args: { invite_code_param: string }
+        Returns: {
+          attendee_count: number
+          creator_avatar_url: string
+          creator_display_name: string
+          creator_id: string
+          description: string
+          id: string
+          invite_code: string
+          is_barhop: boolean
+          is_quick_rally: boolean
+          location_name: string
+          start_time: string
+          title: string
+        }[]
+      }
       is_connected_to_profile: {
         Args: { target_profile_id: string }
         Returns: boolean
