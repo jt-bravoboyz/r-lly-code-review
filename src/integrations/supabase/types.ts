@@ -727,6 +727,49 @@ export type Database = {
           },
         ]
       }
+      rate_limits: {
+        Row: {
+          action_type: string
+          created_at: string
+          id: string
+          profile_id: string
+        }
+        Insert: {
+          action_type: string
+          created_at?: string
+          id?: string
+          profile_id: string
+        }
+        Update: {
+          action_type?: string
+          created_at?: string
+          id?: string
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rate_limits_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rate_limits_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rate_limits_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ride_passengers: {
         Row: {
           id: string
@@ -1451,10 +1494,23 @@ export type Database = {
         }
         Returns: boolean
       }
+      check_rate_limit: {
+        Args: {
+          p_action_type: string
+          p_max_count: number
+          p_profile_id: string
+          p_window_minutes: number
+        }
+        Returns: boolean
+      }
       generate_secure_invite_code: { Args: never; Returns: string }
       is_connected_to_profile: {
         Args: { target_profile_id: string }
         Returns: boolean
+      }
+      record_rate_limit: {
+        Args: { p_action_type: string; p_profile_id: string }
+        Returns: undefined
       }
     }
     Enums: {
