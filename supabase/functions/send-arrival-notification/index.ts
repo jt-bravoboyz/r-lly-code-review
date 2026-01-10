@@ -20,23 +20,86 @@ Deno.serve(async (req) => {
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+
+    // Verify user authentication
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      console.error('Missing or invalid authorization header');
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Create client with user's auth to verify identity
+    const userSupabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: claimsData, error: authError } = await userSupabase.auth.getClaims(token);
+    
+    if (authError || !claimsData?.claims) {
+      console.error('Authentication failed:', authError?.message);
+      return new Response(
+        JSON.stringify({ error: 'Invalid authentication' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const authenticatedUserId = claimsData.claims.sub;
+    console.log(`Authenticated user: ${authenticatedUserId}`);
+
+    // Use service role client for database operations
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const { type, profileId, venueId, eventId } = await req.json() as ArrivalNotificationRequest;
 
+    // Input validation
+    if (!type || !['arrival', 'departure'].includes(type)) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid notification type' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!profileId || typeof profileId !== 'string') {
+      return new Response(
+        JSON.stringify({ error: 'Invalid profileId' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!venueId || typeof venueId !== 'string') {
+      return new Response(
+        JSON.stringify({ error: 'Invalid venueId' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     console.log(`Processing ${type} notification for profile ${profileId} at venue ${venueId}`);
 
-    // Get the user's profile
+    // Get the user's profile and verify ownership
     const { data: userProfile, error: profileError } = await supabase
       .from('profiles')
-      .select('display_name, avatar_url')
+      .select('display_name, avatar_url, user_id')
       .eq('id', profileId)
       .single();
 
     if (profileError) {
       console.error('Error fetching profile:', profileError);
       throw profileError;
+    }
+
+    // CRITICAL: Verify the profileId belongs to the authenticated user
+    if (userProfile.user_id !== authenticatedUserId) {
+      console.error(`User ${authenticatedUserId} attempted to send notification for profile ${profileId}`);
+      return new Response(
+        JSON.stringify({ error: 'Cannot send notifications for other users' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // Get the venue info
