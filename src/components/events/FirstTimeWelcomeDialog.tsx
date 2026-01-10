@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useTutorial } from '@/hooks/useTutorial';
+import { useConfetti } from '@/hooks/useConfetti';
 import { 
   PartyPopper, 
   MapPin, 
@@ -48,7 +49,26 @@ export function FirstTimeWelcomeDialog({
   onClose 
 }: FirstTimeWelcomeDialogProps) {
   const { startTutorial } = useTutorial();
+  const { fireRallyConfetti } = useConfetti();
   const [showFeatures, setShowFeatures] = useState(false);
+  const [confettiFired, setConfettiFired] = useState(false);
+
+  // Fire confetti when dialog opens
+  useEffect(() => {
+    if (isOpen && !confettiFired) {
+      // Small delay to let dialog animate in
+      const timer = setTimeout(() => {
+        fireRallyConfetti();
+        setConfettiFired(true);
+      }, 200);
+      return () => clearTimeout(timer);
+    }
+    
+    // Reset confetti flag when dialog closes
+    if (!isOpen) {
+      setConfettiFired(false);
+    }
+  }, [isOpen, confettiFired, fireRallyConfetti]);
 
   useEffect(() => {
     if (isOpen) {
