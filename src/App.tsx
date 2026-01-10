@@ -6,7 +6,9 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { LocationProvider } from "@/contexts/LocationContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { TutorialProvider } from "@/hooks/useTutorial";
 import { NavigationPortal } from "@/components/navigation/NavigationPortal";
+import { TutorialOverlay } from "@/components/tutorial/TutorialOverlay";
 import { AppEntry } from "@/components/AppEntry";
 import Index from "./pages/Index";
 import Events from "./pages/Events";
@@ -35,24 +37,27 @@ const App = () => (
             <Sonner />
             <NavigationPortal />
             <BrowserRouter>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/auth" element={<AppEntry />} />
-                <Route path="/events" element={<Events />} />
-                <Route path="/events/:id" element={<EventDetail />} />
-                <Route path="/join" element={<JoinRally />} />
-                <Route path="/join/:code" element={<JoinRally />} />
-                <Route path="/rides" element={<Rides />} />
-                <Route path="/chat" element={<Chat />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/notifications" element={<Notifications />} />
-                <Route path="/squads" element={<Squads />} />
-                <Route path="/achievements" element={<Achievements />} />
-                <Route path="/legal" element={<Legal />} />
-                <Route path="/settings" element={<Settings />} />
-                <Route path="/join-squad/:code" element={<JoinSquad />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
+              <TutorialProvider>
+                <TutorialOverlay />
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/auth" element={<AppEntry />} />
+                  <Route path="/events" element={<Events />} />
+                  <Route path="/events/:id" element={<EventDetail />} />
+                  <Route path="/join" element={<JoinRally />} />
+                  <Route path="/join/:code" element={<JoinRally />} />
+                  <Route path="/rides" element={<Rides />} />
+                  <Route path="/chat" element={<Chat />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/notifications" element={<Notifications />} />
+                  <Route path="/squads" element={<Squads />} />
+                  <Route path="/achievements" element={<Achievements />} />
+                  <Route path="/legal" element={<Legal />} />
+                  <Route path="/settings" element={<Settings />} />
+                  <Route path="/join-squad/:code" element={<JoinSquad />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </TutorialProvider>
             </BrowserRouter>
           </TooltipProvider>
         </LocationProvider>

@@ -36,7 +36,8 @@ import { useAppSettings } from '@/hooks/useAppSettings';
 import { useHaptics } from '@/hooks/useHaptics';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/contexts/ThemeContext';
-import { Navigate } from 'react-router-dom';
+import { useTutorial } from '@/hooks/useTutorial';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { NotificationSettings } from '@/components/settings/NotificationSettings';
@@ -82,6 +83,8 @@ export default function Settings() {
   const { settings, updateSetting, resetSettings, isLoaded } = useAppSettings();
   const { triggerHaptic, isSupported: hapticsSupported } = useHaptics();
   const { theme, setTheme } = useTheme();
+  const { startTutorial } = useTutorial();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('privacy');
 
   if (loading || !isLoaded) {
@@ -583,15 +586,31 @@ export default function Settings() {
           </TabsContent>
         </Tabs>
 
-        {/* Reset Button */}
-        <Button 
-          variant="outline" 
-          className="w-full mt-6 border-destructive/50 text-destructive hover:bg-destructive hover:text-destructive-foreground"
-          onClick={handleResetSettings}
-        >
-          <RotateCcw className="h-4 w-4 mr-2" />
-          Reset All Settings
-        </Button>
+        {/* Tutorial & Reset Buttons */}
+        <div className="mt-6 space-y-3">
+          <Button 
+            variant="outline" 
+            className="w-full border-primary/30 text-primary hover:bg-primary hover:text-primary-foreground"
+            onClick={() => {
+              localStorage.removeItem('rally-tutorial-complete');
+              navigate('/');
+              startTutorial();
+              toast.success('Basic training restarted!');
+            }}
+          >
+            <Target className="h-4 w-4 mr-2" />
+            Restart Basic Training
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            className="w-full border-destructive/50 text-destructive hover:bg-destructive hover:text-destructive-foreground"
+            onClick={handleResetSettings}
+          >
+            <RotateCcw className="h-4 w-4 mr-2" />
+            Reset All Settings
+          </Button>
+        </div>
       </main>
 
       <BottomNav />

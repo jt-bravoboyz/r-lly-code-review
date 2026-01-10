@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Zap, MapPin, Users, ChevronRight } from 'lucide-react';
 import { PolicyAcceptanceDialog } from '@/components/legal/PolicyAcceptanceDialog';
+import { useTutorial } from '@/hooks/useTutorial';
 
 interface OnboardingSlide {
   icon: React.ReactNode;
@@ -34,6 +35,7 @@ interface OnboardingProps {
 export function Onboarding({ onComplete }: OnboardingProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [showPolicyDialog, setShowPolicyDialog] = useState(false);
+  const { startTutorial } = useTutorial();
 
   const handleNext = () => {
     if (currentSlide < slides.length - 1) {
@@ -48,6 +50,10 @@ export function Onboarding({ onComplete }: OnboardingProps) {
     // Mark onboarding as complete and call callback
     localStorage.setItem('rally-onboarding-complete', 'true');
     onComplete?.();
+    // Start the interactive tutorial after a short delay
+    setTimeout(() => {
+      startTutorial();
+    }, 500);
   };
 
   const handleSkip = () => {
