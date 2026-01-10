@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Navigate, Link } from 'react-router-dom';
 import { ArrowLeft, Calendar, MapPin, Users, Beer, Share2, Check, X, MessageCircle, Navigation, Home, Plus, Copy, Zap, Crown } from 'lucide-react';
 import { format } from 'date-fns';
@@ -32,6 +32,7 @@ import { BarHopStopManager } from '@/components/events/BarHopStopManager';
 import { useEventRealtime } from '@/hooks/useEventRealtime';
 import { useBarHopStopsRealtime } from '@/hooks/useBarHopStopsRealtime';
 import { LocationMapPreview } from '@/components/location/LocationMapPreview';
+import { FirstTimeWelcomeDialog } from '@/components/events/FirstTimeWelcomeDialog';
 import { toast } from 'sonner';
 
 export default function EventDetail() {
@@ -45,6 +46,20 @@ export default function EventDetail() {
   const leaveEvent = useLeaveEvent();
   const updateEvent = useUpdateEvent();
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [showFirstTimeWelcome, setShowFirstTimeWelcome] = useState(false);
+
+  // Check for first-time welcome flag (set when user auto-joins via invite code)
+  useEffect(() => {
+    const welcomeEventId = sessionStorage.getItem('showFirstTimeWelcome');
+    if (welcomeEventId && welcomeEventId === id) {
+      sessionStorage.removeItem('showFirstTimeWelcome');
+      // Small delay to let page load
+      const timer = setTimeout(() => {
+        setShowFirstTimeWelcome(true);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [id]);
 
   if (authLoading) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
@@ -482,6 +497,13 @@ export default function EventDetail() {
       </main>
 
       <BottomNav />
+
+      {/* First Time Welcome Dialog */}
+      <FirstTimeWelcomeDialog
+        eventTitle={event.title}
+        isOpen={showFirstTimeWelcome}
+        onClose={() => setShowFirstTimeWelcome(false)}
+      />
     </div>
   );
 }
