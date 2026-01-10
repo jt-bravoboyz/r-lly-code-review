@@ -14,8 +14,7 @@ export default function Index() {
   const { user, profile, loading } = useAuth();
   const { data: events, isLoading: eventsLoading } = useEvents();
 
-  // For development: bypass auth check to see all screens
-  const isDev = true; // Set to false to re-enable auth
+  // Production mode - require authentication
 
   if (loading) {
     return (
@@ -33,13 +32,13 @@ export default function Index() {
     );
   }
 
-  // Skip auth check in dev mode
-  if (!user && !isDev) {
+  // Require authentication
+  if (!user) {
     return <LandingScreen />;
   }
 
   const upcomingEvents = events?.slice(0, 3) || [];
-  const userName = profile?.display_name || 'Dev User';
+  const userName = profile?.display_name || 'User';
   const userInitials = userName.slice(0, 2).toUpperCase();
 
   return (

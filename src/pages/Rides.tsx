@@ -33,9 +33,6 @@ export default function Rides() {
   const { awardRideComplete } = useAwardDDPoints();
   const { isSupported: pushSupported, isSubscribed: pushEnabled, isLoading: pushLoading, subscribe: enablePush, unsubscribe: disablePush } = usePushNotifications();
 
-  // Dev mode - bypass auth for preview
-  const isDev = true;
-
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary via-primary to-orange-600">

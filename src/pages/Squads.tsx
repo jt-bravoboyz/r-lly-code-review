@@ -14,9 +14,6 @@ export default function Squads() {
   const { data: squads, isLoading } = useSquads();
   const navigate = useNavigate();
 
-  // Dev mode - bypass auth
-  const isDev = true;
-
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary via-primary to-orange-600">

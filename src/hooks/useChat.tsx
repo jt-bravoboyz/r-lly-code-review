@@ -132,10 +132,7 @@ export function useEventChat(eventId: string) {
 export function useSendMessage() {
   const { profile } = useAuth();
 
-  // Dev mode profile fallback
-  const isDev = true;
-  const devProfile = { id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890', display_name: 'Dev User' };
-  const activeProfile = profile || (isDev ? devProfile : null);
+  const activeProfile = profile;
 
   return useMutation({
     mutationFn: async ({ 

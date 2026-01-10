@@ -37,9 +37,6 @@ export default function JoinSquad() {
   const [isJoining, setIsJoining] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Dev mode bypass
-  const isDev = true;
-
   useEffect(() => {
     async function fetchInvite() {
       if (!code) {
@@ -101,7 +98,7 @@ export default function JoinSquad() {
 
   const handleJoinSquad = async () => {
     if (!invite || !profile) {
-      if (!profile && !isDev) {
+      if (!profile) {
         toast.error('Please sign in to join a squad');
         navigate('/auth');
         return;
@@ -151,7 +148,7 @@ export default function JoinSquad() {
     }
   };
 
-  if (authLoading && !isDev) {
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
@@ -240,7 +237,7 @@ export default function JoinSquad() {
 
               {/* Action buttons */}
               <div className="space-y-3">
-                {!user && !isDev ? (
+              {!user ? (
                   <Button 
                     className="w-full gradient-primary"
                     onClick={() => navigate('/auth')}
