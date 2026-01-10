@@ -1451,6 +1451,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      generate_secure_invite_code: { Args: never; Returns: string }
       is_connected_to_profile: {
         Args: { target_profile_id: string }
         Returns: boolean
