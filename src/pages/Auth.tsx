@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
+import { useJoinEvent } from '@/hooks/useEvents';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Mail, Lock, User, ChevronRight, ArrowLeft } from 'lucide-react';
@@ -40,8 +41,10 @@ export default function Auth() {
   const [showContent, setShowContent] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [resetEmailSent, setResetEmailSent] = useState(false);
-  const { signIn, signUp, user } = useAuth();
+  const { signIn, signUp, user, profile } = useAuth();
+  const joinEvent = useJoinEvent();
   const navigate = useNavigate();
+  const autoJoinAttempted = useRef(false);
   
   const isSignUp = authMode === 'signup';
   const isForgotPassword = authMode === 'forgot-password';
@@ -51,18 +54,75 @@ export default function Auth() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Check for pending rally code after auth
+  // Auto-join rally after auth when there's a pending invite code
   useEffect(() => {
-    if (user) {
+    const autoJoinRally = async () => {
+      // Need both user and profile to join
+      if (!user || !profile) return;
+      
+      // Prevent duplicate join attempts
+      if (autoJoinAttempted.current) return;
+      
       const pendingCode = sessionStorage.getItem('pendingRallyCode');
-      if (pendingCode) {
-        sessionStorage.removeItem('pendingRallyCode');
-        navigate(`/join/${pendingCode}`);
-      } else {
+      if (!pendingCode) {
         navigate('/');
+        return;
       }
-    }
-  }, [user, navigate]);
+      
+      autoJoinAttempted.current = true;
+      sessionStorage.removeItem('pendingRallyCode');
+      
+      try {
+        // Fetch the event by invite code using the public function
+        const { data: rpcData, error: rpcError } = await supabase
+          .rpc('get_event_preview_by_invite_code', { invite_code_param: pendingCode });
+        
+        if (rpcError || !rpcData || rpcData.length === 0) {
+          toast.error('Rally not found');
+          navigate('/');
+          return;
+        }
+        
+        const eventData = rpcData[0];
+        
+        // Check if already a member
+        const { data: existingAttendee } = await supabase
+          .from('event_attendees')
+          .select('id')
+          .eq('event_id', eventData.id)
+          .eq('profile_id', profile.id)
+          .maybeSingle();
+        
+        if (existingAttendee) {
+          toast.info("You're already in this rally!");
+          navigate(`/events/${eventData.id}`);
+          return;
+        }
+        
+        // Auto-join the rally
+        await joinEvent.mutateAsync({ eventId: eventData.id, profileId: profile.id });
+        toast.success("You're in! 🎉 Welcome to the rally!");
+        navigate(`/events/${eventData.id}`);
+      } catch (error: any) {
+        console.error('Auto-join failed:', error);
+        if (error.message?.includes('duplicate')) {
+          // Already joined, just navigate
+          const { data: rpcData } = await supabase
+            .rpc('get_event_preview_by_invite_code', { invite_code_param: pendingCode });
+          if (rpcData && rpcData.length > 0) {
+            navigate(`/events/${rpcData[0].id}`);
+          } else {
+            navigate('/');
+          }
+        } else {
+          toast.error('Failed to auto-join rally. Please try again.');
+          navigate(`/join/${pendingCode}`);
+        }
+      }
+    };
+    
+    autoJoinRally();
+  }, [user, profile, navigate, joinEvent]);
 
   const clearErrors = () => setErrors({});
 
