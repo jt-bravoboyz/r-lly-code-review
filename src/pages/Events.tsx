@@ -22,9 +22,6 @@ export default function Events() {
   // Get preselected squad from navigation state (from Squads page Quick Rally)
   const preselectedSquad = location.state?.inviteSquad;
 
-  // Dev mode - bypass auth
-  const isDev = true;
-
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary via-primary to-orange-600">

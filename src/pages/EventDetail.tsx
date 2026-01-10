@@ -46,14 +46,11 @@ export default function EventDetail() {
   const updateEvent = useUpdateEvent();
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
 
-  // Dev mode - bypass auth
-  const isDev = true;
-
-  if (authLoading && !isDev) {
+  if (authLoading) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
 
-  if (!user && !isDev) {
+  if (!user) {
     return <Navigate to="/auth" replace />;
   }
 
@@ -74,11 +71,9 @@ export default function EventDetail() {
     return <Navigate to="/events" replace />;
   }
 
-  // Use dev profile if no real profile
-  const devProfile = { id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890', display_name: 'Dev User' };
-  const activeProfile = profile || (isDev ? devProfile : null);
+  const activeProfile = profile;
 
-  const isAttending = isDev ? true : event.attendees?.some(a => a.profile?.id === activeProfile?.id);
+  const isAttending = event.attendees?.some(a => a.profile?.id === activeProfile?.id);
   const isCreator = event.creator?.id === activeProfile?.id;
   const isCohost = useIsCohost(event.id);
   const canManage = isCreator || isCohost;

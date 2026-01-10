@@ -14,9 +14,6 @@ export default function Notifications() {
   const { data: notifications, isLoading } = useNotifications();
   const markRead = useMarkNotificationRead();
 
-  // Dev mode
-  const isDev = true;
-
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-primary">
