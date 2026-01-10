@@ -42,7 +42,6 @@ export function useEvent(eventId: string | undefined) {
             current_lat,
             current_lng,
             going_home_at,
-            destination_name,
             arrived_home,
             profile:profiles(id, display_name, avatar_url)
           ),

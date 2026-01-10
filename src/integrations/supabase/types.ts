@@ -207,6 +207,8 @@ export type Database = {
           destination_lat: number | null
           destination_lng: number | null
           destination_name: string | null
+          destination_shared_with: string[] | null
+          destination_visibility: string | null
           event_id: string
           going_home_at: string | null
           id: string
@@ -224,6 +226,8 @@ export type Database = {
           destination_lat?: number | null
           destination_lng?: number | null
           destination_name?: string | null
+          destination_shared_with?: string[] | null
+          destination_visibility?: string | null
           event_id: string
           going_home_at?: string | null
           id?: string
@@ -241,6 +245,8 @@ export type Database = {
           destination_lat?: number | null
           destination_lng?: number | null
           destination_name?: string | null
+          destination_shared_with?: string[] | null
+          destination_visibility?: string | null
           event_id?: string
           going_home_at?: string | null
           id?: string
@@ -1328,6 +1334,8 @@ export type Database = {
           arrived_home: boolean | null
           current_lat: number | null
           current_lng: number | null
+          destination_name: string | null
+          destination_visibility: string | null
           event_id: string | null
           going_home_at: string | null
           id: string | null
@@ -1342,6 +1350,8 @@ export type Database = {
           arrived_home?: boolean | null
           current_lat?: never
           current_lng?: never
+          destination_name?: never
+          destination_visibility?: string | null
           event_id?: string | null
           going_home_at?: string | null
           id?: string | null
@@ -1356,6 +1366,8 @@ export type Database = {
           arrived_home?: boolean | null
           current_lat?: never
           current_lng?: never
+          destination_name?: never
+          destination_visibility?: string | null
           event_id?: string | null
           going_home_at?: string | null
           id?: string | null
@@ -1431,6 +1443,14 @@ export type Database = {
       }
     }
     Functions: {
+      can_see_destination: {
+        Args: {
+          attendee_event_id: string
+          attendee_profile_id: string
+          viewer_user_id: string
+        }
+        Returns: boolean
+      }
       is_connected_to_profile: {
         Args: { target_profile_id: string }
         Returns: boolean
