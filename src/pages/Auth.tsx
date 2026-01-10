@@ -101,6 +101,10 @@ export default function Auth() {
         
         // Auto-join the rally
         await joinEvent.mutateAsync({ eventId: eventData.id, profileId: profile.id });
+        
+        // Set flag for first-time welcome dialog
+        sessionStorage.setItem('showFirstTimeWelcome', eventData.id);
+        
         toast.success("You're in! 🎉 Welcome to the rally!");
         navigate(`/events/${eventData.id}`);
       } catch (error: any) {
