@@ -16,7 +16,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useEvent, useJoinEvent, useLeaveEvent, useUpdateEvent } from '@/hooks/useEvents';
 import { useRides } from '@/hooks/useRides';
 import { useAuth } from '@/hooks/useAuth';
-import { useCohosts, useIsCohost } from '@/hooks/useCohosts';
+import { useCohosts } from '@/hooks/useCohosts';
 import { useMyDDRequest, useEventDDs } from '@/hooks/useDDManagement';
 import { RideCard } from '@/components/rides/RideCard';
 import { CreateRideDialog } from '@/components/rides/CreateRideDialog';
@@ -47,6 +47,7 @@ export default function EventDetail() {
   const { updates } = useEventRealtime(id);
   const { data: myDDRequest } = useMyDDRequest(id);
   const { data: eventDDs } = useEventDDs(id);
+  const { data: cohosts } = useCohosts(id);
   useBarHopStopsRealtime(id); // Real-time updates for bar hop stops
   const joinEvent = useJoinEvent();
   const leaveEvent = useLeaveEvent();
@@ -65,6 +66,15 @@ export default function EventDetail() {
       return () => clearTimeout(timer);
     }
   }, [id]);
+
+  // Calculate derived values after all hooks (to avoid conditional hook calls)
+  const activeProfile = profile;
+  const isAttending = event?.attendees?.some(a => a.profile?.id === activeProfile?.id) ?? false;
+  const isCreator = event?.creator?.id === activeProfile?.id;
+  const isCohost = cohosts?.some(c => c.profile_id === activeProfile?.id) ?? false;
+  const canManage = isCreator || isCohost;
+  const attendeeCount = event?.attendees?.length || 0;
+  const isLiveEvent = event ? new Date(event.start_time) <= new Date() : false;
 
   if (authLoading) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
@@ -90,15 +100,6 @@ export default function EventDetail() {
   if (!event) {
     return <Navigate to="/events" replace />;
   }
-
-  const activeProfile = profile;
-
-  const isAttending = event.attendees?.some(a => a.profile?.id === activeProfile?.id);
-  const isCreator = event.creator?.id === activeProfile?.id;
-  const isCohost = useIsCohost(event.id);
-  const canManage = isCreator || isCohost;
-  const attendeeCount = event.attendees?.length || 0;
-  const isLiveEvent = new Date(event.start_time) <= new Date();
 
   const handleJoin = async () => {
     if (!profile) return;
