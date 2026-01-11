@@ -20,6 +20,7 @@ import { useCohosts } from '@/hooks/useCohosts';
 import { useMyDDRequest, useEventDDs } from '@/hooks/useDDManagement';
 import { RideCard } from '@/components/rides/RideCard';
 import { CreateRideDialog } from '@/components/rides/CreateRideDialog';
+import { RequestRideDialog } from '@/components/rides/RequestRideDialog';
 import { DDRequestBanner } from '@/components/rides/DDRequestBanner';
 import { DDVolunteerButton } from '@/components/rides/DDVolunteerButton';
 import { EventChat } from '@/components/chat/EventChat';
@@ -455,6 +456,24 @@ export default function EventDetail() {
                 eventId={event.id}
                 userName={profile.display_name || 'You'}
               />
+            )}
+
+            {/* Request a Ride Card - For attendees who need a ride */}
+            {isAttending && !isCreator && (
+              <Card className="bg-gradient-to-r from-blue-500 to-blue-600 border-0 shadow-lg">
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                      <Navigation className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-white font-montserrat">Need a Ride?</h3>
+                      <p className="text-white/80 text-sm">Request a safe ride home</p>
+                    </div>
+                  </div>
+                  <RequestRideDialog eventId={event.id} />
+                </CardContent>
+              </Card>
             )}
 
             {/* DD Section */}

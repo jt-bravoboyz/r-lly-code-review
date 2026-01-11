@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -6,11 +6,12 @@ import { MapPin, Navigation } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
+import { LocationSearch } from '@/components/location/LocationSearch';
+import { LocationMapPreview } from '@/components/location/LocationMapPreview';
 
 const requestSchema = z.object({
   pickup_location: z.string().min(1, 'Pickup location is required').max(200, 'Location too long'),
@@ -21,14 +22,19 @@ type RequestFormData = z.infer<typeof requestSchema>;
 
 interface RequestRideDialogProps {
   eventId?: string;
+  rideId?: string;
+  driverName?: string;
   trigger?: React.ReactNode;
 }
 
-export function RequestRideDialog({ eventId, trigger }: RequestRideDialogProps) {
+export function RequestRideDialog({ eventId, rideId, driverName, trigger }: RequestRideDialogProps) {
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { profile } = useAuth();
   const queryClient = useQueryClient();
+  
+  const [pickupCoords, setPickupCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [destCoords, setDestCoords] = useState<{ lat: number; lng: number } | null>(null);
 
   const form = useForm<RequestFormData>({
     resolver: zodResolver(requestSchema),
@@ -46,60 +52,79 @@ export function RequestRideDialog({ eventId, trigger }: RequestRideDialogProps) 
 
     setIsSubmitting(true);
     try {
-      // First, get all DDs who have offered rides for this event
-      const { data: availableRides } = await supabase
-        .from('rides')
-        .select('driver_id')
-        .eq('status', 'available')
-        .eq(eventId ? 'event_id' : 'id', eventId || '');
-
-      const driverIds = availableRides?.map(r => r.driver_id).filter(Boolean) || [];
-
-      // Create a ride request notification for all DDs on this event
-      const { error } = await supabase
-        .from('notifications')
-        .insert({
-          profile_id: profile.id,
-          type: 'ride_request',
-          title: 'Ride Requested',
-          body: `Looking for a ride from ${data.pickup_location} to ${data.destination}`,
-          data: {
-            event_id: eventId,
+      // If requesting from a specific DD's ride, add as passenger
+      if (rideId) {
+        const { error: passengerError } = await supabase
+          .from('ride_passengers')
+          .insert({
+            ride_id: rideId,
+            passenger_id: profile.id,
             pickup_location: data.pickup_location,
-            destination: data.destination,
-            requester_id: profile.id,
-            requester_name: profile.display_name
-          }
-        });
+            pickup_lat: pickupCoords?.lat,
+            pickup_lng: pickupCoords?.lng,
+            status: 'pending'
+          });
 
-      if (error) throw error;
+        if (passengerError) throw passengerError;
 
-      // Send push notifications to all DDs with subscriptions
-      if (driverIds.length > 0) {
-        try {
-          await supabase.functions.invoke('send-push-notification', {
-            body: {
-              driverProfileIds: driverIds,
-              title: '🚗 New Ride Request!',
-              body: `${profile.display_name || 'Someone'} needs a ride from ${data.pickup_location}`,
-              data: {
-                url: '/rides',
-                event_id: eventId,
-                requester_id: profile.id
-              },
-              tag: 'ride-request'
+        toast.success(`Ride requested from ${driverName || 'driver'}! Waiting for approval.`);
+        queryClient.invalidateQueries({ queryKey: ['rides'] });
+      } else {
+        // General ride request notification
+        const { data: availableRides } = await supabase
+          .from('rides')
+          .select('driver_id')
+          .eq('status', 'available')
+          .eq(eventId ? 'event_id' : 'id', eventId || '');
+
+        const driverIds = availableRides?.map(r => r.driver_id).filter(Boolean) || [];
+
+        const { error } = await supabase
+          .from('notifications')
+          .insert({
+            profile_id: profile.id,
+            type: 'ride_request',
+            title: 'Ride Requested',
+            body: `Looking for a ride from ${data.pickup_location} to ${data.destination}`,
+            data: {
+              event_id: eventId,
+              pickup_location: data.pickup_location,
+              destination: data.destination,
+              requester_id: profile.id,
+              requester_name: profile.display_name
             }
           });
-        } catch (pushError) {
-          console.error('Push notification failed:', pushError);
-          // Don't fail the request if push fails
+
+        if (error) throw error;
+
+        if (driverIds.length > 0) {
+          try {
+            await supabase.functions.invoke('send-push-notification', {
+              body: {
+                driverProfileIds: driverIds,
+                title: '🚗 New Ride Request!',
+                body: `${profile.display_name || 'Someone'} needs a ride from ${data.pickup_location}`,
+                data: {
+                  url: '/rides',
+                  event_id: eventId,
+                  requester_id: profile.id
+                },
+                tag: 'ride-request'
+              }
+            });
+          } catch (pushError) {
+            console.error('Push notification failed:', pushError);
+          }
         }
+        
+        toast.success('Ride request sent! A R@lly DD will pick you up soon.');
+        queryClient.invalidateQueries({ queryKey: ['notifications'] });
       }
       
-      toast.success('Ride request sent! A R@lly DD will pick you up soon.');
       setOpen(false);
       form.reset();
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      setPickupCoords(null);
+      setDestCoords(null);
     } catch (error: any) {
       toast.error(error.message || 'Failed to request ride');
     } finally {
@@ -117,9 +142,11 @@ export function RequestRideDialog({ eventId, trigger }: RequestRideDialogProps) 
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold font-montserrat">Request a R@lly Ride</DialogTitle>
+          <DialogTitle className="text-xl font-bold font-montserrat">
+            {driverName ? `Request Ride from ${driverName}` : 'Request a R@lly Ride'}
+          </DialogTitle>
         </DialogHeader>
         
         <Form {...form}>
@@ -131,15 +158,31 @@ export function RequestRideDialog({ eventId, trigger }: RequestRideDialogProps) 
                 <FormItem>
                   <FormLabel>Pickup Location</FormLabel>
                   <FormControl>
-                    <div className="relative">
-                      <MapPin className="absolute left-3 top-3 h-4 w-4 text-primary" />
-                      <Input className="pl-9" placeholder="Where should we pick you up?" {...field} />
-                    </div>
+                    <LocationSearch
+                      value={field.value}
+                      onChange={field.onChange}
+                      onLocationSelect={(loc) => {
+                        field.onChange(loc.name);
+                        setPickupCoords({ lat: loc.lat, lng: loc.lng });
+                      }}
+                      placeholder="Where should we pick you up?"
+                      showMapPreview={false}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
+            {pickupCoords && (
+              <LocationMapPreview
+                lat={pickupCoords.lat}
+                lng={pickupCoords.lng}
+                name="Pickup"
+                height="h-32"
+                interactive={false}
+              />
+            )}
 
             <FormField
               control={form.control}
@@ -148,15 +191,31 @@ export function RequestRideDialog({ eventId, trigger }: RequestRideDialogProps) 
                 <FormItem>
                   <FormLabel>Destination</FormLabel>
                   <FormControl>
-                    <div className="relative">
-                      <MapPin className="absolute left-3 top-3 h-4 w-4 text-green-500" />
-                      <Input className="pl-9" placeholder="Where are you going?" {...field} />
-                    </div>
+                    <LocationSearch
+                      value={field.value}
+                      onChange={field.onChange}
+                      onLocationSelect={(loc) => {
+                        field.onChange(loc.name);
+                        setDestCoords({ lat: loc.lat, lng: loc.lng });
+                      }}
+                      placeholder="Where are you going?"
+                      showMapPreview={false}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
+            {destCoords && (
+              <LocationMapPreview
+                lat={destCoords.lat}
+                lng={destCoords.lng}
+                name="Destination"
+                height="h-32"
+                interactive={false}
+              />
+            )}
 
             <Button 
               type="submit" 
