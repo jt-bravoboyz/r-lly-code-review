@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Header } from '@/components/layout/Header';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
 import { 
   Battery, 
   Gauge, 
@@ -30,17 +31,23 @@ import {
   Hand,
   Sun,
   Moon,
-  Monitor
+  Monitor,
+  MapPinOff,
+  AlertTriangle,
+  CheckCircle2,
+  EyeOff
 } from 'lucide-react';
 import { useAppSettings } from '@/hooks/useAppSettings';
 import { useHaptics } from '@/hooks/useHaptics';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useTutorial } from '@/hooks/useTutorial';
+import { useLocation } from '@/hooks/useLocation';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { NotificationSettings } from '@/components/settings/NotificationSettings';
+import { supabase } from '@/integrations/supabase/client';
 
 const themeOptions = [
   { value: 'light', label: 'Light', icon: Sun, description: 'Always light' },
@@ -79,13 +86,33 @@ const hapticIntensityOptions = [
 ] as const;
 
 export default function Settings() {
-  const { user, loading } = useAuth();
+  const { user, profile, loading, refreshProfile } = useAuth();
   const { settings, updateSetting, resetSettings, isLoaded } = useAppSettings();
   const { triggerHaptic, isSupported: hapticsSupported } = useHaptics();
   const { theme, setTheme } = useTheme();
   const { startTutorial } = useTutorial();
+  const { toggleLocationSharing } = useLocation();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('privacy');
+  const [isTogglingLocation, setIsTogglingLocation] = useState(false);
+  const [activeEventCount, setActiveEventCount] = useState(0);
+
+  // Check how many active events user is sharing location in
+  useEffect(() => {
+    if (!profile?.id) return;
+    
+    const checkActiveEvents = async () => {
+      const { data } = await supabase
+        .from('event_attendees')
+        .select('id, share_location')
+        .eq('profile_id', profile.id)
+        .eq('share_location', true);
+      
+      setActiveEventCount(data?.length || 0);
+    };
+    
+    checkActiveEvents();
+  }, [profile?.id]);
 
   if (loading || !isLoaded) {
     return (
@@ -116,6 +143,28 @@ export default function Settings() {
     setTheme('system');
     triggerHaptic('success');
     toast.success('Settings reset to defaults');
+  };
+
+  const handleGlobalLocationToggle = async (enabled: boolean) => {
+    setIsTogglingLocation(true);
+    try {
+      await toggleLocationSharing(enabled);
+      await refreshProfile();
+      triggerHaptic('selection');
+      toast.success(enabled ? 'Location sharing enabled' : 'Location sharing disabled');
+      
+      // Re-check active events
+      const { data } = await supabase
+        .from('event_attendees')
+        .select('id, share_location')
+        .eq('profile_id', profile?.id || '')
+        .eq('share_location', true);
+      setActiveEventCount(data?.length || 0);
+    } catch (error) {
+      toast.error('Failed to update location sharing');
+    } finally {
+      setIsTogglingLocation(false);
+    }
   };
 
   const testHaptic = () => {
@@ -479,6 +528,67 @@ export default function Settings() {
 
           {/* Privacy Settings */}
           <TabsContent value="privacy" className="space-y-4">
+            {/* Location Sharing Status Indicator - Prominent Banner */}
+            <Card className={cn(
+              "card-rally border-2 transition-all",
+              profile?.location_sharing_enabled 
+                ? "border-green-500/50 bg-green-500/5" 
+                : "border-orange-500/50 bg-orange-500/5"
+            )}>
+              <CardContent className="pt-4 pb-4">
+                <div className="flex items-center gap-4">
+                  <div className={cn(
+                    "p-3 rounded-full",
+                    profile?.location_sharing_enabled 
+                      ? "bg-green-500/20" 
+                      : "bg-orange-500/20"
+                  )}>
+                    {profile?.location_sharing_enabled ? (
+                      <MapPin className="h-6 w-6 text-green-500" />
+                    ) : (
+                      <MapPinOff className="h-6 w-6 text-orange-500" />
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold">
+                        {profile?.location_sharing_enabled ? 'Location Sharing Active' : 'Location Sharing Off'}
+                      </h3>
+                      {profile?.location_sharing_enabled && (
+                        <Badge variant="secondary" className="bg-green-500/20 text-green-600 text-xs">
+                          <CheckCircle2 className="h-3 w-3 mr-1" />
+                          Live
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-0.5">
+                      {profile?.location_sharing_enabled 
+                        ? activeEventCount > 0 
+                          ? `Sharing in ${activeEventCount} active event${activeEventCount > 1 ? 's' : ''}`
+                          : 'Ready to share when you join events'
+                        : 'Your location is private. Toggle to share with rally attendees.'
+                      }
+                    </p>
+                  </div>
+                  <Switch 
+                    checked={profile?.location_sharing_enabled || false}
+                    onCheckedChange={handleGlobalLocationToggle}
+                    disabled={isTogglingLocation}
+                    className="data-[state=checked]:bg-green-500"
+                  />
+                </div>
+                
+                {profile?.location_sharing_enabled && activeEventCount > 0 && (
+                  <div className="mt-3 pt-3 border-t border-border/50">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <AlertTriangle className="h-3 w-3 text-yellow-500" />
+                      <span>Your live location is visible to other attendees in shared events</span>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
             <Card className="card-rally">
               <CardHeader className="pb-2">
                 <CardTitle className="text-base flex items-center gap-2">
@@ -524,9 +634,12 @@ export default function Settings() {
             <Card className="card-rally">
               <CardHeader className="pb-2">
                 <CardTitle className="text-base flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-primary" />
-                  Location Privacy
+                  <Shield className="h-4 w-4 text-primary" />
+                  Location Privacy Controls
                 </CardTitle>
+                <CardDescription>
+                  Fine-tune how your location is shared
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
@@ -561,6 +674,32 @@ export default function Settings() {
                   />
                 </div>
 
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <EyeOff className="h-5 w-5 text-muted-foreground" />
+                    <div>
+                      <Label className="font-medium">Hide Exact Location</Label>
+                      <p className="text-xs text-muted-foreground">
+                        Show approximate area instead
+                      </p>
+                    </div>
+                  </div>
+                  <Switch 
+                    checked={settings.hideExactLocation || false}
+                    onCheckedChange={(checked) => updateSetting('hideExactLocation', checked)}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="card-rally">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Users className="h-4 w-4 text-primary" />
+                  Social Privacy
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <Users className="h-5 w-5 text-muted-foreground" />

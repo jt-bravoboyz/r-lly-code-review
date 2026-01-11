@@ -24,6 +24,7 @@ export interface AppSettings {
   shareLocationDefault: boolean;
   showOnMap: boolean;
   allowFriendRequests: boolean;
+  hideExactLocation: boolean;
   
   // Notification settings
   pushNotifications: boolean;
@@ -60,6 +61,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   shareLocationDefault: true,
   showOnMap: true,
   allowFriendRequests: true,
+  hideExactLocation: false,
   
   // Notifications
   pushNotifications: true,
