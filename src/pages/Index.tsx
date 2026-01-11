@@ -257,8 +257,8 @@ function LandingScreen() {
             </p>
           </div>
 
-          {/* CTA Button */}
-          <div className="pt-8">
+          {/* CTA Buttons */}
+          <div className="pt-8 space-y-3">
             <Button 
               asChild 
               size="lg" 
@@ -273,6 +273,20 @@ function LandingScreen() {
                 Get Started 
                 <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </Link>
+            </Button>
+
+            <Button
+              asChild
+              variant="outline"
+              size="lg"
+              className="w-full rounded-full text-lg h-14 font-bold font-montserrat transition-all hover:scale-[1.02] active:scale-[0.98]"
+              style={{
+                backgroundColor: "rgba(255, 255, 255, 0.06)",
+                borderColor: "rgba(255, 106, 0, 0.35)",
+                color: "rgba(255, 255, 255, 0.90)",
+              }}
+            >
+              <Link to="/auth/return">Log In</Link>
             </Button>
           </div>
         </div>
