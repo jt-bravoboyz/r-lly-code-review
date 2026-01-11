@@ -77,6 +77,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         data: { display_name: displayName }
       }
     });
+    
+    // Mark that this is a new signup - tutorial should show after login
+    if (!error) {
+      localStorage.setItem('rally-is-new-signup', 'true');
+    }
+    
     return { error: error as Error | null };
   };
 
