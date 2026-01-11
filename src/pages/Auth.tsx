@@ -32,12 +32,16 @@ const signUpSchema = z.object({
 type AuthMode = 'signin' | 'signup' | 'forgot-password';
 
 export default function Auth() {
+  // Check if this is a first-time user (hasn't completed onboarding before)
+  const isFirstTimeUser = localStorage.getItem('rally-onboarding-complete') !== 'true';
+  
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
-  const [authMode, setAuthMode] = useState<AuthMode>('signin');
+  // First-time users default to signup, returning users default to signin
+  const [authMode, setAuthMode] = useState<AuthMode>(isFirstTimeUser ? 'signup' : 'signin');
   const [showContent, setShowContent] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [resetEmailSent, setResetEmailSent] = useState(false);
@@ -347,7 +351,7 @@ export default function Auth() {
             {isForgotPassword 
               ? 'Reset Password' 
               : isSignUp 
-                ? 'Create Your Account' 
+                ? (isFirstTimeUser ? 'Welcome' : 'Create Your Account')
                 : 'Welcome Back'
             }
           </h2>
@@ -632,19 +636,40 @@ export default function Auth() {
       {/* Bottom links */}
       {!isForgotPassword && (
         <div className="py-8 text-center relative z-10 space-y-3">
-          <p 
-            className="text-base font-montserrat"
-            style={{ color: "rgba(255, 255, 255, 0.5)" }}
-          >
-            {isSignUp ? "Already have an account? " : "Don't have an account? "}
-            <button 
-              onClick={() => setAuthMode(isSignUp ? 'signin' : 'signup')}
-              className="font-semibold hover:underline"
-              style={{ color: "#FF6A00" }}
+          {/* For first-time users in signup mode, don't show the toggle to signin */}
+          {/* For returning users or those who switched modes, show the toggle */}
+          {!(isFirstTimeUser && isSignUp) && (
+            <p 
+              className="text-base font-montserrat"
+              style={{ color: "rgba(255, 255, 255, 0.5)" }}
             >
-              {isSignUp ? 'Sign in' : 'Sign up'}
-            </button>
-          </p>
+              {isSignUp ? "Already have an account? " : "Don't have an account? "}
+              <button 
+                onClick={() => setAuthMode(isSignUp ? 'signin' : 'signup')}
+                className="font-semibold hover:underline"
+                style={{ color: "#FF6A00" }}
+              >
+                {isSignUp ? 'Sign in' : 'Sign up'}
+              </button>
+            </p>
+          )}
+          
+          {/* For first-time users who somehow got to signin, let them go back to signup */}
+          {isFirstTimeUser && !isSignUp && (
+            <p 
+              className="text-base font-montserrat"
+              style={{ color: "rgba(255, 255, 255, 0.5)" }}
+            >
+              New here?{" "}
+              <button 
+                onClick={() => setAuthMode('signup')}
+                className="font-semibold hover:underline"
+                style={{ color: "#FF6A00" }}
+              >
+                Create an account
+              </button>
+            </p>
+          )}
 
           <button
             type="button"
