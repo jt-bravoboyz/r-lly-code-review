@@ -1,17 +1,19 @@
 import { BottomNav } from '@/components/layout/BottomNav';
 import { useAuth } from '@/hooks/useAuth';
-import { useSquads, Squad } from '@/hooks/useSquads';
+import { useAllMySquads, Squad } from '@/hooks/useSquads';
 import { SquadCard } from '@/components/squads/SquadCard';
 import { CreateSquadDialog } from '@/components/squads/CreateSquadDialog';
+import { ContactsTab } from '@/components/squads/ContactsTab';
 import { Card, CardContent } from '@/components/ui/card';
-import { Users, Sparkles } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Users, Sparkles, Contact } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import rallyLogo from '@/assets/rally-logo.png';
 
 export default function Squads() {
   const { profile, loading: authLoading } = useAuth();
-  const { data: squads, isLoading } = useSquads();
+  const { data: squads, isLoading } = useAllMySquads();
   const navigate = useNavigate();
 
   if (authLoading) {
@@ -27,7 +29,6 @@ export default function Squads() {
   }
 
   const handleQuickRally = (squad: Squad) => {
-    // Navigate to events with squad pre-selected for invite
     navigate('/events', { state: { inviteSquad: squad } });
   };
 
@@ -64,49 +65,68 @@ export default function Squads() {
         </div>
       </header>
 
-      <main className="px-4 py-6 space-y-6 relative z-10">
-        {/* Header with create button */}
-        <div className="flex items-center justify-between animate-fade-in">
-          <div>
-            <h2 className="text-xl font-bold text-foreground font-montserrat flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-primary" />
-              Your Squads
-            </h2>
-            <p className="text-sm text-muted-foreground">Save your favorite groups for quick invites</p>
-          </div>
-          <CreateSquadDialog />
-        </div>
+      <main className="px-4 py-6 relative z-10">
+        <Tabs defaultValue="squads" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-6 bg-white/80 backdrop-blur-sm rounded-xl p-1">
+            <TabsTrigger value="squads" className="rounded-lg font-montserrat data-[state=active]:bg-primary data-[state=active]:text-white">
+              <Users className="h-4 w-4 mr-2" />
+              Squads
+            </TabsTrigger>
+            <TabsTrigger value="contacts" className="rounded-lg font-montserrat data-[state=active]:bg-primary data-[state=active]:text-white">
+              <Contact className="h-4 w-4 mr-2" />
+              Contacts
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Squads list */}
-        {isLoading ? (
-          <div className="space-y-4">
-            {[1, 2, 3].map((i) => (
-              <Card key={i} className="h-32 animate-pulse bg-gradient-to-r from-muted to-muted/50 border-0 rounded-2xl" />
-            ))}
-          </div>
-        ) : squads && squads.length > 0 ? (
-          <div className="space-y-4">
-            {squads.map((squad, index) => (
-              <div key={squad.id} className="animate-fade-in" style={{ animationDelay: `${0.1 + index * 0.1}s` }}>
-                <SquadCard squad={squad} onQuickRally={handleQuickRally} />
+          <TabsContent value="squads" className="space-y-6 animate-fade-in">
+            {/* Header with create button */}
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-foreground font-montserrat flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-primary" />
+                  Your Squads
+                </h2>
+                <p className="text-sm text-muted-foreground">Save your favorite groups for quick invites</p>
               </div>
-            ))}
-          </div>
-        ) : (
-          <Card className="bg-gradient-to-br from-white to-secondary/30 shadow-lg rounded-2xl border-0 overflow-hidden animate-fade-in">
-            <CardContent className="p-8 text-center relative">
-              <div className="absolute top-0 left-1/2 w-32 h-32 bg-primary/5 rounded-full -translate-x-1/2 -translate-y-1/2" />
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-orange-400/20 mx-auto mb-4 flex items-center justify-center relative">
-                <Users className="h-8 w-8 text-primary" />
-              </div>
-              <h3 className="text-lg font-bold mb-2 text-foreground font-montserrat">No squads yet</h3>
-              <p className="text-muted-foreground mb-6 font-montserrat">
-                Create a squad to quickly invite your squad to rallies!
-              </p>
               <CreateSquadDialog />
-            </CardContent>
-          </Card>
-        )}
+            </div>
+
+            {/* Squads list */}
+            {isLoading ? (
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <Card key={i} className="h-32 animate-pulse bg-gradient-to-r from-muted to-muted/50 border-0 rounded-2xl" />
+                ))}
+              </div>
+            ) : squads && squads.length > 0 ? (
+              <div className="space-y-4">
+                {squads.map((squad, index) => (
+                  <div key={squad.id} className="animate-fade-in" style={{ animationDelay: `${0.1 + index * 0.1}s` }}>
+                    <SquadCard squad={squad} onQuickRally={handleQuickRally} />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <Card className="bg-gradient-to-br from-white to-secondary/30 shadow-lg rounded-2xl border-0 overflow-hidden">
+                <CardContent className="p-8 text-center relative">
+                  <div className="absolute top-0 left-1/2 w-32 h-32 bg-primary/5 rounded-full -translate-x-1/2 -translate-y-1/2" />
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-orange-400/20 mx-auto mb-4 flex items-center justify-center relative">
+                    <Users className="h-8 w-8 text-primary" />
+                  </div>
+                  <h3 className="text-lg font-bold mb-2 text-foreground font-montserrat">No squads yet</h3>
+                  <p className="text-muted-foreground mb-6 font-montserrat">
+                    Create a squad to quickly invite your squad to rallies!
+                  </p>
+                  <CreateSquadDialog />
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          <TabsContent value="contacts" className="animate-fade-in">
+            <ContactsTab />
+          </TabsContent>
+        </Tabs>
       </main>
 
       <BottomNav />

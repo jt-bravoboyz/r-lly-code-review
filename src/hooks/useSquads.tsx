@@ -1,12 +1,15 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import type { SquadSymbol } from '@/components/squads/SquadSymbolPicker';
 
 export interface Squad {
   id: string;
   name: string;
   owner_id: string;
   created_at: string;
+  symbol?: string;
+  isOwned?: boolean;
   members?: SquadMember[];
 }
 
@@ -22,11 +25,12 @@ export interface SquadMember {
   };
 }
 
-export function useSquads() {
+// Get squads the user owns
+export function useOwnedSquads() {
   const { profile } = useAuth();
 
   return useQuery({
-    queryKey: ['squads', profile?.id],
+    queryKey: ['owned-squads', profile?.id],
     queryFn: async () => {
       if (!profile?.id) return [];
 
@@ -43,10 +47,72 @@ export function useSquads() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as Squad[];
+      return (data || []).map(s => ({ ...s, isOwned: true })) as Squad[];
     },
     enabled: !!profile?.id,
   });
+}
+
+// Get squads the user is a member of (but doesn't own)
+export function useMemberSquads() {
+  const { profile } = useAuth();
+
+  return useQuery({
+    queryKey: ['member-squads', profile?.id],
+    queryFn: async () => {
+      if (!profile?.id) return [];
+
+      // First get squad IDs where user is a member
+      const { data: memberships, error: memberError } = await supabase
+        .from('squad_members')
+        .select('squad_id')
+        .eq('profile_id', profile.id);
+
+      if (memberError) throw memberError;
+      if (!memberships || memberships.length === 0) return [];
+
+      const squadIds = memberships.map(m => m.squad_id);
+
+      // Then fetch those squads (excluding ones they own)
+      const { data, error } = await supabase
+        .from('squads')
+        .select(`
+          *,
+          members:squad_members(
+            *,
+            profile:safe_profiles(id, display_name, avatar_url)
+          )
+        `)
+        .in('id', squadIds)
+        .neq('owner_id', profile.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return (data || []).map(s => ({ ...s, isOwned: false })) as Squad[];
+    },
+    enabled: !!profile?.id,
+  });
+}
+
+// Combined: all squads user is part of (owned + member)
+export function useAllMySquads() {
+  const { data: ownedSquads, isLoading: loadingOwned } = useOwnedSquads();
+  const { data: memberSquads, isLoading: loadingMember } = useMemberSquads();
+
+  const allSquads = [
+    ...(ownedSquads || []),
+    ...(memberSquads || []),
+  ];
+
+  return {
+    data: allSquads,
+    isLoading: loadingOwned || loadingMember,
+  };
+}
+
+// Legacy alias for backward compatibility
+export function useSquads() {
+  return useOwnedSquads();
 }
 
 export function useCreateSquad() {
@@ -54,13 +120,13 @@ export function useCreateSquad() {
   const { profile } = useAuth();
 
   return useMutation({
-    mutationFn: async ({ name, memberIds }: { name: string; memberIds: string[] }) => {
+    mutationFn: async ({ name, memberIds, symbol = 'shield' }: { name: string; memberIds: string[]; symbol?: SquadSymbol }) => {
       if (!profile?.id) throw new Error('Not authenticated');
 
-      // Create squad
+      // Create squad with symbol
       const { data: squad, error: squadError } = await supabase
         .from('squads')
-        .insert({ name, owner_id: profile.id })
+        .insert({ name, owner_id: profile.id, symbol })
         .select()
         .single();
 
@@ -78,6 +144,28 @@ export function useCreateSquad() {
       return squad;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['owned-squads'] });
+      queryClient.invalidateQueries({ queryKey: ['member-squads'] });
+      queryClient.invalidateQueries({ queryKey: ['squads'] });
+    },
+  });
+}
+
+export function useUpdateSquadSymbol() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ squadId, symbol }: { squadId: string; symbol: SquadSymbol }) => {
+      const { error } = await supabase
+        .from('squads')
+        .update({ symbol })
+        .eq('id', squadId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['owned-squads'] });
+      queryClient.invalidateQueries({ queryKey: ['member-squads'] });
       queryClient.invalidateQueries({ queryKey: ['squads'] });
     },
   });
@@ -96,6 +184,8 @@ export function useDeleteSquad() {
       if (error) throw error;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['owned-squads'] });
+      queryClient.invalidateQueries({ queryKey: ['member-squads'] });
       queryClient.invalidateQueries({ queryKey: ['squads'] });
     },
   });
@@ -113,7 +203,10 @@ export function useAddSquadMember() {
       if (error) throw error;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['owned-squads'] });
+      queryClient.invalidateQueries({ queryKey: ['member-squads'] });
       queryClient.invalidateQueries({ queryKey: ['squads'] });
+      queryClient.invalidateQueries({ queryKey: ['rally-friends'] });
     },
   });
 }
@@ -132,7 +225,10 @@ export function useRemoveSquadMember() {
       if (error) throw error;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['owned-squads'] });
+      queryClient.invalidateQueries({ queryKey: ['member-squads'] });
       queryClient.invalidateQueries({ queryKey: ['squads'] });
+      queryClient.invalidateQueries({ queryKey: ['rally-friends'] });
     },
   });
 }

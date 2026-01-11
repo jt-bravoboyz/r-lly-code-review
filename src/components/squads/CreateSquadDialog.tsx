@@ -10,10 +10,12 @@ import { Plus, Users, Search } from 'lucide-react';
 import { useCreateSquad, useAllProfiles } from '@/hooks/useSquads';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { SquadSymbolPicker, type SquadSymbol } from './SquadSymbolPicker';
 
 export function CreateSquadDialog() {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
+  const [symbol, setSymbol] = useState<SquadSymbol>('shield');
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -42,10 +44,11 @@ export function CreateSquadDialog() {
     }
 
     try {
-      await createSquad.mutateAsync({ name: name.trim(), memberIds: selectedMembers });
+      await createSquad.mutateAsync({ name: name.trim(), memberIds: selectedMembers, symbol });
       toast.success('Squad created!');
       setOpen(false);
       setName('');
+      setSymbol('shield');
       setSelectedMembers([]);
       setSearchQuery('');
     } catch (error) {
@@ -79,6 +82,14 @@ export function CreateSquadDialog() {
               onChange={(e) => setName(e.target.value)}
               className="mt-1"
             />
+          </div>
+
+          <div>
+            <Label className="font-montserrat">Squad Symbol</Label>
+            <p className="text-xs text-muted-foreground mb-2">
+              Choose an icon to represent your squad
+            </p>
+            <SquadSymbolPicker value={symbol} onChange={setSymbol} size="sm" />
           </div>
 
           <div>
