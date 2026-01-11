@@ -396,6 +396,100 @@ export type Database = {
           },
         ]
       }
+      event_invites: {
+        Row: {
+          event_id: string
+          id: string
+          invited_at: string
+          invited_by: string
+          invited_profile_id: string
+          responded_at: string | null
+          status: string
+        }
+        Insert: {
+          event_id: string
+          id?: string
+          invited_at?: string
+          invited_by: string
+          invited_profile_id: string
+          responded_at?: string | null
+          status?: string
+        }
+        Update: {
+          event_id?: string
+          id?: string
+          invited_at?: string
+          invited_by?: string
+          invited_profile_id?: string
+          responded_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_invites_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_invites_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_invites_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_invites_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_invites_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles_with_connection"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_invites_invited_profile_id_fkey"
+            columns: ["invited_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_invites_invited_profile_id_fkey"
+            columns: ["invited_profile_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_invites_invited_profile_id_fkey"
+            columns: ["invited_profile_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_invites_invited_profile_id_fkey"
+            columns: ["invited_profile_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles_with_connection"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       events: {
         Row: {
           created_at: string | null

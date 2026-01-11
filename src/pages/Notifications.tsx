@@ -4,14 +4,17 @@ import { Badge } from '@/components/ui/badge';
 import { Bell, Car, MapPin, Users, CheckCircle, Clock } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useNotifications, useMarkNotificationRead } from '@/hooks/useNotifications';
+import { usePendingInvites } from '@/hooks/useEventInvites';
 import { Link } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { format, formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow } from 'date-fns';
+import { PendingInvites } from '@/components/events/PendingInvites';
 import rallyLogo from '@/assets/rally-logo.png';
 
 export default function Notifications() {
   const { profile, loading: authLoading } = useAuth();
   const { data: notifications, isLoading } = useNotifications();
+  const { data: pendingInvites } = usePendingInvites();
   const markRead = useMarkNotificationRead();
 
   if (authLoading) {
@@ -48,6 +51,8 @@ export default function Notifications() {
   };
 
   const unreadCount = notifications?.filter(n => !n.read).length || 0;
+  const pendingInviteCount = pendingInvites?.length || 0;
+  const totalUnread = unreadCount + pendingInviteCount;
 
   return (
     <div className="min-h-screen pb-24 bg-background">
@@ -77,12 +82,15 @@ export default function Notifications() {
             <h2 className="text-lg font-bold text-rally-dark font-montserrat">Activity</h2>
             <p className="text-sm text-muted-foreground">Stay updated on your squad</p>
           </div>
-          {unreadCount > 0 && (
+          {totalUnread > 0 && (
             <Badge className="bg-primary text-white">
-              {unreadCount} new
+              {totalUnread} new
             </Badge>
           )}
         </div>
+
+        {/* Pending Rally Invites */}
+        <PendingInvites />
 
         {isLoading ? (
           <div className="space-y-3">

@@ -6,20 +6,23 @@ const corsHeaders = {
 };
 
 interface PushPayload {
-  type: 'bar_hop_transition' | 'ride_offer' | 'ride_request' | 'ride_response' | 'going_home' | 'arrived_safe' | 'event_update';
+  type: 'bar_hop_transition' | 'ride_offer' | 'ride_request' | 'ride_response' | 'going_home' | 'arrived_safe' | 'event_update' | 'rally_invite';
   eventId?: string;
-  title: string;
-  body: string;
+  eventTitle?: string;
+  title?: string;
+  body?: string;
   data?: Record<string, unknown>;
   targetProfileIds?: string[];
+  profileIds?: string[];
   excludeProfileId?: string;
+  invitedBy?: string;
 }
 
 // Input validation constants
 const MAX_TITLE_LENGTH = 200;
 const MAX_BODY_LENGTH = 500;
 const MAX_TARGET_PROFILE_IDS = 100;
-const VALID_NOTIFICATION_TYPES = ['bar_hop_transition', 'ride_offer', 'ride_request', 'ride_response', 'going_home', 'arrived_safe', 'event_update'];
+const VALID_NOTIFICATION_TYPES = ['bar_hop_transition', 'ride_offer', 'ride_request', 'ride_response', 'going_home', 'arrived_safe', 'event_update', 'rally_invite'];
 
 function validatePayload(payload: PushPayload): { valid: boolean; error?: string } {
   // Validate notification type
@@ -27,20 +30,30 @@ function validatePayload(payload: PushPayload): { valid: boolean; error?: string
     return { valid: false, error: `Invalid notification type. Must be one of: ${VALID_NOTIFICATION_TYPES.join(', ')}` };
   }
 
-  // Validate title
-  if (!payload.title || typeof payload.title !== 'string') {
-    return { valid: false, error: 'Title is required and must be a string' };
-  }
-  if (payload.title.length > MAX_TITLE_LENGTH) {
-    return { valid: false, error: `Title must be ${MAX_TITLE_LENGTH} characters or less` };
-  }
+  // For rally_invite, title and body are auto-generated
+  if (payload.type === 'rally_invite') {
+    if (!payload.eventTitle || typeof payload.eventTitle !== 'string') {
+      return { valid: false, error: 'eventTitle is required for rally_invite type' };
+    }
+    if (!payload.profileIds || !Array.isArray(payload.profileIds) || payload.profileIds.length === 0) {
+      return { valid: false, error: 'profileIds is required for rally_invite type' };
+    }
+  } else {
+    // Validate title
+    if (!payload.title || typeof payload.title !== 'string') {
+      return { valid: false, error: 'Title is required and must be a string' };
+    }
+    if (payload.title.length > MAX_TITLE_LENGTH) {
+      return { valid: false, error: `Title must be ${MAX_TITLE_LENGTH} characters or less` };
+    }
 
-  // Validate body
-  if (!payload.body || typeof payload.body !== 'string') {
-    return { valid: false, error: 'Body is required and must be a string' };
-  }
-  if (payload.body.length > MAX_BODY_LENGTH) {
-    return { valid: false, error: `Body must be ${MAX_BODY_LENGTH} characters or less` };
+    // Validate body
+    if (!payload.body || typeof payload.body !== 'string') {
+      return { valid: false, error: 'Body is required and must be a string' };
+    }
+    if (payload.body.length > MAX_BODY_LENGTH) {
+      return { valid: false, error: `Body must be ${MAX_BODY_LENGTH} characters or less` };
+    }
   }
 
   // Validate targetProfileIds if provided
@@ -139,7 +152,16 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { type, eventId, title, body, data, targetProfileIds, excludeProfileId } = payload;
+    const { type, eventId, eventTitle, title, body, data, targetProfileIds, profileIds: payloadProfileIds, excludeProfileId, invitedBy } = payload;
+
+    // Handle rally_invite type with auto-generated title/body
+    let notifTitle = title;
+    let notifBody = body;
+    
+    if (type === 'rally_invite') {
+      notifTitle = `You're invited to ${eventTitle || 'a rally'}! 🎉`;
+      notifBody = `${invitedBy || 'Someone'} invited you to join. Tap to RSVP.`;
+    }
 
     // ========== AUTHORIZATION ==========
     // Verify caller has permission to send notifications
@@ -237,25 +259,28 @@ Deno.serve(async (req) => {
     }
 
     // ========== DETERMINE RECIPIENTS ==========
-    let profileIds: string[] = [];
+    let recipientProfileIds: string[] = [];
 
-    if (targetProfileIds && targetProfileIds.length > 0) {
-      profileIds = targetProfileIds;
+    if (payloadProfileIds && payloadProfileIds.length > 0) {
+      // For rally_invite, use the profileIds from payload
+      recipientProfileIds = payloadProfileIds;
+    } else if (targetProfileIds && targetProfileIds.length > 0) {
+      recipientProfileIds = targetProfileIds;
     } else if (eventId) {
       const { data: attendees } = await supabase
         .from('event_attendees')
         .select('profile_id')
         .eq('event_id', eventId);
       
-      profileIds = attendees?.map(a => a.profile_id) || [];
+      recipientProfileIds = attendees?.map(a => a.profile_id) || [];
     }
 
     // Exclude the sender if specified
     if (excludeProfileId) {
-      profileIds = profileIds.filter(id => id !== excludeProfileId);
+      recipientProfileIds = recipientProfileIds.filter((id: string) => id !== excludeProfileId);
     }
 
-    if (profileIds.length === 0) {
+    if (recipientProfileIds.length === 0) {
       return new Response(
         JSON.stringify({ success: true, message: 'No recipients' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -271,6 +296,7 @@ Deno.serve(async (req) => {
       'going_home': 'going_home_alerts',
       'arrived_safe': 'arrival_confirmations',
       'event_update': 'event_updates',
+      'rally_invite': 'squad_invites',
     };
 
     const preferenceColumn = preferenceMap[type] || 'event_updates';
@@ -278,10 +304,10 @@ Deno.serve(async (req) => {
     const { data: preferences } = await supabase
       .from('notification_preferences')
       .select('*')
-      .in('profile_id', profileIds);
+      .in('profile_id', recipientProfileIds);
 
     const prefsMap = new Map((preferences || []).map((p: Record<string, unknown>) => [p.profile_id, p[preferenceColumn]]));
-    const eligibleProfileIds = profileIds.filter(id => {
+    const eligibleProfileIds = recipientProfileIds.filter((id: string) => {
       const pref = prefsMap.get(id);
       return pref === undefined || pref === true;
     });
@@ -323,15 +349,15 @@ Deno.serve(async (req) => {
     const results = await Promise.allSettled(
       subscriptions.map(async (sub) => {
         const pushPayload = JSON.stringify({
-          title,
-          body,
+          title: notifTitle,
+          body: notifBody,
           icon: '/rally-icon-192.png',
           badge: '/rally-icon-192.png',
           data: {
             ...data,
             type,
             eventId,
-            url: eventId ? `/events/${eventId}` : '/',
+            url: type === 'rally_invite' ? '/notifications' : (eventId ? `/events/${eventId}` : '/'),
           },
         });
 

@@ -1,13 +1,12 @@
 import { useState } from 'react';
-import { UserPlus, Users, Copy, Share2, Check, Link2, MessageSquare } from 'lucide-react';
+import { UserPlus, Users, Copy, Share2, Check, Link2, MessageSquare, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { useSquads, Squad } from '@/hooks/useSquads';
-import { useJoinEvent } from '@/hooks/useEvents';
+import { useCreateEventInvites, useEventInvites } from '@/hooks/useEventInvites';
 import { toast } from 'sonner';
 
 interface InviteToEventDialogProps {
@@ -15,6 +14,7 @@ interface InviteToEventDialogProps {
   eventTitle: string;
   inviteCode: string | null;
   existingAttendeeIds: string[];
+  existingInviteIds?: string[];
   trigger?: React.ReactNode;
 }
 
@@ -23,6 +23,7 @@ export function InviteToEventDialog({
   eventTitle, 
   inviteCode, 
   existingAttendeeIds,
+  existingInviteIds = [],
   trigger 
 }: InviteToEventDialogProps) {
   const [open, setOpen] = useState(false);
@@ -30,7 +31,15 @@ export function InviteToEventDialog({
   const [invitedSquads, setInvitedSquads] = useState<Set<string>>(new Set());
   
   const { data: squads } = useSquads();
-  const joinEvent = useJoinEvent();
+  const { data: eventInvites } = useEventInvites(eventId);
+  const createInvites = useCreateEventInvites();
+
+  // Combine existing attendees and pending invites
+  const alreadyInvitedOrAttending = new Set([
+    ...existingAttendeeIds,
+    ...existingInviteIds,
+    ...(eventInvites?.map(i => i.invited_profile_id) || [])
+  ]);
 
   const shareLink = `${window.location.origin}/join/${inviteCode}`;
 
@@ -67,13 +76,13 @@ export function InviteToEventDialog({
       return;
     }
 
-    // Get members who aren't already attending
+    // Get members who aren't already attending or invited
     const membersToInvite = squad.members.filter(
-      member => member.profile?.id && !existingAttendeeIds.includes(member.profile.id)
+      member => member.profile?.id && !alreadyInvitedOrAttending.has(member.profile.id)
     );
 
     if (membersToInvite.length === 0) {
-      toast.info('All squad members are already in this rally!');
+      toast.info('All squad members are already invited or attending!');
       setInvitedSquads(prev => new Set([...prev, squad.id]));
       return;
     }
@@ -81,25 +90,25 @@ export function InviteToEventDialog({
     setInvitingSquads(prev => new Set([...prev, squad.id]));
 
     try {
-      // Add each member to the event
-      await Promise.all(
-        membersToInvite.map(member => 
-          joinEvent.mutateAsync({ 
-            eventId, 
-            profileId: member.profile!.id 
-          }).catch(err => {
-            // Ignore duplicate errors
-            if (!err.message?.includes('duplicate')) {
-              throw err;
-            }
-          })
-        )
-      );
+      const profileIds = membersToInvite
+        .map(m => m.profile?.id)
+        .filter(Boolean) as string[];
+
+      await createInvites.mutateAsync({ 
+        eventId, 
+        profileIds,
+        eventTitle
+      });
 
       setInvitedSquads(prev => new Set([...prev, squad.id]));
-      toast.success(`Added ${membersToInvite.length} member${membersToInvite.length > 1 ? 's' : ''} from ${squad.name}!`);
+      toast.success(`Invited ${membersToInvite.length} member${membersToInvite.length > 1 ? 's' : ''} from ${squad.name}!`);
     } catch (error: any) {
-      toast.error('Failed to add some members');
+      if (error.message?.includes('already been invited')) {
+        toast.info('Some members were already invited');
+        setInvitedSquads(prev => new Set([...prev, squad.id]));
+      } else {
+        toast.error('Failed to send invites');
+      }
     } finally {
       setInvitingSquads(prev => {
         const next = new Set(prev);
@@ -113,11 +122,11 @@ export function InviteToEventDialog({
     if (invitedSquads.has(squad.id)) return 'invited';
     if (invitingSquads.has(squad.id)) return 'inviting';
     
-    // Check if all members are already attending
-    const allAttending = squad.members?.every(
-      member => member.profile?.id && existingAttendeeIds.includes(member.profile.id)
+    // Check if all members are already attending or invited
+    const allInvitedOrAttending = squad.members?.every(
+      member => member.profile?.id && alreadyInvitedOrAttending.has(member.profile.id)
     );
-    if (allAttending && squad.members && squad.members.length > 0) return 'all-attending';
+    if (allInvitedOrAttending && squad.members && squad.members.length > 0) return 'all-invited';
     
     return 'available';
   };
@@ -184,10 +193,10 @@ export function InviteToEventDialog({
                           </div>
                         </div>
 
-                        {status === 'invited' || status === 'all-attending' ? (
+                        {status === 'invited' || status === 'all-invited' ? (
                           <Badge variant="secondary" className="gap-1">
                             <Check className="h-3 w-3" />
-                            {status === 'all-attending' ? 'All In' : 'Invited'}
+                            {status === 'all-invited' ? 'All Invited' : 'Invited'}
                           </Badge>
                         ) : (
                           <Button
@@ -195,8 +204,10 @@ export function InviteToEventDialog({
                             variant="outline"
                             onClick={() => handleInviteSquad(squad)}
                             disabled={status === 'inviting'}
+                            className="gap-1"
                           >
-                            {status === 'inviting' ? 'Adding...' : 'Add All'}
+                            <Send className="h-3 w-3" />
+                            {status === 'inviting' ? 'Sending...' : 'Invite'}
                           </Button>
                         )}
                       </div>
