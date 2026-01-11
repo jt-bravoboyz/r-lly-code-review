@@ -57,15 +57,15 @@ export function useSquadChat(squadId: string | undefined) {
         return { ...existingChat, linked_event } as SquadChat;
       }
 
-      // Create new chat for squad (only owner can do this)
+      // Create new chat for squad (any squad member can trigger this)
       const { data: squad } = await supabase
         .from('squads')
-        .select('name, owner_id')
+        .select('name')
         .eq('id', squadId)
         .single();
 
-      if (!squad || squad.owner_id !== profile?.id) {
-        // Not the owner, can't create - just return null
+      if (!squad) {
+        // Squad doesn't exist
         return null;
       }
 
