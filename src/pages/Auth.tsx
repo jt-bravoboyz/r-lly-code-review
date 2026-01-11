@@ -32,16 +32,18 @@ const signUpSchema = z.object({
 type AuthMode = 'signin' | 'signup' | 'forgot-password';
 
 export default function Auth() {
-  // Check if this is a first-time user (hasn't completed onboarding before)
-  const isFirstTimeUser = localStorage.getItem('rally-onboarding-complete') !== 'true';
+  // Check if user has an account (set after first successful signup/signin)
+  // This is SEPARATE from onboarding completion - a user can complete onboarding
+  // but not have an account yet (they need to sign up first)
+  const hasAccount = localStorage.getItem('rally-has-account') === 'true';
   
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
-  // First-time users default to signup, returning users default to signin
-  const [authMode, setAuthMode] = useState<AuthMode>(isFirstTimeUser ? 'signup' : 'signin');
+  // Users without an account default to signup, users with account default to signin
+  const [authMode, setAuthMode] = useState<AuthMode>(hasAccount ? 'signin' : 'signup');
   const [showContent, setShowContent] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [resetEmailSent, setResetEmailSent] = useState(false);
@@ -180,6 +182,8 @@ export default function Auth() {
     try {
       const { error } = await signIn(email.trim(), password);
       if (error) throw error;
+      // Mark that user has an account for future visits
+      localStorage.setItem('rally-has-account', 'true');
       toast.success("You're in! Let's rally.");
     } catch (error: any) {
       const errorMessage = getAuthErrorMessage(error);
@@ -211,6 +215,8 @@ export default function Auth() {
     try {
       const { error } = await signUp(email.trim(), password, displayName.trim());
       if (error) throw error;
+      // Mark that user has an account for future visits
+      localStorage.setItem('rally-has-account', 'true');
       toast.success('Account created! Welcome to R@lly.');
     } catch (error: any) {
       const errorMessage = getAuthErrorMessage(error);
@@ -351,7 +357,7 @@ export default function Auth() {
             {isForgotPassword 
               ? 'Reset Password' 
               : isSignUp 
-                ? (isFirstTimeUser ? 'Welcome' : 'Create Your Account')
+                ? (!hasAccount ? 'Welcome' : 'Create Your Account')
                 : 'Welcome Back'
             }
           </h2>
@@ -636,9 +642,9 @@ export default function Auth() {
       {/* Bottom links */}
       {!isForgotPassword && (
         <div className="py-8 text-center relative z-10 space-y-3">
-          {/* For first-time users in signup mode, don't show the toggle to signin */}
-          {/* For returning users or those who switched modes, show the toggle */}
-          {!(isFirstTimeUser && isSignUp) && (
+          {/* For new users in signup mode, don't show the toggle to signin */}
+          {/* For users with accounts or those who switched modes, show the toggle */}
+          {!(!hasAccount && isSignUp) && (
             <p 
               className="text-base font-montserrat"
               style={{ color: "rgba(255, 255, 255, 0.5)" }}
@@ -654,8 +660,8 @@ export default function Auth() {
             </p>
           )}
           
-          {/* For first-time users who somehow got to signin, let them go back to signup */}
-          {isFirstTimeUser && !isSignUp && (
+          {/* For new users who somehow got to signin, let them go back to signup */}
+          {!hasAccount && !isSignUp && (
             <p 
               className="text-base font-montserrat"
               style={{ color: "rgba(255, 255, 255, 0.5)" }}
