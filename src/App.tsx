@@ -11,6 +11,7 @@ import { NavigationPortal } from "@/components/navigation/NavigationPortal";
 import { TutorialOverlay } from "@/components/tutorial/TutorialOverlay";
 import { AppEntry } from "@/components/AppEntry";
 import Index from "./pages/Index";
+import ReturningAuth from "./pages/ReturningAuth";
 import Events from "./pages/Events";
 import EventDetail from "./pages/EventDetail";
 import Rides from "./pages/Rides";
@@ -43,7 +44,11 @@ const App = () => (
                 <TutorialOverlay />
                 <Routes>
                   <Route path="/" element={<Index />} />
+                  {/* New users: onboarding + signup */}
                   <Route path="/auth" element={<AppEntry />} />
+                  {/* Returning users: dedicated login page */}
+                  <Route path="/auth/return" element={<ReturningAuth />} />
+                  <Route path="/Auth/return" element={<ReturningAuth />} />
                   <Route path="/events" element={<Events />} />
                   <Route path="/events/:id" element={<EventDetail />} />
                   <Route path="/join" element={<JoinRally />} />
