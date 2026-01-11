@@ -64,6 +64,13 @@ export type Database = {
             referencedRelation: "safe_profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "arrival_notification_settings_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "safe_profiles_with_connection"
+            referencedColumns: ["id"]
+          },
         ]
       }
       barhop_stops: {
@@ -162,6 +169,13 @@ export type Database = {
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "safe_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_participants_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles_with_connection"
             referencedColumns: ["id"]
           },
         ]
@@ -285,6 +299,13 @@ export type Database = {
             referencedRelation: "safe_profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "event_attendees_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles_with_connection"
+            referencedColumns: ["id"]
+          },
         ]
       }
       event_cohosts: {
@@ -332,6 +353,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "event_cohosts_added_by_fkey"
+            columns: ["added_by"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles_with_connection"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "event_cohosts_event_id_fkey"
             columns: ["event_id"]
             isOneToOne: false
@@ -357,6 +385,13 @@ export type Database = {
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "safe_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_cohosts_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles_with_connection"
             referencedColumns: ["id"]
           },
         ]
@@ -441,6 +476,13 @@ export type Database = {
             referencedRelation: "safe_profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "events_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles_with_connection"
+            referencedColumns: ["id"]
+          },
         ]
       }
       messages: {
@@ -498,6 +540,13 @@ export type Database = {
             columns: ["sender_id"]
             isOneToOne: false
             referencedRelation: "safe_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles_with_connection"
             referencedColumns: ["id"]
           },
         ]
@@ -564,6 +613,13 @@ export type Database = {
             referencedRelation: "safe_profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "notification_preferences_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "safe_profiles_with_connection"
+            referencedColumns: ["id"]
+          },
         ]
       }
       notifications: {
@@ -619,7 +675,53 @@ export type Database = {
             referencedRelation: "safe_profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "notifications_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles_with_connection"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      profile_access_logs: {
+        Row: {
+          access_context: string | null
+          accessed_fields: string[] | null
+          accessed_profile_id: string
+          accessor_profile_id: string | null
+          accessor_user_id: string
+          connection_type: Database["public"]["Enums"]["connection_type"]
+          created_at: string
+          id: string
+          ip_address: unknown
+          user_agent: string | null
+        }
+        Insert: {
+          access_context?: string | null
+          accessed_fields?: string[] | null
+          accessed_profile_id: string
+          accessor_profile_id?: string | null
+          accessor_user_id: string
+          connection_type: Database["public"]["Enums"]["connection_type"]
+          created_at?: string
+          id?: string
+          ip_address?: unknown
+          user_agent?: string | null
+        }
+        Update: {
+          access_context?: string | null
+          accessed_fields?: string[] | null
+          accessed_profile_id?: string
+          accessor_profile_id?: string | null
+          accessor_user_id?: string
+          connection_type?: Database["public"]["Enums"]["connection_type"]
+          created_at?: string
+          id?: string
+          ip_address?: unknown
+          user_agent?: string | null
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -725,6 +827,13 @@ export type Database = {
             referencedRelation: "safe_profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "push_subscriptions_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles_with_connection"
+            referencedColumns: ["id"]
+          },
         ]
       }
       rate_limits: {
@@ -766,6 +875,13 @@ export type Database = {
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "safe_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rate_limits_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles_with_connection"
             referencedColumns: ["id"]
           },
         ]
@@ -821,6 +937,13 @@ export type Database = {
             columns: ["passenger_id"]
             isOneToOne: false
             referencedRelation: "safe_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ride_passengers_passenger_id_fkey"
+            columns: ["passenger_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles_with_connection"
             referencedColumns: ["id"]
           },
           {
@@ -904,6 +1027,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "rides_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles_with_connection"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "rides_event_id_fkey"
             columns: ["event_id"]
             isOneToOne: false
@@ -971,6 +1101,13 @@ export type Database = {
             referencedRelation: "safe_profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "saved_locations_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles_with_connection"
+            referencedColumns: ["id"]
+          },
         ]
       }
       squad_invites: {
@@ -1030,6 +1167,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "squad_invites_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles_with_connection"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "squad_invites_squad_id_fkey"
             columns: ["squad_id"]
             isOneToOne: false
@@ -1077,6 +1221,13 @@ export type Database = {
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "safe_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "squad_members_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles_with_connection"
             referencedColumns: ["id"]
           },
           {
@@ -1130,6 +1281,13 @@ export type Database = {
             columns: ["owner_id"]
             isOneToOne: false
             referencedRelation: "safe_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "squads_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles_with_connection"
             referencedColumns: ["id"]
           },
         ]
@@ -1264,6 +1422,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "venue_presence_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles_with_connection"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "venue_presence_venue_id_fkey"
             columns: ["venue_id"]
             isOneToOne: false
@@ -1332,6 +1497,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "safe_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "venues_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles_with_connection"
             referencedColumns: ["id"]
           },
         ]
@@ -1449,6 +1621,13 @@ export type Database = {
             referencedRelation: "safe_profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "event_attendees_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles_with_connection"
+            referencedColumns: ["id"]
+          },
         ]
       }
       safe_profiles: {
@@ -1484,6 +1663,42 @@ export type Database = {
         }
         Relationships: []
       }
+      safe_profiles_with_connection: {
+        Row: {
+          avatar_url: string | null
+          badges: string[] | null
+          bio: string | null
+          connection_type: Database["public"]["Enums"]["connection_type"] | null
+          created_at: string | null
+          display_name: string | null
+          id: string | null
+          reward_points: number | null
+          user_id: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          badges?: string[] | null
+          bio?: string | null
+          connection_type?: never
+          created_at?: string | null
+          display_name?: string | null
+          id?: string | null
+          reward_points?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          badges?: string[] | null
+          bio?: string | null
+          connection_type?: never
+          created_at?: string | null
+          display_name?: string | null
+          id?: string | null
+          reward_points?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       can_see_destination: {
@@ -1503,7 +1718,15 @@ export type Database = {
         }
         Returns: boolean
       }
+      cleanup_old_access_logs: {
+        Args: { retention_days?: number }
+        Returns: number
+      }
       generate_secure_invite_code: { Args: never; Returns: string }
+      get_connection_type: {
+        Args: { target_profile_id: string }
+        Returns: Database["public"]["Enums"]["connection_type"]
+      }
       get_event_preview_by_invite_code: {
         Args: { invite_code_param: string }
         Returns: {
@@ -1521,9 +1744,30 @@ export type Database = {
           title: string
         }[]
       }
+      get_profile_access_summary: {
+        Args: { p_days?: number; p_profile_id: string }
+        Returns: {
+          access_by_type: Json
+          recent_accessors: Json
+          total_accesses: number
+          unique_accessors: number
+        }[]
+      }
       is_connected_to_profile: {
         Args: { target_profile_id: string }
         Returns: boolean
+      }
+      is_connected_via_event: {
+        Args: { target_profile_id: string }
+        Returns: boolean
+      }
+      is_connected_via_squad: {
+        Args: { target_profile_id: string }
+        Returns: boolean
+      }
+      log_profile_access: {
+        Args: { p_accessed_fields?: string[]; p_accessed_profile_id: string }
+        Returns: undefined
       }
       record_rate_limit: {
         Args: { p_action_type: string; p_profile_id: string }
@@ -1531,7 +1775,7 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      connection_type: "event" | "squad" | "self" | "none"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1658,6 +1902,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      connection_type: ["event", "squad", "self", "none"],
+    },
   },
 } as const
