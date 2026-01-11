@@ -1585,6 +1585,7 @@ export type Database = {
           id: string
           name: string
           owner_id: string
+          symbol: string | null
           updated_at: string | null
         }
         Insert: {
@@ -1592,6 +1593,7 @@ export type Database = {
           id?: string
           name: string
           owner_id: string
+          symbol?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -1599,6 +1601,7 @@ export type Database = {
           id?: string
           name?: string
           owner_id?: string
+          symbol?: string | null
           updated_at?: string | null
         }
         Relationships: [
