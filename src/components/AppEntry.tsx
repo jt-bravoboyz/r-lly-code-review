@@ -19,9 +19,9 @@ export function AppEntry() {
     const hasAccount = localStorage.getItem('rally-has-account') === 'true' || returningParam;
     
     if (hasAccount) {
-      // Returning users with accounts get a quick flag splash
+      // Returning users go straight to auth (no splash)
       setIsFirstTime(false);
-      setPhase('flag-splash');
+      setPhase('auth');
     } else {
       // No account = full onboarding flow (splash + onboarding + signup)
       setIsFirstTime(true);
