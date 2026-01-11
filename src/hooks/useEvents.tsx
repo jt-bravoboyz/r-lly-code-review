@@ -35,7 +35,7 @@ export function useEvent(eventId: string | undefined) {
         .select(`
           *,
           creator:profiles!events_creator_id_fkey(id, display_name, avatar_url),
-          attendees:event_attendees(
+          attendees:safe_event_attendees(
             id,
             status,
             share_location,
@@ -43,7 +43,7 @@ export function useEvent(eventId: string | undefined) {
             current_lng,
             going_home_at,
             arrived_home,
-            profile:profiles(id, display_name, avatar_url)
+            profile:safe_profiles(id, display_name, avatar_url)
           ),
           stops:barhop_stops(*)
         `)
