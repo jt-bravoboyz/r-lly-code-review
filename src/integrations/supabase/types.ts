@@ -1786,6 +1786,7 @@ export type Database = {
         Args: { target_profile_id: string }
         Returns: boolean
       }
+      is_event_member: { Args: { p_event_id: string }; Returns: boolean }
       log_profile_access: {
         Args: { p_accessed_fields?: string[]; p_accessed_profile_id: string }
         Returns: undefined
