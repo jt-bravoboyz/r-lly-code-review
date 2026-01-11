@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Navigate, Link } from 'react-router-dom';
-import { ArrowLeft, Calendar, MapPin, Users, Beer, Share2, Check, X, MessageCircle, Navigation, Home, Plus, Copy, Zap, Crown } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Users, Beer, Check, X, MessageCircle, Navigation, Home, Plus, Zap, Crown, UserPlus } from 'lucide-react';
 import { format } from 'date-fns';
 import { Header } from '@/components/layout/Header';
 import { BottomNav } from '@/components/layout/BottomNav';
@@ -33,6 +33,7 @@ import { useEventRealtime } from '@/hooks/useEventRealtime';
 import { useBarHopStopsRealtime } from '@/hooks/useBarHopStopsRealtime';
 import { LocationMapPreview } from '@/components/location/LocationMapPreview';
 import { FirstTimeWelcomeDialog } from '@/components/events/FirstTimeWelcomeDialog';
+import { InviteToEventDialog } from '@/components/events/InviteToEventDialog';
 import { toast } from 'sonner';
 
 export default function EventDetail() {
@@ -45,7 +46,6 @@ export default function EventDetail() {
   const joinEvent = useJoinEvent();
   const leaveEvent = useLeaveEvent();
   const updateEvent = useUpdateEvent();
-  const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [showFirstTimeWelcome, setShowFirstTimeWelcome] = useState(false);
 
   // Check for first-time welcome flag (set when user auto-joins via invite code)
@@ -160,57 +160,17 @@ export default function EventDetail() {
               </div>
               <h1 className="text-2xl font-bold">{event.title}</h1>
             </div>
-            <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
-              <DialogTrigger asChild>
+            <InviteToEventDialog
+              eventId={event.id}
+              eventTitle={event.title}
+              inviteCode={event.invite_code}
+              existingAttendeeIds={event.attendees?.map(a => a.profile?.id).filter(Boolean) as string[] || []}
+              trigger={
                 <Button variant="ghost" size="icon">
-                  <Share2 className="h-5 w-5" />
+                  <UserPlus className="h-5 w-5" />
                 </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Share This Rally</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                  <div className="text-center space-y-2">
-                    <p className="text-sm text-muted-foreground">Invite Code</p>
-                    <div className="bg-muted rounded-xl p-4">
-                      <p className="text-3xl font-bold tracking-widest font-montserrat text-primary">
-                        {event.invite_code || 'N/A'}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <Button 
-                      variant="outline" 
-                      onClick={() => {
-                        navigator.clipboard.writeText(`${window.location.origin}/join/${event.invite_code}`);
-                        toast.success('Link copied!');
-                      }}
-                    >
-                      <Copy className="h-4 w-4 mr-2" />
-                      Copy Link
-                    </Button>
-                    <Button 
-                      onClick={async () => {
-                        if (navigator.share) {
-                          await navigator.share({
-                            title: `Join ${event.title}`,
-                            text: `Join my R@lly! Code: ${event.invite_code}`,
-                            url: `${window.location.origin}/join/${event.invite_code}`,
-                          });
-                        } else {
-                          navigator.clipboard.writeText(`${window.location.origin}/join/${event.invite_code}`);
-                          toast.success('Link copied!');
-                        }
-                      }}
-                    >
-                      <Share2 className="h-4 w-4 mr-2" />
-                      Share
-                    </Button>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
+              }
+            />
           </div>
 
           {event.description && (
