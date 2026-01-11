@@ -166,11 +166,25 @@ export function CreateEventDialog() {
                           <SelectValue />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
+                      <SelectContent className="max-h-60">
                         <SelectItem value="rally">Rally</SelectItem>
                         <SelectItem value="party">Party</SelectItem>
+                        <SelectItem value="bar">Bar / Club</SelectItem>
+                        <SelectItem value="happy_hour">Happy Hour</SelectItem>
+                        <SelectItem value="dinner">Dinner</SelectItem>
+                        <SelectItem value="brunch">Brunch</SelectItem>
                         <SelectItem value="concert">Concert</SelectItem>
+                        <SelectItem value="festival">Festival</SelectItem>
                         <SelectItem value="sports">Sports</SelectItem>
+                        <SelectItem value="tailgate">Tailgate</SelectItem>
+                        <SelectItem value="game_night">Game Night</SelectItem>
+                        <SelectItem value="movie">Movie Night</SelectItem>
+                        <SelectItem value="birthday">Birthday</SelectItem>
+                        <SelectItem value="wedding">Wedding</SelectItem>
+                        <SelectItem value="bbq">BBQ / Cookout</SelectItem>
+                        <SelectItem value="beach">Beach Day</SelectItem>
+                        <SelectItem value="road_trip">Road Trip</SelectItem>
+                        <SelectItem value="meetup">Meetup</SelectItem>
                         <SelectItem value="other">Other</SelectItem>
                       </SelectContent>
                     </Select>
