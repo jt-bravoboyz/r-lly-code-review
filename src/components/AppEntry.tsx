@@ -10,18 +10,23 @@ export function AppEntry() {
   const [phase, setPhase] = useState<AppPhase>('loading');
   const [isFirstTime, setIsFirstTime] = useState<boolean | null>(null);
   
-  // Check localStorage on mount to determine if first time user
+  // Check localStorage on mount to determine user state
   useEffect(() => {
     const onboardingComplete = localStorage.getItem('rally-onboarding-complete');
-    const firstTime = onboardingComplete !== 'true';
-    setIsFirstTime(firstTime);
+    const hasAccount = localStorage.getItem('rally-has-account');
     
-    if (firstTime) {
-      // First time users get full splash + onboarding
-      setPhase('splash');
-    } else {
-      // Returning users get a quick flag splash
+    if (hasAccount === 'true') {
+      // Returning users with accounts get a quick flag splash
+      setIsFirstTime(false);
       setPhase('flag-splash');
+    } else if (onboardingComplete === 'true') {
+      // Completed onboarding but no account yet - go straight to auth (signup)
+      setIsFirstTime(false);
+      setPhase('auth');
+    } else {
+      // First time users get full splash + onboarding
+      setIsFirstTime(true);
+      setPhase('splash');
     }
   }, []);
 
