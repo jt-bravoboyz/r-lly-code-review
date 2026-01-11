@@ -3,13 +3,25 @@ import { SplashScreen } from '@/components/SplashScreen';
 import { Onboarding } from '@/components/Onboarding';
 import Auth from '@/pages/Auth';
 
-type AppPhase = 'splash' | 'onboarding' | 'auth';
+type AppPhase = 'loading' | 'splash' | 'onboarding' | 'auth';
 
 export function AppEntry() {
-  const [phase, setPhase] = useState<AppPhase>('splash');
+  const [phase, setPhase] = useState<AppPhase>('loading');
+  const [isFirstTime, setIsFirstTime] = useState<boolean | null>(null);
   
-  // Check if this is the first time opening the app
-  const isFirstTime = !localStorage.getItem('rally-onboarding-complete');
+  // Check localStorage on mount to determine if first time user
+  useEffect(() => {
+    const onboardingComplete = localStorage.getItem('rally-onboarding-complete');
+    const firstTime = onboardingComplete !== 'true';
+    setIsFirstTime(firstTime);
+    
+    // Only show splash for first time users, skip straight to auth for returning users
+    if (firstTime) {
+      setPhase('splash');
+    } else {
+      setPhase('auth');
+    }
+  }, []);
 
   const handleSplashComplete = () => {
     if (isFirstTime) {
@@ -23,6 +35,11 @@ export function AppEntry() {
     localStorage.setItem('rally-onboarding-complete', 'true');
     setPhase('auth');
   };
+
+  // Show nothing while determining first time status
+  if (phase === 'loading') {
+    return null;
+  }
 
   if (phase === 'splash') {
     return <SplashScreen onComplete={handleSplashComplete} duration={5250} />;
