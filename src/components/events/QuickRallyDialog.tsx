@@ -1,14 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Zap, MapPin, Users, Beer, Check } from 'lucide-react';
+import { Zap, MapPin, Users, Beer, Check, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCreateEvent, useJoinEvent } from '@/hooks/useEvents';
+import { useCreateEventInvites } from '@/hooks/useEventInvites';
 import { useAuth } from '@/hooks/useAuth';
 import { useSquads, Squad } from '@/hooks/useSquads';
 import { useLocation } from '@/hooks/useLocation';
@@ -17,6 +19,7 @@ import { useNavigate } from 'react-router-dom';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useConfetti } from '@/hooks/useConfetti';
 import { LocationSearch } from '@/components/location/LocationSearch';
+import { format, addHours, setHours, setMinutes, isAfter, isSameDay } from 'date-fns';
 
 const quickRallySchema = z.object({
   title: z.string().min(1, 'Give your rally a name'),
@@ -31,18 +34,85 @@ interface QuickRallyDialogProps {
   preselectedSquad?: Squad;
 }
 
+// Generate time options for "later today"
+function generateTimeOptions(): { value: string; label: string }[] {
+  const now = new Date();
+  const options: { value: string; label: string }[] = [
+    { value: 'now', label: 'Start Now' },
+  ];
+  
+  // Add +1hr, +2hr, +3hr options
+  for (let i = 1; i <= 3; i++) {
+    const futureTime = addHours(now, i);
+    if (isSameDay(futureTime, now)) {
+      options.push({
+        value: `+${i}`,
+        label: `In ${i} hour${i > 1 ? 's' : ''} (${format(futureTime, 'h:mm a')})`,
+      });
+    }
+  }
+  
+  // Add specific evening times (6pm, 7pm, 8pm, 9pm, 10pm)
+  const eveningHours = [18, 19, 20, 21, 22];
+  eveningHours.forEach(hour => {
+    const timeOption = setMinutes(setHours(new Date(), hour), 0);
+    // Only show if it's in the future and same day
+    if (isAfter(timeOption, now) && isSameDay(timeOption, now)) {
+      options.push({
+        value: `h${hour}`,
+        label: format(timeOption, 'h:mm a'),
+      });
+    }
+  });
+  
+  return options;
+}
+
+// Convert time selection to Date
+function getStartTime(selection: string): Date {
+  const now = new Date();
+  
+  if (selection === 'now') {
+    return now;
+  }
+  
+  // Handle +1, +2, +3 hour options
+  if (selection.startsWith('+')) {
+    const hours = parseInt(selection.slice(1), 10);
+    return addHours(now, hours);
+  }
+  
+  // Handle specific hour options (h18, h19, etc.)
+  if (selection.startsWith('h')) {
+    const hour = parseInt(selection.slice(1), 10);
+    return setMinutes(setHours(now, hour), 0);
+  }
+  
+  return now;
+}
+
 export function QuickRallyDialog({ trigger, preselectedSquad }: QuickRallyDialogProps) {
   const [open, setOpen] = useState(false);
   const [selectedSquads, setSelectedSquads] = useState<Squad[]>(preselectedSquad ? [preselectedSquad] : []);
   const [selectedLocationCoords, setSelectedLocationCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [selectedTime, setSelectedTime] = useState<string>('now');
   
   const { profile } = useAuth();
   const { data: squads } = useSquads();
   const { location, getCurrentLocation } = useLocation();
   const createEvent = useCreateEvent();
   const joinEvent = useJoinEvent();
+  const createInvites = useCreateEventInvites();
   const navigate = useNavigate();
   const { fireRallyConfetti } = useConfetti();
+
+  // Memoize time options so they update when dialog opens
+  const timeOptions = useMemo(() => {
+    if (open) {
+      return generateTimeOptions();
+    }
+    return [];
+  }, [open]);
 
   const form = useForm<QuickRallyFormData>({
     resolver: zodResolver(quickRallySchema),
@@ -75,6 +145,7 @@ export function QuickRallyDialog({ trigger, preselectedSquad }: QuickRallyDialog
     setOpen(false);
     setSelectedSquads(preselectedSquad ? [preselectedSquad] : []);
     setSelectedLocationCoords(null);
+    setSelectedTime('now');
     form.reset();
   };
 
@@ -85,13 +156,16 @@ export function QuickRallyDialog({ trigger, preselectedSquad }: QuickRallyDialog
     }
 
     try {
-      // Create rally starting now
+      // Calculate start time based on selection
+      const startTime = getStartTime(selectedTime);
+      
+      // Create rally
       const result = await createEvent.mutateAsync({
         creator_id: profile.id,
         title: data.title,
         description: 'Quick Rally - Same day event',
         event_type: 'rally',
-        start_time: new Date().toISOString(),
+        start_time: startTime.toISOString(),
         location_name: data.location_name || 'Current Location',
         location_lat: selectedLocationCoords?.lat || location.lat,
         location_lng: selectedLocationCoords?.lng || location.lng,
@@ -102,13 +176,43 @@ export function QuickRallyDialog({ trigger, preselectedSquad }: QuickRallyDialog
       // Auto-join the event
       await joinEvent.mutateAsync({ eventId: result.id, profileId: profile.id });
       
+      // Auto-invite all members from selected squads
+      if (selectedSquads.length > 0) {
+        // Collect all member profile IDs from selected squads, excluding the host
+        const allMemberIds = new Set<string>();
+        
+        selectedSquads.forEach(squad => {
+          squad.members?.forEach(member => {
+            const memberId = member.profile?.id;
+            // Exclude host's own profile ID and ensure ID exists
+            if (memberId && memberId !== profile.id) {
+              allMemberIds.add(memberId);
+            }
+          });
+        });
+        
+        const uniqueMemberIds = Array.from(allMemberIds);
+        
+        if (uniqueMemberIds.length > 0) {
+          try {
+            await createInvites.mutateAsync({
+              eventId: result.id,
+              profileIds: uniqueMemberIds,
+              eventTitle: data.title,
+            });
+            toast.success(`Invited ${uniqueMemberIds.length} squad member${uniqueMemberIds.length > 1 ? 's' : ''}!`);
+          } catch (inviteError: any) {
+            // Don't fail the whole creation if invites fail
+            console.error('Failed to send squad invites:', inviteError);
+            toast.error('Rally created but some invites failed');
+          }
+        }
+      }
+      
       // Fire confetti celebration!
       fireRallyConfetti();
       
       toast.success('Quick Rally started! 🎉');
-      
-      // TODO: In the future, auto-invite selected squads here
-      // For now, just navigate to the event
       
       // Close dialog and navigate to event
       handleClose();
@@ -161,6 +265,26 @@ export function QuickRallyDialog({ trigger, preselectedSquad }: QuickRallyDialog
                 </FormItem>
               )}
             />
+
+            {/* Time Selection */}
+            <div className="space-y-2">
+              <FormLabel className="flex items-center gap-2">
+                <Clock className="h-4 w-4" />
+                When?
+              </FormLabel>
+              <Select value={selectedTime} onValueChange={setSelectedTime}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select time" />
+                </SelectTrigger>
+                <SelectContent>
+                  {timeOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
             <FormField
               control={form.control}
@@ -244,12 +368,12 @@ export function QuickRallyDialog({ trigger, preselectedSquad }: QuickRallyDialog
             <Button 
               type="submit" 
               className="w-full bg-secondary text-secondary-foreground hover:bg-secondary/90"
-              disabled={createEvent.isPending}
+              disabled={createEvent.isPending || createInvites.isPending}
             >
-              {createEvent.isPending ? 'Starting...' : (
+              {createEvent.isPending || createInvites.isPending ? 'Starting...' : (
                 <>
                   <Zap className="h-4 w-4 mr-2" />
-                  Start Rally Now
+                  {selectedTime === 'now' ? 'Start Rally Now' : 'Schedule Rally'}
                 </>
               )}
             </Button>
