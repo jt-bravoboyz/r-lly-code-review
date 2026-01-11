@@ -579,6 +579,93 @@ export type Database = {
           },
         ]
       }
+      invite_history: {
+        Row: {
+          id: string
+          invite_count: number
+          invited_name: string | null
+          invited_phone: string | null
+          invited_profile_id: string | null
+          inviter_id: string
+          last_invited_at: string
+        }
+        Insert: {
+          id?: string
+          invite_count?: number
+          invited_name?: string | null
+          invited_phone?: string | null
+          invited_profile_id?: string | null
+          inviter_id: string
+          last_invited_at?: string
+        }
+        Update: {
+          id?: string
+          invite_count?: number
+          invited_name?: string | null
+          invited_phone?: string | null
+          invited_profile_id?: string | null
+          inviter_id?: string
+          last_invited_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invite_history_invited_profile_id_fkey"
+            columns: ["invited_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invite_history_invited_profile_id_fkey"
+            columns: ["invited_profile_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invite_history_invited_profile_id_fkey"
+            columns: ["invited_profile_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invite_history_invited_profile_id_fkey"
+            columns: ["invited_profile_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles_with_connection"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invite_history_inviter_id_fkey"
+            columns: ["inviter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invite_history_inviter_id_fkey"
+            columns: ["inviter_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invite_history_inviter_id_fkey"
+            columns: ["inviter_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invite_history_inviter_id_fkey"
+            columns: ["inviter_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles_with_connection"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           chat_id: string
@@ -772,6 +859,165 @@ export type Database = {
           {
             foreignKeyName: "notifications_profile_id_fkey"
             columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles_with_connection"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      phone_contacts: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: string
+          phone_number: string
+          profile_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          phone_number: string
+          profile_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          phone_number?: string
+          profile_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "phone_contacts_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "phone_contacts_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "phone_contacts_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "phone_contacts_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles_with_connection"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      phone_invites: {
+        Row: {
+          claimed_at: string | null
+          claimed_by: string | null
+          display_name: string | null
+          event_id: string
+          id: string
+          invite_code: string
+          invited_at: string
+          invited_by: string
+          phone_number: string
+          status: string
+        }
+        Insert: {
+          claimed_at?: string | null
+          claimed_by?: string | null
+          display_name?: string | null
+          event_id: string
+          id?: string
+          invite_code?: string
+          invited_at?: string
+          invited_by: string
+          phone_number: string
+          status?: string
+        }
+        Update: {
+          claimed_at?: string | null
+          claimed_by?: string | null
+          display_name?: string | null
+          event_id?: string
+          id?: string
+          invite_code?: string
+          invited_at?: string
+          invited_by?: string
+          phone_number?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "phone_invites_claimed_by_fkey"
+            columns: ["claimed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "phone_invites_claimed_by_fkey"
+            columns: ["claimed_by"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "phone_invites_claimed_by_fkey"
+            columns: ["claimed_by"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "phone_invites_claimed_by_fkey"
+            columns: ["claimed_by"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles_with_connection"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "phone_invites_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "phone_invites_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "phone_invites_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "phone_invites_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "phone_invites_invited_by_fkey"
+            columns: ["invited_by"]
             isOneToOne: false
             referencedRelation: "safe_profiles_with_connection"
             referencedColumns: ["id"]
@@ -1811,6 +2057,27 @@ export type Database = {
           p_window_minutes: number
         }
         Returns: boolean
+      }
+      claim_phone_invites: {
+        Args: { p_phone: string; p_profile_id: string }
+        Returns: {
+          claimed_at: string | null
+          claimed_by: string | null
+          display_name: string | null
+          event_id: string
+          id: string
+          invite_code: string
+          invited_at: string
+          invited_by: string
+          phone_number: string
+          status: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "phone_invites"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       cleanup_old_access_logs: {
         Args: { retention_days?: number }

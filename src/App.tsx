@@ -25,6 +25,7 @@ import Legal from "./pages/Legal";
 import Settings from "./pages/Settings";
 import Documentation from "./pages/Documentation";
 import NotFound from "./pages/NotFound";
+import InviteHistory from "./pages/InviteHistory";
 
 const queryClient = new QueryClient();
 
@@ -57,6 +58,7 @@ const App = () => (
                   <Route path="/settings" element={<Settings />} />
                   <Route path="/docs" element={<Documentation />} />
                   <Route path="/join-squad/:code" element={<JoinSquad />} />
+                  <Route path="/invite-history" element={<InviteHistory />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </TutorialProvider>
