@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Zap, MapPin, Copy, Share2, Users, Beer, Check, PartyPopper } from 'lucide-react';
+import { Zap, MapPin, Users, Beer, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -14,8 +14,6 @@ import { useSquads, Squad } from '@/hooks/useSquads';
 import { useLocation } from '@/hooks/useLocation';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useConfetti } from '@/hooks/useConfetti';
 import { LocationSearch } from '@/components/location/LocationSearch';
@@ -35,9 +33,7 @@ interface QuickRallyDialogProps {
 
 export function QuickRallyDialog({ trigger, preselectedSquad }: QuickRallyDialogProps) {
   const [open, setOpen] = useState(false);
-  const [step, setStep] = useState<'create' | 'invite'>('create');
-  const [createdEvent, setCreatedEvent] = useState<{ id: string; invite_code: string; title: string } | null>(null);
-  const [selectedSquad, setSelectedSquad] = useState<Squad | null>(preselectedSquad || null);
+  const [selectedSquads, setSelectedSquads] = useState<Squad[]>(preselectedSquad ? [preselectedSquad] : []);
   const [selectedLocationCoords, setSelectedLocationCoords] = useState<{ lat: number; lng: number } | null>(null);
   
   const { profile } = useAuth();
@@ -64,6 +60,24 @@ export function QuickRallyDialog({ trigger, preselectedSquad }: QuickRallyDialog
     }
   }, [open, getCurrentLocation]);
 
+  const toggleSquadSelection = (squad: Squad) => {
+    setSelectedSquads(prev => {
+      const isSelected = prev.some(s => s.id === squad.id);
+      if (isSelected) {
+        return prev.filter(s => s.id !== squad.id);
+      } else {
+        return [...prev, squad];
+      }
+    });
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+    setSelectedSquads(preselectedSquad ? [preselectedSquad] : []);
+    setSelectedLocationCoords(null);
+    form.reset();
+  };
+
   const onSubmit = async (data: QuickRallyFormData) => {
     if (!profile) {
       toast.error('You must be logged in to create a rally');
@@ -87,62 +101,22 @@ export function QuickRallyDialog({ trigger, preselectedSquad }: QuickRallyDialog
 
       // Auto-join the event
       await joinEvent.mutateAsync({ eventId: result.id, profileId: profile.id });
-
-      setCreatedEvent({
-        id: result.id,
-        invite_code: result.invite_code || '',
-        title: result.title
-      });
-      setStep('invite');
       
       // Fire confetti celebration!
-      setTimeout(() => fireRallyConfetti(), 100);
+      fireRallyConfetti();
       
       toast.success('Quick Rally started! 🎉');
+      
+      // TODO: In the future, auto-invite selected squads here
+      // For now, just navigate to the event
+      
+      // Close dialog and navigate to event
+      handleClose();
+      navigate(`/events/${result.id}`);
+      
     } catch (error: any) {
       toast.error(error.message || 'Failed to create rally');
     }
-  };
-
-  const shareLink = createdEvent 
-    ? `${window.location.origin}/join/${createdEvent.invite_code}`
-    : '';
-
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(shareLink);
-    toast.success('Link copied to clipboard!');
-  };
-
-  const handleShare = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: `Join my R@lly: ${createdEvent?.title}`,
-          text: `Join my Quick Rally! Use code: ${createdEvent?.invite_code}`,
-          url: shareLink,
-        });
-      } catch (err) {
-        handleCopyLink();
-      }
-    } else {
-      handleCopyLink();
-    }
-  };
-
-  const handleGoToRally = () => {
-    setOpen(false);
-    if (createdEvent) {
-      navigate(`/events/${createdEvent.id}`);
-    }
-  };
-
-  const handleClose = () => {
-    setOpen(false);
-    setStep('create');
-    setCreatedEvent(null);
-    setSelectedSquad(null);
-    setSelectedLocationCoords(null);
-    form.reset();
   };
 
   return (
@@ -159,200 +133,128 @@ export function QuickRallyDialog({ trigger, preselectedSquad }: QuickRallyDialog
         )}
       </DialogTrigger>
       <DialogContent className="max-w-md">
-        {step === 'create' ? (
-          <>
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-3 font-montserrat text-xl">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-yellow-400 to-primary flex items-center justify-center">
-                  <Zap className="h-5 w-5 text-white" strokeWidth={2.5} fill="currentColor" />
-                </div>
-                <span className="font-bold">Quick R@lly</span>
-              </DialogTitle>
-            </DialogHeader>
-            
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="title"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>What's the move?</FormLabel>
-                      <FormControl>
-                        <Input 
-                          placeholder="e.g. Drinks at Main St, Game Night..." 
-                          {...field} 
-                          className="text-lg"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="location_name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Where at?</FormLabel>
-                      <FormControl>
-                        <LocationSearch
-                          value={field.value || ''}
-                          onChange={field.onChange}
-                          onLocationSelect={(loc) => {
-                            field.onChange(loc.name);
-                            setSelectedLocationCoords({ lat: loc.lat, lng: loc.lng });
-                          }}
-                          placeholder="Search restaurant, bar, or address..."
-                          allowCustomName={true}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="is_barhop"
-                  render={({ field }) => (
-                    <FormItem className="flex items-center justify-between rounded-lg border p-4">
-                      <div className="flex items-center gap-3">
-                        <Beer className="h-5 w-5 text-secondary" />
-                        <div>
-                          <FormLabel className="text-base">Bar Hop Mode</FormLabel>
-                          <p className="text-sm text-muted-foreground">
-                            Multiple stops tonight
-                          </p>
-                        </div>
-                      </div>
-                      <FormControl>
-                        <Switch checked={field.value} onCheckedChange={field.onChange} />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-
-                {/* Squad Selection */}
-                {squads && squads.length > 0 && (
-                  <div className="space-y-2">
-                    <FormLabel>Invite a Squad (optional)</FormLabel>
-                    <ScrollArea className="h-24">
-                      <div className="flex gap-2 pb-2">
-                        {squads.map((squad) => (
-                          <button
-                            key={squad.id}
-                            type="button"
-                            onClick={() => setSelectedSquad(selectedSquad?.id === squad.id ? null : squad)}
-                            className={`flex items-center gap-2 px-3 py-2 rounded-full border transition-colors ${
-                              selectedSquad?.id === squad.id 
-                                ? 'bg-primary text-primary-foreground border-primary' 
-                                : 'bg-muted hover:bg-muted/80'
-                            }`}
-                          >
-                            <Users className="h-3 w-3" />
-                            <span className="text-sm font-medium">{squad.name}</span>
-                            {selectedSquad?.id === squad.id && <Check className="h-3 w-3" />}
-                          </button>
-                        ))}
-                      </div>
-                    </ScrollArea>
-                  </div>
-                )}
-
-                <Button 
-                  type="submit" 
-                  className="w-full bg-secondary text-secondary-foreground hover:bg-secondary/90"
-                  disabled={createEvent.isPending}
-                >
-                  {createEvent.isPending ? 'Starting...' : (
-                    <>
-                      <Zap className="h-4 w-4 mr-2" />
-                      Start Rally Now
-                    </>
-                  )}
-                </Button>
-              </form>
-            </Form>
-          </>
-        ) : (
-          <>
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2 font-montserrat text-center justify-center text-xl">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center animate-bounce">
-                  <PartyPopper className="h-5 w-5 text-white" />
-                </div>
-                <span className="bg-gradient-to-r from-green-500 to-primary bg-clip-text text-transparent font-bold">
-                  Rally Started!
-                </span>
-              </DialogTitle>
-            </DialogHeader>
-
-            <div className="space-y-6 py-4">
-              {/* Invite Code Display */}
-              <div className="text-center space-y-2">
-                <p className="text-sm text-muted-foreground">Share this code with your squad</p>
-                <div className="bg-gradient-to-br from-primary/10 via-orange-100 to-yellow-50 rounded-xl p-4 border-2 border-primary/20 shadow-lg shadow-primary/10">
-                  <p className="text-3xl font-bold tracking-widest font-montserrat bg-gradient-to-r from-primary to-orange-500 bg-clip-text text-transparent animate-pulse">
-                    {createdEvent?.invite_code}
-                  </p>
-                </div>
-              </div>
-
-              {/* Share Options */}
-              <div className="grid grid-cols-2 gap-3">
-                <Button 
-                  variant="outline" 
-                  className="flex items-center gap-2"
-                  onClick={handleCopyLink}
-                >
-                  <Copy className="h-4 w-4" />
-                  Copy Link
-                </Button>
-                <Button 
-                  className="flex items-center gap-2 bg-primary"
-                  onClick={handleShare}
-                >
-                  <Share2 className="h-4 w-4" />
-                  Share
-                </Button>
-              </div>
-
-              {/* Selected Squad Preview */}
-              {selectedSquad && (
-                <div className="bg-muted/50 rounded-lg p-3 space-y-2">
-                  <p className="text-sm font-medium flex items-center gap-2">
-                    <Users className="h-4 w-4" />
-                    Inviting {selectedSquad.name}
-                  </p>
-                  <div className="flex -space-x-2">
-                    {selectedSquad.members?.slice(0, 5).map((member) => (
-                      <Avatar key={member.id} className="h-8 w-8 border-2 border-background">
-                        <AvatarImage src={member.profile?.avatar_url || undefined} />
-                        <AvatarFallback className="text-xs">
-                          {member.profile?.display_name?.charAt(0)?.toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                    ))}
-                    {selectedSquad.members && selectedSquad.members.length > 5 && (
-                      <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-xs border-2 border-background">
-                        +{selectedSquad.members.length - 5}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              <Button 
-                className="w-full gradient-primary"
-                onClick={handleGoToRally}
-              >
-                Go to Rally
-              </Button>
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-3 font-montserrat text-xl">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-yellow-400 to-primary flex items-center justify-center">
+              <Zap className="h-5 w-5 text-white" strokeWidth={2.5} fill="currentColor" />
             </div>
-          </>
-        )}
+            <span className="font-bold">Quick R@lly</span>
+          </DialogTitle>
+        </DialogHeader>
+        
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="title"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>What's the move?</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="e.g. Drinks at Main St, Game Night..." 
+                      {...field} 
+                      className="text-lg"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="location_name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Where at?</FormLabel>
+                  <FormControl>
+                    <LocationSearch
+                      value={field.value || ''}
+                      onChange={field.onChange}
+                      onLocationSelect={(loc) => {
+                        field.onChange(loc.name);
+                        setSelectedLocationCoords({ lat: loc.lat, lng: loc.lng });
+                      }}
+                      placeholder="Search restaurant, bar, or address..."
+                      allowCustomName={true}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="is_barhop"
+              render={({ field }) => (
+                <FormItem className="flex items-center justify-between rounded-lg border p-4">
+                  <div className="flex items-center gap-3">
+                    <Beer className="h-5 w-5 text-secondary" />
+                    <div>
+                      <FormLabel className="text-base">Bar Hop Mode</FormLabel>
+                      <p className="text-sm text-muted-foreground">
+                        Multiple stops tonight
+                      </p>
+                    </div>
+                  </div>
+                  <FormControl>
+                    <Switch checked={field.value} onCheckedChange={field.onChange} />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
+            {/* Squad Selection - Multi-select */}
+            {squads && squads.length > 0 && (
+              <div className="space-y-2">
+                <FormLabel>Invite Squads (optional)</FormLabel>
+                <ScrollArea className="h-24">
+                  <div className="flex flex-wrap gap-2 pb-2">
+                    {squads.map((squad) => {
+                      const isSelected = selectedSquads.some(s => s.id === squad.id);
+                      return (
+                        <button
+                          key={squad.id}
+                          type="button"
+                          onClick={() => toggleSquadSelection(squad)}
+                          className={`flex items-center gap-2 px-3 py-2 rounded-full border transition-colors ${
+                            isSelected
+                              ? 'bg-primary text-primary-foreground border-primary' 
+                              : 'bg-muted hover:bg-muted/80'
+                          }`}
+                        >
+                          <Users className="h-3 w-3" />
+                          <span className="text-sm font-medium">{squad.name}</span>
+                          {isSelected && <Check className="h-3 w-3" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </ScrollArea>
+                {selectedSquads.length > 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    {selectedSquads.length} squad{selectedSquads.length > 1 ? 's' : ''} selected
+                  </p>
+                )}
+              </div>
+            )}
+
+            <Button 
+              type="submit" 
+              className="w-full bg-secondary text-secondary-foreground hover:bg-secondary/90"
+              disabled={createEvent.isPending}
+            >
+              {createEvent.isPending ? 'Starting...' : (
+                <>
+                  <Zap className="h-4 w-4 mr-2" />
+                  Start Rally Now
+                </>
+              )}
+            </Button>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );
