@@ -84,3 +84,37 @@ export async function sendRallyStartedMessage(chatId: string, eventTitle: string
 export async function sendRallyEndedMessage(chatId: string, eventTitle: string) {
   await sendSystemMessage(chatId, `✨ Rally ended: ${eventTitle}`);
 }
+
+// DD System Messages
+export async function sendDDRequestMessage(chatId: string, requestedName: string, requesterName: string) {
+  await sendSystemMessage(chatId, `🚗 ${requesterName} requested ${requestedName} to be DD`);
+}
+
+export async function sendDDAcceptedMessage(chatId: string, ddName: string) {
+  await sendSystemMessage(chatId, `🚗 ${ddName} is now the DD for this rally!`);
+}
+
+export async function sendDDVolunteeredMessage(chatId: string, ddName: string) {
+  await sendSystemMessage(chatId, `🚗 ${ddName} volunteered as DD!`);
+}
+
+export async function sendDDRevokedMessage(chatId: string, ddName: string) {
+  await sendSystemMessage(chatId, `❌ ${ddName} is no longer DD`);
+}
+
+export async function sendDDDeclinedMessage(chatId: string, requestedName: string) {
+  await sendSystemMessage(chatId, `${requestedName} declined the DD request`);
+}
+
+// Ride System Messages
+export async function sendRideOfferedMessage(chatId: string, driverName: string, seats: number) {
+  await sendSystemMessage(chatId, `🚗 ${driverName} is offering a ride (${seats} seats)`);
+}
+
+export async function sendRideAcceptedMessage(chatId: string, passengerName: string, driverName: string) {
+  await sendSystemMessage(chatId, `✅ ${passengerName} is riding with ${driverName}`);
+}
+
+export async function sendRideDeclinedMessage(chatId: string, passengerName: string) {
+  await sendSystemMessage(chatId, `❌ ${passengerName}'s ride request was declined`);
+}

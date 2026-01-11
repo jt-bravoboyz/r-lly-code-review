@@ -246,6 +246,7 @@ export type Database = {
           event_id: string
           going_home_at: string | null
           id: string
+          is_dd: boolean | null
           joined_at: string | null
           last_location_update: string | null
           profile_id: string
@@ -265,6 +266,7 @@ export type Database = {
           event_id: string
           going_home_at?: string | null
           id?: string
+          is_dd?: boolean | null
           joined_at?: string | null
           last_location_update?: string | null
           profile_id: string
@@ -284,6 +286,7 @@ export type Database = {
           event_id?: string
           going_home_at?: string | null
           id?: string
+          is_dd?: boolean | null
           joined_at?: string | null
           last_location_update?: string | null
           profile_id?: string
@@ -410,6 +413,100 @@ export type Database = {
           {
             foreignKeyName: "event_cohosts_profile_id_fkey"
             columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles_with_connection"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_dd_requests: {
+        Row: {
+          created_at: string | null
+          event_id: string
+          id: string
+          requested_by_profile_id: string
+          requested_profile_id: string
+          responded_at: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string | null
+          event_id: string
+          id?: string
+          requested_by_profile_id: string
+          requested_profile_id: string
+          responded_at?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string | null
+          event_id?: string
+          id?: string
+          requested_by_profile_id?: string
+          requested_profile_id?: string
+          responded_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_dd_requests_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_dd_requests_requested_by_profile_id_fkey"
+            columns: ["requested_by_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_dd_requests_requested_by_profile_id_fkey"
+            columns: ["requested_by_profile_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_dd_requests_requested_by_profile_id_fkey"
+            columns: ["requested_by_profile_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_dd_requests_requested_by_profile_id_fkey"
+            columns: ["requested_by_profile_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles_with_connection"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_dd_requests_requested_profile_id_fkey"
+            columns: ["requested_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_dd_requests_requested_profile_id_fkey"
+            columns: ["requested_profile_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_dd_requests_requested_profile_id_fkey"
+            columns: ["requested_profile_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_dd_requests_requested_profile_id_fkey"
+            columns: ["requested_profile_id"]
             isOneToOne: false
             referencedRelation: "safe_profiles_with_connection"
             referencedColumns: ["id"]
@@ -2168,6 +2265,10 @@ export type Database = {
       }
       is_connected_via_squad: {
         Args: { target_profile_id: string }
+        Returns: boolean
+      }
+      is_event_host_or_cohost: {
+        Args: { p_event_id: string; p_user_id: string }
         Returns: boolean
       }
       is_event_member: { Args: { p_event_id: string }; Returns: boolean }

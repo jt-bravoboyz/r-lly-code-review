@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Navigate, Link } from 'react-router-dom';
-import { ArrowLeft, Calendar, MapPin, Users, Beer, Check, X, MessageCircle, Navigation, Home, Plus, Zap, Crown, UserPlus } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Users, Beer, Check, X, MessageCircle, Navigation, Home, Plus, Zap, Crown, UserPlus, Car } from 'lucide-react';
 import { format } from 'date-fns';
 import { Header } from '@/components/layout/Header';
 import { BottomNav } from '@/components/layout/BottomNav';
@@ -17,8 +17,11 @@ import { useEvent, useJoinEvent, useLeaveEvent, useUpdateEvent } from '@/hooks/u
 import { useRides } from '@/hooks/useRides';
 import { useAuth } from '@/hooks/useAuth';
 import { useCohosts, useIsCohost } from '@/hooks/useCohosts';
+import { useMyDDRequest, useEventDDs } from '@/hooks/useDDManagement';
 import { RideCard } from '@/components/rides/RideCard';
 import { CreateRideDialog } from '@/components/rides/CreateRideDialog';
+import { DDRequestBanner } from '@/components/rides/DDRequestBanner';
+import { DDVolunteerButton } from '@/components/rides/DDVolunteerButton';
 import { EventChat } from '@/components/chat/EventChat';
 import { LiveTracking } from '@/components/tracking/LiveTracking';
 import { LiveMemberTracker } from '@/components/tracking/LiveMemberTracker';
@@ -42,6 +45,8 @@ export default function EventDetail() {
   const { data: event, isLoading } = useEvent(id);
   const { data: rides } = useRides(id);
   const { updates } = useEventRealtime(id);
+  const { data: myDDRequest } = useMyDDRequest(id);
+  const { data: eventDDs } = useEventDDs(id);
   useBarHopStopsRealtime(id); // Real-time updates for bar hop stops
   const joinEvent = useJoinEvent();
   const leaveEvent = useLeaveEvent();
@@ -358,19 +363,27 @@ export default function EventDetail() {
                 </CardHeader>
                 <CardContent>
                   <div className="flex flex-wrap gap-3">
-                    {event.attendees.map((attendee) => (
-                      <div key={attendee.id} className="flex flex-col items-center gap-1">
-                        <Avatar className="h-12 w-12">
-                          <AvatarImage src={attendee.profile?.avatar_url || undefined} />
-                          <AvatarFallback>
-                            {attendee.profile?.display_name?.charAt(0)?.toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="text-xs text-muted-foreground truncate max-w-16">
-                          {attendee.profile?.display_name}
-                        </span>
-                      </div>
-                    ))}
+                    {event.attendees.map((attendee) => {
+                      const isDD = eventDDs?.some(dd => dd.profile_id === attendee.profile?.id);
+                      return (
+                        <div key={attendee.id} className="flex flex-col items-center gap-1 relative">
+                          <Avatar className="h-12 w-12">
+                            <AvatarImage src={attendee.profile?.avatar_url || undefined} />
+                            <AvatarFallback>
+                              {attendee.profile?.display_name?.charAt(0)?.toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          {isDD && (
+                            <div className="absolute -top-1 -right-1 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+                              <Car className="h-3 w-3 text-primary-foreground" />
+                            </div>
+                          )}
+                          <span className="text-xs text-muted-foreground truncate max-w-16">
+                            {attendee.profile?.display_name}
+                          </span>
+                        </div>
+                      );
+                    })}
                   </div>
                 </CardContent>
               </Card>
@@ -432,10 +445,56 @@ export default function EventDetail() {
             <LiveMemberTracker eventId={event.id} isLive={isLiveEvent} />
           </TabsContent>
 
-          <TabsContent value="rides" className="mt-4">
+          <TabsContent value="rides" className="mt-4 space-y-4">
+            {/* DD Request Banner - Show if user has a pending request */}
+            {myDDRequest && profile && (
+              <DDRequestBanner
+                request={myDDRequest}
+                eventId={event.id}
+                userName={profile.display_name || 'You'}
+              />
+            )}
+
+            {/* DD Section */}
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-lg">Rides (DD Mode)</CardTitle>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Car className="h-5 w-5 text-primary" />
+                  Designated Drivers
+                </CardTitle>
+                {isAttending && <DDVolunteerButton eventId={event.id} />}
+              </CardHeader>
+              <CardContent>
+                {eventDDs && eventDDs.length > 0 ? (
+                  <div className="flex flex-wrap gap-3">
+                    {eventDDs.map((dd) => (
+                      <div key={dd.id} className="flex items-center gap-2 bg-primary/10 rounded-full pl-1 pr-3 py-1">
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src={dd.profile?.avatar_url || undefined} />
+                          <AvatarFallback>
+                            {dd.profile?.display_name?.charAt(0)?.toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="text-sm font-medium">{dd.profile?.display_name}</span>
+                        <Badge variant="secondary" className="text-[10px] bg-primary/20 text-primary">
+                          <Car className="h-2.5 w-2.5 mr-0.5" />
+                          DD
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    No DDs yet. Volunteer to keep your crew safe!
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Rides */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-lg">Rides Offered</CardTitle>
                 <CreateRideDialog eventId={event.id} />
               </CardHeader>
               <CardContent>
