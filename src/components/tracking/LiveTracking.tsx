@@ -107,7 +107,7 @@ export function LiveTracking({ eventId, destination, isLive }: LiveTrackingProps
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Navigation className="h-5 w-5 text-primary" />
-            <h3 className="font-bold text-rally-dark font-montserrat">Live Tracking</h3>
+            <h3 className="font-bold text-foreground font-montserrat">Live Tracking</h3>
           </div>
           <div className="flex items-center gap-2">
             {isLive && (
@@ -135,12 +135,12 @@ export function LiveTracking({ eventId, destination, isLive }: LiveTrackingProps
         </div>
 
         {/* Current Destination */}
-        <div className="bg-white rounded-xl p-3 space-y-2">
+        <div className="bg-card rounded-xl p-3 space-y-2">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <MapPin className="h-4 w-4 text-primary" />
             <span>Current Rally Point</span>
           </div>
-          <p className="font-bold text-rally-dark">{destination.name}</p>
+          <p className="font-bold text-foreground">{destination.name}</p>
           {destination.address && (
             <p className="text-sm text-muted-foreground">{destination.address}</p>
           )}

@@ -170,7 +170,7 @@ export function EventChat({ eventId, eventTitle }: EventChatProps) {
       )}
 
       {/* Input area */}
-      <div className="p-4 border-t bg-white">
+      <div className="p-4 border-t bg-card">
         <div className="flex items-center gap-2">
           <input
             type="file"

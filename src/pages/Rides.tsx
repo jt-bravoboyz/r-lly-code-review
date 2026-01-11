@@ -156,7 +156,7 @@ export default function Rides() {
 
             {/* Available Rides for Riders */}
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-bold text-rally-dark font-montserrat">Available DDs</h3>
+              <h3 className="text-lg font-bold text-foreground font-montserrat">Available DDs</h3>
               <span className="text-sm text-muted-foreground">{rides?.length || 0} available</span>
             </div>
 
@@ -173,12 +173,12 @@ export default function Rides() {
                 ))}
               </div>
             ) : (
-              <Card className="bg-white shadow-sm rounded-2xl">
+              <Card className="bg-card shadow-sm rounded-2xl">
                 <CardContent className="p-8 text-center">
-                  <div className="w-16 h-16 rounded-full bg-blue-50 mx-auto mb-4 flex items-center justify-center">
-                    <Car className="h-8 w-8 text-blue-500" />
+                  <div className="w-16 h-16 rounded-full bg-primary/10 mx-auto mb-4 flex items-center justify-center">
+                    <Car className="h-8 w-8 text-primary" />
                   </div>
-                  <h3 className="text-lg font-bold mb-2 text-rally-dark font-montserrat">No DDs Available Yet</h3>
+                  <h3 className="text-lg font-bold mb-2 text-foreground font-montserrat">No DDs Available Yet</h3>
                   <p className="text-muted-foreground font-montserrat">Check back soon or request a ride and a DD will respond!</p>
                 </CardContent>
               </Card>
@@ -202,12 +202,12 @@ export default function Rides() {
             </Card>
 
             {!ddAccepted ? (
-              <Card className="bg-white shadow-sm rounded-2xl border-2 border-dashed border-primary/30">
+              <Card className="bg-card shadow-sm rounded-2xl border-2 border-dashed border-primary/30">
                 <CardContent className="p-6 text-center">
                   <div className="w-16 h-16 rounded-full bg-primary/10 mx-auto mb-4 flex items-center justify-center">
                     <Shield className="h-8 w-8 text-primary" />
                   </div>
-                  <h3 className="text-lg font-bold mb-2 text-rally-dark font-montserrat">Become a Designated Driver</h3>
+                  <h3 className="text-lg font-bold mb-2 text-foreground font-montserrat">Become a Designated Driver</h3>
                   <p className="text-muted-foreground mb-2 text-sm font-montserrat">
                     Take the pledge to stay sober and help others get home safely.
                   </p>
@@ -251,7 +251,7 @@ export default function Rides() {
                           <BellOff className="h-5 w-5 text-muted-foreground" />
                         )}
                         <div>
-                          <h3 className="font-bold text-rally-dark font-montserrat">Ride Alerts</h3>
+                          <h3 className="font-bold text-foreground font-montserrat">Ride Alerts</h3>
                           <p className="text-sm text-muted-foreground font-montserrat">
                             Get notified when someone needs a ride
                           </p>
@@ -266,10 +266,10 @@ export default function Rides() {
                   </Card>
                 )}
 
-                <Card className="bg-white shadow-sm rounded-2xl">
+                <Card className="bg-card shadow-sm rounded-2xl">
                   <CardContent className="p-4 flex items-center justify-between">
                     <div>
-                      <h3 className="font-bold text-rally-dark font-montserrat">Offer a Ride</h3>
+                      <h3 className="font-bold text-foreground font-montserrat">Offer a Ride</h3>
                       <p className="text-sm text-muted-foreground font-montserrat">Let others know you can drive</p>
                     </div>
                     <CreateRideDialog eventId={selectedEventId} />
@@ -280,7 +280,7 @@ export default function Rides() {
                 {myRides.length > 0 && (
                   <>
                     <div className="flex items-center justify-between">
-                      <h3 className="text-lg font-bold text-rally-dark font-montserrat">Ride Requests</h3>
+                      <h3 className="text-lg font-bold text-foreground font-montserrat">Ride Requests</h3>
                     </div>
                     <RideRequestManager 
                       rides={myRides} 
@@ -291,7 +291,7 @@ export default function Rides() {
 
                 {/* My Offered Rides */}
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-bold text-rally-dark font-montserrat">My Ride Offers</h3>
+                  <h3 className="text-lg font-bold text-foreground font-montserrat">My Ride Offers</h3>
                 </div>
 
                 {isLoading ? (
