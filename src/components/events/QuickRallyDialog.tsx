@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useCreateEvent, useJoinEvent } from '@/hooks/useEvents';
 import { useCreateEventInvites } from '@/hooks/useEventInvites';
 import { useAuth } from '@/hooks/useAuth';
-import { useSquads, Squad } from '@/hooks/useSquads';
+import { useAllMySquads, Squad } from '@/hooks/useSquads';
 import { useLocation } from '@/hooks/useLocation';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
@@ -98,7 +98,7 @@ export function QuickRallyDialog({ trigger, preselectedSquad }: QuickRallyDialog
   const [selectedTime, setSelectedTime] = useState<string>('now');
   
   const { profile } = useAuth();
-  const { data: squads } = useSquads();
+  const { data: squads } = useAllMySquads();
   const { location, getCurrentLocation } = useLocation();
   const createEvent = useCreateEvent();
   const joinEvent = useJoinEvent();
