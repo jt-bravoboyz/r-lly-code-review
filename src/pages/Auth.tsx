@@ -2,12 +2,14 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/hooks/useAuth';
+import { useBiometricAuth } from '@/hooks/useBiometricAuth';
 import { useJoinEvent } from '@/hooks/useEvents';
 import { supabase } from '@/integrations/supabase/client';
 import { normalizePhoneNumber } from '@/hooks/usePhoneContacts';
 import { toast } from 'sonner';
-import { Mail, Lock, User, ChevronRight, ArrowLeft, Phone } from 'lucide-react';
+import { Mail, Lock, User, ChevronRight, ArrowLeft, Phone, Fingerprint } from 'lucide-react';
 import { z } from 'zod';
 import { PolicyAcceptanceDialog } from '@/components/legal/PolicyAcceptanceDialog';
 import { useTutorial } from '@/hooks/useTutorial';
@@ -59,7 +61,17 @@ export default function Auth() {
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const [showPolicyDialog, setShowPolicyDialog] = useState(false);
   const [pendingAuthAction, setPendingAuthAction] = useState<'signup' | 'google' | null>(null);
+  const [rememberMe, setRememberMe] = useState(() => {
+    return localStorage.getItem('rally-remember-me') === 'true';
+  });
   const { signIn, signUp, user, profile } = useAuth();
+  const { 
+    isSupported: biometricSupported, 
+    isRegistered: biometricRegistered, 
+    isLoading: biometricLoading,
+    authenticateWithBiometric,
+    registerBiometric,
+  } = useBiometricAuth();
   const { startTutorial } = useTutorial();
   const joinEvent = useJoinEvent();
   const navigate = useNavigate();
@@ -67,6 +79,16 @@ export default function Auth() {
   
   const isSignUp = authMode === 'signup';
   const isForgotPassword = authMode === 'forgot-password';
+
+  // Pre-fill email if remembered
+  useEffect(() => {
+    if (rememberMe) {
+      const savedEmail = localStorage.getItem('rally-remembered-email');
+      if (savedEmail) {
+        setEmail(savedEmail);
+      }
+    }
+  }, [rememberMe]);
 
   useEffect(() => {
     const timer = setTimeout(() => setShowContent(true), 100);
@@ -195,15 +217,44 @@ export default function Auth() {
     try {
       const { error } = await signIn(email.trim(), password);
       if (error) throw error;
+      
+      // Handle remember me
+      if (rememberMe) {
+        localStorage.setItem('rally-remember-me', 'true');
+        localStorage.setItem('rally-remembered-email', email.trim());
+      } else {
+        localStorage.removeItem('rally-remember-me');
+        localStorage.removeItem('rally-remembered-email');
+      }
+      
       // Mark that user has an account for future visits
       localStorage.setItem('rally-has-account', 'true');
       toast.success("You're in! Let's rally.");
+      
+      // Offer biometric setup if supported and not already registered
+      if (biometricSupported && !biometricRegistered && profile) {
+        setTimeout(() => {
+          if (confirm('Would you like to enable Face ID / Fingerprint login for faster access next time?')) {
+            registerBiometric(profile.id, email.trim());
+          }
+        }, 1000);
+      }
     } catch (error: any) {
       const errorMessage = getAuthErrorMessage(error);
       toast.error(errorMessage);
       setErrors({ form: errorMessage });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleBiometricLogin = async () => {
+    const result = await authenticateWithBiometric();
+    if (result && result.success) {
+      // Auto-fill email and let user know they still need password
+      // In a full implementation, you'd use passkeys to skip password entirely
+      setEmail(result.email);
+      toast.success('Identity verified! Enter your password to continue.');
     }
   };
 
@@ -651,13 +702,28 @@ export default function Auth() {
                   </div>
                 )}
 
-                {/* Forgot password - only for login */}
+                {/* Remember me and Forgot password - only for login */}
                 {!isSignUp && (
-                  <div className="text-right">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="remember-me"
+                        checked={rememberMe}
+                        onCheckedChange={(checked) => setRememberMe(checked === true)}
+                        className="border-[rgba(255,106,0,0.4)] data-[state=checked]:bg-[#FF6A00] data-[state=checked]:border-[#FF6A00]"
+                      />
+                      <label 
+                        htmlFor="remember-me" 
+                        className="text-sm font-montserrat cursor-pointer"
+                        style={{ color: "rgba(255, 255, 255, 0.7)" }}
+                      >
+                        Remember me
+                      </label>
+                    </div>
                     <button 
                       type="button" 
                       onClick={() => setAuthMode('forgot-password')}
-                      className="text-base font-montserrat hover:underline"
+                      className="text-sm font-montserrat hover:underline"
                       style={{ color: "#FF6A00" }}
                     >
                       Forgot Password?
@@ -729,6 +795,25 @@ export default function Auth() {
                 </svg>
                 Continue with Google
               </Button>
+
+              {/* Biometric Login - only for returning users on signin */}
+              {!isSignUp && biometricSupported && biometricRegistered && (
+                <Button 
+                  type="button"
+                  variant="outline"
+                  className="w-full h-14 rounded-xl font-medium text-base font-montserrat flex items-center justify-center gap-3 transition-all duration-300 hover:scale-[1.02] mt-3"
+                  style={{
+                    backgroundColor: "rgba(255, 106, 0, 0.1)",
+                    borderColor: "rgba(255, 106, 0, 0.3)",
+                    color: "rgba(255, 255, 255, 0.90)",
+                  }}
+                  onClick={handleBiometricLogin}
+                  disabled={isLoading || biometricLoading}
+                >
+                  <Fingerprint className="h-5 w-5" style={{ color: "#FF6A00" }} />
+                  {biometricLoading ? 'Verifying...' : 'Use Face ID / Fingerprint'}
+                </Button>
+              )}
             </>
           )}
         </div>
