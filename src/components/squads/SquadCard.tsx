@@ -49,7 +49,7 @@ export function SquadCard({ squad, onQuickRally }: SquadCardProps) {
   };
 
   return (
-    <Card className="bg-white shadow-sm rounded-2xl overflow-hidden">
+    <Card className="bg-card shadow-sm rounded-2xl overflow-hidden">
       <CardContent className="p-4">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
@@ -63,7 +63,7 @@ export function SquadCard({ squad, onQuickRally }: SquadCardProps) {
                     </div>
                   </button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-3" align="start">
+                <PopoverContent className="w-auto p-3 bg-popover" align="start">
                   <p className="text-xs text-muted-foreground mb-2 font-medium">Change Symbol</p>
                   <SquadSymbolPicker 
                     value={(squad.symbol || 'shield') as SquadSymbol} 
@@ -78,7 +78,7 @@ export function SquadCard({ squad, onQuickRally }: SquadCardProps) {
               </div>
             )}
             <div>
-              <h3 className="font-bold text-foreground font-montserrat flex items-center gap-2">
+              <h3 className="font-bold text-card-foreground font-montserrat flex items-center gap-2">
                 {squad.name}
                 {!isOwned && (
                   <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground font-normal">
@@ -86,7 +86,7 @@ export function SquadCard({ squad, onQuickRally }: SquadCardProps) {
                   </span>
                 )}
               </h3>
-              <p className="text-xs text-muted-foreground">{members.length} members</p>
+              <p className="text-xs text-muted-foreground">{members.length + 1} members</p>
             </div>
           </div>
           {isOwned && (
@@ -106,7 +106,7 @@ export function SquadCard({ squad, onQuickRally }: SquadCardProps) {
         <div className="flex items-center gap-2 mb-4">
           <div className="flex -space-x-2">
             {members.slice(0, 5).map((member) => (
-              <Avatar key={member.id} className="h-8 w-8 border-2 border-white">
+              <Avatar key={member.id} className="h-8 w-8 border-2 border-card">
                 <AvatarImage src={member.profile?.avatar_url || undefined} />
                 <AvatarFallback className="bg-primary/20 text-primary text-xs font-bold">
                   {member.profile?.display_name?.charAt(0)?.toUpperCase() || '?'}
@@ -114,7 +114,7 @@ export function SquadCard({ squad, onQuickRally }: SquadCardProps) {
               </Avatar>
             ))}
             {members.length > 5 && (
-              <div className="h-8 w-8 rounded-full bg-muted border-2 border-white flex items-center justify-center">
+              <div className="h-8 w-8 rounded-full bg-muted border-2 border-card flex items-center justify-center">
                 <span className="text-xs font-medium text-muted-foreground">+{members.length - 5}</span>
               </div>
             )}

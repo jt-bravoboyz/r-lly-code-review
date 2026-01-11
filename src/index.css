@@ -119,14 +119,14 @@
     font-family: 'Montserrat', 'Inter', system-ui, -apple-system, sans-serif;
   }
 
-  /* Custom R@lly colors for direct use */
-  .bg-rally-cream { background-color: #FFF3E9; }
-  .bg-rally-light { background-color: #FFEFEB; }
-  .bg-rally-light-accent { background-color: #FFD0C2; }
-  .text-rally-dark { color: #222222; }
-  .text-rally-gray { color: #444444; }
-  .text-rally-light-gray { color: #666666; }
-  .border-rally-gray { border-color: #737373; }
+  /* Custom R@lly colors for direct use - with dark mode support */
+  .bg-rally-cream { @apply bg-secondary; }
+  .bg-rally-light { @apply bg-secondary; }
+  .bg-rally-light-accent { @apply bg-primary/20; }
+  .text-rally-dark { @apply text-foreground; }
+  .text-rally-gray { @apply text-muted-foreground; }
+  .text-rally-light-gray { @apply text-muted-foreground; }
+  .border-rally-gray { @apply border-border; }
 }
 
 @layer utilities {

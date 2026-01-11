@@ -53,7 +53,7 @@ export function EventCard({ event }: EventCardProps) {
             <div className="flex-1 min-w-0 space-y-1.5">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <h3 className="font-bold text-base text-rally-dark truncate font-montserrat group-hover:text-primary transition-colors">
+                  <h3 className="font-bold text-base text-card-foreground truncate font-montserrat group-hover:text-primary transition-colors">
                     {event.title}
                   </h3>
                   <div className="flex items-center gap-2 mt-1">
