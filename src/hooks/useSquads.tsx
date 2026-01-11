@@ -141,12 +141,27 @@ export function useCreateSquad() {
         if (membersError) throw membersError;
       }
 
+      // Create squad chat automatically
+      const { error: chatError } = await supabase
+        .from('chats')
+        .insert({ 
+          squad_id: squad.id, 
+          is_group: true,
+          name: `${name} Chat`
+        });
+
+      if (chatError) {
+        console.error('Failed to create squad chat:', chatError);
+        // Don't throw - squad was created, chat is optional
+      }
+
       return squad;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['owned-squads'] });
       queryClient.invalidateQueries({ queryKey: ['member-squads'] });
       queryClient.invalidateQueries({ queryKey: ['squads'] });
+      queryClient.invalidateQueries({ queryKey: ['all-squad-chats'] });
     },
   });
 }
