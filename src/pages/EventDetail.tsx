@@ -364,7 +364,8 @@ export default function EventDetail() {
                 <CardContent>
                   <div className="flex flex-wrap gap-3">
                     {event.attendees.map((attendee) => {
-                      const isDD = eventDDs?.some(dd => dd.profile_id === attendee.profile?.id);
+                      // Use is_dd from attendee data directly (from safe_event_attendees view)
+                      const isDD = attendee.is_dd || eventDDs?.some(dd => dd.profile_id === attendee.profile?.id);
                       return (
                         <div key={attendee.id} className="flex flex-col items-center gap-1 relative">
                           <Avatar className="h-12 w-12">

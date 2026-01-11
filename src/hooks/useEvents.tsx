@@ -43,6 +43,7 @@ export function useEvent(eventId: string | undefined) {
             current_lng,
             going_home_at,
             arrived_home,
+            is_dd,
             profile:safe_profiles(id, display_name, avatar_url)
           ),
           stops:barhop_stops(*)

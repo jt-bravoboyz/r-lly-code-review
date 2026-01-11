@@ -2017,6 +2017,7 @@ export type Database = {
           event_id: string | null
           going_home_at: string | null
           id: string | null
+          is_dd: boolean | null
           joined_at: string | null
           last_location_update: string | null
           profile_id: string | null
@@ -2033,6 +2034,7 @@ export type Database = {
           event_id?: string | null
           going_home_at?: string | null
           id?: string | null
+          is_dd?: boolean | null
           joined_at?: string | null
           last_location_update?: never
           profile_id?: string | null
@@ -2049,6 +2051,7 @@ export type Database = {
           event_id?: string | null
           going_home_at?: string | null
           id?: string | null
+          is_dd?: boolean | null
           joined_at?: string | null
           last_location_update?: never
           profile_id?: string | null
