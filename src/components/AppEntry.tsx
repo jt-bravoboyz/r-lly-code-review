@@ -12,7 +12,11 @@ export function AppEntry() {
   
   // Check localStorage on mount to determine user state
   useEffect(() => {
-    const hasAccount = localStorage.getItem('rally-has-account') === 'true';
+    // URL param bypass for testing: ?returning=true
+    const urlParams = new URLSearchParams(window.location.search);
+    const returningParam = urlParams.get('returning') === 'true';
+    
+    const hasAccount = localStorage.getItem('rally-has-account') === 'true' || returningParam;
     
     if (hasAccount) {
       // Returning users with accounts get a quick flag splash
