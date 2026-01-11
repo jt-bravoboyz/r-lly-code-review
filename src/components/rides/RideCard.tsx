@@ -1,16 +1,16 @@
-import { Car, MapPin, Clock, Users } from 'lucide-react';
+import { Car, MapPin, Clock, Users, Navigation } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { format } from 'date-fns';
 import { useAuth } from '@/hooks/useAuth';
-import { useRequestRide } from '@/hooks/useRides';
-import { toast } from 'sonner';
+import { RequestRideDialog } from './RequestRideDialog';
 
 interface RideCardProps {
   ride: {
     id: string;
+    event_id?: string | null;
     pickup_location: string | null;
     destination: string | null;
     available_seats: number | null;
@@ -35,29 +35,12 @@ interface RideCardProps {
 
 export function RideCard({ ride }: RideCardProps) {
   const { profile } = useAuth();
-  const requestRide = useRequestRide();
 
   const confirmedPassengers = ride.passengers?.filter(p => p.status === 'confirmed') || [];
+  const pendingPassengers = ride.passengers?.filter(p => p.status === 'pending') || [];
   const seatsLeft = (ride.available_seats || 4) - confirmedPassengers.length;
   const isDriver = profile?.id === ride.driver?.id;
   const hasRequested = ride.passengers?.some(p => p.passenger?.id === profile?.id);
-
-  const handleRequestRide = async () => {
-    if (!profile) {
-      toast.error('Please sign in to request a ride');
-      return;
-    }
-
-    try {
-      await requestRide.mutateAsync({
-        rideId: ride.id,
-        passengerId: profile.id
-      });
-      toast.success('Ride requested! Waiting for driver approval.');
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to request ride');
-    }
-  };
 
   return (
     <Card className="overflow-hidden">
@@ -127,21 +110,39 @@ export function RideCard({ ride }: RideCardProps) {
               </div>
             )}
 
+            {/* Show pending requests for driver */}
+            {isDriver && pendingPassengers.length > 0 && (
+              <div className="mt-3 p-2 bg-yellow-50 rounded-lg">
+                <p className="text-xs text-yellow-700 font-medium">
+                  {pendingPassengers.length} pending request{pendingPassengers.length > 1 ? 's' : ''}
+                </p>
+              </div>
+            )}
+
+            {/* Request Ride Button - For non-drivers who haven't requested */}
             {!isDriver && !hasRequested && seatsLeft > 0 && (
-              <Button 
-                className="w-full mt-3"
-                variant="secondary"
-                size="sm"
-                onClick={handleRequestRide}
-                disabled={requestRide.isPending}
-              >
-                Request Ride
-              </Button>
+              <div className="mt-3">
+                <RequestRideDialog
+                  eventId={ride.event_id || undefined}
+                  rideId={ride.id}
+                  driverName={ride.driver?.display_name || undefined}
+                  trigger={
+                    <Button 
+                      className="w-full"
+                      variant="secondary"
+                      size="sm"
+                    >
+                      <Navigation className="h-4 w-4 mr-2" />
+                      Request Ride from {ride.driver?.display_name?.split(' ')[0] || 'Driver'}
+                    </Button>
+                  }
+                />
+              </div>
             )}
 
             {hasRequested && (
               <Badge className="mt-3" variant="outline">
-                Ride Requested
+                Ride Requested - Waiting for approval
               </Badge>
             )}
           </div>
