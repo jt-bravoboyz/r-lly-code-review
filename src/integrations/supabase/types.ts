@@ -624,6 +624,7 @@ export type Database = {
           location_name: string | null
           max_attendees: number | null
           start_time: string
+          status: string | null
           title: string
           updated_at: string | null
         }
@@ -643,6 +644,7 @@ export type Database = {
           location_name?: string | null
           max_attendees?: number | null
           start_time: string
+          status?: string | null
           title: string
           updated_at?: string | null
         }
@@ -662,6 +664,7 @@ export type Database = {
           location_name?: string | null
           max_attendees?: number | null
           start_time?: string
+          status?: string | null
           title?: string
           updated_at?: string | null
         }
