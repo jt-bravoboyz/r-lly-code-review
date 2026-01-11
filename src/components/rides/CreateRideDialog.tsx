@@ -53,7 +53,8 @@ export function CreateRideDialog({ eventId, trigger }: CreateRideDialogProps) {
         pickup_location: data.pickup_location,
         destination: data.destination,
         available_seats: parseInt(data.available_seats),
-        departure_time: new Date(data.departure_time).toISOString()
+        departure_time: new Date(data.departure_time).toISOString(),
+        driverName: profile.display_name || 'Someone',
       });
       
       toast.success('Ride created! Others can now request to join.');

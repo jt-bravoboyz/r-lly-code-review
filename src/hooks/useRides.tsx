@@ -1,9 +1,21 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Tables, TablesInsert } from '@/integrations/supabase/types';
+import { sendRideOfferedMessage, sendRideAcceptedMessage, sendRideDeclinedMessage } from './useSystemMessages';
 
 type Ride = Tables<'rides'>;
 type RideInsert = TablesInsert<'rides'>;
+
+// Helper to get event's chat ID
+async function getEventChatId(eventId: string): Promise<string | null> {
+  const { data } = await supabase
+    .from('chats')
+    .select('id')
+    .or(`event_id.eq.${eventId},linked_event_id.eq.${eventId}`)
+    .maybeSingle();
+  
+  return data?.id || null;
+}
 
 export function useRides(eventId?: string) {
   return useQuery({
@@ -38,14 +50,25 @@ export function useCreateRide() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (ride: RideInsert) => {
+    mutationFn: async (ride: RideInsert & { driverName?: string }) => {
+      const { driverName, ...rideData } = ride;
+      
       const { data, error } = await supabase
         .from('rides')
-        .insert(ride)
+        .insert(rideData)
         .select()
         .single();
       
       if (error) throw error;
+
+      // Send system message if this ride is for an event
+      if (rideData.event_id && driverName) {
+        const chatId = await getEventChatId(rideData.event_id);
+        if (chatId) {
+          await sendRideOfferedMessage(chatId, driverName, rideData.available_seats || 4);
+        }
+      }
+      
       return data;
     },
     onSuccess: () => {
@@ -78,7 +101,19 @@ export function useUpdateRideRequest() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ requestId, status }: { requestId: string; status: string }) => {
+    mutationFn: async ({ 
+      requestId, 
+      status,
+      eventId,
+      passengerName,
+      driverName,
+    }: { 
+      requestId: string; 
+      status: string;
+      eventId?: string;
+      passengerName?: string;
+      driverName?: string;
+    }) => {
       const { data, error } = await supabase
         .from('ride_passengers')
         .update({ status })
@@ -87,6 +122,19 @@ export function useUpdateRideRequest() {
         .single();
       
       if (error) throw error;
+
+      // Send system message for accepted/declined rides
+      if (eventId && passengerName) {
+        const chatId = await getEventChatId(eventId);
+        if (chatId) {
+          if (status === 'accepted' && driverName) {
+            await sendRideAcceptedMessage(chatId, passengerName, driverName);
+          } else if (status === 'declined') {
+            await sendRideDeclinedMessage(chatId, passengerName);
+          }
+        }
+      }
+      
       return data;
     },
     onSuccess: () => {
