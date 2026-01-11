@@ -1,8 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Zap, MapPin, Users, ChevronRight } from 'lucide-react';
-import { PolicyAcceptanceDialog } from '@/components/legal/PolicyAcceptanceDialog';
-import { useTutorial } from '@/hooks/useTutorial';
 
 interface OnboardingSlide {
   icon: React.ReactNode;
@@ -34,31 +32,21 @@ interface OnboardingProps {
 
 export function Onboarding({ onComplete }: OnboardingProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [showPolicyDialog, setShowPolicyDialog] = useState(false);
-  const { startTutorial } = useTutorial();
 
   const handleNext = () => {
     if (currentSlide < slides.length - 1) {
       setCurrentSlide(currentSlide + 1);
     } else {
-      // Show policy acceptance dialog on last slide
-      setShowPolicyDialog(true);
+      // Go to auth - policy acceptance happens during signup
+      localStorage.setItem('rally-onboarding-complete', 'true');
+      onComplete?.();
     }
   };
 
-  const handlePolicyAccepted = () => {
-    // Mark onboarding as complete and call callback
+  const handleSkip = () => {
+    // Skip to auth - policy acceptance happens during signup
     localStorage.setItem('rally-onboarding-complete', 'true');
     onComplete?.();
-    // Start the interactive tutorial after a short delay
-    setTimeout(() => {
-      startTutorial();
-    }, 500);
-  };
-
-  const handleSkip = () => {
-    // Still need to accept policies even when skipping
-    setShowPolicyDialog(true);
   };
 
   const slide = slides[currentSlide];
@@ -221,12 +209,6 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           <ChevronRight className="h-5 w-5 ml-1 group-hover:translate-x-1 transition-transform" />
         </Button>
       </div>
-
-      <PolicyAcceptanceDialog
-        open={showPolicyDialog}
-        onOpenChange={setShowPolicyDialog}
-        onAccept={handlePolicyAccepted}
-      />
     </div>
   );
 }

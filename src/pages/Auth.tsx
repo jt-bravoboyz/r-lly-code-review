@@ -9,6 +9,8 @@ import { normalizePhoneNumber } from '@/hooks/usePhoneContacts';
 import { toast } from 'sonner';
 import { Mail, Lock, User, ChevronRight, ArrowLeft, Phone } from 'lucide-react';
 import { z } from 'zod';
+import { PolicyAcceptanceDialog } from '@/components/legal/PolicyAcceptanceDialog';
+import { useTutorial } from '@/hooks/useTutorial';
 
 // Validation schemas
 const emailSchema = z.string().trim().email('Please enter a valid email address').max(255, 'Email is too long');
@@ -55,7 +57,10 @@ export default function Auth() {
   const [showContent, setShowContent] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [resetEmailSent, setResetEmailSent] = useState(false);
+  const [showPolicyDialog, setShowPolicyDialog] = useState(false);
+  const [pendingAuthAction, setPendingAuthAction] = useState<'signup' | 'google' | null>(null);
   const { signIn, signUp, user, profile } = useAuth();
+  const { startTutorial } = useTutorial();
   const joinEvent = useJoinEvent();
   const navigate = useNavigate();
   const autoJoinAttempted = useRef(false);
@@ -202,11 +207,11 @@ export default function Auth() {
     }
   };
 
-  const handleSignUp = async (e: React.FormEvent) => {
+  const handleSignUpClick = (e: React.FormEvent) => {
     e.preventDefault();
     clearErrors();
 
-    // Validate inputs
+    // Validate inputs first
     const result = signUpSchema.safeParse({ email, password, confirmPassword, displayName, phone });
     if (!result.success) {
       const fieldErrors: Record<string, string> = {};
@@ -219,6 +224,18 @@ export default function Auth() {
       return;
     }
 
+    // Check if policies already accepted
+    const policiesAccepted = localStorage.getItem('rally-policies-accepted') === 'true';
+    if (policiesAccepted) {
+      executeSignUp();
+    } else {
+      // Show policy dialog first
+      setPendingAuthAction('signup');
+      setShowPolicyDialog(true);
+    }
+  };
+
+  const executeSignUp = async () => {
     setIsLoading(true);
     try {
       // Normalize phone number before sending
@@ -228,6 +245,10 @@ export default function Auth() {
       // Mark that user has an account for future visits
       localStorage.setItem('rally-has-account', 'true');
       toast.success('Account created! Welcome to R@lly.');
+      // Start tutorial after signup
+      setTimeout(() => {
+        startTutorial();
+      }, 500);
     } catch (error: any) {
       const errorMessage = getAuthErrorMessage(error);
       toast.error(errorMessage);
@@ -265,7 +286,19 @@ export default function Auth() {
     }
   };
 
-  const handleGoogleSignIn = async () => {
+  const handleGoogleSignInClick = () => {
+    // Check if policies already accepted
+    const policiesAccepted = localStorage.getItem('rally-policies-accepted') === 'true';
+    if (policiesAccepted) {
+      executeGoogleSignIn();
+    } else {
+      // Show policy dialog first
+      setPendingAuthAction('google');
+      setShowPolicyDialog(true);
+    }
+  };
+
+  const executeGoogleSignIn = async () => {
     setIsLoading(true);
     try {
       const { error } = await supabase.auth.signInWithOAuth({
@@ -280,6 +313,17 @@ export default function Auth() {
       toast.error(errorMessage);
       setIsLoading(false);
     }
+  };
+
+  const handlePolicyAccepted = () => {
+    setShowPolicyDialog(false);
+    // Execute the pending auth action
+    if (pendingAuthAction === 'signup') {
+      executeSignUp();
+    } else if (pendingAuthAction === 'google') {
+      executeGoogleSignIn();
+    }
+    setPendingAuthAction(null);
   };
 
   if (user) {
@@ -471,7 +515,7 @@ export default function Auth() {
             </div>
           ) : (
             <>
-              <form onSubmit={isSignUp ? handleSignUp : handleSignIn} className="space-y-4">
+              <form onSubmit={isSignUp ? handleSignUpClick : handleSignIn} className="space-y-4">
                 {/* Name field - only for signup */}
                 {isSignUp && (
                   <div className="relative">
@@ -662,7 +706,7 @@ export default function Auth() {
                   borderColor: "rgba(255, 255, 255, 0.15)",
                   color: "rgba(255, 255, 255, 0.90)",
                 }}
-                onClick={handleGoogleSignIn}
+                onClick={handleGoogleSignInClick}
                 disabled={isLoading}
               >
                 <svg className="h-5 w-5" viewBox="0 0 24 24">
@@ -737,6 +781,12 @@ export default function Auth() {
           </button>
         </div>
       )}
+
+      <PolicyAcceptanceDialog
+        open={showPolicyDialog}
+        onOpenChange={setShowPolicyDialog}
+        onAccept={handlePolicyAccepted}
+      />
     </div>
   );
 }
