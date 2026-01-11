@@ -3,24 +3,72 @@ import { Users, RefreshCw, Check, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useSyncContacts } from '@/hooks/usePhoneContacts';
 import { toast } from 'sonner';
+import { Contacts, PermissionStatus } from '@capacitor-community/contacts';
+import { Capacitor } from '@capacitor/core';
 
-// Mock function for web - in real native app this would use Capacitor Contacts plugin
-async function requestContactsPermission(): Promise<'granted' | 'denied' | 'prompt'> {
-  // Check if Contacts API is available (only in some browsers with proper permissions)
-  if ('contacts' in navigator && 'ContactsManager' in window) {
-    return 'granted';
-  }
-  return 'prompt';
+interface DeviceContact {
+  phone: string;
+  name: string;
 }
 
-async function getDeviceContacts(): Promise<{ phone: string; name: string }[]> {
-  // Check if we're running in a Capacitor native environment
-  const isNative = typeof (window as any).Capacitor !== 'undefined';
+async function requestContactsPermission(): Promise<'granted' | 'denied' | 'prompt'> {
+  // Check if running on native platform
+  if (!Capacitor.isNativePlatform()) {
+    // For web, check if Contact Picker API is available
+    if ('contacts' in navigator && 'ContactsManager' in window) {
+      return 'granted';
+    }
+    return 'prompt';
+  }
+
+  // Use Capacitor Contacts plugin for native
+  try {
+    const permissionStatus = await Contacts.requestPermissions();
+    if (permissionStatus.contacts === 'granted') {
+      return 'granted';
+    } else if (permissionStatus.contacts === 'denied') {
+      return 'denied';
+    }
+    return 'prompt';
+  } catch (error) {
+    console.error('Permission request error:', error);
+    return 'denied';
+  }
+}
+
+async function getDeviceContacts(): Promise<DeviceContact[]> {
+  const isNative = Capacitor.isNativePlatform();
   
   if (isNative) {
-    // In native app, we'd use @capacitor-community/contacts
-    // For now, show a message about native-only feature
-    throw new Error('Contact sync requires the mobile app');
+    // Use Capacitor Contacts plugin for native iOS/Android
+    try {
+      const result = await Contacts.getContacts({
+        projection: {
+          name: true,
+          phones: true,
+        },
+      });
+
+      const contacts: DeviceContact[] = [];
+      
+      for (const contact of result.contacts) {
+        if (contact.phones && contact.phones.length > 0) {
+          // Get the first phone number
+          const phone = contact.phones[0].number;
+          if (phone) {
+            contacts.push({
+              name: contact.name?.display || contact.name?.given || 'Unknown',
+              phone: phone,
+            });
+          }
+        }
+      }
+      
+      return contacts;
+    } catch (error) {
+      console.error('Error fetching contacts:', error);
+      throw new Error('Failed to access contacts');
+    }
   }
   
   // For web, check if Contact Picker API is available
@@ -30,16 +78,18 @@ async function getDeviceContacts(): Promise<{ phone: string; name: string }[]> {
       const opts = { multiple: true };
       const contacts = await (navigator as any).contacts.select(props, opts);
       
-      return contacts.map((c: any) => ({
-        name: c.name?.[0] || 'Unknown',
-        phone: c.tel?.[0] || '',
-      })).filter((c: any) => c.phone);
+      return contacts
+        .map((c: any) => ({
+          name: c.name?.[0] || 'Unknown',
+          phone: c.tel?.[0] || '',
+        }))
+        .filter((c: DeviceContact) => c.phone);
     } catch (err) {
       throw new Error('Contact selection cancelled');
     }
   }
   
-  throw new Error('Contact sync is not available in this browser. Try using the mobile app.');
+  throw new Error('Contact sync is only available on mobile. Download the R@lly app for full access!');
 }
 
 export function ContactSyncButton() {
@@ -55,8 +105,9 @@ export function ContactSyncButton() {
       const permission = await requestContactsPermission();
       
       if (permission === 'denied') {
-        toast.error('Contact access denied. Please enable in settings.');
+        toast.error('Contact access denied. Please enable in your device settings.');
         setSyncStatus('error');
+        setIsSyncing(false);
         return;
       }
 
@@ -64,6 +115,7 @@ export function ContactSyncButton() {
       
       if (contacts.length === 0) {
         toast.info('No contacts with phone numbers found');
+        setIsSyncing(false);
         return;
       }
 

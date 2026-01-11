@@ -5,14 +5,20 @@ import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
 import { useJoinEvent } from '@/hooks/useEvents';
 import { supabase } from '@/integrations/supabase/client';
+import { normalizePhoneNumber } from '@/hooks/usePhoneContacts';
 import { toast } from 'sonner';
-import { Mail, Lock, User, ChevronRight, ArrowLeft } from 'lucide-react';
+import { Mail, Lock, User, ChevronRight, ArrowLeft, Phone } from 'lucide-react';
 import { z } from 'zod';
 
 // Validation schemas
 const emailSchema = z.string().trim().email('Please enter a valid email address').max(255, 'Email is too long');
 const passwordSchema = z.string().min(6, 'Password must be at least 6 characters').max(128, 'Password is too long');
 const displayNameSchema = z.string().trim().min(1, 'Name is required').max(100, 'Name is too long');
+const phoneSchema = z.string().optional().refine(val => {
+  if (!val) return true;
+  const digits = val.replace(/\D/g, '');
+  return digits.length >= 10;
+}, 'Please enter a valid phone number');
 
 const signInSchema = z.object({
   email: emailSchema,
@@ -24,6 +30,7 @@ const signUpSchema = z.object({
   password: passwordSchema,
   confirmPassword: z.string(),
   displayName: displayNameSchema,
+  phone: phoneSchema,
 }).refine(data => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
@@ -42,6 +49,7 @@ export default function Auth() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
+  const [phone, setPhone] = useState('');
   // Users without an account default to signup, users with account default to signin
   const [authMode, setAuthMode] = useState<AuthMode>(hasAccount ? 'signin' : 'signup');
   const [showContent, setShowContent] = useState(false);
@@ -199,7 +207,7 @@ export default function Auth() {
     clearErrors();
 
     // Validate inputs
-    const result = signUpSchema.safeParse({ email, password, confirmPassword, displayName });
+    const result = signUpSchema.safeParse({ email, password, confirmPassword, displayName, phone });
     if (!result.success) {
       const fieldErrors: Record<string, string> = {};
       result.error.errors.forEach(err => {
@@ -213,7 +221,9 @@ export default function Auth() {
 
     setIsLoading(true);
     try {
-      const { error } = await signUp(email.trim(), password, displayName.trim());
+      // Normalize phone number before sending
+      const normalizedPhone = phone ? normalizePhoneNumber(phone) : undefined;
+      const { error } = await signUp(email.trim(), password, displayName.trim(), normalizedPhone);
       if (error) throw error;
       // Mark that user has an account for future visits
       localStorage.setItem('rally-has-account', 'true');
@@ -486,7 +496,48 @@ export default function Auth() {
                   </div>
                 )}
 
-                {/* Email field */}
+                {/* Phone field - only for signup */}
+                {isSignUp && (
+                  <div className="relative">
+                    <Phone 
+                      className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5" 
+                      strokeWidth={1.5} 
+                      style={{ color: "#FF6A00" }}
+                    />
+                    <Input
+                      type="tel"
+                      placeholder="Phone (optional)"
+                      value={phone}
+                      onChange={(e) => {
+                        // Format phone as user types
+                        const digits = e.target.value.replace(/\D/g, '');
+                        let formatted = digits;
+                        if (digits.length >= 4 && digits.length <= 6) {
+                          formatted = `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+                        } else if (digits.length >= 7) {
+                          formatted = `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6, 10)}`;
+                        }
+                        setPhone(formatted);
+                      }}
+                      className="pl-12 h-14 rounded-xl font-montserrat text-base"
+                      style={{
+                        backgroundColor: "#1E1E1E",
+                        borderColor: errors.phone ? "#ef4444" : "rgba(255, 106, 0, 0.2)",
+                        color: "rgba(255, 255, 255, 0.90)",
+                      }}
+                    />
+                    {errors.phone && (
+                      <p className="text-red-400 text-sm mt-1">{errors.phone}</p>
+                    )}
+                    <p 
+                      className="text-xs mt-1 ml-1"
+                      style={{ color: "rgba(255, 255, 255, 0.5)" }}
+                    >
+                      For receiving rally invites via text
+                    </p>
+                  </div>
+                )}
+
                 <div className="relative">
                   <Mail 
                     className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5" 
