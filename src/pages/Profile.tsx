@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Settings, LogOut, MapPin, Award, Camera, Users, Home, Shield, Pencil, Save, X, FileText, ChevronRight, Navigation } from 'lucide-react';
+import { Settings, LogOut, MapPin, Award, Camera, Users, Home, Shield, Pencil, Save, X, FileText, ChevronRight, Navigation, Phone } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useLocation } from '@/hooks/useLocation';
 import { supabase } from '@/integrations/supabase/client';
@@ -17,10 +17,36 @@ import { Navigate, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { LocationSearch } from '@/components/location/LocationSearch';
 
+// Helper to format phone for display
+function formatPhoneForDisplay(phone: string): string {
+  const cleaned = phone.replace(/[^\d]/g, '');
+  if (cleaned.length === 11 && cleaned.startsWith('1')) {
+    return `(${cleaned.slice(1, 4)}) ${cleaned.slice(4, 7)}-${cleaned.slice(7)}`;
+  }
+  if (cleaned.length === 10) {
+    return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
+  }
+  return phone;
+}
+
+// Helper to normalize phone for storage
+function normalizePhoneNumber(phone: string): string {
+  let normalized = phone.replace(/[^\d+]/g, '');
+  if (normalized.length === 10) {
+    normalized = '+1' + normalized;
+  } else if (normalized.length === 11 && normalized.startsWith('1')) {
+    normalized = '+' + normalized;
+  } else if (!normalized.startsWith('+')) {
+    normalized = '+' + normalized;
+  }
+  return normalized;
+}
+
 export default function Profile() {
   const [isEditing, setIsEditing] = useState(false);
   const [editBio, setEditBio] = useState('');
   const [editName, setEditName] = useState('');
+  const [editPhone, setEditPhone] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [isHomeDialogOpen, setIsHomeDialogOpen] = useState(false);
   const [isSavingHome, setIsSavingHome] = useState(false);
@@ -75,18 +101,40 @@ export default function Profile() {
   const handleStartEdit = () => {
     setEditName(profile?.display_name || '');
     setEditBio((profile as any)?.bio || '');
+    setEditPhone(profile?.phone ? formatPhoneForDisplay(profile.phone) : '');
     setIsEditing(true);
+  };
+
+  const handlePhoneChange = (value: string) => {
+    // Format as user types: (555) 123-4567
+    const cleaned = value.replace(/\D/g, '');
+    let formatted = '';
+    if (cleaned.length > 0) {
+      formatted = '(' + cleaned.slice(0, 3);
+      if (cleaned.length > 3) {
+        formatted += ') ' + cleaned.slice(3, 6);
+      }
+      if (cleaned.length > 6) {
+        formatted += '-' + cleaned.slice(6, 10);
+      }
+    }
+    setEditPhone(formatted);
   };
 
   const handleSaveProfile = async () => {
     if (!profile?.id) return;
     setIsSaving(true);
     try {
+      // Normalize phone if provided
+      const phoneDigits = editPhone.replace(/\D/g, '');
+      const normalizedPhone = phoneDigits.length >= 10 ? normalizePhoneNumber(phoneDigits) : null;
+
       const { error } = await supabase
         .from('profiles')
         .update({ 
           display_name: editName.trim(),
-          bio: editBio.trim() || null 
+          bio: editBio.trim() || null,
+          phone: normalizedPhone
         })
         .eq('id', profile.id);
 
@@ -143,6 +191,26 @@ export default function Profile() {
                   <h2 className="text-xl font-bold">{profile?.display_name || 'Anonymous'}</h2>
                 )}
                 <p className="text-sm text-muted-foreground">{user.email}</p>
+                
+                {isEditing ? (
+                  <div className="mt-2 flex items-center gap-2">
+                    <Phone className="h-4 w-4 text-muted-foreground" />
+                    <Input
+                      value={editPhone}
+                      onChange={(e) => handlePhoneChange(e.target.value)}
+                      className="h-8 text-sm"
+                      placeholder="(555) 123-4567"
+                      maxLength={14}
+                    />
+                  </div>
+                ) : (
+                  profile?.phone && (
+                    <div className="flex items-center gap-1 mt-1 text-sm text-muted-foreground">
+                      <Phone className="h-3 w-3" />
+                      {formatPhoneForDisplay(profile.phone)}
+                    </div>
+                  )
+                )}
                 
                 <div 
                   className="flex items-center gap-2 mt-2 cursor-pointer"
