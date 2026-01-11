@@ -20,6 +20,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useConfetti } from '@/hooks/useConfetti';
 import { LocationSearch } from '@/components/location/LocationSearch';
 import { format, addHours, setHours, setMinutes, isAfter, isSameDay } from 'date-fns';
+import { supabase } from '@/integrations/supabase/client';
 
 const quickRallySchema = z.object({
   title: z.string().min(1, 'Give your rally a name'),
@@ -175,6 +176,20 @@ export function QuickRallyDialog({ trigger, preselectedSquad }: QuickRallyDialog
 
       // Auto-join the event
       await joinEvent.mutateAsync({ eventId: result.id, profileId: profile.id });
+      
+      // Create event chat immediately (trigger will add host to chat_participants)
+      const { error: chatError } = await supabase
+        .from('chats')
+        .insert({ 
+          event_id: result.id, 
+          is_group: true, 
+          name: data.title 
+        });
+      
+      if (chatError) {
+        console.error('Failed to create event chat:', chatError);
+        // Don't fail the whole creation - chat can be created lazily
+      }
       
       // Auto-invite all members from selected squads
       if (selectedSquads.length > 0) {

@@ -234,6 +234,8 @@ export type Database = {
       }
       event_attendees: {
         Row: {
+          after_rally_location_name: string | null
+          after_rally_opted_in: boolean | null
           arrived_at: string | null
           arrived_home: boolean | null
           current_lat: number | null
@@ -254,6 +256,8 @@ export type Database = {
           status: string | null
         }
         Insert: {
+          after_rally_location_name?: string | null
+          after_rally_opted_in?: boolean | null
           arrived_at?: string | null
           arrived_home?: boolean | null
           current_lat?: number | null
@@ -274,6 +278,8 @@ export type Database = {
           status?: string | null
         }
         Update: {
+          after_rally_location_name?: string | null
+          after_rally_opted_in?: boolean | null
           arrived_at?: string | null
           arrived_home?: boolean | null
           current_lat?: number | null

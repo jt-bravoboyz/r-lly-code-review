@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Navigate, Link } from 'react-router-dom';
-import { ArrowLeft, Calendar, MapPin, Users, Beer, Check, X, MessageCircle, Navigation, Home, Plus, Zap, Crown, UserPlus, Car } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Users, Beer, Check, X, MessageCircle, Navigation, Home, Plus, Zap, Crown, UserPlus, Car, Play, Moon, PartyPopper } from 'lucide-react';
 import { format } from 'date-fns';
 import { Header } from '@/components/layout/Header';
 import { BottomNav } from '@/components/layout/BottomNav';
@@ -18,6 +18,7 @@ import { useRides } from '@/hooks/useRides';
 import { useAuth } from '@/hooks/useAuth';
 import { useCohosts } from '@/hooks/useCohosts';
 import { useMyDDRequest, useEventDDs } from '@/hooks/useDDManagement';
+import { useStartRally, useEndRally } from '@/hooks/useAfterRally';
 import { RideCard } from '@/components/rides/RideCard';
 import { CreateRideDialog } from '@/components/rides/CreateRideDialog';
 import { RequestRideDialog } from '@/components/rides/RequestRideDialog';
@@ -38,6 +39,7 @@ import { useBarHopStopsRealtime } from '@/hooks/useBarHopStopsRealtime';
 import { LocationMapPreview } from '@/components/location/LocationMapPreview';
 import { FirstTimeWelcomeDialog } from '@/components/events/FirstTimeWelcomeDialog';
 import { InviteToEventDialog } from '@/components/events/InviteToEventDialog';
+import { AfterRallyOptInDialog } from '@/components/events/AfterRallyOptInDialog';
 import { toast } from 'sonner';
 
 export default function EventDetail() {
@@ -53,7 +55,10 @@ export default function EventDetail() {
   const joinEvent = useJoinEvent();
   const leaveEvent = useLeaveEvent();
   const updateEvent = useUpdateEvent();
+  const startRally = useStartRally();
+  const endRally = useEndRally();
   const [showFirstTimeWelcome, setShowFirstTimeWelcome] = useState(false);
+  const [showAfterRallyOptIn, setShowAfterRallyOptIn] = useState(false);
 
   // Check for first-time welcome flag (set when user auto-joins via invite code)
   useEffect(() => {
@@ -76,6 +81,21 @@ export default function EventDetail() {
   const canManage = isCreator || isCohost;
   const attendeeCount = event?.attendees?.length || 0;
   const isLiveEvent = event ? new Date(event.start_time) <= new Date() : false;
+  const isScheduled = event?.status === 'scheduled' || !event?.status;
+  const isLive = event?.status === 'live';
+  const isAfterRally = event?.status === 'after_rally';
+
+  // Show After R@lly opt-in dialog when event transitions to after_rally
+  useEffect(() => {
+    if (isAfterRally && isAttending && !isCreator && !isCohost) {
+      // Check if user hasn't opted in yet (we use sessionStorage to track if dialog was shown)
+      const shownKey = `after_rally_shown_${id}`;
+      if (!sessionStorage.getItem(shownKey)) {
+        sessionStorage.setItem(shownKey, 'true');
+        setShowAfterRallyOptIn(true);
+      }
+    }
+  }, [isAfterRally, isAttending, isCreator, isCohost, id]);
 
   if (authLoading) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
@@ -162,6 +182,18 @@ export default function EventDetail() {
                   <Badge className="bg-secondary/20 text-secondary border-0">
                     <Zap className="h-3 w-3 mr-1" />
                     Quick
+                  </Badge>
+                )}
+                {isLive && (
+                  <Badge className="bg-green-500/20 text-green-600 border-0">
+                    <Play className="h-3 w-3 mr-1" />
+                    Live
+                  </Badge>
+                )}
+                {isAfterRally && (
+                  <Badge className="bg-purple-500/20 text-purple-600 border-0">
+                    <Moon className="h-3 w-3 mr-1" />
+                    After R@lly
                   </Badge>
                 )}
               </div>
@@ -277,8 +309,84 @@ export default function EventDetail() {
           )}
         </div>
 
+        {/* Host Rally Controls - Start/End Rally */}
+        {canManage && isLiveEvent && !isAfterRally && (
+          <Card className="bg-gradient-to-r from-primary to-primary/80 border-0 shadow-lg">
+            <CardContent className="p-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                  {isScheduled ? (
+                    <Play className="h-6 w-6 text-white" />
+                  ) : (
+                    <Moon className="h-6 w-6 text-white" />
+                  )}
+                </div>
+                <div>
+                  <h3 className="font-bold text-white text-lg font-montserrat">
+                    {isScheduled ? 'Start R@lly' : 'End R@lly'}
+                  </h3>
+                  <p className="text-white/80 text-sm font-montserrat">
+                    {isScheduled 
+                      ? 'Go live and notify your crew' 
+                      : 'Transition to After R@lly'
+                    }
+                  </p>
+                </div>
+              </div>
+              {isScheduled ? (
+                <Button
+                  variant="secondary"
+                  onClick={async () => {
+                    try {
+                      await startRally.mutateAsync(event.id);
+                      toast.success('R@lly is live! 🎉');
+                    } catch (error: any) {
+                      toast.error(error.message || 'Failed to start rally');
+                    }
+                  }}
+                  disabled={startRally.isPending}
+                >
+                  <Play className="h-4 w-4 mr-2" />
+                  Start
+                </Button>
+              ) : (
+                <Button
+                  variant="secondary"
+                  onClick={async () => {
+                    try {
+                      await endRally.mutateAsync(event.id);
+                      toast.success('After R@lly started! 🌙');
+                    } catch (error: any) {
+                      toast.error(error.message || 'Failed to end rally');
+                    }
+                  }}
+                  disabled={endRally.isPending}
+                >
+                  <Moon className="h-4 w-4 mr-2" />
+                  End Rally
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* After R@lly Banner - Show when in after_rally status */}
+        {isAfterRally && (
+          <Card className="bg-gradient-to-r from-purple-500 to-purple-600 border-0 shadow-lg">
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                <PartyPopper className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h3 className="font-bold text-white text-lg font-montserrat">After R@lly Mode</h3>
+                <p className="text-white/80 text-sm font-montserrat">The main event has ended. Continue the night!</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* R@lly Home Button - Only show during live events for attendees */}
-        {isLiveEvent && isAttending && (
+        {(isLiveEvent || isAfterRally) && isAttending && (
           <section className="space-y-4">
             <RallyHomeButton 
               eventId={event.id}
@@ -301,8 +409,9 @@ export default function EventDetail() {
           </section>
         )}
 
+
         {/* Going Home Tracker - Show who's heading home */}
-        {isLiveEvent && <GoingHomeTracker eventId={event.id} />}
+        {(isLiveEvent || isAfterRally) && <GoingHomeTracker eventId={event.id} />}
 
         {/* Tabs for Details, Chat, Tracking, Rides */}
         <Tabs defaultValue="details" className="w-full">
@@ -551,6 +660,18 @@ export default function EventDetail() {
         eventTitle={event.title}
         isOpen={showFirstTimeWelcome}
         onClose={() => setShowFirstTimeWelcome(false)}
+      />
+
+      {/* After R@lly Opt-In Dialog */}
+      <AfterRallyOptInDialog
+        eventId={event.id}
+        eventTitle={event.title}
+        open={showAfterRallyOptIn}
+        onOpenChange={setShowAfterRallyOptIn}
+        onHeadHome={() => {
+          // Trigger R@lly Home flow
+          toast.info('Opening R@lly Home...');
+        }}
       />
     </div>
   );
