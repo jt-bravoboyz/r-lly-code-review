@@ -445,7 +445,15 @@ export default function EventDetail() {
             />
 
             {/* Attendee Location Map */}
-            <AttendeeMap eventId={event.id} attendees={event.attendees || []} />
+            <AttendeeMap 
+              eventId={event.id} 
+              attendees={event.attendees || []} 
+              eventLocation={event.location_lat && event.location_lng ? {
+                lat: event.location_lat,
+                lng: event.location_lng,
+                name: event.location_name || undefined
+              } : null}
+            />
           </TabsContent>
 
           <TabsContent value="rides" className="mt-4 space-y-4">

@@ -104,7 +104,12 @@ export default function Rides() {
           <label className="text-sm font-medium text-muted-foreground">Select Event</label>
           <Select value={selectedEventId || 'all'} onValueChange={handleEventChange}>
             <SelectTrigger className="w-full bg-white">
-              <SelectValue placeholder="All Events" />
+              <SelectValue>
+                {selectedEventId 
+                  ? events?.find(e => e.id === selectedEventId)?.title || 'Select Event'
+                  : 'All Events'
+                }
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Events</SelectItem>
