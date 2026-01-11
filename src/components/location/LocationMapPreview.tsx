@@ -34,25 +34,11 @@ export const LocationMapPreview = forwardRef<HTMLDivElement, LocationMapPreviewP
     const marker = useRef<mapboxgl.Marker | null>(null);
     const [mapReady, setMapReady] = useState(false);
 
-    // Open directions in native maps app
+    // Open directions in Google Maps (always use Google Maps for consistency)
     const handleGetDirections = () => {
-      const destination = encodeURIComponent(address || name || `${lat},${lng}`);
       const coords = `${lat},${lng}`;
-      
-      // Detect platform and open appropriate maps app
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-      const isAndroid = /Android/.test(navigator.userAgent);
-      
-      if (isIOS) {
-        // Apple Maps
-        window.open(`maps://maps.apple.com/?daddr=${coords}&q=${destination}`, '_blank');
-      } else if (isAndroid) {
-        // Google Maps on Android
-        window.open(`google.navigation:q=${coords}`, '_blank');
-      } else {
-        // Fallback to Google Maps web
-        window.open(`https://www.google.com/maps/dir/?api=1&destination=${coords}&destination_place_id=${destination}`, '_blank');
-      }
+      const url = `https://www.google.com/maps/dir/?api=1&destination=${coords}`;
+      window.open(url, '_blank');
     };
 
     useEffect(() => {
