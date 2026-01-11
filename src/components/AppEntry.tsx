@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { SplashScreen } from '@/components/SplashScreen';
-import { FlagSplash } from '@/components/FlagSplash';
 import { Onboarding } from '@/components/Onboarding';
 import Auth from '@/pages/Auth';
+import ReturningAuth from '@/pages/ReturningAuth';
 
-type AppPhase = 'loading' | 'splash' | 'flag-splash' | 'onboarding' | 'auth';
+type AppPhase = 'loading' | 'splash' | 'onboarding' | 'new-user-auth' | 'returning-auth';
 
 export function AppEntry() {
   const [phase, setPhase] = useState<AppPhase>('loading');
@@ -19,9 +19,9 @@ export function AppEntry() {
     const hasAccount = localStorage.getItem('rally-has-account') === 'true' || returningParam;
     
     if (hasAccount) {
-      // Returning users go straight to auth (no splash)
+      // Returning users go straight to returning auth (no splash, no onboarding)
       setIsFirstTime(false);
-      setPhase('auth');
+      setPhase('returning-auth');
     } else {
       // No account = full onboarding flow (splash + onboarding + signup)
       setIsFirstTime(true);
@@ -33,17 +33,13 @@ export function AppEntry() {
     if (isFirstTime) {
       setPhase('onboarding');
     } else {
-      setPhase('auth');
+      setPhase('returning-auth');
     }
-  };
-
-  const handleFlagSplashComplete = () => {
-    setPhase('auth');
   };
 
   const handleOnboardingComplete = () => {
     localStorage.setItem('rally-onboarding-complete', 'true');
-    setPhase('auth');
+    setPhase('new-user-auth');
   };
 
   // Show nothing while determining first time status
@@ -55,13 +51,14 @@ export function AppEntry() {
     return <SplashScreen onComplete={handleSplashComplete} duration={5250} />;
   }
 
-  if (phase === 'flag-splash') {
-    return <FlagSplash onComplete={handleFlagSplashComplete} duration={1800} />;
-  }
-
   if (phase === 'onboarding') {
     return <Onboarding onComplete={handleOnboardingComplete} />;
   }
 
+  if (phase === 'returning-auth') {
+    return <ReturningAuth />;
+  }
+
+  // new-user-auth phase
   return <Auth />;
 }
