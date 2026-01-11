@@ -25,6 +25,27 @@ export function useEvents() {
   });
 }
 
+export function usePastEvents() {
+  return useQuery({
+    queryKey: ['past-events'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('events')
+        .select(`
+          *,
+          creator:profiles!events_creator_id_fkey(id, display_name, avatar_url),
+          attendees:event_attendees(count)
+        `)
+        .lt('start_time', new Date().toISOString())
+        .order('start_time', { ascending: false })
+        .limit(20);
+      
+      if (error) throw error;
+      return data;
+    }
+  });
+}
+
 export function useEvent(eventId: string | undefined) {
   return useQuery({
     queryKey: ['event', eventId],

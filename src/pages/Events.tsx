@@ -2,11 +2,11 @@ import { BottomNav } from '@/components/layout/BottomNav';
 import { EventCard } from '@/components/events/EventCard';
 import { CreateEventDialog } from '@/components/events/CreateEventDialog';
 import { QuickRallyDialog } from '@/components/events/QuickRallyDialog';
-import { useEvents } from '@/hooks/useEvents';
+import { useEvents, usePastEvents } from '@/hooks/useEvents';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Zap, Filter, Search, Link2, Sparkles, Calendar } from 'lucide-react';
+import { Zap, Filter, Search, Link2, Sparkles, Calendar, History } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
@@ -16,6 +16,7 @@ import rallyLogo from '@/assets/rally-logo.png';
 export default function Events() {
   const { user, profile, loading: authLoading } = useAuth();
   const { data: events, isLoading } = useEvents();
+  const { data: pastEvents, isLoading: pastLoading } = usePastEvents();
   const [searchQuery, setSearchQuery] = useState('');
   const location = useLocation();
   
@@ -63,7 +64,7 @@ export default function Events() {
           </Link>
           <h1 className="text-xl font-bold text-white font-montserrat drop-shadow-sm flex items-center gap-2">
             <Zap className="h-5 w-5" strokeWidth={2.5} />
-            Rally
+            R@lly
           </h1>
           <Link to="/profile" className="relative group">
             <div className="absolute inset-0 bg-white/30 rounded-full blur-sm scale-110" />
@@ -129,7 +130,7 @@ export default function Events() {
                 <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center">
                   <Calendar className="h-5 w-5 text-white" strokeWidth={2} />
                 </div>
-                Plan a Rally
+                Plan a R@lly
               </h3>
               <p className="text-white/80 text-sm font-montserrat ml-11">Schedule for later</p>
             </div>
@@ -141,7 +142,7 @@ export default function Events() {
         <div className="flex items-center justify-between animate-fade-in" style={{ animationDelay: '0.3s' }}>
           <h2 className="text-xl font-bold text-foreground font-montserrat flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-primary" />
-            Upcoming Rally
+            Upcoming R@lly
           </h2>
           <span className="text-sm text-muted-foreground bg-white/60 backdrop-blur-sm px-3 py-1 rounded-full">{filteredEvents.length} events</span>
         </div>
@@ -168,9 +169,43 @@ export default function Events() {
               <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-orange-400/20 mx-auto mb-4 flex items-center justify-center relative">
                 <Zap className="h-8 w-8 text-primary" strokeWidth={2} />
               </div>
-              <h3 className="text-lg font-bold mb-2 text-foreground font-montserrat">No rally yet</h3>
+              <h3 className="text-lg font-bold mb-2 text-foreground font-montserrat">No R@lly yet</h3>
               <p className="text-muted-foreground mb-6 font-montserrat">Be the first to start one!</p>
               <QuickRallyDialog />
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Past R@lly Section */}
+        <div className="flex items-center justify-between animate-fade-in mt-8" style={{ animationDelay: '0.4s' }}>
+          <h2 className="text-xl font-bold text-foreground font-montserrat flex items-center gap-2">
+            <History className="h-5 w-5 text-muted-foreground" />
+            Past R@lly
+          </h2>
+          <span className="text-sm text-muted-foreground bg-white/60 backdrop-blur-sm px-3 py-1 rounded-full">
+            {pastEvents?.length || 0} events
+          </span>
+        </div>
+
+        {pastLoading ? (
+          <div className="space-y-4">
+            {[1, 2].map((i) => (
+              <Card key={i} className="h-28 animate-pulse bg-gradient-to-r from-muted to-muted/50 border-0 rounded-2xl" />
+            ))}
+          </div>
+        ) : pastEvents && pastEvents.length > 0 ? (
+          <div className="space-y-4">
+            {pastEvents.map((event, index) => (
+              <div key={event.id} className="animate-fade-in opacity-75 hover:opacity-100 transition-opacity" style={{ animationDelay: `${0.4 + index * 0.1}s` }}>
+                <EventCard event={event} />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <Card className="bg-muted/30 border-dashed border-2 border-muted rounded-2xl animate-fade-in" style={{ animationDelay: '0.4s' }}>
+            <CardContent className="p-6 text-center">
+              <History className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+              <p className="text-muted-foreground font-montserrat text-sm">No past R@llys yet</p>
             </CardContent>
           </Card>
         )}
