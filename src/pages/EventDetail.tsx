@@ -25,7 +25,7 @@ import { DDRequestBanner } from '@/components/rides/DDRequestBanner';
 import { DDVolunteerButton } from '@/components/rides/DDVolunteerButton';
 import { EventChat } from '@/components/chat/EventChat';
 import { LiveTracking } from '@/components/tracking/LiveTracking';
-import { LiveMemberTracker } from '@/components/tracking/LiveMemberTracker';
+import { AttendeeMap } from '@/components/tracking/AttendeeMap';
 import { LiveUpdates } from '@/components/events/LiveUpdates';
 import { RallyHomeButton } from '@/components/home/RallyHomeButton';
 import { GoingHomeTracker } from '@/components/home/GoingHomeTracker';
@@ -444,8 +444,8 @@ export default function EventDetail() {
               isLive={isLiveEvent}
             />
 
-            {/* Live Member Tracker with GPS, compass, and distance/bearing */}
-            <LiveMemberTracker eventId={event.id} isLive={isLiveEvent} />
+            {/* Attendee Location Map */}
+            <AttendeeMap eventId={event.id} attendees={event.attendees || []} />
           </TabsContent>
 
           <TabsContent value="rides" className="mt-4 space-y-4">
@@ -459,7 +459,7 @@ export default function EventDetail() {
             )}
 
             {/* Request a Ride Card - For attendees who need a ride */}
-            {isAttending && !isCreator && (
+            {isAttending && (
               <Card className="bg-gradient-to-r from-blue-500 to-blue-600 border-0 shadow-lg">
                 <CardContent className="p-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -468,10 +468,10 @@ export default function EventDetail() {
                     </div>
                     <div>
                       <h3 className="font-bold text-white font-montserrat">Need a Ride?</h3>
-                      <p className="text-white/80 text-sm">Request a safe ride home</p>
+                      <p className="text-white/80 text-sm">Request a safe ride to the event</p>
                     </div>
                   </div>
-                  <RequestRideDialog eventId={event.id} />
+                  <RequestRideDialog eventId={event.id} eventName={event.title} />
                 </CardContent>
               </Card>
             )}

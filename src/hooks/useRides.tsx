@@ -25,12 +25,7 @@ export function useRides(eventId?: string) {
         .from('rides')
         .select(`
           *,
-          driver:profiles!rides_driver_id_fkey(id, display_name, avatar_url),
-          passengers:ride_passengers(
-            id,
-            status,
-            passenger:profiles!ride_passengers_passenger_id_fkey(id, display_name, avatar_url)
-          )
+          driver:profiles!rides_driver_id_fkey(id, display_name, avatar_url)
         `)
         .eq('status', 'available')
         .order('departure_time', { ascending: true });
@@ -39,9 +34,30 @@ export function useRides(eventId?: string) {
         query = query.eq('event_id', eventId);
       }
       
-      const { data, error } = await query;
+      const { data: rides, error } = await query;
       if (error) throw error;
-      return data;
+
+      // Fetch passengers separately to avoid RLS recursion
+      if (rides && rides.length > 0) {
+        const rideIds = rides.map(r => r.id);
+        const { data: passengers } = await supabase
+          .from('ride_passengers')
+          .select(`
+            id,
+            ride_id,
+            status,
+            passenger:profiles!ride_passengers_passenger_id_fkey(id, display_name, avatar_url)
+          `)
+          .in('ride_id', rideIds);
+
+        // Merge passengers into rides
+        return rides.map(ride => ({
+          ...ride,
+          passengers: passengers?.filter(p => p.ride_id === ride.id) || []
+        }));
+      }
+
+      return rides?.map(ride => ({ ...ride, passengers: [] })) || [];
     }
   });
 }

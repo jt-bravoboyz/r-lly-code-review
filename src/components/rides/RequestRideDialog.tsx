@@ -15,7 +15,6 @@ import { LocationMapPreview } from '@/components/location/LocationMapPreview';
 
 const requestSchema = z.object({
   pickup_location: z.string().min(1, 'Pickup location is required').max(200, 'Location too long'),
-  destination: z.string().min(1, 'Destination is required').max(200, 'Destination too long'),
 });
 
 type RequestFormData = z.infer<typeof requestSchema>;
@@ -25,22 +24,21 @@ interface RequestRideDialogProps {
   rideId?: string;
   driverName?: string;
   trigger?: React.ReactNode;
+  eventName?: string;
 }
 
-export function RequestRideDialog({ eventId, rideId, driverName, trigger }: RequestRideDialogProps) {
+export function RequestRideDialog({ eventId, rideId, driverName, trigger, eventName }: RequestRideDialogProps) {
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { profile } = useAuth();
   const queryClient = useQueryClient();
   
   const [pickupCoords, setPickupCoords] = useState<{ lat: number; lng: number } | null>(null);
-  const [destCoords, setDestCoords] = useState<{ lat: number; lng: number } | null>(null);
 
   const form = useForm<RequestFormData>({
     resolver: zodResolver(requestSchema),
     defaultValues: {
       pickup_location: '',
-      destination: profile?.home_address || '',
     }
   });
 
@@ -85,11 +83,10 @@ export function RequestRideDialog({ eventId, rideId, driverName, trigger }: Requ
             profile_id: profile.id,
             type: 'ride_request',
             title: 'Ride Requested',
-            body: `Looking for a ride from ${data.pickup_location} to ${data.destination}`,
+            body: `Looking for a ride from ${data.pickup_location} to the event`,
             data: {
               event_id: eventId,
               pickup_location: data.pickup_location,
-              destination: data.destination,
               requester_id: profile.id,
               requester_name: profile.display_name
             }
@@ -124,7 +121,6 @@ export function RequestRideDialog({ eventId, rideId, driverName, trigger }: Requ
       setOpen(false);
       form.reset();
       setPickupCoords(null);
-      setDestCoords(null);
     } catch (error: any) {
       toast.error(error.message || 'Failed to request ride');
     } finally {
@@ -184,37 +180,10 @@ export function RequestRideDialog({ eventId, rideId, driverName, trigger }: Requ
               />
             )}
 
-            <FormField
-              control={form.control}
-              name="destination"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Destination</FormLabel>
-                  <FormControl>
-                    <LocationSearch
-                      value={field.value}
-                      onChange={field.onChange}
-                      onLocationSelect={(loc) => {
-                        field.onChange(loc.name);
-                        setDestCoords({ lat: loc.lat, lng: loc.lng });
-                      }}
-                      placeholder="Where are you going?"
-                      showMapPreview={false}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {destCoords && (
-              <LocationMapPreview
-                lat={destCoords.lat}
-                lng={destCoords.lng}
-                name="Destination"
-                height="h-32"
-                interactive={false}
-              />
+            {eventName && (
+              <div className="text-sm text-muted-foreground bg-muted rounded-lg p-3">
+                <span className="font-medium">Destination:</span> {eventName}
+              </div>
             )}
 
             <Button 
