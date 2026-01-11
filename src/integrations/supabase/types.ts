@@ -2267,6 +2267,7 @@ export type Database = {
           unique_accessors: number
         }[]
       }
+      is_chat_member: { Args: { p_chat_id: string }; Returns: boolean }
       is_connected_to_profile: {
         Args: { target_profile_id: string }
         Returns: boolean

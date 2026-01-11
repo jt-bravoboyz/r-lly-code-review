@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { Tables, TablesInsert } from '@/integrations/supabase/types';
 import { sendRideOfferedMessage, sendRideAcceptedMessage, sendRideDeclinedMessage } from './useSystemMessages';
@@ -18,6 +19,43 @@ async function getEventChatId(eventId: string): Promise<string | null> {
 }
 
 export function useRides(eventId?: string) {
+  const queryClient = useQueryClient();
+
+  // Subscribe to realtime updates for rides
+  useEffect(() => {
+    const channel = supabase
+      .channel('rides-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'rides',
+        },
+        () => {
+          // Invalidate rides query on any change
+          queryClient.invalidateQueries({ queryKey: ['rides'] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'ride_passengers',
+        },
+        () => {
+          // Invalidate rides query when passengers change
+          queryClient.invalidateQueries({ queryKey: ['rides'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
   return useQuery({
     queryKey: ['rides', eventId],
     queryFn: async () => {
@@ -27,7 +65,8 @@ export function useRides(eventId?: string) {
           *,
           driver:profiles!rides_driver_id_fkey(id, display_name, avatar_url)
         `)
-        .eq('status', 'available')
+        // Show available and in_progress rides (not completed or cancelled)
+        .in('status', ['available', 'in_progress'])
         .order('departure_time', { ascending: true });
       
       if (eventId) {
