@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, createContext, useContext } from 'react';
+import { useAuth } from './useAuth';
 
 export interface TutorialStep {
   id: string;
@@ -102,6 +103,7 @@ const TutorialContext = createContext<TutorialContextType | undefined>(undefined
 export function TutorialProvider({ children }: { children: React.ReactNode }) {
   const [isActive, setIsActive] = useState(false);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const { user, loading: authLoading } = useAuth();
 
   const currentStep = isActive ? TUTORIAL_STEPS[currentStepIndex] : null;
 
@@ -113,11 +115,15 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
   const endTutorial = useCallback(() => {
     setIsActive(false);
     localStorage.setItem('rally-tutorial-complete', 'true');
+    // Clear the new signup flag since tutorial is complete
+    localStorage.removeItem('rally-is-new-signup');
   }, []);
 
   const skipTutorial = useCallback(() => {
     setIsActive(false);
     localStorage.setItem('rally-tutorial-complete', 'true');
+    // Clear the new signup flag since tutorial was skipped
+    localStorage.removeItem('rally-is-new-signup');
   }, []);
 
   const nextStep = useCallback(() => {
@@ -143,20 +149,31 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     }
   }, [currentStep, nextStep]);
 
-  // Check if tutorial should auto-start for new users
+  // Check if tutorial should auto-start for new signups ONLY
   useEffect(() => {
+    // Wait for auth to finish loading
+    if (authLoading) return;
+    
+    // Must be logged in
+    if (!user) return;
+    
     const tutorialComplete = localStorage.getItem('rally-tutorial-complete');
+    const isNewSignup = localStorage.getItem('rally-is-new-signup');
     const onboardingComplete = localStorage.getItem('rally-onboarding-complete');
     
-    // Start tutorial after onboarding is complete but tutorial hasn't been done
-    if (onboardingComplete === 'true' && tutorialComplete !== 'true') {
+    // Only start tutorial if:
+    // 1. User is logged in (checked above)
+    // 2. This is a new signup (flag set during signUp)
+    // 3. Tutorial hasn't been completed yet
+    // 4. Onboarding is complete (if applicable)
+    if (isNewSignup === 'true' && tutorialComplete !== 'true' && onboardingComplete === 'true') {
       // Small delay to let the app settle
       const timer = setTimeout(() => {
         startTutorial();
       }, 500);
       return () => clearTimeout(timer);
     }
-  }, [startTutorial]);
+  }, [user, authLoading, startTutorial]);
 
   return (
     <TutorialContext.Provider
