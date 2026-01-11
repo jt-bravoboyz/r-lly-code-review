@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { SplashScreen } from '@/components/SplashScreen';
+import { FlagSplash } from '@/components/FlagSplash';
 import { Onboarding } from '@/components/Onboarding';
 import Auth from '@/pages/Auth';
 
-type AppPhase = 'loading' | 'splash' | 'onboarding' | 'auth';
+type AppPhase = 'loading' | 'splash' | 'flag-splash' | 'onboarding' | 'auth';
 
 export function AppEntry() {
   const [phase, setPhase] = useState<AppPhase>('loading');
@@ -15,11 +16,12 @@ export function AppEntry() {
     const firstTime = onboardingComplete !== 'true';
     setIsFirstTime(firstTime);
     
-    // Only show splash for first time users, skip straight to auth for returning users
     if (firstTime) {
+      // First time users get full splash + onboarding
       setPhase('splash');
     } else {
-      setPhase('auth');
+      // Returning users get a quick flag splash
+      setPhase('flag-splash');
     }
   }, []);
 
@@ -29,6 +31,10 @@ export function AppEntry() {
     } else {
       setPhase('auth');
     }
+  };
+
+  const handleFlagSplashComplete = () => {
+    setPhase('auth');
   };
 
   const handleOnboardingComplete = () => {
@@ -43,6 +49,10 @@ export function AppEntry() {
 
   if (phase === 'splash') {
     return <SplashScreen onComplete={handleSplashComplete} duration={5250} />;
+  }
+
+  if (phase === 'flag-splash') {
+    return <FlagSplash onComplete={handleFlagSplashComplete} duration={1800} />;
   }
 
   if (phase === 'onboarding') {
