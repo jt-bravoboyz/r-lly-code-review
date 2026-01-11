@@ -76,3 +76,11 @@ export async function sendMovingToNextStopMessage(chatId: string, currentStop: s
 export async function sendArrivedAtStopMessage(chatId: string, stopName: string) {
   await sendSystemMessage(chatId, `🎉 We've arrived at ${stopName}!`);
 }
+
+export async function sendRallyStartedMessage(chatId: string, eventTitle: string) {
+  await sendSystemMessage(chatId, `🚀 Rally started: ${eventTitle}`);
+}
+
+export async function sendRallyEndedMessage(chatId: string, eventTitle: string) {
+  await sendSystemMessage(chatId, `✨ Rally ended: ${eventTitle}`);
+}

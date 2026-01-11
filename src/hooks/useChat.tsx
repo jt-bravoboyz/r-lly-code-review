@@ -2,6 +2,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { 
+  checkEventSquadChatEligibility, 
+  linkSquadChatToEvent 
+} from '@/hooks/useSquadChat';
+import { sendRallyStartedMessage } from '@/hooks/useSystemMessages';
 
 export interface Message {
   id: string;
@@ -22,12 +27,14 @@ export interface Chat {
   id: string;
   name: string | null;
   event_id: string | null;
+  squad_id?: string | null;
+  linked_event_id?: string | null;
   is_group: boolean;
   created_at: string;
   event?: {
     id: string;
     title: string;
-  };
+  } | null;
   latest_message?: Message;
   unread_count?: number;
 }
@@ -38,16 +45,55 @@ export function useEventChat(eventId: string) {
   const { data: chat, isLoading: chatLoading } = useQuery({
     queryKey: ['event-chat', eventId],
     queryFn: async () => {
-      // Find or create chat for this event
-      const { data: existingChat } = await supabase
+      // First check if a squad chat is already linked to this event
+      const { data: linkedSquadChat } = await supabase
+        .from('chats')
+        .select('*')
+        .eq('linked_event_id', eventId)
+        .not('squad_id', 'is', null)
+        .maybeSingle();
+
+      if (linkedSquadChat) return linkedSquadChat;
+
+      // Check if there's an existing dedicated event chat
+      const { data: existingEventChat } = await supabase
         .from('chats')
         .select('*')
         .eq('event_id', eventId)
+        .is('squad_id', null)
         .maybeSingle();
 
-      if (existingChat) return existingChat;
+      if (existingEventChat) return existingEventChat;
 
-      // Create new chat for event
+      // No existing chat - check if we should use a squad chat
+      const eligibility = await checkEventSquadChatEligibility(eventId);
+
+      if (eligibility.useSquadChat && eligibility.chatId) {
+        // Link the squad chat to this event
+        await linkSquadChatToEvent(eligibility.chatId, eventId);
+        
+        // Get the event title for the system message
+        const { data: event } = await supabase
+          .from('events')
+          .select('title')
+          .eq('id', eventId)
+          .single();
+
+        if (event) {
+          await sendRallyStartedMessage(eligibility.chatId, event.title);
+        }
+
+        // Fetch the updated chat
+        const { data: squadChat } = await supabase
+          .from('chats')
+          .select('*')
+          .eq('id', eligibility.chatId)
+          .single();
+
+        return squadChat;
+      }
+
+      // Create new dedicated event chat
       const { data: newChat, error } = await supabase
         .from('chats')
         .insert({ event_id: eventId, is_group: true })
@@ -126,6 +172,8 @@ export function useEventChat(eventId: string) {
     chat,
     messages: messages || [],
     isLoading: chatLoading || messagesLoading,
+    // Helper to identify if this is a squad chat being used for the event
+    isSquadChat: !!chat?.squad_id,
   };
 }
 
@@ -177,10 +225,7 @@ export function useUserChats() {
       // Get chats where user is an attendee of the event
       const { data: eventChats, error } = await supabase
         .from('chats')
-        .select(`
-          *,
-          event:events(id, title)
-        `)
+        .select('*')
         .not('event_id', 'is', null);
 
       if (error) throw error;
@@ -193,9 +238,21 @@ export function useUserChats() {
 
       const attendingEventIds = new Set(attendances?.map(a => a.event_id) || []);
 
-      return (eventChats || []).filter(chat => 
+      const userEventChats = (eventChats || []).filter(chat => 
         chat.event_id && attendingEventIds.has(chat.event_id)
-      ) as Chat[];
+      );
+      
+      // Fetch event details for each chat
+      const chatsWithEvents = await Promise.all(userEventChats.map(async (chat) => {
+        const { data: eventData } = await supabase
+          .from('events')
+          .select('id, title')
+          .eq('id', chat.event_id!)
+          .single();
+        return { ...chat, event: eventData } as Chat;
+      }));
+      
+      return chatsWithEvents;
     },
     enabled: !!profile?.id,
   });

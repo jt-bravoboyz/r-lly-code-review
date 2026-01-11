@@ -186,21 +186,27 @@ export type Database = {
           event_id: string | null
           id: string
           is_group: boolean | null
+          linked_event_id: string | null
           name: string | null
+          squad_id: string | null
         }
         Insert: {
           created_at?: string | null
           event_id?: string | null
           id?: string
           is_group?: boolean | null
+          linked_event_id?: string | null
           name?: string | null
+          squad_id?: string | null
         }
         Update: {
           created_at?: string | null
           event_id?: string | null
           id?: string
           is_group?: boolean | null
+          linked_event_id?: string | null
           name?: string | null
+          squad_id?: string | null
         }
         Relationships: [
           {
@@ -208,6 +214,20 @@ export type Database = {
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chats_linked_event_id_fkey"
+            columns: ["linked_event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chats_squad_id_fkey"
+            columns: ["squad_id"]
+            isOneToOne: false
+            referencedRelation: "squads"
             referencedColumns: ["id"]
           },
         ]

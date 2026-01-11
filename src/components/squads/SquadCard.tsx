@@ -2,11 +2,12 @@ import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Trash2, Zap, UserPlus, Settings2 } from 'lucide-react';
+import { Trash2, Zap, UserPlus, Settings2, MessageCircle } from 'lucide-react';
 import { Squad, useDeleteSquad, useUpdateSquadSymbol } from '@/hooks/useSquads';
 import { toast } from 'sonner';
 import { SquadInviteDialog } from './SquadInviteDialog';
 import { getSquadIcon, SquadSymbolPicker, type SquadSymbol } from './SquadSymbolPicker';
+import { SquadChatSheet } from '@/components/chat/SquadChatSheet';
 import {
   Popover,
   PopoverContent,
@@ -23,6 +24,7 @@ export function SquadCard({ squad, onQuickRally }: SquadCardProps) {
   const updateSymbol = useUpdateSquadSymbol();
   const members = squad.members || [];
   const [symbolPopoverOpen, setSymbolPopoverOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
   
   const Icon = getSquadIcon(squad.symbol || 'shield');
   const isOwned = squad.isOwned !== false; // Default to true for backward compatibility
@@ -121,6 +123,16 @@ export function SquadCard({ squad, onQuickRally }: SquadCardProps) {
 
         {/* Action buttons */}
         <div className="flex gap-2">
+          {/* Chat button */}
+          <Button
+            variant="outline"
+            size="icon"
+            className="rounded-full shrink-0"
+            onClick={() => setChatOpen(true)}
+          >
+            <MessageCircle className="h-4 w-4" />
+          </Button>
+
           {/* Invite Friends button */}
           <SquadInviteDialog 
             squadId={squad.id} 
@@ -148,6 +160,15 @@ export function SquadCard({ squad, onQuickRally }: SquadCardProps) {
           )}
         </div>
       </CardContent>
+
+      {/* Squad Chat Sheet */}
+      <SquadChatSheet
+        squadId={squad.id}
+        squadName={squad.name}
+        squadSymbol={squad.symbol}
+        open={chatOpen}
+        onOpenChange={setChatOpen}
+      />
     </Card>
   );
 }
