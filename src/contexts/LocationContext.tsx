@@ -460,6 +460,7 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
           if (data.profile_id === profile?.id) return; // Skip self
 
           // Fetch profile info using safe_profiles view to protect sensitive data
+          // Only show location if share_location is true (enforced by view)
           const { data: profileData } = await supabase
             .from('safe_profiles')
             .select('display_name, avatar_url')
@@ -483,16 +484,16 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
       )
       .subscribe();
 
-    // Initial fetch of member locations
+    // Initial fetch of member locations - use safe_event_attendees view for location privacy
     supabase
-      .from('event_attendees')
+      .from('safe_event_attendees')
       .select(`
         profile_id,
         current_lat,
         current_lng,
         last_location_update,
         share_location,
-        profile:profiles(display_name, avatar_url)
+        profile:safe_profiles(display_name, avatar_url)
       `)
       .eq('event_id', eventId)
       .eq('share_location', true)

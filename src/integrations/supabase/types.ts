@@ -1727,6 +1727,27 @@ export type Database = {
         Args: { target_profile_id: string }
         Returns: Database["public"]["Enums"]["connection_type"]
       }
+      get_event_attendees_safe: {
+        Args: { p_event_id: string }
+        Returns: {
+          arrived_at: string
+          arrived_home: boolean
+          avatar_url: string
+          current_lat: number
+          current_lng: number
+          destination_name: string
+          destination_visibility: string
+          display_name: string
+          event_id: string
+          going_home_at: string
+          id: string
+          joined_at: string
+          last_location_update: string
+          profile_id: string
+          share_location: boolean
+          status: string
+        }[]
+      }
       get_event_preview_by_invite_code: {
         Args: { invite_code_param: string }
         Returns: {
