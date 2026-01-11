@@ -459,9 +459,9 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
           if (!data.share_location || !data.current_lat || !data.current_lng) return;
           if (data.profile_id === profile?.id) return; // Skip self
 
-          // Fetch profile info
+          // Fetch profile info using safe_profiles view to protect sensitive data
           const { data: profileData } = await supabase
-            .from('profiles')
+            .from('safe_profiles')
             .select('display_name, avatar_url')
             .eq('id', data.profile_id)
             .single();

@@ -36,7 +36,7 @@ export function useSquads() {
           *,
           members:squad_members(
             *,
-            profile:profiles(id, display_name, avatar_url)
+            profile:safe_profiles(id, display_name, avatar_url)
           )
         `)
         .eq('owner_id', profile.id)
@@ -142,7 +142,7 @@ export function useAllProfiles() {
     queryKey: ['all-profiles'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('profiles')
+        .from('safe_profiles')
         .select('id, display_name, avatar_url')
         .order('display_name');
 
