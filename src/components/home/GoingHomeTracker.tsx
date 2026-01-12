@@ -9,9 +9,9 @@ import { formatDistanceToNow } from 'date-fns';
 interface GoingHomeAttendee {
   id: string;
   profile_id: string;
-  destination_name: string | null; // Now privacy-controlled via view
+  destination_name: string | null;
   going_home_at: string | null;
-  arrived_home: boolean;
+  arrived_safely: boolean;
   arrived_at: string | null;
   destination_visibility: string | null;
   profile?: {
@@ -33,14 +33,14 @@ export function GoingHomeTracker({ eventId }: GoingHomeTrackerProps) {
     const fetchGoingHome = async () => {
       // Use the safe_event_attendees view which respects privacy settings
       const { data, error } = await supabase
-        .from('safe_event_attendees')
+        .from('event_attendees')
         .select(`
           id,
           profile_id,
           destination_name,
           destination_visibility,
           going_home_at,
-          arrived_home,
+          arrived_safely,
           arrived_at
         `)
         .eq('event_id', eventId)
@@ -58,12 +58,13 @@ export function GoingHomeTracker({ eventId }: GoingHomeTrackerProps) {
 
           const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
           const enrichedData = data.map(attendee => ({
-            ...attendee,
-            profile: profileMap.get(attendee.profile_id) || null
+            ...(attendee as any),
+            arrived_safely: (attendee as any).arrived_safely ?? false,
+            profile: profileMap.get((attendee as any).profile_id) || null
           }));
           setGoingHome(enrichedData as GoingHomeAttendee[]);
         } else {
-          setGoingHome(data as GoingHomeAttendee[]);
+          setGoingHome((data as any[]).map(d => ({ ...d, arrived_safely: d.arrived_safely ?? false })) as GoingHomeAttendee[]);
         }
       }
       setLoading(false);
@@ -101,8 +102,8 @@ export function GoingHomeTracker({ eventId }: GoingHomeTrackerProps) {
     return null;
   }
 
-  const arrivedCount = goingHome.filter(a => a.arrived_home).length;
-  const enRouteCount = goingHome.filter(a => !a.arrived_home).length;
+  const arrivedCount = goingHome.filter(a => a.arrived_safely).length;
+  const enRouteCount = goingHome.filter(a => !a.arrived_safely).length;
 
   return (
     <Card className="border-0 shadow-sm bg-gradient-to-br from-secondary/5 to-background">
@@ -120,7 +121,7 @@ export function GoingHomeTracker({ eventId }: GoingHomeTrackerProps) {
           <div
             key={attendee.id}
             className={`flex items-center gap-3 p-3 rounded-xl transition-all ${
-              attendee.arrived_home 
+              attendee.arrived_safely 
                 ? 'bg-green-50 border border-green-200' 
                 : 'bg-white border border-muted'
             }`}
@@ -132,7 +133,7 @@ export function GoingHomeTracker({ eventId }: GoingHomeTrackerProps) {
                   {attendee.profile?.display_name?.charAt(0)?.toUpperCase() || '?'}
                 </AvatarFallback>
               </Avatar>
-              {attendee.arrived_home ? (
+              {attendee.arrived_safely ? (
                 <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
                   <CheckCircle2 className="h-3 w-3 text-white" />
                 </div>
@@ -160,7 +161,7 @@ export function GoingHomeTracker({ eventId }: GoingHomeTrackerProps) {
             </div>
 
             <div className="text-right">
-              {attendee.arrived_home ? (
+              {attendee.arrived_safely ? (
                 <Badge className="bg-green-500 hover:bg-green-600">
                   <CheckCircle2 className="h-3 w-3 mr-1" />
                   Safe

@@ -51,29 +51,62 @@ export function useEvent(eventId: string | undefined) {
     queryKey: ['event', eventId],
     queryFn: async () => {
       if (!eventId) return null;
-      const { data, error } = await supabase
+      
+      // Fetch event with creator
+      const { data: eventData, error: eventError } = await supabase
         .from('events')
         .select(`
           *,
           creator:profiles!events_creator_id_fkey(id, display_name, avatar_url),
-          attendees:safe_event_attendees(
-            id,
-            status,
-            share_location,
-            current_lat,
-            current_lng,
-            going_home_at,
-            arrived_home,
-            is_dd,
-            profile:safe_profiles(id, display_name, avatar_url)
-          ),
           stops:barhop_stops(*)
         `)
         .eq('id', eventId)
         .single();
       
-      if (error) throw error;
-      return data;
+      if (eventError) throw eventError;
+      
+      // Fetch attendees separately with profiles
+      const { data: attendeesData, error: attendeesError } = await supabase
+        .from('event_attendees')
+        .select(`
+          id,
+          profile_id,
+          status,
+          share_location,
+          current_lat,
+          current_lng,
+          going_home_at,
+          arrived_safely,
+          is_dd
+        `)
+        .eq('event_id', eventId);
+      
+      if (attendeesError) throw attendeesError;
+      
+      // Fetch profiles for attendees
+      const profileIds = attendeesData?.map(a => a.profile_id).filter(Boolean) || [];
+      let profilesMap = new Map<string, { id: string; display_name: string | null; avatar_url: string | null }>();
+      
+      if (profileIds.length > 0) {
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('id, display_name, avatar_url')
+          .in('id', profileIds);
+        
+        profilesMap = new Map((profilesData || []).map(p => [p.id, p]));
+      }
+      
+      // Combine attendees with profiles
+      const attendees = (attendeesData || []).map(a => ({
+        ...a,
+        arrived_safely: (a as any).arrived_safely ?? false,
+        profile: profilesMap.get(a.profile_id) || { id: a.profile_id, display_name: null, avatar_url: null }
+      }));
+      
+      return {
+        ...eventData,
+        attendees
+      };
     },
     enabled: !!eventId
   });

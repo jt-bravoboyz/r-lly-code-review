@@ -34,7 +34,7 @@ export function useBadges() {
       const [attendeesResult, ridesResult, squadsResult, messagesResult] = await Promise.all([
         supabase
           .from('event_attendees')
-          .select('id, arrived_home, status')
+          .select('id, arrived_safely, status')
           .eq('profile_id', profile.id),
         supabase
           .from('rides')
@@ -58,7 +58,7 @@ export function useBadges() {
       return {
         rallies_attended: attendees.length,
         dd_trips: rides.filter(r => r.status === 'completed').length,
-        safe_homes: attendees.filter(a => a.arrived_home).length,
+        safe_homes: attendees.filter(a => (a as any).arrived_safely).length,
         rides_given: rides.length,
         squads_created: squads.length,
         messages_sent: messages.length,

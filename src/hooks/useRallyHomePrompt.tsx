@@ -39,9 +39,11 @@ export function useRallyHomePrompt(
         .from('event_attendees')
         .select(`
           going_home_at, 
-          arrived_home,
+          arrived_safely,
           after_rally_opted_in,
-          is_dd
+          is_dd,
+          not_participating_rally_home_confirmed,
+          dd_dropoff_confirmed_at
         `)
         .eq('event_id', eventId)
         .eq('profile_id', profileId)
@@ -61,11 +63,11 @@ export function useRallyHomePrompt(
 
       return {
         going_home_at: attendeeData.going_home_at,
-        arrived_safely: (attendeeData as any).arrived_safely ?? attendeeData.arrived_home ?? false,
+        arrived_safely: (attendeeData as any).arrived_safely ?? false,
         not_participating_rally_home_confirmed: (attendeeData as any).not_participating_rally_home_confirmed ?? null,
         dd_dropoff_confirmed_at: (attendeeData as any).dd_dropoff_confirmed_at ?? null,
-        after_rally_opted_in: attendeeData.after_rally_opted_in,
-        is_dd: attendeeData.is_dd,
+        after_rally_opted_in: (attendeeData as any).after_rally_opted_in,
+        is_dd: (attendeeData as any).is_dd,
         event: eventData,
       };
     },
