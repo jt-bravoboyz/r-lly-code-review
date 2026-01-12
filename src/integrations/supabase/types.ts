@@ -237,9 +237,11 @@ export type Database = {
           after_rally_location_name: string | null
           after_rally_opted_in: boolean | null
           arrived_at: string | null
-          arrived_home: boolean | null
+          arrived_safely: boolean | null
           current_lat: number | null
           current_lng: number | null
+          dd_dropoff_confirmed_at: string | null
+          dd_dropoff_confirmed_by: string | null
           destination_lat: number | null
           destination_lng: number | null
           destination_name: string | null
@@ -251,6 +253,7 @@ export type Database = {
           is_dd: boolean | null
           joined_at: string | null
           last_location_update: string | null
+          not_participating_rally_home_confirmed: boolean | null
           profile_id: string
           share_location: boolean | null
           status: string | null
@@ -259,9 +262,11 @@ export type Database = {
           after_rally_location_name?: string | null
           after_rally_opted_in?: boolean | null
           arrived_at?: string | null
-          arrived_home?: boolean | null
+          arrived_safely?: boolean | null
           current_lat?: number | null
           current_lng?: number | null
+          dd_dropoff_confirmed_at?: string | null
+          dd_dropoff_confirmed_by?: string | null
           destination_lat?: number | null
           destination_lng?: number | null
           destination_name?: string | null
@@ -273,6 +278,7 @@ export type Database = {
           is_dd?: boolean | null
           joined_at?: string | null
           last_location_update?: string | null
+          not_participating_rally_home_confirmed?: boolean | null
           profile_id: string
           share_location?: boolean | null
           status?: string | null
@@ -281,9 +287,11 @@ export type Database = {
           after_rally_location_name?: string | null
           after_rally_opted_in?: boolean | null
           arrived_at?: string | null
-          arrived_home?: boolean | null
+          arrived_safely?: boolean | null
           current_lat?: number | null
           current_lng?: number | null
+          dd_dropoff_confirmed_at?: string | null
+          dd_dropoff_confirmed_by?: string | null
           destination_lat?: number | null
           destination_lng?: number | null
           destination_name?: string | null
@@ -295,11 +303,40 @@ export type Database = {
           is_dd?: boolean | null
           joined_at?: string | null
           last_location_update?: string | null
+          not_participating_rally_home_confirmed?: boolean | null
           profile_id?: string
           share_location?: boolean | null
           status?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "event_attendees_dd_dropoff_confirmed_by_fkey"
+            columns: ["dd_dropoff_confirmed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_attendees_dd_dropoff_confirmed_by_fkey"
+            columns: ["dd_dropoff_confirmed_by"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_attendees_dd_dropoff_confirmed_by_fkey"
+            columns: ["dd_dropoff_confirmed_by"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_attendees_dd_dropoff_confirmed_by_fkey"
+            columns: ["dd_dropoff_confirmed_by"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles_with_connection"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "event_attendees_event_id_fkey"
             columns: ["event_id"]
@@ -1979,6 +2016,28 @@ export type Database = {
       }
     }
     Views: {
+      event_safety_summary: {
+        Row: {
+          arrived_safely_count: number | null
+          dd_count: number | null
+          dd_pending_arrival_count: number | null
+          event_id: string | null
+          not_participating_count: number | null
+          participating_count: number | null
+          safety_complete: boolean | null
+          total_attendees: number | null
+          undecided_count: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_attendees_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       public_profiles: {
         Row: {
           avatar_url: string | null
@@ -2015,9 +2074,11 @@ export type Database = {
       safe_event_attendees: {
         Row: {
           arrived_at: string | null
-          arrived_home: boolean | null
+          arrived_safely: boolean | null
           current_lat: number | null
           current_lng: number | null
+          dd_dropoff_confirmed_at: string | null
+          dd_dropoff_confirmed_by: string | null
           destination_name: string | null
           destination_visibility: string | null
           event_id: string | null
@@ -2026,15 +2087,18 @@ export type Database = {
           is_dd: boolean | null
           joined_at: string | null
           last_location_update: string | null
+          not_participating_rally_home_confirmed: boolean | null
           profile_id: string | null
           share_location: boolean | null
           status: string | null
         }
         Insert: {
           arrived_at?: string | null
-          arrived_home?: boolean | null
+          arrived_safely?: boolean | null
           current_lat?: never
           current_lng?: never
+          dd_dropoff_confirmed_at?: string | null
+          dd_dropoff_confirmed_by?: string | null
           destination_name?: never
           destination_visibility?: string | null
           event_id?: string | null
@@ -2043,15 +2107,18 @@ export type Database = {
           is_dd?: boolean | null
           joined_at?: string | null
           last_location_update?: never
+          not_participating_rally_home_confirmed?: boolean | null
           profile_id?: string | null
           share_location?: boolean | null
           status?: string | null
         }
         Update: {
           arrived_at?: string | null
-          arrived_home?: boolean | null
+          arrived_safely?: boolean | null
           current_lat?: never
           current_lng?: never
+          dd_dropoff_confirmed_at?: string | null
+          dd_dropoff_confirmed_by?: string | null
           destination_name?: never
           destination_visibility?: string | null
           event_id?: string | null
@@ -2060,11 +2127,40 @@ export type Database = {
           is_dd?: boolean | null
           joined_at?: string | null
           last_location_update?: never
+          not_participating_rally_home_confirmed?: boolean | null
           profile_id?: string | null
           share_location?: boolean | null
           status?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "event_attendees_dd_dropoff_confirmed_by_fkey"
+            columns: ["dd_dropoff_confirmed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_attendees_dd_dropoff_confirmed_by_fkey"
+            columns: ["dd_dropoff_confirmed_by"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_attendees_dd_dropoff_confirmed_by_fkey"
+            columns: ["dd_dropoff_confirmed_by"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_attendees_dd_dropoff_confirmed_by_fkey"
+            columns: ["dd_dropoff_confirmed_by"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles_with_connection"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "event_attendees_event_id_fkey"
             columns: ["event_id"]
@@ -2267,6 +2363,10 @@ export type Database = {
           unique_accessors: number
         }[]
       }
+      is_attendee_rally_home_undecided: {
+        Args: { p_event_id: string; p_profile_id: string }
+        Returns: boolean
+      }
       is_chat_member: { Args: { p_chat_id: string }; Returns: boolean }
       is_connected_to_profile: {
         Args: { target_profile_id: string }
@@ -2285,6 +2385,10 @@ export type Database = {
         Returns: boolean
       }
       is_event_member: { Args: { p_event_id: string }; Returns: boolean }
+      is_event_safety_complete: {
+        Args: { p_event_id: string }
+        Returns: boolean
+      }
       is_squad_member_or_owner: {
         Args: { p_squad_id: string }
         Returns: boolean
@@ -2292,6 +2396,10 @@ export type Database = {
       log_profile_access: {
         Args: { p_accessed_fields?: string[]; p_accessed_profile_id: string }
         Returns: undefined
+      }
+      needs_rally_home_reconfirmation: {
+        Args: { p_event_id: string; p_profile_id: string }
+        Returns: boolean
       }
       record_rate_limit: {
         Args: { p_action_type: string; p_profile_id: string }
