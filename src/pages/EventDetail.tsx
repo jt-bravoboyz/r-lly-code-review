@@ -18,7 +18,7 @@ import { useRides } from '@/hooks/useRides';
 import { useAuth } from '@/hooks/useAuth';
 import { useCohosts } from '@/hooks/useCohosts';
 import { useMyDDRequest, useEventDDs } from '@/hooks/useDDManagement';
-import { useStartRally, useEndRally } from '@/hooks/useAfterRally';
+import { useStartRally, useEndRally, useCompleteRally } from '@/hooks/useAfterRally';
 import { RideCard } from '@/components/rides/RideCard';
 import { CreateRideDialog } from '@/components/rides/CreateRideDialog';
 import { RequestRideDialog } from '@/components/rides/RequestRideDialog';
@@ -31,6 +31,7 @@ import { LiveUpdates } from '@/components/events/LiveUpdates';
 import { RallyHomeButton } from '@/components/home/RallyHomeButton';
 import { SafetyTracker } from '@/components/home/SafetyTracker';
 import { HostSafetyDashboard } from '@/components/home/HostSafetyDashboard';
+import { DDArrivedButton } from '@/components/home/DDArrivedButton';
 import { DDDropoffButton } from '@/components/rides/DDDropoffButton';
 import { useIsDD } from '@/hooks/useDDManagement';
 import { AddCohostDialog } from '@/components/events/AddCohostDialog';
@@ -60,6 +61,8 @@ export default function EventDetail() {
   const updateEvent = useUpdateEvent();
   const startRally = useStartRally();
   const endRally = useEndRally();
+  const completeRally = useCompleteRally();
+  const { data: isDD } = useIsDD(id);
   const [showFirstTimeWelcome, setShowFirstTimeWelcome] = useState(false);
   const [showAfterRallyOptIn, setShowAfterRallyOptIn] = useState(false);
 
@@ -413,12 +416,32 @@ export default function EventDetail() {
         )}
 
 
-        {/* Safety Tracker - Always show during/after live events (independent of event status) */}
-        {(isLiveEvent || isAfterRally) && <SafetyTracker eventId={event.id} />}
+        {/* Safety Tracker - Component handles its own visibility based on safety completion */}
+        <SafetyTracker eventId={event.id} />
         
         {/* Host Safety Dashboard - For hosts and co-hosts */}
         {canManage && (isLiveEvent || isAfterRally) && (
-          <HostSafetyDashboard eventId={event.id} />
+          <HostSafetyDashboard 
+            eventId={event.id} 
+            onCompleteRally={async () => {
+              try {
+                await completeRally.mutateAsync(event.id);
+                toast.success('R@lly completed! 🎉 Everyone made it home safely.');
+              } catch (error: any) {
+                toast.error(error.message || 'Failed to complete rally');
+              }
+            }}
+          />
+        )}
+
+        {/* DD Arrived Button - For designated drivers to confirm their own arrival */}
+        {isDD && (isLiveEvent || isAfterRally) && (
+          <DDArrivedButton eventId={event.id} />
+        )}
+
+        {/* DD Dropoff Button - For DDs to confirm passenger dropoffs */}
+        {isDD && (isLiveEvent || isAfterRally) && (
+          <DDDropoffButton eventId={event.id} />
         )}
 
         {/* Tabs for Details, Chat, Tracking, Rides */}
