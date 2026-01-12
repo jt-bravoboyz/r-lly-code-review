@@ -48,6 +48,38 @@ function calculateETA(fromLat: number, fromLng: number, toLat: number, toLng: nu
   return eta;
 }
 
+// Send push notification for bar hop events
+async function sendBarHopPushNotification(
+  eventId: string,
+  title: string,
+  body: string
+): Promise<void> {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+
+    await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-event-notification`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          type: 'bar_hop_transition',
+          eventId,
+          title,
+          body,
+        }),
+      }
+    );
+  } catch (error) {
+    console.error('Failed to send bar hop push notification:', error);
+    // Don't throw - push notification failure shouldn't break the flow
+  }
+}
+
 export function BarHopControls({ eventId, stops, canManage, hostName }: BarHopControlsProps) {
   const [isLoading, setIsLoading] = useState(false);
   const queryClient = useQueryClient();
@@ -115,6 +147,13 @@ export function BarHopControls({ eventId, stops, canManage, hostName }: BarHopCo
         await sendArrivedAtStopMessage(chatId, stop.name);
       }
 
+      // Send push notification to all attendees
+      await sendBarHopPushNotification(
+        eventId,
+        `Arrived at ${stop.name}! 🎉`,
+        `Your group has arrived at the next stop`
+      );
+
       toast.success(`Arrived at ${stop.name}! 🍺`);
       queryClient.invalidateQueries({ queryKey: ['event', eventId] });
     } catch (error) {
@@ -167,6 +206,14 @@ export function BarHopControls({ eventId, stops, canManage, hostName }: BarHopCo
       if (chatId) {
         await sendMovingToNextStopMessage(chatId, currentStop.name, nextStop.name, hostName);
       }
+
+      // Send push notification for departure
+      const etaText = eta ? ` - ETA ${format(eta, 'h:mm a')}` : '';
+      await sendBarHopPushNotification(
+        eventId,
+        `Moving to ${nextStop.name} 🚶`,
+        `Leaving ${currentStop.name}${etaText}`
+      );
 
       const etaMessage = eta ? ` ETA: ${format(eta, 'h:mm a')}` : '';
       toast.success(`Moving to ${nextStop.name}!${etaMessage} 🚶`, {
