@@ -89,16 +89,19 @@ export function useEventSafetyStatus(eventId: string | undefined) {
     queryFn: async () => {
       if (!eventId) return [];
 
-      // Query event_attendees directly and cast since new columns may not be in types yet
+      // Query event_attendees with renamed columns
       const { data, error } = await supabase
         .from('event_attendees')
         .select(`
           id,
           profile_id,
           going_home_at,
-          arrived_home,
+          arrived_safely,
           is_dd,
-          after_rally_opted_in
+          after_rally_opted_in,
+          not_participating_rally_home_confirmed,
+          dd_dropoff_confirmed_at,
+          dd_dropoff_confirmed_by
         `)
         .eq('event_id', eventId);
 
@@ -116,13 +119,12 @@ export function useEventSafetyStatus(eventId: string | undefined) {
 
       const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
       
-      // Map to our interface, handling column renames
+      // Map to our interface
       return data.map(attendee => ({
         id: attendee.id,
         profile_id: attendee.profile_id,
         going_home_at: attendee.going_home_at,
-        // Handle both old (arrived_home) and new (arrived_safely) column names
-        arrived_safely: (attendee as any).arrived_safely ?? attendee.arrived_home ?? false,
+        arrived_safely: (attendee as any).arrived_safely ?? false,
         not_participating_rally_home_confirmed: (attendee as any).not_participating_rally_home_confirmed ?? null,
         dd_dropoff_confirmed_at: (attendee as any).dd_dropoff_confirmed_at ?? null,
         dd_dropoff_confirmed_by: (attendee as any).dd_dropoff_confirmed_by ?? null,
@@ -175,9 +177,12 @@ export function useMyAttendeeStatus(eventId: string | undefined) {
           id,
           profile_id,
           going_home_at,
-          arrived_home,
+          arrived_safely,
           is_dd,
-          after_rally_opted_in
+          after_rally_opted_in,
+          not_participating_rally_home_confirmed,
+          dd_dropoff_confirmed_at,
+          dd_dropoff_confirmed_by
         `)
         .eq('event_id', eventId)
         .eq('profile_id', profile.id)
@@ -191,7 +196,7 @@ export function useMyAttendeeStatus(eventId: string | undefined) {
         id: data.id,
         profile_id: data.profile_id,
         going_home_at: data.going_home_at,
-        arrived_safely: (data as any).arrived_safely ?? data.arrived_home ?? false,
+        arrived_safely: (data as any).arrived_safely ?? false,
         not_participating_rally_home_confirmed: (data as any).not_participating_rally_home_confirmed ?? null,
         dd_dropoff_confirmed_at: (data as any).dd_dropoff_confirmed_at ?? null,
         dd_dropoff_confirmed_by: (data as any).dd_dropoff_confirmed_by ?? null,
@@ -214,7 +219,8 @@ export function useUpdateSafetyStatus() {
       going_home_at: new Date().toISOString(),
       destination_name: destinationName || null,
       destination_visibility: visibility || 'squad',
-      arrived_home: false, // Use old column name for compatibility
+      arrived_safely: false,
+      not_participating_rally_home_confirmed: null, // Clear any previous "not participating" confirmation
     };
 
     const { error } = await supabase
@@ -229,11 +235,11 @@ export function useUpdateSafetyStatus() {
   const confirmNotParticipating = async (eventId: string) => {
     if (!profile?.id) throw new Error('Not authenticated');
 
-    // Try new column name, fall back to just clearing going_home_at
     const { error } = await supabase
       .from('event_attendees')
       .update({
         going_home_at: null,
+        not_participating_rally_home_confirmed: true,
       } as any)
       .eq('event_id', eventId)
       .eq('profile_id', profile.id);
@@ -247,7 +253,7 @@ export function useUpdateSafetyStatus() {
     const { error } = await supabase
       .from('event_attendees')
       .update({
-        arrived_home: true, // Use old column name for compatibility
+        arrived_safely: true,
         arrived_at: new Date().toISOString(),
       } as any)
       .eq('event_id', eventId)

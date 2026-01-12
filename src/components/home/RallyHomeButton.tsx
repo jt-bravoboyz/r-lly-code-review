@@ -48,14 +48,14 @@ export function RallyHomeButton({ eventId, trigger }: RallyHomeButtonProps) {
       
       const { data } = await supabase
         .from('event_attendees')
-        .select('going_home_at, arrived_home')
+        .select('going_home_at, arrived_safely')
         .eq('event_id', eventId)
         .eq('profile_id', profile.id)
         .maybeSingle();
 
       if (data) {
-        setIsGoingHome(!!data.going_home_at);
-        setHasArrived(!!data.arrived_home);
+        setIsGoingHome(!!(data as any).going_home_at);
+        setHasArrived(!!(data as any).arrived_safely);
       }
     };
 
@@ -127,7 +127,6 @@ export function RallyHomeButton({ eventId, trigger }: RallyHomeButtonProps) {
         finalAddress = customAddress.trim();
       }
 
-      // Update attendee record with going home status and privacy settings
       const { error } = await supabase
         .from('event_attendees')
         .update({
@@ -135,9 +134,9 @@ export function RallyHomeButton({ eventId, trigger }: RallyHomeButtonProps) {
           destination_name: finalAddress,
           destination_visibility: visibility,
           destination_shared_with: visibility === 'selected' ? selectedPeople : [],
-          arrived_home: false,
+          arrived_safely: false,
           arrived_at: null,
-        })
+        } as any)
         .eq('event_id', eventId)
         .eq('profile_id', profile.id);
 
@@ -182,9 +181,9 @@ export function RallyHomeButton({ eventId, trigger }: RallyHomeButtonProps) {
       const { error } = await supabase
         .from('event_attendees')
         .update({
-          arrived_home: true,
+          arrived_safely: true,
           arrived_at: new Date().toISOString(),
-        })
+        } as any)
         .eq('event_id', eventId)
         .eq('profile_id', profile.id);
 
