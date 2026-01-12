@@ -234,7 +234,7 @@ export function RallyHomeButton({ eventId, trigger }: RallyHomeButtonProps) {
         className="w-full bg-green-500/20 text-green-700 rounded-full font-montserrat h-14 text-lg cursor-default"
       >
         <CheckCircle2 className="h-5 w-5 mr-2" />
-        Safe at Home
+        Arrived Safely ✓
       </Button>
     );
   }

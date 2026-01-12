@@ -29,7 +29,10 @@ import { LiveTracking } from '@/components/tracking/LiveTracking';
 import { AttendeeMap } from '@/components/tracking/AttendeeMap';
 import { LiveUpdates } from '@/components/events/LiveUpdates';
 import { RallyHomeButton } from '@/components/home/RallyHomeButton';
-import { GoingHomeTracker } from '@/components/home/GoingHomeTracker';
+import { SafetyTracker } from '@/components/home/SafetyTracker';
+import { HostSafetyDashboard } from '@/components/home/HostSafetyDashboard';
+import { DDDropoffButton } from '@/components/rides/DDDropoffButton';
+import { useIsDD } from '@/hooks/useDDManagement';
 import { AddCohostDialog } from '@/components/events/AddCohostDialog';
 import { BarHopStopsMap } from '@/components/tracking/BarHopStopsMap';
 import { BarHopControls } from '@/components/events/BarHopControls';
@@ -410,8 +413,13 @@ export default function EventDetail() {
         )}
 
 
-        {/* Going Home Tracker - Show who's heading home */}
-        {(isLiveEvent || isAfterRally) && <GoingHomeTracker eventId={event.id} />}
+        {/* Safety Tracker - Always show during/after live events (independent of event status) */}
+        {(isLiveEvent || isAfterRally) && <SafetyTracker eventId={event.id} />}
+        
+        {/* Host Safety Dashboard - For hosts and co-hosts */}
+        {canManage && (isLiveEvent || isAfterRally) && (
+          <HostSafetyDashboard eventId={event.id} />
+        )}
 
         {/* Tabs for Details, Chat, Tracking, Rides */}
         <Tabs defaultValue="details" className="w-full">
