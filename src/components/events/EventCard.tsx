@@ -1,8 +1,8 @@
 import { Clock, MapPin, Users, Beer, ChevronRight } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
+import { getEventTypeLabel } from '@/lib/eventTypes';
 
 interface EventCardProps {
   event: {
@@ -56,7 +56,12 @@ export function EventCard({ event }: EventCardProps) {
                   <h3 className="font-bold text-base text-card-foreground truncate font-montserrat group-hover:text-primary transition-colors">
                     {event.title}
                   </h3>
-                  <div className="flex items-center gap-2 mt-1">
+                  <div className="flex items-center gap-2 mt-1 flex-wrap">
+                    {event.event_type && event.event_type !== 'rally' && (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-medium border border-primary/20">
+                        {getEventTypeLabel(event.event_type)}
+                      </span>
+                    )}
                     {event.is_barhop && (
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-100 to-orange-100 text-orange-600 text-[10px] font-bold border border-orange-200/50 shadow-sm">
                         <Beer className="h-3 w-3 icon-bounce" />

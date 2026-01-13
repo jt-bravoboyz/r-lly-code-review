@@ -11,6 +11,8 @@ import { Input } from '@/components/ui/input';
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { EVENT_TYPES } from '@/lib/eventTypes';
 import rallyLogo from '@/assets/rally-logo.png';
 
 export default function Events() {
@@ -18,6 +20,7 @@ export default function Events() {
   const { data: events, isLoading } = useEvents();
   const { data: pastEvents, isLoading: pastLoading } = usePastEvents();
   const [searchQuery, setSearchQuery] = useState('');
+  const [typeFilter, setTypeFilter] = useState<string>('all');
   const location = useLocation();
   
   // Get preselected squad from navigation state (from Squads page Quick Rally)
@@ -39,11 +42,13 @@ export default function Events() {
     );
   }
 
-  // Filter events based on search
-  const filteredEvents = events?.filter(event => 
-    event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    event.location_name?.toLowerCase().includes(searchQuery.toLowerCase())
-  ) || [];
+  // Filter events based on search and type
+  const filteredEvents = events?.filter(event => {
+    const matchesSearch = event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      event.location_name?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesType = typeFilter === 'all' || event.event_type === typeFilter;
+    return matchesSearch && matchesType;
+  }) || [];
 
   return (
     <div className="min-h-screen pb-28 bg-gradient-to-b from-secondary/30 via-background to-secondary/20 relative overflow-hidden">
@@ -95,9 +100,20 @@ export default function Events() {
               <Link2 className="h-4 w-4" />
             </Link>
           </Button>
-          <Button variant="outline" size="icon" className="rounded-full shrink-0 bg-white/80 backdrop-blur-sm border-primary/20 hover:bg-primary hover:text-white hover:border-primary transition-all">
-            <Filter className="h-4 w-4" />
-          </Button>
+          <Select value={typeFilter} onValueChange={setTypeFilter}>
+            <SelectTrigger className="w-[130px] rounded-full bg-white/80 backdrop-blur-sm border-primary/20 hover:border-primary/40 transition-all">
+              <Filter className="h-4 w-4 mr-2 text-muted-foreground" />
+              <SelectValue placeholder="Filter" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Types</SelectItem>
+              {EVENT_TYPES.map((type) => (
+                <SelectItem key={type.value} value={type.value}>
+                  {type.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Quick Rally Card - BOLD & VIBRANT */}

@@ -2,13 +2,14 @@ import { useState, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Zap, MapPin, Users, Beer, Check, Clock } from 'lucide-react';
+import { Zap, Users, Beer, Check, Clock, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useCreateEvent, useJoinEvent } from '@/hooks/useEvents';
 import { useCreateEventInvites } from '@/hooks/useEventInvites';
 import { useAuth } from '@/hooks/useAuth';
@@ -20,12 +21,13 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useConfetti } from '@/hooks/useConfetti';
 import { LocationSearch } from '@/components/location/LocationSearch';
 import { format, addHours, setHours, setMinutes, isAfter, isSameDay } from 'date-fns';
-import { supabase } from '@/integrations/supabase/client';
+import { EVENT_TYPES, getEventTypeLabel } from '@/lib/eventTypes';
 
 const quickRallySchema = z.object({
   title: z.string().min(1, 'Give your rally a name'),
   location_name: z.string().optional(),
   is_barhop: z.boolean(),
+  event_type: z.string().default('rally'),
 });
 
 type QuickRallyFormData = z.infer<typeof quickRallySchema>;
@@ -97,6 +99,7 @@ export function QuickRallyDialog({ trigger, preselectedSquad }: QuickRallyDialog
   const [selectedSquads, setSelectedSquads] = useState<Squad[]>(preselectedSquad ? [preselectedSquad] : []);
   const [selectedLocationCoords, setSelectedLocationCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [selectedTime, setSelectedTime] = useState<string>('now');
+  const [showEventType, setShowEventType] = useState(false);
   
   const { profile } = useAuth();
   const { data: squads } = useAllMySquads();
@@ -121,6 +124,7 @@ export function QuickRallyDialog({ trigger, preselectedSquad }: QuickRallyDialog
       title: '',
       location_name: '',
       is_barhop: false,
+      event_type: 'rally',
     }
   });
 
@@ -147,6 +151,7 @@ export function QuickRallyDialog({ trigger, preselectedSquad }: QuickRallyDialog
     setSelectedSquads(preselectedSquad ? [preselectedSquad] : []);
     setSelectedLocationCoords(null);
     setSelectedTime('now');
+    setShowEventType(false);
     form.reset();
   };
 
@@ -160,12 +165,12 @@ export function QuickRallyDialog({ trigger, preselectedSquad }: QuickRallyDialog
       // Calculate start time based on selection
       const startTime = getStartTime(selectedTime);
       
-      // Create rally
+      // Create rally - Chat is created automatically via database trigger
       const result = await createEvent.mutateAsync({
         creator_id: profile.id,
         title: data.title,
         description: 'Quick Rally - Same day event',
-        event_type: 'rally',
+        event_type: data.event_type,
         start_time: startTime.toISOString(),
         location_name: data.location_name || 'Current Location',
         location_lat: selectedLocationCoords?.lat || location.lat,
@@ -174,22 +179,14 @@ export function QuickRallyDialog({ trigger, preselectedSquad }: QuickRallyDialog
         is_quick_rally: true,
       });
 
-      // Auto-join the event
+      // Auto-join the event - This triggers chat_participants sync
       await joinEvent.mutateAsync({ eventId: result.id, profileId: profile.id });
       
-      // Create event chat immediately (trigger will add host to chat_participants)
-      const { error: chatError } = await supabase
-        .from('chats')
-        .insert({ 
-          event_id: result.id, 
-          is_group: true, 
-          name: data.title 
-        });
-      
-      if (chatError) {
-        console.error('Failed to create event chat:', chatError);
-        // Don't fail the whole creation - chat can be created lazily
-      }
+      console.log('[R@lly Debug] Quick Rally completed:', { 
+        event_id: result.id, 
+        creator_joined: true,
+        event_type: data.event_type,
+      });
       
       // Auto-invite all members from selected squads
       if (selectedSquads.length > 0) {
@@ -237,6 +234,8 @@ export function QuickRallyDialog({ trigger, preselectedSquad }: QuickRallyDialog
       toast.error(error.message || 'Failed to create rally');
     }
   };
+
+  const selectedEventType = form.watch('event_type');
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => {
@@ -323,6 +322,45 @@ export function QuickRallyDialog({ trigger, preselectedSquad }: QuickRallyDialog
                 </FormItem>
               )}
             />
+
+            {/* Event Type - Collapsible for quick flow */}
+            <Collapsible open={showEventType} onOpenChange={setShowEventType}>
+              <CollapsibleTrigger asChild>
+                <button
+                  type="button"
+                  className="flex items-center justify-between w-full text-sm text-muted-foreground hover:text-foreground transition-colors py-2"
+                >
+                  <span className="flex items-center gap-2">
+                    Event type: <span className="font-medium text-foreground">{getEventTypeLabel(selectedEventType)}</span>
+                  </span>
+                  <ChevronDown className={`h-4 w-4 transition-transform ${showEventType ? 'rotate-180' : ''}`} />
+                </button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="space-y-2">
+                <FormField
+                  control={form.control}
+                  name="event_type"
+                  render={({ field }) => (
+                    <FormItem>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent className="max-h-60">
+                          {EVENT_TYPES.map((type) => (
+                            <SelectItem key={type.value} value={type.value}>
+                              {type.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </FormItem>
+                  )}
+                />
+              </CollapsibleContent>
+            </Collapsible>
 
             <FormField
               control={form.control}
