@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useOptIntoAfterRally } from '@/hooks/useAfterRally';
 import { useAuth } from '@/hooks/useAuth';
+import { useMyRallyHomePrompt } from '@/hooks/useRallyHomePrompt';
 import { toast } from 'sonner';
 
 interface AfterRallyOptInDialogProps {
@@ -33,6 +34,11 @@ export function AfterRallyOptInDialog({
   const [locationName, setLocationName] = useState('');
   const { profile } = useAuth();
   const optIn = useOptIntoAfterRally();
+  const promptStatus = useMyRallyHomePrompt(eventId);
+
+  // Only show for undecided or those needing re-confirmation
+  // If already participating or arrived safely, don't show this dialog
+  const shouldShow = open && (promptStatus.isUndecided || promptStatus.needsReconfirmation);
 
   const handleContinue = async () => {
     if (!profile) return;
@@ -67,8 +73,14 @@ export function AfterRallyOptInDialog({
     }
   };
 
+  // If shouldn't show, close the dialog automatically
+  if (open && !shouldShow) {
+    onOpenChange(false);
+    return null;
+  }
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={shouldShow} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3">
@@ -78,7 +90,10 @@ export function AfterRallyOptInDialog({
             <span>After R@lly</span>
           </DialogTitle>
           <DialogDescription>
-            The main event is wrapping up. What's next for you?
+            {promptStatus.needsReconfirmation 
+              ? 'You opted into After R@lly! Please confirm your safety plans.'
+              : 'The main event is wrapping up. What\'s next for you?'
+            }
           </DialogDescription>
         </DialogHeader>
 

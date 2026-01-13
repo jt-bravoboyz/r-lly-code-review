@@ -44,6 +44,7 @@ import { LocationMapPreview } from '@/components/location/LocationMapPreview';
 import { FirstTimeWelcomeDialog } from '@/components/events/FirstTimeWelcomeDialog';
 import { InviteToEventDialog } from '@/components/events/InviteToEventDialog';
 import { AfterRallyOptInDialog } from '@/components/events/AfterRallyOptInDialog';
+import { SafetyCloseoutDialog } from '@/components/events/SafetyCloseoutDialog';
 import { toast } from 'sonner';
 
 export default function EventDetail() {
@@ -65,6 +66,8 @@ export default function EventDetail() {
   const { data: isDD } = useIsDD(id);
   const [showFirstTimeWelcome, setShowFirstTimeWelcome] = useState(false);
   const [showAfterRallyOptIn, setShowAfterRallyOptIn] = useState(false);
+  const [showSafetyCloseout, setShowSafetyCloseout] = useState(false);
+  const [isBarHopTransitionPoint, setIsBarHopTransitionPoint] = useState(false);
 
   // Check for first-time welcome flag (set when user auto-joins via invite code)
   useEffect(() => {
@@ -78,6 +81,18 @@ export default function EventDetail() {
       return () => clearTimeout(timer);
     }
   }, [id]);
+
+  // Debug logging for Phase 9 validation
+  useEffect(() => {
+    if (event?.id) {
+      console.log('[R@lly Debug] EventDetail loaded:', { 
+        event_id: event.id,
+        event_status: event.status,
+        attendee_count: event.attendees?.length || 0,
+        is_barhop: event.is_barhop,
+      });
+    }
+  }, [event?.id, event?.status, event?.attendees?.length, event?.is_barhop]);
 
   // Calculate derived values after all hooks (to avoid conditional hook calls)
   const activeProfile = profile;
@@ -541,6 +556,12 @@ export default function EventDetail() {
                   stops={event.stops || []}
                   canManage={canManage}
                   hostName={activeProfile?.display_name || 'Host'}
+                  onTransitionPoint={() => {
+                    // Trigger re-confirmation prompts at bar hop transition points
+                    setIsBarHopTransitionPoint(true);
+                    // Reset after a short delay to avoid repeat triggers
+                    setTimeout(() => setIsBarHopTransitionPoint(false), 1000);
+                  }}
                 />
 
                 {/* Full Stop Manager with reorder, remove, ETA */}
@@ -702,6 +723,22 @@ export default function EventDetail() {
         onHeadHome={() => {
           // Trigger R@lly Home flow
           toast.info('Opening R@lly Home...');
+        }}
+      />
+
+      {/* Safety Closeout Dialog */}
+      <SafetyCloseoutDialog
+        eventId={event.id}
+        open={showSafetyCloseout}
+        onOpenChange={setShowSafetyCloseout}
+        onConfirm={async () => {
+          try {
+            await completeRally.mutateAsync(event.id);
+            toast.success('R@lly completed! 🎉 Everyone made it home safely.');
+            setShowSafetyCloseout(false);
+          } catch (error: any) {
+            toast.error(error.message || 'Failed to complete rally');
+          }
         }}
       />
     </div>

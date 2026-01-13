@@ -21,6 +21,13 @@ interface ChatViewProps {
 const URL_REGEX = /(https?:\/\/[^\s]+)/g;
 
 export function ChatView({ chatId, messages, isLoading, storagePath = 'general' }: ChatViewProps) {
+  // Debug logging for Phase 9 validation
+  useEffect(() => {
+    console.log('[R@lly Debug] ChatView loaded:', { 
+      chat_id: chatId,
+      messages_count: messages?.length || 0
+    });
+  }, [chatId, messages?.length]);
   const [newMessage, setNewMessage] = useState('');
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
