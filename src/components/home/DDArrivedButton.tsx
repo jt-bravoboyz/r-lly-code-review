@@ -4,6 +4,7 @@ import { Car, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useIsDD } from '@/hooks/useDDManagement';
 import { useMyAttendeeStatus } from '@/hooks/useSafetyStatus';
+import { useSafetyNotifications } from '@/hooks/useSafetyNotifications';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
@@ -17,6 +18,7 @@ export function DDArrivedButton({ eventId }: DDArrivedButtonProps) {
   const { profile } = useAuth();
   const { data: isDD } = useIsDD(eventId);
   const { data: myStatus } = useMyAttendeeStatus(eventId);
+  const { notifyArrivedSafe } = useSafetyNotifications();
   const queryClient = useQueryClient();
 
   // Only show for DDs who haven't marked arrived_safely
@@ -50,6 +52,9 @@ export function DDArrivedButton({ eventId }: DDArrivedButtonProps) {
         .eq('profile_id', profile.id);
 
       if (error) throw error;
+
+      // Send notification to host/cohosts
+      notifyArrivedSafe(eventId);
 
       toast.success('DD arrival confirmed! 🚗', {
         description: 'Great job getting everyone home safely!',

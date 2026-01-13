@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Home, User, Building2, MapPin, Navigation, CheckCircle2, Lock, Users, UserCheck, Globe, Shield, XCircle } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useMyAttendeeStatus, useUpdateSafetyStatus } from '@/hooks/useSafetyStatus';
+import { useSafetyNotifications } from '@/hooks/useSafetyNotifications';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -44,6 +45,7 @@ export function RallyHomeButton({ eventId, trigger }: RallyHomeButtonProps) {
   // Use the safety status hook
   const { data: myStatus, refetch: refetchStatus } = useMyAttendeeStatus(eventId);
   const { confirmNotParticipating } = useUpdateSafetyStatus();
+  const { notifyGoingHome, notifyArrivedSafe } = useSafetyNotifications();
 
   // Derive state from myStatus
   const isGoingHome = !!myStatus?.going_home_at;
@@ -153,6 +155,9 @@ export function RallyHomeButton({ eventId, trigger }: RallyHomeButtonProps) {
 
       await refetchStatus();
       
+      // Send notification to host/cohosts
+      notifyGoingHome(eventId);
+      
       const visibilityMessage = visibility === 'none' 
         ? 'Your destination is private' 
         : visibility === 'squad' 
@@ -199,6 +204,10 @@ export function RallyHomeButton({ eventId, trigger }: RallyHomeButtonProps) {
       if (error) throw error;
 
       await refetchStatus();
+      
+      // Send notification to host/cohosts/squad
+      notifyArrivedSafe(eventId);
+      
       toast.success('You made it! 🎉', {
         description: 'Your squad knows you arrived safely',
       });

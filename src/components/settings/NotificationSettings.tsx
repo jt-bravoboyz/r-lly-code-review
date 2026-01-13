@@ -36,19 +36,19 @@ const notificationOptions: NotificationOption[] = [
   {
     key: 'arrival_confirmations',
     label: 'Safe Arrivals',
-    description: 'When friends arrive home safely',
+    description: 'When attendees confirm they arrived safely or DD confirms a drop-off',
     icon: <Home className="h-4 w-4 text-primary" />,
   },
   {
     key: 'going_home_alerts',
-    label: 'Going Home Alerts',
-    description: 'When someone is heading home',
+    label: 'R@lly Home Participation',
+    description: 'When someone starts Participating in R@lly Home',
     icon: <Home className="h-4 w-4 text-orange-500" />,
   },
   {
     key: 'event_updates',
     label: 'Event Updates',
-    description: 'Location changes and event announcements',
+    description: 'Location changes, announcements, and safety completion alerts',
     icon: <Calendar className="h-4 w-4 text-purple-500" />,
   },
   {

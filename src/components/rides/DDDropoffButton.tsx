@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CheckCircle2, Car, Navigation } from 'lucide-react';
 import { useEventSafetyStatus, getSafetyState } from '@/hooks/useSafetyStatus';
+import { useSafetyNotifications } from '@/hooks/useSafetyNotifications';
 import { useAuth } from '@/hooks/useAuth';
 import { useRides } from '@/hooks/useRides';
 import { supabase } from '@/integrations/supabase/client';
@@ -20,6 +21,7 @@ export function DDDropoffButton({ eventId }: DDDropoffButtonProps) {
   const { profile } = useAuth();
   const { data: attendees } = useEventSafetyStatus(eventId);
   const { data: rides } = useRides(eventId);
+  const { notifyDDDropoff } = useSafetyNotifications();
   const queryClient = useQueryClient();
 
   if (!profile) return null;
@@ -79,6 +81,9 @@ export function DDDropoffButton({ eventId }: DDDropoffButtonProps) {
         .eq('profile_id', passengerId);
 
       if (error) throw error;
+
+      // Send notification to host/cohosts
+      notifyDDDropoff(eventId, passengerName, profile.display_name || 'DD');
 
       toast.success(`Confirmed drop-off for ${passengerName}!`);
       queryClient.invalidateQueries({ queryKey: ['event-safety-status', eventId] });

@@ -1,3 +1,4 @@
+import { useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -6,6 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Shield, CheckCircle2, Navigation, HelpCircle, XCircle, Car, PartyPopper, Clock } from 'lucide-react';
 import { useEventSafetyStatus, useIsEventSafetyComplete, getSafetyState, getSafetyStateLabel, type SafetyState } from '@/hooks/useSafetyStatus';
+import { useSafetyNotifications } from '@/hooks/useSafetyNotifications';
 import { toast } from 'sonner';
 
 interface HostSafetyDashboardProps {
@@ -59,6 +61,20 @@ function SafetyStateBadge({ state }: { state: SafetyState }) {
 export function HostSafetyDashboard({ eventId, onCompleteRally }: HostSafetyDashboardProps) {
   const { data: attendees, isLoading } = useEventSafetyStatus(eventId);
   const { data: safetyComplete } = useIsEventSafetyComplete(eventId);
+  const { notifySafetyComplete } = useSafetyNotifications();
+  const previousSafetyComplete = useRef<boolean | undefined>(undefined);
+
+  // Notify when safety becomes complete
+  useEffect(() => {
+    // Only notify on transition from incomplete to complete
+    if (
+      previousSafetyComplete.current === false && 
+      safetyComplete === true
+    ) {
+      notifySafetyComplete(eventId);
+    }
+    previousSafetyComplete.current = safetyComplete;
+  }, [safetyComplete, eventId, notifySafetyComplete]);
 
   // Persist until safety is complete - don't hide when safetyComplete becomes true
   // This allows hosts to see the final "all safe" state before completing
