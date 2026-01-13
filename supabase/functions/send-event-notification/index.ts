@@ -6,7 +6,7 @@ const corsHeaders = {
 };
 
 interface PushPayload {
-  type: 'bar_hop_transition' | 'ride_offer' | 'ride_request' | 'ride_response' | 'going_home' | 'arrived_safe' | 'event_update' | 'rally_invite';
+  type: 'bar_hop_transition' | 'ride_offer' | 'ride_request' | 'ride_response' | 'going_home' | 'arrived_safe' | 'event_update' | 'rally_invite' | 'safety_complete';
   eventId?: string;
   eventTitle?: string;
   title?: string;
@@ -22,7 +22,7 @@ interface PushPayload {
 const MAX_TITLE_LENGTH = 200;
 const MAX_BODY_LENGTH = 500;
 const MAX_TARGET_PROFILE_IDS = 100;
-const VALID_NOTIFICATION_TYPES = ['bar_hop_transition', 'ride_offer', 'ride_request', 'ride_response', 'going_home', 'arrived_safe', 'event_update', 'rally_invite'];
+const VALID_NOTIFICATION_TYPES = ['bar_hop_transition', 'ride_offer', 'ride_request', 'ride_response', 'going_home', 'arrived_safe', 'event_update', 'rally_invite', 'safety_complete'];
 
 function validatePayload(payload: PushPayload): { valid: boolean; error?: string } {
   // Validate notification type
@@ -297,6 +297,7 @@ Deno.serve(async (req) => {
       'arrived_safe': 'arrival_confirmations',
       'event_update': 'event_updates',
       'rally_invite': 'squad_invites',
+      'safety_complete': 'event_updates',
     };
 
     const preferenceColumn = preferenceMap[type] || 'event_updates';
