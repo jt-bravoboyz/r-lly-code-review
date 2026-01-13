@@ -29,6 +29,28 @@ export function usePastEvents() {
   return useQuery({
     queryKey: ['past-events'],
     queryFn: async () => {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+
+      // Get user's profile
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!profile) return [];
+
+      // Get events user attended
+      const { data: attendedEvents } = await supabase
+        .from('event_attendees')
+        .select('event_id')
+        .eq('profile_id', profile.id);
+
+      const attendedEventIds = attendedEvents?.map(a => a.event_id) || [];
+
+      // Get past events where user is creator OR attendee
       const { data, error } = await supabase
         .from('events')
         .select(`
@@ -37,6 +59,7 @@ export function usePastEvents() {
           attendees:event_attendees(count)
         `)
         .lt('start_time', new Date().toISOString())
+        .or(`creator_id.eq.${profile.id},id.in.(${attendedEventIds.join(',')})`)
         .order('start_time', { ascending: false })
         .limit(20);
       
