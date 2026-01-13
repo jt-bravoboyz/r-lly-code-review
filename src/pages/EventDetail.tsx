@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Navigate, Link } from 'react-router-dom';
+import { getEventTypeLabel } from '@/lib/eventTypes';
 import { ArrowLeft, Calendar, MapPin, Users, Beer, Check, X, MessageCircle, Navigation, Home, Plus, Zap, Crown, UserPlus, Car, Play, Moon, PartyPopper } from 'lucide-react';
 import { format } from 'date-fns';
 import { Header } from '@/components/layout/Header';
@@ -198,7 +199,7 @@ export default function EventDetail() {
           <div className="flex items-start justify-between gap-4">
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <Badge variant="outline">{event.event_type}</Badge>
+                <Badge variant="outline">{getEventTypeLabel(event.event_type)}</Badge>
                 {event.is_quick_rally && (
                   <Badge className="bg-secondary/20 text-secondary border-0">
                     <Zap className="h-3 w-3 mr-1" />

@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { format } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
 import { Plus, Calendar as CalendarIcon, Beer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -13,11 +14,12 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { useCreateEvent } from '@/hooks/useEvents';
+import { useCreateEvent, useJoinEvent } from '@/hooks/useEvents';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { LocationSearch } from '@/components/location/LocationSearch';
 import { cn } from '@/lib/utils';
+import { EVENT_TYPES } from '@/lib/eventTypes';
 
 const eventSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters'),
@@ -60,6 +62,8 @@ export function CreateEventDialog() {
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const { profile } = useAuth();
   const createEvent = useCreateEvent();
+  const joinEvent = useJoinEvent();
+  const navigate = useNavigate();
 
   const form = useForm<EventFormData>({
     resolver: zodResolver(eventSchema),
@@ -89,7 +93,7 @@ export function CreateEventDialog() {
       const startTime = new Date(data.date);
       startTime.setHours(hours, minutes, 0, 0);
 
-      await createEvent.mutateAsync({
+      const result = await createEvent.mutateAsync({
         creator_id: profile.id,
         title: data.title,
         description: data.description || null,
@@ -101,10 +105,21 @@ export function CreateEventDialog() {
         is_barhop: data.is_barhop,
         max_attendees: data.max_attendees ? parseInt(data.max_attendees) : null
       });
+
+      // Auto-join the creator to the event (same behavior as Quick R@lly)
+      await joinEvent.mutateAsync({ eventId: result.id, profileId: profile.id });
+
+      console.log('[R@lly Debug] Create Event completed:', { 
+        event_id: result.id, 
+        creator_joined: true 
+      });
       
       toast.success('Event created!');
       setOpen(false);
       form.reset();
+      
+      // Navigate to the new event (same behavior as Quick R@lly)
+      navigate(`/events/${result.id}`);
     } catch (error: any) {
       toast.error(error.message || 'Failed to create event');
     }
@@ -167,25 +182,11 @@ export function CreateEventDialog() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent className="max-h-60">
-                        <SelectItem value="rally">Rally</SelectItem>
-                        <SelectItem value="party">Party</SelectItem>
-                        <SelectItem value="bar">Bar / Club</SelectItem>
-                        <SelectItem value="happy_hour">Happy Hour</SelectItem>
-                        <SelectItem value="dinner">Dinner</SelectItem>
-                        <SelectItem value="brunch">Brunch</SelectItem>
-                        <SelectItem value="concert">Concert</SelectItem>
-                        <SelectItem value="festival">Festival</SelectItem>
-                        <SelectItem value="sports">Sports</SelectItem>
-                        <SelectItem value="tailgate">Tailgate</SelectItem>
-                        <SelectItem value="game_night">Game Night</SelectItem>
-                        <SelectItem value="movie">Movie Night</SelectItem>
-                        <SelectItem value="birthday">Birthday</SelectItem>
-                        <SelectItem value="wedding">Wedding</SelectItem>
-                        <SelectItem value="bbq">BBQ / Cookout</SelectItem>
-                        <SelectItem value="beach">Beach Day</SelectItem>
-                        <SelectItem value="road_trip">Road Trip</SelectItem>
-                        <SelectItem value="meetup">Meetup</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
+                        {EVENT_TYPES.map((type) => (
+                          <SelectItem key={type.value} value={type.value}>
+                            {type.label}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -326,9 +327,9 @@ export function CreateEventDialog() {
             <Button 
               type="submit" 
               className="w-full gradient-primary"
-              disabled={createEvent.isPending}
+              disabled={createEvent.isPending || joinEvent.isPending}
             >
-              {createEvent.isPending ? 'Creating...' : 'Create Event'}
+              {createEvent.isPending || joinEvent.isPending ? 'Creating...' : 'Create Event'}
             </Button>
           </form>
         </Form>
