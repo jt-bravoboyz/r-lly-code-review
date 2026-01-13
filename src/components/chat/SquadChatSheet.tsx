@@ -1,6 +1,7 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { ChatView } from './ChatView';
 import { useSquadChat } from '@/hooks/useSquadChat';
+import { getSquadIcon, type SquadSymbol } from '@/components/squads/SquadSymbolPicker';
 
 interface SquadChatSheetProps {
   squadId: string;
@@ -19,16 +20,17 @@ export function SquadChatSheet({
 }: SquadChatSheetProps) {
   const { chat, messages, isLoading } = useSquadChat(squadId);
 
-  const displayTitle = squadSymbol 
-    ? `${squadSymbol} ${squadName}` 
-    : squadName;
+  const Icon = getSquadIcon((squadSymbol || 'shield') as SquadSymbol);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full sm:max-w-md p-0 flex flex-col">
         <SheetHeader className="p-4 border-b">
           <SheetTitle className="flex items-center gap-2">
-            <span>{displayTitle}</span>
+            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+              <Icon className="h-4 w-4 text-primary" />
+            </div>
+            <span>{squadName}</span>
             {chat?.linked_event_id && (
               <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full">
                 Live Rally
