@@ -27,6 +27,7 @@ interface BarHopControlsProps {
   stops: BarHopStop[];
   canManage: boolean;
   hostName: string;
+  onTransitionPoint?: () => void; // Callback for bar hop transition (re-confirmation trigger)
 }
 
 // Calculate ETA using Haversine distance and assumed walking speed
@@ -80,7 +81,7 @@ async function sendBarHopPushNotification(
   }
 }
 
-export function BarHopControls({ eventId, stops, canManage, hostName }: BarHopControlsProps) {
+export function BarHopControls({ eventId, stops, canManage, hostName, onTransitionPoint }: BarHopControlsProps) {
   const [isLoading, setIsLoading] = useState(false);
   const queryClient = useQueryClient();
   const { profile } = useAuth();
@@ -156,6 +157,9 @@ export function BarHopControls({ eventId, stops, canManage, hostName }: BarHopCo
 
       toast.success(`Arrived at ${stop.name}! 🍺`);
       queryClient.invalidateQueries({ queryKey: ['event', eventId] });
+      
+      // Trigger bar hop transition callback for re-confirmation prompts
+      onTransitionPoint?.();
     } catch (error) {
       console.error('Error:', error);
       toast.error('Failed to update stop');
@@ -220,6 +224,9 @@ export function BarHopControls({ eventId, stops, canManage, hostName }: BarHopCo
         description: 'Your squad has been notified',
       });
       queryClient.invalidateQueries({ queryKey: ['event', eventId] });
+      
+      // Trigger bar hop transition callback for re-confirmation prompts
+      onTransitionPoint?.();
     } catch (error) {
       console.error('Error:', error);
       toast.error('Failed to update');

@@ -37,10 +37,15 @@ export function DDVolunteerButton({ eventId }: DDVolunteerButtonProps) {
 
   if (isDD) {
     return (
-      <Badge className="bg-primary/20 text-primary border-primary">
-        <Car className="h-3 w-3 mr-1" />
-        You're the DD
-      </Badge>
+      <div className="flex flex-col items-end gap-1">
+        <Badge className="bg-primary/20 text-primary border-primary">
+          <Car className="h-3 w-3 mr-1" />
+          You're the DD
+        </Badge>
+        <p className="text-[10px] text-muted-foreground text-right max-w-32">
+          Remember to confirm your own arrival after all drop-offs
+        </p>
+      </div>
     );
   }
 
