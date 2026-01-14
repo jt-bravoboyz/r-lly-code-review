@@ -1,19 +1,22 @@
 import { useState } from 'react';
-import { UserPlus, Users, Copy, Share2, Check, Link2, MessageSquare, Send, Phone, History } from 'lucide-react';
+import { UserPlus, Users, Copy, Share2, Check, Link2, MessageSquare, Send, Phone, History, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { useSquads, Squad } from '@/hooks/useSquads';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Squad, useAllMySquads } from '@/hooks/useSquads';
 import { useCreateEventInvites, useEventInvites } from '@/hooks/useEventInvites';
 import { useCreatePhoneInvite, openSMSInvite, useEventPhoneInvites } from '@/hooks/usePhoneInvites';
 import { useRecordInvite } from '@/hooks/useInviteHistory';
 import { ContactSelector } from '@/components/contacts/ContactSelector';
 import { PhoneInviteInput } from '@/components/contacts/PhoneInviteInput';
 import { ContactSyncButton } from '@/components/contacts/ContactSyncButton';
+import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { format } from 'date-fns';
 
 interface InviteToEventDialogProps {
   eventId: string;
@@ -36,8 +39,10 @@ export function InviteToEventDialog({
   const [invitingSquads, setInvitingSquads] = useState<Set<string>>(new Set());
   const [invitedSquads, setInvitedSquads] = useState<Set<string>>(new Set());
   const navigate = useNavigate();
+  const { profile } = useAuth();
   
-  const { data: squads } = useSquads();
+  // Use all squads (owned + member) for inviting
+  const { data: squads } = useAllMySquads();
   const { data: eventInvites } = useEventInvites(eventId);
   const { data: phoneInvites } = useEventPhoneInvites(eventId);
   const createInvites = useCreateEventInvites();
@@ -85,17 +90,34 @@ export function InviteToEventDialog({
   };
 
   const handleInviteSquad = async (squad: Squad) => {
-    if (!squad.members || squad.members.length === 0) {
-      toast.error('This squad has no members');
-      return;
+    // Collect all profile IDs to invite (members + owner if not current user)
+    const profilesToInvite: string[] = [];
+
+    // Add squad owner if not the current user and not already invited
+    if (squad.owner_id && squad.owner_id !== profile?.id && !alreadyInvitedOrAttending.has(squad.owner_id)) {
+      profilesToInvite.push(squad.owner_id);
     }
 
-    // Get members who aren't already attending or invited
-    const membersToInvite = squad.members.filter(
-      member => member.profile?.id && !alreadyInvitedOrAttending.has(member.profile.id)
-    );
+    // Add members who aren't already attending or invited
+    // Use profile_id directly (with fallback to profile?.id for backwards compatibility)
+    if (squad.members) {
+      for (const member of squad.members) {
+        const memberId = member.profile_id || member.profile?.id;
+        if (memberId && !alreadyInvitedOrAttending.has(memberId) && !profilesToInvite.includes(memberId)) {
+          profilesToInvite.push(memberId);
+        }
+      }
+    }
 
-    if (membersToInvite.length === 0) {
+    console.log('[R@lly Debug] InviteToEventDialog squad invite:', {
+      squad_id: squad.id,
+      squad_name: squad.name,
+      owner_id: squad.owner_id,
+      current_user: profile?.id,
+      members_to_invite: profilesToInvite
+    });
+
+    if (profilesToInvite.length === 0) {
       toast.info('All squad members are already invited or attending!');
       setInvitedSquads(prev => new Set([...prev, squad.id]));
       return;
@@ -104,19 +126,15 @@ export function InviteToEventDialog({
     setInvitingSquads(prev => new Set([...prev, squad.id]));
 
     try {
-      const profileIds = membersToInvite
-        .map(m => m.profile?.id)
-        .filter(Boolean) as string[];
-
       await createInvites.mutateAsync({ 
         eventId, 
-        profileIds,
+        profileIds: profilesToInvite,
         eventTitle
       });
 
       // Record in invite history
-      for (const profileId of profileIds) {
-        const member = membersToInvite.find(m => m.profile?.id === profileId);
+      for (const profileId of profilesToInvite) {
+        const member = squad.members?.find(m => (m.profile_id || m.profile?.id) === profileId);
         await recordInvite.mutateAsync({
           profileId,
           name: member?.profile?.display_name || undefined,
@@ -124,7 +142,7 @@ export function InviteToEventDialog({
       }
 
       setInvitedSquads(prev => new Set([...prev, squad.id]));
-      toast.success(`Invited ${membersToInvite.length} member${membersToInvite.length > 1 ? 's' : ''} from ${squad.name}!`);
+      toast.success(`Invited ${profilesToInvite.length} member${profilesToInvite.length > 1 ? 's' : ''} from ${squad.name}!`);
     } catch (error: any) {
       if (error.message?.includes('already been invited')) {
         toast.info('Some members were already invited');
@@ -148,7 +166,7 @@ export function InviteToEventDialog({
     }
 
     try {
-      const result = await createPhoneInvite.mutateAsync({
+      await createPhoneInvite.mutateAsync({
         eventId,
         eventTitle,
         phoneNumber: phone,
@@ -202,11 +220,14 @@ export function InviteToEventDialog({
     if (invitedSquads.has(squad.id)) return 'invited';
     if (invitingSquads.has(squad.id)) return 'inviting';
     
-    // Check if all members are already attending or invited
-    const allInvitedOrAttending = squad.members?.every(
-      member => member.profile?.id && alreadyInvitedOrAttending.has(member.profile.id)
-    );
-    if (allInvitedOrAttending && squad.members && squad.members.length > 0) return 'all-invited';
+    // Check if all members AND owner are already attending or invited
+    const ownerInvited = squad.owner_id === profile?.id || alreadyInvitedOrAttending.has(squad.owner_id);
+    const allMembersInvited = squad.members?.every(member => {
+      const memberId = member.profile_id || member.profile?.id;
+      return memberId && alreadyInvitedOrAttending.has(memberId);
+    });
+    
+    if (ownerInvited && allMembersInvited && (squad.members?.length || 0) >= 0) return 'all-invited';
     
     return 'available';
   };
@@ -230,7 +251,7 @@ export function InviteToEventDialog({
         </DialogHeader>
 
         <Tabs defaultValue="contacts" className="mt-2">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="contacts" className="gap-1 text-xs">
               <Phone className="h-3 w-3" />
               Contacts
@@ -242,6 +263,10 @@ export function InviteToEventDialog({
             <TabsTrigger value="link" className="gap-1 text-xs">
               <Link2 className="h-3 w-3" />
               Link
+            </TabsTrigger>
+            <TabsTrigger value="history" className="gap-1 text-xs">
+              <Clock className="h-3 w-3" />
+              History
             </TabsTrigger>
           </TabsList>
 
@@ -398,6 +423,88 @@ export function InviteToEventDialog({
               <MessageSquare className="h-3 w-3" />
               Tap share to send via text, WhatsApp, etc.
             </p>
+          </TabsContent>
+
+          {/* History Tab - Who was invited to this event */}
+          <TabsContent value="history" className="space-y-4 mt-4">
+            <p className="text-sm text-muted-foreground">
+              People invited to this rally
+            </p>
+            <ScrollArea className="h-[280px] pr-4">
+              {(eventInvites && eventInvites.length > 0) || (phoneInvites && phoneInvites.length > 0) ? (
+                <div className="space-y-2">
+                  {/* App user invites */}
+                  {eventInvites?.map((invite) => (
+                    <div
+                      key={invite.id}
+                      className="flex items-center justify-between p-3 rounded-lg border bg-card"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src={(invite as any).invited_profile?.avatar_url || undefined} />
+                          <AvatarFallback className="bg-primary/20 text-primary text-xs">
+                            {(invite as any).invited_profile?.display_name?.charAt(0)?.toUpperCase() || '?'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="text-sm font-medium">
+                            {(invite as any).invited_profile?.display_name || 'Unknown'}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {format(new Date(invite.invited_at), 'MMM d, h:mm a')}
+                          </p>
+                        </div>
+                      </div>
+                      <Badge 
+                        variant={invite.status === 'accepted' ? 'default' : invite.status === 'declined' ? 'destructive' : 'secondary'}
+                        className="text-xs"
+                      >
+                        {invite.status === 'accepted' ? 'Joined' : invite.status === 'declined' ? 'Declined' : 'Pending'}
+                      </Badge>
+                    </div>
+                  ))}
+                  {/* Phone invites */}
+                  {phoneInvites?.map((invite) => (
+                    <div
+                      key={invite.id}
+                      className="flex items-center justify-between p-3 rounded-lg border bg-card"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-8 w-8">
+                          <AvatarFallback className="bg-muted text-muted-foreground text-xs">
+                            <Phone className="h-3 w-3" />
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="text-sm font-medium">
+                            {invite.display_name || invite.phone_number}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            SMS • {format(new Date(invite.invited_at), 'MMM d, h:mm a')}
+                          </p>
+                        </div>
+                      </div>
+                      <Badge 
+                        variant={invite.status === 'joined' ? 'default' : 'secondary'}
+                        className="text-xs"
+                      >
+                        {invite.status === 'joined' ? 'Joined' : invite.status === 'clicked' ? 'Clicked' : 'Pending'}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 space-y-3">
+                  <History className="h-12 w-12 mx-auto text-muted-foreground/50" />
+                  <div>
+                    <p className="font-medium">No invites yet</p>
+                    <p className="text-sm text-muted-foreground">
+                      Invite people using Contacts, Squads, or share the link
+                    </p>
+                  </div>
+                </div>
+              )}
+            </ScrollArea>
           </TabsContent>
         </Tabs>
       </DialogContent>

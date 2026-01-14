@@ -9,6 +9,7 @@ export interface Squad {
   owner_id: string;
   created_at: string;
   symbol?: string;
+  group_photo_url?: string;
   isOwned?: boolean;
   members?: SquadMember[];
 }

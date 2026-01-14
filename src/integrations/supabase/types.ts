@@ -1745,6 +1745,7 @@ export type Database = {
       squads: {
         Row: {
           created_at: string | null
+          group_photo_url: string | null
           id: string
           name: string
           owner_id: string
@@ -1753,6 +1754,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          group_photo_url?: string | null
           id?: string
           name: string
           owner_id: string
@@ -1761,6 +1763,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          group_photo_url?: string | null
           id?: string
           name?: string
           owner_id?: string

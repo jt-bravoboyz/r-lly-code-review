@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -20,6 +21,7 @@ interface SquadCardProps {
 }
 
 export function SquadCard({ squad, onQuickRally }: SquadCardProps) {
+  const navigate = useNavigate();
   const deleteSquad = useDeleteSquad();
   const updateSymbol = useUpdateSquadSymbol();
   const members = squad.members || [];
@@ -28,6 +30,10 @@ export function SquadCard({ squad, onQuickRally }: SquadCardProps) {
   
   const Icon = getSquadIcon(squad.symbol || 'shield');
   const isOwned = squad.isOwned !== false; // Default to true for backward compatibility
+
+  const handleNavigateToDetail = () => {
+    navigate(`/squads/${squad.id}`);
+  };
 
   const handleDelete = async () => {
     try {
@@ -78,7 +84,10 @@ export function SquadCard({ squad, onQuickRally }: SquadCardProps) {
               </div>
             )}
             <div>
-              <h3 className="font-bold text-card-foreground font-montserrat flex items-center gap-2">
+              <h3 
+                className="font-bold text-card-foreground font-montserrat flex items-center gap-2 cursor-pointer hover:text-primary transition-colors"
+                onClick={handleNavigateToDetail}
+              >
                 {squad.name}
                 {!isOwned && (
                   <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground font-normal">
