@@ -194,9 +194,24 @@ export const QuickRallyDialog = forwardRef<HTMLButtonElement, QuickRallyDialogPr
           // Collect all member profile IDs from selected squads, excluding the host
           const allMemberIds = new Set<string>();
           
+          console.log('[R@lly Debug] Processing squad invites:', { 
+            selectedSquads: selectedSquads.map(s => ({ id: s.id, name: s.name, memberCount: s.members?.length }))
+          });
+          
           selectedSquads.forEach(squad => {
+            // Also add the squad owner if it's not the current user
+            if (squad.owner_id && squad.owner_id !== profile.id) {
+              allMemberIds.add(squad.owner_id);
+            }
+            
             squad.members?.forEach(member => {
-              const memberId = member.profile?.id;
+              // Use profile_id directly from squad_members, with profile.id as fallback
+              const memberId = member.profile_id || member.profile?.id;
+              console.log('[R@lly Debug] Processing member:', { 
+                profile_id: member.profile_id, 
+                nested_profile_id: member.profile?.id,
+                resolved_memberId: memberId 
+              });
               // Exclude host's own profile ID and ensure ID exists
               if (memberId && memberId !== profile.id) {
                 allMemberIds.add(memberId);
@@ -205,6 +220,8 @@ export const QuickRallyDialog = forwardRef<HTMLButtonElement, QuickRallyDialogPr
           });
           
           const uniqueMemberIds = Array.from(allMemberIds);
+          
+          console.log('[R@lly Debug] Unique member IDs to invite:', uniqueMemberIds);
           
           if (uniqueMemberIds.length > 0) {
             try {
@@ -219,6 +236,8 @@ export const QuickRallyDialog = forwardRef<HTMLButtonElement, QuickRallyDialogPr
               console.error('Failed to send squad invites:', inviteError);
               toast.error('Rally created but some invites failed');
             }
+          } else {
+            console.log('[R@lly Debug] No members to invite (all excluded or empty)');
           }
         }
         
