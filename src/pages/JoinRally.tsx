@@ -108,7 +108,7 @@ export default function JoinRally() {
   }, [code, profile]);
 
   const handleJoin = async () => {
-    if (!profile) {
+    if (!profile?.id) {
       // Store the invite code and redirect to auth
       sessionStorage.setItem('pendingRallyCode', event?.invite_code || manualCode);
       navigate('/auth');
@@ -119,10 +119,12 @@ export default function JoinRally() {
 
     setJoining(true);
     try {
+      console.log('[R@lly Debug] Joining event:', { eventId: event.id, profileId: profile.id });
       await joinEvent.mutateAsync({ eventId: event.id, profileId: profile.id });
       toast.success("You're in! 🎉");
       navigate(`/events/${event.id}`);
     } catch (error: any) {
+      console.error('[R@lly Debug] Join error:', error);
       if (error.message?.includes('duplicate')) {
         toast.info("You're already in this rally!");
         navigate(`/events/${event.id}`);
