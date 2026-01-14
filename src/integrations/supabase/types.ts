@@ -2393,6 +2393,7 @@ export type Database = {
         Args: { p_squad_id: string }
         Returns: boolean
       }
+      is_valid_squad_invite: { Args: { p_squad_id: string }; Returns: boolean }
       log_profile_access: {
         Args: { p_accessed_fields?: string[]; p_accessed_profile_id: string }
         Returns: undefined
