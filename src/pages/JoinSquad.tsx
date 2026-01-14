@@ -57,7 +57,7 @@ export default function JoinSquad() {
             squad:squads(
               id,
               name,
-              owner:profiles!squads_owner_id_fkey(id, display_name, avatar_url)
+              owner:safe_profiles!squads_owner_id_fkey(id, display_name, avatar_url)
             )
           `)
           .eq('invite_code', code.toUpperCase())
