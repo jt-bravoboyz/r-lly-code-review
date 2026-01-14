@@ -19,6 +19,7 @@ import Chat from "./pages/Chat";
 import Profile from "./pages/Profile";
 import Notifications from "./pages/Notifications";
 import Squads from "./pages/Squads";
+import SquadDetail from "./pages/SquadDetail";
 import Achievements from "./pages/Achievements";
 import JoinRally from "./pages/JoinRally";
 import JoinSquad from "./pages/JoinSquad";
@@ -58,6 +59,7 @@ const App = () => (
                   <Route path="/profile" element={<Profile />} />
                   <Route path="/notifications" element={<Notifications />} />
                   <Route path="/squads" element={<Squads />} />
+                  <Route path="/squads/:squadId" element={<SquadDetail />} />
                   <Route path="/achievements" element={<Achievements />} />
                   <Route path="/legal" element={<Legal />} />
                   <Route path="/settings" element={<Settings />} />
