@@ -34,7 +34,7 @@ interface EventPreview {
 export default function JoinRally() {
   const { code } = useParams<{ code: string }>();
   const navigate = useNavigate();
-  const { profile, loading: authLoading } = useAuth();
+  const { user, profile, loading: authLoading } = useAuth();
   const joinEvent = useJoinEvent();
   
   const [event, setEvent] = useState<EventPreview | null>(null);
@@ -108,10 +108,16 @@ export default function JoinRally() {
   }, [code, profile]);
 
   const handleJoin = async () => {
-    if (!profile?.id) {
-      // Store the invite code and redirect to auth
+    // Not authenticated yet
+    if (!user) {
       sessionStorage.setItem('pendingRallyCode', event?.invite_code || manualCode);
       navigate('/auth');
+      return;
+    }
+
+    // Authenticated, but profile not loaded yet (avoid using stale/other-user profile)
+    if (!profile?.id || profile.user_id !== user.id) {
+      toast.error('Finishing sign-in… try again in a second');
       return;
     }
 

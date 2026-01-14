@@ -66,7 +66,7 @@ export default function ReturningAuth() {
   // Auto-join rally after auth when there's a pending invite code
   useEffect(() => {
     const autoJoinRally = async () => {
-      if (!user || !profile) return;
+      if (!user || !profile || profile.user_id !== user.id) return;
       if (autoJoinAttempted.current) return;
       
       const pendingCode = sessionStorage.getItem('pendingRallyCode');
