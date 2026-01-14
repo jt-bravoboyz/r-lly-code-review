@@ -97,8 +97,8 @@ export default function Auth() {
   // Auto-join rally after auth when there's a pending invite code
   useEffect(() => {
     const autoJoinRally = async () => {
-      // Need both user and profile to join
-      if (!user || !profile) return;
+      // Need both user and the matching profile to join
+      if (!user || !profile || profile.user_id !== user.id) return;
       
       // Prevent duplicate join attempts
       if (autoJoinAttempted.current) return;

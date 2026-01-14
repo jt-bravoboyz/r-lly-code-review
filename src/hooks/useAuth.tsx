@@ -1,4 +1,4 @@
-import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
+import { useState, useEffect, useRef, createContext, useContext, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import type { Tables } from '@/integrations/supabase/types';
@@ -24,13 +24,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Prevent race conditions when users switch accounts quickly.
+  const currentUserIdRef = useRef<string | null>(null);
+
   const fetchProfile = async (userId: string) => {
-    const { data } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('user_id', userId)
-      .single();
-    setProfile(data);
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      // Ignore stale responses if auth user changed mid-flight
+      if (currentUserIdRef.current !== userId) return;
+
+      if (error) {
+        console.error('Failed to fetch profile:', error);
+        setProfile(null);
+        return;
+      }
+
+      // Ensure the profile belongs to the current session user
+      if (!data || data.user_id !== userId) {
+        setProfile(null);
+        return;
+      }
+
+      setProfile(data);
+    } catch (e) {
+      console.error('Failed to fetch profile:', e);
+      if (currentUserIdRef.current === userId) setProfile(null);
+    }
   };
 
   useEffect(() => {
@@ -38,12 +62,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
-        
+
         if (session?.user) {
+          // Clear stale profile immediately; fetch the correct one for this user.
+          setProfile(null);
+          currentUserIdRef.current = session.user.id;
           setTimeout(() => {
             fetchProfile(session.user.id);
           }, 0);
         } else {
+          currentUserIdRef.current = null;
           setProfile(null);
         }
         setLoading(false);
@@ -54,7 +82,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
+        setProfile(null);
+        currentUserIdRef.current = session.user.id;
         fetchProfile(session.user.id);
+      } else {
+        currentUserIdRef.current = null;
+        setProfile(null);
       }
       setLoading(false);
     });
