@@ -180,7 +180,8 @@ export function useUpdateRideRequest() {
         .eq('id', requestId)
         .select(`
           *,
-          ride:rides!ride_id(id, driver_id, event_id)
+          ride:rides!ride_id(id, driver_id, event_id),
+          passenger:profiles!ride_passengers_passenger_id_fkey(id, display_name)
         `)
         .single();
       
@@ -221,6 +222,56 @@ export function useUpdateRideRequest() {
           } else if (status === 'declined') {
             await sendRideDeclinedMessage(chatId, passengerName);
           }
+        }
+      }
+
+      // Send push notification to the passenger
+      const passengerId = data.passenger_id;
+      if (passengerId && (status === 'accepted' || status === 'declined')) {
+        try {
+          const notificationTitle = status === 'accepted' 
+            ? 'Ride Accepted! 🚗' 
+            : 'Ride Request Declined';
+          const notificationBody = status === 'accepted'
+            ? `${driverName || 'A DD'} is coming to pick you up!`
+            : `${driverName || 'The DD'} couldn't accept your ride request. Try requesting another DD.`;
+
+          // Create in-app notification
+          await supabase
+            .from('notifications')
+            .insert({
+              profile_id: passengerId,
+              type: status === 'accepted' ? 'ride_accepted' : 'ride_declined',
+              title: notificationTitle,
+              body: notificationBody,
+              data: {
+                ride_id: data.ride?.id,
+                driver_name: driverName,
+                event_id: eventId
+              }
+            });
+
+          // Send push notification
+          const { data: session } = await supabase.auth.getSession();
+          if (session?.session?.access_token) {
+            await supabase.functions.invoke('send-push-notification', {
+              body: {
+                driverProfileIds: [passengerId],
+                title: notificationTitle,
+                body: notificationBody,
+                tag: `ride-${status}-${data.ride?.id}`,
+                data: {
+                  type: status === 'accepted' ? 'ride_accepted' : 'ride_declined',
+                  rideId: data.ride?.id,
+                  eventId: eventId
+                }
+              }
+            });
+            console.log('[useUpdateRideRequest] Push notification sent to passenger');
+          }
+        } catch (notifError) {
+          console.error('[useUpdateRideRequest] Failed to send notification:', notifError);
+          // Don't throw - notification failure shouldn't block the main operation
         }
       }
       
