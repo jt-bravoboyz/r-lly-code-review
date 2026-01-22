@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.bravoboyz.rally',
-  appName: 'Rally',
+  appName: 'R@lly',
   webDir: 'dist',
   server: {
     androidScheme: 'https'
