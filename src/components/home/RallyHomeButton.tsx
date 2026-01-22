@@ -7,10 +7,11 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Home, User, Building2, MapPin, Navigation, CheckCircle2, Lock, Users, UserCheck, Globe, Shield, XCircle } from 'lucide-react';
+import { Home, User, Building2, MapPin, Navigation, CheckCircle2, Lock, Users, UserCheck, Globe, Shield, XCircle, Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useMyAttendeeStatus, useUpdateSafetyStatus } from '@/hooks/useSafetyStatus';
 import { useSafetyNotifications } from '@/hooks/useSafetyNotifications';
+import { useMapboxToken } from '@/hooks/useMapboxToken';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -41,11 +42,32 @@ export function RallyHomeButton({ eventId, trigger }: RallyHomeButtonProps) {
   const [selectedPeople, setSelectedPeople] = useState<string[]>([]);
   const [eventAttendees, setEventAttendees] = useState<EventAttendee[]>([]);
   const { profile } = useAuth();
+  const { token: mapboxToken } = useMapboxToken();
   
   // Use the safety status hook
   const { data: myStatus, refetch: refetchStatus } = useMyAttendeeStatus(eventId);
   const { confirmNotParticipating } = useUpdateSafetyStatus();
   const { notifyGoingHome, notifyArrivedSafe } = useSafetyNotifications();
+  
+  // Geocode an address to get coordinates
+  const geocodeAddress = async (address: string): Promise<{ lat: number; lng: number } | null> => {
+    if (!mapboxToken) return null;
+    
+    try {
+      const response = await fetch(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(address)}.json?access_token=${mapboxToken}&limit=1`
+      );
+      const data = await response.json();
+      
+      if (data.features && data.features.length > 0) {
+        const [lng, lat] = data.features[0].center;
+        return { lat, lng };
+      }
+    } catch (error) {
+      console.error('Geocoding failed:', error);
+    }
+    return null;
+  };
 
   // Derive state from myStatus
   const isGoingHome = !!myStatus?.going_home_at;
@@ -136,11 +158,16 @@ export function RallyHomeButton({ eventId, trigger }: RallyHomeButtonProps) {
         finalAddress = customAddress.trim();
       }
 
+      // Geocode the address to get coordinates for auto-arrival detection
+      const coords = await geocodeAddress(finalAddress);
+
       const { error } = await supabase
         .from('event_attendees')
         .update({
           going_home_at: new Date().toISOString(),
           destination_name: finalAddress,
+          destination_lat: coords?.lat || null,
+          destination_lng: coords?.lng || null,
           destination_visibility: visibility,
           destination_shared_with: visibility === 'selected' ? selectedPeople : [],
           arrived_safely: false,
@@ -287,7 +314,7 @@ export function RallyHomeButton({ eventId, trigger }: RallyHomeButtonProps) {
       <Dialog open={showInitialChoice} onOpenChange={setShowInitialChoice}>
         <DialogTrigger asChild>
           {trigger || (
-            <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white rounded-full font-montserrat h-14 text-lg shadow-lg shadow-orange-500/30">
+            <Button className="w-full bg-secondary hover:bg-secondary/90 text-secondary-foreground rounded-full font-montserrat h-14 text-lg shadow-lg">
               <Home className="h-5 w-5 mr-2" />
               R@lly Home
             </Button>
