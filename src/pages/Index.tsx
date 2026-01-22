@@ -216,10 +216,10 @@ export default function Index() {
         {pastEvents.length > 0 && (
           <section className="space-y-4">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <History className="h-5 w-5 text-muted-foreground" />
-                <h3 className="text-xl font-bold text-foreground font-montserrat">Past Rallies</h3>
-              </div>
+            <div className="flex items-center gap-2">
+              <History className="h-5 w-5 text-muted-foreground" />
+              <h3 className="text-xl font-bold text-foreground font-montserrat">Past R@llies</h3>
+            </div>
             </div>
 
             <div className="space-y-4 opacity-80">
