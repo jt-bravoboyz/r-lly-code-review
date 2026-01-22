@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -6,7 +6,6 @@ import { Badge } from '@/components/ui/badge';
 import { Check, X, MapPin, Clock, Users, Bell } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useUpdateRideRequest } from '@/hooks/useRides';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 
@@ -47,10 +46,10 @@ export function RideRequestManager({ rides, onRideComplete }: RideRequestManager
   const handleAccept = async (requestId: string, passengerName: string) => {
     setPendingActions(prev => new Set(prev).add(requestId));
     try {
-      await updateRequest.mutateAsync({ requestId, status: 'confirmed' });
+      await updateRequest.mutateAsync({ requestId, status: 'accepted' });
       toast.success(`Accepted ${passengerName}'s ride request!`);
-    } catch (error) {
-      toast.error('Failed to accept request');
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to accept request');
     } finally {
       setPendingActions(prev => {
         const next = new Set(prev);
@@ -65,8 +64,8 @@ export function RideRequestManager({ rides, onRideComplete }: RideRequestManager
     try {
       await updateRequest.mutateAsync({ requestId, status: 'declined' });
       toast.success(`Declined ${passengerName}'s request`);
-    } catch (error) {
-      toast.error('Failed to decline request');
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to decline request');
     } finally {
       setPendingActions(prev => {
         const next = new Set(prev);
@@ -85,8 +84,8 @@ export function RideRequestManager({ rides, onRideComplete }: RideRequestManager
     try {
       await updateRequest.mutateAsync({ requestId: request.id, status: 'completed' });
       toast.success(`Ride completed! Points awarded.`);
-    } catch (error) {
-      toast.error('Failed to complete ride');
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to complete ride');
     } finally {
       setPendingActions(prev => {
         const next = new Set(prev);
@@ -102,9 +101,9 @@ export function RideRequestManager({ rides, onRideComplete }: RideRequestManager
       .map(p => ({ ...p, ride }))
   );
 
-  const confirmedRequests = myRides.flatMap(ride => 
+  const confirmedRequests = myRides.flatMap(ride =>
     (ride.passengers || [])
-      .filter(p => p.status === 'confirmed')
+      .filter(p => p.status === 'accepted' || p.status === 'confirmed')
       .map(p => ({ ...p, ride }))
   );
 
@@ -184,12 +183,12 @@ export function RideRequestManager({ rides, onRideComplete }: RideRequestManager
         </div>
       )}
 
-      {/* Confirmed Passengers */}
+      {/* Accepted Passengers */}
       {confirmedRequests.length > 0 && (
         <div className="space-y-3">
           <h4 className="text-sm font-semibold text-green-600 flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-green-500" />
-            Confirmed Passengers ({confirmedRequests.length})
+            Accepted Passengers ({confirmedRequests.length})
           </h4>
           {confirmedRequests.map((request) => (
             <Card key={request.id} className="bg-green-50 border-green-200">
@@ -205,7 +204,7 @@ export function RideRequestManager({ rides, onRideComplete }: RideRequestManager
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-sm">{request.passenger?.display_name || 'Anonymous'}</p>
                     <Badge variant="outline" className="text-[10px] bg-green-100 text-green-700 border-green-200 mt-1">
-                      Confirmed
+                      Accepted
                     </Badge>
                   </div>
 
