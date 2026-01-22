@@ -270,7 +270,7 @@ export default function SquadDetail() {
               onClick={handleQuickRally}
             >
               <Zap className="h-4 w-4" />
-              Quick Rally with Squad
+              Quick R@lly with Squad
             </Button>
           </div>
 

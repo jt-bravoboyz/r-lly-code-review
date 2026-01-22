@@ -138,7 +138,7 @@ export function LiveTracking({ eventId, destination, isLive }: LiveTrackingProps
         <div className="bg-card rounded-xl p-3 space-y-2">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <MapPin className="h-4 w-4 text-primary" />
-            <span>Current Rally Point</span>
+            <span>Current R@lly Point</span>
           </div>
           <p className="font-bold text-foreground">{destination.name}</p>
           {destination.address && (

@@ -98,14 +98,14 @@ export default function ReturningAuth() {
           .maybeSingle();
         
         if (existingAttendee) {
-          toast.info("You're already in this rally!");
+          toast.info("You're already in this R@lly!");
           navigate(`/events/${eventData.id}`);
           return;
         }
         
         await joinEvent.mutateAsync({ eventId: eventData.id, profileId: profile.id });
         sessionStorage.setItem('showFirstTimeWelcome', eventData.id);
-        toast.success("You're in! 🎉 Welcome to the rally!");
+        toast.success("You're in! 🎉 Welcome to the R@lly!");
         navigate(`/events/${eventData.id}`);
       } catch (error: any) {
         console.error('Auto-join failed:', error);

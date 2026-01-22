@@ -379,7 +379,7 @@ export default function EventDetail() {
                       await endRally.mutateAsync(event.id);
                       toast.success('After R@lly started! 🌙');
                     } catch (error: any) {
-                      toast.error(error.message || 'Failed to end rally');
+                      toast.error(error.message || 'Failed to end R@lly');
                     }
                   }}
                   disabled={endRally.isPending}

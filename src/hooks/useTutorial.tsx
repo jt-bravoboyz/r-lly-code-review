@@ -38,7 +38,7 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     id: 'events-intro',
     title: 'MISSION CONTROL',
     command: 'ACCESS EVENT OPERATIONS',
-    instruction: 'Events are called "Rallies." This is where you create and join spontaneous hangouts. TAP the Events tab to proceed.',
+    instruction: 'Events are called "R@llies." This is where you create and join spontaneous hangouts. TAP the Events tab to proceed.',
     targetSelector: '[data-tutorial="nav-events"]',
     requiredAction: 'navigate',
     targetRoute: '/events',
