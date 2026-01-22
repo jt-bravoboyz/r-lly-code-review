@@ -30,9 +30,10 @@ export function DDDropoffButton({ eventId }: DDDropoffButtonProps) {
   const myRides = rides?.filter(r => r.driver?.id === profile.id) || [];
   
   // Get all passengers from my rides who are participating in R@lly Home
+  // Normalize: treat 'accepted' and 'confirmed' the same
   const myPassengers = myRides.flatMap(ride => 
     (ride.passengers || [])
-      .filter(p => p.status === 'confirmed')
+      .filter(p => p.status === 'accepted' || p.status === 'confirmed')
       .map(p => ({
         ...p,
         rideId: ride.id,

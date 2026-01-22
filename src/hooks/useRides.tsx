@@ -171,6 +171,8 @@ export function useUpdateRideRequest() {
       passengerName?: string;
       driverName?: string;
     }) => {
+      console.log('[useUpdateRideRequest] Updating ride request:', { requestId, status, eventId });
+      
       // Fetch ride info along with the update for points awarding
       const { data, error } = await supabase
         .from('ride_passengers')
@@ -182,7 +184,19 @@ export function useUpdateRideRequest() {
         `)
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('[useUpdateRideRequest] Database error:', error);
+        // Provide more helpful error messages for common RLS issues
+        if (error.code === 'PGRST116') {
+          throw new Error('Request not found or you do not have permission to update it');
+        }
+        if (error.message?.includes('row-level security')) {
+          throw new Error('Permission denied: You can only update requests for rides you drive');
+        }
+        throw new Error(error.message || 'Failed to update ride request');
+      }
+
+      console.log('[useUpdateRideRequest] Update successful:', data);
 
       // Award points when ride is completed
       if (status === 'completed' && data.ride?.driver_id) {
@@ -192,8 +206,9 @@ export function useUpdateRideRequest() {
             p_event_type: 'drive_event',
             p_source_id: data.ride.id
           });
+          console.log('[useUpdateRideRequest] Points awarded for completed ride');
         } catch (pointsError) {
-          console.error('Failed to award drive_event points:', pointsError);
+          console.error('[useUpdateRideRequest] Failed to award drive_event points:', pointsError);
         }
       }
 
