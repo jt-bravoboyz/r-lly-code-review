@@ -20,6 +20,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useCohosts } from '@/hooks/useCohosts';
 import { useMyDDRequest, useEventDDs } from '@/hooks/useDDManagement';
 import { useStartRally, useEndRally, useCompleteRally } from '@/hooks/useAfterRally';
+import { useAutoArrival } from '@/hooks/useAutoArrival';
 import { RideCard } from '@/components/rides/RideCard';
 import { CreateRideDialog } from '@/components/rides/CreateRideDialog';
 import { RequestRideDialog } from '@/components/rides/RequestRideDialog';
@@ -71,6 +72,12 @@ export default function EventDetail() {
   const [showSafetyCloseout, setShowSafetyCloseout] = useState(false);
   const [isBarHopTransitionPoint, setIsBarHopTransitionPoint] = useState(false);
   const [showEndRallyDialog, setShowEndRallyDialog] = useState(false);
+  
+  // Auto-arrival detection for R@lly Home - only active after event ends
+  useAutoArrival({ 
+    eventId: id || '', 
+    eventStatus: event?.status 
+  });
 
   // Check for first-time welcome flag (set when user auto-joins via invite code)
   useEffect(() => {
