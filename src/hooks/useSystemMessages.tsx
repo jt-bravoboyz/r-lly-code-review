@@ -41,11 +41,11 @@ export async function sendSystemMessage(chatId: string, content: string, eventDa
 }
 
 export async function sendJoinMessage(chatId: string, userName: string) {
-  await sendSystemMessage(chatId, `🎉 ${userName} joined the rally!`);
+  await sendSystemMessage(chatId, `🎉 ${userName} joined the R@lly!`);
 }
 
 export async function sendLeaveMessage(chatId: string, userName: string) {
-  await sendSystemMessage(chatId, `👋 ${userName} left the rally`);
+  await sendSystemMessage(chatId, `👋 ${userName} left the R@lly`);
 }
 
 export async function sendGoingHomeMessage(chatId: string, userName: string, destination?: string) {

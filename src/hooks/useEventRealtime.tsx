@@ -37,11 +37,11 @@ export function useEventRealtime(eventId: string | undefined) {
               oldData.location_lng !== newData.location_lng) {
             const update: EventUpdate = {
               type: 'location_change',
-              message: `Rally location updated to ${newData.location_name || 'a new location'}`,
+              message: `R@lly location updated to ${newData.location_name || 'a new location'}`,
               timestamp: new Date(),
             };
             setUpdates(prev => [update, ...prev.slice(0, 9)]);
-            toast.info('📍 Rally location updated!', {
+            toast.info('📍 R@lly location updated!', {
               description: newData.location_name || 'Check the new meeting point',
             });
           }
@@ -49,11 +49,11 @@ export function useEventRealtime(eventId: string | undefined) {
           if (oldData.start_time !== newData.start_time) {
             const update: EventUpdate = {
               type: 'status_change',
-              message: 'Rally time has been updated',
+              message: 'R@lly time has been updated',
               timestamp: new Date(),
             };
             setUpdates(prev => [update, ...prev.slice(0, 9)]);
-            toast.info('⏰ Rally time changed!', {
+            toast.info('⏰ R@lly time changed!', {
               description: 'Check the updated schedule',
             });
           }
@@ -85,7 +85,7 @@ export function useEventRealtime(eventId: string | undefined) {
 
           const update: EventUpdate = {
             type: 'attendee_joined',
-            message: `${profile?.display_name || 'Someone'} joined the rally!`,
+            message: `${profile?.display_name || 'Someone'} joined the R@lly!`,
             timestamp: new Date(),
           };
           setUpdates(prev => [update, ...prev.slice(0, 9)]);
@@ -106,7 +106,7 @@ export function useEventRealtime(eventId: string | undefined) {
         () => {
           const update: EventUpdate = {
             type: 'attendee_left',
-            message: 'Someone left the rally',
+            message: 'Someone left the R@lly',
             timestamp: new Date(),
           };
           setUpdates(prev => [update, ...prev.slice(0, 9)]);

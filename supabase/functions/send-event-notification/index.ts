@@ -159,7 +159,7 @@ Deno.serve(async (req) => {
     let notifBody = body;
     
     if (type === 'rally_invite') {
-      notifTitle = `You're invited to ${eventTitle || 'a rally'}! 🎉`;
+      notifTitle = `You're invited to ${eventTitle || 'a R@lly'}! 🎉`;
       notifBody = `${invitedBy || 'Someone'} invited you to join. Tap to RSVP.`;
     }
 

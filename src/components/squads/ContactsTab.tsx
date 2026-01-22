@@ -80,7 +80,7 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
 
   const handleInviteToApp = (phone: string) => {
     const message = encodeURIComponent(
-      "Hey! Join me on R@lly - the app for coordinating nights out with friends. Download it here: https://rally.app"
+      "Hey! Join me on R@lly - the app for coordinating nights out with friends. Download it here: https://rallyboyz.lovable.app"
     );
     window.open(`sms:${phone}?body=${message}`, '_blank');
   };

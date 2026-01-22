@@ -34,7 +34,7 @@ export function SwipeableCard({
   },
   rightAction = {
     icon: <Zap className="h-5 w-5" />,
-    label: 'Rally',
+    label: 'R@lly',
     className: 'bg-primary',
   },
   className,

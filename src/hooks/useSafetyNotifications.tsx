@@ -70,7 +70,7 @@ export function useSafetyNotifications() {
           type: 'safety_complete',
           eventId,
           title: '🎉 Everyone is Safe!',
-          body: `All attendees at ${eventTitle || 'the rally'} have confirmed their safety status`,
+          body: `All attendees at ${eventTitle || 'the R@lly'} have confirmed their safety status`,
         },
       });
     } catch (error) {
