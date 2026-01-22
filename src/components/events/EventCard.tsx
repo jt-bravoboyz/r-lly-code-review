@@ -13,6 +13,8 @@ interface EventCardProps {
     event_type: string;
     image_url: string | null;
     start_time: string;
+    end_time?: string | null;
+    status?: string | null;
     location_name: string | null;
     is_barhop: boolean | null;
     max_attendees: number | null;
@@ -28,8 +30,16 @@ interface EventCardProps {
 export const EventCard = forwardRef<HTMLAnchorElement, EventCardProps>(
   function EventCard({ event }, ref) {
     const attendeeCount = event.attendees?.[0]?.count || 0;
-    const isLive = new Date(event.start_time) <= new Date();
     const eventDate = new Date(event.start_time);
+    const now = new Date();
+    
+    // Calculate if event is truly live (not completed/cancelled and within time window)
+    const isCompleted = event.status === 'completed' || event.status === 'cancelled';
+    const endTime = event.end_time 
+      ? new Date(event.end_time) 
+      : new Date(eventDate.getTime() + 4 * 60 * 60 * 1000); // Default 4 hours
+    const isWithinTimeWindow = eventDate <= now && now <= endTime;
+    const isLive = !isCompleted && (isWithinTimeWindow || event.status === 'live' || event.status === 'after_rally');
     
     return (
       <Link ref={ref} to={`/events/${event.id}`}>
