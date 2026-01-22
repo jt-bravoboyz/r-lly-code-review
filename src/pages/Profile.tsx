@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Header } from '@/components/layout/Header';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,6 +16,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { LocationSearch } from '@/components/location/LocationSearch';
+import { AvatarCropperDialog } from '@/components/profile/AvatarCropperDialog';
+import { AvatarSourceSheet } from '@/components/profile/AvatarSourceSheet';
 
 // Helper to format phone for display
 function formatPhoneForDisplay(phone: string): string {
@@ -51,9 +53,81 @@ export default function Profile() {
   const [isHomeDialogOpen, setIsHomeDialogOpen] = useState(false);
   const [isSavingHome, setIsSavingHome] = useState(false);
   const [homeSearchValue, setHomeSearchValue] = useState('');
+  
+  // Avatar upload state
+  const [avatarSourceOpen, setAvatarSourceOpen] = useState(false);
+  const [cropperOpen, setCropperOpen] = useState(false);
+  const [selectedImageSrc, setSelectedImageSrc] = useState<string | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  
   const { user, profile, loading, signOut, refreshProfile } = useAuth();
   const { toggleLocationSharing } = useLocation();
   const navigate = useNavigate();
+
+  // Handle image selection from file input
+  const handleImageSelected = (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('Image must be less than 10MB');
+      return;
+    }
+    
+    const imageUrl = URL.createObjectURL(file);
+    setSelectedImageSrc(imageUrl);
+    setCropperOpen(true);
+  };
+
+  // Handle cropped image upload
+  const handleCropComplete = async (croppedBlob: Blob) => {
+    if (!user || !profile) return;
+    
+    setUploadingAvatar(true);
+    setCropperOpen(false);
+    
+    try {
+      const fileName = `${user.id}/avatar.jpg`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, croppedBlob, { 
+          upsert: true,
+          contentType: 'image/jpeg'
+        });
+      
+      if (uploadError) throw uploadError;
+      
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(fileName);
+      
+      // Cache-bust to force refresh
+      const avatarUrl = `${publicUrl}?t=${Date.now()}`;
+      
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: avatarUrl })
+        .eq('id', profile.id);
+      
+      if (updateError) throw updateError;
+      
+      await refreshProfile();
+      toast.success('Profile picture updated!');
+    } catch (error) {
+      console.error('Avatar upload error:', error);
+      toast.error('Failed to upload profile picture');
+    } finally {
+      setUploadingAvatar(false);
+      if (selectedImageSrc) {
+        URL.revokeObjectURL(selectedImageSrc);
+        setSelectedImageSrc(null);
+      }
+    }
+  };
 
   const handleSaveHomeAddress = async (location: { name: string; address: string; lat: number; lng: number }) => {
     if (!profile?.id) return;
@@ -174,9 +248,32 @@ export default function Profile() {
                 <Button 
                   size="icon" 
                   className="absolute -bottom-1 -right-1 h-8 w-8 rounded-full btn-rally"
+                  onClick={() => setAvatarSourceOpen(true)}
+                  disabled={uploadingAvatar}
                 >
-                  <Camera className="h-4 w-4" />
+                  {uploadingAvatar ? (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <Camera className="h-4 w-4" />
+                  )}
                 </Button>
+                
+                {/* Hidden file inputs */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => e.target.files?.[0] && handleImageSelected(e.target.files[0])}
+                />
+                <input
+                  ref={cameraInputRef}
+                  type="file"
+                  accept="image/*"
+                  capture="user"
+                  className="hidden"
+                  onChange={(e) => e.target.files?.[0] && handleImageSelected(e.target.files[0])}
+                />
               </div>
               
               <div className="flex-1">
@@ -422,6 +519,30 @@ export default function Profile() {
       </main>
 
       <BottomNav />
+
+      {/* Avatar Source Selection Sheet */}
+      <AvatarSourceSheet
+        open={avatarSourceOpen}
+        onOpenChange={setAvatarSourceOpen}
+        onCameraClick={() => cameraInputRef.current?.click()}
+        onGalleryClick={() => fileInputRef.current?.click()}
+      />
+
+      {/* Avatar Cropper Dialog */}
+      {selectedImageSrc && (
+        <AvatarCropperDialog
+          open={cropperOpen}
+          onOpenChange={(open) => {
+            setCropperOpen(open);
+            if (!open && selectedImageSrc) {
+              URL.revokeObjectURL(selectedImageSrc);
+              setSelectedImageSrc(null);
+            }
+          }}
+          imageSrc={selectedImageSrc}
+          onCropComplete={handleCropComplete}
+        />
+      )}
     </div>
   );
 }
