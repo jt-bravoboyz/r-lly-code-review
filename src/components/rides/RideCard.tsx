@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Car, MapPin, Clock, Users, Navigation, Check, X, Loader2, CheckCircle2, Pencil } from 'lucide-react';
+import { Car, MapPin, Clock, Users, Navigation, Check, X, Loader2, CheckCircle2, Pencil, Award } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -164,9 +164,15 @@ export function RideCard({ ride }: RideCardProps) {
             {/* Rider accepted status - show for passengers who are accepted */}
             {!isDriver && isAccepted && (
               <div className="mt-3 p-3 rounded-lg bg-green-50 border border-green-200">
-                <div className="flex items-center gap-2 mb-2">
-                  <CheckCircle2 className="h-4 w-4 text-green-600" />
-                  <span className="text-sm font-semibold text-green-700">You're confirmed!</span>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-green-600" />
+                    <span className="text-sm font-semibold text-green-700">You're confirmed!</span>
+                  </div>
+                  <Badge className="bg-accent text-accent-foreground text-[10px]">
+                    <Award className="h-3 w-3 mr-1" />
+                    Ride Accepted
+                  </Badge>
                 </div>
                 <div className="flex items-center justify-between">
                   <p className="text-xs text-green-600 flex-1">
@@ -224,11 +230,17 @@ export function RideCard({ ride }: RideCardProps) {
             {/* DD View: Accepted passengers with pickup locations and navigation */}
             {isDriver && acceptedPassengers.length > 0 && (
               <div className="mt-3 space-y-2">
-                <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4 text-green-600" />
-                  <span className="text-xs font-semibold text-green-700">
-                    {acceptedPassengers.length} confirmed rider{acceptedPassengers.length > 1 ? 's' : ''}
-                  </span>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4 text-green-600" />
+                    <span className="text-xs font-semibold text-green-700">
+                      {acceptedPassengers.length} confirmed rider{acceptedPassengers.length > 1 ? 's' : ''}
+                    </span>
+                  </div>
+                  <Badge className="bg-accent/20 text-accent border-accent/30 text-[10px]">
+                    <Award className="h-3 w-3 mr-1" />
+                    50+ pts per ride
+                  </Badge>
                 </div>
                 <div className="space-y-2">
                   {acceptedPassengers.map((p) => (
