@@ -13,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import rallyLogo from '@/assets/rally-logo.png';
+import { RallyHomeOptInDialog } from '@/components/events/RallyHomeOptInDialog';
 
 interface EventPreview {
   id: string;
@@ -42,6 +43,8 @@ export default function JoinRally() {
   const [manualCode, setManualCode] = useState(code || '');
   const [joining, setJoining] = useState(false);
   const [alreadyJoined, setAlreadyJoined] = useState(false);
+  const [showRallyHomeOptIn, setShowRallyHomeOptIn] = useState(false);
+  const [joinedEventId, setJoinedEventId] = useState<string | null>(null);
 
   const fetchEvent = async (inviteCode: string) => {
     if (!inviteCode || inviteCode.length < 6) return;
@@ -145,7 +148,18 @@ export default function JoinRally() {
               console.log('[R@lly Debug] Joining event with fresh profile:', { eventId: event.id, profileId: freshProfile.id });
               await joinEvent.mutateAsync({ eventId: event.id, profileId: freshProfile.id });
               toast.success("You're in! 🎉");
-              navigate(`/events/${event.id}`);
+              
+              // Check if event is live and show R@lly Home opt-in
+              const now = new Date();
+              const startTime = new Date(event.start_time);
+              const isLiveEvent = startTime <= now;
+              
+              if (isLiveEvent) {
+                setJoinedEventId(event.id);
+                setShowRallyHomeOptIn(true);
+              } else {
+                navigate(`/events/${event.id}`);
+              }
               return;
             } catch (error: any) {
               console.error('[R@lly Debug] Join error:', error);
@@ -176,7 +190,18 @@ export default function JoinRally() {
       console.log('[R@lly Debug] Joining event:', { eventId: event.id, profileId: profile.id });
       await joinEvent.mutateAsync({ eventId: event.id, profileId: profile.id });
       toast.success("You're in! 🎉");
-      navigate(`/events/${event.id}`);
+      
+      // Check if event is live and show R@lly Home opt-in
+      const now = new Date();
+      const startTime = new Date(event.start_time);
+      const isLiveEvent = startTime <= now;
+      
+      if (isLiveEvent) {
+        setJoinedEventId(event.id);
+        setShowRallyHomeOptIn(true);
+      } else {
+        navigate(`/events/${event.id}`);
+      }
     } catch (error: any) {
       console.error('[R@lly Debug] Join error:', error);
       if (error.message?.includes('duplicate')) {
@@ -195,7 +220,18 @@ export default function JoinRally() {
           try {
             await joinEvent.mutateAsync({ eventId: event.id, profileId: freshProfile.id });
             toast.success("You're in! 🎉");
-            navigate(`/events/${event.id}`);
+            
+            // Check if event is live and show R@lly Home opt-in
+            const now = new Date();
+            const startTime = new Date(event.start_time);
+            const isLiveEvent = startTime <= now;
+            
+            if (isLiveEvent) {
+              setJoinedEventId(event.id);
+              setShowRallyHomeOptIn(true);
+            } else {
+              navigate(`/events/${event.id}`);
+            }
             return;
           } catch (retryError: any) {
             console.error('[R@lly Debug] Retry join error:', retryError);
@@ -386,6 +422,21 @@ export default function JoinRally() {
           </Card>
         )}
       </main>
+
+      {/* R@lly Home Opt-In Dialog for live events */}
+      {joinedEventId && event && (
+        <RallyHomeOptInDialog
+          eventId={joinedEventId}
+          eventTitle={event.title}
+          open={showRallyHomeOptIn}
+          onOpenChange={(open) => {
+            setShowRallyHomeOptIn(open);
+            if (!open) {
+              navigate(`/events/${joinedEventId}`);
+            }
+          }}
+        />
+      )}
     </div>
   );
 }

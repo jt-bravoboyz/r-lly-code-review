@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Zap, ArrowRight, Plus, Calendar, Bell, Sparkles } from 'lucide-react';
+import { Zap, ArrowRight, Plus, Bell, Sparkles, Clock, Calendar, History } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { BottomNav } from '@/components/layout/BottomNav';
@@ -8,14 +8,14 @@ import { PendingInvites } from '@/components/events/PendingInvites';
 import { PWAInstallPrompt } from '@/components/pwa/PWAInstallPrompt';
 import { QuickRallyDialog } from '@/components/events/QuickRallyDialog';
 import { useAuth } from '@/hooks/useAuth';
-import { useEvents } from '@/hooks/useEvents';
+import { useMyEvents } from '@/hooks/useMyEvents';
 import { useUnreadCount } from '@/hooks/useNotifications';
 import { usePendingInvites } from '@/hooks/useEventInvites';
 import rallyLogo from '@/assets/rally-logo.png';
 
 export default function Index() {
   const { user, profile, loading } = useAuth();
-  const { data: events, isLoading: eventsLoading } = useEvents();
+  const { data: categorizedEvents, isLoading: eventsLoading } = useMyEvents();
   const unreadCount = useUnreadCount();
   const { data: pendingInvites } = usePendingInvites();
   const totalUnread = unreadCount + (pendingInvites?.length || 0);
@@ -43,7 +43,9 @@ export default function Index() {
     return <LandingScreen />;
   }
 
-  const upcomingEvents = events?.slice(0, 3) || [];
+  const currentEvents = categorizedEvents?.current || [];
+  const upcomingEvents = categorizedEvents?.upcoming || [];
+  const pastEvents = categorizedEvents?.past || [];
   const userName = profile?.display_name || 'User';
   const userInitials = userName.slice(0, 2).toUpperCase();
 
@@ -146,10 +148,35 @@ export default function Index() {
           </div>
         </section>
 
+        {/* Current/Live Events Section */}
+        {currentEvents.length > 0 && (
+          <section className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                <h3 className="text-xl font-bold text-foreground font-montserrat">Live Now</h3>
+              </div>
+              <Clock className="h-5 w-5 text-green-500" />
+            </div>
+
+            <div className="space-y-4">
+              {currentEvents.map((event) => (
+                <div key={event.id} className="relative">
+                  <div className="absolute -left-2 top-0 bottom-0 w-1 bg-gradient-to-b from-green-500 to-green-400 rounded-full" />
+                  <EventCard event={event} />
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* Upcoming Events Section */}
         <section className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-xl font-bold text-foreground font-montserrat">Upcoming Events</h3>
+            <div className="flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-primary" />
+              <h3 className="text-xl font-bold text-foreground font-montserrat">Upcoming</h3>
+            </div>
             <Button variant="ghost" size="sm" asChild className="text-primary hover:text-primary/80 font-bold font-montserrat hover:bg-primary/10">
               <Link to="/events" className="flex items-center gap-1">
                 See All
@@ -166,7 +193,7 @@ export default function Index() {
             </div>
           ) : upcomingEvents.length > 0 ? (
             <div className="space-y-4">
-              {upcomingEvents.map((event) => (
+              {upcomingEvents.slice(0, 3).map((event) => (
                 <EventCard key={event.id} event={event} />
               ))}
             </div>
@@ -184,6 +211,24 @@ export default function Index() {
             </Card>
           )}
         </section>
+
+        {/* Past Events Section */}
+        {pastEvents.length > 0 && (
+          <section className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <History className="h-5 w-5 text-muted-foreground" />
+                <h3 className="text-xl font-bold text-foreground font-montserrat">Past Rallies</h3>
+              </div>
+            </div>
+
+            <div className="space-y-4 opacity-80">
+              {pastEvents.slice(0, 3).map((event) => (
+                <EventCard key={event.id} event={event} />
+              ))}
+            </div>
+          </section>
+        )}
       </main>
 
       <BottomNav />
