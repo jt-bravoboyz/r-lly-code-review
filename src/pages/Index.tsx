@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { EventCard } from '@/components/events/EventCard';
+import { PendingInvites } from '@/components/events/PendingInvites';
 import { PWAInstallPrompt } from '@/components/pwa/PWAInstallPrompt';
 import { QuickRallyDialog } from '@/components/events/QuickRallyDialog';
 import { useAuth } from '@/hooks/useAuth';
@@ -97,6 +98,13 @@ export default function Index() {
       </header>
       
       <main className="px-4 py-6 space-y-8 relative z-10">
+
+        {/* Pending Rally Invites - Show prominently at top */}
+        {(pendingInvites?.length ?? 0) > 0 && (
+          <section className="space-y-3">
+            <PendingInvites />
+          </section>
+        )}
 
         {/* Ready to Rally Section - Bold & Vibrant */}
         <section className="space-y-5">
