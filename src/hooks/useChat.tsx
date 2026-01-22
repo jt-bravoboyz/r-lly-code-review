@@ -229,6 +229,36 @@ export function useSendMessage() {
         .single();
 
       if (error) throw error;
+
+      // Send push notifications to other chat participants
+      try {
+        // Get all participants except the sender
+        const { data: participants } = await supabase
+          .from('chat_participants')
+          .select('profile_id')
+          .eq('chat_id', chatId)
+          .neq('profile_id', activeProfile.id);
+
+        if (participants && participants.length > 0) {
+          const recipientIds = participants.map(p => p.profile_id);
+          const senderName = activeProfile.display_name || 'Someone';
+          const messagePreview = content.length > 50 ? content.substring(0, 50) + '...' : content;
+          
+          await supabase.functions.invoke('send-push-notification', {
+            body: {
+              driverProfileIds: recipientIds,
+              title: `${senderName} sent a message`,
+              body: messagePreview,
+              tag: `chat-${chatId}`,
+              data: { chatId, type: 'new_message' }
+            }
+          });
+        }
+      } catch (notifyError) {
+        // Don't fail the message send if notifications fail
+        console.error('Failed to send chat notification:', notifyError);
+      }
+
       return data;
     },
   });
