@@ -132,6 +132,20 @@ export default function JoinSquad() {
 
       if (joinError) throw joinError;
 
+      // Award points for joining a squad
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user?.id) {
+          await supabase.rpc('rly_award_points', {
+            p_user_id: user.id,
+            p_event_type: 'join_squad',
+            p_source_id: invite.squad_id
+          });
+        }
+      } catch (pointsError) {
+        console.error('Failed to award join_squad points:', pointsError);
+      }
+
       // Update invite status
       await supabase
         .from('squad_invites')

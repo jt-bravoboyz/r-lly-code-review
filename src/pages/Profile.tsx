@@ -8,6 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Settings, LogOut, MapPin, Award, Camera, Users, Home, Shield, Pencil, Save, X, FileText, ChevronRight, Navigation, Phone } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
@@ -18,6 +19,9 @@ import { toast } from 'sonner';
 import { LocationSearch } from '@/components/location/LocationSearch';
 import { AvatarCropperDialog } from '@/components/profile/AvatarCropperDialog';
 import { AvatarSourceSheet } from '@/components/profile/AvatarSourceSheet';
+import { useBadgeState, useActivityBadges } from '@/hooks/useBadgeSystem';
+import { TierBadgeIcon } from '@/components/badges/TierBadgeIcon';
+import { ActivityBadgeIcon } from '@/components/badges/ActivityBadgeIcon';
 
 // Helper to format phone for display
 function formatPhoneForDisplay(phone: string): string {
@@ -65,6 +69,10 @@ export default function Profile() {
   const { user, profile, loading, signOut, refreshProfile } = useAuth();
   const { toggleLocationSharing } = useLocation();
   const navigate = useNavigate();
+  
+  // Badge system hooks
+  const { state: badgeState, currentTier, nextTier, progress } = useBadgeState();
+  const { badges: activityBadges } = useActivityBadges();
 
   // Handle image selection from file input
   const handleImageSelected = (file: File) => {
@@ -309,15 +317,36 @@ export default function Profile() {
                   )
                 )}
                 
-                <div 
-                  className="flex items-center gap-2 mt-2 cursor-pointer"
-                  onClick={() => navigate('/achievements')}
-                >
-                  <div className="badge-rally">
+                {/* Tier and Points Display */}
+                <div className="flex items-center gap-2 mt-2">
+                  {currentTier && (
+                    <div 
+                      className="flex items-center gap-1.5 cursor-pointer"
+                      onClick={() => navigate('/achievements')}
+                    >
+                      <TierBadgeIcon tier={currentTier} size="sm" />
+                      <span className="text-sm font-medium">{currentTier.tier_name}</span>
+                    </div>
+                  )}
+                  <div 
+                    className="badge-rally cursor-pointer"
+                    onClick={() => navigate('/achievements')}
+                  >
                     <Award className="h-3 w-3" />
-                    <span>{profile?.reward_points || 0} points</span>
+                    <span>{badgeState?.total_points || profile?.reward_points || 0} pts</span>
                   </div>
                 </div>
+
+                {/* Progress to next tier */}
+                {nextTier && (
+                  <div className="mt-2 w-full">
+                    <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                      <span>{progress.pointsToNext} pts to {nextTier.tier_name}</span>
+                      <span>{Math.round(progress.percent)}%</span>
+                    </div>
+                    <Progress value={progress.percent} className="h-1.5" />
+                  </div>
+                )}
               </div>
 
               {/* Edit button */}
@@ -356,7 +385,28 @@ export default function Profile() {
               )}
             </div>
 
-            {/* Badges */}
+            {/* Earned Activity Badges */}
+            {activityBadges && activityBadges.filter(b => b.isEarned).length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-border">
+                <span className="text-xs text-muted-foreground w-full mb-1">Earned Badges</span>
+                <div className="flex gap-2">
+                  {activityBadges.filter(b => b.isEarned).slice(0, 6).map((badge) => (
+                    <ActivityBadgeIcon 
+                      key={badge.badge_key} 
+                      badge={badge}
+                      progress={{ 
+                        current: badge.progress_count, 
+                        required: badge.requirement_count, 
+                        isEarned: true 
+                      }}
+                      size="sm"
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Legacy Badges */}
             {profile?.badges && profile.badges.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-border">
                 {profile.badges.map((badge, index) => (
@@ -394,6 +444,18 @@ export default function Profile() {
             </CardContent>
           </Card>
         </div>
+
+        {/* View All Badges Link */}
+        <button 
+          onClick={() => navigate('/achievements')}
+          className="w-full flex items-center justify-between py-3 px-4 bg-muted/50 rounded-xl hover:bg-muted transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <Award className="h-5 w-5 text-primary" />
+            <span className="font-medium">View all badges & rewards</span>
+          </div>
+          <ChevronRight className="h-5 w-5 text-muted-foreground" />
+        </button>
 
         {/* Settings */}
         <Card className="card-rally">
