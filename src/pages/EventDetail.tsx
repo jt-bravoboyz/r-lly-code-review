@@ -175,10 +175,10 @@ export default function EventDetail() {
   };
 
   return (
-    <div className={`min-h-screen pb-20 transition-colors duration-500 ${isAfterRally ? 'after-rally-mode' : ''}`}>
+    <div className={`min-h-screen pb-20 ${isAfterRally ? 'after-rally-mode' : ''}`}>
       <Header />
       
-      <main className="container py-6 space-y-6">
+      <main className="container py-6 space-y-6 relative z-10">
         {/* Back Button */}
         <Button variant="ghost" size="sm" asChild>
           <Link to="/events">
@@ -397,17 +397,22 @@ export default function EventDetail() {
 
         {/* After R@lly Banner - Show when in after_rally status */}
         {isAfterRally && (
-          <Card className="gradient-after-rally border-0 shadow-lg shadow-[hsl(270,60%,50%)]/20">
-            <CardContent className="p-4 flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
-                <PartyPopper className="h-6 w-6 text-white" />
+          <Card className="gradient-after-rally border-0 after-rally-pulse overflow-hidden relative">
+            {/* Animated glow overlay */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-[shimmer_3s_ease-in-out_infinite]" />
+            <CardContent className="p-5 flex items-center gap-4 relative">
+              <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm">
+                <Moon className="h-7 w-7 text-white" />
               </div>
               <div className="flex-1">
-                <h3 className="font-bold text-white text-lg font-montserrat">After R@lly Mode</h3>
-                <p className="text-white/80 text-sm font-montserrat">
+                <div className="flex items-center gap-2 mb-1">
+                  <h3 className="font-bold text-white text-xl font-montserrat">After R@lly Mode</h3>
+                  <PartyPopper className="h-5 w-5 text-white/80" />
+                </div>
+                <p className="text-white/90 text-sm font-montserrat">
                   {(event as any)?.after_rally_location_name 
-                    ? `Next stop: ${(event as any).after_rally_location_name}` 
-                    : 'The night continues!'
+                    ? `📍 Next stop: ${(event as any).after_rally_location_name}` 
+                    : '✨ The night continues!'
                   }
                 </p>
               </div>

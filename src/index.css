@@ -147,17 +147,176 @@
     background: radial-gradient(ellipse at center, hsl(27 100% 55% / 0.15) 0%, transparent 70%);
   }
 
-  /* After R@lly Purple Night Theme */
+  /* After R@lly Purple Night Theme - Complete Override */
   .after-rally-mode {
-    background: linear-gradient(180deg, hsl(270 60% 15%) 0%, hsl(270 70% 8%) 100%);
+    background: linear-gradient(180deg, hsl(270 60% 12%) 0%, hsl(275 70% 6%) 100%);
+    animation: after-rally-enter 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* Override all text colors in After R@lly mode */
+  .after-rally-mode,
+  .after-rally-mode * {
+    --foreground: 0 0% 95%;
+    --card-foreground: 0 0% 95%;
+    --popover-foreground: 0 0% 95%;
+    --muted-foreground: 270 30% 75%;
+  }
+
+  .after-rally-mode {
+    --background: 270 60% 10%;
+    --card: 270 50% 15%;
+    --popover: 270 50% 15%;
+    --muted: 270 40% 20%;
+    --border: 270 40% 30%;
+    --input: 270 40% 25%;
+    --primary: 270 70% 65%;
+    --primary-foreground: 270 60% 10%;
+    --secondary: 280 60% 55%;
+    --secondary-foreground: 0 0% 100%;
+    --accent: 270 70% 60%;
+    --accent-foreground: 0 0% 100%;
   }
 
   .after-rally-dialog {
-    background: linear-gradient(180deg, hsl(270 50% 25%) 0%, hsl(270 60% 12%) 100%);
+    background: linear-gradient(180deg, hsl(270 50% 22%) 0%, hsl(270 60% 10%) 100%);
   }
 
   .gradient-after-rally {
     background: linear-gradient(135deg, hsl(270 60% 50%) 0%, hsl(280 70% 40%) 100%);
+  }
+
+  /* Cool purple glow effect */
+  .after-rally-glow {
+    box-shadow: 
+      0 0 30px hsl(270 70% 50% / 0.4),
+      0 0 60px hsl(270 70% 50% / 0.2),
+      0 0 100px hsl(280 70% 40% / 0.1);
+  }
+
+  /* Stars/sparkles animation for night mode */
+  .after-rally-mode::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+      radial-gradient(2px 2px at 20px 30px, hsl(270 80% 80% / 0.3), transparent),
+      radial-gradient(2px 2px at 40px 70px, hsl(280 80% 85% / 0.2), transparent),
+      radial-gradient(1px 1px at 90px 40px, hsl(270 70% 90% / 0.4), transparent),
+      radial-gradient(2px 2px at 130px 80px, hsl(260 80% 80% / 0.25), transparent),
+      radial-gradient(1px 1px at 160px 120px, hsl(270 70% 85% / 0.35), transparent);
+    background-size: 200px 200px;
+    animation: twinkle 4s ease-in-out infinite alternate;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .after-rally-mode > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Keyframe for the dramatic entrance */
+  @keyframes after-rally-enter {
+    0% {
+      background: linear-gradient(180deg, hsl(0 0% 98%) 0%, hsl(0 0% 96%) 100%);
+      filter: brightness(1);
+    }
+    15% {
+      filter: brightness(0.3);
+    }
+    30% {
+      background: linear-gradient(180deg, hsl(270 60% 30%) 0%, hsl(275 70% 20%) 100%);
+      filter: brightness(0.6);
+    }
+    60% {
+      filter: brightness(1.2);
+    }
+    100% {
+      background: linear-gradient(180deg, hsl(270 60% 12%) 0%, hsl(275 70% 6%) 100%);
+      filter: brightness(1);
+    }
+  }
+
+  /* Twinkling stars animation */
+  @keyframes twinkle {
+    0% { opacity: 0.3; }
+    50% { opacity: 0.6; }
+    100% { opacity: 0.4; }
+  }
+
+  /* Pulse glow for key elements in after-rally */
+  @keyframes purple-pulse {
+    0%, 100% {
+      box-shadow: 0 0 20px hsl(270 70% 50% / 0.4);
+    }
+    50% {
+      box-shadow: 0 0 40px hsl(270 70% 60% / 0.6), 0 0 60px hsl(280 70% 50% / 0.3);
+    }
+  }
+
+  /* Shimmer effect for after-rally banner */
+  @keyframes shimmer {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(100%);
+    }
+  }
+
+  .after-rally-pulse {
+    animation: purple-pulse 2s ease-in-out infinite;
+  }
+
+  /* Glass card effect for after-rally */
+  .after-rally-mode .glass-purple {
+    background: hsl(270 50% 20% / 0.7);
+    backdrop-filter: blur(20px);
+    border: 1px solid hsl(270 50% 40% / 0.3);
+  }
+
+  /* Make cards readable in after-rally mode */
+  .after-rally-mode [class*="bg-card"],
+  .after-rally-mode [class*="bg-background"] {
+    background: hsl(270 50% 15% / 0.9) !important;
+    border-color: hsl(270 40% 35%) !important;
+  }
+
+  /* Fix text visibility */
+  .after-rally-mode h1,
+  .after-rally-mode h2,
+  .after-rally-mode h3,
+  .after-rally-mode h4,
+  .after-rally-mode p,
+  .after-rally-mode span,
+  .after-rally-mode label {
+    color: hsl(0 0% 95%);
+  }
+
+  .after-rally-mode .text-muted-foreground {
+    color: hsl(270 30% 75%) !important;
+  }
+
+  /* Button adjustments */
+  .after-rally-mode button:not(.gradient-after-rally):not([class*="bg-white"]) {
+    border-color: hsl(270 40% 40%);
+  }
+
+  .after-rally-mode button[class*="variant-outline"] {
+    background: hsl(270 50% 20% / 0.5);
+    border-color: hsl(270 50% 50%);
+    color: hsl(0 0% 95%);
+  }
+
+  /* Badge visibility */
+  .after-rally-mode [class*="Badge"],
+  .after-rally-mode .badge {
+    background: hsl(270 50% 30%) !important;
+    color: hsl(0 0% 95%) !important;
+    border-color: hsl(270 50% 50%) !important;
   }
 
   /* Glow Effects */
