@@ -170,7 +170,7 @@ export const QuickRallyDialog = forwardRef<HTMLButtonElement, QuickRallyDialogPr
         const result = await createEvent.mutateAsync({
           creator_id: profile.id,
           title: data.title,
-          description: 'Quick Rally - Same day event',
+          description: 'Quick R@lly - Same day event',
           event_type: data.event_type,
           start_time: startTime.toISOString(),
           location_name: data.location_name || 'Current Location',
@@ -244,14 +244,14 @@ export const QuickRallyDialog = forwardRef<HTMLButtonElement, QuickRallyDialogPr
         // Fire confetti celebration!
         fireRallyConfetti();
         
-        toast.success('Quick Rally started! 🎉');
+        toast.success('Quick R@lly started! 🎉');
         
         // Close dialog and navigate to event
         handleClose();
         navigate(`/events/${result.id}`);
         
       } catch (error: any) {
-        toast.error(error.message || 'Failed to create rally');
+        toast.error(error.message || 'Failed to create R@lly');
       }
     };
 

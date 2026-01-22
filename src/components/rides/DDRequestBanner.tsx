@@ -66,7 +66,7 @@ export function DDRequestBanner({ request, eventId, userName }: DDRequestBannerP
                 <span className="font-medium text-foreground">
                   {request.requested_by_profile?.display_name || 'The host'}
                 </span>
-                {' '}has requested you to be the Designated Driver for this rally.
+                {' '}has requested you to be the Designated Driver for this R@lly.
               </p>
               <div className="flex gap-2">
                 <Button

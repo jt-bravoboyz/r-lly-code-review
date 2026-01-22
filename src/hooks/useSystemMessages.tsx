@@ -78,11 +78,11 @@ export async function sendArrivedAtStopMessage(chatId: string, stopName: string)
 }
 
 export async function sendRallyStartedMessage(chatId: string, eventTitle: string) {
-  await sendSystemMessage(chatId, `🚀 Rally started: ${eventTitle}`);
+  await sendSystemMessage(chatId, `🚀 R@lly started: ${eventTitle}`);
 }
 
 export async function sendRallyEndedMessage(chatId: string, eventTitle: string) {
-  await sendSystemMessage(chatId, `✨ Rally ended: ${eventTitle}`);
+  await sendSystemMessage(chatId, `✨ R@lly ended: ${eventTitle}`);
 }
 
 // DD System Messages

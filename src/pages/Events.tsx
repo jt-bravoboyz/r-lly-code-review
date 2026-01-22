@@ -116,7 +116,7 @@ export default function Events() {
           </Select>
         </div>
 
-        {/* Quick Rally Card - BOLD & VIBRANT */}
+        {/* Quick R@lly Card - BOLD & VIBRANT */}
         <Card className="bg-gradient-to-r from-yellow-400 via-orange-500 to-primary border-0 shadow-xl shadow-orange-500/30 overflow-hidden group hover:shadow-2xl hover:shadow-orange-500/40 transition-all duration-300 hover:scale-[1.01] animate-fade-in" style={{ animationDelay: '0.1s' }}>
           <CardContent className="p-5 flex items-center justify-between relative">
             {/* Decorative elements */}

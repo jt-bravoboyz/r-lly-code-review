@@ -648,7 +648,7 @@ export default function Settings() {
                     <div>
                       <Label className="font-medium">Share Location by Default</Label>
                       <p className="text-xs text-muted-foreground">
-                        Auto-share when joining rallies
+                        Auto-share when joining R@llies
                       </p>
                     </div>
                   </div>

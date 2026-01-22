@@ -115,7 +115,7 @@ export default function Squads() {
                   </div>
                   <h3 className="text-lg font-bold mb-2 text-foreground font-montserrat">No squads yet</h3>
                   <p className="text-muted-foreground mb-6 font-montserrat">
-                    Create a squad to quickly invite your squad to rallies!
+                    Create a squad to quickly invite your squad to R@llies!
                   </p>
                   <CreateSquadDialog />
                 </CardContent>

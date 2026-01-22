@@ -97,7 +97,7 @@ export default function JoinRally() {
       }
     } else {
       setEvent(null);
-      toast.error('Rally not found');
+      toast.error('R@lly not found');
     }
     setLoading(false);
   };
@@ -164,10 +164,10 @@ export default function JoinRally() {
             } catch (error: any) {
               console.error('[R@lly Debug] Join error:', error);
               if (error.message?.includes('duplicate')) {
-                toast.info("You're already in this rally!");
+                toast.info("You're already in this R@lly!");
                 navigate(`/events/${event.id}`);
               } else {
-                toast.error(error.message || 'Failed to join rally');
+                toast.error(error.message || 'Failed to join R@lly');
               }
               setJoining(false);
               return;
@@ -205,7 +205,7 @@ export default function JoinRally() {
     } catch (error: any) {
       console.error('[R@lly Debug] Join error:', error);
       if (error.message?.includes('duplicate')) {
-        toast.info("You're already in this rally!");
+        toast.info("You're already in this R@lly!");
         navigate(`/events/${event.id}`);
       } else if (error.message?.includes('row-level security')) {
         // RLS error - likely profile mismatch, fetch fresh profile and retry
@@ -235,13 +235,13 @@ export default function JoinRally() {
             return;
           } catch (retryError: any) {
             console.error('[R@lly Debug] Retry join error:', retryError);
-            toast.error(retryError.message || 'Failed to join rally');
+            toast.error(retryError.message || 'Failed to join R@lly');
           }
         } else {
           toast.error('Could not verify your profile. Please try again.');
         }
       } else {
-        toast.error(error.message || 'Failed to join rally');
+        toast.error(error.message || 'Failed to join R@lly');
       }
     } finally {
       setJoining(false);
@@ -410,13 +410,13 @@ export default function JoinRally() {
                 <Users className="h-8 w-8 text-muted-foreground" />
               </div>
               <div>
-                <h2 className="text-lg font-bold font-montserrat">Rally Not Found</h2>
+                <h2 className="text-lg font-bold font-montserrat">R@lly Not Found</h2>
                 <p className="text-sm text-muted-foreground">
-                  This invite code doesn't match any active rally.
+                  This invite code doesn't match any active R@lly.
                 </p>
               </div>
               <Button variant="outline" onClick={() => navigate('/events')}>
-                Browse Rallies
+                Browse R@llies
               </Button>
             </CardContent>
           </Card>

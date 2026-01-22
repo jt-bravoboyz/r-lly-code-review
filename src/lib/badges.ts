@@ -129,17 +129,17 @@ export const getProgressToNextTier = (points: number): { current: number; next: 
 
 export const getMotivationalMessage = (tierName: string): string => {
   const messages: Record<string, string> = {
-    bronze: "Look at you, just getting started! Keep rallying with your squad and you'll level up in no time. The journey to the top starts here!",
+    bronze: "Look at you, just getting started! Keep R@llying with your squad and you'll level up in no time. The journey to the top starts here!",
     silver: "You're making moves! We're definitely seeing your potential but there's more work to be done if you want to be a champion.",
-    gold: "Now we're talking! You're shining bright and showing everyone what rally life is all about. Keep that momentum going!",
+    gold: "Now we're talking! You're shining bright and showing everyone what R@lly life is all about. Keep that momentum going!",
     emerald: "Wow, you're really standing out! Your dedication to safe nights out is inspiring. You're becoming a legend!",
     sapphire: "Absolutely crushing it! You've proven you're committed to the squad. The elite badges are within reach!",
-    ruby: "Fire! You're blazing through the ranks like a true rally veteran. Not many make it this far!",
+    ruby: "Fire! You're blazing through the ranks like a true R@lly veteran. Not many make it this far!",
     amethyst: "Royal status achieved! You're in rare company now. Keep going and you'll reach the pinnacle!",
-    diamond: "Brilliant! You're sparkling at the top tiers. Only the most dedicated ralliers make it here!",
+    diamond: "Brilliant! You're sparkling at the top tiers. Only the most dedicated R@lliers make it here!",
     pink_diamond: "Extraordinary! You're one of the elite few. Your commitment is truly remarkable!",
     galaxy_opal: "Cosmic level unlocked! You're among the stars now. The ultimate badge awaits!",
-    dark_matter: "LEGENDARY! You've reached the highest tier. You are the embodiment of rally excellence!",
+    dark_matter: "LEGENDARY! You've reached the highest tier. You are the embodiment of R@lly excellence!",
   };
   return messages[tierName] || messages.bronze;
 };

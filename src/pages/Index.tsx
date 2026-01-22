@@ -101,7 +101,7 @@ export default function Index() {
       
       <main className="px-4 py-6 space-y-8 relative z-10">
 
-        {/* Pending Rally Invites - Show prominently at top */}
+        {/* Pending R@lly Invites - Show prominently at top */}
         {(pendingInvites?.length ?? 0) > 0 && (
           <section className="space-y-3">
             <PendingInvites />

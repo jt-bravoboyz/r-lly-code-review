@@ -60,7 +60,7 @@ export function PendingInvites() {
     <div className="space-y-3">
       <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
         <PartyPopper className="h-4 w-4 text-primary" />
-        Rally Invites
+        R@lly Invites
       </h3>
       
       {invites.map((invite) => {

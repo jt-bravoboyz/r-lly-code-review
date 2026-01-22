@@ -134,7 +134,7 @@ export default function Auth() {
           .maybeSingle();
         
         if (existingAttendee) {
-          toast.info("You're already in this rally!");
+          toast.info("You're already in this R@lly!");
           navigate(`/events/${eventData.id}`);
           return;
         }
@@ -254,7 +254,7 @@ export default function Auth() {
       
       // Mark that user has an account for future visits
       localStorage.setItem('rally-has-account', 'true');
-      toast.success("You're in! Let's rally.");
+      toast.success("You're in! Let's R@lly.");
       
       // Offer biometric setup if supported and not already registered
       if (biometricSupported && !biometricRegistered && profile) {
@@ -653,7 +653,7 @@ export default function Auth() {
                       className="text-xs mt-1 ml-1"
                       style={{ color: "rgba(255, 255, 255, 0.5)" }}
                     >
-                      For receiving rally invites via text
+                      For receiving R@lly invites via text
                     </p>
                   </div>
                 )}
