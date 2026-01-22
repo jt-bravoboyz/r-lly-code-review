@@ -2,11 +2,11 @@ import { BottomNav } from '@/components/layout/BottomNav';
 import { EventCard } from '@/components/events/EventCard';
 import { CreateEventDialog } from '@/components/events/CreateEventDialog';
 import { QuickRallyDialog } from '@/components/events/QuickRallyDialog';
-import { useEvents, usePastEvents } from '@/hooks/useEvents';
+import { useMyEvents } from '@/hooks/useMyEvents';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Zap, Filter, Search, Link2, Sparkles, Calendar, History } from 'lucide-react';
+import { Zap, Filter, Search, Link2, Sparkles, Calendar, History, Clock } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
@@ -17,8 +17,7 @@ import rallyLogo from '@/assets/rally-logo.png';
 
 export default function Events() {
   const { user, profile, loading: authLoading } = useAuth();
-  const { data: events, isLoading } = useEvents();
-  const { data: pastEvents, isLoading: pastLoading } = usePastEvents();
+  const { data: categorizedEvents, isLoading } = useMyEvents();
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const location = useLocation();
@@ -42,13 +41,23 @@ export default function Events() {
     );
   }
 
+  const currentEvents = categorizedEvents?.current || [];
+  const upcomingEvents = categorizedEvents?.upcoming || [];
+  const pastEvents = categorizedEvents?.past || [];
+
   // Filter events based on search and type
-  const filteredEvents = events?.filter(event => {
-    const matchesSearch = event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      event.location_name?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesType = typeFilter === 'all' || event.event_type === typeFilter;
-    return matchesSearch && matchesType;
-  }) || [];
+  const filterEvents = (events: typeof currentEvents) => {
+    return events.filter(event => {
+      const matchesSearch = event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        event.location_name?.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesType = typeFilter === 'all' || event.event_type === typeFilter;
+      return matchesSearch && matchesType;
+    });
+  };
+
+  const filteredCurrent = filterEvents(currentEvents);
+  const filteredUpcoming = filterEvents(upcomingEvents);
+  const filteredPast = filterEvents(pastEvents);
 
   return (
     <div className="min-h-screen pb-28 bg-gradient-to-b from-secondary/30 via-background to-secondary/20 relative overflow-hidden">
@@ -154,77 +163,102 @@ export default function Events() {
           </CardContent>
         </Card>
 
-        {/* Section Header */}
-        <div className="flex items-center justify-between animate-fade-in" style={{ animationDelay: '0.3s' }}>
-          <h2 className="text-xl font-bold text-foreground font-montserrat flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary" />
-            Upcoming R@lly
-          </h2>
-          <span className="text-sm text-muted-foreground bg-white/60 backdrop-blur-sm px-3 py-1 rounded-full">{filteredEvents.length} events</span>
-        </div>
+        {/* Live Now Section */}
+        {filteredCurrent.length > 0 && (
+          <section className="space-y-4 animate-fade-in" style={{ animationDelay: '0.25s' }}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                <h2 className="text-xl font-bold text-foreground font-montserrat">Live Now</h2>
+              </div>
+              <Clock className="h-5 w-5 text-green-500" />
+            </div>
 
-        {/* Events List */}
-        {isLoading ? (
-          <div className="space-y-4">
-            {[1, 2, 3].map((i) => (
-              <Card key={i} className="h-28 animate-pulse bg-gradient-to-r from-muted to-muted/50 border-0 rounded-2xl" />
-            ))}
-          </div>
-        ) : filteredEvents.length > 0 ? (
-          <div className="space-y-4">
-            {filteredEvents.map((event, index) => (
-              <div key={event.id} className="animate-fade-in" style={{ animationDelay: `${0.3 + index * 0.1}s` }}>
-                <EventCard event={event} />
-              </div>
-            ))}
-          </div>
-        ) : (
-          <Card className="bg-gradient-to-br from-white to-secondary/30 shadow-lg rounded-2xl border-0 overflow-hidden animate-fade-in" style={{ animationDelay: '0.3s' }}>
-            <CardContent className="p-8 text-center relative">
-              <div className="absolute top-0 left-1/2 w-32 h-32 bg-primary/5 rounded-full -translate-x-1/2 -translate-y-1/2" />
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-orange-400/20 mx-auto mb-4 flex items-center justify-center relative">
-                <Zap className="h-8 w-8 text-primary" strokeWidth={2} />
-              </div>
-              <h3 className="text-lg font-bold mb-2 text-foreground font-montserrat">No R@lly yet</h3>
-              <p className="text-muted-foreground mb-6 font-montserrat">Be the first to start one!</p>
-              <QuickRallyDialog />
-            </CardContent>
-          </Card>
+            <div className="space-y-4">
+              {filteredCurrent.map((event, index) => (
+                <div key={event.id} className="relative animate-fade-in" style={{ animationDelay: `${0.25 + index * 0.1}s` }}>
+                  <div className="absolute -left-2 top-0 bottom-0 w-1 bg-gradient-to-b from-green-500 to-green-400 rounded-full" />
+                  <EventCard event={event} />
+                </div>
+              ))}
+            </div>
+          </section>
         )}
+
+        {/* Upcoming Section */}
+        <section className="space-y-4 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold text-foreground font-montserrat flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              Upcoming R@lly
+            </h2>
+            <span className="text-sm text-muted-foreground bg-white/60 backdrop-blur-sm px-3 py-1 rounded-full">{filteredUpcoming.length} events</span>
+          </div>
+
+          {isLoading ? (
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <Card key={i} className="h-28 animate-pulse bg-gradient-to-r from-muted to-muted/50 border-0 rounded-2xl" />
+              ))}
+            </div>
+          ) : filteredUpcoming.length > 0 ? (
+            <div className="space-y-4">
+              {filteredUpcoming.map((event, index) => (
+                <div key={event.id} className="animate-fade-in" style={{ animationDelay: `${0.3 + index * 0.1}s` }}>
+                  <EventCard event={event} />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <Card className="bg-gradient-to-br from-white to-secondary/30 shadow-lg rounded-2xl border-0 overflow-hidden animate-fade-in" style={{ animationDelay: '0.3s' }}>
+              <CardContent className="p-8 text-center relative">
+                <div className="absolute top-0 left-1/2 w-32 h-32 bg-primary/5 rounded-full -translate-x-1/2 -translate-y-1/2" />
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-orange-400/20 mx-auto mb-4 flex items-center justify-center relative">
+                  <Zap className="h-8 w-8 text-primary" strokeWidth={2} />
+                </div>
+                <h3 className="text-lg font-bold mb-2 text-foreground font-montserrat">No upcoming R@lly</h3>
+                <p className="text-muted-foreground mb-6 font-montserrat">Be the first to start one!</p>
+                <QuickRallyDialog />
+              </CardContent>
+            </Card>
+          )}
+        </section>
 
         {/* Past R@lly Section */}
-        <div className="flex items-center justify-between animate-fade-in mt-8" style={{ animationDelay: '0.4s' }}>
-          <h2 className="text-xl font-bold text-foreground font-montserrat flex items-center gap-2">
-            <History className="h-5 w-5 text-muted-foreground" />
-            Past R@lly
-          </h2>
-          <span className="text-sm text-muted-foreground bg-white/60 backdrop-blur-sm px-3 py-1 rounded-full">
-            {pastEvents?.length || 0} events
-          </span>
-        </div>
+        <section className="space-y-4 animate-fade-in mt-8" style={{ animationDelay: '0.4s' }}>
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold text-foreground font-montserrat flex items-center gap-2">
+              <History className="h-5 w-5 text-muted-foreground" />
+              Past R@lly
+            </h2>
+            <span className="text-sm text-muted-foreground bg-white/60 backdrop-blur-sm px-3 py-1 rounded-full">
+              {filteredPast.length} events
+            </span>
+          </div>
 
-        {pastLoading ? (
-          <div className="space-y-4">
-            {[1, 2].map((i) => (
-              <Card key={i} className="h-28 animate-pulse bg-gradient-to-r from-muted to-muted/50 border-0 rounded-2xl" />
-            ))}
-          </div>
-        ) : pastEvents && pastEvents.length > 0 ? (
-          <div className="space-y-4">
-            {pastEvents.map((event, index) => (
-              <div key={event.id} className="animate-fade-in opacity-75 hover:opacity-100 transition-opacity" style={{ animationDelay: `${0.4 + index * 0.1}s` }}>
-                <EventCard event={event} />
-              </div>
-            ))}
-          </div>
-        ) : (
-          <Card className="bg-muted/30 border-dashed border-2 border-muted rounded-2xl animate-fade-in" style={{ animationDelay: '0.4s' }}>
-            <CardContent className="p-6 text-center">
-              <History className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-              <p className="text-muted-foreground font-montserrat text-sm">No past R@llys yet</p>
-            </CardContent>
-          </Card>
-        )}
+          {isLoading ? (
+            <div className="space-y-4">
+              {[1, 2].map((i) => (
+                <Card key={i} className="h-28 animate-pulse bg-gradient-to-r from-muted to-muted/50 border-0 rounded-2xl" />
+              ))}
+            </div>
+          ) : filteredPast.length > 0 ? (
+            <div className="space-y-4">
+              {filteredPast.map((event, index) => (
+                <div key={event.id} className="animate-fade-in opacity-75 hover:opacity-100 transition-opacity" style={{ animationDelay: `${0.4 + index * 0.1}s` }}>
+                  <EventCard event={event} />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <Card className="bg-muted/30 border-dashed border-2 border-muted rounded-2xl animate-fade-in" style={{ animationDelay: '0.4s' }}>
+              <CardContent className="p-6 text-center">
+                <History className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                <p className="text-muted-foreground font-montserrat text-sm">No past R@llys yet</p>
+              </CardContent>
+            </Card>
+          )}
+        </section>
       </main>
 
       <BottomNav />
