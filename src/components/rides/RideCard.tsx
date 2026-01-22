@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Car, MapPin, Clock, Users, Navigation, Check, X, Loader2, User, CheckCircle2 } from 'lucide-react';
+import { Car, MapPin, Clock, Users, Navigation, Check, X, Loader2, CheckCircle2, Pencil } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -8,12 +8,17 @@ import { format } from 'date-fns';
 import { useAuth } from '@/hooks/useAuth';
 import { useUpdateRideRequest } from '@/hooks/useRides';
 import { RequestRideDialog } from './RequestRideDialog';
+import { UpdatePickupDialog } from './UpdatePickupDialog';
+import { NavigateToPickupButton } from './NavigateToPickupButton';
+import { RiderETADisplay } from './RiderETADisplay';
 import { toast } from 'sonner';
 
 interface PassengerInfo {
   id: string;
   status: string | null;
   pickup_location?: string | null;
+  pickup_lat?: number | null;
+  pickup_lng?: number | null;
   passenger?: {
     id: string;
     display_name: string | null;
@@ -163,10 +168,34 @@ export function RideCard({ ride }: RideCardProps) {
                   <CheckCircle2 className="h-4 w-4 text-green-600" />
                   <span className="text-sm font-semibold text-green-700">You're confirmed!</span>
                 </div>
-                <p className="text-xs text-green-600">
-                  {ride.driver?.display_name} will pick you up
-                  {myRequest?.pickup_location && ` from ${myRequest.pickup_location}`}
-                </p>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-green-600 flex-1">
+                    {ride.driver?.display_name} will pick you up
+                    {myRequest?.pickup_location && ` from ${myRequest.pickup_location}`}
+                  </p>
+                  {/* Update pickup location button */}
+                  <UpdatePickupDialog
+                    requestId={myRequest.id}
+                    currentLocation={myRequest.pickup_location}
+                    trigger={
+                      <Button variant="ghost" size="sm" className="h-6 px-2 text-xs text-green-700 hover:text-green-800 hover:bg-green-100">
+                        <Pencil className="h-3 w-3 mr-1" />
+                        Update
+                      </Button>
+                    }
+                  />
+                </div>
+                
+                {/* ETA Display */}
+                {ride.driver?.id && (
+                  <RiderETADisplay
+                    driverId={ride.driver.id}
+                    driverName={ride.driver.display_name || undefined}
+                    passengerLat={myRequest.pickup_lat}
+                    passengerLng={myRequest.pickup_lng}
+                    eventId={ride.event_id}
+                  />
+                )}
                 
                 {/* Show other riders */}
                 {otherRiders.length > 0 && (
@@ -192,7 +221,7 @@ export function RideCard({ ride }: RideCardProps) {
               </div>
             )}
 
-            {/* DD View: Accepted passengers with pickup locations */}
+            {/* DD View: Accepted passengers with pickup locations and navigation */}
             {isDriver && acceptedPassengers.length > 0 && (
               <div className="mt-3 space-y-2">
                 <div className="flex items-center gap-2">
@@ -223,10 +252,24 @@ export function RideCard({ ride }: RideCardProps) {
                           </div>
                         )}
                       </div>
-                      <Badge variant="outline" className="text-[9px] bg-green-100 text-green-700 border-green-300 shrink-0">
-                        <CheckCircle2 className="h-2.5 w-2.5 mr-0.5" />
-                        Confirmed
-                      </Badge>
+                      <div className="flex items-center gap-1 shrink-0">
+                        {/* Navigate button for DD */}
+                        {p.pickup_location && (
+                          <NavigateToPickupButton
+                            pickupLocation={p.pickup_location}
+                            pickupLat={p.pickup_lat}
+                            pickupLng={p.pickup_lng}
+                            passengerName={p.passenger?.display_name || undefined}
+                            size="icon"
+                            variant="secondary"
+                            className="bg-green-100 hover:bg-green-200 text-green-700"
+                          />
+                        )}
+                        <Badge variant="outline" className="text-[9px] bg-green-100 text-green-700 border-green-300">
+                          <CheckCircle2 className="h-2.5 w-2.5 mr-0.5" />
+                          OK
+                        </Badge>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -256,7 +299,7 @@ export function RideCard({ ride }: RideCardProps) {
               </div>
             )}
 
-            {/* DD View: Pending requests with Accept/Decline */}
+            {/* DD View: Pending requests with Accept/Decline and Navigate */}
             {isDriver && pendingPassengers.length > 0 && (
               <div className="mt-3 space-y-2">
                 <p className="text-xs font-medium text-amber-700">
@@ -275,6 +318,18 @@ export function RideCard({ ride }: RideCardProps) {
                           </AvatarFallback>
                         </Avatar>
                         <span className="text-sm font-medium flex-1 truncate">{passengerName}</span>
+                        {/* Navigate to pending pickup */}
+                        {p.pickup_location && (
+                          <NavigateToPickupButton
+                            pickupLocation={p.pickup_location}
+                            pickupLat={p.pickup_lat}
+                            pickupLng={p.pickup_lng}
+                            passengerName={passengerName}
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7 text-amber-700 hover:bg-amber-100"
+                          />
+                        )}
                         <Button
                           size="sm"
                           variant="outline"
@@ -328,11 +383,23 @@ export function RideCard({ ride }: RideCardProps) {
               </div>
             )}
 
-            {/* Pending request status for riders */}
+            {/* Pending request status for riders with update option */}
             {hasRequested && !isAccepted && (
-              <Badge className="mt-3" variant="outline">
-                Ride Requested - Waiting for approval
-              </Badge>
+              <div className="mt-3 flex items-center gap-2">
+                <Badge variant="outline">
+                  Ride Requested - Waiting for approval
+                </Badge>
+                <UpdatePickupDialog
+                  requestId={myRequest.id}
+                  currentLocation={myRequest.pickup_location}
+                  trigger={
+                    <Button variant="ghost" size="sm" className="h-6 px-2 text-xs">
+                      <Pencil className="h-3 w-3 mr-1" />
+                      Update Location
+                    </Button>
+                  }
+                />
+              </div>
             )}
           </div>
         </div>

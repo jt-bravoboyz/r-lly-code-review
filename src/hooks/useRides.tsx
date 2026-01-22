@@ -87,6 +87,8 @@ export function useRides(eventId?: string) {
             status,
             requested_at,
             pickup_location,
+            pickup_lat,
+            pickup_lng,
             passenger:profiles!ride_passengers_passenger_id_fkey(id, display_name, avatar_url)
           `)
           .in('ride_id', rideIds);
