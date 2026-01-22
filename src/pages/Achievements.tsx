@@ -1,49 +1,49 @@
-import { useRef } from 'react';
+import { useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Header } from '@/components/layout/Header';
 import { BottomNav } from '@/components/layout/BottomNav';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { ChevronDown, Trophy, Star } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { BadgeIcon } from '@/components/badges/BadgeIcon';
 import { 
-  BADGE_TIERS, 
-  getCurrentTier, 
-  getNextTier, 
-  getProgressToNextTier, 
-  getMotivationalMessage 
-} from '@/lib/badges';
-
-function TierMilestone({ tier, isActive, isCompleted }: { 
-  tier: typeof BADGE_TIERS[0]; 
-  isActive: boolean; 
-  isCompleted: boolean;
-}) {
-  return (
-    <div className="flex flex-col items-center shrink-0">
-      <div 
-        className={`w-6 h-6 rounded-full flex items-center justify-center transition-all ${
-          isCompleted 
-            ? 'bg-primary' 
-            : isActive 
-              ? 'bg-primary ring-2 ring-primary/30' 
-              : 'bg-muted-foreground/30'
-        }`}
-      >
-        {isCompleted && (
-          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-          </svg>
-        )}
-      </div>
-    </div>
-  );
-}
+  useBadgeState, 
+  useActivityBadges, 
+  usePointsHistory,
+  useTierUpListener,
+  type TierUpData
+} from '@/hooks/useBadgeSystem';
+import { TierBadgeIcon } from '@/components/badges/TierBadgeIcon';
+import { TierLadder } from '@/components/badges/TierLadder';
+import { ActivityBadgeGrid } from '@/components/badges/ActivityBadgeGrid';
+import { PointsHistoryList } from '@/components/badges/PointsHistoryList';
+import { TierUpModal } from '@/components/badges/TierUpModal';
+import { cn } from '@/lib/utils';
 
 export default function Achievements() {
-  const { user, profile, loading } = useAuth();
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
+  const { state, currentTier, nextTier, progress, isLoading: badgeLoading, allTiers } = useBadgeState();
+  const { badges, isLoading: badgesLoading } = useActivityBadges();
+  const { data: pointsHistory, isLoading: historyLoading } = usePointsHistory(50);
+  
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [tierUpData, setTierUpData] = useState<TierUpData | null>(null);
+  const [showTierUpModal, setShowTierUpModal] = useState(false);
 
-  if (loading) {
+  // Listen for tier-up events
+  const handleTierUp = useCallback((data: TierUpData) => {
+    setTierUpData(data);
+    setShowTierUpModal(true);
+  }, []);
+
+  useTierUpListener(handleTierUp);
+
+  const isLoading = authLoading || badgeLoading;
+
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
@@ -51,162 +51,159 @@ export default function Achievements() {
     );
   }
 
-  // Use demo data if not logged in
-  const isDemo = !user;
-  const points = isDemo ? 200 : (profile?.reward_points || 0);
-  const currentTier = getCurrentTier(points);
-  const nextTier = getNextTier(points);
-  const progress = getProgressToNextTier(points);
-  const message = getMotivationalMessage(currentTier.id);
+  if (!user) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background p-6">
+        <Trophy className="w-16 h-16 text-muted-foreground mb-4" />
+        <h2 className="text-xl font-bold mb-2">Sign in to view your badges</h2>
+        <p className="text-muted-foreground text-center mb-6">
+          Track your progress and earn rewards by joining R@llys!
+        </p>
+        <Button onClick={() => navigate('/auth')} className="btn-rally">
+          Sign In
+        </Button>
+      </div>
+    );
+  }
 
-  const pointsToNext = nextTier ? nextTier.pointsRequired - points : 0;
+  const earnedBadges = badges.filter(b => b.isEarned);
 
   return (
     <div className="min-h-screen pb-24 bg-background">
-      <Header title="Your Badge" />
+      <Header title="Badges & Ranks" />
       
       <main className="container py-6 space-y-6">
-        {/* Reward Points Card */}
-        <Card className="bg-white shadow-sm rounded-lg overflow-hidden">
-          <CardContent className="py-4 flex flex-col items-center gap-3">
-            <h2 className="text-lg font-bold text-foreground" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-              Your Reward Points!
-            </h2>
-            <div 
-              className="px-8 py-4 rounded-lg"
-              style={{ background: 'hsl(var(--primary) / 0.1)' }}
-            >
-              <span 
-                className="text-3xl font-bold text-primary"
-                style={{ fontFamily: 'Montserrat, sans-serif' }}
-              >
-                {points}
-              </span>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Current Badge Card */}
-        <Card className="bg-white shadow-sm rounded-lg overflow-hidden">
-          <CardContent className="py-4 flex flex-col items-center gap-2">
-            {/* Current Badge Label */}
-            <div 
-              className="px-4 py-1 rounded-full flex items-center gap-2"
-              style={{ background: 'hsl(var(--primary) / 0.1)' }}
-            >
-              <div 
-                className="w-3 h-3 rounded-full"
-                style={{ background: currentTier.accentColor }}
+        {/* Current Tier Card */}
+        <Card className="overflow-hidden border-primary/20">
+          <CardContent className="pt-6 pb-4">
+            <div className="flex flex-col items-center gap-4">
+              {/* Badge Icon */}
+              <TierBadgeIcon 
+                tier={currentTier} 
+                size="xl" 
+                showGlow 
               />
-              <span className="text-xs font-medium text-muted-foreground">Current Badge</span>
+
+              {/* Tier Name */}
+              <div className="text-center">
+                <h2 className="text-2xl font-bold">
+                  {currentTier?.tier_name || 'Unranked'}
+                </h2>
+                {!currentTier && (
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Earn 50 points to reach Bronze
+                  </p>
+                )}
+              </div>
+
+              {/* Points Display */}
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10">
+                <Star className="w-4 h-4 text-primary" />
+                <span className="font-bold text-lg">{state?.total_points || 0}</span>
+                <span className="text-sm text-muted-foreground">points</span>
+              </div>
+
+              {/* Progress to Next Tier */}
+              {nextTier && (
+                <div className="w-full max-w-xs space-y-2">
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>{currentTier?.tier_name}</span>
+                    <span>{nextTier.tier_name}</span>
+                  </div>
+                  <div className="h-2 bg-muted rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-primary rounded-full transition-all duration-500"
+                      style={{ width: `${progress.percent}%` }}
+                    />
+                  </div>
+                  <p className="text-xs text-center text-muted-foreground">
+                    {progress.pointsToNext} points to {nextTier.tier_name}
+                  </p>
+                </div>
+              )}
             </div>
-            
-            {/* Large Badge Icon */}
-            <BadgeIcon tier={currentTier} size="lg" />
-            
-            {/* Badge Name */}
-            <h3 
-              className="text-lg font-bold text-foreground"
-              style={{ fontFamily: 'Montserrat, sans-serif' }}
-            >
-              {currentTier.name}
-            </h3>
           </CardContent>
         </Card>
 
-        {/* All Badges Section */}
-        <div className="space-y-3">
-          <h3 
-            className="text-base font-bold text-foreground"
-            style={{ fontFamily: 'Montserrat, sans-serif' }}
-          >
-            All Badge
-          </h3>
-          
-          {/* Horizontal Scrolling Badge List */}
-          <ScrollArea className="w-full whitespace-nowrap">
-            <div className="flex gap-4 pb-4">
-              {BADGE_TIERS.map((tier) => {
-                const isUnlocked = points >= tier.pointsRequired;
-                return (
-                  <Card 
-                    key={tier.id} 
-                    className={`shrink-0 bg-white shadow-sm rounded-lg overflow-hidden transition-all ${
-                      tier.id === currentTier.id ? 'ring-2 ring-primary' : ''
-                    }`}
-                  >
-                    <CardContent className="p-2 flex flex-col items-center gap-1.5 w-[90px]">
-                      <BadgeIcon tier={tier} size="sm" locked={!isUnlocked} />
-                      <span 
-                        className="text-xs font-medium text-foreground text-center truncate w-full"
-                        style={{ fontFamily: 'Montserrat, sans-serif' }}
-                      >
-                        {tier.name}
-                      </span>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-            <ScrollBar orientation="horizontal" />
-          </ScrollArea>
+        {/* Activity Badges */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Trophy className="w-4 h-4 text-primary" />
+              Activity Badges
+              {earnedBadges.length > 0 && (
+                <span className="text-xs bg-primary/15 text-primary px-2 py-0.5 rounded-full">
+                  {earnedBadges.length}/{badges.length}
+                </span>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            {badgesLoading ? (
+              <div className="h-32 flex items-center justify-center">
+                <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : (
+              <ActivityBadgeGrid badges={badges} />
+            )}
+          </CardContent>
+        </Card>
 
-          {/* Progress Bar with Milestones */}
-          <div className="relative py-4">
-            {/* Progress Track */}
-            <div className="relative h-2 bg-muted-foreground/20 rounded-full overflow-hidden">
-              <div 
-                className="absolute left-0 top-0 h-full bg-primary rounded-full transition-all duration-500"
-                style={{ 
-                  width: `${(BADGE_TIERS.findIndex(t => t.id === currentTier.id) + progress.progress / 100) / BADGE_TIERS.length * 100}%` 
-                }}
+        {/* Tier Ladder */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">All Tiers</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            {allTiers && (
+              <TierLadder 
+                tiers={allTiers}
+                currentTierKey={currentTier?.tier_key || null}
+                totalPoints={state?.total_points || 0}
               />
-            </div>
-            
-            {/* Milestone Markers */}
-            <div className="absolute top-1/2 left-0 right-0 -translate-y-1/2 flex justify-between px-0">
-              {BADGE_TIERS.map((tier, index) => {
-                const tierIndex = BADGE_TIERS.findIndex(t => t.id === currentTier.id);
-                const isCompleted = index < tierIndex;
-                const isActive = index === tierIndex;
-                
-                return (
-                  <TierMilestone 
-                    key={tier.id}
-                    tier={tier}
-                    isActive={isActive}
-                    isCompleted={isCompleted}
-                  />
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Points to Next Badge */}
-          {nextTier && (
-            <p 
-              className="text-xs font-medium text-muted-foreground text-center"
-              style={{ fontFamily: 'Montserrat, sans-serif' }}
-            >
-              Earn {pointsToNext} more points to unlock your next badge.
-            </p>
-          )}
-        </div>
-
-        {/* Motivational Message Card */}
-        <Card className="bg-white shadow-sm rounded-lg overflow-hidden">
-          <CardContent className="py-4 px-4">
-            <p 
-              className="text-base text-muted-foreground leading-relaxed"
-              style={{ fontFamily: 'Montserrat, sans-serif' }}
-            >
-              {message}
-            </p>
+            )}
           </CardContent>
         </Card>
+
+        {/* Points History (Collapsible) */}
+        <Collapsible open={historyOpen} onOpenChange={setHistoryOpen}>
+          <Card>
+            <CollapsibleTrigger asChild>
+              <CardHeader className="pb-3 cursor-pointer hover:bg-muted/50 transition-colors rounded-t-lg">
+                <CardTitle className="text-base flex items-center justify-between">
+                  <span>Points History</span>
+                  <ChevronDown className={cn(
+                    'w-4 h-4 text-muted-foreground transition-transform',
+                    historyOpen && 'rotate-180'
+                  )} />
+                </CardTitle>
+              </CardHeader>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <CardContent className="pt-0">
+                {historyLoading ? (
+                  <div className="h-32 flex items-center justify-center">
+                    <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                  </div>
+                ) : (
+                  <ScrollArea className="h-[300px]">
+                    <PointsHistoryList entries={pointsHistory || []} />
+                  </ScrollArea>
+                )}
+              </CardContent>
+            </CollapsibleContent>
+          </Card>
+        </Collapsible>
       </main>
 
       <BottomNav />
+
+      {/* Tier Up Modal */}
+      <TierUpModal 
+        isOpen={showTierUpModal}
+        onClose={() => setShowTierUpModal(false)}
+        tierUpData={tierUpData}
+      />
     </div>
   );
 }

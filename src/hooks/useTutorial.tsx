@@ -10,6 +10,10 @@ export interface TutorialStep {
   requiredAction: 'tap' | 'navigate' | 'scroll' | 'complete';
   targetRoute?: string;
   position?: 'top' | 'bottom' | 'center';
+  ctaButton?: {
+    label: string;
+    route: string;
+  };
 }
 
 const TUTORIAL_STEPS: TutorialStep[] = [
@@ -75,6 +79,18 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     instruction: 'The bell icon shows notifications. Stay alert for rally updates and squad invites. TAP CONTINUE.',
     requiredAction: 'complete',
     position: 'center',
+  },
+  {
+    id: 'badges-intro',
+    title: 'BADGES AND RANKS',
+    command: 'EARN YOUR STRIPES',
+    instruction: 'Earn points by joining R@llys, hosting, driving, inviting friends, and building squads. Rise through Bronze to Dark Matter!',
+    requiredAction: 'complete',
+    position: 'center',
+    ctaButton: {
+      label: 'View Badges',
+      route: '/achievements',
+    },
   },
   {
     id: 'graduation',
