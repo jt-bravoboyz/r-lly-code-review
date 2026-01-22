@@ -117,8 +117,9 @@ export default function EventDetail() {
   const isAfterRally = event?.status === 'after_rally';
 
   // Show After R@lly opt-in dialog when event transitions to after_rally
+  // EVERYONE must accept and specify their next location - including hosts
   useEffect(() => {
-    if (isAfterRally && isAttending && !isCreator && !isCohost) {
+    if (isAfterRally && (isAttending || isCreator)) {
       // Check if user hasn't opted in yet (we use sessionStorage to track if dialog was shown)
       const shownKey = `after_rally_shown_${id}`;
       if (!sessionStorage.getItem(shownKey)) {
@@ -126,7 +127,7 @@ export default function EventDetail() {
         setShowAfterRallyOptIn(true);
       }
     }
-  }, [isAfterRally, isAttending, isCreator, isCohost, id]);
+  }, [isAfterRally, isAttending, isCreator, id]);
 
   if (authLoading) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
