@@ -153,16 +153,27 @@ export function useCreateSquad() {
 
       if (chatError) {
         console.error('Failed to create squad chat:', chatError);
-        // Don't throw - squad was created, chat is optional
       }
 
       return squad;
     },
-    onSuccess: () => {
+    onSuccess: async (squad) => {
       queryClient.invalidateQueries({ queryKey: ['owned-squads'] });
       queryClient.invalidateQueries({ queryKey: ['member-squads'] });
       queryClient.invalidateQueries({ queryKey: ['squads'] });
       queryClient.invalidateQueries({ queryKey: ['all-squad-chats'] });
+      
+      // Award points for creating squad
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user?.id) {
+          await supabase.rpc('rly_award_points', {
+            p_user_id: user.id,
+            p_event_type: 'create_squad',
+            p_source_id: squad.id
+          });
+        }
+      } catch (e) { console.error('Points award failed:', e); }
     },
   });
 }

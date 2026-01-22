@@ -149,8 +149,20 @@ export function useCreateEvent() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: async (data) => {
       queryClient.invalidateQueries({ queryKey: ['events'] });
+      
+      // Award points for creating event
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user?.id) {
+          await supabase.rpc('rly_award_points', {
+            p_user_id: user.id,
+            p_event_type: 'create_event',
+            p_source_id: data.id
+          });
+        }
+      } catch (e) { console.error('Points award failed:', e); }
     }
   });
 }
@@ -169,9 +181,18 @@ export function useJoinEvent() {
       if (error) throw error;
       return data;
     },
-    onSuccess: (_, variables) => {
+    onSuccess: async (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['event', variables.eventId] });
       queryClient.invalidateQueries({ queryKey: ['events'] });
+      
+      // Award points for joining event
+      try {
+        await supabase.rpc('rly_award_points_by_profile', {
+          p_profile_id: variables.profileId,
+          p_event_type: 'join_event',
+          p_source_id: variables.eventId
+        });
+      } catch (e) { console.error('Points award failed:', e); }
     }
   });
 }
