@@ -9,12 +9,15 @@ import { QuickRallyDialog } from '@/components/events/QuickRallyDialog';
 import { useAuth } from '@/hooks/useAuth';
 import { useEvents } from '@/hooks/useEvents';
 import { useUnreadCount } from '@/hooks/useNotifications';
+import { usePendingInvites } from '@/hooks/useEventInvites';
 import rallyLogo from '@/assets/rally-logo.png';
 
 export default function Index() {
   const { user, profile, loading } = useAuth();
   const { data: events, isLoading: eventsLoading } = useEvents();
   const unreadCount = useUnreadCount();
+  const { data: pendingInvites } = usePendingInvites();
+  const totalUnread = unreadCount + (pendingInvites?.length || 0);
 
   // Production mode - require authentication
 
@@ -75,9 +78,9 @@ export default function Index() {
             <Link to="/notifications" className="relative group">
               <div className="absolute inset-0 bg-white/20 rounded-full blur-sm group-hover:bg-white/30 transition-all" />
               <Bell className="h-6 w-6 text-white relative" strokeWidth={2} />
-              {unreadCount > 0 && (
+              {totalUnread > 0 && (
                 <span className="absolute -top-1 -right-1 w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center text-[10px] text-black font-bold shadow-lg animate-pulse">
-                  {unreadCount > 9 ? '9+' : unreadCount}
+                  {totalUnread > 9 ? '9+' : totalUnread}
                 </span>
               )}
             </Link>
