@@ -1545,6 +1545,262 @@ export type Database = {
           },
         ]
       }
+      rly_activity_badges: {
+        Row: {
+          badge_key: string
+          badge_name: string
+          created_at: string
+          description: string
+          icon_path: string | null
+          icon_svg: string | null
+          requirement_count: number
+          requirement_event_type: string
+        }
+        Insert: {
+          badge_key: string
+          badge_name: string
+          created_at?: string
+          description: string
+          icon_path?: string | null
+          icon_svg?: string | null
+          requirement_count: number
+          requirement_event_type: string
+        }
+        Update: {
+          badge_key?: string
+          badge_name?: string
+          created_at?: string
+          description?: string
+          icon_path?: string | null
+          icon_svg?: string | null
+          requirement_count?: number
+          requirement_event_type?: string
+        }
+        Relationships: []
+      }
+      rly_badge_tiers: {
+        Row: {
+          accent_color: string | null
+          congrats_body: string
+          congrats_title: string
+          created_at: string
+          gradient: string | null
+          icon_path: string | null
+          max_points: number | null
+          min_points: number
+          sort_order: number
+          tier_key: string
+          tier_name: string
+        }
+        Insert: {
+          accent_color?: string | null
+          congrats_body: string
+          congrats_title: string
+          created_at?: string
+          gradient?: string | null
+          icon_path?: string | null
+          max_points?: number | null
+          min_points: number
+          sort_order: number
+          tier_key: string
+          tier_name: string
+        }
+        Update: {
+          accent_color?: string | null
+          congrats_body?: string
+          congrats_title?: string
+          created_at?: string
+          gradient?: string | null
+          icon_path?: string | null
+          max_points?: number | null
+          min_points?: number
+          sort_order?: number
+          tier_key?: string
+          tier_name?: string
+        }
+        Relationships: []
+      }
+      rly_point_rules: {
+        Row: {
+          created_at: string
+          daily_cap: number | null
+          description: string
+          event_type: string
+          is_active: boolean
+          points: number
+        }
+        Insert: {
+          created_at?: string
+          daily_cap?: number | null
+          description: string
+          event_type: string
+          is_active?: boolean
+          points: number
+        }
+        Update: {
+          created_at?: string
+          daily_cap?: number | null
+          description?: string
+          event_type?: string
+          is_active?: boolean
+          points?: number
+        }
+        Relationships: []
+      }
+      rly_points_ledger: {
+        Row: {
+          created_at: string
+          created_date: string
+          event_type: string
+          id: number
+          points: number
+          source_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_date?: string
+          event_type: string
+          id?: number
+          points: number
+          source_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_date?: string
+          event_type?: string
+          id?: number
+          points?: number
+          source_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rly_points_ledger_event_type_fkey"
+            columns: ["event_type"]
+            isOneToOne: false
+            referencedRelation: "rly_point_rules"
+            referencedColumns: ["event_type"]
+          },
+        ]
+      }
+      rly_tier_history: {
+        Row: {
+          created_at: string
+          from_tier_key: string | null
+          id: number
+          to_tier_key: string | null
+          total_points: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          from_tier_key?: string | null
+          id?: number
+          to_tier_key?: string | null
+          total_points: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          from_tier_key?: string | null
+          id?: number
+          to_tier_key?: string | null
+          total_points?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rly_tier_history_from_tier_key_fkey"
+            columns: ["from_tier_key"]
+            isOneToOne: false
+            referencedRelation: "rly_badge_tiers"
+            referencedColumns: ["tier_key"]
+          },
+          {
+            foreignKeyName: "rly_tier_history_to_tier_key_fkey"
+            columns: ["to_tier_key"]
+            isOneToOne: false
+            referencedRelation: "rly_badge_tiers"
+            referencedColumns: ["tier_key"]
+          },
+        ]
+      }
+      rly_user_activity_badges: {
+        Row: {
+          badge_key: string
+          earned_at: string | null
+          progress_count: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          badge_key: string
+          earned_at?: string | null
+          progress_count?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          badge_key?: string
+          earned_at?: string | null
+          progress_count?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rly_user_activity_badges_badge_key_fkey"
+            columns: ["badge_key"]
+            isOneToOne: false
+            referencedRelation: "rly_activity_badges"
+            referencedColumns: ["badge_key"]
+          },
+        ]
+      }
+      rly_user_badge_state: {
+        Row: {
+          current_tier_key: string | null
+          last_seen_tier_history_id: number | null
+          last_tier_key: string | null
+          total_points: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          current_tier_key?: string | null
+          last_seen_tier_history_id?: number | null
+          last_tier_key?: string | null
+          total_points?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          current_tier_key?: string | null
+          last_seen_tier_history_id?: number | null
+          last_tier_key?: string | null
+          total_points?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rly_user_badge_state_current_tier_key_fkey"
+            columns: ["current_tier_key"]
+            isOneToOne: false
+            referencedRelation: "rly_badge_tiers"
+            referencedColumns: ["tier_key"]
+          },
+          {
+            foreignKeyName: "rly_user_badge_state_last_tier_key_fkey"
+            columns: ["last_tier_key"]
+            isOneToOne: false
+            referencedRelation: "rly_badge_tiers"
+            referencedColumns: ["tier_key"]
+          },
+        ]
+      }
       saved_locations: {
         Row: {
           address: string
@@ -2407,6 +2663,72 @@ export type Database = {
       }
       record_rate_limit: {
         Args: { p_action_type: string; p_profile_id: string }
+        Returns: undefined
+      }
+      rly_award_points: {
+        Args: { p_event_type: string; p_source_id?: string; p_user_id: string }
+        Returns: {
+          created_at: string
+          created_date: string
+          event_type: string
+          id: number
+          points: number
+          source_id: string | null
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "rly_points_ledger"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      rly_award_points_by_profile: {
+        Args: {
+          p_event_type: string
+          p_profile_id: string
+          p_source_id?: string
+        }
+        Returns: {
+          created_at: string
+          created_date: string
+          event_type: string
+          id: number
+          points: number
+          source_id: string | null
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "rly_points_ledger"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      rly_check_daily_cap: {
+        Args: { p_event_type: string; p_user_id: string }
+        Returns: boolean
+      }
+      rly_get_next_tier: {
+        Args: { p_current_tier_key: string }
+        Returns: {
+          min_points: number
+          tier_key: string
+          tier_name: string
+        }[]
+      }
+      rly_get_tier_for_points: { Args: { p_points: number }; Returns: string }
+      rly_get_user_id_from_profile: {
+        Args: { p_profile_id: string }
+        Returns: string
+      }
+      rly_mark_tier_seen: {
+        Args: { p_history_id: number; p_user_id: string }
+        Returns: undefined
+      }
+      rly_recalc_user_badge: { Args: { p_user_id: string }; Returns: undefined }
+      rly_update_activity_badges: {
+        Args: { p_user_id: string }
         Returns: undefined
       }
     }
