@@ -17,6 +17,7 @@ export function useEvents() {
           attendees:event_attendees(count)
         `)
         .gte('start_time', new Date().toISOString())
+        .not('status', 'eq', 'completed') // Exclude completed events
         .order('start_time', { ascending: true });
       
       if (error) throw error;
