@@ -6,6 +6,7 @@ import { MapPin, Navigation, ExternalLink, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useGoogleMapsKey } from '@/hooks/useGoogleMapsKey';
+import { AttendeeLocationItem } from './AttendeeLocationItem';
 
 interface Attendee {
   id: string;
@@ -176,33 +177,15 @@ export function AttendeeMap({ eventId, attendees, eventLocation }: AttendeeMapPr
             </p>
             <div className="grid gap-2">
               {sharingAttendees.map((attendee) => (
-                <div 
+                <AttendeeLocationItem
                   key={attendee.id}
-                  className="flex items-center justify-between p-2 bg-green-50 rounded-lg"
-                >
-                  <div className="flex items-center gap-2">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={attendee.profile?.avatar_url || undefined} />
-                      <AvatarFallback className="bg-green-200 text-green-700 text-xs">
-                        {attendee.profile?.display_name?.charAt(0)?.toUpperCase() || '?'}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="text-sm font-medium">{attendee.profile?.display_name}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-[10px] bg-green-100 text-green-700 border-green-200">
-                      {getTimeSinceUpdate(attendee.last_location_update)}
-                    </Badge>
-                    <a
-                      href={`https://www.google.com/maps/dir/?api=1&destination=${attendee.current_lat},${attendee.current_lng}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="p-1.5 rounded-full bg-primary/10 hover:bg-primary/20 transition-colors"
-                    >
-                      <Navigation className="h-3.5 w-3.5 text-primary" />
-                    </a>
-                  </div>
-                </div>
+                  id={attendee.id}
+                  displayName={attendee.profile?.display_name || null}
+                  avatarUrl={attendee.profile?.avatar_url || null}
+                  lat={attendee.current_lat || null}
+                  lng={attendee.current_lng || null}
+                  lastUpdate={attendee.last_location_update || null}
+                />
               ))}
             </div>
           </div>
