@@ -46,6 +46,7 @@ import { FirstTimeWelcomeDialog } from '@/components/events/FirstTimeWelcomeDial
 import { InviteToEventDialog } from '@/components/events/InviteToEventDialog';
 import { AfterRallyOptInDialog } from '@/components/events/AfterRallyOptInDialog';
 import { SafetyCloseoutDialog } from '@/components/events/SafetyCloseoutDialog';
+import { EndRallyDialog } from '@/components/events/EndRallyDialog';
 import { toast } from 'sonner';
 
 export default function EventDetail() {
@@ -69,6 +70,7 @@ export default function EventDetail() {
   const [showAfterRallyOptIn, setShowAfterRallyOptIn] = useState(false);
   const [showSafetyCloseout, setShowSafetyCloseout] = useState(false);
   const [isBarHopTransitionPoint, setIsBarHopTransitionPoint] = useState(false);
+  const [showEndRallyDialog, setShowEndRallyDialog] = useState(false);
 
   // Check for first-time welcome flag (set when user auto-joins via invite code)
   useEffect(() => {
@@ -374,18 +376,11 @@ export default function EventDetail() {
               ) : (
                 <Button
                   variant="secondary"
-                  onClick={async () => {
-                    try {
-                      await endRally.mutateAsync(event.id);
-                      toast.success('After R@lly started! 🌙');
-                    } catch (error: any) {
-                      toast.error(error.message || 'Failed to end R@lly');
-                    }
-                  }}
+                  onClick={() => setShowEndRallyDialog(true)}
                   disabled={endRally.isPending}
                 >
                   <Moon className="h-4 w-4 mr-2" />
-                  End Rally
+                  End R@lly
                 </Button>
               )}
             </CardContent>
@@ -741,6 +736,13 @@ export default function EventDetail() {
             toast.error(error.message || 'Failed to complete rally');
           }
         }}
+      />
+
+      {/* End R@lly Dialog */}
+      <EndRallyDialog
+        eventId={event.id}
+        open={showEndRallyDialog}
+        onOpenChange={setShowEndRallyDialog}
       />
     </div>
   );
