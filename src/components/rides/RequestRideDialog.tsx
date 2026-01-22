@@ -68,50 +68,57 @@ export function RequestRideDialog({ eventId, rideId, driverName, trigger, eventN
         toast.success(`Ride requested from ${driverName || 'driver'}! Waiting for approval.`);
         queryClient.invalidateQueries({ queryKey: ['rides'] });
       } else {
-        // General ride request notification
-        const { data: availableRides } = await supabase
-          .from('rides')
-          .select('driver_id')
-          .eq('status', 'available')
-          .eq(eventId ? 'event_id' : 'id', eventId || '');
+        // General ride request (broadcast to DDs)
+        // NOTE: We cannot insert notifications for other users directly due to RLS,
+        // so we use the backend notification sender.
+        if (!eventId) {
+          toast.error('Please select an event first');
+          return;
+        }
 
-        const driverIds = availableRides?.map(r => r.driver_id).filter(Boolean) || [];
+        // Find recipients:
+        // 1) Attendees marked as DD for this event
+        // 2) Drivers who have offered an available ride for this event
+        const [{ data: ddAttendees }, { data: availableRides }] = await Promise.all([
+          supabase
+            .from('event_attendees')
+            .select('profile_id')
+            .eq('event_id', eventId)
+            .eq('is_dd', true),
+          supabase
+            .from('rides')
+            .select('driver_id')
+            .eq('event_id', eventId)
+            .eq('status', 'available'),
+        ]);
 
-        const { error } = await supabase
-          .from('notifications')
-          .insert({
-            profile_id: profile.id,
-            type: 'ride_request',
-            title: 'Ride Requested',
-            body: `Looking for a ride from ${data.pickup_location} to the event`,
-            data: {
-              event_id: eventId,
-              pickup_location: data.pickup_location,
-              requester_id: profile.id,
-              requester_name: profile.display_name
-            }
+        const ddIds = (ddAttendees || []).map((a: any) => a.profile_id).filter(Boolean) as string[];
+        const driverIds = (availableRides || []).map((r: any) => r.driver_id).filter(Boolean) as string[];
+
+        const recipientIds = Array.from(new Set([...ddIds, ...driverIds])).filter(
+          (id) => id && id !== profile.id
+        );
+
+        try {
+          await supabase.functions.invoke('send-event-notification', {
+            body: {
+              type: 'ride_request',
+              eventId,
+              targetProfileIds: recipientIds,
+              excludeProfileId: profile.id,
+              title: '🚗 New Ride Request!',
+              body: `${profile.display_name || 'Someone'} needs a ride from ${data.pickup_location}`,
+              data: {
+                event_id: eventId,
+                pickup_location: data.pickup_location,
+                requester_id: profile.id,
+                requester_name: profile.display_name,
+                url: `/rides?event=${eventId}`,
+              },
+            },
           });
-
-        if (error) throw error;
-
-        if (driverIds.length > 0) {
-          try {
-            await supabase.functions.invoke('send-push-notification', {
-              body: {
-                driverProfileIds: driverIds,
-                title: '🚗 New Ride Request!',
-                body: `${profile.display_name || 'Someone'} needs a ride from ${data.pickup_location}`,
-                data: {
-                  url: '/rides',
-                  event_id: eventId,
-                  requester_id: profile.id
-                },
-                tag: 'ride-request'
-              }
-            });
-          } catch (pushError) {
-            console.error('Push notification failed:', pushError);
-          }
+        } catch (notifError) {
+          console.error('Failed to send ride request notification:', notifError);
         }
         
         toast.success('Ride request sent! A R@lly DD will pick you up soon.');
