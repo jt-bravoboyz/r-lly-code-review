@@ -5,6 +5,7 @@ import { CreateRideDialog } from '@/components/rides/CreateRideDialog';
 import { DDDisclaimerDialog } from '@/components/rides/DDDisclaimerDialog';
 import { RequestRideDialog } from '@/components/rides/RequestRideDialog';
 import { RideRequestManager } from '@/components/rides/RideRequestManager';
+import { IncomingRideRequests } from '@/components/rides/IncomingRideRequests';
 import { useRides } from '@/hooks/useRides';
 import { useEvents } from '@/hooks/useEvents';
 import { useAuth } from '@/hooks/useAuth';
@@ -276,7 +277,10 @@ export default function Rides() {
                   </CardContent>
                 </Card>
 
-                {/* Ride Request Manager */}
+                {/* Incoming Ride Requests from Riders */}
+                <IncomingRideRequests eventId={selectedEventId} />
+
+                {/* Ride Request Manager for my specific rides */}
                 {myRides.length > 0 && (
                   <>
                     <div className="flex items-center justify-between">
