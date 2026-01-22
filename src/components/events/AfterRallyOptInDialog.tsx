@@ -11,6 +11,7 @@ import { useOptIntoAfterRally } from '@/hooks/useAfterRally';
 import { useAuth } from '@/hooks/useAuth';
 import { useMyRallyHomePrompt } from '@/hooks/useRallyHomePrompt';
 import { useEvent } from '@/hooks/useEvents';
+import { useAfterRallyTransition } from '@/hooks/useAfterRallyTransition';
 import { toast } from 'sonner';
 
 interface AfterRallyOptInDialogProps {
@@ -32,6 +33,7 @@ export function AfterRallyOptInDialog({
   const optIn = useOptIntoAfterRally();
   const promptStatus = useMyRallyHomePrompt(eventId);
   const { data: event } = useEvent(eventId);
+  const { playAcceptSound } = useAfterRallyTransition();
 
   // Only show for undecided or those needing re-confirmation
   // If already participating or arrived safely, don't show this dialog
@@ -47,6 +49,8 @@ export function AfterRallyOptInDialog({
         optIn: true,
         locationName: (event as any)?.after_rally_location_name || undefined,
       });
+      // Play celebratory sound
+      playAcceptSound();
       toast.success('You\'re in for After R@lly! 🌙');
       onOpenChange(false);
     } catch (error: any) {

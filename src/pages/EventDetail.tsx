@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, Navigate, Link } from 'react-router-dom';
 import { getEventTypeLabel } from '@/lib/eventTypes';
 import { ArrowLeft, Calendar, MapPin, Users, Beer, Check, X, MessageCircle, Navigation, Home, Plus, Zap, Crown, UserPlus, Car, Play, Moon, PartyPopper } from 'lucide-react';
@@ -21,6 +21,7 @@ import { useCohosts } from '@/hooks/useCohosts';
 import { useMyDDRequest, useEventDDs } from '@/hooks/useDDManagement';
 import { useStartRally, useEndRally, useCompleteRally } from '@/hooks/useAfterRally';
 import { useAutoArrival } from '@/hooks/useAutoArrival';
+import { useAfterRallyTransition } from '@/hooks/useAfterRallyTransition';
 import { RideCard } from '@/components/rides/RideCard';
 import { CreateRideDialog } from '@/components/rides/CreateRideDialog';
 import { RequestRideDialog } from '@/components/rides/RequestRideDialog';
@@ -67,11 +68,13 @@ export default function EventDetail() {
   const endRally = useEndRally();
   const completeRally = useCompleteRally();
   const { data: isDD } = useIsDD(id);
+  const { triggerAfterRallyTransition } = useAfterRallyTransition();
   const [showFirstTimeWelcome, setShowFirstTimeWelcome] = useState(false);
   const [showAfterRallyOptIn, setShowAfterRallyOptIn] = useState(false);
   const [showSafetyCloseout, setShowSafetyCloseout] = useState(false);
   const [isBarHopTransitionPoint, setIsBarHopTransitionPoint] = useState(false);
   const [showEndRallyDialog, setShowEndRallyDialog] = useState(false);
+  const afterRallyTriggeredRef = useRef(false);
   
   // Auto-arrival detection for R@lly Home - only active after event ends
   useAutoArrival({ 
@@ -118,16 +121,29 @@ export default function EventDetail() {
 
   // Show After R@lly opt-in dialog when event transitions to after_rally
   // EVERYONE must accept and specify their next location - including hosts
+  // Also trigger the immersive transition sound/haptics
   useEffect(() => {
     if (isAfterRally && (isAttending || isCreator)) {
       // Check if user hasn't opted in yet (we use sessionStorage to track if dialog was shown)
       const shownKey = `after_rally_shown_${id}`;
+      const transitionKey = `after_rally_transition_${id}`;
+      
+      // Trigger sound/haptic transition only once per event
+      if (!sessionStorage.getItem(transitionKey) && !afterRallyTriggeredRef.current) {
+        sessionStorage.setItem(transitionKey, 'true');
+        afterRallyTriggeredRef.current = true;
+        // Small delay to sync with CSS animation
+        setTimeout(() => {
+          triggerAfterRallyTransition();
+        }, 200);
+      }
+      
       if (!sessionStorage.getItem(shownKey)) {
         sessionStorage.setItem(shownKey, 'true');
         setShowAfterRallyOptIn(true);
       }
     }
-  }, [isAfterRally, isAttending, isCreator, id]);
+  }, [isAfterRally, isAttending, isCreator, id, triggerAfterRallyTransition]);
 
   if (authLoading) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
