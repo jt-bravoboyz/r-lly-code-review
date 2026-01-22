@@ -175,7 +175,7 @@ export default function EventDetail() {
   };
 
   return (
-    <div className="min-h-screen pb-20">
+    <div className={`min-h-screen pb-20 transition-colors duration-500 ${isAfterRally ? 'after-rally-mode' : ''}`}>
       <Header />
       
       <main className="container py-6 space-y-6">
@@ -397,14 +397,19 @@ export default function EventDetail() {
 
         {/* After R@lly Banner - Show when in after_rally status */}
         {isAfterRally && (
-          <Card className="bg-gradient-to-r from-purple-500 to-purple-600 border-0 shadow-lg">
+          <Card className="gradient-after-rally border-0 shadow-lg shadow-[hsl(270,60%,50%)]/20">
             <CardContent className="p-4 flex items-center gap-3">
               <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
                 <PartyPopper className="h-6 w-6 text-white" />
               </div>
-              <div>
+              <div className="flex-1">
                 <h3 className="font-bold text-white text-lg font-montserrat">After R@lly Mode</h3>
-                <p className="text-white/80 text-sm font-montserrat">The main event has ended. Continue the night!</p>
+                <p className="text-white/80 text-sm font-montserrat">
+                  {(event as any)?.after_rally_location_name 
+                    ? `Next stop: ${(event as any).after_rally_location_name}` 
+                    : 'The night continues!'
+                  }
+                </p>
               </div>
             </CardContent>
           </Card>

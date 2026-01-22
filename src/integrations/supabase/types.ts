@@ -652,6 +652,9 @@ export type Database = {
       }
       events: {
         Row: {
+          after_rally_location_lat: number | null
+          after_rally_location_lng: number | null
+          after_rally_location_name: string | null
           created_at: string | null
           creator_id: string
           description: string | null
@@ -672,6 +675,9 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          after_rally_location_lat?: number | null
+          after_rally_location_lng?: number | null
+          after_rally_location_name?: string | null
           created_at?: string | null
           creator_id: string
           description?: string | null
@@ -692,6 +698,9 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          after_rally_location_lat?: number | null
+          after_rally_location_lng?: number | null
+          after_rally_location_name?: string | null
           created_at?: string | null
           creator_id?: string
           description?: string | null
