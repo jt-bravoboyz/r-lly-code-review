@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Car, MapPin, Clock, Users, Navigation, Check, X, Loader2 } from 'lucide-react';
+import { Car, MapPin, Clock, Users, Navigation, Check, X, Loader2, User, CheckCircle2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,17 @@ import { useAuth } from '@/hooks/useAuth';
 import { useUpdateRideRequest } from '@/hooks/useRides';
 import { RequestRideDialog } from './RequestRideDialog';
 import { toast } from 'sonner';
+
+interface PassengerInfo {
+  id: string;
+  status: string | null;
+  pickup_location?: string | null;
+  passenger?: {
+    id: string;
+    display_name: string | null;
+    avatar_url: string | null;
+  } | null;
+}
 
 interface RideCardProps {
   ride: {
@@ -24,15 +35,7 @@ interface RideCardProps {
       display_name: string | null;
       avatar_url: string | null;
     } | null;
-    passengers?: {
-      id: string;
-      status: string | null;
-      passenger?: {
-        id: string;
-        display_name: string | null;
-        avatar_url: string | null;
-      } | null;
-    }[];
+    passengers?: PassengerInfo[];
   };
 }
 
@@ -48,7 +51,12 @@ export function RideCard({ ride }: RideCardProps) {
   const pendingPassengers = ride.passengers?.filter(p => p.status === 'pending') || [];
   const seatsLeft = (ride.available_seats || 4) - acceptedPassengers.length;
   const isDriver = profile?.id === ride.driver?.id;
-  const hasRequested = ride.passengers?.some(p => p.passenger?.id === profile?.id);
+  const myRequest = ride.passengers?.find(p => p.passenger?.id === profile?.id);
+  const hasRequested = !!myRequest;
+  const isAccepted = myRequest?.status === 'accepted' || myRequest?.status === 'confirmed';
+  
+  // Get other riders (excluding self)
+  const otherRiders = acceptedPassengers.filter(p => p.passenger?.id !== profile?.id);
 
   const handleAccept = async (passengerId: string, passengerName: string) => {
     setPendingActions(prev => new Set(prev).add(passengerId));
@@ -106,6 +114,7 @@ export function RideCard({ ride }: RideCardProps) {
           </div>
           
           <div className="flex-1 min-w-0">
+            {/* Driver info */}
             <div className="flex items-center gap-2 mb-2">
               <Avatar className="h-6 w-6">
                 <AvatarImage src={ride.driver?.avatar_url || undefined} />
@@ -114,6 +123,11 @@ export function RideCard({ ride }: RideCardProps) {
                 </AvatarFallback>
               </Avatar>
               <span className="font-medium text-sm">{ride.driver?.display_name}</span>
+              {isDriver && (
+                <Badge variant="secondary" className="text-[10px] bg-primary/10 text-primary">
+                  You're driving
+                </Badge>
+              )}
               <Badge variant="outline" className="ml-auto">
                 {seatsLeft} seats left
               </Badge>
@@ -142,7 +156,85 @@ export function RideCard({ ride }: RideCardProps) {
               )}
             </div>
 
-            {acceptedPassengers.length > 0 && (
+            {/* Rider accepted status - show for passengers who are accepted */}
+            {!isDriver && isAccepted && (
+              <div className="mt-3 p-3 rounded-lg bg-green-50 border border-green-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <CheckCircle2 className="h-4 w-4 text-green-600" />
+                  <span className="text-sm font-semibold text-green-700">You're confirmed!</span>
+                </div>
+                <p className="text-xs text-green-600">
+                  {ride.driver?.display_name} will pick you up
+                  {myRequest?.pickup_location && ` from ${myRequest.pickup_location}`}
+                </p>
+                
+                {/* Show other riders */}
+                {otherRiders.length > 0 && (
+                  <div className="mt-2 pt-2 border-t border-green-200">
+                    <p className="text-xs text-green-600 mb-1">Also riding:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {otherRiders.map((p) => (
+                        <div key={p.id} className="flex items-center gap-1 bg-green-100 rounded-full px-2 py-0.5">
+                          <Avatar className="h-4 w-4">
+                            <AvatarImage src={p.passenger?.avatar_url || undefined} />
+                            <AvatarFallback className="text-[8px] bg-green-200">
+                              {p.passenger?.display_name?.charAt(0)?.toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="text-[10px] text-green-700 font-medium">
+                            {p.passenger?.display_name?.split(' ')[0]}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* DD View: Accepted passengers with pickup locations */}
+            {isDriver && acceptedPassengers.length > 0 && (
+              <div className="mt-3 space-y-2">
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4 text-green-600" />
+                  <span className="text-xs font-semibold text-green-700">
+                    {acceptedPassengers.length} confirmed rider{acceptedPassengers.length > 1 ? 's' : ''}
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  {acceptedPassengers.map((p) => (
+                    <div key={p.id} className="flex items-start gap-2 p-2 rounded-lg bg-green-50 border border-green-200">
+                      <Avatar className="h-7 w-7 shrink-0">
+                        <AvatarImage src={p.passenger?.avatar_url || undefined} />
+                        <AvatarFallback className="text-[10px] bg-green-200 text-green-700">
+                          {p.passenger?.display_name?.charAt(0)?.toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">
+                          {p.passenger?.display_name}
+                        </p>
+                        {p.pickup_location && (
+                          <div className="flex items-center gap-1 mt-0.5">
+                            <MapPin className="h-3 w-3 text-green-600 shrink-0" />
+                            <span className="text-[11px] text-green-700 truncate">
+                              {p.pickup_location}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      <Badge variant="outline" className="text-[9px] bg-green-100 text-green-700 border-green-300 shrink-0">
+                        <CheckCircle2 className="h-2.5 w-2.5 mr-0.5" />
+                        Confirmed
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Non-driver simple view of accepted passengers */}
+            {!isDriver && !isAccepted && acceptedPassengers.length > 0 && (
               <div className="flex items-center gap-2 mt-3">
                 <Users className="h-4 w-4 text-muted-foreground" />
                 <div className="flex -space-x-2">
@@ -160,10 +252,11 @@ export function RideCard({ ride }: RideCardProps) {
                     </span>
                   )}
                 </div>
+                <span className="text-xs text-muted-foreground">riding</span>
               </div>
             )}
 
-            {/* Inline pending requests for driver with Accept/Decline */}
+            {/* DD View: Pending requests with Accept/Decline */}
             {isDriver && pendingPassengers.length > 0 && (
               <div className="mt-3 space-y-2">
                 <p className="text-xs font-medium text-amber-700">
@@ -173,31 +266,41 @@ export function RideCard({ ride }: RideCardProps) {
                   const isActionPending = pendingActions.has(p.id);
                   const passengerName = p.passenger?.display_name || 'Unknown';
                   return (
-                    <div key={p.id} className="flex items-center gap-2 p-2 rounded-lg bg-amber-50 border border-amber-200">
-                      <Avatar className="h-6 w-6">
-                        <AvatarImage src={p.passenger?.avatar_url || undefined} />
-                        <AvatarFallback className="text-[10px] bg-amber-200 text-amber-700">
-                          {passengerName.charAt(0).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="text-sm font-medium flex-1 truncate">{passengerName}</span>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-7 w-7 p-0 border-destructive/30 text-destructive hover:bg-destructive/10"
-                        onClick={() => handleDecline(p.id, passengerName)}
-                        disabled={isActionPending}
-                      >
-                        {isActionPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <X className="h-3 w-3" />}
-                      </Button>
-                      <Button
-                        size="sm"
-                        className="h-7 w-7 p-0 bg-green-500 hover:bg-green-600"
-                        onClick={() => handleAccept(p.id, passengerName)}
-                        disabled={isActionPending}
-                      >
-                        {isActionPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
-                      </Button>
+                    <div key={p.id} className="p-2 rounded-lg bg-amber-50 border border-amber-200">
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-6 w-6">
+                          <AvatarImage src={p.passenger?.avatar_url || undefined} />
+                          <AvatarFallback className="text-[10px] bg-amber-200 text-amber-700">
+                            {passengerName.charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="text-sm font-medium flex-1 truncate">{passengerName}</span>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 w-7 p-0 border-destructive/30 text-destructive hover:bg-destructive/10"
+                          onClick={() => handleDecline(p.id, passengerName)}
+                          disabled={isActionPending}
+                        >
+                          {isActionPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <X className="h-3 w-3" />}
+                        </Button>
+                        <Button
+                          size="sm"
+                          className="h-7 w-7 p-0 bg-green-500 hover:bg-green-600"
+                          onClick={() => handleAccept(p.id, passengerName)}
+                          disabled={isActionPending}
+                        >
+                          {isActionPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
+                        </Button>
+                      </div>
+                      {p.pickup_location && (
+                        <div className="flex items-center gap-1 mt-1.5 ml-8">
+                          <MapPin className="h-3 w-3 text-amber-600 shrink-0" />
+                          <span className="text-[11px] text-amber-700 truncate">
+                            Pickup: {p.pickup_location}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -225,7 +328,8 @@ export function RideCard({ ride }: RideCardProps) {
               </div>
             )}
 
-            {hasRequested && (
+            {/* Pending request status for riders */}
+            {hasRequested && !isAccepted && (
               <Badge className="mt-3" variant="outline">
                 Ride Requested - Waiting for approval
               </Badge>
