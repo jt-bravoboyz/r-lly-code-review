@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { SquadChatSheet } from '@/components/chat/SquadChatSheet';
 import { SquadInviteDialog } from '@/components/squads/SquadInviteDialog';
+import { GroupPhotoCropperDialog } from '@/components/squads/GroupPhotoCropperDialog';
 import { getSquadIcon, type SquadSymbol } from '@/components/squads/SquadSymbolPicker';
 import { useSquadDetail, useUpdateSquadPhoto, useSquadEventHistory } from '@/hooks/useSquadDetail';
 import { useDeleteSquad, useRemoveSquadMember } from '@/hooks/useSquads';
@@ -43,6 +44,8 @@ export default function SquadDetail() {
   
   const [chatOpen, setChatOpen] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [cropperOpen, setCropperOpen] = useState(false);
+  const [selectedImageSrc, setSelectedImageSrc] = useState<string | null>(null);
 
   if (isLoading) {
     return (
@@ -71,7 +74,7 @@ export default function SquadDetail() {
     ...(squad.members || []).map(m => ({ ...m, isOwner: false }))
   ];
 
-  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !squadId) return;
 
@@ -80,14 +83,28 @@ export default function SquadDetail() {
       return;
     }
 
+    // Create object URL and open cropper
+    const objectUrl = URL.createObjectURL(file);
+    setSelectedImageSrc(objectUrl);
+    setCropperOpen(true);
+    
+    // Clear the input so the same file can be selected again
+    e.target.value = '';
+  };
+
+  const handleCroppedImage = async (croppedBlob: Blob) => {
+    if (!squadId) return;
+    
     setUploadingPhoto(true);
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${squadId}/${Date.now()}.${fileExt}`;
+      const fileName = `${squadId}/${Date.now()}.jpg`;
 
       const { error: uploadError } = await supabase.storage
         .from('squad-images')
-        .upload(fileName, file, { upsert: true });
+        .upload(fileName, croppedBlob, { 
+          upsert: true,
+          contentType: 'image/jpeg'
+        });
 
       if (uploadError) throw uploadError;
 
@@ -102,6 +119,11 @@ export default function SquadDetail() {
       toast.error('Failed to upload photo');
     } finally {
       setUploadingPhoto(false);
+      // Clean up object URL
+      if (selectedImageSrc) {
+        URL.revokeObjectURL(selectedImageSrc);
+        setSelectedImageSrc(null);
+      }
     }
   };
 
@@ -202,12 +224,27 @@ export default function SquadDetail() {
                   type="file"
                   accept="image/*"
                   className="hidden"
-                  onChange={handlePhotoUpload}
+                  onChange={handleFileSelect}
                 />
               </div>
             </CardContent>
           </Card>
 
+          {/* Group Photo Cropper Dialog */}
+          {selectedImageSrc && (
+            <GroupPhotoCropperDialog
+              open={cropperOpen}
+              onOpenChange={(open) => {
+                setCropperOpen(open);
+                if (!open && selectedImageSrc) {
+                  URL.revokeObjectURL(selectedImageSrc);
+                  setSelectedImageSrc(null);
+                }
+              }}
+              imageSrc={selectedImageSrc}
+              onCropComplete={handleCroppedImage}
+            />
+          )}
           {/* Action Buttons */}
           <div className="grid grid-cols-2 gap-3">
             <Button
