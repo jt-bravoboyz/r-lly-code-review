@@ -158,6 +158,32 @@ export default function Auth() {
           } else {
             navigate('/');
           }
+        } else if (error.message?.includes('row-level security')) {
+          // RLS error - profile might be stale, try with fresh profile
+          console.log('[R@lly Debug] RLS error during auto-join, fetching fresh profile...');
+          const { data: freshProfile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('user_id', user.id)
+            .single();
+          
+          if (freshProfile) {
+            try {
+              const { data: rpcData } = await supabase
+                .rpc('get_event_preview_by_invite_code', { invite_code_param: pendingCode });
+              if (rpcData && rpcData.length > 0) {
+                await joinEvent.mutateAsync({ eventId: rpcData[0].id, profileId: freshProfile.id });
+                sessionStorage.setItem('showFirstTimeWelcome', rpcData[0].id);
+                toast.success("You're in! 🎉 Welcome to the rally!");
+                navigate(`/events/${rpcData[0].id}`);
+                return;
+              }
+            } catch (retryError: any) {
+              console.error('[R@lly Debug] Retry auto-join failed:', retryError);
+            }
+          }
+          toast.error('Failed to join rally. Please try again.');
+          navigate(`/join/${pendingCode}`);
         } else {
           toast.error('Failed to auto-join rally. Please try again.');
           navigate(`/join/${pendingCode}`);

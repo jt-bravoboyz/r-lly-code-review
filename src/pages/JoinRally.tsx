@@ -115,9 +115,57 @@ export default function JoinRally() {
       return;
     }
 
-    // Authenticated, but profile not loaded yet (avoid using stale/other-user profile)
+    // Authenticated, but profile not loaded yet - wait and retry
     if (!profile?.id || profile.user_id !== user.id) {
-      toast.error('Finishing sign-in… try again in a second');
+      setJoining(true);
+      // Wait for profile to load (poll for up to 5 seconds)
+      let attempts = 0;
+      const maxAttempts = 10;
+      const checkProfile = async (): Promise<boolean> => {
+        const { data } = await supabase
+          .from('profiles')
+          .select('id, user_id')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        return !!data && data.user_id === user.id;
+      };
+
+      while (attempts < maxAttempts) {
+        const hasProfile = await checkProfile();
+        if (hasProfile) {
+          // Fetch the profile and proceed
+          const { data: freshProfile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('user_id', user.id)
+            .single();
+          
+          if (freshProfile && event) {
+            try {
+              console.log('[R@lly Debug] Joining event with fresh profile:', { eventId: event.id, profileId: freshProfile.id });
+              await joinEvent.mutateAsync({ eventId: event.id, profileId: freshProfile.id });
+              toast.success("You're in! 🎉");
+              navigate(`/events/${event.id}`);
+              return;
+            } catch (error: any) {
+              console.error('[R@lly Debug] Join error:', error);
+              if (error.message?.includes('duplicate')) {
+                toast.info("You're already in this rally!");
+                navigate(`/events/${event.id}`);
+              } else {
+                toast.error(error.message || 'Failed to join rally');
+              }
+              setJoining(false);
+              return;
+            }
+          }
+        }
+        attempts++;
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+      
+      toast.error('Profile is still loading. Please try again.');
+      setJoining(false);
       return;
     }
 
@@ -134,6 +182,28 @@ export default function JoinRally() {
       if (error.message?.includes('duplicate')) {
         toast.info("You're already in this rally!");
         navigate(`/events/${event.id}`);
+      } else if (error.message?.includes('row-level security')) {
+        // RLS error - likely profile mismatch, fetch fresh profile and retry
+        console.log('[R@lly Debug] RLS error, fetching fresh profile...');
+        const { data: freshProfile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+        
+        if (freshProfile) {
+          try {
+            await joinEvent.mutateAsync({ eventId: event.id, profileId: freshProfile.id });
+            toast.success("You're in! 🎉");
+            navigate(`/events/${event.id}`);
+            return;
+          } catch (retryError: any) {
+            console.error('[R@lly Debug] Retry join error:', retryError);
+            toast.error(retryError.message || 'Failed to join rally');
+          }
+        } else {
+          toast.error('Could not verify your profile. Please try again.');
+        }
       } else {
         toast.error(error.message || 'Failed to join rally');
       }
