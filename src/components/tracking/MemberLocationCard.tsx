@@ -1,9 +1,10 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Navigation, ExternalLink, Wifi, WifiOff } from 'lucide-react';
+import { Navigation, ExternalLink, Wifi, MapPin } from 'lucide-react';
 import { useLocationContext } from '@/contexts/LocationContext';
 import { formatDistanceToNow } from 'date-fns';
+import { useReverseGeocode } from '@/hooks/useReverseGeocode';
 
 interface MemberLocationCardProps {
   profileId: string;
@@ -29,6 +30,7 @@ export function MemberLocationCard({
   proximitySignal = 'gps',
 }: MemberLocationCardProps) {
   const { compassHeading, navigateToMember } = useLocationContext();
+  const { address, isLoading: addressLoading } = useReverseGeocode(lat, lng);
 
   // Calculate the arrow rotation relative to device heading
   const getArrowRotation = () => {
@@ -81,6 +83,14 @@ export function MemberLocationCard({
         <div className="flex items-center gap-2">
           <span className="font-medium text-sm truncate">{displayName}</span>
           <div className={`w-2 h-2 rounded-full ${freshness.color} animate-pulse`} />
+        </div>
+        
+        {/* Address */}
+        <div className="flex items-center gap-1 mt-0.5 text-xs text-muted-foreground">
+          <MapPin className="h-3 w-3 shrink-0" />
+          <span className="truncate">
+            {addressLoading ? 'Loading...' : address || 'Location shared'}
+          </span>
         </div>
         
         <div className="flex items-center gap-2 mt-0.5">
