@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Moon, Home, PartyPopper, CheckCircle } from 'lucide-react';
+import { Moon, Home, PartyPopper, CheckCircle, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -9,7 +9,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useEndRally, useCompleteRally } from '@/hooks/useAfterRally';
+import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 interface EndRallyDialogProps {
@@ -21,14 +25,35 @@ interface EndRallyDialogProps {
 export function EndRallyDialog({ eventId, open, onOpenChange }: EndRallyDialogProps) {
   const endRally = useEndRally();
   const completeRally = useCompleteRally();
+  const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
+  const [afterRallyLocation, setAfterRallyLocation] = useState('');
+  const [showLocationError, setShowLocationError] = useState(false);
 
   const handleAfterRally = async () => {
+    if (!afterRallyLocation.trim()) {
+      setShowLocationError(true);
+      return;
+    }
+
     setIsLoading(true);
     try {
+      // First set the after rally location on the event (using raw update for new column)
+      const { error: updateError } = await supabase
+        .from('events')
+        .update({ after_rally_location_name: afterRallyLocation.trim() } as any)
+        .eq('id', eventId);
+      
+      if (updateError) throw updateError;
+      
+      // Then transition to after_rally status
       await endRally.mutateAsync(eventId);
-      toast.success('After R@lly started! 🌙');
+      queryClient.invalidateQueries({ queryKey: ['event', eventId] });
+      toast.success('After R@lly started! 🌙', {
+        description: `Location: ${afterRallyLocation.trim()}`,
+      });
       onOpenChange(false);
+      setAfterRallyLocation('');
     } catch (error: any) {
       toast.error(error.message || 'Failed to start After R@lly');
     } finally {
@@ -64,24 +89,52 @@ export function EndRallyDialog({ eventId, open, onOpenChange }: EndRallyDialogPr
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-3 py-4">
-          <Button
-            variant="outline"
-            className="w-full h-auto py-4 flex items-start gap-3 text-left"
-            onClick={handleAfterRally}
-            disabled={isLoading}
-          >
-            <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center shrink-0">
-              <Moon className="h-5 w-5 text-purple-500" />
+        <div className="space-y-4 py-4">
+          {/* After R@lly Option with Location Input */}
+          <div className="p-4 rounded-lg border-2 border-[hsl(270,60%,70%)] bg-[hsl(270,60%,95%)] space-y-3">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-full bg-[hsl(270,60%,50%)]/20 flex items-center justify-center shrink-0">
+                <Moon className="h-5 w-5 text-[hsl(270,60%,50%)]" />
+              </div>
+              <div>
+                <div className="font-semibold font-montserrat">Start After R@lly</div>
+                <p className="text-sm text-muted-foreground">
+                  Continue the night at a new spot!
+                </p>
+              </div>
             </div>
-            <div>
-              <div className="font-semibold font-montserrat">Start After R@lly</div>
-              <p className="text-sm text-muted-foreground font-normal">
-                Continue the night! Guests can choose to keep hanging or head home.
-              </p>
+            
+            <div className="space-y-2">
+              <Label htmlFor="afterRallyLocation" className="flex items-center gap-2 text-sm">
+                <MapPin className="h-4 w-4" />
+                Where's the After R@lly? <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="afterRallyLocation"
+                placeholder="e.g., Denny's on Main St, Jake's place..."
+                value={afterRallyLocation}
+                onChange={(e) => {
+                  setAfterRallyLocation(e.target.value);
+                  setShowLocationError(false);
+                }}
+                className={showLocationError ? 'border-destructive' : ''}
+              />
+              {showLocationError && (
+                <p className="text-xs text-destructive">Please enter the After R@lly location</p>
+              )}
             </div>
-          </Button>
 
+            <Button
+              className="w-full bg-[hsl(270,60%,50%)] hover:bg-[hsl(270,60%,40%)] text-white"
+              onClick={handleAfterRally}
+              disabled={isLoading}
+            >
+              <Moon className="h-4 w-4 mr-2" />
+              Start After R@lly
+            </Button>
+          </div>
+
+          {/* Complete Rally Option */}
           <Button
             variant="outline"
             className="w-full h-auto py-4 flex items-start gap-3 text-left"
