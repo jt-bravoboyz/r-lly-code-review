@@ -181,20 +181,48 @@ export function useAcceptRideRequest() {
         .update({ read: true })
         .eq('id', requestId);
 
-      // Notify the requester
+      const notificationTitle = 'Ride Accepted! 🚗';
+      const notificationBody = `${profile.display_name || 'A DD'} is coming to pick you up!`;
+
+      // Create in-app notification for the requester
       await supabase
         .from('notifications')
         .insert({
           profile_id: requesterId,
           type: 'ride_accepted',
-          title: 'Ride Accepted! 🚗',
-          body: `${profile.display_name || 'A DD'} is coming to pick you up!`,
+          title: notificationTitle,
+          body: notificationBody,
           data: {
             ride_id: ride.id,
             driver_id: profile.id,
-            driver_name: profile.display_name
+            driver_name: profile.display_name,
+            event_id: eventId
           }
         });
+
+      // Send push notification to the requester
+      try {
+        const { data: session } = await supabase.auth.getSession();
+        if (session?.session?.access_token) {
+          await supabase.functions.invoke('send-push-notification', {
+            body: {
+              driverProfileIds: [requesterId],
+              title: notificationTitle,
+              body: notificationBody,
+              tag: `ride-accepted-${ride.id}`,
+              data: {
+                type: 'ride_accepted',
+                rideId: ride.id,
+                eventId: eventId
+              }
+            }
+          });
+          console.log('[useAcceptRideRequest] Push notification sent to requester');
+        }
+      } catch (pushError) {
+        console.error('[useAcceptRideRequest] Failed to send push notification:', pushError);
+        // Don't throw - push notification failure shouldn't block the main operation
+      }
 
       return ride;
     },
