@@ -22,6 +22,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import rallyLogo from '@/assets/rally-logo.png';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function Rides() {
   const { user, profile, loading: authLoading } = useAuth();
@@ -55,8 +57,31 @@ export default function Rides() {
     setSearchParams(searchParams);
   };
 
-  const handleDDAccept = () => {
-    setDDAccepted(true);
+  const handleDDAccept = async () => {
+    if (!profile?.id) {
+      toast.error('You must be logged in');
+      return;
+    }
+
+    if (!selectedEventId) {
+      toast.error('Please select an event first');
+      return;
+    }
+
+    try {
+      // Persist DD status so riders can find/notify DDs for this event
+      const { error } = await supabase
+        .from('event_attendees')
+        .update({ is_dd: true })
+        .eq('event_id', selectedEventId)
+        .eq('profile_id', profile.id);
+
+      if (error) throw error;
+      setDDAccepted(true);
+      toast.success('DD Mode enabled for this event');
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed to enable DD mode');
+    }
   };
 
   const handleRideComplete = async (rideId: string, passengerId: string) => {
