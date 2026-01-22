@@ -333,6 +333,30 @@ Deno.serve(async (req) => {
       );
     }
 
+    // ========== STORE NOTIFICATIONS IN DATABASE ==========
+    // Insert notifications into the database for each eligible recipient
+    const notificationRecords = eligibleProfileIds.map((profileId: string) => ({
+      profile_id: profileId,
+      type,
+      title: notifTitle,
+      body: notifBody,
+      data: {
+        ...data,
+        event_id: eventId,
+      },
+      read: false,
+    }));
+
+    const { error: insertError } = await supabase
+      .from('notifications')
+      .insert(notificationRecords);
+
+    if (insertError) {
+      console.error('Failed to insert notifications:', insertError);
+    } else {
+      console.log(`Stored ${notificationRecords.length} notifications in database`);
+    }
+
     // ========== SEND PUSH NOTIFICATIONS ==========
     const vapidPrivateKey = Deno.env.get("VAPID_PRIVATE_KEY");
     const vapidPublicKey = Deno.env.get("VAPID_PUBLIC_KEY");
@@ -385,7 +409,7 @@ Deno.serve(async (req) => {
 
     const successCount = results.filter(r => r.status === 'fulfilled').length;
 
-    console.log(`Successfully sent ${successCount}/${subscriptions.length} notifications by user ${callerProfileId}`);
+    console.log(`Successfully sent ${successCount}/${subscriptions.length} push notifications by user ${callerProfileId}`);
 
     return new Response(
       JSON.stringify({ 
