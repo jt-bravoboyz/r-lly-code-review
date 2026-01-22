@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Check, X, MapPin, Clock, Users, Bell } from 'lucide-react';
+import { Check, X, MapPin, Clock, Users, Bell, Award } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useUpdateRideRequest } from '@/hooks/useRides';
 import { toast } from 'sonner';
@@ -83,7 +83,10 @@ export function RideRequestManager({ rides, onRideComplete }: RideRequestManager
     setPendingActions(prev => new Set(prev).add(request.id));
     try {
       await updateRequest.mutateAsync({ requestId: request.id, status: 'completed' });
-      toast.success(`Ride completed! Points awarded.`);
+      toast.success(`🎉 Ride completed! +50 points earned!`, {
+        description: 'Thanks for being a safe driver!',
+        duration: 5000,
+      });
     } catch (error: any) {
       toast.error(error?.message || 'Failed to complete ride');
     } finally {
@@ -214,7 +217,8 @@ export function RideRequestManager({ rides, onRideComplete }: RideRequestManager
                     onClick={() => handleComplete(request.ride.id, request)}
                     disabled={pendingActions.has(request.id)}
                   >
-                    Complete Ride
+                    <Award className="h-3 w-3 mr-1" />
+                    Complete (+50 pts)
                   </Button>
                 </div>
               </CardContent>
