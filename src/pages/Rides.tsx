@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { RideCard } from '@/components/rides/RideCard';
 import { CreateRideDialog } from '@/components/rides/CreateRideDialog';
@@ -35,6 +36,7 @@ export default function Rides() {
   const [ddAccepted, setDDAccepted] = useState(false);
   const { awardRideComplete } = useAwardDDPoints();
   const { isSupported: pushSupported, isSubscribed: pushEnabled, isLoading: pushLoading, subscribe: enablePush, unsubscribe: disablePush } = usePushNotifications();
+  const queryClient = useQueryClient();
 
   if (authLoading) {
     return (
@@ -70,15 +72,38 @@ export default function Rides() {
 
     try {
       // Persist DD status so riders can find/notify DDs for this event
-      const { error } = await supabase
+      const { error: attendeeError } = await supabase
         .from('event_attendees')
         .update({ is_dd: true })
         .eq('event_id', selectedEventId)
         .eq('profile_id', profile.id);
 
-      if (error) throw error;
+      if (attendeeError) throw attendeeError;
+
+      // Get the event details for the ride
+      const selectedEvent = events?.find(e => e.id === selectedEventId);
+      
+      // Automatically create an available ride for this DD
+      const { error: rideError } = await supabase
+        .from('rides')
+        .insert({
+          driver_id: profile.id,
+          event_id: selectedEventId,
+          pickup_location: selectedEvent?.location_name || 'Event Location',
+          destination: 'Home / Safe Location',
+          available_seats: 4,
+          departure_time: new Date(Date.now() + 60 * 60 * 1000).toISOString(), // 1 hour from now
+          status: 'available'
+        });
+
+      if (rideError) {
+        console.error('Failed to create ride:', rideError);
+        // Don't fail the whole flow if ride creation fails
+      }
+
       setDDAccepted(true);
-      toast.success('DD Mode enabled for this event');
+      queryClient.invalidateQueries({ queryKey: ['rides'] });
+      toast.success('DD Mode enabled! You\'re now visible to riders.');
     } catch (e: any) {
       toast.error(e?.message || 'Failed to enable DD mode');
     }
