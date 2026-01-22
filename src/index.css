@@ -292,7 +292,8 @@
   .after-rally-mode h4,
   .after-rally-mode p,
   .after-rally-mode span,
-  .after-rally-mode label {
+  .after-rally-mode label,
+  .after-rally-mode a {
     color: hsl(0 0% 95%);
   }
 
@@ -300,8 +301,61 @@
     color: hsl(270 30% 75%) !important;
   }
 
+  /* Bottom Navigation in After R@lly mode */
+  .after-rally-mode nav.fixed.bottom-0 {
+    background: linear-gradient(to top, hsl(270 60% 10%) 0%, hsl(270 60% 10% / 0.98) 50%, hsl(270 60% 10% / 0.95) 100%) !important;
+    border-color: hsl(270 50% 30%) !important;
+  }
+
+  .after-rally-mode nav.fixed.bottom-0 a {
+    color: hsl(270 30% 75%);
+  }
+
+  .after-rally-mode nav.fixed.bottom-0 a.text-primary,
+  .after-rally-mode nav.fixed.bottom-0 a span.text-primary {
+    color: hsl(270 70% 70%) !important;
+  }
+
+  .after-rally-mode nav.fixed.bottom-0 .bg-gradient-to-br {
+    background: linear-gradient(to bottom right, hsl(270 60% 50%), hsl(280 70% 45%)) !important;
+  }
+
+  /* Safety tracker cards in After R@lly */
+  .after-rally-mode .bg-orange-50,
+  .after-rally-mode .bg-green-50,
+  .after-rally-mode .bg-amber-50 {
+    background: hsl(270 50% 18% / 0.8) !important;
+  }
+
+  .after-rally-mode .border-orange-200,
+  .after-rally-mode .border-green-200,
+  .after-rally-mode .border-amber-200 {
+    border-color: hsl(270 40% 35%) !important;
+  }
+
+  .after-rally-mode .text-amber-600 {
+    color: hsl(45 90% 70%) !important;
+  }
+
+  .after-rally-mode .border-amber-300 {
+    border-color: hsl(45 70% 50%) !important;
+  }
+
+  /* Keep colored badges visible */
+  .after-rally-mode .bg-orange-500 {
+    background: hsl(30 90% 50%) !important;
+  }
+
+  .after-rally-mode .bg-green-500 {
+    background: hsl(140 70% 45%) !important;
+  }
+
+  .after-rally-mode .bg-amber-500 {
+    background: hsl(45 90% 50%) !important;
+  }
+
   /* Button adjustments */
-  .after-rally-mode button:not(.gradient-after-rally):not([class*="bg-white"]) {
+  .after-rally-mode button:not(.gradient-after-rally):not([class*="bg-white"]):not(.bg-orange-500):not(.bg-green-500) {
     border-color: hsl(270 40% 40%);
   }
 
@@ -311,12 +365,77 @@
     color: hsl(0 0% 95%);
   }
 
-  /* Badge visibility */
-  .after-rally-mode [class*="Badge"],
-  .after-rally-mode .badge {
+  /* Badge visibility - but preserve colored status badges */
+  .after-rally-mode [class*="Badge"]:not(.bg-orange-500):not(.bg-green-500):not(.bg-amber-500):not(.bg-primary),
+  .after-rally-mode .badge:not(.bg-orange-500):not(.bg-green-500):not(.bg-amber-500):not(.bg-primary) {
     background: hsl(270 50% 30%) !important;
     color: hsl(0 0% 95%) !important;
     border-color: hsl(270 50% 50%) !important;
+  }
+
+  /* Input fields in After R@lly */
+  .after-rally-mode input,
+  .after-rally-mode textarea,
+  .after-rally-mode select {
+    background: hsl(270 50% 15%) !important;
+    border-color: hsl(270 40% 35%) !important;
+    color: hsl(0 0% 95%) !important;
+  }
+
+  .after-rally-mode input::placeholder,
+  .after-rally-mode textarea::placeholder {
+    color: hsl(270 30% 60%) !important;
+  }
+
+  /* Tabs in After R@lly */
+  .after-rally-mode [role="tablist"] {
+    background: hsl(270 50% 15%) !important;
+  }
+
+  .after-rally-mode [role="tab"] {
+    color: hsl(270 30% 70%) !important;
+  }
+
+  .after-rally-mode [role="tab"][data-state="active"] {
+    background: hsl(270 50% 25%) !important;
+    color: hsl(0 0% 95%) !important;
+  }
+
+  /* Dialog content in After R@lly */
+  .after-rally-mode [role="dialog"],
+  .after-rally-mode [data-radix-popper-content-wrapper] {
+    --background: 270 50% 15%;
+    --foreground: 0 0% 95%;
+    --muted-foreground: 270 30% 75%;
+    --border: 270 40% 35%;
+  }
+
+  .after-rally-mode [role="dialog"] > div {
+    background: hsl(270 50% 15%) !important;
+    border-color: hsl(270 40% 35%) !important;
+  }
+
+  /* Header in After R@lly - make logo/brand visible */
+  .after-rally-mode header {
+    background: hsl(270 60% 10% / 0.98) !important;
+    border-color: hsl(270 50% 30%) !important;
+  }
+
+  /* Scroll areas */
+  .after-rally-mode [data-radix-scroll-area-viewport] {
+    background: transparent !important;
+  }
+
+  /* Radio buttons and checkboxes */
+  .after-rally-mode [role="radio"],
+  .after-rally-mode [role="checkbox"] {
+    border-color: hsl(270 50% 50%) !important;
+  }
+
+  .after-rally-mode [role="radio"][data-state="checked"],
+  .after-rally-mode [role="checkbox"][data-state="checked"] {
+    background: hsl(270 60% 50%) !important;
+    border-color: hsl(270 60% 50%) !important;
   }
 
   /* Glow Effects */

@@ -23,7 +23,7 @@ export function BottomNav() {
   const totalUnread = unreadNotifications + pendingInviteCount;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-white via-white to-white/95 backdrop-blur-lg border-t border-primary/10 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-background via-background to-background/95 backdrop-blur-lg border-t border-border shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
       {/* Extra padding for Android navigation buttons */}
       <div className="container flex h-20 pb-4 items-center justify-around">
         {navItems.map(({ path, icon: Icon, label, tutorialId }) => {
