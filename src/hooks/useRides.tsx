@@ -169,14 +169,31 @@ export function useUpdateRideRequest() {
       passengerName?: string;
       driverName?: string;
     }) => {
+      // Fetch ride info along with the update for points awarding
       const { data, error } = await supabase
         .from('ride_passengers')
         .update({ status })
         .eq('id', requestId)
-        .select()
+        .select(`
+          *,
+          ride:rides!ride_id(id, driver_id, event_id)
+        `)
         .single();
       
       if (error) throw error;
+
+      // Award points when ride is completed
+      if (status === 'completed' && data.ride?.driver_id) {
+        try {
+          await supabase.rpc('rly_award_points_by_profile', {
+            p_profile_id: data.ride.driver_id,
+            p_event_type: 'drive_event',
+            p_source_id: data.ride.id
+          });
+        } catch (pointsError) {
+          console.error('Failed to award drive_event points:', pointsError);
+        }
+      }
 
       // Send system message for accepted/declined rides
       if (eventId && passengerName) {

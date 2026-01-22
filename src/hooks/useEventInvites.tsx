@@ -177,6 +177,33 @@ export function useRespondToInvite() {
         if (joinError && joinError.code !== '23505') {
           throw joinError;
         }
+
+        // Check if this is user's first event (invite conversion)
+        try {
+          const { count } = await supabase
+            .from('event_attendees')
+            .select('*', { count: 'exact', head: true })
+            .eq('profile_id', profile.id);
+
+          if (count === 1) {
+            // This is their first event - award points to inviter
+            const { data: invite } = await supabase
+              .from('event_invites')
+              .select('invited_by')
+              .eq('id', inviteId)
+              .single();
+
+            if (invite?.invited_by) {
+              await supabase.rpc('rly_award_points_by_profile', {
+                p_profile_id: invite.invited_by,
+                p_event_type: 'invite_friend',
+                p_source_id: profile.id
+              });
+            }
+          }
+        } catch (conversionError) {
+          console.error('Failed to award invite_friend points:', conversionError);
+        }
       }
 
       return { response };

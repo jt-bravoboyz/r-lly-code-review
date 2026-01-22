@@ -203,6 +203,17 @@ export function RallyHomeButton({ eventId, trigger }: RallyHomeButtonProps) {
 
       if (error) throw error;
 
+      // Award safe arrival points
+      try {
+        await supabase.rpc('rly_award_points_by_profile', {
+          p_profile_id: profile.id,
+          p_event_type: 'safe_arrival',
+          p_source_id: eventId
+        });
+      } catch (pointsError) {
+        console.error('Failed to award safe_arrival points:', pointsError);
+      }
+
       await refetchStatus();
       
       // Send notification to host/cohosts/squad

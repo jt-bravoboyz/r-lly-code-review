@@ -186,6 +186,21 @@ export function TutorialOverlay() {
             </Button>
           )}
 
+          {/* CTA button for steps that have one */}
+          {currentStep.ctaButton && (
+            <Button
+              onClick={() => {
+                navigate(currentStep.ctaButton!.route);
+                completeAction('complete');
+              }}
+              variant="outline"
+              className="w-full h-10 rounded-full font-bold text-sm mt-3 border-white/30 text-white hover:bg-white/10"
+            >
+              {currentStep.ctaButton.label}
+              <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          )}
+
           {/* Target hint for action steps */}
           {!isCompletionStep && currentStep.targetSelector && (
             <div className="flex items-center gap-2 text-white/50 text-sm">
