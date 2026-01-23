@@ -50,6 +50,7 @@ import { AfterRallyOptInDialog } from '@/components/events/AfterRallyOptInDialog
 import { RallyHomeOptInDialog } from '@/components/events/RallyHomeOptInDialog';
 import { SafetyCloseoutDialog } from '@/components/events/SafetyCloseoutDialog';
 import { EndRallyDialog } from '@/components/events/EndRallyDialog';
+import { EditEventLocationDialog } from '@/components/events/EditEventLocationDialog';
 import { useMyRallyHomePrompt } from '@/hooks/useRallyHomePrompt';
 import { toast } from 'sonner';
 
@@ -291,12 +292,18 @@ export default function EventDetail() {
               <span>{format(new Date(event.start_time), 'EEEE, MMMM d · h:mm a')}</span>
             </div>
             
-            {event.location_name && (
-              <div className="flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-primary" />
-                <span>{event.location_name}</span>
-              </div>
-            )}
+            <div className="flex items-center gap-2">
+              <MapPin className="h-4 w-4 text-primary" />
+              <span>{event.location_name || 'No location set'}</span>
+              {canManage && (
+                <EditEventLocationDialog
+                  eventId={event.id}
+                  currentLocationName={event.location_name}
+                  currentLat={event.location_lat}
+                  currentLng={event.location_lng}
+                />
+              )}
+            </div>
             
             <div className="flex items-center gap-2">
               <Users className="h-4 w-4 text-primary" />
