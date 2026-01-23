@@ -314,7 +314,7 @@ export function RallyHomeButton({ eventId, trigger }: RallyHomeButtonProps) {
       <Dialog open={showInitialChoice} onOpenChange={setShowInitialChoice}>
         <DialogTrigger asChild>
           {trigger || (
-            <Button className="w-full bg-secondary hover:bg-secondary/90 text-secondary-foreground rounded-full font-montserrat h-14 text-lg shadow-lg">
+            <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-full font-montserrat h-14 text-lg shadow-lg">
               <Home className="h-5 w-5 mr-2" />
               R@lly Home
             </Button>
@@ -332,7 +332,7 @@ export function RallyHomeButton({ eventId, trigger }: RallyHomeButtonProps) {
               Let your squad know your plans for getting home safely.
             </p>
             <Button
-              className="w-full bg-secondary hover:bg-secondary/90 h-14"
+              className="w-full bg-primary hover:bg-primary/90 h-14"
               onClick={() => {
                 setShowInitialChoice(false);
                 setOpen(true);
