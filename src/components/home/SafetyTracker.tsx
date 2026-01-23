@@ -22,6 +22,8 @@ function SafetyStateIcon({ state }: { state: SafetyState }) {
       return <XCircle className="h-3 w-3 text-white" />;
     case 'undecided':
       return <HelpCircle className="h-3 w-3 text-white" />;
+    case 'opted_in':
+      return <Shield className="h-3 w-3 text-white" />;
     case 'dd_pending':
       return <Car className="h-3 w-3 text-white" />;
   }
@@ -59,6 +61,13 @@ function SafetyStateBadge({ state }: { state: SafetyState }) {
           {label}
         </Badge>
       );
+    case 'opted_in':
+      return (
+        <Badge className="bg-blue-500 hover:bg-blue-600 text-white">
+          <Shield className="h-3 w-3 mr-1" />
+          {label}
+        </Badge>
+      );
     case 'dd_pending':
       return (
         <Badge className="bg-primary hover:bg-primary/90 text-primary-foreground">
@@ -79,6 +88,8 @@ function getStateBackgroundColor(state: SafetyState): string {
       return 'bg-muted border-muted';
     case 'undecided':
       return 'bg-amber-50 border-amber-200';
+    case 'opted_in':
+      return 'bg-blue-50 border-blue-200';
     case 'dd_pending':
       return 'bg-primary/5 border-primary/20';
   }
@@ -94,6 +105,8 @@ function getIconBackgroundColor(state: SafetyState): string {
       return 'bg-muted-foreground/50';
     case 'undecided':
       return 'bg-amber-500';
+    case 'opted_in':
+      return 'bg-blue-500';
     case 'dd_pending':
       return 'bg-primary';
   }
@@ -161,6 +174,7 @@ export function SafetyTracker({ eventId }: SafetyTrackerProps) {
 
   const arrivedCount = stateCounts.arrived_safely || 0;
   const participatingCount = stateCounts.participating || 0;
+  const optedInCount = stateCounts.opted_in || 0;
   const undecidedCount = stateCounts.undecided || 0;
   const ddPendingCount = stateCounts.dd_pending || 0;
   
@@ -169,9 +183,10 @@ export function SafetyTracker({ eventId }: SafetyTrackerProps) {
     const stateOrder: Record<SafetyState, number> = {
       'arrived_safely': 0,
       'participating': 1,
-      'dd_pending': 2,
-      'undecided': 3,
-      'not_participating': 4,
+      'opted_in': 2,
+      'dd_pending': 3,
+      'undecided': 4,
+      'not_participating': 5,
     };
     return stateOrder[getSafetyState(a)] - stateOrder[getSafetyState(b)];
   });
@@ -194,6 +209,12 @@ export function SafetyTracker({ eventId }: SafetyTrackerProps) {
             <Badge variant="outline" className="text-orange-600 border-orange-300">
               <Navigation className="h-3 w-3 mr-1" />
               {participatingCount} en route
+            </Badge>
+          )}
+          {optedInCount > 0 && (
+            <Badge variant="outline" className="text-blue-600 border-blue-300">
+              <Shield className="h-3 w-3 mr-1" />
+              {optedInCount} ready
             </Badge>
           )}
           {undecidedCount > 0 && (

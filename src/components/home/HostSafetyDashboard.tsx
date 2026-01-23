@@ -48,6 +48,13 @@ function SafetyStateBadge({ state }: { state: SafetyState }) {
           {label}
         </Badge>
       );
+    case 'opted_in':
+      return (
+        <Badge className="bg-blue-100 text-blue-700 border-blue-300 text-[10px]">
+          <Shield className="h-2.5 w-2.5 mr-1" />
+          {label}
+        </Badge>
+      );
     case 'dd_pending':
       return (
         <Badge className="bg-primary/20 text-primary border-primary/30 text-[10px]">
@@ -93,6 +100,7 @@ export function HostSafetyDashboard({ eventId, onCompleteRally }: HostSafetyDash
   const arrivedSafely = attendees.filter(a => getSafetyState(a) === 'arrived_safely');
   const notParticipating = attendees.filter(a => getSafetyState(a) === 'not_participating');
   const undecided = attendees.filter(a => getSafetyState(a) === 'undecided');
+  const optedIn = attendees.filter(a => getSafetyState(a) === 'opted_in');
   const ddPending = attendees.filter(a => getSafetyState(a) === 'dd_pending');
 
   // DD specific counts
@@ -242,10 +250,11 @@ export function HostSafetyDashboard({ eventId, onCompleteRally }: HostSafetyDash
                 return (
                   <div 
                     key={attendee.id}
-                    className={`flex items-center gap-2 p-2 rounded-lg ${
+                  className={`flex items-center gap-2 p-2 rounded-lg ${
                       state === 'arrived_safely' ? 'bg-green-50/50' :
                       state === 'participating' ? 'bg-orange-50/50' :
                       state === 'undecided' ? 'bg-amber-50/50' :
+                      state === 'opted_in' ? 'bg-blue-50/50' :
                       state === 'dd_pending' ? 'bg-primary/5' :
                       'bg-muted/30'
                     }`}

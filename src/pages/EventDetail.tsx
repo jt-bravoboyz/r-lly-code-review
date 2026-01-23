@@ -471,6 +471,7 @@ export default function EventDetail() {
           <section className="space-y-4">
             <RallyHomeButton 
               eventId={event.id}
+              eventStatus={event.status}
               trigger={
                 <Card className="bg-gradient-to-r from-primary to-primary/85 border-0 shadow-lg cursor-pointer hover:shadow-xl transition-shadow">
                   <CardContent className="p-4 flex items-center justify-between">
