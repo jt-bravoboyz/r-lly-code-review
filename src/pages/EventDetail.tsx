@@ -472,15 +472,15 @@ export default function EventDetail() {
             <RallyHomeButton 
               eventId={event.id}
               trigger={
-                <Card className="bg-gradient-to-r from-secondary to-secondary/80 border-0 shadow-lg cursor-pointer hover:shadow-xl transition-shadow">
+                <Card className="bg-gradient-to-r from-primary to-primary/85 border-0 shadow-lg cursor-pointer hover:shadow-xl transition-shadow">
                   <CardContent className="p-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
-                        <Home className="h-6 w-6 text-white" />
+                      <div className="w-12 h-12 rounded-full bg-primary-foreground/20 flex items-center justify-center">
+                        <Home className="h-6 w-6 text-primary-foreground" />
                       </div>
                       <div>
-                        <h3 className="font-bold text-white text-lg font-montserrat">R@lly Home</h3>
-                        <p className="text-white/80 text-sm font-montserrat">Let your crew know you're heading out</p>
+                        <h3 className="font-bold text-primary-foreground text-lg font-montserrat">R@lly Home</h3>
+                        <p className="text-primary-foreground/80 text-sm font-montserrat">Let your crew know you're heading out</p>
                       </div>
                     </div>
                   </CardContent>
