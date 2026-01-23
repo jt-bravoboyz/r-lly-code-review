@@ -47,8 +47,10 @@ import { LocationMapPreview } from '@/components/location/LocationMapPreview';
 import { FirstTimeWelcomeDialog } from '@/components/events/FirstTimeWelcomeDialog';
 import { InviteToEventDialog } from '@/components/events/InviteToEventDialog';
 import { AfterRallyOptInDialog } from '@/components/events/AfterRallyOptInDialog';
+import { RallyHomeOptInDialog } from '@/components/events/RallyHomeOptInDialog';
 import { SafetyCloseoutDialog } from '@/components/events/SafetyCloseoutDialog';
 import { EndRallyDialog } from '@/components/events/EndRallyDialog';
+import { useMyRallyHomePrompt } from '@/hooks/useRallyHomePrompt';
 import { toast } from 'sonner';
 
 export default function EventDetail() {
@@ -71,6 +73,7 @@ export default function EventDetail() {
   const { triggerAfterRallyTransition } = useAfterRallyTransition();
   const [showFirstTimeWelcome, setShowFirstTimeWelcome] = useState(false);
   const [showAfterRallyOptIn, setShowAfterRallyOptIn] = useState(false);
+  const [showRallyHomeOptIn, setShowRallyHomeOptIn] = useState(false);
   const [showSafetyCloseout, setShowSafetyCloseout] = useState(false);
   const [isBarHopTransitionPoint, setIsBarHopTransitionPoint] = useState(false);
   const [showEndRallyDialog, setShowEndRallyDialog] = useState(false);
@@ -118,6 +121,24 @@ export default function EventDetail() {
   const isScheduled = event?.status === 'scheduled' || !event?.status;
   const isLive = event?.status === 'live';
   const isAfterRally = event?.status === 'after_rally';
+  
+  // R@lly Home prompt status for current user
+  const myPromptStatus = useMyRallyHomePrompt(id);
+  
+  // Show R@lly Home opt-in dialog when user is on a LIVE event and hasn't decided yet
+  useEffect(() => {
+    if (isLive && (isAttending || isCreator) && myPromptStatus.canPrompt) {
+      const shownKey = `rally_home_prompt_${id}`;
+      if (!sessionStorage.getItem(shownKey)) {
+        sessionStorage.setItem(shownKey, 'true');
+        // Small delay to let page load first
+        const timer = setTimeout(() => {
+          setShowRallyHomeOptIn(true);
+        }, 800);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [isLive, isAttending, isCreator, id, myPromptStatus.canPrompt]);
 
   // Show After R@lly opt-in dialog when event transitions to after_rally
   // EVERYONE must accept and specify their next location - including hosts
@@ -388,6 +409,8 @@ export default function EventDetail() {
                     try {
                       await startRally.mutateAsync(event.id);
                       toast.success('R@lly is live! 🎉');
+                      // Clear session flag so R@lly Home prompt can show for host
+                      sessionStorage.removeItem(`rally_home_prompt_${event.id}`);
                     } catch (error: any) {
                       toast.error(error.message || 'Failed to start rally');
                     }
@@ -754,6 +777,14 @@ export default function EventDetail() {
           // Trigger R@lly Home flow
           toast.info('Opening R@lly Home...');
         }}
+      />
+
+      {/* R@lly Home Opt-In Dialog - For live events */}
+      <RallyHomeOptInDialog
+        eventId={event.id}
+        eventTitle={event.title}
+        open={showRallyHomeOptIn}
+        onOpenChange={setShowRallyHomeOptIn}
       />
 
       {/* Safety Closeout Dialog */}
