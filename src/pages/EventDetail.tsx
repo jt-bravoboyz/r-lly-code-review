@@ -748,7 +748,14 @@ export default function EventDetail() {
                   <Car className="h-5 w-5 text-primary" />
                   Designated Drivers
                 </CardTitle>
-                {isAttending && <DDVolunteerButton eventId={event.id} />}
+                {isAttending && (
+                  <DDVolunteerButton 
+                    eventId={event.id} 
+                    eventLocationName={event.location_name}
+                    eventLocationLat={event.location_lat}
+                    eventLocationLng={event.location_lng}
+                  />
+                )}
               </CardHeader>
               <CardContent>
                 {eventDDs && eventDDs.length > 0 ? (

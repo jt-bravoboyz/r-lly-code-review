@@ -113,7 +113,7 @@ export function RequestRideDialog({ eventId, rideId, driverName, trigger, eventN
                 pickup_location: data.pickup_location,
                 requester_id: profile.id,
                 requester_name: profile.display_name,
-                url: `/rides?event=${eventId}`,
+                url: `/events/${eventId}`,
               },
             },
           });

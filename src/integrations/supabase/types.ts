@@ -232,6 +232,69 @@ export type Database = {
           },
         ]
       }
+      dd_disclaimer_acceptances: {
+        Row: {
+          accepted_at: string
+          app_version: string | null
+          disclaimer_version: string
+          event_id: string
+          id: string
+          profile_id: string
+        }
+        Insert: {
+          accepted_at?: string
+          app_version?: string | null
+          disclaimer_version?: string
+          event_id: string
+          id?: string
+          profile_id: string
+        }
+        Update: {
+          accepted_at?: string
+          app_version?: string | null
+          disclaimer_version?: string
+          event_id?: string
+          id?: string
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dd_disclaimer_acceptances_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dd_disclaimer_acceptances_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dd_disclaimer_acceptances_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dd_disclaimer_acceptances_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dd_disclaimer_acceptances_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles_with_connection"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_attendees: {
         Row: {
           after_rally_location_name: string | null
@@ -1245,8 +1308,13 @@ export type Database = {
           current_lng: number | null
           display_name: string | null
           home_address: string | null
+          home_lat: number | null
+          home_lng: number | null
           id: string
           last_location_update: string | null
+          last_rally_home_destination: string | null
+          last_rally_home_lat: number | null
+          last_rally_home_lng: number | null
           location_sharing_enabled: boolean | null
           phone: string | null
           reward_points: number | null
@@ -1262,8 +1330,13 @@ export type Database = {
           current_lng?: number | null
           display_name?: string | null
           home_address?: string | null
+          home_lat?: number | null
+          home_lng?: number | null
           id?: string
           last_location_update?: string | null
+          last_rally_home_destination?: string | null
+          last_rally_home_lat?: number | null
+          last_rally_home_lng?: number | null
           location_sharing_enabled?: boolean | null
           phone?: string | null
           reward_points?: number | null
@@ -1279,8 +1352,13 @@ export type Database = {
           current_lng?: number | null
           display_name?: string | null
           home_address?: string | null
+          home_lat?: number | null
+          home_lng?: number | null
           id?: string
           last_location_update?: string | null
+          last_rally_home_destination?: string | null
+          last_rally_home_lat?: number | null
+          last_rally_home_lng?: number | null
           location_sharing_enabled?: boolean | null
           phone?: string | null
           reward_points?: number | null
@@ -1392,6 +1470,72 @@ export type Database = {
           {
             foreignKeyName: "rate_limits_profile_id_fkey"
             columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles_with_connection"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ride_offers: {
+        Row: {
+          expires_at: string | null
+          id: string
+          offered_at: string
+          responded_at: string | null
+          ride_id: string
+          status: string
+          to_profile_id: string
+        }
+        Insert: {
+          expires_at?: string | null
+          id?: string
+          offered_at?: string
+          responded_at?: string | null
+          ride_id: string
+          status?: string
+          to_profile_id: string
+        }
+        Update: {
+          expires_at?: string | null
+          id?: string
+          offered_at?: string
+          responded_at?: string | null
+          ride_id?: string
+          status?: string
+          to_profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ride_offers_ride_id_fkey"
+            columns: ["ride_id"]
+            isOneToOne: false
+            referencedRelation: "rides"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ride_offers_to_profile_id_fkey"
+            columns: ["to_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ride_offers_to_profile_id_fkey"
+            columns: ["to_profile_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ride_offers_to_profile_id_fkey"
+            columns: ["to_profile_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ride_offers_to_profile_id_fkey"
+            columns: ["to_profile_id"]
             isOneToOne: false
             referencedRelation: "safe_profiles_with_connection"
             referencedColumns: ["id"]
