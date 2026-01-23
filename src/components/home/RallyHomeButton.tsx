@@ -30,9 +30,10 @@ interface EventAttendee {
 interface RallyHomeButtonProps {
   eventId: string;
   trigger?: React.ReactNode;
+  eventStatus?: string;  // NEW: to determine if event is over
 }
 
-export function RallyHomeButton({ eventId, trigger }: RallyHomeButtonProps) {
+export function RallyHomeButton({ eventId, trigger, eventStatus }: RallyHomeButtonProps) {
   const [showInitialChoice, setShowInitialChoice] = useState(false);
   const [open, setOpen] = useState(false);
   const [destinationType, setDestinationType] = useState<DestinationType>('home');
@@ -73,6 +74,8 @@ export function RallyHomeButton({ eventId, trigger }: RallyHomeButtonProps) {
   const isGoingHome = !!myStatus?.going_home_at;
   const hasArrived = !!myStatus?.arrived_safely;
   const notParticipating = !!myStatus?.not_participating_rally_home_confirmed;
+  const hasDestinationSet = !!(myStatus as any)?.destination_name && (myStatus as any)?.after_rally_opted_in;
+  const isEventOver = eventStatus === 'after_rally' || eventStatus === 'completed';
 
   // Fetch event attendees for "selected" option
   useEffect(() => {
@@ -164,7 +167,8 @@ export function RallyHomeButton({ eventId, trigger }: RallyHomeButtonProps) {
       const { error } = await supabase
         .from('event_attendees')
         .update({
-          going_home_at: new Date().toISOString(),
+          // Only set going_home_at if event is over - otherwise just save destination
+          going_home_at: isEventOver ? new Date().toISOString() : null,
           destination_name: finalAddress,
           destination_lat: coords?.lat || null,
           destination_lng: coords?.lng || null,
@@ -172,7 +176,7 @@ export function RallyHomeButton({ eventId, trigger }: RallyHomeButtonProps) {
           destination_shared_with: visibility === 'selected' ? selectedPeople : [],
           arrived_safely: false,
           arrived_at: null,
-          // Also set after_rally_opted_in to true when participating
+          // Mark as opted-in regardless of event status
           after_rally_opted_in: true,
         } as any)
         .eq('event_id', eventId)
@@ -182,27 +186,35 @@ export function RallyHomeButton({ eventId, trigger }: RallyHomeButtonProps) {
 
       await refetchStatus();
       
-      // Send notification to host/cohosts
-      notifyGoingHome(eventId);
-      
-      const visibilityMessage = visibility === 'none' 
-        ? 'Your destination is private' 
-        : visibility === 'squad' 
-          ? 'Your squad can see your destination' 
-          : visibility === 'selected' 
-            ? `${selectedPeople.length} people can see your destination`
-            : 'All attendees can see your destination';
-      
-      toast.success(`You're heading ${destinationType === 'home' ? 'home' : 'to ' + finalAddress}!`, {
-        description: visibilityMessage + ' 🏠',
-        action: {
-          label: 'Get Directions',
-          onClick: () => {
-            const encodedAddress = encodeURIComponent(finalAddress);
-            window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodedAddress}`, '_blank');
+      // Different behavior based on event phase
+      if (isEventOver) {
+        // Send notification to host/cohosts - only when actually departing
+        notifyGoingHome(eventId);
+        
+        const visibilityMessage = visibility === 'none' 
+          ? 'Your destination is private' 
+          : visibility === 'squad' 
+            ? 'Your squad can see your destination' 
+            : visibility === 'selected' 
+              ? `${selectedPeople.length} people can see your destination`
+              : 'All attendees can see your destination';
+        
+        toast.success(`You're heading ${destinationType === 'home' ? 'home' : 'to ' + finalAddress}!`, {
+          description: visibilityMessage + ' 🏠',
+          action: {
+            label: 'Get Directions',
+            onClick: () => {
+              const encodedAddress = encodeURIComponent(finalAddress);
+              window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodedAddress}`, '_blank');
+            }
           }
-        }
-      });
+        });
+      } else {
+        // Event not over yet - just save destination
+        toast.success('Destination saved! ✓', {
+          description: "We'll remind you when it's time to head home 🏠",
+        });
+      }
       
       setOpen(false);
       setCustomAddress('');
@@ -305,6 +317,73 @@ export function RallyHomeButton({ eventId, trigger }: RallyHomeButtonProps) {
         Arrived Safely ✓
       </Button>
     );
+  }
+
+  // NEW: Show "Destination Set" state OR "Start Heading Home" button
+  if (hasDestinationSet && !isGoingHome && !hasArrived && !notParticipating) {
+    if (isEventOver) {
+      // Event is over - show "Start Heading Home Now" button
+      const handleStartJourney = async () => {
+        if (!profile?.id) return;
+        setIsLoading(true);
+        
+        try {
+          const { error } = await supabase
+            .from('event_attendees')
+            .update({
+              going_home_at: new Date().toISOString(),
+            } as any)
+            .eq('event_id', eventId)
+            .eq('profile_id', profile.id);
+
+          if (error) throw error;
+
+          await refetchStatus();
+          
+          // Now notify that we're heading home
+          notifyGoingHome(eventId);
+          
+          const destinationName = (myStatus as any)?.destination_name || 'your destination';
+          toast.success(`You're heading to ${destinationName}!`, {
+            description: 'Safe travels! 🏠',
+            action: {
+              label: 'Get Directions',
+              onClick: () => {
+                const encodedAddress = encodeURIComponent(destinationName);
+                window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodedAddress}`, '_blank');
+              }
+            }
+          });
+        } catch (error) {
+          console.error('Error:', error);
+          toast.error('Something went wrong');
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      
+      return (
+        <Button
+          onClick={handleStartJourney}
+          disabled={isLoading}
+          className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-full font-montserrat h-14 text-lg shadow-lg"
+        >
+          <Navigation className="h-5 w-5 mr-2" />
+          {isLoading ? 'Starting...' : "I'm Heading Home Now"}
+        </Button>
+      );
+    } else {
+      // Event not over yet - show "Destination Set" status
+      return (
+        <Button
+          disabled
+          className="w-full bg-blue-500/20 text-blue-700 dark:text-blue-300 rounded-full font-montserrat h-14 text-lg cursor-default"
+        >
+          <Shield className="h-5 w-5 mr-2" />
+          Destination Set ✓
+        </Button>
+      );
+    }
   }
 
   // For undecided users - show initial choice dialog

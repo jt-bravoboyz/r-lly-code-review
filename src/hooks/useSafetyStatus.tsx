@@ -12,6 +12,7 @@ export interface AttendeeWithSafetyStatus {
   dd_dropoff_confirmed_by: string | null;
   is_dd: boolean;
   after_rally_opted_in: boolean | null;
+  destination_name?: string | null;  // NEW: For detecting opted_in state
   profile?: {
     id: string;
     display_name: string | null;
@@ -35,7 +36,8 @@ export type SafetyState =
   | 'participating' 
   | 'arrived_safely' 
   | 'not_participating' 
-  | 'undecided' 
+  | 'undecided'
+  | 'opted_in'     // NEW: destination set but not yet departing
   | 'dd_pending';
 
 export function getSafetyState(attendee: AttendeeWithSafetyStatus): SafetyState {
@@ -53,9 +55,14 @@ export function getSafetyState(attendee: AttendeeWithSafetyStatus): SafetyState 
     return 'dd_pending';
   }
   
-  // Participating in R@lly Home (started journey)
+  // En route home (actively traveling - going_home_at is set)
   if (attendee.going_home_at) {
     return 'participating';
+  }
+  
+  // NEW: Opted in but not yet departing (destination set, event not over yet)
+  if (attendee.after_rally_opted_in && attendee.destination_name) {
+    return 'opted_in';
   }
   
   // Confirmed not participating
@@ -70,13 +77,15 @@ export function getSafetyState(attendee: AttendeeWithSafetyStatus): SafetyState 
 export function getSafetyStateLabel(state: SafetyState): string {
   switch (state) {
     case 'participating':
-      return 'Participating in R@lly Home';
+      return 'En Route Home';
     case 'arrived_safely':
       return 'Arrived Safely';
     case 'not_participating':
-      return 'Not Participating in R@lly Home';
+      return 'Not Participating';
     case 'undecided':
       return 'Undecided';
+    case 'opted_in':
+      return 'Ready for R@lly Home';
     case 'dd_pending':
       return 'DD - Awaiting Arrival';
   }
@@ -101,7 +110,8 @@ export function useEventSafetyStatus(eventId: string | undefined) {
           after_rally_opted_in,
           not_participating_rally_home_confirmed,
           dd_dropoff_confirmed_at,
-          dd_dropoff_confirmed_by
+          dd_dropoff_confirmed_by,
+          destination_name
         `)
         .eq('event_id', eventId);
 
@@ -130,6 +140,7 @@ export function useEventSafetyStatus(eventId: string | undefined) {
         dd_dropoff_confirmed_by: (attendee as any).dd_dropoff_confirmed_by ?? null,
         is_dd: attendee.is_dd ?? false,
         after_rally_opted_in: attendee.after_rally_opted_in ?? null,
+        destination_name: (attendee as any).destination_name ?? null,
         profile: profileMap.get(attendee.profile_id) || null
       })) as AttendeeWithSafetyStatus[];
     },
@@ -152,8 +163,11 @@ export function useIsEventSafetyComplete(eventId: string | undefined) {
     if (a.is_dd && !a.arrived_safely) {
       return true;
     }
-    // Undecided (neither participating NOR confirmed not participating)
-    if (!a.going_home_at && a.not_participating_rally_home_confirmed === null) {
+    // Undecided: neither participating NOR confirmed not participating AND not opted in
+    // (opted_in users have made a valid choice even if not yet departed)
+    if (!a.going_home_at && 
+        a.not_participating_rally_home_confirmed !== true && 
+        !a.after_rally_opted_in) {
       return true;
     }
     return false;
@@ -182,7 +196,8 @@ export function useMyAttendeeStatus(eventId: string | undefined) {
           after_rally_opted_in,
           not_participating_rally_home_confirmed,
           dd_dropoff_confirmed_at,
-          dd_dropoff_confirmed_by
+          dd_dropoff_confirmed_by,
+          destination_name
         `)
         .eq('event_id', eventId)
         .eq('profile_id', profile.id)
@@ -202,6 +217,7 @@ export function useMyAttendeeStatus(eventId: string | undefined) {
         dd_dropoff_confirmed_by: (data as any).dd_dropoff_confirmed_by ?? null,
         is_dd: data.is_dd ?? false,
         after_rally_opted_in: data.after_rally_opted_in ?? null,
+        destination_name: (data as any).destination_name ?? null,
       } as AttendeeWithSafetyStatus;
     },
     enabled: !!eventId && !!profile?.id,
