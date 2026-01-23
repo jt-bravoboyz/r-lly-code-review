@@ -5,6 +5,8 @@ import { Navigation, ExternalLink, Wifi, MapPin } from 'lucide-react';
 import { useLocationContext } from '@/contexts/LocationContext';
 import { formatDistanceToNow } from 'date-fns';
 import { useReverseGeocode } from '@/hooks/useReverseGeocode';
+import { useAppSettings } from '@/hooks/useAppSettings';
+import { formatDistance as formatDistanceUtil } from '@/lib/formatDistance';
 
 interface MemberLocationCardProps {
   profileId: string;
@@ -31,6 +33,7 @@ export function MemberLocationCard({
 }: MemberLocationCardProps) {
   const { compassHeading, navigateToMember } = useLocationContext();
   const { address, isLoading: addressLoading } = useReverseGeocode(lat, lng);
+  const { settings } = useAppSettings();
 
   // Calculate the arrow rotation relative to device heading
   const getArrowRotation = () => {
@@ -38,11 +41,10 @@ export function MemberLocationCard({
     return bearing - compassHeading;
   };
 
-  // Format distance for display
+  // Format distance for display using app settings
   const formatDistance = (meters: number | undefined) => {
     if (meters === undefined) return '--';
-    if (meters < 1000) return `${Math.round(meters)}m`;
-    return `${(meters / 1000).toFixed(1)}km`;
+    return formatDistanceUtil(meters, settings.showDistanceInFeet);
   };
 
   // Get freshness indicator

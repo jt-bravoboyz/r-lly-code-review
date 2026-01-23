@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, Navigate, Link } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getEventTypeLabel } from '@/lib/eventTypes';
 import { ArrowLeft, Calendar, MapPin, Users, Beer, Check, X, MessageCircle, Navigation, Home, Plus, Zap, Crown, UserPlus, Car, Play, Moon, PartyPopper } from 'lucide-react';
 import { format } from 'date-fns';
@@ -52,6 +53,7 @@ import { SafetyCloseoutDialog } from '@/components/events/SafetyCloseoutDialog';
 import { EndRallyDialog } from '@/components/events/EndRallyDialog';
 import { EditEventLocationDialog } from '@/components/events/EditEventLocationDialog';
 import { useMyRallyHomePrompt } from '@/hooks/useRallyHomePrompt';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 export default function EventDetail() {
@@ -78,7 +80,25 @@ export default function EventDetail() {
   const [showSafetyCloseout, setShowSafetyCloseout] = useState(false);
   const [isBarHopTransitionPoint, setIsBarHopTransitionPoint] = useState(false);
   const [showEndRallyDialog, setShowEndRallyDialog] = useState(false);
+  const [showRallyHomeDialog, setShowRallyHomeDialog] = useState(false);
   const afterRallyTriggeredRef = useRef(false);
+  const queryClient = useQueryClient();
+  
+  // Query user's personal After R@lly opt-in status
+  const { data: myAttendee, refetch: refetchMyAttendee } = useQuery({
+    queryKey: ['my-attendee', id, profile?.id],
+    queryFn: async () => {
+      if (!id || !profile?.id) return null;
+      const { data } = await supabase
+        .from('event_attendees')
+        .select('after_rally_opted_in')
+        .eq('event_id', id)
+        .eq('profile_id', profile.id)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!id && !!profile?.id,
+  });
   
   // Auto-arrival detection for R@lly Home - only active after event ends
   useAutoArrival({ 
@@ -142,30 +162,45 @@ export default function EventDetail() {
   }, [isLive, isAttending, isCreator, id, myPromptStatus.canPrompt]);
 
   // Show After R@lly opt-in dialog when event transitions to after_rally
-  // EVERYONE must accept and specify their next location - including hosts
-  // Also trigger the immersive transition sound/haptics
+  // Dialog shows on NORMAL screen - user must opt-in to see purple theme
   useEffect(() => {
     if (isAfterRally && (isAttending || isCreator)) {
-      // Check if user hasn't opted in yet (we use sessionStorage to track if dialog was shown)
+      // Only show dialog if user hasn't already opted in
       const shownKey = `after_rally_shown_${id}`;
-      const transitionKey = `after_rally_transition_${id}`;
       
-      // Trigger sound/haptic transition only once per event
-      if (!sessionStorage.getItem(transitionKey) && !afterRallyTriggeredRef.current) {
-        sessionStorage.setItem(transitionKey, 'true');
-        afterRallyTriggeredRef.current = true;
-        // Small delay to sync with CSS animation
-        setTimeout(() => {
-          triggerAfterRallyTransition();
-        }, 200);
-      }
-      
-      if (!sessionStorage.getItem(shownKey)) {
+      if (!sessionStorage.getItem(shownKey) && myAttendee?.after_rally_opted_in !== true) {
         sessionStorage.setItem(shownKey, 'true');
         setShowAfterRallyOptIn(true);
       }
     }
-  }, [isAfterRally, isAttending, isCreator, id, triggerAfterRallyTransition]);
+  }, [isAfterRally, isAttending, isCreator, id, myAttendee?.after_rally_opted_in]);
+
+  // Trigger the rainbow transition ONLY when user opts in (not on event status change)
+  // This creates the dramatic visual effect after they click "I'm In!"
+  const showAfterRallyTheme = isAfterRally && myAttendee?.after_rally_opted_in === true;
+  
+  useEffect(() => {
+    if (showAfterRallyTheme) {
+      const transitionKey = `after_rally_transition_${id}`;
+      if (!sessionStorage.getItem(transitionKey) && !afterRallyTriggeredRef.current) {
+        sessionStorage.setItem(transitionKey, 'true');
+        afterRallyTriggeredRef.current = true;
+        // Small delay to sync with CSS animation start
+        setTimeout(() => {
+          triggerAfterRallyTransition();
+        }, 200);
+      }
+    }
+  }, [showAfterRallyTheme, id, triggerAfterRallyTransition]);
+
+  // Handler for when user declines After R@lly and wants to head home
+  const handleHeadHomeFromAfterRally = () => {
+    setShowAfterRallyOptIn(false);
+    // Open the R@lly Home dialog to help them get home safely
+    setShowRallyHomeDialog(true);
+    // Refetch attendee status
+    refetchMyAttendee();
+  };
 
   if (authLoading) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
@@ -213,7 +248,7 @@ export default function EventDetail() {
   };
 
   return (
-    <div className={`min-h-screen pb-20 ${isAfterRally ? 'after-rally-mode' : ''}`}>
+    <div className={`min-h-screen pb-20 ${showAfterRallyTheme ? 'after-rally-mode' : ''}`}>
       <Header />
       
       <main className="container py-6 space-y-6 relative z-10">
@@ -781,10 +816,7 @@ export default function EventDetail() {
         eventTitle={event.title}
         open={showAfterRallyOptIn}
         onOpenChange={setShowAfterRallyOptIn}
-        onHeadHome={() => {
-          // Trigger R@lly Home flow
-          toast.info('Opening R@lly Home...');
-        }}
+        onHeadHome={handleHeadHomeFromAfterRally}
       />
 
       {/* R@lly Home Opt-In Dialog - For live events */}
@@ -810,6 +842,15 @@ export default function EventDetail() {
           }
         }}
       />
+
+      {/* R@lly Home Dialog - For users declining After R@lly */}
+      {showRallyHomeDialog && (
+        <RallyHomeButton 
+          eventId={event.id}
+          eventStatus={event.status}
+          trigger={<></>}
+        />
+      )}
 
       {/* End R@lly Dialog */}
       <EndRallyDialog
