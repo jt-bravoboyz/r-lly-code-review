@@ -129,7 +129,7 @@ self.addEventListener('notificationclick', function(event) {
   
   event.notification.close();
   
-  const urlToOpen = event.notification.data?.url || '/rides';
+  const urlToOpen = event.notification.data?.url || '/events';
   
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true })

@@ -34,7 +34,7 @@ const features = [
   {
     icon: Car,
     title: 'Ride Coordination',
-    description: 'Offer or request rides to the event',
+    description: 'Offer or request rides within each event',
   },
   {
     icon: Home,

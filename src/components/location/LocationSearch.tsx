@@ -43,6 +43,7 @@ type SearchResult = {
   rating?: number;
   isOpen?: boolean;
   icon?: string;
+  place_id?: string;  // Google/Mapbox place ID
 };
 
 interface LocationSearchProps {
@@ -53,6 +54,7 @@ interface LocationSearchProps {
     address: string;
     lat: number;
     lng: number;
+    place_id?: string;  // Google/Mapbox place ID for structured data
   }) => void;
   placeholder?: string;
   allowCustomName?: boolean;
@@ -139,6 +141,7 @@ export function LocationSearch({
         types: place.types,
         rating: place.rating,
         isOpen: place.isOpen,
+        place_id: place.id,  // Store place_id for structured location
       }));
     } catch (error) {
       console.error('Google Places search failed:', error);
@@ -174,6 +177,7 @@ export function LocationSearch({
         lng: result.center[0],
         source: 'mapbox' as const,
         types: result.place_type,
+        place_id: result.id,  // Store place_id for structured location
       }));
     } catch (error) {
       console.error('Mapbox search error:', error);
@@ -269,6 +273,7 @@ export function LocationSearch({
         address: result.address,
         lat: result.lat,
         lng: result.lng,
+        place_id: result.place_id,
       });
     }
   };
@@ -296,6 +301,7 @@ export function LocationSearch({
         address: selectedLocation.address,
         lat: selectedLocation.lat,
         lng: selectedLocation.lng,
+        place_id: selectedLocation.place_id,
       });
     }
   };

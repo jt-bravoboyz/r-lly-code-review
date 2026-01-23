@@ -66,10 +66,10 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     id: 'rides-intro',
     title: 'TRANSPORT LOGISTICS',
     command: 'COORDINATE RIDES',
-    instruction: 'Need a ride or can offer one? The Rides hub coordinates transport. TAP the Rides tab.',
-    targetSelector: '[data-tutorial="nav-rides"]',
+    instruction: 'Need a ride or can offer one? Rides are coordinated within each event. Open an event to access the Rides tab.',
+    targetSelector: '[data-tutorial="nav-events"]',
     requiredAction: 'navigate',
-    targetRoute: '/rides',
+    targetRoute: '/events',
     position: 'top',
   },
   {
