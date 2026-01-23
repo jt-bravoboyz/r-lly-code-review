@@ -168,9 +168,21 @@ export function formatETA(minutes: number | null): string {
   return mins > 0 ? `~${hours}h ${mins}m` : `~${hours}h`;
 }
 
-// Format distance for display
-export function formatDistance(km: number | null): string {
+// Format distance for display (supports both imperial and metric)
+export function formatDistance(km: number | null, useFeet: boolean = true): string {
   if (km === null) return 'Unknown';
+  
+  if (useFeet) {
+    const miles = km * 0.621371;
+    const feet = miles * 5280;
+    
+    if (feet < 5280) {
+      return `${Math.round(feet)} ft away`;
+    }
+    return `${miles.toFixed(1)} mi away`;
+  }
+  
+  // Metric fallback
   if (km < 1) return `${Math.round(km * 1000)}m away`;
   return `${km.toFixed(1)}km away`;
 }

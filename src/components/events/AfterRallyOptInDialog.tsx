@@ -49,7 +49,7 @@ export function AfterRallyOptInDialog({
         optIn: true,
         locationName: (event as any)?.after_rally_location_name || undefined,
       });
-      // Play celebratory sound
+      // Play celebratory sound before the rainbow transition
       playAcceptSound();
       toast.success('You\'re in for After R@lly! 🌙');
       onOpenChange(false);
@@ -68,6 +68,7 @@ export function AfterRallyOptInDialog({
         optIn: false,
       });
       onOpenChange(false);
+      // Trigger the R@lly Home flow for users who decline
       onHeadHome?.();
     } catch (error: any) {
       toast.error(error.message || 'Failed to update');
@@ -82,23 +83,25 @@ export function AfterRallyOptInDialog({
 
   const afterRallyLocation = (event as any)?.after_rally_location_name;
 
+  // Dialog appears on NORMAL (white) screen - not the purple theme
+  // Purple theme only applies after user clicks "I'm In!"
   return (
     <Dialog open={shouldShow} onOpenChange={() => {
       // Don't allow closing without making a choice
       toast.info('Please choose your next step');
     }}>
       <DialogContent 
-        className="max-w-sm after-rally-dialog border-[hsl(270,60%,50%)]/50" 
+        className="max-w-sm border-[hsl(270,60%,50%)]/30 bg-background" 
         onPointerDownOutside={(e) => e.preventDefault()}
       >
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-3 text-white">
-            <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
-              <Moon className="h-6 w-6 text-white" />
+          <DialogTitle className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-full bg-[hsl(270,60%,50%)]/20 flex items-center justify-center">
+              <Moon className="h-6 w-6 text-[hsl(270,60%,50%)]" />
             </div>
             <div>
               <span className="text-xl font-montserrat">After R@lly</span>
-              <p className="text-white/70 text-sm font-normal">The night continues!</p>
+              <p className="text-muted-foreground text-sm font-normal">The night continues!</p>
             </div>
           </DialogTitle>
         </DialogHeader>
@@ -106,21 +109,21 @@ export function AfterRallyOptInDialog({
         <div className="space-y-4 py-4">
           {/* Location Card */}
           {afterRallyLocation && (
-            <div className="p-4 rounded-xl bg-white/10 backdrop-blur border border-white/20">
+            <div className="p-4 rounded-xl bg-[hsl(270,60%,50%)]/10 border border-[hsl(270,60%,50%)]/20">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
-                  <MapPin className="h-5 w-5 text-white" />
+                <div className="w-10 h-10 rounded-full bg-[hsl(270,60%,50%)]/20 flex items-center justify-center">
+                  <MapPin className="h-5 w-5 text-[hsl(270,60%,50%)]" />
                 </div>
                 <div>
-                  <p className="text-white/60 text-xs uppercase tracking-wide">Next Stop</p>
-                  <p className="text-white font-semibold text-lg">{afterRallyLocation}</p>
+                  <p className="text-muted-foreground text-xs uppercase tracking-wide">Next Stop</p>
+                  <p className="font-semibold text-lg">{afterRallyLocation}</p>
                 </div>
               </div>
             </div>
           )}
 
-          <div className="p-3 rounded-lg bg-white/10 border border-white/20">
-            <p className="text-white/80 text-sm text-center">
+          <div className="p-3 rounded-lg bg-muted/50 border border-border">
+            <p className="text-muted-foreground text-sm text-center">
               <PartyPopper className="h-4 w-4 inline mr-2" />
               Everyone heading to After R@lly will be tracked for safety
             </p>
@@ -131,16 +134,16 @@ export function AfterRallyOptInDialog({
           <Button
             onClick={handleJoinAfterRally}
             disabled={optIn.isPending}
-            className="w-full bg-white text-[hsl(270,60%,30%)] hover:bg-white/90 font-semibold h-12 text-base"
+            className="w-full bg-[hsl(270,60%,50%)] hover:bg-[hsl(270,60%,40%)] text-white font-semibold h-12 text-base"
           >
             <Moon className="h-5 w-5 mr-2" />
             I'm In!
           </Button>
           <Button
-            variant="ghost"
+            variant="outline"
             onClick={handleHeadHome}
             disabled={optIn.isPending}
-            className="w-full text-white/80 hover:text-white hover:bg-white/10"
+            className="w-full"
           >
             <Home className="h-4 w-4 mr-2" />
             I'm Heading Home

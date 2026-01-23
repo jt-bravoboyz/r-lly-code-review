@@ -6,8 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useLocationContext } from '@/contexts/LocationContext';
 import { useMapboxToken } from '@/hooks/useMapboxToken';
+import { useAppSettings } from '@/hooks/useAppSettings';
 import { toast } from 'sonner';
 import { escapeHtml } from '@/lib/sanitize';
+import { formatDistance as formatDistanceUtil } from '@/lib/formatDistance';
 interface NavigationTarget {
   profileId: string;
   displayName: string;
@@ -36,6 +38,7 @@ export function TurnByTurnNav({ target, onClose }: TurnByTurnNavProps) {
   
   const { currentPosition, compassHeading } = useLocationContext();
   const { token: MAPBOX_TOKEN, isLoading: tokenLoading, error: tokenError } = useMapboxToken();
+  const { settings } = useAppSettings();
   
   const [steps, setSteps] = useState<RouteStep[]>([]);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
@@ -112,10 +115,9 @@ export function TurnByTurnNav({ target, onClose }: TurnByTurnNavProps) {
     });
   }, []);
 
-  // Format distance for display
+  // Format distance for display using app settings
   const formatDistance = (meters: number) => {
-    if (meters < 1000) return `${Math.round(meters)}m`;
-    return `${(meters / 1000).toFixed(1)}km`;
+    return formatDistanceUtil(meters, settings.showDistanceInFeet);
   };
 
   // Format duration for display

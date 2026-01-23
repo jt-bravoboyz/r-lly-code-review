@@ -4,10 +4,12 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useMapboxToken } from '@/hooks/useMapboxToken';
+import { useAppSettings } from '@/hooks/useAppSettings';
 import { useSavedLocations, SavedLocation } from '@/hooks/useSavedLocations';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { LocationMapPreview } from './LocationMapPreview';
+import { formatDistanceAway } from '@/lib/formatDistance';
 
 interface GooglePlaceResult {
   id: string;
@@ -68,6 +70,7 @@ export function LocationSearch({
   className,
 }: LocationSearchProps) {
   const { token: mapboxToken, isLoading: tokenLoading } = useMapboxToken();
+  const { settings } = useAppSettings();
   const { savedLocations, saveLocation } = useSavedLocations();
   const [query, setQuery] = useState(value);
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -347,15 +350,11 @@ export function LocationSearch({
     });
   };
 
-  // Get distance text if user location is available
+  // Get distance text if user location is available (uses app settings for units)
   const getDistanceText = (result: SearchResult): string | null => {
     if (!userLocation) return null;
     const distance = calculateDistance(userLocation.lat, userLocation.lng, result.lat, result.lng);
-    
-    if (distance < 1000) {
-      return `${Math.round(distance)}m away`;
-    }
-    return `${(distance / 1000).toFixed(1)}km away`;
+    return formatDistanceAway(distance, settings.showDistanceInFeet);
   };
 
   if (tokenLoading) {
