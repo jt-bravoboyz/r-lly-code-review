@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Zap, ArrowRight, Plus, Bell, Sparkles, Clock, Calendar, History } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -10,7 +11,8 @@ import { QuickRallyDialog } from '@/components/events/QuickRallyDialog';
 import { useAuth } from '@/hooks/useAuth';
 import { useMyEvents } from '@/hooks/useMyEvents';
 import { useUnreadCount } from '@/hooks/useNotifications';
-import { usePendingInvites } from '@/hooks/useEventInvites';
+import { usePendingInvites, useInviteRealtime } from '@/hooks/useEventInvites';
+import { useRallyOnboarding } from '@/contexts/RallyOnboardingContext';
 import rallyLogo from '@/assets/rally-logo.png';
 
 export default function Index() {
@@ -18,7 +20,24 @@ export default function Index() {
   const { data: categorizedEvents, isLoading: eventsLoading } = useMyEvents();
   const unreadCount = useUnreadCount();
   const { data: pendingInvites } = usePendingInvites();
+  const { startOnboarding, state: onboardingState } = useRallyOnboarding();
   const totalUnread = unreadCount + (pendingInvites?.length || 0);
+
+  // Subscribe to realtime invite updates
+  useInviteRealtime();
+
+  // Trigger onboarding banner when there's a pending invite and not already onboarding
+  useEffect(() => {
+    if (
+      pendingInvites && 
+      pendingInvites.length > 0 && 
+      !onboardingState.isActive && 
+      onboardingState.currentStep === 'idle'
+    ) {
+      // Start onboarding with the first pending invite
+      startOnboarding(pendingInvites[0]);
+    }
+  }, [pendingInvites, onboardingState.isActive, onboardingState.currentStep, startOnboarding]);
 
   // Production mode - require authentication
 

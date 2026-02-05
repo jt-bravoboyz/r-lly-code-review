@@ -1355,3 +1355,53 @@
     opacity: 0.5;
   }
 }
+
+/* Rally Onboarding Banner Animations */
+@keyframes banner-slide-down {
+  from {
+    transform: translateY(-30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes banner-slide-up {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-30px);
+    opacity: 0;
+  }
+}
+
+.rally-onboarding-banner {
+  animation: banner-slide-down 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.rally-onboarding-banner-exit {
+  animation: banner-slide-up 0.3s ease-in forwards;
+}
+
+/* Step indicator dots */
+.step-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background: hsl(var(--muted-foreground) / 0.3);
+  transition: all 0.3s ease;
+}
+
+.step-dot.active {
+  width: 24px;
+  border-radius: 4px;
+  background: hsl(var(--primary));
+}
+
+.step-dot.completed {
+  background: hsl(152 76% 45%);
+}
