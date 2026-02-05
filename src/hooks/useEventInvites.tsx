@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
@@ -213,4 +214,35 @@ export function useRespondToInvite() {
       queryClient.invalidateQueries({ queryKey: ['events'] });
     },
   });
+}
+
+// Realtime subscription for new invites
+export function useInviteRealtime() {
+  const { profile } = useAuth();
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (!profile?.id) return;
+
+    const channel = supabase
+      .channel('invite-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'event_invites',
+          filter: `invited_profile_id=eq.${profile.id}`,
+        },
+        () => {
+          // Invalidate pending invites to trigger banner
+          queryClient.invalidateQueries({ queryKey: ['event-invites', 'pending'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [profile?.id, queryClient]);
 }
