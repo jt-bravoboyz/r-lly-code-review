@@ -165,19 +165,21 @@ export function useRespondToInvite() {
 
       if (updateError) throw updateError;
 
-      // If accepted, also join the event
+      // If accepted, request joining the event (host approval flow)
       if (response === 'accepted') {
-        const { error: joinError } = await supabase
-          .from('event_attendees')
-          .insert({ 
-            event_id: eventId, 
-            profile_id: profile.id 
-          });
+        const { data, error: joinError } = await supabase.rpc('request_join_event', {
+          p_event_id: eventId,
+        });
 
-        // Ignore duplicate errors (already joined)
-        if (joinError && joinError.code !== '23505') {
-          throw joinError;
+        if (joinError) throw joinError;
+
+        const result = data as { success?: boolean; error?: string; status?: string };
+        if (result?.error && result.status !== 'attending' && result.status !== 'pending') {
+          throw new Error(result.error);
         }
+
+        // If approved immediately (status=attending), we can proceed as before.
+        // If pending, the UI will show the pending state.
 
         // Check if this is user's first event (invite conversion)
         try {

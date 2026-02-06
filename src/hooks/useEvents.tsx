@@ -172,29 +172,34 @@ export function useJoinEvent() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ eventId, profileId }: { eventId: string; profileId: string }) => {
-      const { data, error } = await supabase
-        .from('event_attendees')
-        .insert({ event_id: eventId, profile_id: profileId })
-        .select()
-        .single();
-      
+    mutationFn: async ({ eventId }: { eventId: string; profileId: string }) => {
+      // Use the secure RPC to avoid RLS insert issues and support host approval.
+      const { data, error } = await supabase.rpc('request_join_event', {
+        p_event_id: eventId,
+      });
+
       if (error) throw error;
-      return data;
+
+      // RPC returns jsonb like: { success: true, status: 'pending' } OR { error, status }
+      return data as { success?: boolean; error?: string; status?: 'pending' | 'attending' };
     },
-    onSuccess: async (_, variables) => {
+    onSuccess: async (result, variables) => {
       queryClient.invalidateQueries({ queryKey: ['event', variables.eventId] });
       queryClient.invalidateQueries({ queryKey: ['events'] });
-      
-      // Award points for joining event
+
+      // Only award “join_event” points once the user is actually attending.
+      if (result?.status !== 'attending') return;
+
       try {
         await supabase.rpc('rly_award_points_by_profile', {
           p_profile_id: variables.profileId,
           p_event_type: 'join_event',
-          p_source_id: variables.eventId
+          p_source_id: variables.eventId,
         });
-      } catch (e) { console.error('Points award failed:', e); }
-    }
+      } catch (e) {
+        console.error('Points award failed:', e);
+      }
+    },
   });
 }
 
