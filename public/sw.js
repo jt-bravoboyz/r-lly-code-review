@@ -1,6 +1,6 @@
 // R@lly Service Worker for Push Notifications and Offline Support
 
-const CACHE_NAME = 'rally-cache-v1';
+const CACHE_NAME = 'rally-cache-v2';
 const OFFLINE_URL = '/';
 
 // Files to cache for offline use
@@ -51,6 +51,12 @@ self.addEventListener('fetch', function(event) {
   
   // Skip API calls and Supabase requests
   const url = new URL(event.request.url);
+
+  // IMPORTANT: never cache the app bundle/chunks (prevents stale code + auth/RLS bugs)
+  if (url.pathname.startsWith('/assets/') || url.pathname.startsWith('/src/')) {
+    return;
+  }
+
   if (url.pathname.startsWith('/api') || 
       url.hostname.includes('supabase') ||
       url.hostname.includes('googleapis')) {
