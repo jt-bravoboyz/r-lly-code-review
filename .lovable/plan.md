@@ -1,188 +1,289 @@
 
 
-# Rally Join Onboarding Flow: "1, 2, 3" Guided Setup
+# Fix: Rally Join via Invite Code + Host Approval Flow
 
-## Overview
+## Problem Identified
 
-This plan implements a guided 3-step onboarding experience when someone joins a rally. Each step is a prominent banner/dialog that ensures every attendee is fully set up for the event:
+When a user enters an invite code on the "Join a R@lly" screen, they receive a **"new row violates row level security"** error. This happens because:
 
-1. **Step 1**: Accept/Join the Rally (full-screen invite banner)
-2. **Step 2**: Choose your ride role (DD or Rider)
-3. **Step 3**: Share your location for safety tracking
+1. The current `JoinRally.tsx` attempts to directly insert into `event_attendees` 
+2. The RLS policy checks that `profile_id` matches the authenticated user's profile
+3. There may be timing issues between authentication and profile loading
+
+Additionally, the user wants a **host approval flow** where:
+- User enters invite code → Request goes to host
+- Host can accept or decline
+- Only after acceptance → User joins the rally
 
 ---
 
-## User Experience Flow
+## Solution Overview
+
+We'll implement a **"Join Request"** flow using the existing `event_attendees.status` column:
 
 ```text
-User receives rally invite
+User enters invite code
          ↓
 ┌─────────────────────────────────────────────────────┐
-│  STEP 1: Rally Invite Banner (Full Screen)         │
-│                                                     │
-│  [Avatar] John invited you to:                      │
-│                                                     │
-│  "Saturday Night Hangout"                           │
-│  📍 Downtown Bar & Grill                            │
-│  📅 Tonight at 8:00 PM                              │
-│                                                     │
-│  [     I'M IN!     ]  [  Nah  ]                    │
-└─────────────────────────────────────────────────────┘
-         ↓ (Click "I'm In!")
-┌─────────────────────────────────────────────────────┐
-│  STEP 2: Rally Rides Banner                         │
-│                                                     │
-│  🚗 How are you getting there?                      │
-│                                                     │
-│  ┌──────────────────┐  ┌──────────────────┐        │
-│  │ 🛡️ I'M THE DD    │  │ 🚌 I NEED A RIDE │        │
-│  │ (Drive others    │  │ (Find a ride     │        │
-│  │  home safely)    │  │  from the crew)  │        │
-│  └──────────────────┘  └──────────────────┘        │
-│                                                     │
-│  [ I'll figure it out later ]                       │
-└─────────────────────────────────────────────────────┘
-         ↓ (Make selection or skip)
-┌─────────────────────────────────────────────────────┐
-│  STEP 3: Location Sharing Banner                    │
-│                                                     │
-│  📍 "It's important for troops to stick together"  │
-│                                                     │
-│  Share your location with the crew so everyone      │
-│  can find each other and stay safe.                 │
-│                                                     │
-│  [  SHARE MY LOCATION  ]                            │
-│                                                     │
-│  [ Maybe Later ]                                    │
+│  Creates event_attendees row with status='pending'  │
 └─────────────────────────────────────────────────────┘
          ↓
-User lands on Event Detail page, fully set up
+Host receives notification: "John wants to join your rally"
+         ↓
+┌────────────────────────────────────────────────────────────┐
+│  Host sees banner/card with Accept/Decline buttons         │
+└────────────────────────────────────────────────────────────┘
+         ↓
+If Accept: status = 'attending' → User gets full access
+If Decline: Row is deleted → User notified
 ```
 
 ---
 
-## Part 1: Rally Onboarding Context
+## Part 1: Database Changes
 
-**New File: `src/contexts/RallyOnboardingContext.tsx`**
+### 1.1 Update RLS Policy for event_attendees INSERT
 
-Manages the 3-step flow state:
-- Tracks current step: `invite` → `rides` → `location` → `complete`
-- Stores event and invite data
-- Handles auto-progression between steps
-- Persists state to sessionStorage for refresh recovery
+Current policy only allows insert with `status='attending'` (implicit). We need to allow `status='pending'` as well:
 
----
+```sql
+-- Drop existing INSERT policy
+DROP POLICY IF EXISTS "Users can join events" ON public.event_attendees;
 
-## Part 2: Step 1 - Rally Invite Banner
+-- Create new policy allowing pending joins
+CREATE POLICY "Users can join events with pending status"
+ON public.event_attendees
+FOR INSERT
+TO authenticated
+WITH CHECK (
+  profile_id IN (SELECT id FROM profiles WHERE user_id = auth.uid())
+  AND status IN ('attending', 'pending')
+);
+```
 
-**New File: `src/components/onboarding/RallyInviteBanner.tsx`**
+### 1.2 Add Host Approval Policy
 
-Full-screen overlay when user has pending invite:
+Allow hosts/cohosts to update pending requests:
 
-- Slides down from top with smooth animation
-- Shows event details (title, location, time, host avatar)
-- **"I'm In!"** button - accepts invite, fires confetti, progresses to Step 2
-- **"Nah"** button - declines invite and closes banner
-- Sound effect on accept
-- Triggered by pending invites or realtime new invite detection
+```sql
+-- Hosts can approve/decline join requests
+CREATE POLICY "Hosts can manage pending attendees"
+ON public.event_attendees
+FOR UPDATE
+TO authenticated
+USING (
+  status = 'pending' 
+  AND is_event_host_or_cohost(event_id, auth.uid())
+)
+WITH CHECK (
+  status IN ('attending', 'declined')
+);
 
----
+-- Hosts can delete declined requests
+CREATE POLICY "Hosts can remove declined attendees"
+ON public.event_attendees
+FOR DELETE
+TO authenticated
+USING (
+  status IN ('pending', 'declined')
+  AND is_event_host_or_cohost(event_id, auth.uid())
+);
+```
 
-## Part 3: Step 2 - Rally Rides Banner
+### 1.3 Update is_event_member Function
 
-**New File: `src/components/onboarding/RallyRidesBanner.tsx`**
+Ensure pending users can see basic event info but not full member access:
 
-Appears immediately after accepting:
-
-- Two prominent cards: "I'm the DD" and "I Need a Ride"
-- DD selection opens DDSetupDialog flow
-- Rider selection opens RequestRideDialog
-- "I'll figure it out later" skips to Step 3
-- Progress indicator showing Step 2 of 3
-
----
-
-## Part 4: Step 3 - Location Sharing Banner
-
-**New File: `src/components/onboarding/LocationSharingBanner.tsx`**
-
-Final step with safety messaging:
-
-- Prominent text: "It's important for troops to stick together"
-- Shield/safety visual
-- "Share My Location" button requests permission and updates `event_attendees.share_location`
-- "Maybe Later" completes onboarding without sharing
-- Celebration animation when enabled
-
----
-
-## Part 5: Integration Points
-
-**Modified Files:**
-
-| File | Changes |
-|------|---------|
-| `src/App.tsx` | Wrap with RallyOnboardingProvider |
-| `src/pages/Index.tsx` | Render onboarding banners as overlays |
-| `src/pages/EventDetail.tsx` | Support continuing onboarding if navigated directly |
-| `src/hooks/useEventInvites.tsx` | Add realtime subscription for instant invite detection |
-| `src/index.css` | Banner slide animations and step indicator styles |
-
----
-
-## Part 6: Banner Animation Styles
-
-```css
-@keyframes banner-slide-down {
-  from { transform: translateY(-100%); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
-}
-
-.rally-onboarding-banner {
-  animation: banner-slide-down 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-/* Step indicator */
-.step-dot.active { width: 24px; background: white; }
-.step-dot.completed { background: #22c55e; }
+```sql
+CREATE OR REPLACE FUNCTION public.is_event_member(p_event_id uuid)
+RETURNS boolean
+LANGUAGE sql
+STABLE SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM event_attendees
+    WHERE event_id = p_event_id
+    AND profile_id IN (SELECT id FROM profiles WHERE user_id = auth.uid())
+    AND status = 'attending'  -- Only full members
+  )
+  OR EXISTS (
+    SELECT 1 FROM events
+    WHERE id = p_event_id
+    AND creator_id IN (SELECT id FROM profiles WHERE user_id = auth.uid())
+  )
+$$;
 ```
 
 ---
 
-## Summary of All Files
+## Part 2: Frontend Changes
 
-**New Files:**
+### 2.1 Update JoinRally.tsx
+
+Modify the join flow to create a pending request instead of immediate join:
+
+**Changes:**
+- When user clicks "Join This Rally", insert with `status='pending'`
+- Show "Request Sent" confirmation instead of immediate access
+- Display message: "Waiting for host approval..."
+
+```typescript
+// In handleJoin function:
+const { error } = await supabase
+  .from('event_attendees')
+  .insert({ 
+    event_id: event.id, 
+    profile_id: profile.id,
+    status: 'pending'  // NEW: Start as pending
+  });
+
+if (!error) {
+  toast.success("Request sent! Waiting for host approval...");
+  // Show waiting UI
+}
+```
+
+### 2.2 Create New Component: PendingJoinRequests.tsx
+
+Display pending join requests for hosts on the EventDetail page:
+
+```typescript
+// src/components/events/PendingJoinRequests.tsx
+// Shows cards for each pending attendee with Accept/Decline buttons
+// Only visible to hosts and cohosts
+```
+
+**Features:**
+- Avatar, name, and time of request
+- "Accept" button (green) → Updates status to 'attending'
+- "Decline" button (red) → Deletes the record
+- Realtime updates when new requests come in
+
+### 2.3 Create Hook: useJoinRequests.tsx
+
+```typescript
+// src/hooks/useJoinRequests.tsx
+export function usePendingJoinRequests(eventId: string) {
+  // Query pending attendees for this event
+  return useQuery({
+    queryKey: ['join-requests', eventId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('event_attendees')
+        .select('*, profile:profiles(id, display_name, avatar_url)')
+        .eq('event_id', eventId)
+        .eq('status', 'pending');
+      return data;
+    },
+  });
+}
+
+export function useRespondToJoinRequest() {
+  // Accept or decline a join request
+}
+```
+
+### 2.4 Update EventDetail.tsx
+
+Add the PendingJoinRequests component for hosts:
+
+```tsx
+{isHost && <PendingJoinRequests eventId={id} />}
+```
+
+---
+
+## Part 3: Notifications
+
+### 3.1 Send Notification to Host
+
+When a join request is created, notify the host:
+
+```typescript
+// After successful pending insert in JoinRally.tsx
+await supabase.functions.invoke('send-event-notification', {
+  body: {
+    type: 'join_request',
+    eventId: event.id,
+    eventTitle: event.title,
+    requesterName: profile.display_name,
+    profileIds: [event.creator.id], // Host profile ID
+  },
+});
+```
+
+### 3.2 Send Notification to Requester on Decision
+
+When host accepts/declines:
+
+```typescript
+// On accept
+await supabase.functions.invoke('send-push-notification', {
+  body: {
+    profileIds: [requesterId],
+    title: "You're in! 🎉",
+    body: `You've been accepted to ${eventTitle}`,
+    data: { url: `/events/${eventId}` },
+  },
+});
+
+// On decline
+await supabase.functions.invoke('send-push-notification', {
+  body: {
+    profileIds: [requesterId],
+    title: "Request Declined",
+    body: `Your request to join ${eventTitle} was declined`,
+  },
+});
+```
+
+---
+
+## Part 4: Integration with Onboarding Flow
+
+The existing 3-step onboarding flow (invite banner → rides → location) works for **direct invites** where the host invites someone by profile. 
+
+For **invite code joins**, after host approval:
+1. User receives push notification: "You're in!"
+2. Tapping notification opens the event
+3. The 3-step onboarding could optionally trigger for first-time joiners
+
+---
+
+## Summary of Files
+
+### New Files
 | File | Purpose |
 |------|---------|
-| `src/contexts/RallyOnboardingContext.tsx` | State management for 3-step flow |
-| `src/components/onboarding/RallyInviteBanner.tsx` | Step 1: "I'm In!" / "Nah" |
-| `src/components/onboarding/RallyRidesBanner.tsx` | Step 2: DD or Rider selection |
-| `src/components/onboarding/LocationSharingBanner.tsx` | Step 3: Location sharing prompt |
+| `src/components/events/PendingJoinRequests.tsx` | Host view of pending requests |
+| `src/hooks/useJoinRequests.tsx` | Query and respond to join requests |
 
-**Modified Files:**
+### Modified Files
 | File | Changes |
 |------|---------|
-| `src/App.tsx` | Add RallyOnboardingProvider |
-| `src/pages/Index.tsx` | Render banners, trigger on invite |
-| `src/pages/EventDetail.tsx` | Support onboarding continuation |
-| `src/hooks/useEventInvites.tsx` | Realtime invite subscription |
-| `src/index.css` | Animation styles |
+| `src/pages/JoinRally.tsx` | Insert as 'pending' instead of 'attending' |
+| `src/pages/EventDetail.tsx` | Add PendingJoinRequests for hosts |
+| Database migration | Update RLS policies, update is_event_member function |
 
 ---
 
-## Technical Details
+## Testing Checklist
 
-**Realtime Detection:**
-- Subscribe to `event_invites` INSERT events filtered by current user
-- Immediately show Step 1 banner when new invite arrives
-- Play notification sound
+**Join Request Flow:**
+- [ ] User can enter invite code and submit request
+- [ ] Request creates `event_attendees` row with `status='pending'`
+- [ ] No RLS error occurs
+- [ ] User sees "Request sent, waiting for approval" message
 
-**State Persistence:**
-- Store `{ eventId, step, startedAt }` in sessionStorage
-- Resume onboarding if interrupted within 30 minutes
-- Clear on completion
+**Host Approval:**
+- [ ] Host sees pending requests on event page
+- [ ] Host receives push notification for new requests
+- [ ] "Accept" changes status to 'attending'
+- [ ] "Decline" removes the record
+- [ ] Requester receives notification of decision
 
-**Button Labels (Step 1):**
-- Accept: **"I'm In!"**
-- Decline: **"Nah"**
-
+**Access Control:**
+- [ ] Pending users cannot access full event features
+- [ ] Pending users cannot see chat, tracking, etc.
+- [ ] Approved users get full access
