@@ -53,6 +53,7 @@ import { SafetyCloseoutDialog } from '@/components/events/SafetyCloseoutDialog';
 import { EndRallyDialog } from '@/components/events/EndRallyDialog';
 import { EditEventLocationDialog } from '@/components/events/EditEventLocationDialog';
 import { useMyRallyHomePrompt } from '@/hooks/useRallyHomePrompt';
+import { PendingJoinRequests } from '@/components/events/PendingJoinRequests';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -261,6 +262,9 @@ export default function EventDetail() {
 
         {/* Live Updates Banner */}
         {updates.length > 0 && <LiveUpdates updates={updates} />}
+
+        {/* Pending Join Requests - Only for hosts */}
+        {canManage && <PendingJoinRequests eventId={event.id} />}
 
         {/* Event Header */}
         <div className="space-y-4">
