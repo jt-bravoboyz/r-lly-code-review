@@ -43,8 +43,8 @@ const App = () => (
               <Toaster />
               <Sonner />
               <NavigationPortal />
-              <RallyOnboardingOverlay />
               <BrowserRouter>
+                <RallyOnboardingOverlay />
                 <TutorialProvider>
                   <TutorialOverlay />
                   <Routes>
