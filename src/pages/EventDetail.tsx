@@ -263,9 +263,6 @@ export default function EventDetail() {
         {/* Live Updates Banner */}
         {updates.length > 0 && <LiveUpdates updates={updates} />}
 
-        {/* Pending Join Requests - Only for hosts */}
-        {canManage && <PendingJoinRequests eventId={event.id} />}
-
         {/* Event Header */}
         <div className="space-y-4">
           {event.image_url && (
@@ -394,6 +391,41 @@ export default function EventDetail() {
                   attendees={event.attendees} 
                 />
               )}
+            </div>
+          )}
+
+          {/* Pending Join Requests - Only for hosts, right below host info */}
+          {canManage && <PendingJoinRequests eventId={event.id} />}
+
+          {/* Quick Attendee Preview */}
+          {event.attendees && event.attendees.filter(a => a.status === 'attending').length > 0 && (
+            <div className="pt-2">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm text-muted-foreground">Attending</p>
+                <Badge variant="secondary" className="text-xs">
+                  {event.attendees.filter(a => a.status === 'attending').length}
+                </Badge>
+              </div>
+              <div className="flex -space-x-2 overflow-hidden">
+                {event.attendees
+                  .filter(a => a.status === 'attending')
+                  .slice(0, 8)
+                  .map((attendee) => (
+                    <Avatar key={attendee.id} className="h-8 w-8 border-2 border-background">
+                      <AvatarImage src={attendee.profile?.avatar_url || undefined} />
+                      <AvatarFallback className="text-xs">
+                        {attendee.profile?.display_name?.charAt(0)?.toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  ))}
+                {event.attendees.filter(a => a.status === 'attending').length > 8 && (
+                  <div className="h-8 w-8 rounded-full bg-muted border-2 border-background flex items-center justify-center">
+                    <span className="text-xs text-muted-foreground">
+                      +{event.attendees.filter(a => a.status === 'attending').length - 8}
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
