@@ -103,13 +103,36 @@ export default function ReturningAuth() {
           return;
         }
         
-        await joinEvent.mutateAsync({ eventId: eventData.id, profileId: profile.id });
-        sessionStorage.setItem('showFirstTimeWelcome', eventData.id);
-        toast.success("You're in! 🎉 Welcome to the R@lly!");
-        navigate(`/events/${eventData.id}`);
+        const { data: joinData, error: joinError } = await supabase.rpc('request_join_event', {
+          p_event_id: eventData.id,
+        });
+
+        if (joinError) throw joinError;
+
+        const joinResult = joinData as { success?: boolean; error?: string; status?: string };
+
+        if (joinResult?.error) {
+          if (joinResult.status === 'attending') {
+            toast.info("You're already in this R@lly!");
+            navigate(`/events/${eventData.id}`);
+            return;
+          }
+          if (joinResult.status === 'pending') {
+            toast.info('Your request is already pending approval');
+            navigate(`/join/${pendingCode}`);
+            return;
+          }
+          throw new Error(joinResult.error);
+        }
+
+        toast.success('Request sent! Waiting for host approval...', {
+          description: 'The host will be notified of your request',
+        });
+        navigate(`/join/${pendingCode}`);
       } catch (error: any) {
         console.error('Auto-join failed:', error);
-        navigate('/');
+        toast.error('Failed to join rally. Please try again.');
+        navigate(`/join/${pendingCode}`);
       }
     };
     

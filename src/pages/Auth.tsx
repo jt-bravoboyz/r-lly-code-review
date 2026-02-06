@@ -139,55 +139,38 @@ export default function Auth() {
           return;
         }
         
-        // Auto-join the rally
-        await joinEvent.mutateAsync({ eventId: eventData.id, profileId: profile.id });
-        
-        // Set flag for first-time welcome dialog
-        sessionStorage.setItem('showFirstTimeWelcome', eventData.id);
-        
-        toast.success("You're in! 🎉 Welcome to the rally!");
-        navigate(`/events/${eventData.id}`);
+        // Request to join the rally (host approval flow)
+        const { data: joinData, error: joinError } = await supabase.rpc('request_join_event', {
+          p_event_id: eventData.id,
+        });
+
+        if (joinError) throw joinError;
+
+        const joinResult = joinData as { success?: boolean; error?: string; status?: string };
+
+        if (joinResult?.error) {
+          if (joinResult.status === 'attending') {
+            toast.info("You're already in this R@lly!");
+            navigate(`/events/${eventData.id}`);
+            return;
+          }
+          if (joinResult.status === 'pending') {
+            toast.info('Your request is already pending approval');
+            navigate(`/join/${pendingCode}`);
+            return;
+          }
+          throw new Error(joinResult.error);
+        }
+
+        // Pending by default
+        toast.success('Request sent! Waiting for host approval...', {
+          description: 'The host will be notified of your request',
+        });
+        navigate(`/join/${pendingCode}`);
       } catch (error: any) {
         console.error('Auto-join failed:', error);
-        if (error.message?.includes('duplicate')) {
-          // Already joined, just navigate
-          const { data: rpcData } = await supabase
-            .rpc('get_event_preview_by_invite_code', { invite_code_param: pendingCode });
-          if (rpcData && rpcData.length > 0) {
-            navigate(`/events/${rpcData[0].id}`);
-          } else {
-            navigate('/');
-          }
-        } else if (error.message?.includes('row-level security')) {
-          // RLS error - profile might be stale, try with fresh profile
-          console.log('[R@lly Debug] RLS error during auto-join, fetching fresh profile...');
-          const { data: freshProfile } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('user_id', user.id)
-            .single();
-          
-          if (freshProfile) {
-            try {
-              const { data: rpcData } = await supabase
-                .rpc('get_event_preview_by_invite_code', { invite_code_param: pendingCode });
-              if (rpcData && rpcData.length > 0) {
-                await joinEvent.mutateAsync({ eventId: rpcData[0].id, profileId: freshProfile.id });
-                sessionStorage.setItem('showFirstTimeWelcome', rpcData[0].id);
-                toast.success("You're in! 🎉 Welcome to the rally!");
-                navigate(`/events/${rpcData[0].id}`);
-                return;
-              }
-            } catch (retryError: any) {
-              console.error('[R@lly Debug] Retry auto-join failed:', retryError);
-            }
-          }
-          toast.error('Failed to join rally. Please try again.');
-          navigate(`/join/${pendingCode}`);
-        } else {
-          toast.error('Failed to auto-join rally. Please try again.');
-          navigate(`/join/${pendingCode}`);
-        }
+        toast.error('Failed to join rally. Please try again.');
+        navigate(`/join/${pendingCode}`);
       }
     };
     
