@@ -1,289 +1,191 @@
 
 
-# Fix: Rally Join via Invite Code + Host Approval Flow
+# Fix: Rally Join RLS Error + Host Approval Flow
 
-## Problem Identified
+## Problem
 
-When a user enters an invite code on the "Join a R@lly" screen, they receive a **"new row violates row level security"** error. This happens because:
+When your friend enters the invite code, they get the error:
+> "new row violates row-level security policy for table event_attendees"
 
-1. The current `JoinRally.tsx` attempts to directly insert into `event_attendees` 
-2. The RLS policy checks that `profile_id` matches the authenticated user's profile
-3. There may be timing issues between authentication and profile loading
+This happens because:
+1. The INSERT policy on `event_attendees` does a nested query to `profiles` table
+2. The `profiles` table has its own RLS policies that may block this lookup
+3. This creates an RLS "chicken and egg" problem
 
-Additionally, the user wants a **host approval flow** where:
-- User enters invite code → Request goes to host
-- Host can accept or decline
-- Only after acceptance → User joins the rally
+## Solution
+
+We'll fix this with a secure database function and add the host approval flow you requested.
 
 ---
 
-## Solution Overview
-
-We'll implement a **"Join Request"** flow using the existing `event_attendees.status` column:
+## How It Will Work
 
 ```text
-User enters invite code
-         ↓
+Friend enters invite code → "Join This Rally"
+                ↓
 ┌─────────────────────────────────────────────────────┐
-│  Creates event_attendees row with status='pending'  │
+│  Request is created with status = 'pending'         │
+│  Friend sees: "Request sent! Waiting for approval"  │
 └─────────────────────────────────────────────────────┘
-         ↓
-Host receives notification: "John wants to join your rally"
-         ↓
-┌────────────────────────────────────────────────────────────┐
-│  Host sees banner/card with Accept/Decline buttons         │
-└────────────────────────────────────────────────────────────┘
-         ↓
-If Accept: status = 'attending' → User gets full access
-If Decline: Row is deleted → User notified
+                ↓
+┌─────────────────────────────────────────────────────┐
+│  HOST'S SCREEN (Event Detail page)                  │
+│                                                     │
+│  🔔 Join Requests (1)                               │
+│  ┌─────────────────────────────────────────────┐   │
+│  │ [Avatar] John Doe                           │   │
+│  │ Wants to join your rally                    │   │
+│  │                                             │   │
+│  │   [✓ Accept]    [✗ Decline]                │   │
+│  └─────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────┘
+                ↓
+If Accept → Friend gets full access to rally
+If Decline → Request is removed, friend notified
 ```
 
 ---
 
-## Part 1: Database Changes
+## Technical Changes
 
-### 1.1 Update RLS Policy for event_attendees INSERT
+### Part 1: Database - Secure Join Function
 
-Current policy only allows insert with `status='attending'` (implicit). We need to allow `status='pending'` as well:
+Create a `SECURITY DEFINER` function that bypasses the nested RLS evaluation:
 
 ```sql
--- Drop existing INSERT policy
-DROP POLICY IF EXISTS "Users can join events" ON public.event_attendees;
-
--- Create new policy allowing pending joins
-CREATE POLICY "Users can join events with pending status"
-ON public.event_attendees
-FOR INSERT
-TO authenticated
-WITH CHECK (
-  profile_id IN (SELECT id FROM profiles WHERE user_id = auth.uid())
-  AND status IN ('attending', 'pending')
-);
+CREATE OR REPLACE FUNCTION public.request_join_event(p_event_id uuid)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+DECLARE
+  v_profile_id uuid;
+  v_existing_status text;
+  v_result jsonb;
+BEGIN
+  -- Get current user's profile ID directly (bypasses RLS)
+  SELECT id INTO v_profile_id 
+  FROM profiles 
+  WHERE user_id = auth.uid();
+  
+  IF v_profile_id IS NULL THEN
+    RETURN jsonb_build_object('error', 'Profile not found');
+  END IF;
+  
+  -- Check if already an attendee
+  SELECT status INTO v_existing_status
+  FROM event_attendees
+  WHERE event_id = p_event_id AND profile_id = v_profile_id;
+  
+  IF v_existing_status = 'attending' THEN
+    RETURN jsonb_build_object('error', 'Already attending', 'status', 'attending');
+  ELSIF v_existing_status = 'pending' THEN
+    RETURN jsonb_build_object('error', 'Request already pending', 'status', 'pending');
+  END IF;
+  
+  -- Insert with pending status
+  INSERT INTO event_attendees (event_id, profile_id, status)
+  VALUES (p_event_id, v_profile_id, 'pending')
+  ON CONFLICT (event_id, profile_id) DO NOTHING;
+  
+  RETURN jsonb_build_object('success', true, 'status', 'pending');
+END;
+$$;
 ```
 
-### 1.2 Add Host Approval Policy
+### Part 2: RLS Policy Updates
 
-Allow hosts/cohosts to update pending requests:
+Add policies for host approval:
 
 ```sql
--- Hosts can approve/decline join requests
-CREATE POLICY "Hosts can manage pending attendees"
+-- Hosts can approve pending requests (update status to attending)
+CREATE POLICY "Hosts can approve pending attendees"
 ON public.event_attendees
 FOR UPDATE
 TO authenticated
 USING (
   status = 'pending' 
   AND is_event_host_or_cohost(event_id, auth.uid())
-)
-WITH CHECK (
-  status IN ('attending', 'declined')
 );
 
--- Hosts can delete declined requests
-CREATE POLICY "Hosts can remove declined attendees"
+-- Hosts can decline/remove pending requests
+CREATE POLICY "Hosts can decline pending attendees"
 ON public.event_attendees
 FOR DELETE
 TO authenticated
 USING (
-  status IN ('pending', 'declined')
+  status = 'pending'
   AND is_event_host_or_cohost(event_id, auth.uid())
 );
 ```
 
-### 1.3 Update is_event_member Function
+---
 
-Ensure pending users can see basic event info but not full member access:
+### Part 3: Frontend - Join Rally Page
 
-```sql
-CREATE OR REPLACE FUNCTION public.is_event_member(p_event_id uuid)
-RETURNS boolean
-LANGUAGE sql
-STABLE SECURITY DEFINER
-SET search_path TO 'public'
-AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM event_attendees
-    WHERE event_id = p_event_id
-    AND profile_id IN (SELECT id FROM profiles WHERE user_id = auth.uid())
-    AND status = 'attending'  -- Only full members
-  )
-  OR EXISTS (
-    SELECT 1 FROM events
-    WHERE id = p_event_id
-    AND creator_id IN (SELECT id FROM profiles WHERE user_id = auth.uid())
-  )
-$$;
-```
+**File: `src/pages/JoinRally.tsx`**
+
+Update the join flow to:
+1. Call the new secure function instead of direct insert
+2. Show "Request Sent" confirmation for pending status
+3. Display "Waiting for host approval" message
 
 ---
 
-## Part 2: Frontend Changes
+### Part 4: New Components for Host
 
-### 2.1 Update JoinRally.tsx
+**New File: `src/components/events/PendingJoinRequests.tsx`**
 
-Modify the join flow to create a pending request instead of immediate join:
+A card that shows pending join requests with:
+- Requester's avatar and name
+- "Accept" button (green checkmark)
+- "Decline" button (red X)
+- Real-time updates when new requests arrive
 
-**Changes:**
-- When user clicks "Join This Rally", insert with `status='pending'`
-- Show "Request Sent" confirmation instead of immediate access
-- Display message: "Waiting for host approval..."
+**New File: `src/hooks/useJoinRequests.tsx`**
 
-```typescript
-// In handleJoin function:
-const { error } = await supabase
-  .from('event_attendees')
-  .insert({ 
-    event_id: event.id, 
-    profile_id: profile.id,
-    status: 'pending'  // NEW: Start as pending
-  });
+Hook to:
+- Query pending attendees for an event
+- Accept a join request (update status to 'attending')
+- Decline a join request (delete the record)
 
-if (!error) {
-  toast.success("Request sent! Waiting for host approval...");
-  // Show waiting UI
-}
-```
+---
 
-### 2.2 Create New Component: PendingJoinRequests.tsx
+### Part 5: EventDetail Page Update
 
-Display pending join requests for hosts on the EventDetail page:
-
-```typescript
-// src/components/events/PendingJoinRequests.tsx
-// Shows cards for each pending attendee with Accept/Decline buttons
-// Only visible to hosts and cohosts
-```
-
-**Features:**
-- Avatar, name, and time of request
-- "Accept" button (green) → Updates status to 'attending'
-- "Decline" button (red) → Deletes the record
-- Realtime updates when new requests come in
-
-### 2.3 Create Hook: useJoinRequests.tsx
-
-```typescript
-// src/hooks/useJoinRequests.tsx
-export function usePendingJoinRequests(eventId: string) {
-  // Query pending attendees for this event
-  return useQuery({
-    queryKey: ['join-requests', eventId],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from('event_attendees')
-        .select('*, profile:profiles(id, display_name, avatar_url)')
-        .eq('event_id', eventId)
-        .eq('status', 'pending');
-      return data;
-    },
-  });
-}
-
-export function useRespondToJoinRequest() {
-  // Accept or decline a join request
-}
-```
-
-### 2.4 Update EventDetail.tsx
+**File: `src/pages/EventDetail.tsx`**
 
 Add the PendingJoinRequests component for hosts:
-
-```tsx
-{isHost && <PendingJoinRequests eventId={id} />}
-```
-
----
-
-## Part 3: Notifications
-
-### 3.1 Send Notification to Host
-
-When a join request is created, notify the host:
-
-```typescript
-// After successful pending insert in JoinRally.tsx
-await supabase.functions.invoke('send-event-notification', {
-  body: {
-    type: 'join_request',
-    eventId: event.id,
-    eventTitle: event.title,
-    requesterName: profile.display_name,
-    profileIds: [event.creator.id], // Host profile ID
-  },
-});
-```
-
-### 3.2 Send Notification to Requester on Decision
-
-When host accepts/declines:
-
-```typescript
-// On accept
-await supabase.functions.invoke('send-push-notification', {
-  body: {
-    profileIds: [requesterId],
-    title: "You're in! 🎉",
-    body: `You've been accepted to ${eventTitle}`,
-    data: { url: `/events/${eventId}` },
-  },
-});
-
-// On decline
-await supabase.functions.invoke('send-push-notification', {
-  body: {
-    profileIds: [requesterId],
-    title: "Request Declined",
-    body: `Your request to join ${eventTitle} was declined`,
-  },
-});
-```
+- Shows only to event creators and co-hosts
+- Positioned prominently near the top
+- Badge showing number of pending requests
 
 ---
 
-## Part 4: Integration with Onboarding Flow
+## Files Summary
 
-The existing 3-step onboarding flow (invite banner → rides → location) works for **direct invites** where the host invites someone by profile. 
-
-For **invite code joins**, after host approval:
-1. User receives push notification: "You're in!"
-2. Tapping notification opens the event
-3. The 3-step onboarding could optionally trigger for first-time joiners
-
----
-
-## Summary of Files
-
-### New Files
-| File | Purpose |
-|------|---------|
-| `src/components/events/PendingJoinRequests.tsx` | Host view of pending requests |
-| `src/hooks/useJoinRequests.tsx` | Query and respond to join requests |
-
-### Modified Files
-| File | Changes |
-|------|---------|
-| `src/pages/JoinRally.tsx` | Insert as 'pending' instead of 'attending' |
-| `src/pages/EventDetail.tsx` | Add PendingJoinRequests for hosts |
-| Database migration | Update RLS policies, update is_event_member function |
+| File | Action | Purpose |
+|------|--------|---------|
+| Database migration | Create | Secure join function + RLS policies |
+| `src/pages/JoinRally.tsx` | Modify | Use secure function, show pending UI |
+| `src/hooks/useJoinRequests.tsx` | Create | Query/respond to join requests |
+| `src/components/events/PendingJoinRequests.tsx` | Create | Host approval interface |
+| `src/pages/EventDetail.tsx` | Modify | Add pending requests for hosts |
 
 ---
 
-## Testing Checklist
+## User Experience After Fix
 
-**Join Request Flow:**
-- [ ] User can enter invite code and submit request
-- [ ] Request creates `event_attendees` row with `status='pending'`
-- [ ] No RLS error occurs
-- [ ] User sees "Request sent, waiting for approval" message
+**For the person joining:**
+1. Enter invite code
+2. See event preview, click "Join This Rally"
+3. See success: "Request sent! Waiting for host approval..."
+4. When approved → Navigate to event page
 
-**Host Approval:**
-- [ ] Host sees pending requests on event page
-- [ ] Host receives push notification for new requests
-- [ ] "Accept" changes status to 'attending'
-- [ ] "Decline" removes the record
-- [ ] Requester receives notification of decision
+**For the host:**
+1. See notification badge: "1 pending request"
+2. Card shows who wants to join
+3. Click Accept → Person joins the rally
+4. Click Decline → Request removed
 
-**Access Control:**
-- [ ] Pending users cannot access full event features
-- [ ] Pending users cannot see chat, tracking, etc.
-- [ ] Approved users get full access
