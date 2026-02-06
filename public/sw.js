@@ -1,11 +1,10 @@
 // R@lly Service Worker for Push Notifications and Offline Support
 
-const CACHE_NAME = 'rally-cache-v2';
+const CACHE_NAME = 'rally-cache-v3';
 const OFFLINE_URL = '/';
 
-// Files to cache for offline use
+// Files to cache for offline use (avoid caching '/' to prevent stale HTML pointing to old bundles)
 const STATIC_ASSETS = [
-  '/',
   '/manifest.json',
   '/rally-icon-192.png',
 ];
@@ -48,8 +47,7 @@ self.addEventListener('activate', function(event) {
 self.addEventListener('fetch', function(event) {
   // Skip non-GET requests
   if (event.request.method !== 'GET') return;
-  
-  // Skip API calls and Supabase requests
+
   const url = new URL(event.request.url);
 
   // IMPORTANT: never cache the app bundle/chunks (prevents stale code + auth/RLS bugs)
@@ -57,44 +55,74 @@ self.addEventListener('fetch', function(event) {
     return;
   }
 
-  if (url.pathname.startsWith('/api') || 
-      url.hostname.includes('supabase') ||
-      url.hostname.includes('googleapis')) {
+  // Skip API calls and Supabase requests
+  if (
+    url.pathname.startsWith('/api') ||
+    url.hostname.includes('supabase') ||
+    url.hostname.includes('googleapis')
+  ) {
     return;
   }
-  
+
+  // Network-first for navigations (HTML shell) to avoid stale index.html referencing old bundles
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request, { cache: 'no-store' })
+        .then(function(response) {
+          // Optionally refresh cached offline URL (best-effort)
+          if (response && response.ok) {
+            const clone = response.clone();
+            event.waitUntil(
+              caches.open(CACHE_NAME).then(function(cache) {
+                return cache.put(OFFLINE_URL, clone);
+              })
+            );
+          }
+          return response;
+        })
+        .catch(function() {
+          return caches.match(OFFLINE_URL);
+        })
+    );
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request).then(function(cachedResponse) {
       if (cachedResponse) {
         // Return cached response and update cache in background
         event.waitUntil(
-          fetch(event.request).then(function(response) {
-            if (response.ok) {
-              caches.open(CACHE_NAME).then(function(cache) {
-                cache.put(event.request, response);
-              });
-            }
-          }).catch(function() {})
+          fetch(event.request, { cache: 'no-store' })
+            .then(function(response) {
+              if (response.ok && response.type === 'basic') {
+                caches.open(CACHE_NAME).then(function(cache) {
+                  cache.put(event.request, response.clone());
+                });
+              }
+            })
+            .catch(function() {})
         );
         return cachedResponse;
       }
-      
+
       // Not in cache, try network
-      return fetch(event.request).then(function(response) {
-        // Cache successful responses
-        if (response.ok && response.type === 'basic') {
-          const responseClone = response.clone();
-          caches.open(CACHE_NAME).then(function(cache) {
-            cache.put(event.request, responseClone);
-          });
-        }
-        return response;
-      }).catch(function() {
-        // Offline - return cached offline page for navigation
-        if (event.request.mode === 'navigate') {
-          return caches.match(OFFLINE_URL);
-        }
-      });
+      return fetch(event.request, { cache: 'no-store' })
+        .then(function(response) {
+          // Cache successful responses
+          if (response.ok && response.type === 'basic') {
+            const responseClone = response.clone();
+            caches.open(CACHE_NAME).then(function(cache) {
+              cache.put(event.request, responseClone);
+            });
+          }
+          return response;
+        })
+        .catch(function() {
+          // Offline - return cached offline page for navigation
+          if (event.request.mode === 'navigate') {
+            return caches.match(OFFLINE_URL);
+          }
+        });
     })
   );
 });
