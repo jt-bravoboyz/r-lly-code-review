@@ -8,7 +8,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/hooks/useAuth';
-import { useJoinEvent } from '@/hooks/useEvents';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -36,13 +35,13 @@ export default function JoinRally() {
   const { code } = useParams<{ code: string }>();
   const navigate = useNavigate();
   const { user, profile, loading: authLoading } = useAuth();
-  const joinEvent = useJoinEvent();
   
   const [event, setEvent] = useState<EventPreview | null>(null);
   const [loading, setLoading] = useState(true);
   const [manualCode, setManualCode] = useState(code || '');
   const [joining, setJoining] = useState(false);
   const [alreadyJoined, setAlreadyJoined] = useState(false);
+  const [isPending, setIsPending] = useState(false);
   const [showRallyHomeOptIn, setShowRallyHomeOptIn] = useState(false);
   const [joinedEventId, setJoinedEventId] = useState<string | null>(null);
 
@@ -84,16 +83,24 @@ export default function JoinRally() {
       };
       setEvent(transformedEvent);
       
-      // Check if already attending (only if authenticated)
+      // Check if already attending or pending (only if authenticated)
       if (profile) {
         const { data: attendance } = await supabase
           .from('event_attendees')
-          .select('id')
+          .select('id, status')
           .eq('event_id', eventData.id)
           .eq('profile_id', profile.id)
           .maybeSingle();
         
-        setAlreadyJoined(!!attendance);
+        if (attendance) {
+          if (attendance.status === 'attending') {
+            setAlreadyJoined(true);
+            setIsPending(false);
+          } else if (attendance.status === 'pending') {
+            setIsPending(true);
+            setAlreadyJoined(false);
+          }
+        }
       }
     } else {
       setEvent(null);
@@ -118,131 +125,47 @@ export default function JoinRally() {
       return;
     }
 
-    // Authenticated, but profile not loaded yet - wait and retry
-    if (!profile?.id || profile.user_id !== user.id) {
-      setJoining(true);
-      // Wait for profile to load (poll for up to 5 seconds)
-      let attempts = 0;
-      const maxAttempts = 10;
-      const checkProfile = async (): Promise<boolean> => {
-        const { data } = await supabase
-          .from('profiles')
-          .select('id, user_id')
-          .eq('user_id', user.id)
-          .maybeSingle();
-        return !!data && data.user_id === user.id;
-      };
-
-      while (attempts < maxAttempts) {
-        const hasProfile = await checkProfile();
-        if (hasProfile) {
-          // Fetch the profile and proceed
-          const { data: freshProfile } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('user_id', user.id)
-            .single();
-          
-          if (freshProfile && event) {
-            try {
-              console.log('[R@lly Debug] Joining event with fresh profile:', { eventId: event.id, profileId: freshProfile.id });
-              await joinEvent.mutateAsync({ eventId: event.id, profileId: freshProfile.id });
-              toast.success("You're in! 🎉");
-              
-              // Check if event is live and show R@lly Home opt-in
-              const now = new Date();
-              const startTime = new Date(event.start_time);
-              const isLiveEvent = startTime <= now;
-              
-              if (isLiveEvent) {
-                setJoinedEventId(event.id);
-                setShowRallyHomeOptIn(true);
-              } else {
-                navigate(`/events/${event.id}`);
-              }
-              return;
-            } catch (error: any) {
-              console.error('[R@lly Debug] Join error:', error);
-              if (error.message?.includes('duplicate')) {
-                toast.info("You're already in this R@lly!");
-                navigate(`/events/${event.id}`);
-              } else {
-                toast.error(error.message || 'Failed to join R@lly');
-              }
-              setJoining(false);
-              return;
-            }
-          }
-        }
-        attempts++;
-        await new Promise(resolve => setTimeout(resolve, 500));
-      }
-      
-      toast.error('Profile is still loading. Please try again.');
-      setJoining(false);
-      return;
-    }
-
     if (!event) return;
 
     setJoining(true);
     try {
-      console.log('[R@lly Debug] Joining event:', { eventId: event.id, profileId: profile.id });
-      await joinEvent.mutateAsync({ eventId: event.id, profileId: profile.id });
-      toast.success("You're in! 🎉");
-      
-      // Check if event is live and show R@lly Home opt-in
-      const now = new Date();
-      const startTime = new Date(event.start_time);
-      const isLiveEvent = startTime <= now;
-      
-      if (isLiveEvent) {
-        setJoinedEventId(event.id);
-        setShowRallyHomeOptIn(true);
-      } else {
-        navigate(`/events/${event.id}`);
+      // Use the secure RPC function to request joining
+      const { data, error } = await supabase.rpc('request_join_event', {
+        p_event_id: event.id
+      });
+
+      if (error) {
+        console.error('[R@lly Debug] RPC error:', error);
+        throw error;
       }
+
+      const result = data as { success?: boolean; error?: string; status?: string };
+
+      if (result.error) {
+        if (result.status === 'attending') {
+          toast.info("You're already in this R@lly!");
+          navigate(`/events/${event.id}`);
+          return;
+        }
+        if (result.status === 'pending') {
+          toast.info('Your request is already pending approval');
+          return;
+        }
+        throw new Error(result.error);
+      }
+
+      // Success - request created with pending status
+      toast.success('Request sent! Waiting for host approval...', {
+        description: 'The host will be notified of your request',
+        icon: '⏳',
+      });
+      
+      // Update the UI to show pending state
+      setAlreadyJoined(false); // Not fully joined yet
+      
     } catch (error: any) {
       console.error('[R@lly Debug] Join error:', error);
-      if (error.message?.includes('duplicate')) {
-        toast.info("You're already in this R@lly!");
-        navigate(`/events/${event.id}`);
-      } else if (error.message?.includes('row-level security')) {
-        // RLS error - likely profile mismatch, fetch fresh profile and retry
-        console.log('[R@lly Debug] RLS error, fetching fresh profile...');
-        const { data: freshProfile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('user_id', user.id)
-          .single();
-        
-        if (freshProfile) {
-          try {
-            await joinEvent.mutateAsync({ eventId: event.id, profileId: freshProfile.id });
-            toast.success("You're in! 🎉");
-            
-            // Check if event is live and show R@lly Home opt-in
-            const now = new Date();
-            const startTime = new Date(event.start_time);
-            const isLiveEvent = startTime <= now;
-            
-            if (isLiveEvent) {
-              setJoinedEventId(event.id);
-              setShowRallyHomeOptIn(true);
-            } else {
-              navigate(`/events/${event.id}`);
-            }
-            return;
-          } catch (retryError: any) {
-            console.error('[R@lly Debug] Retry join error:', retryError);
-            toast.error(retryError.message || 'Failed to join R@lly');
-          }
-        } else {
-          toast.error('Could not verify your profile. Please try again.');
-        }
-      } else {
-        toast.error(error.message || 'Failed to join R@lly');
-      }
+      toast.error(error.message || 'Failed to request to join R@lly');
     } finally {
       setJoining(false);
     }
@@ -384,13 +307,25 @@ export default function JoinRally() {
                   <Check className="h-4 w-4 mr-2" />
                   You're In - View Rally
                 </Button>
+              ) : isPending ? (
+                <div className="space-y-3">
+                  <div className="p-4 rounded-xl bg-secondary/10 border border-secondary/30 text-center">
+                    <div className="w-12 h-12 rounded-full bg-secondary/20 mx-auto mb-2 flex items-center justify-center">
+                      <Users className="h-6 w-6 text-secondary" />
+                    </div>
+                    <p className="font-semibold text-foreground">Request Pending</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Waiting for the host to approve your request
+                    </p>
+                  </div>
+                </div>
               ) : (
                 <Button 
                   className="w-full gradient-primary"
                   onClick={handleJoin}
                   disabled={joining}
                 >
-                  {joining ? 'Joining...' : (
+                  {joining ? 'Sending Request...' : (
                     <>
                       <Check className="h-4 w-4 mr-2" />
                       {profile ? 'Join This Rally' : 'Sign In to Join'}
