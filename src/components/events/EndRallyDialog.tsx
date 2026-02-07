@@ -138,14 +138,14 @@ export function EndRallyDialog({ eventId, open, onOpenChange }: EndRallyDialogPr
           {/* Complete Rally Option */}
           <Button
             variant="outline"
-            className="w-full h-auto py-4 flex items-start gap-3 text-left"
+            className="w-full h-auto py-4 flex items-center gap-2 text-left"
             onClick={handleCompleteRally}
             disabled={isLoading}
           >
-            <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center shrink-0">
-              <CheckCircle className="h-5 w-5 text-green-500" />
+            <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center shrink-0">
+              <CheckCircle className="h-4 w-4 text-green-500" />
             </div>
-            <div>
+            <div className="min-w-0 flex-1">
               <div className="font-semibold font-montserrat">Complete R@lly</div>
               <p className="text-sm text-muted-foreground font-normal">
                 End the event now. Everyone's already home or leaving.
