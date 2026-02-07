@@ -441,12 +441,6 @@ export default function EventDetail() {
           {/* Quick Attendee Preview */}
           {event.attendees && event.attendees.filter(a => a.status === 'attending').length > 0 && (
             <div className="pt-2">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm text-muted-foreground">Attending</p>
-                <Badge variant="secondary" className="text-xs">
-                  {event.attendees.filter(a => a.status === 'attending').length}
-                </Badge>
-              </div>
               <div className="flex -space-x-2 overflow-hidden">
                 {event.attendees
                   .filter(a => a.status === 'attending')
