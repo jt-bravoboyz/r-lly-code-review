@@ -119,23 +119,23 @@ export function RallyHomeOptInDialog({
           </div>
         </div>
 
-        <DialogFooter className="flex-col gap-2 sm:flex-col">
+        <DialogFooter className="flex-row gap-2">
+          <Button
+            onClick={handleNotParticipating}
+            variant="outline"
+            disabled={isSubmitting}
+            className="flex-1"
+          >
+            <Moon className="h-4 w-4 mr-2" />
+            I'm Good
+          </Button>
           <Button
             onClick={handleParticipate}
             disabled={isSubmitting}
-            className="w-full gradient-primary"
+            className="flex-1 gradient-primary"
           >
             <Home className="h-4 w-4 mr-2" />
-            Yes, Help Me Get Home Safe
-          </Button>
-          <Button
-            variant="outline"
-            onClick={handleNotParticipating}
-            disabled={isSubmitting}
-            className="w-full"
-          >
-            <Moon className="h-4 w-4 mr-2" />
-            I'll Handle My Own Ride
+            Help Me Home
           </Button>
         </DialogFooter>
       </DialogContent>
