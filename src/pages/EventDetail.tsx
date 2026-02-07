@@ -439,29 +439,17 @@ export default function EventDetail() {
           {canManage && <PendingJoinRequests eventId={event.id} />}
 
 
-          {/* Join/Leave Button */}
-          {!isCreator && (
+          {/* Join Button - Only for non-attendees */}
+          {!isCreator && !isAttending && (
             <div className="pt-2">
-              {isAttending ? (
-                <Button 
-                  variant="outline" 
-                  className="w-full"
-                  onClick={handleLeave}
-                  disabled={leaveEvent.isPending}
-                >
-                  <X className="h-4 w-4 mr-2" />
-                  Leave Event
-                </Button>
-              ) : (
-                <Button 
-                  className="w-full gradient-primary"
-                  onClick={handleJoin}
-                  disabled={joinEvent.isPending}
-                >
-                  <Check className="h-4 w-4 mr-2" />
-                  Join Event
-                </Button>
-              )}
+              <Button 
+                className="w-full gradient-primary"
+                onClick={handleJoin}
+                disabled={joinEvent.isPending}
+              >
+                <Check className="h-4 w-4 mr-2" />
+                Join Event
+              </Button>
             </div>
           )}
         </div>
@@ -852,6 +840,21 @@ export default function EventDetail() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Leave Event Button - At bottom for attendees */}
+        {!isCreator && isAttending && (
+          <div className="px-4 pb-24 pt-6">
+            <Button 
+              variant="outline" 
+              className="w-full text-destructive border-destructive/30 hover:bg-destructive/10"
+              onClick={handleLeave}
+              disabled={leaveEvent.isPending}
+            >
+              <X className="h-4 w-4 mr-2" />
+              Leave Event
+            </Button>
+          </div>
+        )}
       </main>
 
       <BottomNav />
