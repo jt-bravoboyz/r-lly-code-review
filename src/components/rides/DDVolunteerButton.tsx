@@ -32,12 +32,12 @@ export function DDVolunteerButton({
       if (!profile?.id) return null;
       const { data } = await supabase
         .from('rides')
-        .select('id, available_seats, pickup_location')
+        .select('id, available_seats, pickup_location, notes')
         .eq('event_id', eventId)
         .eq('driver_id', profile.id)
         .in('status', ['active', 'full', 'paused'])
         .maybeSingle();
-      return data ? { ...data, notes: null } : null;
+      return data;
     },
     enabled: !!eventId && !!profile?.id && !!isDD,
   });

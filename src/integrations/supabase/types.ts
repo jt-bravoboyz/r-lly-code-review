@@ -1622,6 +1622,7 @@ export type Database = {
           driver_id: string
           event_id: string | null
           id: string
+          notes: string | null
           pickup_lat: number | null
           pickup_lng: number | null
           pickup_location: string | null
@@ -1638,6 +1639,7 @@ export type Database = {
           driver_id: string
           event_id?: string | null
           id?: string
+          notes?: string | null
           pickup_lat?: number | null
           pickup_lng?: number | null
           pickup_location?: string | null
@@ -1654,6 +1656,7 @@ export type Database = {
           driver_id?: string
           event_id?: string | null
           id?: string
+          notes?: string | null
           pickup_lat?: number | null
           pickup_lng?: number | null
           pickup_location?: string | null
