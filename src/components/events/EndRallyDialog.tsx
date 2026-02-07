@@ -104,7 +104,7 @@ export function EndRallyDialog({ eventId, open, onOpenChange }: EndRallyDialogPr
               </div>
             </div>
             
-            <div className="space-y-2">
+            <div className="space-y-2 w-full overflow-hidden">
               <Label htmlFor="afterRallyLocation" className="flex items-center gap-2 text-xs">
                 <MapPin className="h-3 w-3 shrink-0" />
                 <span className="truncate">Where's the After R@lly?</span>
