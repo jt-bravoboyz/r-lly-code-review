@@ -195,7 +195,7 @@ export function SafetyTracker({ eventId }: SafetyTrackerProps) {
     <Card className="border-0 shadow-sm bg-gradient-to-br from-secondary/5 to-background">
       <CardHeader className="pb-2">
         <CardTitle className="text-lg flex items-center gap-2 font-montserrat">
-          <Shield className="h-5 w-5 text-secondary" />
+          <Shield className="h-5 w-5 text-primary" />
           R@lly Home Safety
           <Badge variant="secondary" className="ml-auto">
             {arrivedCount}/{attendees.length} arrived safely
