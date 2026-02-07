@@ -54,6 +54,7 @@ import { EndRallyDialog } from '@/components/events/EndRallyDialog';
 import { EditEventLocationDialog } from '@/components/events/EditEventLocationDialog';
 import { SafetyChoiceModal } from '@/components/events/SafetyChoiceModal';
 import { RidesSelectionModal } from '@/components/events/RidesSelectionModal';
+import { AfterRallyCard } from '@/components/events/AfterRallyCard';
 import { useMyRallyHomePrompt } from '@/hooks/useRallyHomePrompt';
 import { PendingJoinRequests } from '@/components/events/PendingJoinRequests';
 import { supabase } from '@/integrations/supabase/client';
@@ -558,6 +559,18 @@ export default function EventDetail() {
               }
             />
           </section>
+        )}
+
+        {/* After R@lly Card - Only show when event is in after_rally status */}
+        {isAfterRally && isAttending && (
+          <AfterRallyCard
+            eventId={event.id}
+            afterRallyLocation={(event as any)?.after_rally_location_name}
+            afterRallyLat={(event as any)?.after_rally_location_lat}
+            afterRallyLng={(event as any)?.after_rally_location_lng}
+            isOptedIn={myAttendee?.after_rally_opted_in === true}
+            onJoinClick={() => setShowAfterRallyOptIn(true)}
+          />
         )}
 
 
