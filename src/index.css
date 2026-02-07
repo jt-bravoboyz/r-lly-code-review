@@ -130,20 +130,20 @@
 }
 
 @layer utilities {
-  /* Timeline Slider - Purple to Orange gradient */
+  /* Timeline Slider - Orange to Purple gradient */
   .timeline-slider-track {
     background: linear-gradient(
       to right,
-      hsl(270 60% 45%) 0%,      /* Purple */
-      hsl(27 100% 55%) 100%     /* R@lly Orange */
+      hsl(27 100% 55%) 0%,      /* R@lly Orange */
+      hsl(270 60% 45%) 100%     /* Purple */
     );
   }
   
   .dark .timeline-slider-track {
     background: linear-gradient(
       to right,
-      hsl(270 55% 40%) 0%,      /* Purple */
-      hsl(27 95% 50%) 100%      /* R@lly Orange */
+      hsl(27 95% 50%) 0%,       /* R@lly Orange */
+      hsl(270 55% 40%) 100%     /* Purple */
     );
   }
 
