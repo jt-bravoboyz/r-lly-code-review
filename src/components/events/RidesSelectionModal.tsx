@@ -11,6 +11,7 @@ import {
 import { LocationSearch } from '@/components/location/LocationSearch';
 import { LocationMapPreview } from '@/components/location/LocationMapPreview';
 import { DDSetupDialog } from '@/components/rides/DDSetupDialog';
+import { LocationSharingModal } from '@/components/events/LocationSharingModal';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -46,6 +47,7 @@ export function RidesSelectionModal({
   
   const [view, setView] = useState<View>('choice');
   const [showDDSetup, setShowDDSetup] = useState(false);
+  const [showLocationModal, setShowLocationModal] = useState(false);
   
   // Request ride state
   const [pickupLocation, setPickupLocation] = useState('');
@@ -124,7 +126,9 @@ export function RidesSelectionModal({
       });
       
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
-      onComplete();
+      // Show location modal instead of completing immediately
+      onOpenChange(false);
+      setShowLocationModal(true);
     } catch (error: any) {
       toast.error(error.message || 'Failed to request ride');
     } finally {
@@ -134,6 +138,12 @@ export function RidesSelectionModal({
 
   const handleDDComplete = () => {
     setShowDDSetup(false);
+    // Show location modal instead of completing immediately
+    setShowLocationModal(true);
+  };
+
+  const handleLocationComplete = () => {
+    setShowLocationModal(false);
     onComplete();
   };
 
@@ -281,6 +291,14 @@ export function RidesSelectionModal({
         onOpenChange={setShowDDSetup}
         onComplete={handleDDComplete}
         mode="full"
+      />
+
+      {/* Location Sharing Modal - shows after rides setup */}
+      <LocationSharingModal
+        open={showLocationModal}
+        onOpenChange={setShowLocationModal}
+        eventId={eventId}
+        onComplete={handleLocationComplete}
       />
     </>
   );
