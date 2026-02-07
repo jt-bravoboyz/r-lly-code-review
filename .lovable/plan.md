@@ -1,191 +1,233 @@
 
+# Plan: Move Safety Choice Flow from Event Start to Join/Enter Time
 
-# Fix: Rally Join RLS Error + Host Approval Flow
+## Overview
 
-## Problem
+Currently, the "How are you getting home?" safety flow is triggered when a user is on a **LIVE** event (lines 150-163 in `EventDetail.tsx`). This needs to move to the **join/enter** action instead, ensuring users confirm their transportation plan **before** they can participate in a Rally.
 
-When your friend enters the invite code, they get the error:
-> "new row violates row-level security policy for table event_attendees"
-
-This happens because:
-1. The INSERT policy on `event_attendees` does a nested query to `profiles` table
-2. The `profiles` table has its own RLS policies that may block this lookup
-3. This creates an RLS "chicken and egg" problem
-
-## Solution
-
-We'll fix this with a secure database function and add the host approval flow you requested.
+The `JoinRally.tsx` page already has the correct blocking safety modals (`SafetyChoiceModal` and `RidesSelectionModal`) implemented - we need to replicate this gating logic in `EventDetail.tsx` for the "Join Event" button and ensure consistency across all entry points.
 
 ---
 
-## How It Will Work
+## What Already Works
+
+The `JoinRally.tsx` page (lines 310-327) already gates entry correctly:
+- When user is already attending (`alreadyJoined`), clicking "Enter Rally" checks `hasMadeSafetyChoice`
+- If no safety choice, shows `SafetyChoiceModal` (blocking)
+- If "R@lly got me" selected, shows `RidesSelectionModal` (blocking)
+- User cannot proceed until a choice is completed and persisted
+
+---
+
+## Changes Required
+
+### 1. EventDetail.tsx - Gate the "Join Event" Handler
+
+**Current behavior (lines 231-239):**
+The `handleJoin` function directly calls `joinEvent.mutateAsync()` and shows a success toast, allowing immediate entry.
+
+**New behavior:**
+After successful join, show the blocking safety modals before allowing the user to see the event content.
+
+**Implementation:**
+- Add state variables for safety modal control
+- Modify `handleJoin` to trigger `SafetyChoiceModal` after successful join
+- Import and add `SafetyChoiceModal` and `RidesSelectionModal` components
+- Gate the main event content until safety choice is confirmed
+
+### 2. EventDetail.tsx - Remove Time-Based Trigger
+
+**Current behavior (lines 150-163):**
+An `useEffect` watches for `isLive` events and shows `RallyHomeOptInDialog` automatically when the event goes live.
+
+**New behavior:**
+- Remove or condition this useEffect so it only serves as a **reminder** for users who somehow bypassed the join flow
+- The primary safety gate is now at join time, not event-start time
+
+### 3. EventDetail.tsx - Gate Content for New Attendees
+
+For users who just joined (via the join button on EventDetail), we need to ensure they complete the safety flow before seeing full event content.
+
+**Implementation approach:**
+- Track if user just joined and hasn't completed safety choice
+- Show the blocking modals instead of / before the main event content
+- Once safety choice is made, allow full access
+
+### 4. "Change Plan" Button (Optional Enhancement)
+
+Add a way for users to modify their safety choice from within the Rally Detail page.
+
+---
+
+## Technical Implementation
+
+### Files to Modify
+
+| File | Change |
+|------|--------|
+| `src/pages/EventDetail.tsx` | Add safety modal gating to join handler, import modals, remove/modify time-based trigger |
+| `src/hooks/useRallyHomePrompt.tsx` | No changes needed - already provides `canPrompt` logic |
+| `src/components/events/SafetyChoiceModal.tsx` | No changes needed |
+| `src/components/events/RidesSelectionModal.tsx` | No changes needed |
+
+### Data Persistence (Already Working)
+
+The safety choices are persisted to `event_attendees` table:
+
+| Choice | Field Updated |
+|--------|---------------|
+| "I'm good" (self-transport) | `not_participating_rally_home_confirmed = true` |
+| "Request Ride" | `not_participating_rally_home_confirmed = false` + notification sent |
+| "Become DD" | `is_dd = true` |
+
+### "Already Has Plan" Check
+
+The existing logic in `useRallyHomePrompt.tsx` (lines 93-95) already handles this:
+```typescript
+const isUndecided = 
+  attendee.going_home_at === null && 
+  attendee.not_participating_rally_home_confirmed === null;
+```
+
+A user "has a plan" when:
+- `not_participating_rally_home_confirmed = true` (self-transport), OR
+- `not_participating_rally_home_confirmed = false` (requested ride), OR
+- `is_dd = true` (became a DD)
+
+### Event-Start Reminder Logic
+
+Modify the existing `useEffect` at lines 150-163 to only trigger if:
+1. Event is live AND
+2. User is attending AND
+3. User still hasn't made a safety choice (`myPromptStatus.canPrompt`)
+
+This serves as a fallback reminder, not the primary gate.
+
+---
+
+## Code Changes Summary
+
+### EventDetail.tsx Changes
+
+1. **Add imports:**
+```typescript
+import { SafetyChoiceModal } from '@/components/events/SafetyChoiceModal';
+import { RidesSelectionModal } from '@/components/events/RidesSelectionModal';
+```
+
+2. **Add state variables:**
+```typescript
+const [showSafetyChoice, setShowSafetyChoice] = useState(false);
+const [showRidesSelection, setShowRidesSelection] = useState(false);
+const [savingSafetyChoice, setSavingSafetyChoice] = useState(false);
+```
+
+3. **Modify handleJoin function:**
+```typescript
+const handleJoin = async () => {
+  if (!profile) return;
+  try {
+    const result = await joinEvent.mutateAsync({ eventId: event.id, profileId: profile.id });
+    
+    // If successfully joined/pending, show safety modal
+    if (result?.status === 'attending') {
+      toast.success("You're in! 🎉");
+      // Show safety choice modal for new attendees
+      setShowSafetyChoice(true);
+    } else if (result?.status === 'pending') {
+      toast.success('Request sent! Waiting for host approval...');
+    }
+  } catch (error: any) {
+    toast.error(error.message || 'Failed to join event');
+  }
+};
+```
+
+4. **Modify the Join/Leave button section (lines 432-456):**
+When user clicks "Join Event" and is approved, trigger safety modal flow.
+
+5. **Add the modal components at the end of the component:**
+```typescript
+{/* Entry Safety Choice Modal */}
+<SafetyChoiceModal
+  open={showSafetyChoice}
+  onOpenChange={setShowSafetyChoice}
+  isLoading={savingSafetyChoice}
+  onRallyGotMe={() => {
+    setShowSafetyChoice(false);
+    setShowRidesSelection(true);
+  }}
+  onDoingItMyself={async () => {
+    // Persist choice and close
+    await supabase.from('event_attendees')
+      .update({ not_participating_rally_home_confirmed: true })
+      .eq('event_id', event.id)
+      .eq('profile_id', profile.id);
+    setShowSafetyChoice(false);
+  }}
+/>
+
+<RidesSelectionModal
+  open={showRidesSelection}
+  onOpenChange={setShowRidesSelection}
+  onBack={() => {
+    setShowRidesSelection(false);
+    setShowSafetyChoice(true);
+  }}
+  onComplete={() => setShowRidesSelection(false)}
+  eventId={event.id}
+  eventTitle={event.title}
+  eventLocationName={event.location_name || undefined}
+/>
+```
+
+6. **Modify the time-based useEffect (lines 150-163):**
+Add a comment clarifying this is now a fallback reminder, not the primary gate.
+
+---
+
+## Flow Diagram
 
 ```text
-Friend enters invite code → "Join This Rally"
-                ↓
-┌─────────────────────────────────────────────────────┐
-│  Request is created with status = 'pending'         │
-│  Friend sees: "Request sent! Waiting for approval"  │
-└─────────────────────────────────────────────────────┘
-                ↓
-┌─────────────────────────────────────────────────────┐
-│  HOST'S SCREEN (Event Detail page)                  │
-│                                                     │
-│  🔔 Join Requests (1)                               │
-│  ┌─────────────────────────────────────────────┐   │
-│  │ [Avatar] John Doe                           │   │
-│  │ Wants to join your rally                    │   │
-│  │                                             │   │
-│  │   [✓ Accept]    [✗ Decline]                │   │
-│  └─────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────┘
-                ↓
-If Accept → Friend gets full access to rally
-If Decline → Request is removed, friend notified
+User Action                          System Response
+-----------                          ---------------
+Tap "Join Rally" / "Enter Rally"  →  Check if already has safety choice
+                                      ↓
+                            ┌─────────┴─────────┐
+                            │                   │
+                        Has Choice          No Choice
+                            ↓                   ↓
+                      Enter Rally       Show SafetyChoiceModal
+                                               ↓
+                                    ┌──────────┴──────────┐
+                                    │                     │
+                              "R@lly got me"        "I'm good"
+                                    ↓                     ↓
+                            RidesSelectionModal      Save choice
+                                    ↓                     ↓
+                           ┌────────┴────────┐      Enter Rally
+                           │                 │
+                     Request Ride      Become DD
+                           ↓                 ↓
+                     Save + Notify     Save DD status
+                           ↓                 ↓
+                        Enter Rally      Enter Rally
 ```
 
 ---
 
-## Technical Changes
+## Acceptance Criteria Verification
 
-### Part 1: Database - Secure Join Function
-
-Create a `SECURITY DEFINER` function that bypasses the nested RLS evaluation:
-
-```sql
-CREATE OR REPLACE FUNCTION public.request_join_event(p_event_id uuid)
-RETURNS jsonb
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path TO 'public'
-AS $$
-DECLARE
-  v_profile_id uuid;
-  v_existing_status text;
-  v_result jsonb;
-BEGIN
-  -- Get current user's profile ID directly (bypasses RLS)
-  SELECT id INTO v_profile_id 
-  FROM profiles 
-  WHERE user_id = auth.uid();
-  
-  IF v_profile_id IS NULL THEN
-    RETURN jsonb_build_object('error', 'Profile not found');
-  END IF;
-  
-  -- Check if already an attendee
-  SELECT status INTO v_existing_status
-  FROM event_attendees
-  WHERE event_id = p_event_id AND profile_id = v_profile_id;
-  
-  IF v_existing_status = 'attending' THEN
-    RETURN jsonb_build_object('error', 'Already attending', 'status', 'attending');
-  ELSIF v_existing_status = 'pending' THEN
-    RETURN jsonb_build_object('error', 'Request already pending', 'status', 'pending');
-  END IF;
-  
-  -- Insert with pending status
-  INSERT INTO event_attendees (event_id, profile_id, status)
-  VALUES (p_event_id, v_profile_id, 'pending')
-  ON CONFLICT (event_id, profile_id) DO NOTHING;
-  
-  RETURN jsonb_build_object('success', true, 'status', 'pending');
-END;
-$$;
-```
-
-### Part 2: RLS Policy Updates
-
-Add policies for host approval:
-
-```sql
--- Hosts can approve pending requests (update status to attending)
-CREATE POLICY "Hosts can approve pending attendees"
-ON public.event_attendees
-FOR UPDATE
-TO authenticated
-USING (
-  status = 'pending' 
-  AND is_event_host_or_cohost(event_id, auth.uid())
-);
-
--- Hosts can decline/remove pending requests
-CREATE POLICY "Hosts can decline pending attendees"
-ON public.event_attendees
-FOR DELETE
-TO authenticated
-USING (
-  status = 'pending'
-  AND is_event_host_or_cohost(event_id, auth.uid())
-);
-```
-
----
-
-### Part 3: Frontend - Join Rally Page
-
-**File: `src/pages/JoinRally.tsx`**
-
-Update the join flow to:
-1. Call the new secure function instead of direct insert
-2. Show "Request Sent" confirmation for pending status
-3. Display "Waiting for host approval" message
-
----
-
-### Part 4: New Components for Host
-
-**New File: `src/components/events/PendingJoinRequests.tsx`**
-
-A card that shows pending join requests with:
-- Requester's avatar and name
-- "Accept" button (green checkmark)
-- "Decline" button (red X)
-- Real-time updates when new requests arrive
-
-**New File: `src/hooks/useJoinRequests.tsx`**
-
-Hook to:
-- Query pending attendees for an event
-- Accept a join request (update status to 'attending')
-- Decline a join request (delete the record)
-
----
-
-### Part 5: EventDetail Page Update
-
-**File: `src/pages/EventDetail.tsx`**
-
-Add the PendingJoinRequests component for hosts:
-- Shows only to event creators and co-hosts
-- Positioned prominently near the top
-- Badge showing number of pending requests
-
----
-
-## Files Summary
-
-| File | Action | Purpose |
-|------|--------|---------|
-| Database migration | Create | Secure join function + RLS policies |
-| `src/pages/JoinRally.tsx` | Modify | Use secure function, show pending UI |
-| `src/hooks/useJoinRequests.tsx` | Create | Query/respond to join requests |
-| `src/components/events/PendingJoinRequests.tsx` | Create | Host approval interface |
-| `src/pages/EventDetail.tsx` | Modify | Add pending requests for hosts |
-
----
-
-## User Experience After Fix
-
-**For the person joining:**
-1. Enter invite code
-2. See event preview, click "Join This Rally"
-3. See success: "Request sent! Waiting for host approval..."
-4. When approved → Navigate to event page
-
-**For the host:**
-1. See notification badge: "1 pending request"
-2. Card shows who wants to join
-3. Click Accept → Person joins the rally
-4. Click Decline → Request removed
-
+| Requirement | Solution |
+|-------------|----------|
+| Trigger on Join/Enter/RSVP | Modified `handleJoin` in EventDetail + existing JoinRally flow |
+| Show Safety Choice first | `SafetyChoiceModal` shown before entry is allowed |
+| "R@lly got me" opens Rides modal | `setShowRidesSelection(true)` on selection |
+| Rides modal is blocking | `onPointerDownOutside` and `onEscapeKeyDown` prevented in modals |
+| Persist choice to DB | Updates to `event_attendees` table fields |
+| Don't re-prompt if already decided | `hasMadeSafetyChoice` / `useRallyHomePrompt.canPrompt` check |
+| Event-start reminder (optional) | Keep existing useEffect but now serves as fallback |
+| Copy: "HOW YOU GETTIN' HOME?" | Already in SafetyChoiceModal component |
+| No faces imagery, use icons | SafetyChoiceModal uses Shield, Car, MapPin icons |
+| Loading/error states | `isLoading` prop passed to modals |
+| Minimal file changes | Only EventDetail.tsx needs modification |
