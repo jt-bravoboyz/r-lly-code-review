@@ -147,8 +147,8 @@ export function EndRallyDialog({ eventId, open, onOpenChange }: EndRallyDialogPr
             </div>
             <div className="min-w-0 flex-1">
               <div className="font-semibold font-montserrat">Complete R@lly</div>
-              <p className="text-sm text-muted-foreground font-normal">
-                End the event now. Everyone's already home or leaving.
+              <p className="text-xs text-muted-foreground font-normal">
+                End the event—everyone's home safe.
               </p>
             </div>
           </Button>
