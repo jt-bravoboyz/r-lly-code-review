@@ -223,7 +223,7 @@ export default function EventDetail() {
   if (isLoading) {
     return (
       <div className="min-h-screen pb-20">
-        <Header />
+        <Header afterRallyMode={false} />
         <main className="container py-6 space-y-6">
           <Skeleton className="h-48 w-full rounded-lg" />
           <Skeleton className="h-32 w-full rounded-lg" />
@@ -291,7 +291,7 @@ export default function EventDetail() {
 
   return (
     <div className={`min-h-screen pb-20 ${showAfterRallyTheme ? 'after-rally-mode' : ''}`}>
-      <Header />
+      <Header afterRallyMode={showAfterRallyTheme} />
       
       <main className="container py-6 space-y-6 relative z-10">
         {/* Back Button */}
