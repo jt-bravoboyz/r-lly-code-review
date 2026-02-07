@@ -1,25 +1,22 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Header } from '@/components/layout/Header';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ChevronDown, Trophy, Star } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { 
   useBadgeState, 
   useActivityBadges, 
-  usePointsHistory,
-  useTierUpListener,
-  type TierUpData
+  usePointsHistory
 } from '@/hooks/useBadgeSystem';
 import { TierBadgeIcon } from '@/components/badges/TierBadgeIcon';
 import { TierLadder } from '@/components/badges/TierLadder';
 import { ActivityBadgeGrid } from '@/components/badges/ActivityBadgeGrid';
 import { PointsHistoryList } from '@/components/badges/PointsHistoryList';
-import { TierUpModal } from '@/components/badges/TierUpModal';
 import { cn } from '@/lib/utils';
 
 export default function Achievements() {
@@ -30,16 +27,8 @@ export default function Achievements() {
   const { data: pointsHistory, isLoading: historyLoading } = usePointsHistory(50);
   
   const [historyOpen, setHistoryOpen] = useState(false);
-  const [tierUpData, setTierUpData] = useState<TierUpData | null>(null);
-  const [showTierUpModal, setShowTierUpModal] = useState(false);
 
-  // Listen for tier-up events
-  const handleTierUp = useCallback((data: TierUpData) => {
-    setTierUpData(data);
-    setShowTierUpModal(true);
-  }, []);
-
-  useTierUpListener(handleTierUp);
+  // Tier-up listener is now handled globally by TierUpProvider
 
   const isLoading = authLoading || badgeLoading;
 
@@ -197,13 +186,6 @@ export default function Achievements() {
       </main>
 
       <BottomNav />
-
-      {/* Tier Up Modal */}
-      <TierUpModal 
-        isOpen={showTierUpModal}
-        onClose={() => setShowTierUpModal(false)}
-        tierUpData={tierUpData}
-      />
     </div>
   );
 }

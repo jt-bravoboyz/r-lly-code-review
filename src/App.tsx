@@ -8,6 +8,7 @@ import { LocationProvider } from "@/contexts/LocationContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { TutorialProvider } from "@/hooks/useTutorial";
 import { RallyOnboardingProvider } from "@/contexts/RallyOnboardingContext";
+import { TierUpProvider } from "@/contexts/TierUpContext";
 import { NavigationPortal } from "@/components/navigation/NavigationPortal";
 import { TutorialOverlay } from "@/components/tutorial/TutorialOverlay";
 import { RallyOnboardingOverlay } from "@/components/onboarding/RallyOnboardingOverlay";
@@ -39,42 +40,44 @@ const App = () => (
       <AuthProvider>
         <LocationProvider>
           <RallyOnboardingProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <NavigationPortal />
-              <BrowserRouter>
-                <RallyOnboardingOverlay />
-                <TutorialProvider>
-                  <TutorialOverlay />
-                  <Routes>
-                    <Route path="/" element={<Index />} />
-                    {/* New users: onboarding + signup */}
-                    <Route path="/auth" element={<AppEntry />} />
-                    {/* Returning users: dedicated login page */}
-                    <Route path="/auth/return" element={<ReturningAuth />} />
-                    <Route path="/Auth/return" element={<ReturningAuth />} />
-                    <Route path="/events" element={<Events />} />
-                    <Route path="/events/:id" element={<EventDetail />} />
-                    <Route path="/join" element={<JoinRally />} />
-                    <Route path="/join/:code" element={<JoinRally />} />
-                    <Route path="/rides" element={<Rides />} />
-                    <Route path="/chat" element={<Chat />} />
-                    <Route path="/profile" element={<Profile />} />
-                    <Route path="/notifications" element={<Notifications />} />
-                    <Route path="/squads" element={<Squads />} />
-                    <Route path="/squads/:squadId" element={<SquadDetail />} />
-                    <Route path="/achievements" element={<Achievements />} />
-                    <Route path="/legal" element={<Legal />} />
-                    <Route path="/settings" element={<Settings />} />
-                    <Route path="/docs" element={<Documentation />} />
-                    <Route path="/join-squad/:code" element={<JoinSquad />} />
-                    <Route path="/invite-history" element={<InviteHistory />} />
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </TutorialProvider>
-              </BrowserRouter>
-            </TooltipProvider>
+            <TierUpProvider>
+              <TooltipProvider>
+                <Toaster />
+                <Sonner />
+                <NavigationPortal />
+                <BrowserRouter>
+                  <RallyOnboardingOverlay />
+                  <TutorialProvider>
+                    <TutorialOverlay />
+                    <Routes>
+                      <Route path="/" element={<Index />} />
+                      {/* New users: onboarding + signup */}
+                      <Route path="/auth" element={<AppEntry />} />
+                      {/* Returning users: dedicated login page */}
+                      <Route path="/auth/return" element={<ReturningAuth />} />
+                      <Route path="/Auth/return" element={<ReturningAuth />} />
+                      <Route path="/events" element={<Events />} />
+                      <Route path="/events/:id" element={<EventDetail />} />
+                      <Route path="/join" element={<JoinRally />} />
+                      <Route path="/join/:code" element={<JoinRally />} />
+                      <Route path="/rides" element={<Rides />} />
+                      <Route path="/chat" element={<Chat />} />
+                      <Route path="/profile" element={<Profile />} />
+                      <Route path="/notifications" element={<Notifications />} />
+                      <Route path="/squads" element={<Squads />} />
+                      <Route path="/squads/:squadId" element={<SquadDetail />} />
+                      <Route path="/achievements" element={<Achievements />} />
+                      <Route path="/legal" element={<Legal />} />
+                      <Route path="/settings" element={<Settings />} />
+                      <Route path="/docs" element={<Documentation />} />
+                      <Route path="/join-squad/:code" element={<JoinSquad />} />
+                      <Route path="/invite-history" element={<InviteHistory />} />
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </TutorialProvider>
+                </BrowserRouter>
+              </TooltipProvider>
+            </TierUpProvider>
           </RallyOnboardingProvider>
         </LocationProvider>
       </AuthProvider>
