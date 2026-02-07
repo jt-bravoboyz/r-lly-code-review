@@ -92,14 +92,14 @@ export default function EventDetail() {
   const afterRallyTriggeredRef = useRef(false);
   const queryClient = useQueryClient();
   
-  // Query user's personal After R@lly opt-in status
+  // Query user's personal After R@lly opt-in status AND safety choice status
   const { data: myAttendee, refetch: refetchMyAttendee } = useQuery({
     queryKey: ['my-attendee', id, profile?.id],
     queryFn: async () => {
       if (!id || !profile?.id) return null;
       const { data } = await supabase
         .from('event_attendees')
-        .select('after_rally_opted_in')
+        .select('after_rally_opted_in, going_home_at, not_participating_rally_home_confirmed, is_dd')
         .eq('event_id', id)
         .eq('profile_id', profile.id)
         .maybeSingle();
@@ -107,6 +107,7 @@ export default function EventDetail() {
     },
     enabled: !!id && !!profile?.id,
   });
+  
   
   // Auto-arrival detection for R@lly Home - only active after event ends
   useAutoArrival({ 
@@ -150,6 +151,28 @@ export default function EventDetail() {
   const isScheduled = event?.status === 'scheduled' || !event?.status;
   const isLive = event?.status === 'live';
   const isAfterRally = event?.status === 'after_rally';
+  
+  // Determine if user needs to make safety choice (entry gate for existing attendees)
+  const needsSafetyChoice = isAttending && 
+    myAttendee?.going_home_at === null && 
+    myAttendee?.not_participating_rally_home_confirmed === null &&
+    !myAttendee?.is_dd &&
+    event?.status !== 'completed';
+  
+  // Show safety choice modal on page load for existing attendees who haven't chosen yet
+  useEffect(() => {
+    if (needsSafetyChoice && !showSafetyChoice && !showRidesSelection) {
+      const shownKey = `safety_choice_entry_${id}`;
+      if (!sessionStorage.getItem(shownKey)) {
+        sessionStorage.setItem(shownKey, 'true');
+        // Small delay to let page load first
+        const timer = setTimeout(() => {
+          setShowSafetyChoice(true);
+        }, 500);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [needsSafetyChoice, id, showSafetyChoice, showRidesSelection]);
   
   // R@lly Home prompt status for current user
   const myPromptStatus = useMyRallyHomePrompt(id);
