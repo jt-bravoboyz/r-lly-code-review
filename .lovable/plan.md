@@ -1,177 +1,227 @@
 
-
-# Plan: Redesign Safety Choice Flow - Planning Before Entering Rally
+# Plan: Add Location Sharing Prompt After Rally Rides Setup
 
 ## Overview
 
-Transform the safety choice flow from a passive button to a mandatory, calm planning step that happens **before entering a Rally** (not just at join time or when live). Users must choose their transportation plan before seeing the full event content, but the flow is intentional and planning-focused, not alarming.
+After a user completes Rally Rides setup (either requesting a ride OR becoming a DD), immediately show a second popup prompting them to share their location with the rally group. This is a "no man left behind" safety feature that happens **before** they fully enter the Rally.
 
 ---
 
-## Current State vs. Desired State
+## Current State
 
-| Aspect | Current | Proposed |
-|--------|---------|----------|
-| When prompted | At join time (instant join) or when event goes live | Before entering/viewing the Rally |
-| R@lly Home Button | Prominent card visible during live events | Hidden before rally starts; only contextual after |
-| "R@lly got me" flow | Opens Rides modal | Immediately opens Rides modal (same) |
-| "I'm good" flow | Saves choice, closes modal | Saves choice, closes modal, continues to Rally |
-| After Rally starts | Can show reminder if undecided | Contextual reminders only, no big button |
+| Component | Behavior |
+|-----------|----------|
+| `RidesSelectionModal.tsx` | Calls `onComplete()` after ride request succeeds |
+| `DDSetupDialog.tsx` | Calls `onComplete()` after DD setup succeeds |
+| `event_attendees.share_location` | Boolean already exists in schema |
+| Location prompt tracking | No field exists yet |
 
 ---
 
-## Files to Modify
+## Proposed Flow
+
+```text
+User completes Rally Rides
+         ↓
+   Location Sharing Modal appears
+      "NO MAN LEFT BEHIND"
+         ↓
+  "Share Location" | "Not Now"
+         ↓              ↓
+Request OS perm    Save declined
+Enable sharing     Continue to Rally
+Continue to Rally
+```
+
+---
+
+## Files to Modify/Create
 
 | File | Change |
 |------|--------|
-| `src/components/events/SafetyChoiceModal.tsx` | Update copy to be calmer/planning-focused |
-| `src/pages/EventDetail.tsx` | Hide R@lly Home button card before event starts; show safety modal on page load if undecided |
-| `src/pages/JoinRally.tsx` | Existing flow already works correctly |
+| **NEW** `src/components/events/LocationSharingModal.tsx` | New modal component |
+| `src/components/events/RidesSelectionModal.tsx` | Add state to show location modal after completion |
+| `src/pages/JoinRally.tsx` | Wire up location modal in the flow |
+| `src/pages/EventDetail.tsx` | Wire up location modal in the flow |
+| Database migration | Add `location_prompt_shown` column to `event_attendees` |
 
 ---
 
 ## Implementation Details
 
-### 1. Update Safety Modal Copy (`SafetyChoiceModal.tsx`)
+### 1. Database Migration
 
-Make the tone calm and planning-focused:
+Add a column to track if the user has seen the location prompt for this rally:
 
-```
-Current: "HOW YOU GETTIN' HOME?"
-         "Before you enter the R@lly, confirm your plan."
-
-Update:  "How are you getting home tonight?"
-         "Plan ahead so you can focus on having fun."
+```sql
+ALTER TABLE event_attendees 
+ADD COLUMN location_prompt_shown boolean DEFAULT false;
 ```
 
-Button labels remain the same:
-- "R@lly got me" (primary gradient button)
-- "I'm good" (outline button)
-
-Footer note: "You can change this later in the Rally"
+This prevents re-prompting. Once `location_prompt_shown = true`, skip the modal.
 
 ---
 
-### 2. EventDetail.tsx - Entry Gate Logic
+### 2. New Component: `LocationSharingModal.tsx`
 
-**Change 1: Show SafetyChoiceModal on page load if undecided**
+Create a new modal matching the Rally Rides style:
 
-Currently, the modal only shows after clicking "Join". We need to also show it when:
-- User is already attending (existing attendee returning to page)
-- User has NOT made a safety choice yet (`going_home_at === null` AND `not_participating_rally_home_confirmed === null` AND `is_dd === false`)
-- Event is NOT completed
+**Props:**
+```typescript
+interface LocationSharingModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  eventId: string;
+  onComplete: () => void; // Called after user makes choice
+}
+```
 
-Add a query to check existing attendee's safety status and trigger modal on page load:
+**UI:**
+- Icon: MapPin with Shield overlay (similar to existing LocationSharingBanner)
+- Title: "NO MAN LEFT BEHIND"  
+- Body: "Share your live location with the squad so everybody gets home safe."
+- Primary button: "Share Location" (gradient style)
+- Secondary button: "Not Now" (ghost style)
+
+**Behavior:**
+- "Share Location" clicked:
+  1. Request browser geolocation permission via `navigator.geolocation.getCurrentPosition()`
+  2. If granted: Update `event_attendees.share_location = true` AND `location_prompt_shown = true`
+  3. If denied: Show toast "No worries—you can turn it on later in the Rally.", set `location_prompt_shown = true`
+  4. Call `onComplete()`
+  
+- "Not Now" clicked:
+  1. Update `event_attendees.location_prompt_shown = true` (skip sharing)
+  2. Call `onComplete()`
+
+---
+
+### 3. Modify `RidesSelectionModal.tsx`
+
+Add state and logic to show location modal after rides completion:
 
 ```typescript
-// New query for existing attendees' safety choice status
-const { data: myAttendeeStatus } = useQuery({
-  queryKey: ['my-attendee-safety', id, profile?.id],
-  queryFn: async () => {
-    if (!id || !profile?.id) return null;
-    const { data } = await supabase
-      .from('event_attendees')
-      .select('going_home_at, not_participating_rally_home_confirmed, is_dd')
-      .eq('event_id', id)
-      .eq('profile_id', profile.id)
-      .maybeSingle();
-    return data;
-  },
-  enabled: !!id && !!profile?.id,
-});
+// New state
+const [showLocationModal, setShowLocationModal] = useState(false);
+const [pendingComplete, setPendingComplete] = useState(false);
 
-// Determine if user needs to make safety choice
-const needsSafetyChoice = isAttending && 
-  myAttendeeStatus?.going_home_at === null && 
-  myAttendeeStatus?.not_participating_rally_home_confirmed === null &&
-  !myAttendeeStatus?.is_dd &&
-  event?.status !== 'completed';
+// Modified onComplete logic
+const handleRidesComplete = () => {
+  // Instead of calling onComplete immediately, show location modal
+  setPendingComplete(true);
+  onOpenChange(false); // Close rides modal
+  setShowLocationModal(true); // Show location modal
+};
 
-// Show modal on mount if needed
-useEffect(() => {
-  if (needsSafetyChoice && !showSafetyChoice && !showRidesSelection) {
-    const shownKey = `safety_choice_entry_${id}`;
-    if (!sessionStorage.getItem(shownKey)) {
-      sessionStorage.setItem(shownKey, 'true');
-      setShowSafetyChoice(true);
-    }
-  }
-}, [needsSafetyChoice, id]);
+// After location choice is made
+const handleLocationComplete = () => {
+  setShowLocationModal(false);
+  onComplete(); // Now call the original onComplete
+};
 ```
 
-**Change 2: Hide R@lly Home Button Card BEFORE event starts**
-
-Current code (line 540):
+The component will render:
 ```tsx
-{(isLiveEvent || isAfterRally) && isAttending && (
-  <section className="space-y-4">
-    <RallyHomeButton ... />
+<LocationSharingModal
+  open={showLocationModal}
+  onOpenChange={setShowLocationModal}
+  eventId={eventId}
+  onComplete={handleLocationComplete}
+/>
 ```
-
-This is already correct - it only shows during live/after_rally. No change needed here.
-
-**Change 3: Remove the "R@lly Home" card from being prominent before start**
-
-The existing logic already handles this since `isLiveEvent` checks if start time has passed. The R@lly Home button card only appears once the event is live.
 
 ---
 
-### 3. JoinRally.tsx - No Changes Needed
+### 4. Modify `JoinRally.tsx`
 
-The existing flow in JoinRally.tsx already:
-1. Shows SafetyChoiceModal when user clicks "Enter Rally"
-2. On "R@lly got me" → Opens RidesSelectionModal
-3. On "I'm good" → Saves choice, navigates to event
-4. RidesSelectionModal allows: Request Ride OR Become DD
+The same pattern - after rides modal closes, show location modal:
 
-This matches the desired flow exactly.
+```typescript
+// Add state
+const [showLocationModal, setShowLocationModal] = useState(false);
+
+// Modify RidesSelectionModal onComplete
+onComplete={() => {
+  setShowRidesSelection(false);
+  setShowLocationModal(true); // Show location modal instead of navigating
+}}
+
+// Add LocationSharingModal
+<LocationSharingModal
+  open={showLocationModal}
+  onOpenChange={setShowLocationModal}
+  eventId={joinedEventId!}
+  onComplete={() => {
+    setShowLocationModal(false);
+    navigate(`/events/${joinedEventId}`);
+  }}
+/>
+```
+
+---
+
+### 5. Modify `EventDetail.tsx`
+
+Same pattern for users entering from the event detail page:
+
+```typescript
+// Add state
+const [showLocationModal, setShowLocationModal] = useState(false);
+
+// Modify RidesSelectionModal onComplete (around line 973)
+onComplete={() => {
+  setShowRidesSelection(false);
+  setShowLocationModal(true);
+}}
+
+// Add LocationSharingModal
+<LocationSharingModal
+  open={showLocationModal}
+  onOpenChange={setShowLocationModal}
+  eventId={event.id}
+  onComplete={() => {
+    setShowLocationModal(false);
+    queryClient.invalidateQueries({ queryKey: ['event', event.id] });
+  }}
+/>
+```
+
+---
+
+### 6. Preventing Repeated Prompts
+
+The modal will check before showing:
+
+```typescript
+// In the parent component before triggering the modal
+const shouldShowLocationPrompt = async () => {
+  const { data } = await supabase
+    .from('event_attendees')
+    .select('location_prompt_shown, share_location')
+    .eq('event_id', eventId)
+    .eq('profile_id', profile.id)
+    .maybeSingle();
+  
+  // Skip if already prompted OR already sharing
+  return !data?.location_prompt_shown && !data?.share_location;
+};
+```
 
 ---
 
 ## Summary of Changes
 
-1. **SafetyChoiceModal.tsx**: Soften copy from "HOW YOU GETTIN' HOME?" to "How are you getting home tonight?" and update description to planning-focused language
-
-2. **EventDetail.tsx**: Add logic to show SafetyChoiceModal on page load for existing attendees who haven't made a choice yet (with sessionStorage to prevent repeat prompts)
+1. **Database**: Add `location_prompt_shown` boolean to `event_attendees`
+2. **New File**: `src/components/events/LocationSharingModal.tsx`
+3. **RidesSelectionModal.tsx**: Chain to location modal on complete
+4. **JoinRally.tsx**: Add location modal in the flow
+5. **EventDetail.tsx**: Add location modal in the flow
 
 ---
 
 ## What Stays the Same
 
-- R@lly Home Button only appears during live/after_rally events (already implemented)
-- The Rides flow (request ride OR become DD) remains unchanged
-- Backend schema and stored values remain unchanged
-- Join flow in JoinRally.tsx already works correctly
-
----
-
-## Flow Diagram
-
-```text
-User visits /events/{id}
-         ↓
-    Is attending?
-    /           \
-  No             Yes
-   ↓               ↓
-Join button   Has made safety choice?
-   ↓              /         \
-Shows modal    Yes           No
-on join       (continue)   (show modal)
-                              ↓
-                    "R@lly got me" | "I'm good"
-                         ↓              ↓
-                   Rides Modal    Save choice
-                   (DD or Rider)  Continue
-                         ↓
-                    Complete
-                    Continue to Rally
-```
-
----
-
-## Deliverables
-
-1. `src/components/events/SafetyChoiceModal.tsx` - Updated copy
-2. `src/pages/EventDetail.tsx` - Add entry-gate logic for existing attendees
-
+- Safety choice flow unchanged
+- Rally Rides UI unchanged  
+- Existing `share_location` field and location tracking logic unchanged
+- All other modals and flows unchanged
