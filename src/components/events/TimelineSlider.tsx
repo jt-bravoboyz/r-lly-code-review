@@ -3,8 +3,8 @@ import * as SliderPrimitive from "@radix-ui/react-slider";
 import { cn } from '@/lib/utils';
 import { useHaptics } from '@/hooks/useHaptics';
 
-// Constants for full 24-hour range (0-95 = 96 positions for 15-min increments)
-const STEPS = 95; // Max position is 95 = 23:45
+// Constants for full 24-hour range (0-96 = 97 positions for 15-min increments)
+const STEPS = 96; // Max position is 96 = 24:00 (12:00 AM next day)
 
 interface TimelineSliderProps {
   value: string; // "HH:mm" format (e.g., "21:30")
@@ -37,6 +37,9 @@ function formatTimeDisplay(time: string): string {
   const [hours, minutes] = time.split(':').map(Number);
   if (isNaN(hours) || isNaN(minutes)) return '8:00 PM';
   
+  // Handle midnight (24:00 or 00:00)
+  if (hours === 24 || (hours === 0 && minutes === 0)) return '12:00 AM';
+  
   const period = hours >= 12 && hours < 24 ? 'PM' : 'AM';
   const displayHour = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
   return `${displayHour}:${minutes.toString().padStart(2, '0')} ${period}`;
@@ -64,7 +67,7 @@ const HOUR_LABELS = [
   { position: 24, label: '6AM' },
   { position: 48, label: '12PM' },
   { position: 72, label: '6PM' },
-  { position: 95, label: '12AM' },
+  { position: 96, label: '12AM' },
 ];
 
 // Quick labels with positions
@@ -72,7 +75,7 @@ const QUICK_LABELS = [
   { start: 0, end: 24, label: 'Morning', center: 12 },
   { start: 24, end: 48, label: 'Afternoon', center: 36 },
   { start: 48, end: 72, label: 'Evening', center: 60 },
-  { start: 72, end: 95, label: 'Night', center: 84 },
+  { start: 72, end: 96, label: 'Night', center: 84 },
 ];
 
 export function TimelineSlider({ value, onChange, selectedDate, className }: TimelineSliderProps) {
