@@ -130,26 +130,20 @@
 }
 
 @layer utilities {
-  /* Timeline Slider - Full day gradient */
+  /* Timeline Slider - Purple to Orange gradient */
   .timeline-slider-track {
     background: linear-gradient(
       to right,
-      hsl(240 40% 30%) 0%,      /* Night blue at 12AM */
-      hsl(200 60% 50%) 25%,     /* Dawn blue at 6AM */
-      hsl(45 90% 60%) 50%,      /* Sunny yellow at 12PM */
-      hsl(25 80% 55%) 75%,      /* Sunset orange at 6PM */
-      hsl(270 50% 35%) 100%     /* Night purple at 12AM */
+      hsl(270 60% 45%) 0%,      /* Purple */
+      hsl(27 100% 55%) 100%     /* R@lly Orange */
     );
   }
   
   .dark .timeline-slider-track {
     background: linear-gradient(
       to right,
-      hsl(240 45% 20%) 0%,      /* Night blue at 12AM */
-      hsl(200 55% 40%) 25%,     /* Dawn blue at 6AM */
-      hsl(45 85% 50%) 50%,      /* Sunny yellow at 12PM */
-      hsl(25 75% 45%) 75%,      /* Sunset orange at 6PM */
-      hsl(270 55% 30%) 100%     /* Night purple at 12AM */
+      hsl(270 55% 40%) 0%,      /* Purple */
+      hsl(27 95% 50%) 100%      /* R@lly Orange */
     );
   }
 
