@@ -1,150 +1,164 @@
 
-# Plan: "Dusk to Midnight Fade" Transition for After R@lly Mode
+# Plan: Add After R@lly Feature Card Below R@lly Home Button
 
 ## Overview
 
-Replace the current 2.2-second flashy rainbow glide with a smooth, intentional "Dusk → Midnight Fade" transition that feels like the night turning over from R@lly's orange theme to After R@lly's deep purple.
+Add a dedicated "After R@lly" interactive card below the existing "R@lly Home" button on the EventDetail page. This card will:
+1. Allow attendees to join the After R@lly if the event is in `after_rally` status
+2. Show their opt-in status (joined vs. not joined)
+3. Display the After R@lly location set by the host
+4. Provide navigation to the After R@lly location
 
 ---
 
-## Current vs. New Transition
+## Current After R@lly Features (Already Implemented)
 
-| Aspect | Current | New "Dusk → Midnight" |
-|--------|---------|----------------------|
-| Duration | 2.2 seconds | 600-900ms |
-| Effect | Rainbow sweep across screen | Subtle dim → gradient fade |
-| Style | Flashy, celebratory | Intentional, atmospheric |
-| Sparkles | 25 random colorful bursts | None (clean transition) |
-| Sound | Complex multi-layer audio | Optional subtle tone |
+Based on my exploration, the After R@lly mode includes:
+
+| Feature | Status | Location |
+|---------|--------|----------|
+| Status transition (live → after_rally) | Done | `EndRallyDialog.tsx`, `useAfterRally.tsx` |
+| Host sets After R@lly location | Done | `EndRallyDialog.tsx` |
+| Opt-in dialog for attendees | Done | `AfterRallyOptInDialog.tsx` |
+| Purple "night mode" theme with Dusk→Midnight transition | Done | `index.css`, `useAfterRallyTransition.tsx` |
+| "After R@lly Mode" banner at top | Done | `EventDetail.tsx` (lines 514-536) |
+| Header badge "🌙 After R@lly" | Done | `Header.tsx` |
+| Safety tracking continues | Done | `SafetyTracker.tsx` |
 
 ---
 
-## Visual Transition Stages
+## What's Missing
+
+There's no dedicated **interactive card** below the R@lly Home button that allows users to:
+- See and quickly join After R@lly (if they haven't yet)
+- View the After R@lly location with navigation
+- See their current status (opted-in vs. not)
+
+---
+
+## Proposed Solution
+
+### New Component: `AfterRallyCard.tsx`
+
+Create a new card component that displays contextually based on event and user status:
 
 ```text
-Stage 1 (0-200ms): "Lights Lowering"
-┌────────────────────────┐
-│  Screen dims slightly  │
-│  brightness: 1 → 0.85  │
-│  Orange colors fade    │
-└────────────────────────┘
-           ↓
-Stage 2 (200-600ms): "Color Shift"
-┌────────────────────────┐
-│  Orange → Blue/Purple  │
-│  Gradient sweeps       │
-│  top-to-bottom         │
-└────────────────────────┘
-           ↓
-Stage 3 (600-800ms): "Night Settles"
-┌────────────────────────┐
-│  Deep purple locks in  │
-│  brightness: 0.85 → 1  │
-│  Stars fade in subtly  │
-└────────────────────────┘
+┌─────────────────────────────────────────────┐
+│  [Moon Icon]   After R@lly                  │
+│                                             │
+│  📍 Next stop: Denny's on Main St           │
+│                                             │
+│  ┌─────────────────────────────────────┐    │
+│  │    [Join After R@lly]  (purple btn) │    │
+│  └─────────────────────────────────────┘    │
+│                                             │
+│  [Get Directions →]                         │
+└─────────────────────────────────────────────┘
 ```
+
+### States the Card Should Handle
+
+1. **Event is in `after_rally` status + User has NOT opted in**
+   - Show "Join After R@lly" button
+   - Show location card
+   - Show "Get Directions" link
+
+2. **Event is in `after_rally` status + User HAS opted in**
+   - Show checkmark: "You're in for After R@lly! ✓"
+   - Show location card
+   - Show "Get Directions" link
+
+3. **Event is NOT in `after_rally` status**
+   - Don't show the card at all
 
 ---
 
-## Persistent "After R@lly" Indicator
+## Files to Create
 
-Once in After R@lly mode, a badge will appear in the header:
+### 1. `src/components/events/AfterRallyCard.tsx` (NEW)
 
-```text
-┌─────────────────────────────────────────┐
-│ [Logo]   🌙 After R@lly     [Profile] │
-│          ^^^^^^^^^^^^^^                 │
-│          Purple badge chip              │
-└─────────────────────────────────────────┘
-```
+A new component with:
+- Purple gradient styling (matching After R@lly theme)
+- Location display with the `after_rally_location_name` from the event
+- "Join After R@lly" button (opens opt-in flow)
+- "You're In!" status badge when opted in
+- "Get Directions" button linking to Google Maps
+- Moon icon and consistent styling with the existing After R@lly banner
 
 ---
 
 ## Files to Modify
 
-### 1. `src/index.css`
-- Replace `@keyframes after-rally-enter` with new "dusk-to-midnight" animation
-- Remove or simplify the rainbow-glide overlay (`::after` pseudo-element)
-- Adjust duration from 2.2s to ~800ms
-- Add new smooth dimming + gradient transition keyframes
+### 2. `src/pages/EventDetail.tsx`
 
-### 2. `src/hooks/useAfterRallyTransition.tsx`
-- Replace complex multi-oscillator sound with optional subtle transition tone
-- Remove sparkle creation (too flashy)
-- Simplify haptic pattern to single soft pulse
-- Update timing to match new 800ms duration
-
-### 3. `src/components/layout/Header.tsx`
-- Add optional `afterRallyMode` prop
-- Render "🌙 After R@lly" badge when in After R@lly mode
-- Style header background for purple theme
-
-### 4. `src/pages/EventDetail.tsx`
-- Pass `afterRallyMode` prop to Header component
-- Ensure transition only runs once per session (already implemented)
+- Import the new `AfterRallyCard` component
+- Add it in the section immediately after the `RallyHomeButton` section (around line 560)
+- Pass required props: `eventId`, `event`, `isOptedIn`, `onJoin`
 
 ---
 
-## Technical Details
+## Component Props
 
-### New CSS Animation (replacing current)
-```css
-/* Dusk to Midnight Fade - replaces rainbow glide */
-@keyframes dusk-to-midnight {
-  0% {
-    /* Current orange theme */
-    filter: brightness(1);
-    --bg-transition: 0%;
-  }
-  25% {
-    /* Dim like lights lowering */
-    filter: brightness(0.85);
-  }
-  60% {
-    /* Mid-transition: warm to cool shift */
-    filter: brightness(0.9);
-    --bg-transition: 70%;
-  }
-  100% {
-    /* Deep purple settled */
-    filter: brightness(1);
-    --bg-transition: 100%;
-  }
-}
-
-.after-rally-mode {
-  animation: dusk-to-midnight 800ms cubic-bezier(0.4, 0, 0.2, 1);
+```typescript
+interface AfterRallyCardProps {
+  eventId: string;
+  eventStatus: string;
+  afterRallyLocation?: string;
+  isOptedIn: boolean;
+  onJoinClick: () => void;
+  isLoading?: boolean;
 }
 ```
 
-### Simplified Transition Sound
-- Single gentle "whoosh" descending tone
-- Duration: ~400ms
-- Much quieter and subtler
+---
 
-### Transition Trigger Flow
-1. User clicks "I'm In!" → database updates
-2. `showAfterRallyTheme` becomes `true`
-3. `after-rally-mode` class applied with new animation
-4. `triggerAfterRallyTransition()` plays subtle sound + single haptic
-5. Header shows "After R@lly" badge
+## Integration with Existing Code
+
+The card will:
+- Reuse `useOptIntoAfterRally` hook for opt-in logic
+- Reuse `useAfterRallyTransition` for the theme transition when opting in
+- Query user's opt-in status from `myAttendee?.after_rally_opted_in`
+- Get location from `(event as any)?.after_rally_location_name`
 
 ---
 
-## Edge Cases Handled
+## Visual Design
 
-- **Returning to page**: Animation won't replay (sessionStorage check exists)
-- **Reverse transition**: If supported, uses same smooth fade in reverse (purple → orange)
-- **Auto-trigger**: Same animation whether button or time-based trigger
-- **Performance**: No DOM manipulation for sparkles; pure CSS animation
+The card will use:
+- Purple gradient background (`gradient-after-rally` class)
+- White/light text for contrast
+- Moon icon from `lucide-react`
+- MapPin icon for location
+- Rounded corners and shadow (`rounded-xl shadow-lg`)
+- Consistent spacing with other cards in the section
 
 ---
 
-## Acceptance Criteria
+## Placement in EventDetail
 
-- Transition feels like "day → night" shift, not a party explosion
-- Duration is 600-900ms total
-- No hard cuts or flashes
-- Header shows "🌙 After R@lly" badge persistently
-- No performance lag or flicker
-- Works on both manual trigger and automatic state changes
+```
+[After R@lly Banner]           ← existing (lines 514-536)
+[R@lly Home Button Card]       ← existing (lines 538-560)
+[After R@lly Card]             ← NEW (add here)
+[SafetyTracker]                ← existing (line 565)
+```
+
+---
+
+## Technical Implementation
+
+1. Create the new `AfterRallyCard.tsx` component with the states described above
+2. Import it in `EventDetail.tsx`
+3. Add conditional rendering:
+   - Only show when `isAfterRally === true`
+   - Pass `isOptedIn` from `myAttendee?.after_rally_opted_in`
+   - Handle "Join" click by setting `showAfterRallyOptIn(true)` to reuse existing dialog
+
+---
+
+## Edge Cases
+
+- Card only appears when event status is `after_rally`
+- If user is already opted in, show "You're In!" status instead of join button
+- If no location was set by host, show generic "After party continues!" message
+- Clicking "Get Directions" opens Google Maps in new tab with the location
