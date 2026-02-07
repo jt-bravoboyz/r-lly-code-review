@@ -1,6 +1,7 @@
 import { cn } from '@/lib/utils';
 import { TierBadgeIcon } from './TierBadgeIcon';
 import { Check } from 'lucide-react';
+import { getTierQuote } from '@/lib/badges';
 import type { BadgeTier } from '@/hooks/useBadgeSystem';
 
 interface TierLadderProps {
@@ -68,6 +69,16 @@ export function TierLadder({ tiers, currentTierKey, totalPoints, className }: Ti
                 {tier.min_points.toLocaleString()}
                 {tier.max_points ? ` - ${tier.max_points.toLocaleString()}` : '+'} pts
               </div>
+              {/* Quote - only revealed when unlocked */}
+              {isUnlocked ? (
+                <p className="text-xs italic text-muted-foreground/80 mt-1 leading-relaxed whitespace-pre-line">
+                  {getTierQuote(tier.tier_key)}
+                </p>
+              ) : (
+                <p className="text-xs italic text-muted-foreground/50 mt-1">
+                  Unlock to reveal
+                </p>
+              )}
             </div>
 
             {/* Status indicator */}
