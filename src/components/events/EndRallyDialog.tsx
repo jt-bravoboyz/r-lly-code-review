@@ -76,7 +76,7 @@ export function EndRallyDialog({ eventId, open, onOpenChange }: EndRallyDialogPr
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm overflow-hidden">
+      <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-sm overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
@@ -89,9 +89,9 @@ export function EndRallyDialog({ eventId, open, onOpenChange }: EndRallyDialogPr
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
+        <div className="space-y-4 py-4 w-full min-w-0 overflow-hidden">
           {/* After R@lly Option with Location Input */}
-          <div className="p-3 rounded-lg border-2 border-[hsl(270,60%,70%)] bg-[hsl(270,60%,95%)] space-y-3 min-w-0">
+          <div className="p-3 rounded-lg border-2 border-[hsl(270,60%,70%)] bg-[hsl(270,60%,95%)] space-y-3 w-full min-w-0 box-border">
             <div className="flex items-start gap-2">
               <div className="w-8 h-8 rounded-full bg-[hsl(270,60%,50%)]/20 flex items-center justify-center shrink-0">
                 <Moon className="h-4 w-4 text-[hsl(270,60%,50%)]" />
