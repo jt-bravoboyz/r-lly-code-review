@@ -117,7 +117,7 @@ export function LocationSharingModal({
             NO MAN LEFT BEHIND
           </DialogTitle>
           <DialogDescription className="text-base">
-            Share your live location with the squad so everybody gets home safe.
+            Share your live location to keep tabs on the squad—see where everyone's at and make sure nobody gets left behind.
           </DialogDescription>
         </DialogHeader>
 
