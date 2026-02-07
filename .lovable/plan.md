@@ -1,166 +1,153 @@
 
-# Plan: Timeline Slider for Time Selection
+# Plan: Full-Day Timeline Slider with "Until we're done" End State
 
 ## Overview
 
-Replace the dropdown time picker in the Create Event dialog with a premium horizontal timeline slider that lets users visually scrub through evening hours and snap to 15-minute increments.
+Update the existing `TimelineSlider` component to support:
+1. Full 24-hour range (12:00 AM → 11:59 PM)
+2. "Until we're done" label when slider is at maximum position
+3. Data persistence via `end_time = null` to indicate open-ended events
 
 ---
 
 ## Current Implementation
 
-| Component | Current UI | Location |
-|-----------|-----------|----------|
-| CreateEventDialog | Dropdown Select with 96 time options (24 hours × 4) | Lines 256-280 |
-| QuickRallyDialog | Dropdown Select with preset options (Now, +1hr, etc.) | Lines 306-324 |
-
-Both use `<Select>` with `<SelectContent>` requiring scrolling through options.
-
----
-
-## New Component: `TimelineSlider.tsx`
-
-A reusable horizontal timeline slider with the following specs:
-
-```text
-            ┌─────────────────────────────────────────────────────┐
-            │              Rally Start Time                       │
-            │                  9:30 PM                            │
-            │                                                     │
-            │  6PM    7PM    8PM    9PM    10PM   11PM   12AM   1AM   2AM  │
-            │   │      │      │      │      │      │      │     │     │   │
-            │ ──┼──────┼──────┼──────┼──────┼──────┼──────┼─────┼─────┼── │
-            │                    ◉                                │
-            │                                                     │
-            │   Early          Prime            Late              │
-            └─────────────────────────────────────────────────────┘
-```
-
-### Timeline Specifications
-
-| Property | Value |
-|----------|-------|
-| Range | 6:00 PM → 2:00 AM (8 hours = 480 minutes) |
-| Increments | 15-minute snap points (33 total positions) |
-| Default (create) | Now + 30 minutes (rounded to nearest 15) |
-| Default (edit) | Load existing time |
-
-### Visual Design
-
-- **Track**: Full-width horizontal bar with subtle gradient (darker at late hours)
-- **Tick marks**: Larger ticks at each hour, smaller ticks at 15-min intervals
-- **Thumb**: Large pill-shaped handle (44px touch target) with glow effect
-- **Selected range**: Gradient fill from start to current position
-- **Time display**: Large, prominent text above slider showing "9:30 PM"
-- **Quick labels**: "Early" (6-8PM), "Prime" (8-11PM), "Late" (11PM-2AM)
+| Aspect | Current Value |
+|--------|---------------|
+| Range | 6 PM → 2 AM (8 hours) |
+| Steps | 32 positions (0-32) |
+| Labels | 6PM, 7PM, ... 2AM |
+| Quick Labels | Early, Prime, Late |
 
 ---
 
-## Files to Create
+## New Implementation
 
-### 1. `src/components/events/TimelineSlider.tsx` (NEW)
+| Aspect | New Value |
+|--------|-----------|
+| Range | 12:00 AM → 11:59 PM (24 hours) |
+| Steps | 96 positions (0-96) for 15-min increments |
+| Position 96 | Maps to "Until we're done" (stored as `null` end_time) |
+| Labels | 12AM, 6AM, 12PM, 6PM, 12AM (minimal, readable) |
+| Quick Labels | Morning, Afternoon, Evening, Night |
 
-New component with:
+---
+
+## Technical Details
+
+### Slider Value Mapping (24 hours)
 
 ```typescript
-interface TimelineSliderProps {
-  value: string; // "HH:mm" format (e.g., "21:30")
-  onChange: (value: string) => void;
-  selectedDate?: Date; // For blocking past times
-  minTime?: string; // Optional minimum time
-  className?: string;
+// Constants for full day range
+const START_HOUR = 0;   // 12:00 AM
+const END_HOUR = 24;    // 11:59 PM (position 95) or "open" (position 96)
+const TOTAL_MINUTES = 24 * 60; // 1440 minutes
+const STEPS = 96;       // 96 positions (0-95 = times, 96 = open-ended)
+
+// Slider value (0-95) → Time string ("HH:mm")
+function sliderToTime(value: number): string {
+  if (value >= STEPS) return 'open'; // Position 96 = "Until we're done"
+  const totalMinutes = value * 15;
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+}
+
+// Time string ("HH:mm" or "open") → Slider value (0-96)
+function timeToSlider(time: string): number {
+  if (!time || time === 'open') return STEPS; // Return max for open-ended
+  const [hours, minutes] = time.split(':').map(Number);
+  if (isNaN(hours) || isNaN(minutes)) return 32; // Default to 8 AM
+  const sliderValue = (hours * 60 + minutes) / 15;
+  return Math.max(0, Math.min(STEPS - 1, sliderValue));
 }
 ```
 
-**Key Logic:**
+### "Until we're done" Logic
 
-1. **Slider Value Mapping**
-   - Slider range: 0 → 32 (33 positions for 15-min intervals across 8 hours)
-   - Position 0 = 18:00 (6 PM)
-   - Position 32 = 02:00 (2 AM next day)
-   - Formula: `sliderValue * 15 + 18*60` gives minutes since midnight
+| Slider Position | Display | Stored Value |
+|-----------------|---------|--------------|
+| 0-95 | Normal time (e.g., "10:30 PM") | `"22:30"` |
+| 96 (max) | "Until we're done" | `"open"` |
 
-2. **Past Time Handling**
-   - Calculate minimum valid slider position based on current time
-   - If selected date is today and current time is 7:30 PM, block positions 0-5
-   - Visually dim/disable past portion of the track
-   - Auto-shift to next valid time if current selection becomes invalid
+### Display Formatting
 
-3. **Snap Behavior**
-   - Use Radix Slider's `step` prop for automatic 15-min snapping
-   - No manual snap logic needed
+```typescript
+function formatTimeDisplay(time: string): string {
+  if (!time || time === 'open') return "Until we're done";
+  // ... existing 12-hour formatting logic
+}
+```
 
 ---
 
 ## Files to Modify
 
+### 1. `src/components/events/TimelineSlider.tsx`
+
+Changes:
+- Update constants: `START_HOUR = 0`, `STEPS = 96`
+- Modify `sliderToTime()` to handle position 96 → `'open'`
+- Modify `timeToSlider()` to handle `'open'` → position 96
+- Update `formatTimeDisplay()` to show "Until we're done" for `'open'`
+- Update `HOUR_LABELS` to: `12AM, 6AM, 12PM, 6PM, 12AM`
+- Update `QUICK_LABELS` to: `Morning, Afternoon, Evening, Night`
+- Update haptic feedback to trigger every 4 positions (hourly)
+
 ### 2. `src/components/events/CreateEventDialog.tsx`
 
-**Changes:**
-- Import new `TimelineSlider` component
-- Replace lines 256-280 (the Select time picker) with TimelineSlider
-- Add logic to calculate default time (now + 30 min rounded to 15)
-- Pass selected date to TimelineSlider for past-time blocking
-
-**Before (lines 256-280):**
-```tsx
-<FormField name="time" ...>
-  <Select onValueChange={field.onChange} value={field.value}>
-    <SelectContent className="max-h-60">
-      {timeOptions.map(...)}
-    </SelectContent>
-  </Select>
-</FormField>
-```
-
-**After:**
-```tsx
-<FormField name="time" ...>
-  <TimelineSlider
-    value={field.value}
-    onChange={field.onChange}
-    selectedDate={form.watch('date')}
-  />
-</FormField>
-```
-
-### 3. `src/components/events/QuickRallyDialog.tsx` (Optional Enhancement)
-
-Could also benefit from this slider, but keeping the preset buttons may be better for "quick" flow. I'll leave this unchanged unless requested.
+Changes:
+- In `onSubmit()`: Handle `time === 'open'` case
+  - If `'open'`: set `end_time: null` (no explicit end time)
+  - Otherwise: calculate end_time normally
+- No schema changes needed (already has nullable `end_time`)
 
 ---
 
-## Technical Implementation Details
-
-### Time Mapping Logic
+## Hour Labels (Minimal, Readable)
 
 ```typescript
-// Constants
-const START_HOUR = 18; // 6 PM
-const END_HOUR = 26; // 2 AM next day (treated as 26:00)
-const TOTAL_MINUTES = (END_HOUR - START_HOUR) * 60; // 480 minutes
-const STEPS = TOTAL_MINUTES / 15; // 32 steps
-
-// Slider value (0-32) → Time string ("HH:mm")
-function sliderToTime(value: number): string {
-  const totalMinutes = START_HOUR * 60 + value * 15;
-  const hours = Math.floor(totalMinutes / 60) % 24;
-  const minutes = totalMinutes % 60;
-  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-}
-
-// Time string ("HH:mm") → Slider value (0-32)
-function timeToSlider(time: string): number {
-  const [hours, minutes] = time.split(':').map(Number);
-  // Handle next-day times (0-2 AM)
-  const adjustedHours = hours < START_HOUR ? hours + 24 : hours;
-  const totalMinutes = adjustedHours * 60 + minutes;
-  const sliderValue = (totalMinutes - START_HOUR * 60) / 15;
-  return Math.max(0, Math.min(STEPS, sliderValue));
-}
+const HOUR_LABELS = [
+  { position: 0, label: '12AM' },   // Midnight
+  { position: 24, label: '6AM' },   // Morning
+  { position: 48, label: '12PM' },  // Noon
+  { position: 72, label: '6PM' },   // Evening
+  { position: 96, label: '12AM' },  // End / Open
+];
 ```
 
-### Past Time Blocking
+---
+
+## Quick Labels (Time of Day)
+
+```typescript
+const QUICK_LABELS = [
+  { start: 0, end: 24, label: 'Morning', center: 12 },    // 12AM-6AM
+  { start: 24, end: 48, label: 'Afternoon', center: 36 }, // 6AM-12PM
+  { start: 48, end: 72, label: 'Evening', center: 60 },   // 12PM-6PM
+  { start: 72, end: 96, label: 'Night', center: 84 },     // 6PM-12AM
+];
+```
+
+---
+
+## Data Handling
+
+| User Action | Form Value | Database Storage |
+|-------------|------------|------------------|
+| Selects 10:00 PM | `"22:00"` | `start_time = date + 22:00` |
+| Drags to max | `"open"` | `start_time = date + 23:45`, `end_time = null` |
+
+For "Until we're done":
+- Store a reasonable `start_time` (either user's last position before max, or a sensible default like 8 PM)
+- Set `end_time = null` to indicate open-ended
+- On load/edit: if `end_time === null`, restore slider to max position
+
+---
+
+## Past Time Blocking Update
+
+The `getMinSliderValue()` function will be updated to work with the full 24-hour range:
 
 ```typescript
 function getMinSliderValue(selectedDate: Date | undefined): number {
@@ -172,111 +159,11 @@ function getMinSliderValue(selectedDate: Date | undefined): number {
   if (!isToday) return 0; // No restriction for future dates
   
   const currentMinutes = now.getHours() * 60 + now.getMinutes();
-  const startMinutes = START_HOUR * 60;
+  const bufferMinutes = 15;
+  const minPosition = Math.ceil((currentMinutes + bufferMinutes) / 15);
   
-  if (currentMinutes < startMinutes) return 0; // Before 6 PM
-  if (currentMinutes >= END_HOUR * 60 % (24*60)) return STEPS; // Past 2 AM
-  
-  // Calculate minimum slider position (round up to next 15 min)
-  const minPosition = Math.ceil((currentMinutes - startMinutes) / 15);
-  return Math.min(minPosition, STEPS);
+  return Math.max(0, Math.min(STEPS, minPosition));
 }
-```
-
-### Haptic Feedback on Hour Snap
-
-```typescript
-const { triggerHaptic } = useHaptics();
-const lastHourRef = useRef<number>(-1);
-
-function handleSliderChange(value: number) {
-  const time = sliderToTime(value);
-  const [hours] = time.split(':').map(Number);
-  
-  // Trigger haptic when crossing an hour boundary
-  if (hours !== lastHourRef.current && value % 4 === 0) {
-    triggerHaptic('selection');
-    lastHourRef.current = hours;
-  }
-  
-  onChange(time);
-}
-```
-
----
-
-## CSS Styling
-
-Custom styles for the timeline slider:
-
-```css
-/* Track with gradient from sunset to night */
-.timeline-slider-track {
-  background: linear-gradient(
-    to right,
-    hsl(35, 90%, 60%) 0%,      /* Sunset orange at 6PM */
-    hsl(270, 50%, 40%) 50%,    /* Dusk purple at 10PM */
-    hsl(240, 40%, 20%) 100%    /* Night blue at 2AM */
-  );
-}
-
-/* Hour tick marks */
-.timeline-tick-hour {
-  height: 12px;
-  width: 2px;
-  background: currentColor;
-}
-
-/* 15-min tick marks */
-.timeline-tick-quarter {
-  height: 6px;
-  width: 1px;
-  background: currentColor;
-  opacity: 0.5;
-}
-
-/* Large thumb for touch */
-.timeline-thumb {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: white;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-  border: 3px solid hsl(var(--primary));
-}
-```
-
----
-
-## Accessibility
-
-| Feature | Implementation |
-|---------|----------------|
-| Large touch target | 44px minimum thumb size |
-| Clear label | "Rally start time" above slider |
-| Keyboard support | Arrow keys (Radix Slider built-in) |
-| Screen reader | aria-label, aria-valuetext for time |
-| Focus visible | Ring outline on focus |
-
----
-
-## Component Structure
-
-```
-TimelineSlider/
-├── Time Display (prominent, e.g. "9:30 PM")
-├── Slider Track
-│   ├── Background gradient (sunset → night)
-│   ├── Past time overlay (dimmed)
-│   ├── Active range (highlighted)
-│   └── Thumb (large, draggable)
-├── Tick Marks Row
-│   ├── Hour ticks (larger)
-│   └── 15-min ticks (smaller)
-├── Hour Labels Row
-│   └── "6PM", "7PM", ... "2AM"
-└── Quick Labels Row (optional)
-    └── "Early" | "Prime" | "Late"
 ```
 
 ---
@@ -285,32 +172,47 @@ TimelineSlider/
 
 | Scenario | Handling |
 |----------|----------|
-| No date selected | Show full range, no blocking |
-| Today selected, current time 7:45 PM | Block 6-7:30 PM, start at 8 PM |
-| Today selected, past 2 AM | All times blocked, show message |
-| Tomorrow selected | Full range available |
-| Editing existing event | Pre-populate with existing time |
-| Time outside 6PM-2AM range | Clamp to nearest valid time |
+| User at position 96 then moves left | Revert to normal time display |
+| Loading event with `end_time = null` | Slider at position 96, show "Until we're done" |
+| Loading event with `end_time` set | Calculate slider position from `start_time` |
+| Today past 11 PM | Allow position 96 ("Until we're done") |
+
+---
+
+## Visual Styling Updates
+
+The existing gradient will be updated to span the full day:
+
+```css
+.timeline-slider-track {
+  background: linear-gradient(
+    to right,
+    hsl(240, 40%, 30%) 0%,    /* Night blue at 12AM */
+    hsl(200, 60%, 50%) 25%,   /* Dawn blue at 6AM */
+    hsl(45, 90%, 60%) 50%,    /* Sunny yellow at 12PM */
+    hsl(25, 80%, 55%) 75%,    /* Sunset orange at 6PM */
+    hsl(270, 50%, 35%) 100%   /* Night purple at 12AM */
+  );
+}
+```
 
 ---
 
 ## Deliverables Summary
 
-1. **New file**: `src/components/events/TimelineSlider.tsx`
-   - Horizontal slider with 6PM-2AM range
-   - 15-minute snap points
-   - Visual tick marks and hour labels
-   - Past time dimming
+1. **Modified file**: `src/components/events/TimelineSlider.tsx`
+   - Full 24-hour range (96 positions)
+   - Position 96 = "Until we're done"
+   - Updated hour labels and quick labels
+   - Updated past-time blocking for full day
    - Haptic feedback on hour boundaries
-   - Premium sunset-to-night gradient styling
 
 2. **Modified file**: `src/components/events/CreateEventDialog.tsx`
-   - Replace Select dropdown with TimelineSlider
-   - Calculate smart default time (now + 30 min)
-   - Pass selected date for validation
+   - Handle `'open'` time value in submission
+   - Set `end_time: null` for open-ended events
 
-3. **No changes to**:
-   - Backend/database schema
-   - Form validation logic
-   - Submission handling
-   - Time field format ("HH:mm" string)
+3. **Modified file**: `src/index.css`
+   - Update gradient to span full day (night → dawn → noon → sunset → night)
+
+4. **No database changes required**
+   - Uses existing nullable `end_time` column
