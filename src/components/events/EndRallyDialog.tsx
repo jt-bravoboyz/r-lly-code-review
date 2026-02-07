@@ -76,7 +76,7 @@ export function EndRallyDialog({ eventId, open, onOpenChange }: EndRallyDialogPr
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm">
+      <DialogContent className="max-w-sm overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
@@ -91,33 +91,34 @@ export function EndRallyDialog({ eventId, open, onOpenChange }: EndRallyDialogPr
 
         <div className="space-y-4 py-4">
           {/* After R@lly Option with Location Input */}
-          <div className="p-4 rounded-lg border-2 border-[hsl(270,60%,70%)] bg-[hsl(270,60%,95%)] space-y-3">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-full bg-[hsl(270,60%,50%)]/20 flex items-center justify-center shrink-0">
-                <Moon className="h-5 w-5 text-[hsl(270,60%,50%)]" />
+          <div className="p-3 rounded-lg border-2 border-[hsl(270,60%,70%)] bg-[hsl(270,60%,95%)] space-y-3 min-w-0">
+            <div className="flex items-start gap-2">
+              <div className="w-8 h-8 rounded-full bg-[hsl(270,60%,50%)]/20 flex items-center justify-center shrink-0">
+                <Moon className="h-4 w-4 text-[hsl(270,60%,50%)]" />
               </div>
-              <div>
-                <div className="font-semibold font-montserrat">Start After R@lly</div>
-                <p className="text-sm text-muted-foreground">
+              <div className="min-w-0 flex-1">
+                <div className="font-semibold font-montserrat text-sm">Start After R@lly</div>
+                <p className="text-xs text-muted-foreground">
                   Continue the night at a new spot!
                 </p>
               </div>
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="afterRallyLocation" className="flex items-center gap-2 text-sm">
-                <MapPin className="h-4 w-4" />
-                Where's the After R@lly? <span className="text-destructive">*</span>
+              <Label htmlFor="afterRallyLocation" className="flex items-center gap-2 text-xs">
+                <MapPin className="h-3 w-3 shrink-0" />
+                <span className="truncate">Where's the After R@lly?</span>
+                <span className="text-destructive shrink-0">*</span>
               </Label>
               <Input
                 id="afterRallyLocation"
-                placeholder="e.g., Denny's on Main St, Jake's place..."
+                placeholder="e.g., Denny's, Jake's place..."
                 value={afterRallyLocation}
                 onChange={(e) => {
                   setAfterRallyLocation(e.target.value);
                   setShowLocationError(false);
                 }}
-                className={showLocationError ? 'border-destructive' : ''}
+                className={`text-sm ${showLocationError ? 'border-destructive' : ''}`}
               />
               {showLocationError && (
                 <p className="text-xs text-destructive">Please enter the After R@lly location</p>
@@ -125,7 +126,7 @@ export function EndRallyDialog({ eventId, open, onOpenChange }: EndRallyDialogPr
             </div>
 
             <Button
-              className="w-full bg-[hsl(270,60%,50%)] hover:bg-[hsl(270,60%,40%)] text-white"
+              className="w-full bg-[hsl(270,60%,50%)] hover:bg-[hsl(270,60%,40%)] text-white text-sm"
               onClick={handleAfterRally}
               disabled={isLoading}
             >
