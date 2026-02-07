@@ -845,8 +845,7 @@ export default function EventDetail() {
         {!isCreator && isAttending && (
           <div className="px-4 pb-24 pt-6">
             <Button 
-              variant="outline" 
-              className="w-full text-destructive border-destructive/30 hover:bg-destructive/10"
+              className="w-full bg-secondary hover:bg-secondary/90 text-secondary-foreground"
               onClick={handleLeave}
               disabled={leaveEvent.isPending}
             >
