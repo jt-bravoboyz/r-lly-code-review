@@ -12,8 +12,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import rallyLogo from '@/assets/rally-logo.png';
-import { RallyHomeOptInDialog } from '@/components/events/RallyHomeOptInDialog';
-
+import { SafetyChoiceModal } from '@/components/events/SafetyChoiceModal';
+import { RidesSelectionModal } from '@/components/events/RidesSelectionModal';
 interface EventPreview {
   id: string;
   title: string;
@@ -42,8 +42,11 @@ export default function JoinRally() {
   const [joining, setJoining] = useState(false);
   const [alreadyJoined, setAlreadyJoined] = useState(false);
   const [isPending, setIsPending] = useState(false);
-  const [showRallyHomeOptIn, setShowRallyHomeOptIn] = useState(false);
+  const [showSafetyChoice, setShowSafetyChoice] = useState(false);
+  const [showRidesSelection, setShowRidesSelection] = useState(false);
   const [joinedEventId, setJoinedEventId] = useState<string | null>(null);
+  const [savingSafetyChoice, setSavingSafetyChoice] = useState(false);
+  const [hasMadeSafetyChoice, setHasMadeSafetyChoice] = useState(false);
 
   const fetchEvent = async (inviteCode: string) => {
     if (!inviteCode || inviteCode.length < 6) return;
@@ -87,7 +90,7 @@ export default function JoinRally() {
       if (profile) {
         const { data: attendance } = await supabase
           .from('event_attendees')
-          .select('id, status')
+          .select('id, status, going_home_at, not_participating_rally_home_confirmed, is_dd')
           .eq('event_id', eventData.id)
           .eq('profile_id', profile.id)
           .maybeSingle();
@@ -96,6 +99,12 @@ export default function JoinRally() {
           if (attendance.status === 'attending') {
             setAlreadyJoined(true);
             setIsPending(false);
+            // Check if they've already made a safety choice
+            const hasSafetyChoice = 
+              attendance.going_home_at !== null || 
+              attendance.not_participating_rally_home_confirmed !== null ||
+              attendance.is_dd === true;
+            setHasMadeSafetyChoice(hasSafetyChoice);
           } else if (attendance.status === 'pending') {
             setIsPending(true);
             setAlreadyJoined(false);
@@ -302,10 +311,19 @@ export default function JoinRally() {
               {alreadyJoined ? (
                 <Button 
                   className="w-full"
-                  onClick={() => navigate(`/events/${event.id}`)}
+                  onClick={() => {
+                    // If they've already made a safety choice, go directly to the rally
+                    if (hasMadeSafetyChoice) {
+                      navigate(`/events/${event.id}`);
+                    } else {
+                      // Show safety choice modal when entering the rally
+                      setJoinedEventId(event.id);
+                      setShowSafetyChoice(true);
+                    }
+                  }}
                 >
                   <Check className="h-4 w-4 mr-2" />
-                  You're In - View Rally
+                  You're In - Enter Rally
                 </Button>
               ) : isPending ? (
                 <div className="space-y-3">
@@ -358,18 +376,51 @@ export default function JoinRally() {
         )}
       </main>
 
-      {/* R@lly Home Opt-In Dialog for live events */}
-      {joinedEventId && event && (
-        <RallyHomeOptInDialog
+      {/* Safety Choice Modal */}
+      <SafetyChoiceModal
+        open={showSafetyChoice}
+        onOpenChange={setShowSafetyChoice}
+        isLoading={savingSafetyChoice}
+        onRallyGotMe={() => {
+          setShowSafetyChoice(false);
+          setShowRidesSelection(true);
+        }}
+        onDoingItMyself={async () => {
+          if (!profile || !joinedEventId) return;
+          setSavingSafetyChoice(true);
+          try {
+            await supabase
+              .from('event_attendees')
+              .update({ not_participating_rally_home_confirmed: true })
+              .eq('event_id', joinedEventId)
+              .eq('profile_id', profile.id);
+            
+            setShowSafetyChoice(false);
+            navigate(`/events/${joinedEventId}`);
+          } catch (error) {
+            toast.error('Failed to save choice');
+          } finally {
+            setSavingSafetyChoice(false);
+          }
+        }}
+      />
+
+      {/* Rides Selection Modal */}
+      {event && joinedEventId && (
+        <RidesSelectionModal
+          open={showRidesSelection}
+          onOpenChange={setShowRidesSelection}
+          onBack={() => {
+            setShowRidesSelection(false);
+            setShowSafetyChoice(true);
+          }}
+          onComplete={() => {
+            setShowRidesSelection(false);
+            navigate(`/events/${joinedEventId}`);
+          }}
           eventId={joinedEventId}
           eventTitle={event.title}
-          open={showRallyHomeOptIn}
-          onOpenChange={(open) => {
-            setShowRallyHomeOptIn(open);
-            if (!open) {
-              navigate(`/events/${joinedEventId}`);
-            }
-          }}
+          eventLocationName={event.location_name || undefined}
         />
       )}
     </div>
