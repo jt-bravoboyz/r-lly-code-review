@@ -182,7 +182,7 @@ export function RidesSelectionModal({
 
               <div className="space-y-3 pt-4">
                 <Button
-                  className="w-full h-16 text-base gradient-primary flex-col py-2"
+                  className="w-full h-20 text-base gradient-primary flex-col py-3"
                   onClick={() => setView('request-ride')}
                 >
                   <Navigation className="h-5 w-5 mb-1" />
@@ -192,7 +192,7 @@ export function RidesSelectionModal({
                 
                 <Button
                   variant="outline"
-                  className="w-full h-16 text-base flex-col py-2 border-primary text-primary hover:bg-primary/10"
+                  className="w-full h-20 text-base flex-col py-3 border-primary text-primary hover:bg-primary/10"
                   onClick={() => setShowDDSetup(true)}
                 >
                   <Shield className="h-5 w-5 mb-1" />
