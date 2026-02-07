@@ -3,37 +3,37 @@ import * as SliderPrimitive from "@radix-ui/react-slider";
 import { cn } from '@/lib/utils';
 import { useHaptics } from '@/hooks/useHaptics';
 
-// Constants for full 24-hour range
-const STEPS = 96; // 96 positions (0-95 = times, 96 = open-ended)
+// Constants for full 24-hour range (0-95 = 96 positions for 15-min increments)
+const STEPS = 95; // Max position is 95 = 23:45
 
 interface TimelineSliderProps {
-  value: string; // "HH:mm" format (e.g., "21:30") or "open"
+  value: string; // "HH:mm" format (e.g., "21:30")
   onChange: (value: string) => void;
   selectedDate?: Date; // For blocking past times
   className?: string;
 }
 
-// Convert slider value (0-96) to time string ("HH:mm" or "open")
+// Convert slider value (0-95) to time string ("HH:mm")
 function sliderToTime(value: number): string {
-  if (value >= STEPS) return 'open'; // Position 96 = "Until we're done"
-  const totalMinutes = value * 15;
+  const clampedValue = Math.min(value, STEPS);
+  const totalMinutes = clampedValue * 15;
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
   return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
 }
 
-// Convert time string ("HH:mm" or "open") to slider value (0-96)
+// Convert time string ("HH:mm") to slider value (0-95)
 function timeToSlider(time: string): number {
-  if (!time || time === 'open') return STEPS; // Return max for open-ended
+  if (!time) return 80; // Default to 8 PM (position 80)
   const [hours, minutes] = time.split(':').map(Number);
-  if (isNaN(hours) || isNaN(minutes)) return 80; // Default to 8 PM (position 80)
+  if (isNaN(hours) || isNaN(minutes)) return 80; // Default to 8 PM
   const sliderValue = (hours * 60 + minutes) / 15;
   return Math.max(0, Math.min(STEPS, sliderValue));
 }
 
-// Format time for display (e.g., "9:30 PM" or "Until we're done")
+// Format time for display (e.g., "9:30 PM")
 function formatTimeDisplay(time: string): string {
-  if (!time || time === 'open') return "Until we're done";
+  if (!time) return '8:00 PM';
   const [hours, minutes] = time.split(':').map(Number);
   if (isNaN(hours) || isNaN(minutes)) return '8:00 PM';
   
@@ -64,7 +64,7 @@ const HOUR_LABELS = [
   { position: 24, label: '6AM' },
   { position: 48, label: '12PM' },
   { position: 72, label: '6PM' },
-  { position: 96, label: '∞' },
+  { position: 95, label: '12AM' },
 ];
 
 // Quick labels with positions
@@ -72,7 +72,7 @@ const QUICK_LABELS = [
   { start: 0, end: 24, label: 'Morning', center: 12 },
   { start: 24, end: 48, label: 'Afternoon', center: 36 },
   { start: 48, end: 72, label: 'Evening', center: 60 },
-  { start: 72, end: 96, label: 'Night', center: 84 },
+  { start: 72, end: 95, label: 'Night', center: 84 },
 ];
 
 export function TimelineSlider({ value, onChange, selectedDate, className }: TimelineSliderProps) {
@@ -81,29 +81,23 @@ export function TimelineSlider({ value, onChange, selectedDate, className }: Tim
   const sliderValue = timeToSlider(value);
   const minValue = useMemo(() => getMinSliderValue(selectedDate), [selectedDate]);
   
-  // Auto-adjust if current value is below minimum (but not for 'open')
+  // Auto-adjust if current value is below minimum
   useEffect(() => {
-    if (value !== 'open' && sliderValue < minValue) {
+    if (sliderValue < minValue) {
       onChange(sliderToTime(minValue));
     }
-  }, [minValue, sliderValue, onChange, value]);
+  }, [minValue, sliderValue, onChange]);
 
   const handleValueChange = (values: number[]) => {
     const newValue = values[0];
-    // Enforce minimum (allow max for "open")
-    const clampedValue = newValue >= STEPS ? STEPS : Math.max(newValue, minValue);
+    const clampedValue = Math.max(newValue, minValue);
     const time = sliderToTime(clampedValue);
     
     // Trigger haptic when crossing an hour boundary (every 4 positions = 1 hour)
-    if (time !== 'open') {
-      const [hours] = time.split(':').map(Number);
-      if (hours !== lastHourRef.current && clampedValue % 4 === 0) {
-        triggerHaptic('selection');
-        lastHourRef.current = hours;
-      }
-    } else if (clampedValue === STEPS && value !== 'open') {
-      // Haptic when reaching "Until we're done"
+    const [hours] = time.split(':').map(Number);
+    if (hours !== lastHourRef.current && clampedValue % 4 === 0) {
       triggerHaptic('selection');
+      lastHourRef.current = hours;
     }
     
     onChange(time);
@@ -111,17 +105,13 @@ export function TimelineSlider({ value, onChange, selectedDate, className }: Tim
 
   // Calculate past overlay width
   const pastOverlayWidth = minValue > 0 ? (minValue / STEPS) * 100 : 0;
-  const isOpenEnded = value === 'open' || sliderValue >= STEPS;
 
   return (
     <div className={cn("space-y-3", className)}>
       {/* Time Display */}
       <div className="text-center">
         <span className="text-sm text-muted-foreground">Rally Start Time</span>
-        <div className={cn(
-          "text-3xl font-bold font-montserrat",
-          isOpenEnded ? "text-primary" : "text-foreground"
-        )}>
+        <div className="text-3xl font-bold font-montserrat text-foreground">
           {formatTimeDisplay(value)}
         </div>
       </div>
@@ -140,14 +130,11 @@ export function TimelineSlider({ value, onChange, selectedDate, className }: Tim
                 transform: 'translateX(-50%)',
               }}
             >
-              <div className={cn(
-                "w-0.5 bg-muted-foreground/50",
-                "h-3"
-              )} />
+              <div className="w-0.5 bg-muted-foreground/50 h-3" />
             </div>
           ))}
           {/* Hourly tick marks (every 4 positions) */}
-          {Array.from({ length: 25 }).map((_, i) => {
+          {Array.from({ length: 24 }).map((_, i) => {
             const position = i * 4;
             if (HOUR_LABELS.some(h => h.position === position)) return null;
             return (
@@ -186,10 +173,7 @@ export function TimelineSlider({ value, onChange, selectedDate, className }: Tim
             <SliderPrimitive.Track className="relative h-2 w-full grow overflow-hidden rounded-full timeline-slider-track">
               <SliderPrimitive.Range className="absolute h-full bg-primary/80 rounded-full" />
             </SliderPrimitive.Track>
-            <SliderPrimitive.Thumb className={cn(
-              "block h-6 w-6 rounded-full border-[3px] bg-background shadow-lg ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:scale-110 active:scale-95 cursor-grab active:cursor-grabbing",
-              isOpenEnded ? "border-primary animate-pulse" : "border-primary"
-            )} />
+            <SliderPrimitive.Thumb className="block h-6 w-6 rounded-full border-[3px] border-primary bg-background shadow-lg ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:scale-110 active:scale-95 cursor-grab active:cursor-grabbing" />
           </SliderPrimitive.Root>
         </div>
 
@@ -197,11 +181,8 @@ export function TimelineSlider({ value, onChange, selectedDate, className }: Tim
         <div className="relative mt-2 h-4">
           {HOUR_LABELS.map((hour) => (
             <span
-              key={hour.label}
-              className={cn(
-                "absolute text-[10px] transform -translate-x-1/2",
-                hour.position === 96 && isOpenEnded ? "text-primary font-medium" : "text-muted-foreground"
-              )}
+              key={hour.position}
+              className="absolute text-[10px] text-muted-foreground transform -translate-x-1/2"
               style={{ left: `${(hour.position / STEPS) * 100}%` }}
             >
               {hour.label}
@@ -216,7 +197,7 @@ export function TimelineSlider({ value, onChange, selectedDate, className }: Tim
               key={section.label}
               className={cn(
                 "absolute text-[10px] font-medium transform -translate-x-1/2",
-                sliderValue >= section.start && sliderValue <= section.end && !isOpenEnded
+                sliderValue >= section.start && sliderValue <= section.end
                   ? "text-primary"
                   : "text-muted-foreground/60"
               )}
