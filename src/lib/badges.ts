@@ -143,3 +143,20 @@ export const getMotivationalMessage = (tierName: string): string => {
   };
   return messages[tierName] || messages.bronze;
 };
+
+export const getTierQuote = (tierKey: string): string => {
+  const quotes: Record<string, string> = {
+    bronze: '"B stands for bitch cup. Hold up, drink this."',
+    silver: '"Private, you\'ve moved up in rank! You\'re officially moving out of the dorm basement and into sophomore year of the R@lly army. Thank you for your service."',
+    gold: '"Look at you, a professional pussy footer! We\'re definitely seeing your potential but there is more work to be done if you want to be a champion."',
+    emerald: '"If ya look good, ya feel good. If ya feel good, you play good. And if you play good, they pay good."\n— Deion Sanders',
+    sapphire: '"Wow… you\'ve done a lot of drinking. We\'re not sure if that\'s an achievement or a cry for help, but either way—we\'re celebrating you tonight."',
+    ruby: '"Damn you might actually be a penis stomper! Keep showing out in practice and maybe you\'ll see the field."',
+    amethyst: '"You honestly could have gone D1 for drinking. Too bad it\'s just another reason for your parents to disapprove of your life choices."',
+    diamond: '"In the words of Lyndon B. Johnson, \'You fuck.\'"',
+    pink_diamond: '"You don\'t follow the crowd—you lead it, shot for shot. And hopefully, one day, that same leadership shows up in a part of your life that doesn\'t make you a total degenerate."',
+    galaxy_opal: '"You\'re a certified party general now. The troops salute you and your dedication to your craft."',
+    dark_matter: '"You don\'t pre-game, you pre-career. You\'re the AA leader. Uber drivers put YOU on their vision boards. Your liver has its own gym membership. You\'ve gone beyond the frat house, beyond the campus, beyond the galaxy. Dark Matter unlocked. Job well done."',
+  };
+  return quotes[tierKey] || '';
+};
