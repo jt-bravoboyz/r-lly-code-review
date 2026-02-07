@@ -316,6 +316,7 @@ export type Database = {
           is_dd: boolean | null
           joined_at: string | null
           last_location_update: string | null
+          location_prompt_shown: boolean | null
           not_participating_rally_home_confirmed: boolean | null
           profile_id: string
           share_location: boolean | null
@@ -341,6 +342,7 @@ export type Database = {
           is_dd?: boolean | null
           joined_at?: string | null
           last_location_update?: string | null
+          location_prompt_shown?: boolean | null
           not_participating_rally_home_confirmed?: boolean | null
           profile_id: string
           share_location?: boolean | null
@@ -366,6 +368,7 @@ export type Database = {
           is_dd?: boolean | null
           joined_at?: string | null
           last_location_update?: string | null
+          location_prompt_shown?: boolean | null
           not_participating_rally_home_confirmed?: boolean | null
           profile_id?: string
           share_location?: boolean | null
