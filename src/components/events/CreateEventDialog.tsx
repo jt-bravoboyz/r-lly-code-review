@@ -20,6 +20,7 @@ import { toast } from 'sonner';
 import { LocationSearch } from '@/components/location/LocationSearch';
 import { cn } from '@/lib/utils';
 import { EVENT_TYPES } from '@/lib/eventTypes';
+import { TimelineSlider } from '@/components/events/TimelineSlider';
 
 const eventSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters'),
@@ -253,27 +254,19 @@ export function CreateEventDialog() {
               )}
             />
 
-            {/* Time Picker */}
+            {/* Time Picker - Timeline Slider */}
             <FormField
               control={form.control}
               name="time"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Time</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a time" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent className="max-h-60">
-                      {timeOptions.map((time) => (
-                        <SelectItem key={time.value} value={time.value}>
-                          {time.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormControl>
+                    <TimelineSlider
+                      value={field.value}
+                      onChange={field.onChange}
+                      selectedDate={form.watch('date')}
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
