@@ -130,24 +130,26 @@
 }
 
 @layer utilities {
-  /* Timeline Slider - Sunset to Night gradient */
+  /* Timeline Slider - Full day gradient */
   .timeline-slider-track {
     background: linear-gradient(
       to right,
-      hsl(35 90% 55%) 0%,      /* Sunset orange at 6PM */
-      hsl(22 90% 52%) 25%,     /* R@lly orange at 8PM */
-      hsl(270 50% 40%) 60%,    /* Dusk purple at 10PM */
-      hsl(240 40% 25%) 100%    /* Night blue at 2AM */
+      hsl(240 40% 30%) 0%,      /* Night blue at 12AM */
+      hsl(200 60% 50%) 25%,     /* Dawn blue at 6AM */
+      hsl(45 90% 60%) 50%,      /* Sunny yellow at 12PM */
+      hsl(25 80% 55%) 75%,      /* Sunset orange at 6PM */
+      hsl(270 50% 35%) 100%     /* Night purple at 12AM */
     );
   }
   
   .dark .timeline-slider-track {
     background: linear-gradient(
       to right,
-      hsl(35 85% 50%) 0%,      /* Sunset orange at 6PM */
-      hsl(22 90% 48%) 25%,     /* R@lly orange at 8PM */
-      hsl(270 55% 35%) 60%,    /* Dusk purple at 10PM */
-      hsl(240 45% 20%) 100%    /* Night blue at 2AM */
+      hsl(240 45% 20%) 0%,      /* Night blue at 12AM */
+      hsl(200 55% 40%) 25%,     /* Dawn blue at 6AM */
+      hsl(45 85% 50%) 50%,      /* Sunny yellow at 12PM */
+      hsl(25 75% 45%) 75%,      /* Sunset orange at 6PM */
+      hsl(270 55% 30%) 100%     /* Night purple at 12AM */
     );
   }
 
