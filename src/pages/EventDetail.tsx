@@ -52,6 +52,8 @@ import { RallyHomeOptInDialog } from '@/components/events/RallyHomeOptInDialog';
 import { SafetyCloseoutDialog } from '@/components/events/SafetyCloseoutDialog';
 import { EndRallyDialog } from '@/components/events/EndRallyDialog';
 import { EditEventLocationDialog } from '@/components/events/EditEventLocationDialog';
+import { SafetyChoiceModal } from '@/components/events/SafetyChoiceModal';
+import { RidesSelectionModal } from '@/components/events/RidesSelectionModal';
 import { useMyRallyHomePrompt } from '@/hooks/useRallyHomePrompt';
 import { PendingJoinRequests } from '@/components/events/PendingJoinRequests';
 import { supabase } from '@/integrations/supabase/client';
@@ -82,6 +84,10 @@ export default function EventDetail() {
   const [isBarHopTransitionPoint, setIsBarHopTransitionPoint] = useState(false);
   const [showEndRallyDialog, setShowEndRallyDialog] = useState(false);
   const [showRallyHomeDialog, setShowRallyHomeDialog] = useState(false);
+  // Safety choice modal states for join-time gating
+  const [showSafetyChoice, setShowSafetyChoice] = useState(false);
+  const [showRidesSelection, setShowRidesSelection] = useState(false);
+  const [savingSafetyChoice, setSavingSafetyChoice] = useState(false);
   const afterRallyTriggeredRef = useRef(false);
   const queryClient = useQueryClient();
   
@@ -147,8 +153,11 @@ export default function EventDetail() {
   // R@lly Home prompt status for current user
   const myPromptStatus = useMyRallyHomePrompt(id);
   
-  // Show R@lly Home opt-in dialog when user is on a LIVE event and hasn't decided yet
+  // Fallback reminder: Show R@lly Home opt-in dialog when user is on a LIVE event
+  // and hasn't decided yet (primary gating now happens at join time, this is a safety net)
   useEffect(() => {
+    // Only trigger for users who somehow bypassed the join-time flow
+    // (e.g., creators who auto-join, or users from older sessions)
     if (isLive && (isAttending || isCreator) && myPromptStatus.canPrompt) {
       const shownKey = `rally_home_prompt_${id}`;
       if (!sessionStorage.getItem(shownKey)) {
@@ -231,10 +240,42 @@ export default function EventDetail() {
   const handleJoin = async () => {
     if (!profile) return;
     try {
-      await joinEvent.mutateAsync({ eventId: event.id, profileId: profile.id });
-      toast.success("You're in! 🎉");
+      const result = await joinEvent.mutateAsync({ eventId: event.id, profileId: profile.id });
+      
+      // Check if successfully joined (attending status) - show safety choice modal
+      if (result?.status === 'attending') {
+        toast.success("You're in! 🎉");
+        // Show safety choice modal for new attendees (blocking flow)
+        setShowSafetyChoice(true);
+      } else if (result?.status === 'pending') {
+        // Pending approval - don't show safety modal yet
+        toast.success('Request sent! Waiting for host approval...');
+      }
     } catch (error: any) {
       toast.error(error.message || 'Failed to join event');
+    }
+  };
+
+  // Handler for safety choice: "I'm good" (self-transport)
+  const handleDoingItMyself = async () => {
+    if (!profile) return;
+    setSavingSafetyChoice(true);
+    try {
+      const { error } = await supabase
+        .from('event_attendees')
+        .update({ not_participating_rally_home_confirmed: true })
+        .eq('event_id', event.id)
+        .eq('profile_id', profile.id);
+      
+      if (error) throw error;
+      
+      toast.success('Got it! Have a great time 🎉');
+      queryClient.invalidateQueries({ queryKey: ['event', event.id] });
+      setShowSafetyChoice(false);
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to save preference');
+    } finally {
+      setSavingSafetyChoice(false);
     }
   };
 
@@ -900,6 +941,37 @@ export default function EventDetail() {
         eventId={event.id}
         open={showEndRallyDialog}
         onOpenChange={setShowEndRallyDialog}
+      />
+
+      {/* Entry Safety Choice Modal - Blocking flow on join */}
+      <SafetyChoiceModal
+        open={showSafetyChoice}
+        onOpenChange={setShowSafetyChoice}
+        isLoading={savingSafetyChoice}
+        onRallyGotMe={() => {
+          setShowSafetyChoice(false);
+          setShowRidesSelection(true);
+        }}
+        onDoingItMyself={handleDoingItMyself}
+      />
+
+      {/* Rides Selection Modal - Request ride or become DD */}
+      <RidesSelectionModal
+        open={showRidesSelection}
+        onOpenChange={setShowRidesSelection}
+        onBack={() => {
+          setShowRidesSelection(false);
+          setShowSafetyChoice(true);
+        }}
+        onComplete={() => {
+          setShowRidesSelection(false);
+          queryClient.invalidateQueries({ queryKey: ['event', event.id] });
+        }}
+        eventId={event.id}
+        eventTitle={event.title}
+        eventLocationName={event.location_name || undefined}
+        eventLocationLat={event.location_lat ?? undefined}
+        eventLocationLng={event.location_lng ?? undefined}
       />
     </div>
   );
