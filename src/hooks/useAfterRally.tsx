@@ -1,6 +1,31 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from './useAuth';
 
+/**
+ * Hook to get current user's After R@lly status for an event
+ */
+export function useMyAfterRallyStatus(eventId: string | undefined) {
+  const { profile } = useAuth();
+  
+  return useQuery({
+    queryKey: ['after-rally-status', eventId, profile?.id],
+    queryFn: async () => {
+      if (!eventId || !profile?.id) return null;
+      
+      const { data, error } = await supabase
+        .from('event_attendees')
+        .select('after_rally_opted_in, arrived_safely, dd_dropoff_confirmed_at')
+        .eq('event_id', eventId)
+        .eq('profile_id', profile.id)
+        .maybeSingle();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!eventId && !!profile?.id,
+  });
+}
 export function useStartRally() {
   const queryClient = useQueryClient();
 

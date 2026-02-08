@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Moon, Home, MapPin, PartyPopper } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -7,9 +8,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { useOptIntoAfterRally } from '@/hooks/useAfterRally';
+import { useOptIntoAfterRally, useMyAfterRallyStatus } from '@/hooks/useAfterRally';
 import { useAuth } from '@/hooks/useAuth';
-import { useMyRallyHomePrompt } from '@/hooks/useRallyHomePrompt';
 import { useEvent } from '@/hooks/useEvents';
 import { useAfterRallyTransition } from '@/hooks/useAfterRallyTransition';
 import { toast } from 'sonner';
@@ -31,13 +31,22 @@ export function AfterRallyOptInDialog({
 }: AfterRallyOptInDialogProps) {
   const { profile } = useAuth();
   const optIn = useOptIntoAfterRally();
-  const promptStatus = useMyRallyHomePrompt(eventId);
+  const { data: myStatus } = useMyAfterRallyStatus(eventId);
   const { data: event } = useEvent(eventId);
   const { playAcceptSound } = useAfterRallyTransition();
 
-  // Only show for undecided or those needing re-confirmation
-  // If already participating or arrived safely, don't show this dialog
-  const shouldShow = open && (promptStatus.isUndecided || promptStatus.needsReconfirmation);
+  // Show dialog if user hasn't opted in yet (regardless of R@lly Home status)
+  // Don't show if already opted in or already arrived safely
+  const hasOptedIn = myStatus?.after_rally_opted_in === true;
+  const hasArrivedSafely = myStatus?.arrived_safely === true || !!myStatus?.dd_dropoff_confirmed_at;
+  const shouldShow = open && !hasOptedIn && !hasArrivedSafely;
+
+  // Close dialog via useEffect to avoid setState during render
+  useEffect(() => {
+    if (open && !shouldShow) {
+      onOpenChange(false);
+    }
+  }, [open, shouldShow, onOpenChange]);
 
   const handleJoinAfterRally = async () => {
     if (!profile) return;
@@ -75,9 +84,8 @@ export function AfterRallyOptInDialog({
     }
   };
 
-  // If shouldn't show, close the dialog automatically
-  if (open && !shouldShow) {
-    onOpenChange(false);
+  // Don't render if shouldn't show
+  if (!shouldShow) {
     return null;
   }
 
