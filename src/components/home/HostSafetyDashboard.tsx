@@ -265,7 +265,7 @@ export function HostSafetyDashboard({ eventId, onCompleteRally }: HostSafetyDash
                         {attendee.profile?.display_name?.charAt(0)?.toUpperCase() || '?'}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="text-sm flex-1 truncate">{attendee.profile?.display_name}</span>
+                    <span className="text-sm flex-1 truncate text-primary font-medium">{attendee.profile?.display_name}</span>
                     <SafetyStateBadge state={state} />
                     {attendee.is_dd && (
                       <Badge variant="secondary" className="text-[10px] shrink-0">
