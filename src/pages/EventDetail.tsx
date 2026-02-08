@@ -176,19 +176,15 @@ export default function EventDetail() {
   const myPromptStatus = useMyRallyHomePrompt(id);
   
 
-  // Show After R@lly opt-in dialog when event transitions to after_rally
+  // Show After R@lly opt-in dialog when event is in after_rally status
   // Dialog shows on NORMAL screen - user must opt-in to see purple theme
+  // Always show if user hasn't opted in yet (no sessionStorage blocking)
   useEffect(() => {
-    if (isAfterRally && (isAttending || isCreator)) {
-      // Only show dialog if user hasn't already opted in
-      const shownKey = `after_rally_shown_${id}`;
-      
-      if (!sessionStorage.getItem(shownKey) && myAttendee?.after_rally_opted_in !== true) {
-        sessionStorage.setItem(shownKey, 'true');
-        setShowAfterRallyOptIn(true);
-      }
+    if (isAfterRally && (isAttending || isCreator) && myAttendee?.after_rally_opted_in !== true) {
+      // Only set once per page load to avoid infinite re-triggers
+      setShowAfterRallyOptIn(true);
     }
-  }, [isAfterRally, isAttending, isCreator, id, myAttendee?.after_rally_opted_in]);
+  }, [isAfterRally, isAttending, isCreator, myAttendee?.after_rally_opted_in]);
 
   // Trigger the rainbow transition ONLY when user opts in (not on event status change)
   // This creates the dramatic visual effect after they click "I'm In!"
