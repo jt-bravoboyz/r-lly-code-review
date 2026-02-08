@@ -151,7 +151,7 @@ export function AfterRallyOptInDialog({
             variant="outline"
             onClick={handleHeadHome}
             disabled={optIn.isPending}
-            className="w-full"
+            className="w-full ml-0.5"
           >
             <Home className="h-4 w-4 mr-2" />
             I'm Heading Home
