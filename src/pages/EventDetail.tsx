@@ -48,7 +48,6 @@ import { LocationMapPreview } from '@/components/location/LocationMapPreview';
 import { FirstTimeWelcomeDialog } from '@/components/events/FirstTimeWelcomeDialog';
 import { InviteToEventDialog } from '@/components/events/InviteToEventDialog';
 import { AfterRallyOptInDialog } from '@/components/events/AfterRallyOptInDialog';
-import { RallyHomeOptInDialog } from '@/components/events/RallyHomeOptInDialog';
 import { SafetyCloseoutDialog } from '@/components/events/SafetyCloseoutDialog';
 import { EndRallyDialog } from '@/components/events/EndRallyDialog';
 import { EditEventLocationDialog } from '@/components/events/EditEventLocationDialog';
@@ -80,7 +79,6 @@ export default function EventDetail() {
   const { triggerAfterRallyTransition } = useAfterRallyTransition();
   const [showFirstTimeWelcome, setShowFirstTimeWelcome] = useState(false);
   const [showAfterRallyOptIn, setShowAfterRallyOptIn] = useState(false);
-  const [showRallyHomeOptIn, setShowRallyHomeOptIn] = useState(false);
   const [showSafetyCloseout, setShowSafetyCloseout] = useState(false);
   const [isBarHopTransitionPoint, setIsBarHopTransitionPoint] = useState(false);
   const [showEndRallyDialog, setShowEndRallyDialog] = useState(false);
@@ -177,23 +175,6 @@ export default function EventDetail() {
   // R@lly Home prompt status for current user
   const myPromptStatus = useMyRallyHomePrompt(id);
   
-  // Fallback reminder: Show R@lly Home opt-in dialog when user is on a LIVE event
-  // and hasn't decided yet (primary gating now happens at join time, this is a safety net)
-  useEffect(() => {
-    // Only trigger for users who somehow bypassed the join-time flow
-    // (e.g., creators who auto-join, or users from older sessions)
-    if (isLive && (isAttending || isCreator) && myPromptStatus.canPrompt) {
-      const shownKey = `rally_home_prompt_${id}`;
-      if (!sessionStorage.getItem(shownKey)) {
-        sessionStorage.setItem(shownKey, 'true');
-        // Small delay to let page load first
-        const timer = setTimeout(() => {
-          setShowRallyHomeOptIn(true);
-        }, 800);
-        return () => clearTimeout(timer);
-      }
-    }
-  }, [isLive, isAttending, isCreator, id, myPromptStatus.canPrompt]);
 
   // Show After R@lly opt-in dialog when event transitions to after_rally
   // Dialog shows on NORMAL screen - user must opt-in to see purple theme
@@ -910,13 +891,6 @@ export default function EventDetail() {
         onHeadHome={handleHeadHomeFromAfterRally}
       />
 
-      {/* R@lly Home Opt-In Dialog - For live events */}
-      <RallyHomeOptInDialog
-        eventId={event.id}
-        eventTitle={event.title}
-        open={showRallyHomeOptIn}
-        onOpenChange={setShowRallyHomeOptIn}
-      />
 
       {/* Safety Closeout Dialog */}
       <SafetyCloseoutDialog
