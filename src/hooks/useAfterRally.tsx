@@ -122,7 +122,10 @@ export function useOptIntoAfterRally() {
       return data;
     },
     onSuccess: (_, variables) => {
+      // Invalidate all relevant queries so UI updates immediately
       queryClient.invalidateQueries({ queryKey: ['event', variables.eventId] });
+      queryClient.invalidateQueries({ queryKey: ['my-attendee', variables.eventId, variables.profileId] });
+      queryClient.invalidateQueries({ queryKey: ['after-rally-status', variables.eventId, variables.profileId] });
     }
   });
 }
