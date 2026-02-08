@@ -138,7 +138,7 @@ export function AfterRallyOptInDialog({
           </div>
         </div>
 
-        <DialogFooter className="flex-col gap-3 sm:flex-col items-stretch">
+        <DialogFooter className="flex flex-col gap-3 sm:flex-col sm:justify-start items-stretch sm:space-x-0">
           <Button
             onClick={handleJoinAfterRally}
             disabled={optIn.isPending}
