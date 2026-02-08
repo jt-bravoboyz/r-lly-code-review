@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Zap, ArrowRight, Plus, Bell, Sparkles, Clock, Calendar, History } from 'lucide-react';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { BottomNav } from '@/components/layout/BottomNav';
@@ -110,9 +111,12 @@ export default function Index() {
             {/* User avatar with ring */}
             <Link to="/profile" className="relative group">
               <div className="absolute inset-0 bg-white/30 rounded-full blur-sm scale-110" />
-              <div className="w-11 h-11 rounded-full bg-white flex items-center justify-center ring-2 ring-white/50 hover:ring-white transition-all relative shadow-lg">
-                <span className="text-sm font-bold text-primary">{userInitials}</span>
-              </div>
+              <Avatar className="h-11 w-11 ring-2 ring-white/50 hover:ring-white transition-all relative shadow-lg">
+                <AvatarImage src={profile?.avatar_url || undefined} />
+                <AvatarFallback className="text-sm font-bold bg-white text-primary">
+                  {userInitials}
+                </AvatarFallback>
+              </Avatar>
             </Link>
           </div>
         </div>
