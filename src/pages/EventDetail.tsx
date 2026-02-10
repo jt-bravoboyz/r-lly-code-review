@@ -441,6 +441,32 @@ export default function EventDetail() {
             </div>
           )}
 
+          {/* Co-hosts */}
+          {cohosts && cohosts.length > 0 && (
+            <div className="space-y-2 pt-1">
+              {cohosts.map((cohost) => (
+                <div key={cohost.id} className="flex items-center gap-3">
+                  <Avatar>
+                    <AvatarImage src={cohost.profile?.avatar_url || undefined} />
+                    <AvatarFallback>
+                      {cohost.profile?.display_name?.charAt(0)?.toUpperCase() || '?'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Co-Host</p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium">{cohost.profile?.display_name || 'Unknown'}</p>
+                      <Badge variant="outline" className="text-[10px]">
+                        <Crown className="h-2.5 w-2.5 mr-1" />
+                        Co-Host
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
           {/* Pending Join Requests - Only for hosts, right below host info */}
           {canManage && <PendingJoinRequests eventId={event.id} />}
 
