@@ -50,42 +50,55 @@ export function LocationSharingModal({
   const handleShareLocation = async () => {
     setIsLoading(true);
     try {
-      // Request browser geolocation permission
-      const result = await new Promise<GeolocationPosition | null>((resolve) => {
-        if (!navigator.geolocation) {
-          resolve(null);
-          return;
-        }
-        navigator.geolocation.getCurrentPosition(
-          (position) => resolve(position),
-          () => resolve(null), // Permission denied or error
-          { enableHighAccuracy: true, timeout: 10000 }
-        );
-      });
+      if (!navigator.geolocation) {
+        await markPromptShown(false);
+        toast.info("No worries—you can turn it on later in the Rally.", { icon: '📍' });
+        onComplete();
+        return;
+      }
 
-      if (result) {
-        // Permission granted - enable location sharing
+      // Check permission state first via Permissions API if available
+      let permissionGranted = false;
+
+      try {
+        // Try to get position - this triggers the browser permission prompt
+        await new Promise<void>((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(
+            () => { permissionGranted = true; resolve(); },
+            (err) => {
+              // PERMISSION_DENIED = 1, other codes mean permission was granted but position failed
+              if (err.code === 1) {
+                reject(err);
+              } else {
+                // Position unavailable or timeout - permission was still granted
+                permissionGranted = true;
+                resolve();
+              }
+            },
+            { enableHighAccuracy: true, timeout: 10000 }
+          );
+        });
+      } catch {
+        // Permission explicitly denied
+        permissionGranted = false;
+      }
+
+      if (permissionGranted) {
         await markPromptShown(true);
-        // Start location tracking so updates flow to Track tab
         startTracking(eventId);
         toast.success('Location sharing enabled! 📍', {
           description: 'Your squad can now see where you are.',
         });
       } else {
-        // Permission denied
         await markPromptShown(false);
-        toast.info("No worries—you can turn it on later in the Rally.", {
-          icon: '📍',
-        });
+        toast.info("No worries—you can turn it on later in the Rally.", { icon: '📍' });
       }
 
       onComplete();
     } catch (error) {
       console.error('Location permission error:', error);
       await markPromptShown(false);
-      toast.info("No worries—you can turn it on later in the Rally.", {
-        icon: '📍',
-      });
+      toast.info("No worries—you can turn it on later in the Rally.", { icon: '📍' });
       onComplete();
     } finally {
       setIsLoading(false);
