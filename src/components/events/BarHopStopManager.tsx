@@ -175,7 +175,7 @@ export function BarHopStopManager({ eventId, stops, canManage }: BarHopStopManag
         {canManage && (
           <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-2">
+              <Button size="sm" className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90">
                 <Plus className="h-4 w-4" />
                 Add Stop
               </Button>
