@@ -443,7 +443,7 @@ export const QuickRallyDialog = forwardRef<HTMLButtonElement, QuickRallyDialogPr
 
               <Button 
                 type="submit" 
-                className="w-full bg-secondary text-secondary-foreground hover:bg-secondary/90"
+                className="w-full gradient-primary text-primary-foreground hover:opacity-90"
                 disabled={createEvent.isPending || createInvites.isPending}
               >
                 {createEvent.isPending || createInvites.isPending ? 'Starting...' : (
