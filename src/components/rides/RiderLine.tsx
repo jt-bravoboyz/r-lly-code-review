@@ -80,73 +80,108 @@ export function RiderLine({ eventId }: RiderLineProps) {
     enabled: !!isDD && !!profile?.id,
   });
 
-  // Fetch all pending ride_passengers for this event (unassigned riders)
+  // Fetch all unassigned riders: both ride_passengers with pending status AND
+  // attendees who broadcast a ride need (needs_ride = true on event_attendees)
   const { data: unassignedRiders, isLoading } = useQuery({
     queryKey: ['unassigned-riders', eventId],
     queryFn: async () => {
-      // Get all rides for this event
+      const seen = new Set<string>();
+      const riders: (UnassignedRider & { riderLat: number | null; riderLng: number | null })[] = [];
+
+      // --- Source 1: ride_passengers with pending status ---
       const { data: eventRides } = await supabase
         .from('rides')
         .select('id, driver_id')
         .eq('event_id', eventId)
         .in('status', ['active', 'full', 'paused']);
 
-      if (!eventRides || eventRides.length === 0) return [];
+      if (eventRides && eventRides.length > 0) {
+        const rideIds = eventRides.map((r) => r.id);
+        const rideDriverMap = new Map(eventRides.map((r) => [r.id, r.driver_id]));
 
-      const rideIds = eventRides.map((r) => r.id);
-      const rideDriverMap = new Map(eventRides.map((r) => [r.id, r.driver_id]));
+        const { data: pendingPassengers } = await supabase
+          .from('ride_passengers')
+          .select(`
+            id, ride_id, status, pickup_location, pickup_lat, pickup_lng, requested_at,
+            passenger:profiles!ride_passengers_passenger_id_fkey(id, display_name, avatar_url)
+          `)
+          .in('ride_id', rideIds)
+          .eq('status', 'pending');
 
-      // Get pending passengers across all rides
-      const { data: pendingPassengers } = await supabase
-        .from('ride_passengers')
-        .select(`
-          id, ride_id, status, pickup_location, pickup_lat, pickup_lng, requested_at,
-          passenger:profiles!ride_passengers_passenger_id_fkey(id, display_name, avatar_url)
-        `)
-        .in('ride_id', rideIds)
-        .eq('status', 'pending');
+        if (pendingPassengers) {
+          const passengerIds = pendingPassengers.map((p) => (p.passenger as any)?.id).filter(Boolean);
+          const { data: riderLocations } = await supabase
+            .from('event_attendees')
+            .select('profile_id, current_lat, current_lng, share_location')
+            .eq('event_id', eventId)
+            .in('profile_id', passengerIds.length > 0 ? passengerIds : ['__none__']);
 
-      if (!pendingPassengers) return [];
+          const locationMap = new Map(
+            (riderLocations || []).map((l) => [l.profile_id, l])
+          );
 
-      // Also get riders' locations from event_attendees
-      const passengerIds = pendingPassengers.map((p) => (p.passenger as any)?.id).filter(Boolean);
-      const { data: riderLocations } = await supabase
+          for (const p of pendingPassengers) {
+            const passenger = p.passenger as any;
+            if (!passenger?.id || seen.has(passenger.id)) continue;
+            seen.add(passenger.id);
+
+            const loc = locationMap.get(passenger.id);
+            const riderLat = loc?.share_location ? loc.current_lat : null;
+            const riderLng = loc?.share_location ? loc.current_lng : null;
+
+            riders.push({
+              passengerId: passenger.id,
+              requestId: p.id,
+              rideId: p.ride_id,
+              displayName: passenger.display_name || 'Anonymous',
+              avatarUrl: passenger.avatar_url,
+              pickupLocation: p.pickup_location,
+              pickupLat: p.pickup_lat || riderLat,
+              pickupLng: p.pickup_lng || riderLng,
+              requestedDriverId: rideDriverMap.get(p.ride_id) || null,
+              requestedAt: p.requested_at,
+              riderLat,
+              riderLng,
+            });
+          }
+        }
+      }
+
+      // --- Source 2: attendees who broadcast needs_ride = true ---
+      const { data: broadcastRiders } = await supabase
         .from('event_attendees')
-        .select('profile_id, current_lat, current_lng, share_location')
+        .select(`
+          profile_id, current_lat, current_lng, share_location,
+          ride_pickup_location, ride_pickup_lat, ride_pickup_lng, ride_requested_at,
+          profile:profiles!event_attendees_profile_id_fkey(id, display_name, avatar_url)
+        `)
         .eq('event_id', eventId)
-        .in('profile_id', passengerIds);
+        .eq('needs_ride', true);
 
-      const locationMap = new Map(
-        (riderLocations || []).map((l) => [l.profile_id, l])
-      );
+      if (broadcastRiders) {
+        for (const br of broadcastRiders) {
+          const p = br.profile as any;
+          if (!p?.id || seen.has(p.id)) continue;
+          seen.add(p.id);
 
-      // Deduplicate by passenger (a rider might have requested multiple DDs)
-      const seen = new Set<string>();
-      const riders: (UnassignedRider & { riderLat: number | null; riderLng: number | null })[] = [];
+          const riderLat = br.share_location ? br.current_lat : null;
+          const riderLng = br.share_location ? br.current_lng : null;
 
-      for (const p of pendingPassengers) {
-        const passenger = p.passenger as any;
-        if (!passenger?.id || seen.has(passenger.id)) continue;
-        seen.add(passenger.id);
-
-        const loc = locationMap.get(passenger.id);
-        const riderLat = loc?.share_location ? loc.current_lat : null;
-        const riderLng = loc?.share_location ? loc.current_lng : null;
-
-        riders.push({
-          passengerId: passenger.id,
-          requestId: p.id,
-          rideId: p.ride_id,
-          displayName: passenger.display_name || 'Anonymous',
-          avatarUrl: passenger.avatar_url,
-          pickupLocation: p.pickup_location,
-          pickupLat: p.pickup_lat || riderLat,
-          pickupLng: p.pickup_lng || riderLng,
-          requestedDriverId: rideDriverMap.get(p.ride_id) || null,
-          requestedAt: p.requested_at,
-          riderLat,
-          riderLng,
-        });
+          riders.push({
+            passengerId: p.id,
+            requestId: '', // no ride_passenger row yet
+            rideId: '',
+            displayName: p.display_name || 'Anonymous',
+            avatarUrl: p.avatar_url,
+            pickupLocation: br.ride_pickup_location,
+            pickupLat: br.ride_pickup_lat || riderLat,
+            pickupLng: br.ride_pickup_lng || riderLng,
+            requestedDriverId: null,
+            requestedAt: br.ride_requested_at,
+            riderLat,
+            riderLng,
+          });
+        }
       }
 
       return riders;
@@ -216,18 +251,16 @@ export function RiderLine({ eventId }: RiderLineProps) {
 
     setPickingId(rider.passengerId);
     try {
-      // Check if the rider already requested THIS DD's ride
-      if (rider.rideId === myRide.id) {
-        // Accept the existing request
+      if (rider.rideId === myRide.id && rider.requestId) {
+        // Accept the existing request on this DD's ride
         const { error } = await supabase
           .from('ride_passengers')
           .update({ status: 'accepted' })
           .eq('id', rider.requestId)
           .eq('ride_id', myRide.id);
-
         if (error) throw error;
-      } else {
-        // Rider requested a different DD - add them to this DD's ride
+      } else if (rider.rideId && rider.requestId) {
+        // Rider requested a different DD - add to this DD's ride
         const { error: insertError } = await supabase
           .from('ride_passengers')
           .insert({
@@ -238,7 +271,6 @@ export function RiderLine({ eventId }: RiderLineProps) {
             pickup_lng: rider.pickupLng,
             status: 'accepted',
           });
-
         if (insertError) {
           if (insertError.code === '23505') {
             toast.info('Already picked by another DD.');
@@ -246,13 +278,38 @@ export function RiderLine({ eventId }: RiderLineProps) {
           }
           throw insertError;
         }
-
         // Decline the original request
         await supabase
           .from('ride_passengers')
           .update({ status: 'declined' })
           .eq('id', rider.requestId);
+      } else {
+        // Broadcast rider (needs_ride = true, no ride_passenger row yet)
+        const { error: insertError } = await supabase
+          .from('ride_passengers')
+          .insert({
+            ride_id: myRide.id,
+            passenger_id: rider.passengerId,
+            pickup_location: rider.pickupLocation,
+            pickup_lat: rider.pickupLat,
+            pickup_lng: rider.pickupLng,
+            status: 'accepted',
+          });
+        if (insertError) {
+          if (insertError.code === '23505') {
+            toast.info('Already picked by another DD.');
+            return;
+          }
+          throw insertError;
+        }
       }
+
+      // Clear the needs_ride flag since they've been picked
+      await supabase
+        .from('event_attendees')
+        .update({ needs_ride: false })
+        .eq('event_id', eventId)
+        .eq('profile_id', rider.passengerId);
 
       toast.success(`Picked up ${rider.displayName}! 🚗`);
       queryClient.invalidateQueries({ queryKey: ['rides'] });
