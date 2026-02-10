@@ -64,14 +64,33 @@ export function LiveTracking({ eventId, destination, isLive }: LiveTrackingProps
     return () => { cancelled = true; };
   }, [profile?.id, eventId]); // intentionally exclude deps that would cause loops
 
-  const startTracking = () => {
+  const startTracking = async () => {
     if (!navigator.geolocation) {
       toast.error('Geolocation is not supported by your browser');
       return;
     }
 
-    startLocationTracking(eventId);
-    toast.success('Location tracking started');
+    try {
+      await new Promise<void>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(
+          () => resolve(),
+          (err) => {
+            if (err.code === 1) reject(err);
+            else resolve();
+          },
+          { enableHighAccuracy: true, timeout: 10000 }
+        );
+      });
+      startLocationTracking(eventId);
+      toast.success('Location tracking started');
+    } catch {
+      toast.error("Location is off. Turn it on to let the squad keep tabs.", {
+        action: {
+          label: 'Try Again',
+          onClick: () => startTracking(),
+        },
+      });
+    }
   };
 
   const stopTracking = async () => {
