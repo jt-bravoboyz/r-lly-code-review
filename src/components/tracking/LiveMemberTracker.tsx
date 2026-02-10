@@ -62,13 +62,37 @@ export function LiveMemberTracker({ eventId, isLive }: LiveMemberTrackerProps) {
     return a.distance - b.distance;
   });
 
-  const handleToggleTracking = () => {
+  const handleToggleTracking = async () => {
     if (isTracking) {
       stopTracking();
       toast.success('Location sharing stopped');
     } else {
-      startTracking(eventId);
-      toast.success('Location sharing started');
+      // Check permission before starting
+      if (navigator.geolocation) {
+        try {
+          await new Promise<void>((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(
+              () => resolve(),
+              (err) => {
+                if (err.code === 1) reject(err);
+                else resolve(); // timeout/unavailable is fine
+              },
+              { enableHighAccuracy: true, timeout: 10000 }
+            );
+          });
+          startTracking(eventId);
+          toast.success('Location sharing started');
+        } catch {
+          toast.error("Location is off. Turn it on to let the squad keep tabs.", {
+            action: {
+              label: 'Try Again',
+              onClick: () => handleToggleTracking(),
+            },
+          });
+        }
+      } else {
+        toast.error('Geolocation is not supported by your browser');
+      }
     }
   };
 

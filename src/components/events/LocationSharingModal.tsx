@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MapPin, Shield, Loader2 } from 'lucide-react';
+import { MapPin, Shield, Loader2, Settings, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -29,6 +29,7 @@ export function LocationSharingModal({
   const { profile } = useAuth();
   const { startTracking } = useLocationContext();
   const [isLoading, setIsLoading] = useState(false);
+  const [denied, setDenied] = useState(false);
 
   const markPromptShown = async (shareLocation: boolean) => {
     if (!profile) return;
@@ -47,8 +48,9 @@ export function LocationSharingModal({
     }
   };
 
-  const handleShareLocation = async () => {
+  const requestPermissionAndStart = async () => {
     setIsLoading(true);
+    setDenied(false);
     try {
       if (!navigator.geolocation) {
         await markPromptShown(false);
@@ -57,20 +59,16 @@ export function LocationSharingModal({
         return;
       }
 
-      // Check permission state first via Permissions API if available
       let permissionGranted = false;
 
       try {
-        // Try to get position - this triggers the browser permission prompt
         await new Promise<void>((resolve, reject) => {
           navigator.geolocation.getCurrentPosition(
             () => { permissionGranted = true; resolve(); },
             (err) => {
-              // PERMISSION_DENIED = 1, other codes mean permission was granted but position failed
               if (err.code === 1) {
                 reject(err);
               } else {
-                // Position unavailable or timeout - permission was still granted
                 permissionGranted = true;
                 resolve();
               }
@@ -79,7 +77,6 @@ export function LocationSharingModal({
           );
         });
       } catch {
-        // Permission explicitly denied
         permissionGranted = false;
       }
 
@@ -89,17 +86,13 @@ export function LocationSharingModal({
         toast.success('Location sharing enabled! 📍', {
           description: 'Your squad can now see where you are.',
         });
+        onComplete();
       } else {
-        await markPromptShown(false);
-        toast.info("No worries—you can turn it on later in the Rally.", { icon: '📍' });
+        setDenied(true);
       }
-
-      onComplete();
     } catch (error) {
       console.error('Location permission error:', error);
-      await markPromptShown(false);
-      toast.info("No worries—you can turn it on later in the Rally.", { icon: '📍' });
-      onComplete();
+      setDenied(true);
     } finally {
       setIsLoading(false);
     }
@@ -113,6 +106,12 @@ export function LocationSharingModal({
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleOpenSettings = () => {
+    toast.info('Open your browser or device settings to allow location access for this site.', {
+      duration: 5000,
+    });
   };
 
   return (
@@ -134,37 +133,79 @@ export function LocationSharingModal({
             NO MAN LEFT BEHIND
           </DialogTitle>
           <DialogDescription className="text-base">
-            Share your live location to keep tabs on the squad—see where everyone's at and make sure nobody gets left behind.
+            {denied
+              ? "Location is off. Turn it on to let the squad keep tabs."
+              : "Share your live location to keep tabs on the squad—see where everyone's at and make sure nobody gets left behind."}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3 pt-4">
-          <Button
-            className="w-full h-12 text-base gradient-primary"
-            onClick={handleShareLocation}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Enabling...
-              </>
-            ) : (
-              <>
-                <MapPin className="h-4 w-4 mr-2" />
-                Share Location
-              </>
-            )}
-          </Button>
+          {denied ? (
+            <>
+              <Button
+                className="w-full h-12 text-base gradient-primary"
+                onClick={requestPermissionAndStart}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Checking...
+                  </>
+                ) : (
+                  <>
+                    <RotateCcw className="h-4 w-4 mr-2" />
+                    Try Again
+                  </>
+                )}
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={handleOpenSettings}
+              >
+                <Settings className="h-4 w-4 mr-2" />
+                Open Settings
+              </Button>
+              <Button
+                variant="ghost"
+                className="w-full"
+                onClick={handleNotNow}
+                disabled={isLoading}
+              >
+                Skip for Now
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                className="w-full h-12 text-base gradient-primary"
+                onClick={requestPermissionAndStart}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Enabling...
+                  </>
+                ) : (
+                  <>
+                    <MapPin className="h-4 w-4 mr-2" />
+                    Share Location
+                  </>
+                )}
+              </Button>
 
-          <Button
-            variant="ghost"
-            className="w-full"
-            onClick={handleNotNow}
-            disabled={isLoading}
-          >
-            Not Now
-          </Button>
+              <Button
+                variant="ghost"
+                className="w-full"
+                onClick={handleNotNow}
+                disabled={isLoading}
+              >
+                Not Now
+              </Button>
+            </>
+          )}
         </div>
       </DialogContent>
     </Dialog>

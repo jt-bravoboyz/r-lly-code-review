@@ -299,6 +299,16 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
     eventIdRef.current = eventId;
     setIsTracking(true);
 
+    // Also ensure DB flag is set immediately so Track tab can read it
+    supabase
+      .from('event_attendees')
+      .update({ share_location: true })
+      .eq('event_id', eventId)
+      .eq('profile_id', profile.id)
+      .then(({ error }) => {
+        if (error) console.error('Failed to set share_location flag:', error);
+      });
+
     const config = batteryOptimization.getOptimalConfig();
 
     const handlePositionUpdate = async (coords: {
@@ -384,7 +394,21 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
     };
 
     const handleError = (error: any) => {
-      console.error('Geolocation error:', error);
+      // Only treat PERMISSION_DENIED (code 1) as a hard failure
+      if (error?.code === 1) {
+        console.error('Geolocation permission denied');
+        setIsTracking(false);
+        eventIdRef.current = null;
+        // Revert the share_location flag since permission was denied
+        supabase
+          .from('event_attendees')
+          .update({ share_location: false })
+          .eq('event_id', eventId)
+          .eq('profile_id', profile.id);
+        return;
+      }
+      // For other errors (timeout, position unavailable), keep tracking active
+      console.warn('Geolocation error (non-fatal):', error?.code, error?.message);
       setSignalQuality('poor');
     };
 
@@ -439,7 +463,6 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
 
       watchIdRef.current = id;
     }
-    
     // Sync native geolocation position updates to our state
     // This effect is handled separately below
 
