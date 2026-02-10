@@ -246,21 +246,17 @@ function MessageBubble({ message, isOwn }: { message: Message; isOwn: boolean })
 
   return (
     <div className={`flex items-end gap-2 ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}>
-      {!isOwn && (
-        <Avatar className="h-8 w-8 shrink-0">
-          <AvatarImage src={message.sender?.avatar_url || undefined} />
-          <AvatarFallback className="bg-primary/20 text-primary text-xs font-bold">
-            {message.sender?.display_name?.charAt(0)?.toUpperCase() || '?'}
-          </AvatarFallback>
-        </Avatar>
-      )}
+      <Avatar className="h-8 w-8 shrink-0">
+        <AvatarImage src={message.sender?.avatar_url || undefined} />
+        <AvatarFallback className="bg-primary/20 text-primary text-xs font-bold">
+          {message.sender?.display_name?.charAt(0)?.toUpperCase() || '?'}
+        </AvatarFallback>
+      </Avatar>
       
       <div className={`max-w-[70%] ${isOwn ? 'items-end' : 'items-start'}`}>
-        {!isOwn && (
-          <p className="text-xs text-muted-foreground mb-1 px-2">
-            {message.sender?.display_name || 'Anonymous'}
-          </p>
-        )}
+        <p className={`text-xs text-muted-foreground mb-1 px-2 ${isOwn ? 'text-right' : 'text-left'}`}>
+          {message.sender?.display_name || 'Anonymous'}
+        </p>
         
         {/* Image message */}
         {message.image_url && (
