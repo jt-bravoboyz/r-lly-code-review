@@ -51,6 +51,7 @@ import { AfterRallyOptInDialog } from '@/components/events/AfterRallyOptInDialog
 import { SafetyCloseoutDialog } from '@/components/events/SafetyCloseoutDialog';
 import { EndRallyDialog } from '@/components/events/EndRallyDialog';
 import { EditEventLocationDialog } from '@/components/events/EditEventLocationDialog';
+import { LocationSharingModal } from '@/components/events/LocationSharingModal';
 import { SafetyChoiceModal } from '@/components/events/SafetyChoiceModal';
 import { RidesSelectionModal } from '@/components/events/RidesSelectionModal';
 import { AfterRallyCard } from '@/components/events/AfterRallyCard';
@@ -87,6 +88,7 @@ export default function EventDetail() {
   const [showSafetyChoice, setShowSafetyChoice] = useState(false);
   const [showRidesSelection, setShowRidesSelection] = useState(false);
   const [savingSafetyChoice, setSavingSafetyChoice] = useState(false);
+  const [showLocationSharingModal, setShowLocationSharingModal] = useState(false);
   const afterRallyTriggeredRef = useRef(false);
   const queryClient = useQueryClient();
   
@@ -273,6 +275,8 @@ export default function EventDetail() {
       toast.success('Got it! Have a great time 🎉');
       queryClient.invalidateQueries({ queryKey: ['event', event.id] });
       setShowSafetyChoice(false);
+      // Show location sharing prompt after safety choice
+      setShowLocationSharingModal(true);
     } catch (error: any) {
       toast.error(error.message || 'Failed to save preference');
     } finally {
@@ -949,6 +953,14 @@ export default function EventDetail() {
         eventLocationName={event.location_name || undefined}
         eventLocationLat={event.location_lat ?? undefined}
         eventLocationLng={event.location_lng ?? undefined}
+      />
+
+      {/* Location Sharing Modal - shows after "I'm good" safety choice */}
+      <LocationSharingModal
+        open={showLocationSharingModal}
+        onOpenChange={setShowLocationSharingModal}
+        eventId={event.id}
+        onComplete={() => setShowLocationSharingModal(false)}
       />
     </div>
   );
