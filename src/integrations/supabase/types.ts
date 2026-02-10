@@ -317,8 +317,13 @@ export type Database = {
           joined_at: string | null
           last_location_update: string | null
           location_prompt_shown: boolean | null
+          needs_ride: boolean | null
           not_participating_rally_home_confirmed: boolean | null
           profile_id: string
+          ride_pickup_lat: number | null
+          ride_pickup_lng: number | null
+          ride_pickup_location: string | null
+          ride_requested_at: string | null
           share_location: boolean | null
           status: string | null
         }
@@ -343,8 +348,13 @@ export type Database = {
           joined_at?: string | null
           last_location_update?: string | null
           location_prompt_shown?: boolean | null
+          needs_ride?: boolean | null
           not_participating_rally_home_confirmed?: boolean | null
           profile_id: string
+          ride_pickup_lat?: number | null
+          ride_pickup_lng?: number | null
+          ride_pickup_location?: string | null
+          ride_requested_at?: string | null
           share_location?: boolean | null
           status?: string | null
         }
@@ -369,8 +379,13 @@ export type Database = {
           joined_at?: string | null
           last_location_update?: string | null
           location_prompt_shown?: boolean | null
+          needs_ride?: boolean | null
           not_participating_rally_home_confirmed?: boolean | null
           profile_id?: string
+          ride_pickup_lat?: number | null
+          ride_pickup_lng?: number | null
+          ride_pickup_location?: string | null
+          ride_requested_at?: string | null
           share_location?: boolean | null
           status?: string | null
         }

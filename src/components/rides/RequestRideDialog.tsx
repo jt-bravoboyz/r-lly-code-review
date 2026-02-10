@@ -121,8 +121,22 @@ export function RequestRideDialog({ eventId, rideId, driverName, trigger, eventN
           console.error('Failed to send ride request notification:', notifError);
         }
         
+        // Persist the ride request on the attendee row so the Rider Line picks it up
+        await supabase
+          .from('event_attendees')
+          .update({
+            needs_ride: true,
+            ride_requested_at: new Date().toISOString(),
+            ride_pickup_location: data.pickup_location,
+            ride_pickup_lat: pickupCoords?.lat || null,
+            ride_pickup_lng: pickupCoords?.lng || null,
+          })
+          .eq('event_id', eventId)
+          .eq('profile_id', profile.id);
+
         toast.success('Ride request sent! A R@lly DD will pick you up soon.');
         queryClient.invalidateQueries({ queryKey: ['notifications'] });
+        queryClient.invalidateQueries({ queryKey: ['unassigned-riders', eventId] });
       }
       
       setOpen(false);
