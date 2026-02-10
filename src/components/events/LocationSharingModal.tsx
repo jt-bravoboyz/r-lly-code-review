@@ -9,6 +9,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { useAuth } from '@/hooks/useAuth';
+import { useLocationContext } from '@/contexts/LocationContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -26,6 +27,7 @@ export function LocationSharingModal({
   onComplete,
 }: LocationSharingModalProps) {
   const { profile } = useAuth();
+  const { startTracking } = useLocationContext();
   const [isLoading, setIsLoading] = useState(false);
 
   const markPromptShown = async (shareLocation: boolean) => {
@@ -64,6 +66,8 @@ export function LocationSharingModal({
       if (result) {
         // Permission granted - enable location sharing
         await markPromptShown(true);
+        // Start location tracking so updates flow to Track tab
+        startTracking(eventId);
         toast.success('Location sharing enabled! 📍', {
           description: 'Your squad can now see where you are.',
         });

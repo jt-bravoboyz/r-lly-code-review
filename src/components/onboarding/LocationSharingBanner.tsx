@@ -3,6 +3,7 @@ import { MapPin, Shield, Users, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useRallyOnboarding } from '@/contexts/RallyOnboardingContext';
 import { useLocation } from '@/hooks/useLocation';
+import { useLocationContext } from '@/contexts/LocationContext';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
@@ -11,6 +12,7 @@ import { toast } from 'sonner';
 export function LocationSharingBanner() {
   const { state, completeOnboarding } = useRallyOnboarding();
   const { getCurrentLocation } = useLocation();
+  const { startTracking } = useLocationContext();
   const { profile } = useAuth();
   const navigate = useNavigate();
   const [isExiting, setIsExiting] = useState(false);
@@ -38,6 +40,9 @@ export function LocationSharingBanner() {
         .eq('profile_id', profile.id);
       
       if (error) throw error;
+      
+      // Start location tracking so updates flow to Track tab
+      startTracking(state.eventId);
       
       toast.success('Location sharing enabled! 📍', {
         description: 'Your crew can now find you',

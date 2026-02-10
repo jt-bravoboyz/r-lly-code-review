@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Navigation, Users, Locate, Signal, SignalLow, SignalZero, Compass, Building2, TreePine, Wifi, ChevronDown, ChevronUp } from 'lucide-react';
 import { useLocationContext } from '@/contexts/LocationContext';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { MemberLocationCard } from './MemberLocationCard';
 import { AccuracyIndicator, EnvironmentBadge } from './AccuracyIndicator';
 import { PoorSignalAlert } from './PoorSignalAlert';
@@ -17,6 +19,7 @@ interface LiveMemberTrackerProps {
 
 export function LiveMemberTracker({ eventId, isLive }: LiveMemberTrackerProps) {
   const [showHistory, setShowHistory] = useState(false);
+  const { profile } = useAuth();
   
   const {
     currentPosition,
@@ -30,6 +33,27 @@ export function LiveMemberTracker({ eventId, isLive }: LiveMemberTrackerProps) {
     isWifiPositioningActive,
     accuracyHistory,
   } = useLocationContext();
+
+  // Auto-start tracking if user already has share_location enabled for this event
+  useEffect(() => {
+    if (!profile?.id || !eventId || isTracking) return;
+    
+    let cancelled = false;
+    
+    supabase
+      .from('event_attendees')
+      .select('share_location')
+      .eq('event_id', eventId)
+      .eq('profile_id', profile.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!cancelled && data?.share_location === true) {
+          startTracking(eventId);
+        }
+      });
+    
+    return () => { cancelled = true; };
+  }, [profile?.id, eventId]); // intentionally exclude isTracking/startTracking to avoid loops
 
   // Sort members by distance
   const sortedMembers = Array.from(memberLocations.values()).sort((a, b) => {
