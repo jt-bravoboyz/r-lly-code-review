@@ -43,6 +43,27 @@ export function LiveTracking({ eventId, destination, isLive }: LiveTrackingProps
     setIsTracking(isContextTracking);
   }, [isContextTracking]);
 
+  // Auto-start tracking if user already has share_location enabled for this event
+  useEffect(() => {
+    if (!profile?.id || !eventId || isContextTracking) return;
+    
+    let cancelled = false;
+    
+    supabase
+      .from('event_attendees')
+      .select('share_location')
+      .eq('event_id', eventId)
+      .eq('profile_id', profile.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!cancelled && data?.share_location === true) {
+          startLocationTracking(eventId);
+        }
+      });
+    
+    return () => { cancelled = true; };
+  }, [profile?.id, eventId]); // intentionally exclude deps that would cause loops
+
   const startTracking = () => {
     if (!navigator.geolocation) {
       toast.error('Geolocation is not supported by your browser');
