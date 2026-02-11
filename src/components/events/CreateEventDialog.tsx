@@ -296,26 +296,7 @@ export function CreateEventDialog() {
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="is_barhop"
-              render={({ field }) => (
-                <FormItem className="flex items-center justify-between rounded-lg border p-4">
-                  <div className="flex items-center gap-3">
-                    <Beer className="h-5 w-5 text-secondary" />
-                    <div>
-                      <FormLabel className="text-base">Bar Hop Mode</FormLabel>
-                      <p className="text-sm text-muted-foreground">
-                        Plan multiple stops for the night
-                      </p>
-                    </div>
-                  </div>
-                  <FormControl>
-                    <Switch checked={field.value} onCheckedChange={field.onChange} />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
+            {/* Bar Hop Mode removed from creation — now available only in After R@lly */}
 
             <Button 
               type="submit" 

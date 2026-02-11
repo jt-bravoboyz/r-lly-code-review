@@ -319,7 +319,7 @@ export default function EventDetail() {
                 alt={event.title}
                 className="object-cover w-full h-full"
               />
-              {event.is_barhop && (
+              {isAfterRally && event.is_barhop && (
                 <Badge className="absolute top-3 right-3 bg-secondary">
                   <Beer className="h-3 w-3 mr-1" /> Bar Hop
                 </Badge>
@@ -398,7 +398,7 @@ export default function EventDetail() {
           </div>
 
           {/* Location Map Preview - Show if event has coordinates */}
-          {event.location_lat && event.location_lng && !event.is_barhop && (
+          {event.location_lat && event.location_lng && !(isAfterRally && event.is_barhop) && (
             <LocationMapPreview
               lat={event.location_lat}
               lng={event.location_lng}
@@ -649,8 +649,8 @@ export default function EventDetail() {
           </TabsList>
 
           <TabsContent value="details" className="space-y-4 mt-4">
-            {/* Bar Hop Mode Toggle - Only for event managers */}
-            {canManage && (
+            {/* Bar Hop Mode Toggle - Only for event managers, only in After R@lly */}
+            {canManage && isAfterRally && (
               <Card className="border-secondary/50 bg-secondary/5">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
@@ -721,8 +721,8 @@ export default function EventDetail() {
               </Card>
             )}
 
-            {/* Bar Hop Stops - Show when bar hop mode is enabled */}
-            {event.is_barhop && (
+            {/* Bar Hop Stops - Show only in After R@lly when bar hop mode is enabled */}
+            {isAfterRally && event.is_barhop && (
               <>
                 {/* Bar Hop Controls - Host can move between stops */}
                 <BarHopControls
@@ -731,9 +731,7 @@ export default function EventDetail() {
                   canManage={canManage}
                   hostName={activeProfile?.display_name || 'Host'}
                   onTransitionPoint={() => {
-                    // Trigger re-confirmation prompts at bar hop transition points
                     setIsBarHopTransitionPoint(true);
-                    // Reset after a short delay to avoid repeat triggers
                     setTimeout(() => setIsBarHopTransitionPoint(false), 1000);
                   }}
                 />
@@ -747,8 +745,8 @@ export default function EventDetail() {
               </>
             )}
 
-            {/* Bar Hop Map - Show when stops have coordinates */}
-            {event.is_barhop && event.stops && event.stops.length > 0 && (
+            {/* Bar Hop Map - Show only in After R@lly when stops have coordinates */}
+            {isAfterRally && event.is_barhop && event.stops && event.stops.length > 0 && (
               <BarHopStopsMap 
                 stops={event.stops}
                 eventLocation={{
