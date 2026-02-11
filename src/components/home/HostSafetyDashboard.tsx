@@ -140,13 +140,13 @@ export function HostSafetyDashboard({
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 text-center cursor-help">
-                  <p className="text-2xl font-bold text-orange-600">{participating.length}</p>
-                  <p className="text-xs text-orange-700">Participating in R@lly Home</p>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-center cursor-help">
+                  <p className="text-2xl font-bold text-blue-600">{optedIn.length + undecided.length}</p>
+                  <p className="text-xs text-blue-700">Hasn't Left</p>
                 </div>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Attendees currently traveling home - waiting for arrival confirmation</p>
+                <p>Attendees participating in R@lly Home who haven't started heading home yet</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -154,13 +154,13 @@ export function HostSafetyDashboard({
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-center cursor-help">
-                  <p className="text-2xl font-bold text-amber-600">{undecided.length}</p>
-                  <p className="text-xs text-amber-700">Undecided</p>
+                <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 text-center cursor-help">
+                  <p className="text-2xl font-bold text-orange-600">{participating.length}</p>
+                  <p className="text-xs text-orange-700">OTW Home</p>
                 </div>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Attendees who haven't made a safety choice yet</p>
+                <p>Attendees currently on their way home - waiting for arrival confirmation</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
