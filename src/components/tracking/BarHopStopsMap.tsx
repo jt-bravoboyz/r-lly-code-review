@@ -96,12 +96,12 @@ export function BarHopStopsMap({ stops, eventLocation, currentStopIndex = 0 }: B
           .setLngLat([stop.lng!, stop.lat!])
           .addTo(map.current!);
 
-        // Add popup with sanitized content
-        const popup = new mapboxgl.Popup({ offset: 25 }).setHTML(`
-          <div class="p-2">
-            <p class="font-bold">Stop ${stop.stop_order}: ${escapedName}</p>
-            ${stop.address ? `<p class="text-sm text-gray-600">${escapedAddress}</p>` : ''}
-            ${stop.arrived_at ? '<p class="text-xs text-green-600 mt-1">✓ Visited</p>' : ''}
+        // Add popup with sanitized content - dark theme for After R@lly readability
+        const popup = new mapboxgl.Popup({ offset: 25, className: 'barhop-popup-dark' }).setHTML(`
+          <div style="background:#1e1b2e;color:#c4b5fd;padding:10px 14px;border-radius:8px;min-width:160px;">
+            <p style="font-weight:700;color:#d8b4fe;margin:0 0 4px;">Stop ${stop.stop_order}: ${escapedName}</p>
+            ${stop.address ? `<p style="font-size:13px;color:#a78bfa;margin:0 0 2px;">${escapedAddress}</p>` : ''}
+            ${stop.arrived_at ? '<p style="font-size:12px;color:#86efac;margin:4px 0 0;">✓ Visited</p>' : ''}
           </div>
         `);
         
