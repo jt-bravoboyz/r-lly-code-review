@@ -140,9 +140,9 @@ export function HostSafetyDashboard({
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-center cursor-help">
-                  <p className="text-2xl font-bold text-blue-600">{optedIn.length + undecided.length}</p>
-                  <p className="text-xs text-blue-700">Hasn't Left</p>
+                <div className="bg-secondary/10 border border-secondary/30 rounded-lg p-3 text-center cursor-help">
+                  <p className="text-2xl font-bold text-secondary">{optedIn.length + undecided.length}</p>
+                  <p className="text-xs text-secondary/80">Hasn't Left</p>
                 </div>
               </TooltipTrigger>
               <TooltipContent>
