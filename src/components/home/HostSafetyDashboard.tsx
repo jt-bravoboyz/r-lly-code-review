@@ -126,9 +126,9 @@ export function HostSafetyDashboard({
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-center cursor-help">
-                  <p className="text-2xl font-bold text-green-600">{arrivedSafely.length}</p>
-                  <p className="text-xs text-green-700">Arrived Safely</p>
+                <div className="bg-muted border border-green-500/30 rounded-lg p-3 text-center cursor-help">
+                  <p className="text-2xl font-bold text-green-500">{arrivedSafely.length}</p>
+                  <p className="text-xs text-green-600 dark:text-green-400">Arrived Safely</p>
                 </div>
               </TooltipTrigger>
               <TooltipContent>
@@ -140,7 +140,7 @@ export function HostSafetyDashboard({
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="bg-secondary/10 border border-secondary/30 rounded-lg p-3 text-center cursor-help">
+                <div className="bg-muted border border-secondary/30 rounded-lg p-3 text-center cursor-help">
                   <p className="text-2xl font-bold text-secondary">{optedIn.length + undecided.length}</p>
                   <p className="text-xs text-secondary/80">Hasn't Left</p>
                 </div>
@@ -154,9 +154,9 @@ export function HostSafetyDashboard({
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 text-center cursor-help">
-                  <p className="text-2xl font-bold text-orange-600">{participating.length}</p>
-                  <p className="text-xs text-orange-700">OTW Home</p>
+                <div className="bg-muted border border-orange-500/30 rounded-lg p-3 text-center cursor-help">
+                  <p className="text-2xl font-bold text-orange-500">{participating.length}</p>
+                  <p className="text-xs text-orange-600 dark:text-orange-400">OTW Home</p>
                 </div>
               </TooltipTrigger>
               <TooltipContent>
