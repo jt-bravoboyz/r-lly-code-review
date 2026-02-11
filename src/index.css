@@ -1418,3 +1418,17 @@
 .step-dot.completed {
   background: hsl(152 76% 45%);
 }
+
+/* After R@lly Bar Hop popup - dark theme override */
+.barhop-popup-dark .mapboxgl-popup-content {
+  background: #1e1b2e;
+  padding: 0;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+.barhop-popup-dark .mapboxgl-popup-tip {
+  border-top-color: #1e1b2e;
+}
+.barhop-popup-dark .mapboxgl-popup-close-button {
+  color: #c4b5fd;
+}
