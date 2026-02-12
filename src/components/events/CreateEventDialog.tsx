@@ -4,24 +4,24 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Calendar as CalendarIcon, Beer } from 'lucide-react';
+import { Plus, Calendar as CalendarIcon, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useCreateEvent, useJoinEvent } from '@/hooks/useEvents';
 import { useAuth } from '@/hooks/useAuth';
+import { useUploadRallyMedia } from '@/hooks/useRallyMedia';
 import { toast } from 'sonner';
 import { LocationSearch } from '@/components/location/LocationSearch';
 import { cn } from '@/lib/utils';
 import { EVENT_TYPES } from '@/lib/eventTypes';
 import { TimelineSlider } from '@/components/events/TimelineSlider';
-import { RallyMediaUpload } from '@/components/events/RallyMediaUpload';
+import { StagedMediaPicker, type StagedFile } from '@/components/events/StagedMediaPicker';
 
 const eventSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters'),
@@ -62,10 +62,12 @@ const timeOptions = generateTimeOptions();
 export function CreateEventDialog() {
   const [open, setOpen] = useState(false);
   const [datePickerOpen, setDatePickerOpen] = useState(false);
-  const [createdEventId, setCreatedEventId] = useState<string | null>(null);
+  const [stagedMedia, setStagedMedia] = useState<StagedFile[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
   const { profile } = useAuth();
   const createEvent = useCreateEvent();
   const joinEvent = useJoinEvent();
+  const uploadMedia = useUploadRallyMedia();
   const navigate = useNavigate();
 
   const form = useForm<EventFormData>({
@@ -91,7 +93,6 @@ export function CreateEventDialog() {
     }
 
     try {
-      // Combine date and time
       const [hours, minutes] = data.time.split(':').map(Number);
       const startTime = new Date(data.date);
       startTime.setHours(hours, minutes, 0, 0);
@@ -109,16 +110,46 @@ export function CreateEventDialog() {
         max_attendees: data.max_attendees ? parseInt(data.max_attendees) : null
       });
 
-      // Auto-join the creator to the event (same behavior as Quick R@lly)
       await joinEvent.mutateAsync({ eventId: result.id, profileId: profile.id });
 
-      console.log('[R@lly Debug] Create Event completed:', { 
-        event_id: result.id, 
-        creator_joined: true 
-      });
-      
+      // Upload staged media
+      if (stagedMedia.length > 0) {
+        setIsUploading(true);
+        const photos = stagedMedia.filter(f => f.type === 'photo');
+        const videos = stagedMedia.filter(f => f.type === 'video');
+        let failed = 0;
+
+        for (let i = 0; i < photos.length; i++) {
+          try {
+            await uploadMedia.mutateAsync({
+              eventId: result.id,
+              profileId: profile.id,
+              file: photos[i].file,
+              type: 'photo',
+              orderIndex: i,
+            });
+          } catch { failed++; }
+        }
+        for (const v of videos) {
+          try {
+            await uploadMedia.mutateAsync({
+              eventId: result.id,
+              profileId: profile.id,
+              file: v.file,
+              type: 'video',
+              orderIndex: 0,
+            });
+          } catch { failed++; }
+        }
+        setIsUploading(false);
+        if (failed > 0) toast.error(`${failed} file(s) failed to upload`);
+      }
+
       toast.success('Event created!');
-      setCreatedEventId(result.id);
+      setOpen(false);
+      setStagedMedia([]);
+      form.reset();
+      navigate(`/events/${result.id}`);
     } catch (error: any) {
       toast.error(error.message || 'Failed to create event');
     }
@@ -296,35 +327,24 @@ export function CreateEventDialog() {
 
             {/* Bar Hop Mode removed from creation — now available only in After R@lly */}
 
-            {!createdEventId && (
-              <Button 
-                type="submit" 
-                className="w-full gradient-primary"
-                disabled={createEvent.isPending || joinEvent.isPending}
-              >
-                {createEvent.isPending || joinEvent.isPending ? 'Creating...' : 'Create Event'}
-              </Button>
-            )}
+            {/* Staged media picker — files held locally until submit */}
+            <StagedMediaPicker stagedFiles={stagedMedia} onChange={setStagedMedia} />
+
+            <Button 
+              type="submit" 
+              className="w-full gradient-primary"
+              disabled={createEvent.isPending || joinEvent.isPending || isUploading}
+            >
+              {isUploading ? (
+                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Uploading Media...</>
+              ) : createEvent.isPending || joinEvent.isPending ? (
+                'Creating...'
+              ) : (
+                'Create Event'
+              )}
+            </Button>
           </form>
         </Form>
-
-        {/* Post-creation media upload step */}
-        {createdEventId && (
-          <div className="space-y-4 border-t pt-4">
-            <RallyMediaUpload eventId={createdEventId} />
-            <Button
-              className="w-full gradient-primary"
-              onClick={() => {
-                setOpen(false);
-                setCreatedEventId(null);
-                form.reset();
-                navigate(`/events/${createdEventId}`);
-              }}
-            >
-              Done — Go to Rally
-            </Button>
-          </div>
-        )}
       </DialogContent>
     </Dialog>
   );
