@@ -57,6 +57,7 @@ import { SafetyChoiceModal } from '@/components/events/SafetyChoiceModal';
 import { RidesSelectionModal } from '@/components/events/RidesSelectionModal';
 import { AfterRallyCard } from '@/components/events/AfterRallyCard';
 import { RallyMediaSection } from '@/components/events/RallyMediaSection';
+import { RallyHeroMediaCarousel } from '@/components/events/RallyHeroMediaCarousel';
 import { RallyCompleteOverlay } from '@/components/events/RallyCompleteOverlay';
 import { useMyRallyHomePrompt } from '@/hooks/useRallyHomePrompt';
 import { PendingJoinRequests } from '@/components/events/PendingJoinRequests';
@@ -316,25 +317,14 @@ export default function EventDetail() {
           </Link>
         </Button>
 
+        {/* Hero Media Carousel - above title */}
+        <RallyHeroMediaCarousel eventId={event.id} />
+
         {/* Live Updates Banner */}
         {updates.length > 0 && <LiveUpdates updates={updates} />}
 
         {/* Event Header */}
         <div className="space-y-4">
-          {event.image_url && (
-            <div className="aspect-video relative overflow-hidden rounded-lg bg-muted">
-              <img 
-                src={event.image_url} 
-                alt={event.title}
-                className="object-cover w-full h-full"
-              />
-              {isAfterRally && event.is_barhop && (
-                <Badge className="absolute top-3 right-3 bg-secondary">
-                  <Beer className="h-3 w-3 mr-1" /> Bar Hop
-                </Badge>
-              )}
-            </div>
-          )}
 
           <div className="flex items-start justify-between gap-4">
             <div>
