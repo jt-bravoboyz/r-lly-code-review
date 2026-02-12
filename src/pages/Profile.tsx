@@ -76,7 +76,7 @@ export default function Profile() {
 
   // Handle image selection from file input
   const handleImageSelected = (file: File) => {
-    if (!file.type.startsWith('image/')) {
+    if (!file.type.startsWith('image/') && !file.name.toLowerCase().endsWith('.heic') && !file.name.toLowerCase().endsWith('.heif')) {
       toast.error('Please select an image file');
       return;
     }
@@ -85,9 +85,22 @@ export default function Profile() {
       return;
     }
     
-    const imageUrl = URL.createObjectURL(file);
-    setSelectedImageSrc(imageUrl);
-    setCropperOpen(true);
+    // Use FileReader to convert to data URL for better mobile compatibility
+    // (handles HEIC and other formats that URL.createObjectURL may not render)
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target?.result as string;
+      if (dataUrl) {
+        setSelectedImageSrc(dataUrl);
+        setCropperOpen(true);
+      } else {
+        toast.error('Failed to read image file');
+      }
+    };
+    reader.onerror = () => {
+      toast.error('Failed to read image file');
+    };
+    reader.readAsDataURL(file);
   };
 
   // Handle cropped image upload
@@ -131,7 +144,6 @@ export default function Profile() {
     } finally {
       setUploadingAvatar(false);
       if (selectedImageSrc) {
-        URL.revokeObjectURL(selectedImageSrc);
         setSelectedImageSrc(null);
       }
     }
