@@ -20,9 +20,10 @@ interface EndRallyDialogProps {
   eventId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onCompleted?: () => void;
 }
 
-export function EndRallyDialog({ eventId, open, onOpenChange }: EndRallyDialogProps) {
+export function EndRallyDialog({ eventId, open, onOpenChange, onCompleted }: EndRallyDialogProps) {
   const endRally = useEndRally();
   const completeRally = useCompleteRally();
   const queryClient = useQueryClient();
@@ -65,8 +66,8 @@ export function EndRallyDialog({ eventId, open, onOpenChange }: EndRallyDialogPr
     setIsLoading(true);
     try {
       await completeRally.mutateAsync(eventId);
-      toast.success('R@lly completed! 🎉');
       onOpenChange(false);
+      onCompleted?.();
     } catch (error: any) {
       toast.error(error.message || 'Failed to complete R@lly');
     } finally {
