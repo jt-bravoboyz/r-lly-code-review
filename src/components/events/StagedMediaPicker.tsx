@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 
 const MAX_PHOTOS = 10;
 const MAX_PHOTO_SIZE = 10 * 1024 * 1024;
-const MAX_VIDEO_SIZE = 50 * 1024 * 1024;
+const MAX_VIDEO_SIZE = 500 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic'];
 const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/quicktime', 'video/webm'];
 
@@ -63,7 +63,7 @@ export function StagedMediaPicker({ stagedFiles, onChange }: StagedMediaPickerPr
       return;
     }
     if (file.size > MAX_VIDEO_SIZE) {
-      toast.error('Video too large (max 50MB)');
+      toast.error('Video too large (max 500MB)');
       return;
     }
 
