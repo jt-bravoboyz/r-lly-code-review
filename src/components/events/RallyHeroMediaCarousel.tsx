@@ -1,6 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { Play, X, Pencil, Trash2, GripVertical, ArrowUp, ArrowDown } from 'lucide-react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { useRallyMedia, useDeleteRallyMedia } from '@/hooks/useRallyMedia';
@@ -273,31 +272,29 @@ export function RallyHeroMediaCarousel({ eventId, canManage = false }: RallyHero
       </div>
 
       {/* Fullscreen viewer */}
-      <Dialog open={!!viewerUrl} onOpenChange={() => setViewerUrl(null)}>
-        <DialogContent
-          hideCloseButton
-          className="fixed inset-0 translate-x-0 translate-y-0 left-0 top-0 max-w-none w-full h-full p-0 bg-black border-0 rounded-none flex items-center justify-center"
-        >
+      {viewerUrl && (
+        <div className="fixed inset-0 z-[100] bg-black flex items-center justify-center" onClick={() => setViewerUrl(null)}>
           <button
             onClick={() => setViewerUrl(null)}
-            className="absolute top-4 right-4 z-50 bg-black/60 text-white rounded-full p-2 hover:bg-black/80 transition-colors"
+            className="absolute top-4 right-4 z-[101] bg-black/60 text-white rounded-full p-2 hover:bg-black/80 transition-colors"
           >
             <X className="h-5 w-5" />
           </button>
-          {viewerUrl && viewerType === 'photo' && (
-            <img src={viewerUrl} alt="" className="max-w-full max-h-full object-contain" />
+          {viewerType === 'photo' && (
+            <img src={viewerUrl} alt="" className="max-w-full max-h-full object-contain" onClick={e => e.stopPropagation()} />
           )}
-          {viewerUrl && viewerType === 'video' && (
+          {viewerType === 'video' && (
             <video
               src={viewerUrl}
               controls
               autoPlay
               playsInline
               className="max-w-full max-h-full object-contain"
+              onClick={e => e.stopPropagation()}
             />
           )}
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
     </>
   );
 }
