@@ -15,10 +15,13 @@ export function TierUpProvider({ children }: { children: ReactNode }) {
   const { triggerHaptic } = useHaptics();
 
   const handleTierUp = useCallback((data: TierUpData) => {
-    setTierUpData(data);
-    setShowTierUpModal(true);
-    // Haptic feedback on tier up
-    triggerHaptic('success');
+    // Guard: don't re-trigger if modal is already showing
+    setShowTierUpModal(prev => {
+      if (prev) return prev;
+      setTierUpData(data);
+      triggerHaptic('success');
+      return true;
+    });
   }, [triggerHaptic]);
 
   // Global listener for tier-up events
