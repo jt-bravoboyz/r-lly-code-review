@@ -60,7 +60,7 @@ const generateTimeOptions = () => {
 
 const timeOptions = generateTimeOptions();
 
-export function CreateEventDialog() {
+export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {}) {
   const [open, setOpen] = useState(false);
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [stagedMedia, setStagedMedia] = useState<StagedFile[]>([]);
@@ -173,10 +173,12 @@ export function CreateEventDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-white text-primary hover:bg-white/90 rounded-full shadow-md font-montserrat font-bold">
-          <Plus className="h-4 w-4 mr-2" />
-          Create R@lly
-        </Button>
+        {trigger || (
+          <Button className="bg-white text-primary hover:bg-white/90 rounded-full shadow-md font-montserrat font-bold">
+            <Plus className="h-4 w-4 mr-2" />
+            Create R@lly
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
