@@ -5,6 +5,7 @@ import { Share2, ChevronRight } from 'lucide-react';
 import { TierBadgeIcon } from './TierBadgeIcon';
 import { useConfetti } from '@/hooks/useConfetti';
 import { useMarkTierSeen, type TierUpData } from '@/hooks/useBadgeSystem';
+import { getTierQuote } from '@/lib/badges';
 import { cn } from '@/lib/utils';
 
 interface TierUpModalProps {
@@ -146,16 +147,16 @@ export function TierUpModal({ isOpen, onClose, tierUpData }: TierUpModalProps) {
             {tier.congrats_title}
           </h2>
 
-          {/* Congrats body */}
+          {/* Congrats body — rank catchphrase */}
           <p 
             className={cn(
-              "mt-3 text-center text-muted-foreground max-w-[280px] transition-all duration-500 delay-100",
+              "mt-3 text-center text-muted-foreground max-w-[280px] transition-all duration-500 delay-100 italic",
               stage === 'text' || stage === 'complete'
                 ? 'opacity-100 translate-y-0' 
                 : 'opacity-0 translate-y-4'
             )}
           >
-            {tier.congrats_body}
+            {getTierQuote(tier.tier_key) || tier.congrats_body}
           </p>
 
           {/* Points display */}
