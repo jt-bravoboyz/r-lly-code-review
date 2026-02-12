@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { Play, X, Pencil, Trash2, GripVertical, ArrowUp, ArrowDown } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
@@ -271,16 +272,16 @@ export function RallyHeroMediaCarousel({ eventId, canManage = false }: RallyHero
         )}
       </div>
 
-      {/* Fullscreen viewer */}
-      {viewerUrl && (
+      {/* Fullscreen viewer via portal */}
+      {viewerUrl && createPortal(
         <div
-          className="fixed inset-0 z-[9999] bg-black flex items-center justify-center"
-          style={{ top: 0, left: 0, right: 0, bottom: 0, position: 'fixed' }}
+          className="fixed inset-0 z-[99999] bg-black flex items-center justify-center"
+          style={{ top: 0, left: 0, right: 0, bottom: 0, width: '100vw', height: '100vh', position: 'fixed' }}
           onClick={() => setViewerUrl(null)}
         >
           <button
             onClick={(e) => { e.stopPropagation(); setViewerUrl(null); }}
-            className="absolute top-4 right-4 z-[10000] bg-white/20 text-white rounded-full p-2 hover:bg-white/40 transition-colors"
+            className="absolute top-4 right-4 z-[100000] bg-white/20 text-white rounded-full p-2 hover:bg-white/40 transition-colors"
           >
             <X className="h-6 w-6" />
           </button>
@@ -297,7 +298,8 @@ export function RallyHeroMediaCarousel({ eventId, canManage = false }: RallyHero
               onClick={e => e.stopPropagation()}
             />
           )}
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
