@@ -273,15 +273,19 @@ export function RallyHeroMediaCarousel({ eventId, canManage = false }: RallyHero
 
       {/* Fullscreen viewer */}
       {viewerUrl && (
-        <div className="fixed inset-0 z-[100] bg-black flex items-center justify-center" onClick={() => setViewerUrl(null)}>
+        <div
+          className="fixed inset-0 z-[9999] bg-black flex items-center justify-center"
+          style={{ top: 0, left: 0, right: 0, bottom: 0, position: 'fixed' }}
+          onClick={() => setViewerUrl(null)}
+        >
           <button
-            onClick={() => setViewerUrl(null)}
-            className="absolute top-4 right-4 z-[101] bg-black/60 text-white rounded-full p-2 hover:bg-black/80 transition-colors"
+            onClick={(e) => { e.stopPropagation(); setViewerUrl(null); }}
+            className="absolute top-4 right-4 z-[10000] bg-white/20 text-white rounded-full p-2 hover:bg-white/40 transition-colors"
           >
-            <X className="h-5 w-5" />
+            <X className="h-6 w-6" />
           </button>
           {viewerType === 'photo' && (
-            <img src={viewerUrl} alt="" className="max-w-full max-h-full object-contain" onClick={e => e.stopPropagation()} />
+            <img src={viewerUrl} alt="" className="w-full h-full object-contain" onClick={e => e.stopPropagation()} />
           )}
           {viewerType === 'video' && (
             <video
@@ -289,7 +293,7 @@ export function RallyHeroMediaCarousel({ eventId, canManage = false }: RallyHero
               controls
               autoPlay
               playsInline
-              className="max-w-full max-h-full object-contain"
+              className="w-full h-full object-contain"
               onClick={e => e.stopPropagation()}
             />
           )}
