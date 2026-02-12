@@ -147,6 +147,37 @@
     );
   }
 
+  /* Primary button gradient - Orange → deeper orange */
+  .btn-gradient-primary {
+    background: linear-gradient(180deg, hsl(22 90% 55%) 0%, hsl(18 92% 44%) 100%);
+  }
+
+  /* CTA gradient class used on primary action buttons */
+  .gradient-primary {
+    background: linear-gradient(180deg, hsl(22 90% 55%) 0%, hsl(18 92% 44%) 100%) !important;
+    box-shadow: 0 4px 14px hsl(22 90% 52% / 0.3);
+  }
+  .gradient-primary:hover {
+    filter: brightness(1.05);
+    box-shadow: 0 6px 20px hsl(22 90% 52% / 0.4);
+  }
+  .gradient-primary:active {
+    box-shadow: 0 2px 8px hsl(22 90% 52% / 0.2);
+  }
+
+  /* After Rally purple button gradient */
+  .gradient-after-rally {
+    background: linear-gradient(180deg, hsl(270 60% 55%) 0%, hsl(275 70% 40%) 100%);
+    box-shadow: 0 4px 14px hsl(270 60% 50% / 0.3);
+  }
+  .gradient-after-rally:hover {
+    filter: brightness(1.05);
+    box-shadow: 0 6px 20px hsl(270 60% 50% / 0.4);
+  }
+  .gradient-after-rally:active {
+    box-shadow: 0 2px 8px hsl(270 60% 50% / 0.2);
+  }
+
   /* Gradients */
   .gradient-rally {
     background: linear-gradient(135deg, hsl(27 100% 55%) 0%, hsl(35 100% 50%) 100%);
@@ -198,9 +229,7 @@
     background: linear-gradient(180deg, hsl(270 50% 22%) 0%, hsl(270 60% 10%) 100%);
   }
 
-  .gradient-after-rally {
-    background: linear-gradient(135deg, hsl(270 60% 50%) 0%, hsl(280 70% 40%) 100%);
-  }
+
 
   /* Cool purple glow effect */
   .after-rally-glow {
