@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Share2, ChevronRight } from 'lucide-react';
@@ -18,30 +18,37 @@ type AnimationStage = 'backdrop' | 'burst' | 'badge' | 'text' | 'complete';
 export function TierUpModal({ isOpen, onClose, tierUpData }: TierUpModalProps) {
   const [stage, setStage] = useState<AnimationStage>('backdrop');
   const { fireRallyConfetti } = useConfetti();
+  const confettiRef = useRef(fireRallyConfetti);
+  confettiRef.current = fireRallyConfetti;
   const markTierSeen = useMarkTierSeen();
+  const hasAnimatedRef = useRef(false);
 
-  // Animation sequence
+  // Animation sequence — runs exactly once per open
   useEffect(() => {
     if (!isOpen) {
       setStage('backdrop');
+      hasAnimatedRef.current = false;
       return;
     }
+
+    if (hasAnimatedRef.current) return;
+    hasAnimatedRef.current = true;
 
     const timers = [
       setTimeout(() => setStage('burst'), 200),
       setTimeout(() => setStage('badge'), 500),
       setTimeout(() => {
         setStage('text');
-        fireRallyConfetti();
+        confettiRef.current();
       }, 800),
       setTimeout(() => {
         setStage('complete');
-        fireRallyConfetti();
+        confettiRef.current();
       }, 1400),
     ];
 
     return () => timers.forEach(clearTimeout);
-  }, [isOpen, fireRallyConfetti]);
+  }, [isOpen]);
 
   const handleClose = async () => {
     if (tierUpData?.historyId) {
