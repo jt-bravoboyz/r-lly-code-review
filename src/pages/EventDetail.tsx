@@ -56,7 +56,6 @@ import { LocationSharingModal } from '@/components/events/LocationSharingModal';
 import { SafetyChoiceModal } from '@/components/events/SafetyChoiceModal';
 import { RidesSelectionModal } from '@/components/events/RidesSelectionModal';
 import { AfterRallyCard } from '@/components/events/AfterRallyCard';
-import { RallyMediaSection } from '@/components/events/RallyMediaSection';
 import { RallyHeroMediaCarousel } from '@/components/events/RallyHeroMediaCarousel';
 import { RallyCompleteOverlay } from '@/components/events/RallyCompleteOverlay';
 import { useMyRallyHomePrompt } from '@/hooks/useRallyHomePrompt';
@@ -318,7 +317,7 @@ export default function EventDetail() {
         </Button>
 
         {/* Hero Media Carousel - above title */}
-        <RallyHeroMediaCarousel eventId={event.id} />
+        <RallyHeroMediaCarousel eventId={event.id} canManage={canManage} />
 
         {/* Live Updates Banner */}
         {updates.length > 0 && <LiveUpdates updates={updates} />}
@@ -485,8 +484,6 @@ export default function EventDetail() {
           )}
         </div>
 
-        {/* Rally Media Section */}
-        <RallyMediaSection eventId={event.id} canManage={canManage} />
 
         {/* Host Rally Controls - Start/End Rally */}
         {canManage && isLiveEvent && !isAfterRally && (
