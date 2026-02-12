@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { EventCard } from '@/components/events/EventCard';
+import { CreateEventDialog } from '@/components/events/CreateEventDialog';
 import { PendingInvites } from '@/components/events/PendingInvites';
 import { PWAInstallPrompt } from '@/components/pwa/PWAInstallPrompt';
 import { QuickRallyDialog } from '@/components/events/QuickRallyDialog';
@@ -142,17 +143,19 @@ export default function Index() {
           
           {/* Quick action cards - Bold gradient style */}
           <div className="grid grid-cols-2 gap-4">
-            <Link to="/events">
-              <Card className="group bg-gradient-to-br from-white to-secondary/50 shadow-lg hover:shadow-xl rounded-2xl border-0 overflow-hidden transition-all duration-300 hover:scale-[1.02]">
-                <CardContent className="p-6 flex flex-col items-center justify-center text-center gap-4 relative">
-                  <div className="absolute top-0 right-0 w-20 h-20 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform shadow-inner">
-                    <Plus className="h-7 w-7 text-primary" strokeWidth={2.5} />
-                  </div>
-                  <span className="font-bold text-base text-foreground font-montserrat">Create Event</span>
-                </CardContent>
-              </Card>
-            </Link>
+            <CreateEventDialog
+              trigger={
+                <Card className="group bg-gradient-to-br from-white to-secondary/50 shadow-lg hover:shadow-xl rounded-2xl border-0 overflow-hidden transition-all duration-300 hover:scale-[1.02] cursor-pointer">
+                  <CardContent className="p-6 flex flex-col items-center justify-center text-center gap-4 relative">
+                    <div className="absolute top-0 right-0 w-20 h-20 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform shadow-inner">
+                      <Plus className="h-7 w-7 text-primary" strokeWidth={2.5} />
+                    </div>
+                    <span className="font-bold text-base text-foreground font-montserrat">Create Event</span>
+                  </CardContent>
+                </Card>
+              }
+            />
             
             <QuickRallyDialog 
               trigger={
