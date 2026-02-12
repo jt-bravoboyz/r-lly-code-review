@@ -21,6 +21,7 @@ import { LocationSearch } from '@/components/location/LocationSearch';
 import { cn } from '@/lib/utils';
 import { EVENT_TYPES } from '@/lib/eventTypes';
 import { TimelineSlider } from '@/components/events/TimelineSlider';
+import { RallyMediaUpload } from '@/components/events/RallyMediaUpload';
 
 const eventSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters'),
@@ -61,6 +62,7 @@ const timeOptions = generateTimeOptions();
 export function CreateEventDialog() {
   const [open, setOpen] = useState(false);
   const [datePickerOpen, setDatePickerOpen] = useState(false);
+  const [createdEventId, setCreatedEventId] = useState<string | null>(null);
   const { profile } = useAuth();
   const createEvent = useCreateEvent();
   const joinEvent = useJoinEvent();
@@ -116,11 +118,7 @@ export function CreateEventDialog() {
       });
       
       toast.success('Event created!');
-      setOpen(false);
-      form.reset();
-      
-      // Navigate to the new event (same behavior as Quick R@lly)
-      navigate(`/events/${result.id}`);
+      setCreatedEventId(result.id);
     } catch (error: any) {
       toast.error(error.message || 'Failed to create event');
     }
@@ -298,15 +296,35 @@ export function CreateEventDialog() {
 
             {/* Bar Hop Mode removed from creation — now available only in After R@lly */}
 
-            <Button 
-              type="submit" 
-              className="w-full gradient-primary"
-              disabled={createEvent.isPending || joinEvent.isPending}
-            >
-              {createEvent.isPending || joinEvent.isPending ? 'Creating...' : 'Create Event'}
-            </Button>
+            {!createdEventId && (
+              <Button 
+                type="submit" 
+                className="w-full gradient-primary"
+                disabled={createEvent.isPending || joinEvent.isPending}
+              >
+                {createEvent.isPending || joinEvent.isPending ? 'Creating...' : 'Create Event'}
+              </Button>
+            )}
           </form>
         </Form>
+
+        {/* Post-creation media upload step */}
+        {createdEventId && (
+          <div className="space-y-4 border-t pt-4">
+            <RallyMediaUpload eventId={createdEventId} />
+            <Button
+              className="w-full gradient-primary"
+              onClick={() => {
+                setOpen(false);
+                setCreatedEventId(null);
+                form.reset();
+                navigate(`/events/${createdEventId}`);
+              }}
+            >
+              Done — Go to Rally
+            </Button>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

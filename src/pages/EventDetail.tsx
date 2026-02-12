@@ -56,6 +56,7 @@ import { LocationSharingModal } from '@/components/events/LocationSharingModal';
 import { SafetyChoiceModal } from '@/components/events/SafetyChoiceModal';
 import { RidesSelectionModal } from '@/components/events/RidesSelectionModal';
 import { AfterRallyCard } from '@/components/events/AfterRallyCard';
+import { RallyMediaSection } from '@/components/events/RallyMediaSection';
 import { useMyRallyHomePrompt } from '@/hooks/useRallyHomePrompt';
 import { PendingJoinRequests } from '@/components/events/PendingJoinRequests';
 import { supabase } from '@/integrations/supabase/client';
@@ -485,6 +486,9 @@ export default function EventDetail() {
             </div>
           )}
         </div>
+
+        {/* Rally Media Section */}
+        <RallyMediaSection eventId={event.id} canManage={canManage} />
 
         {/* Host Rally Controls - Start/End Rally */}
         {canManage && isLiveEvent && !isAfterRally && (
