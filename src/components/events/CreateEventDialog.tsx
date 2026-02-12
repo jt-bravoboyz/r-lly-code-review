@@ -175,7 +175,7 @@ export function CreateEventDialog() {
       <DialogTrigger asChild>
         <Button className="bg-white text-primary hover:bg-white/90 rounded-full shadow-md font-montserrat font-bold">
           <Plus className="h-4 w-4 mr-2" />
-          Create
+          Create R@lly
         </Button>
       </DialogTrigger>
       <DialogContent className="max-h-[90vh] overflow-y-auto">
