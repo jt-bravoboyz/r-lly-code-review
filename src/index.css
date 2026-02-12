@@ -150,12 +150,14 @@
   /* Primary button gradient - Orange → deeper orange */
   .btn-gradient-primary {
     background: linear-gradient(180deg, hsl(22 90% 55%) 0%, hsl(18 92% 44%) 100%);
+    color: #FFFFFF !important;
   }
 
   /* CTA gradient class used on primary action buttons */
   .gradient-primary {
     background: linear-gradient(180deg, hsl(22 90% 55%) 0%, hsl(18 92% 44%) 100%) !important;
     box-shadow: 0 4px 14px hsl(22 90% 52% / 0.3);
+    color: #FFFFFF !important;
   }
   .gradient-primary:hover {
     filter: brightness(1.05);
