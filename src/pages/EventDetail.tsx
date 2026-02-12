@@ -576,8 +576,8 @@ export default function EventDetail() {
                 <Card className="bg-gradient-to-r from-primary to-primary/85 border-0 shadow-lg cursor-pointer hover:shadow-xl transition-shadow">
                   <CardContent className="p-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full bg-primary-foreground/20 flex items-center justify-center">
-                        <Home className="h-6 w-6 text-primary-foreground" />
+                      <div className={`w-12 h-12 rounded-full bg-primary-foreground/20 flex items-center justify-center ${showAfterRallyTheme ? 'shadow-[0_0_14px_rgba(255,255,255,0.5)] animate-[home-glow_3s_ease-in-out_infinite]' : ''}`}>
+                        <Home className={`h-6 w-6 ${showAfterRallyTheme ? 'text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.7)]' : 'text-primary-foreground'}`} />
                       </div>
                       <div>
                         <h3 className="font-bold text-primary-foreground text-lg font-montserrat">R@lly Home</h3>
