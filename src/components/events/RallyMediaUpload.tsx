@@ -1,9 +1,10 @@
-import { useState, useRef } from 'react';
-import { ImagePlus, Video, X, Loader2 } from 'lucide-react';
+import { useState, useRef, useCallback } from 'react';
+import { ImagePlus, Video, X, Loader2, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useUploadRallyMedia, useRallyMedia, useDeleteRallyMedia } from '@/hooks/useRallyMedia';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { Progress } from '@/components/ui/progress';
 
 const MAX_PHOTOS = 10;
 const MAX_PHOTO_SIZE = 10 * 1024 * 1024; // 10MB
@@ -23,6 +24,9 @@ export function RallyMediaUpload({ eventId }: RallyMediaUploadProps) {
   const photoInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState('');
+  const [uploadPercent, setUploadPercent] = useState(0);
+  const [failedFiles, setFailedFiles] = useState<{ file: File; type: 'photo' | 'video'; orderIndex: number }[]>([]);
 
   const photos = existingMedia?.filter(m => m.type === 'photo') || [];
   const video = existingMedia?.find(m => m.type === 'video');
@@ -49,21 +53,29 @@ export function RallyMediaUpload({ eventId }: RallyMediaUploadProps) {
     }
 
     setUploading(true);
+    const failed: typeof failedFiles = [];
     try {
       for (let i = 0; i < files.length; i++) {
-        await uploadMedia.mutateAsync({
-          eventId,
-          profileId: profile.id,
-          file: files[i],
-          type: 'photo',
-          orderIndex: photos.length + i,
-        });
+        setUploadStatus(`Uploading photo ${i + 1} of ${files.length}…`);
+        setUploadPercent(0);
+        try {
+          await uploadMedia.mutateAsync({
+            eventId,
+            profileId: profile.id,
+            file: files[i],
+            type: 'photo',
+            orderIndex: photos.length + i,
+            onUploadProgress: (p) => setUploadPercent(Math.round((p.loaded / p.total) * 100)),
+          });
+        } catch { failed.push({ file: files[i], type: 'photo', orderIndex: photos.length + i }); }
       }
-      toast.success(`${files.length} photo${files.length > 1 ? 's' : ''} uploaded`);
-    } catch (err: any) {
-      toast.error(err.message || 'Upload failed');
+      if (failed.length === 0) toast.success(`${files.length} photo${files.length > 1 ? 's' : ''} uploaded`);
+      else toast.error(`${failed.length} photo(s) failed to upload`);
     } finally {
       setUploading(false);
+      setUploadStatus('');
+      setUploadPercent(0);
+      setFailedFiles(prev => [...prev, ...failed]);
       if (photoInputRef.current) photoInputRef.current.value = '';
     }
   };
@@ -82,8 +94,9 @@ export function RallyMediaUpload({ eventId }: RallyMediaUploadProps) {
     }
 
     setUploading(true);
+    setUploadStatus('Uploading video…');
+    setUploadPercent(0);
     try {
-      // Remove existing video first
       if (video) {
         await deleteMedia.mutateAsync({ mediaId: video.id, eventId });
       }
@@ -93,12 +106,16 @@ export function RallyMediaUpload({ eventId }: RallyMediaUploadProps) {
         file,
         type: 'video',
         orderIndex: 0,
+        onUploadProgress: (p) => setUploadPercent(Math.round((p.loaded / p.total) * 100)),
       });
       toast.success('Video uploaded');
     } catch (err: any) {
       toast.error(err.message || 'Upload failed');
+      setFailedFiles(prev => [...prev, { file, type: 'video', orderIndex: 0 }]);
     } finally {
       setUploading(false);
+      setUploadStatus('');
+      setUploadPercent(0);
       if (videoInputRef.current) videoInputRef.current.value = '';
     }
   };
@@ -148,6 +165,51 @@ export function RallyMediaUpload({ eventId }: RallyMediaUploadProps) {
             <Video className="h-8 w-8 text-white/80" />
           </div>
         </div>
+      )}
+
+      {/* Upload progress */}
+      {uploading && (
+        <div className="space-y-2">
+          <p className="text-sm text-muted-foreground font-medium">{uploadStatus}</p>
+          <Progress value={uploadPercent} className="h-2" />
+        </div>
+      )}
+
+      {/* Retry failed uploads */}
+      {failedFiles.length > 0 && !uploading && (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={async () => {
+            if (!profile) return;
+            setUploading(true);
+            const stillFailed: typeof failedFiles = [];
+            for (let i = 0; i < failedFiles.length; i++) {
+              const f = failedFiles[i];
+              setUploadStatus(`Retrying ${f.type} ${i + 1} of ${failedFiles.length}…`);
+              setUploadPercent(0);
+              try {
+                await uploadMedia.mutateAsync({
+                  eventId,
+                  profileId: profile.id,
+                  file: f.file,
+                  type: f.type,
+                  orderIndex: f.orderIndex,
+                  onUploadProgress: (p) => setUploadPercent(Math.round((p.loaded / p.total) * 100)),
+                });
+              } catch { stillFailed.push(f); }
+            }
+            setUploading(false);
+            setUploadStatus('');
+            setUploadPercent(0);
+            setFailedFiles(stillFailed);
+            if (stillFailed.length > 0) toast.error(`${stillFailed.length} file(s) still failed`);
+            else toast.success('All files uploaded!');
+          }}
+        >
+          <RotateCcw className="h-4 w-4 mr-1" /> Retry {failedFiles.length} failed
+        </Button>
       )}
 
       {/* Upload buttons */}

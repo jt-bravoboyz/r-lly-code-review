@@ -40,19 +40,21 @@ export function useUploadRallyMedia() {
       file,
       type,
       orderIndex,
+      onUploadProgress,
     }: {
       eventId: string;
       profileId: string;
       file: File;
       type: 'photo' | 'video';
       orderIndex: number;
+      onUploadProgress?: (progress: { loaded: number; total: number }) => void;
     }) => {
       const ext = file.name.split('.').pop() || (type === 'video' ? 'mp4' : 'jpg');
       const filePath = `${eventId}/${crypto.randomUUID()}.${ext}`;
 
       const { error: uploadError } = await supabase.storage
         .from('rally-media')
-        .upload(filePath, file, { upsert: false });
+        .upload(filePath, file, { upsert: false, ...(onUploadProgress ? { onUploadProgress } : {}) });
       if (uploadError) throw uploadError;
 
       const { data: urlData } = supabase.storage
