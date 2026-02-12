@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
-import { useParams, Navigate, Link } from 'react-router-dom';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { useParams, Navigate, Link, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getEventTypeLabel } from '@/lib/eventTypes';
 import { ArrowLeft, Calendar, MapPin, Users, Beer, Check, X, MessageCircle, Navigation, Home, Plus, Zap, Crown, UserPlus, Car, Play, Moon, PartyPopper } from 'lucide-react';
@@ -57,6 +57,7 @@ import { SafetyChoiceModal } from '@/components/events/SafetyChoiceModal';
 import { RidesSelectionModal } from '@/components/events/RidesSelectionModal';
 import { AfterRallyCard } from '@/components/events/AfterRallyCard';
 import { RallyMediaSection } from '@/components/events/RallyMediaSection';
+import { RallyCompleteOverlay } from '@/components/events/RallyCompleteOverlay';
 import { useMyRallyHomePrompt } from '@/hooks/useRallyHomePrompt';
 import { PendingJoinRequests } from '@/components/events/PendingJoinRequests';
 import { supabase } from '@/integrations/supabase/client';
@@ -93,6 +94,13 @@ export default function EventDetail() {
   const [showLocationSharingModal, setShowLocationSharingModal] = useState(false);
   const afterRallyTriggeredRef = useRef(false);
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const [showRallyComplete, setShowRallyComplete] = useState(false);
+
+  const handleRallyCompleteDone = useCallback(() => {
+    setShowRallyComplete(false);
+    navigate('/', { replace: true });
+  }, [navigate]);
   
   // Query user's personal After R@lly opt-in status AND safety choice status
   const { data: myAttendee, refetch: refetchMyAttendee } = useQuery({
@@ -619,7 +627,7 @@ export default function EventDetail() {
             onCompleteRally={async () => {
               try {
                 await completeRally.mutateAsync(event.id);
-                toast.success('R@lly completed! 🎉 Everyone made it home safely.');
+                setShowRallyComplete(true);
               } catch (error: any) {
                 toast.error(error.message || 'Failed to complete rally');
               }
@@ -932,8 +940,8 @@ export default function EventDetail() {
         onConfirm={async () => {
           try {
             await completeRally.mutateAsync(event.id);
-            toast.success('R@lly completed! 🎉 Everyone made it home safely.');
             setShowSafetyCloseout(false);
+            setShowRallyComplete(true);
           } catch (error: any) {
             toast.error(error.message || 'Failed to complete rally');
           }
@@ -954,6 +962,7 @@ export default function EventDetail() {
         eventId={event.id}
         open={showEndRallyDialog}
         onOpenChange={setShowEndRallyDialog}
+        onCompleted={() => setShowRallyComplete(true)}
       />
 
       {/* Entry Safety Choice Modal - Blocking flow on join */}
@@ -993,6 +1002,12 @@ export default function EventDetail() {
         onOpenChange={setShowLocationSharingModal}
         eventId={event.id}
         onComplete={() => setShowLocationSharingModal(false)}
+      />
+
+      {/* Rally Complete Celebration Overlay */}
+      <RallyCompleteOverlay
+        show={showRallyComplete}
+        onDone={handleRallyCompleteDone}
       />
     </div>
   );
