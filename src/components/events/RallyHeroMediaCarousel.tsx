@@ -274,15 +274,18 @@ export function RallyHeroMediaCarousel({ eventId, canManage = false }: RallyHero
 
       {/* Fullscreen viewer */}
       <Dialog open={!!viewerUrl} onOpenChange={() => setViewerUrl(null)}>
-        <DialogContent hideCloseButton className="max-w-[95vw] max-h-[95vh] p-0 bg-black border-0 overflow-hidden">
+        <DialogContent
+          hideCloseButton
+          className="fixed inset-0 translate-x-0 translate-y-0 left-0 top-0 max-w-none w-full h-full p-0 bg-black border-0 rounded-none flex items-center justify-center"
+        >
           <button
             onClick={() => setViewerUrl(null)}
-            className="absolute top-3 right-3 z-50 bg-black/60 text-white rounded-full p-2 hover:bg-black/80 transition-colors"
+            className="absolute top-4 right-4 z-50 bg-black/60 text-white rounded-full p-2 hover:bg-black/80 transition-colors"
           >
             <X className="h-5 w-5" />
           </button>
           {viewerUrl && viewerType === 'photo' && (
-            <img src={viewerUrl} alt="" className="w-full h-full object-contain max-h-[90vh]" />
+            <img src={viewerUrl} alt="" className="max-w-full max-h-full object-contain" />
           )}
           {viewerUrl && viewerType === 'video' && (
             <video
@@ -290,7 +293,7 @@ export function RallyHeroMediaCarousel({ eventId, canManage = false }: RallyHero
               controls
               autoPlay
               playsInline
-              className="w-full h-full object-contain max-h-[90vh]"
+              className="max-w-full max-h-full object-contain"
             />
           )}
         </DialogContent>
