@@ -52,12 +52,9 @@ export function AttendeeLocationItem({
         </div>
       </div>
       <div className="flex items-center gap-2 shrink-0">
-        <div className="flex flex-col items-start">
-          <span className="text-[9px] text-muted-foreground leading-tight mb-0.5">Last Updated</span>
-          <Badge variant="outline" className="text-[10px] bg-green-100 text-green-700 border-green-200">
-            {getTimeSinceUpdate()}
-          </Badge>
-        </div>
+        <Badge variant="outline" className="text-[10px] bg-green-100 text-green-700 border-green-200">
+          {getTimeSinceUpdate()}
+        </Badge>
         {lat && lng && (
           <a
             href={`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`}
