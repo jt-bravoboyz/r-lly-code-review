@@ -9,7 +9,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useEndRally, useCompleteRally } from '@/hooks/useAfterRally';
 import { supabase } from '@/integrations/supabase/client';
@@ -37,7 +36,6 @@ export function EndRallyDialog({ eventId, open, onOpenChange, onCompleted }: End
     lng: number;
     place_id?: string;
   } | null>(null);
-  const [spotLabel, setSpotLabel] = useState('');
   const [showLocationError, setShowLocationError] = useState(false);
 
   const handleAfterRally = async () => {
@@ -48,7 +46,7 @@ export function EndRallyDialog({ eventId, open, onOpenChange, onCompleted }: End
 
     setIsLoading(true);
     try {
-      const displayName = spotLabel.trim() || selectedLocation.name;
+      const displayName = selectedLocation.name;
 
       const { error: updateError } = await supabase
         .from('events')
@@ -91,7 +89,6 @@ export function EndRallyDialog({ eventId, open, onOpenChange, onCompleted }: End
   const resetForm = () => {
     setLocationSearchValue('');
     setSelectedLocation(null);
-    setSpotLabel('');
     setShowLocationError(false);
   };
 
@@ -111,7 +108,7 @@ export function EndRallyDialog({ eventId, open, onOpenChange, onCompleted }: End
         </DialogHeader>
 
         <div className="space-y-4 py-4 w-full min-w-0 overflow-hidden">
-          {/* After R@lly Option with Location Picker */}
+          {/* After R@lly Option */}
           <div className="p-3 rounded-lg border-2 border-[hsl(270,60%,70%)] bg-[hsl(270,60%,95%)] space-y-3 w-full min-w-0 box-border">
             <div className="flex items-start gap-2">
               <div className="w-8 h-8 rounded-full bg-[hsl(270,60%,50%)]/20 flex items-center justify-center shrink-0">
@@ -125,11 +122,11 @@ export function EndRallyDialog({ eventId, open, onOpenChange, onCompleted }: End
               </div>
             </div>
             
-            {/* Location Search (mappable, required) */}
+            {/* Single Location Field */}
             <div className="space-y-2 w-full overflow-visible relative">
               <Label className="flex items-center gap-2 text-xs">
                 <MapPin className="h-3 w-3 shrink-0" />
-                <span className="truncate">After R@lly Spot</span>
+                <span>After R@lly Spot</span>
                 <span className="text-destructive shrink-0">*</span>
               </Label>
               <LocationSearch
@@ -137,7 +134,6 @@ export function EndRallyDialog({ eventId, open, onOpenChange, onCompleted }: End
                 onChange={(v) => {
                   setLocationSearchValue(v);
                   setShowLocationError(false);
-                  // If user clears or types new text, clear the selected location
                   if (selectedLocation && v !== selectedLocation.name) {
                     setSelectedLocation(null);
                   }
@@ -146,13 +142,13 @@ export function EndRallyDialog({ eventId, open, onOpenChange, onCompleted }: End
                   setSelectedLocation(loc);
                   setShowLocationError(false);
                 }}
-                placeholder="Search for a place or address..."
+                placeholder="Search an address or type 'Josh's House'…"
                 showMapPreview={false}
-                allowCustomName={false}
+                allowCustomName={true}
               />
-              {showLocationError && (
+              {showLocationError && !selectedLocation && (
                 <p className="text-xs text-destructive">
-                  Pick a place/address so the squad can map it.
+                  Add an address so the squad can map it.
                 </p>
               )}
               {selectedLocation && (
@@ -160,20 +156,6 @@ export function EndRallyDialog({ eventId, open, onOpenChange, onCompleted }: End
                   📍 {selectedLocation.address}
                 </p>
               )}
-            </div>
-
-            {/* Optional Label */}
-            <div className="space-y-2 w-full overflow-hidden">
-              <Label htmlFor="spotLabel" className="text-xs text-muted-foreground">
-                Spot Name (optional)
-              </Label>
-              <Input
-                id="spotLabel"
-                placeholder="e.g., Josh's House, The Basement..."
-                value={spotLabel}
-                onChange={(e) => setSpotLabel(e.target.value)}
-                className="text-sm"
-              />
             </div>
 
             <Button
