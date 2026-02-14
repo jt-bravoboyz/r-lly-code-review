@@ -1,17 +1,35 @@
 
+# Display Rider Distance in Miles
 
-# Increase Profile Picture Size Limit to 50 MB
+## Change Summary
+Replace the `formatDistanceCompact` call in the RiderLine component with a simple miles-only formatter that converts meters to miles.
 
 ## What Changes
-Update the profile picture upload limit from 10 MB to 50 MB so you can upload higher-resolution photos.
 
-## Files to Update
+**src/components/rides/RiderLine.tsx** (display layer only):
+- Add a small local helper function `formatMiles(meters)` that:
+  - Converts meters to miles (`meters * 0.000621371`)
+  - Returns `"Less than 0.1 mi"` if under 0.1 miles
+  - Returns `"X.X mi"` with 1 decimal place otherwise
+- Replace the `formatDistanceCompact(rider.distanceMeters)` call with `formatMiles(rider.distanceMeters)`
+- Remove the unused `formatDistanceCompact` import
 
-**src/pages/Profile.tsx** -- Change the file size check from `10 * 1024 * 1024` to `50 * 1024 * 1024` and update the error message to say "50MB" instead of "10MB".
+## What Does NOT Change
+- Sorting logic (still sorts by raw `distanceMeters` before formatting)
+- Backend calculations
+- Live location updates
+- UI layout
+- Any other distance displays elsewhere in the app
 
-## What Won't Change
-- Rally media photo limits (event photos) stay at 10 MB
-- Video upload limits stay at 500 MB
-- No layout, styling, or functionality changes
-- The cropping dialog and upload flow remain the same
+## Technical Details
 
+The formatting function:
+```
+function formatMiles(meters: number): string {
+  const miles = meters * 0.000621371;
+  if (miles < 0.1) return "Less than 0.1 mi";
+  return `${miles.toFixed(1)} mi`;
+}
+```
+
+Unit conversion: meters to miles using the standard factor (1 meter = 0.000621371 miles).
