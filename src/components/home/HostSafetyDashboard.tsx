@@ -115,7 +115,7 @@ export function HostSafetyDashboard({
   return <Card className="border-secondary/50 bg-gradient-to-br from-secondary/5 to-background">
       <CardHeader className="pb-3">
         <CardTitle className="text-lg flex items-center gap-2 font-montserrat">
-          <Shield className="h-5 w-5 text-secondary" />
+          <Shield className="h-5 w-5 text-primary" />
           Safety Dashboard
           {safetyComplete && <Badge className="ml-auto bg-green-500 text-white">
               <CheckCircle2 className="h-3 w-3 mr-1" />
