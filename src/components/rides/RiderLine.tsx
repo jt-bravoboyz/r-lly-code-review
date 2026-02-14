@@ -9,7 +9,7 @@ import { Users, MapPin, Loader2, Car, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useIsDD } from '@/hooks/useDDManagement';
-import { formatDistanceCompact } from '@/lib/formatDistance';
+
 import { toast } from 'sonner';
 
 interface RiderLineProps {
@@ -38,6 +38,12 @@ function haversineMeters(lat1: number, lng1: number, lat2: number, lng2: number)
     Math.sin(dLat / 2) ** 2 +
     Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function formatMiles(meters: number): string {
+  const miles = meters * 0.000621371;
+  if (miles < 0.1) return 'Less than 0.1 mi';
+  return `${miles.toFixed(1)} mi`;
 }
 
 export function RiderLine({ eventId }: RiderLineProps) {
@@ -383,7 +389,7 @@ export function RiderLine({ eventId }: RiderLineProps) {
                   {isDD && rider.distanceMeters != null && (
                     <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
                       <MapPin className="h-2.5 w-2.5" />
-                      {formatDistanceCompact(rider.distanceMeters)}
+                      {formatMiles(rider.distanceMeters)}
                     </span>
                   )}
                   {isDD && rider.distanceMeters == null && (
