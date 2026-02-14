@@ -111,12 +111,17 @@ export function RidesSelectionModal({
         console.error('Failed to send ride request notification:', notifError);
       }
 
-      // Mark safety choice in attendee record
+      // Mark safety choice and ride need in attendee record
       await supabase
         .from('event_attendees')
         .update({ 
           not_participating_rally_home_confirmed: false,
-          going_home_at: null, // Will be set when they actually leave
+          going_home_at: null,
+          needs_ride: true,
+          ride_requested_at: new Date().toISOString(),
+          ride_pickup_location: pickupLocation.trim() || null,
+          ride_pickup_lat: pickupCoords?.lat || null,
+          ride_pickup_lng: pickupCoords?.lng || null,
         })
         .eq('event_id', eventId)
         .eq('profile_id', profile.id);

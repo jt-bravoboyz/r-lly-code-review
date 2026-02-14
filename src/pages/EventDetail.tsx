@@ -975,6 +975,9 @@ export default function EventDetail() {
         onComplete={() => {
           setShowRidesSelection(false);
           queryClient.invalidateQueries({ queryKey: ['event', event.id] });
+          queryClient.invalidateQueries({ queryKey: ['unassigned-riders', event.id] });
+          queryClient.invalidateQueries({ queryKey: ['rides', event.id] });
+          refetchMyAttendee();
         }}
         eventId={event.id}
         eventTitle={event.title}
