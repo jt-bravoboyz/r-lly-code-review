@@ -84,7 +84,12 @@ export function MemberLocationCard({
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <span className="font-medium text-sm truncate">{displayName}</span>
-          <div className={`w-2 h-2 rounded-full ${freshness.color} animate-pulse`} />
+          <div className="flex items-center gap-1">
+            <div className={`w-2 h-2 rounded-full ${freshness.color} animate-pulse`} />
+            <span className="text-[9px] text-muted-foreground">
+              Last Updated: {freshness.label === 'Live' ? 'Just now' : freshness.label === 'Stale' ? 'Unknown' : `${freshness.label} ago`}
+            </span>
+          </div>
         </div>
         
         {/* Address */}
