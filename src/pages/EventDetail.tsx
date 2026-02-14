@@ -934,6 +934,8 @@ export default function EventDetail() {
         <RallyHomeButton 
           eventId={event.id}
           eventStatus={event.status}
+          autoOpen={true}
+          onAutoOpenComplete={() => setShowRallyHomeDialog(false)}
           trigger={<></>}
         />
       )}

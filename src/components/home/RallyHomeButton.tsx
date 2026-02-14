@@ -31,9 +31,11 @@ interface RallyHomeButtonProps {
   eventId: string;
   trigger?: React.ReactNode;
   eventStatus?: string;  // NEW: to determine if event is over
+  autoOpen?: boolean;     // Auto-open the initial choice dialog on mount
+  onAutoOpenComplete?: () => void; // Callback after auto-open is handled
 }
 
-export function RallyHomeButton({ eventId, trigger, eventStatus }: RallyHomeButtonProps) {
+export function RallyHomeButton({ eventId, trigger, eventStatus, autoOpen, onAutoOpenComplete }: RallyHomeButtonProps) {
   const [showInitialChoice, setShowInitialChoice] = useState(false);
   const [open, setOpen] = useState(false);
   const [destinationType, setDestinationType] = useState<DestinationType>('home');
@@ -76,6 +78,19 @@ export function RallyHomeButton({ eventId, trigger, eventStatus }: RallyHomeButt
   const notParticipating = !!myStatus?.not_participating_rally_home_confirmed;
   const hasDestinationSet = !!(myStatus as any)?.destination_name && (myStatus as any)?.after_rally_opted_in;
   const isEventOver = eventStatus === 'after_rally' || eventStatus === 'completed';
+
+  // Auto-open the initial choice dialog when autoOpen prop is set
+  useEffect(() => {
+    if (autoOpen && !isGoingHome && !hasArrived && !notParticipating) {
+      // If destination already set and event is over, skip dialog - just start journey
+      if (hasDestinationSet && isEventOver) {
+        // Already has destination, no need to show dialog
+      } else if (!hasDestinationSet) {
+        setShowInitialChoice(true);
+      }
+      onAutoOpenComplete?.();
+    }
+  }, [autoOpen]);
 
   // Fetch event attendees for "selected" option
   useEffect(() => {
