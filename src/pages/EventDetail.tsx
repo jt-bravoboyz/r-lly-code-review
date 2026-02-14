@@ -441,27 +441,22 @@ export default function EventDetail() {
 
           {/* Co-hosts */}
           {cohosts && cohosts.length > 0 && (
-            <div className="space-y-2 pt-1">
-              {cohosts.map((cohost) => (
-                <div key={cohost.id} className="flex items-center gap-3">
-                  <Avatar>
-                    <AvatarImage src={cohost.profile?.avatar_url || undefined} />
-                    <AvatarFallback>
-                      {cohost.profile?.display_name?.charAt(0)?.toUpperCase() || '?'}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Co-Host</p>
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium">{cohost.profile?.display_name || 'Unknown'}</p>
-                      <Badge variant="outline" className="text-[10px]">
-                        <Crown className="h-2.5 w-2.5 mr-1" />
-                        Co-Host
-                      </Badge>
-                    </div>
+            <div className="pt-1">
+              <p className="text-xs text-muted-foreground mb-1.5">Co-hosts</p>
+              <div className="flex flex-wrap gap-2">
+                {cohosts.map((cohost) => (
+                  <div key={cohost.id} className="flex items-center gap-1.5 bg-muted/50 rounded-full pl-1 pr-2.5 py-0.5">
+                    <Avatar className="h-5 w-5">
+                      <AvatarImage src={cohost.profile?.avatar_url || undefined} />
+                      <AvatarFallback className="text-[9px]">
+                        {cohost.profile?.display_name?.charAt(0)?.toUpperCase() || '?'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="text-xs font-medium">{cohost.profile?.display_name || 'Unknown'}</span>
+                    <Crown className="h-2.5 w-2.5 text-muted-foreground" />
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           )}
 
