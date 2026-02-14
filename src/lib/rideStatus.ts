@@ -80,11 +80,11 @@ export function getRideStatus(
     }
   }
 
-  // 4. Self Ride (not participating in R@lly rides)
-  if (attendee.not_participating_rally_home_confirmed) {
+  // 4. Self Ride (explicitly opted out of R@lly rides)
+  if (attendee.not_participating_rally_home_confirmed === true) {
     return { type: 'self_ride', label: 'Self Ride' };
   }
 
-  // Default: Self Ride (no ride interaction at all)
-  return { type: 'self_ride', label: 'Self Ride' };
+  // Default: no ride decision yet
+  return { type: 'needs_dd', label: 'Needs a DD' };
 }
