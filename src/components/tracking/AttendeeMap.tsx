@@ -171,12 +171,12 @@ export function AttendeeMap({ eventId, attendees, eventLocation }: AttendeeMapPr
         {/* Sharing location */}
         {sharingAttendees.length > 0 && (
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
               <p className="text-sm text-muted-foreground flex items-center gap-1">
                 <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
                 Sharing Location ({sharingAttendees.length})
               </p>
-              <span className="text-[10px] text-muted-foreground">Last Updated</span>
+              <span className="text-[10px] text-muted-foreground">· Last Updated</span>
             </div>
             <div className="grid gap-2">
               {sharingAttendees.map((attendee) => (
