@@ -62,6 +62,22 @@ import { useMyRallyHomePrompt } from '@/hooks/useRallyHomePrompt';
 import { PendingJoinRequests } from '@/components/events/PendingJoinRequests';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { getRideStatus, type RideStatus } from '@/lib/rideStatus';
+
+function RideStatusPill({ status }: { status: RideStatus }) {
+  const styles: Record<string, string> = {
+    dd: 'bg-primary/10 text-primary border-primary/30',
+    riding_with: 'bg-green-100 text-green-700 border-green-300',
+    needs_dd: 'bg-amber-100 text-amber-700 border-amber-300',
+    self_ride: 'bg-muted text-muted-foreground border-border',
+  };
+  return (
+    <Badge variant="outline" className={`text-[9px] px-1.5 py-0 leading-tight whitespace-nowrap ${styles[status.type]}`}>
+      {status.type === 'dd' && <Car className="h-2 w-2 mr-0.5" />}
+      {status.label}
+    </Badge>
+  );
+}
 
 export default function EventDetail() {
   const { id } = useParams<{ id: string }>();
@@ -680,7 +696,7 @@ export default function EventDetail() {
               </Card>
             )}
 
-            {/* Attendees */}
+          {/* Attendees */}
             {event.attendees && event.attendees.length > 0 && (
               <Card>
                 <CardHeader>
@@ -691,6 +707,15 @@ export default function EventDetail() {
                     {event.attendees.map((attendee) => {
                       // Use is_dd from attendee data directly (from safe_event_attendees view)
                       const isDD = attendee.is_dd || eventDDs?.some(dd => dd.profile_id === attendee.profile?.id);
+                      const rideStatus = getRideStatus(
+                        { 
+                          profile_id: attendee.profile_id || attendee.profile?.id || '', 
+                          is_dd: isDD,
+                          needs_ride: (attendee as any).needs_ride,
+                          not_participating_rally_home_confirmed: (attendee as any).not_participating_rally_home_confirmed,
+                        },
+                        rides
+                      );
                       return (
                         <div key={attendee.id} className="flex flex-col items-center gap-1 relative">
                           <Avatar className="h-12 w-12">
@@ -707,6 +732,7 @@ export default function EventDetail() {
                           <span className="text-xs text-muted-foreground truncate max-w-16">
                             {attendee.profile?.display_name}
                           </span>
+                          <RideStatusPill status={rideStatus} />
                         </div>
                       );
                     })}
