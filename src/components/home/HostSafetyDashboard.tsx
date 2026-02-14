@@ -8,6 +8,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Shield, CheckCircle2, Navigation, HelpCircle, XCircle, Car, PartyPopper, Clock } from 'lucide-react';
 import { useEventSafetyStatus, useIsEventSafetyComplete, getSafetyState, getSafetyStateLabel, type SafetyState } from '@/hooks/useSafetyStatus';
 import { useSafetyNotifications } from '@/hooks/useSafetyNotifications';
+import { useRides } from '@/hooks/useRides';
+import { getRideStatus, type RideStatus } from '@/lib/rideStatus';
 import { toast } from 'sonner';
 interface HostSafetyDashboardProps {
   eventId: string;
@@ -62,6 +64,7 @@ export function HostSafetyDashboard({
     data: attendees,
     isLoading
   } = useEventSafetyStatus(eventId);
+  const { data: rides } = useRides(eventId);
   const {
     data: safetyComplete
   } = useIsEventSafetyComplete(eventId);
@@ -223,6 +226,23 @@ export function HostSafetyDashboard({
             <div className="space-y-1 pr-2">
               {attendees.map(attendee => {
               const state = getSafetyState(attendee);
+              const rideStatus = getRideStatus(
+                {
+                  profile_id: attendee.profile_id,
+                  is_dd: attendee.is_dd,
+                  needs_ride: (attendee as any).needs_ride,
+                  not_participating_rally_home_confirmed: attendee.not_participating_rally_home_confirmed,
+                },
+                rides
+              );
+              // Use ride-status pill instead of "Undecided"
+              const showRidePill = state === 'undecided';
+              const ridePillStyles: Record<string, string> = {
+                dd: 'bg-primary/10 text-primary border-primary/30',
+                riding_with: 'bg-green-100 text-green-700 border-green-300',
+                needs_dd: 'bg-amber-100 text-amber-700 border-amber-300',
+                self_ride: 'bg-muted text-muted-foreground border-border',
+              };
               return <div key={attendee.id} className={`flex items-center gap-2 p-2 rounded-lg ${state === 'arrived_safely' ? 'bg-green-50/50' : state === 'participating' ? 'bg-orange-50/50' : state === 'undecided' ? 'bg-amber-50/50' : state === 'opted_in' ? 'bg-blue-50/50' : state === 'dd_pending' ? 'bg-primary/5' : 'bg-muted/30'}`}>
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={attendee.profile?.avatar_url || undefined} />
@@ -231,8 +251,15 @@ export function HostSafetyDashboard({
                       </AvatarFallback>
                     </Avatar>
                     <span className="text-sm flex-1 truncate text-primary brightness-75 font-medium">{attendee.profile?.display_name}</span>
-                    <SafetyStateBadge state={state} />
-                    {attendee.is_dd && <Badge variant="secondary" className="text-[10px] shrink-0">
+                    {showRidePill ? (
+                      <Badge variant="outline" className={`text-[10px] whitespace-nowrap ${ridePillStyles[rideStatus.type]}`}>
+                        {rideStatus.type === 'dd' && <Car className="h-2.5 w-2.5 mr-1" />}
+                        {rideStatus.label}
+                      </Badge>
+                    ) : (
+                      <SafetyStateBadge state={state} />
+                    )}
+                    {attendee.is_dd && !showRidePill && <Badge variant="secondary" className="text-[10px] shrink-0">
                         <Car className="h-2.5 w-2.5" />
                       </Badge>}
                   </div>;
