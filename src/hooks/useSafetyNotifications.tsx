@@ -78,10 +78,24 @@ export function useSafetyNotifications() {
     }
   };
 
+  // Notify car group members when someone hits Rally Home
+  const notifyCarGroupRallyHome = async (eventId: string) => {
+    if (!profile) return;
+
+    try {
+      await supabase.functions.invoke('notify-car-group-rally-home', {
+        body: { eventId },
+      });
+    } catch (error) {
+      console.error('Failed to send car group rally home notification:', error);
+    }
+  };
+
   return {
     notifyGoingHome,
     notifyArrivedSafe,
     notifyDDDropoff,
     notifySafetyComplete,
+    notifyCarGroupRallyHome,
   };
 }

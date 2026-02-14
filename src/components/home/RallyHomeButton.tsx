@@ -48,7 +48,7 @@ export function RallyHomeButton({ eventId, trigger, eventStatus }: RallyHomeButt
   // Use the safety status hook
   const { data: myStatus, refetch: refetchStatus } = useMyAttendeeStatus(eventId);
   const { confirmNotParticipating } = useUpdateSafetyStatus();
-  const { notifyGoingHome, notifyArrivedSafe } = useSafetyNotifications();
+  const { notifyGoingHome, notifyArrivedSafe, notifyCarGroupRallyHome } = useSafetyNotifications();
   
   // Geocode an address to get coordinates
   const geocodeAddress = async (address: string): Promise<{ lat: number; lng: number } | null> => {
@@ -190,6 +190,8 @@ export function RallyHomeButton({ eventId, trigger, eventStatus }: RallyHomeButt
       if (isEventOver) {
         // Send notification to host/cohosts - only when actually departing
         notifyGoingHome(eventId);
+        // Notify car group members
+        notifyCarGroupRallyHome(eventId);
         
         const visibilityMessage = visibility === 'none' 
           ? 'Your destination is private' 
@@ -342,6 +344,8 @@ export function RallyHomeButton({ eventId, trigger, eventStatus }: RallyHomeButt
           
           // Now notify that we're heading home
           notifyGoingHome(eventId);
+          // Notify car group members
+          notifyCarGroupRallyHome(eventId);
           
           const destinationName = (myStatus as any)?.destination_name || 'your destination';
           toast.success(`You're heading to ${destinationName}!`, {
