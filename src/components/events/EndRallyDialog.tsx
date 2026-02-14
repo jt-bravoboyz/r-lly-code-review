@@ -142,7 +142,7 @@ export function EndRallyDialog({ eventId, open, onOpenChange, onCompleted }: End
                   setSelectedLocation(loc);
                   setShowLocationError(false);
                 }}
-                placeholder="Search an address or type 'Josh's House'…"
+                placeholder="Search an address"
                 showMapPreview={false}
                 allowCustomName={true}
               />
