@@ -111,7 +111,8 @@ export function useEventSafetyStatus(eventId: string | undefined) {
           not_participating_rally_home_confirmed,
           dd_dropoff_confirmed_at,
           dd_dropoff_confirmed_by,
-          destination_name
+          destination_name,
+          needs_ride
         `)
         .eq('event_id', eventId);
 
@@ -141,6 +142,7 @@ export function useEventSafetyStatus(eventId: string | undefined) {
         is_dd: attendee.is_dd ?? false,
         after_rally_opted_in: attendee.after_rally_opted_in ?? null,
         destination_name: (attendee as any).destination_name ?? null,
+        needs_ride: (attendee as any).needs_ride ?? false,
         profile: profileMap.get(attendee.profile_id) || null
       })) as AttendeeWithSafetyStatus[];
     },
