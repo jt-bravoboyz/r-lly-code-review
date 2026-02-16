@@ -192,7 +192,7 @@ export function SafetyTracker({ eventId }: SafetyTrackerProps) {
   });
 
   return (
-    <Card className="border-0 shadow-none bg-transparent">
+    <Card className="rounded-xl border border-border shadow-sm bg-card">
       <CardHeader className="pb-2">
         <CardTitle className="text-lg flex items-center gap-2 font-montserrat">
           <Shield className="h-5 w-5 text-primary" />

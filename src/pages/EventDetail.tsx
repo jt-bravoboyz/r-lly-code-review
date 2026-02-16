@@ -601,7 +601,7 @@ export default function EventDetail() {
 
         {/* Safety Tracker + Host Safety Dashboard grouped together */}
         {(isLiveEvent || isAfterRally) && (
-          <div className="rounded-xl border border-border shadow-sm bg-card p-4 space-y-2">
+          <div className="space-y-3">
             <SafetyTracker eventId={event.id} />
             {canManage && (
               <HostSafetyDashboard 
