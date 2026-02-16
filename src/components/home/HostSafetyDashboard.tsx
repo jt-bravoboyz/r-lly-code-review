@@ -113,7 +113,7 @@ export function HostSafetyDashboard({
     onCompleteRally?.();
   };
   return <>
-    <Card className="rounded-xl border border-border shadow-sm bg-card">
+    <Card className="rounded-xl border-0 shadow-[0_4px_12px_rgba(0,0,0,0.04)] bg-card">
       <CardHeader className="pb-3">
         <CardTitle className="text-lg flex items-center gap-2 font-montserrat">
           <Shield className="h-5 w-5 text-primary" />
@@ -130,7 +130,7 @@ export function HostSafetyDashboard({
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="bg-muted border border-green-500/30 rounded-lg p-3 text-center cursor-help">
+                <div className="bg-muted rounded-lg p-3 text-center cursor-help">
                   <p className="text-2xl font-bold text-green-500">{arrivedSafely.length}</p>
                   <p className="text-xs text-green-600 dark:text-green-400">Arrived Safely</p>
                 </div>
@@ -144,7 +144,7 @@ export function HostSafetyDashboard({
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="bg-muted border border-orange-500/30 rounded-lg p-3 text-center cursor-help">
+                <div className="bg-muted rounded-lg p-3 text-center cursor-help">
                   <p className="text-2xl font-bold text-orange-500">{optedIn.length + undecided.length}</p>
                   <p className="text-xs text-orange-600 dark:text-orange-400">Hasn't Left</p>
                 </div>
@@ -158,7 +158,7 @@ export function HostSafetyDashboard({
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="bg-muted border border-orange-500/30 rounded-lg p-3 text-center cursor-help">
+                <div className="bg-muted rounded-lg p-3 text-center cursor-help">
                   <p className="text-2xl font-bold text-orange-500">{participating.length}</p>
                   <p className="text-xs text-orange-600 dark:text-orange-400">OTW Home</p>
                 </div>
@@ -172,7 +172,7 @@ export function HostSafetyDashboard({
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="bg-muted border rounded-lg p-3 text-center cursor-help">
+                <div className="bg-muted rounded-lg p-3 text-center cursor-help">
                   <p className="text-2xl font-bold text-muted-foreground">{notParticipating.length}</p>
                   <p className="text-xs text-muted-foreground">Not Participating in R@lly Home</p>
                 </div>
@@ -186,12 +186,12 @@ export function HostSafetyDashboard({
       </CardContent>
     </Card>
 
-    <Card className="rounded-xl border border-border shadow-sm bg-card">
+    <Card className="rounded-xl border-0 shadow-[0_4px_12px_rgba(0,0,0,0.04)] bg-card">
       <CardContent className="space-y-4 pt-4">
         {/* DD + All Attendees grouped together */}
         <div className="space-y-3">
           {/* DD Section */}
-          {allDDs.length > 0 && <div className="bg-primary/5 border border-primary/20 rounded-lg p-3">
+          {allDDs.length > 0 && <div className="bg-primary/5 rounded-lg p-3">
               <div className="flex items-center justify-between mb-2">
                 <span className="font-medium flex items-center gap-2">
                   <Car className="h-4 w-4 text-primary" />
@@ -277,7 +277,7 @@ export function HostSafetyDashboard({
         </div>
 
         {/* Empty State when all safe */}
-        {safetyComplete && <div className="text-center py-3 bg-green-50 rounded-lg border border-green-200">
+        {safetyComplete && <div className="text-center py-3 bg-green-50 rounded-lg">
             <PartyPopper className="h-6 w-6 text-green-600 mx-auto mb-1" />
             <p className="text-sm font-medium text-green-700">Everyone is accounted for!</p>
             <p className="text-xs text-green-600">All attendees have confirmed their safety status.</p>
