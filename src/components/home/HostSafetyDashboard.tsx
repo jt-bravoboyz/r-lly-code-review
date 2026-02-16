@@ -183,39 +183,41 @@ export function HostSafetyDashboard({
           </TooltipProvider>
         </div>
 
-        {/* DD Section */}
-        {allDDs.length > 0 && <div className="bg-primary/5 border border-primary/20 rounded-lg p-3">
-            <div className="flex items-center justify-between mb-2">
-              <span className="font-medium flex items-center gap-2">
-                <Car className="h-4 w-4 text-primary" />
-                Designated Drivers
-              </span>
-              <Badge variant={ddsArrived.length === allDDs.length ? 'default' : 'secondary'}>
-                {ddsArrived.length}/{allDDs.length} arrived
-              </Badge>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {allDDs.map(dd => {
-            const arrived = dd.arrived_safely;
-            return <div key={dd.id} className={`flex items-center gap-2 rounded-full pl-1 pr-3 py-1 ${arrived ? 'bg-green-100' : 'bg-orange-100'}`}>
-                    <Avatar className="h-6 w-6">
-                      <AvatarImage src={dd.profile?.avatar_url || undefined} />
-                      <AvatarFallback className="text-xs">
-                        {dd.profile?.display_name?.charAt(0)?.toUpperCase() || '?'}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="text-xs font-medium text-orange-500">{dd.profile?.display_name}</span>
-                    {arrived ? <CheckCircle2 className="h-3 w-3 text-green-600" /> : <Navigation className="h-3 w-3 text-orange-600 animate-pulse" />}
-                  </div>;
-          })}
-            </div>
-            {ddPending.length > 0 && <p className="text-xs text-muted-foreground mt-2">
-                DDs must confirm their own arrival regardless of participation choice.
-              </p>}
-          </div>}
+        {/* DD + All Attendees grouped together */}
+        <div className="rounded-lg border border-secondary/20 p-3 space-y-3">
+          {/* DD Section */}
+          {allDDs.length > 0 && <div className="bg-primary/5 border border-primary/20 rounded-lg p-3">
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-medium flex items-center gap-2">
+                  <Car className="h-4 w-4 text-primary" />
+                  Designated Drivers
+                </span>
+                <Badge variant={ddsArrived.length === allDDs.length ? 'default' : 'secondary'}>
+                  {ddsArrived.length}/{allDDs.length} arrived
+                </Badge>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {allDDs.map(dd => {
+              const arrived = dd.arrived_safely;
+              return <div key={dd.id} className={`flex items-center gap-2 rounded-full pl-1 pr-3 py-1 ${arrived ? 'bg-green-100' : 'bg-orange-100'}`}>
+                      <Avatar className="h-6 w-6">
+                        <AvatarImage src={dd.profile?.avatar_url || undefined} />
+                        <AvatarFallback className="text-xs">
+                          {dd.profile?.display_name?.charAt(0)?.toUpperCase() || '?'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="text-xs font-medium text-orange-500">{dd.profile?.display_name}</span>
+                      {arrived ? <CheckCircle2 className="h-3 w-3 text-green-600" /> : <Navigation className="h-3 w-3 text-orange-600 animate-pulse" />}
+                    </div>;
+            })}
+              </div>
+              {ddPending.length > 0 && <p className="text-xs text-muted-foreground mt-2">
+                  DDs must confirm their own arrival regardless of participation choice.
+                </p>}
+            </div>}
 
-        {/* Full Attendee List with Safety Status */}
-        <div className="space-y-2">
+          {/* Full Attendee List with Safety Status */}
+          <div className="space-y-2">
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium">All Attendees</p>
             <Badge variant="outline" className="text-[10px]">
@@ -266,6 +268,7 @@ export function HostSafetyDashboard({
             })}
             </div>
           </ScrollArea>
+        </div>
         </div>
 
         {/* Empty State when all safe */}
