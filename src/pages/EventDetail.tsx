@@ -599,23 +599,7 @@ export default function EventDetail() {
         )}
 
 
-        {/* Safety Tracker - Component handles its own visibility based on safety completion */}
-        <SafetyTracker eventId={event.id} />
-        
-        {/* Host Safety Dashboard - For hosts and co-hosts */}
-        {canManage && (isLiveEvent || isAfterRally) && (
-          <HostSafetyDashboard 
-            eventId={event.id} 
-            onCompleteRally={async () => {
-              try {
-                await completeRally.mutateAsync(event.id);
-                setShowRallyComplete(true);
-              } catch (error: any) {
-                toast.error(error.message || 'Failed to complete rally');
-              }
-            }}
-          />
-        )}
+        {/* Safety components moved into Details tab */}
 
         {/* DD Arrived Button - For designated drivers to confirm their own arrival */}
         {isDD && (isLiveEvent || isAfterRally) && (
@@ -642,7 +626,7 @@ export default function EventDetail() {
             <TabsTrigger value="rides">Rides</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="details" className="space-y-4 mt-4">
+          <TabsContent value="details" className="space-y-6 mt-4">
             {/* Bar Hop Mode Toggle - Only for event managers, only in After R@lly */}
             {canManage && isAfterRally && (
               <Card className="border-secondary/50 bg-secondary/5">
@@ -680,39 +664,104 @@ export default function EventDetail() {
               </Card>
             )}
 
-          {/* Attendees */}
-            {event.attendees && event.attendees.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Who's Going</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-wrap gap-3">
-                    {event.attendees.map((attendee) => {
-                      const isDD = attendee.is_dd || eventDDs?.some(dd => dd.profile_id === attendee.profile?.id);
-                      return (
-                        <div key={attendee.id} className="flex flex-col items-center gap-1 relative">
-                          <Avatar className="h-12 w-12">
-                            <AvatarImage src={attendee.profile?.avatar_url || undefined} />
+            {/* ─── Group 1: R@lly Home ─── */}
+            {(isLiveEvent || isAfterRally) && isAttending && (
+              <section className="space-y-3">
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide font-montserrat flex items-center gap-2">
+                  <Home className="h-4 w-4" />
+                  R@lly Home
+                </h3>
+                {/* Safety Tracker - user-facing R@lly Home safety */}
+                <SafetyTracker eventId={event.id} />
+                {/* Host Safety Dashboard */}
+                {canManage && (
+                  <HostSafetyDashboard 
+                    eventId={event.id} 
+                    onCompleteRally={async () => {
+                      try {
+                        await completeRally.mutateAsync(event.id);
+                        setShowRallyComplete(true);
+                      } catch (error: any) {
+                        toast.error(error.message || 'Failed to complete rally');
+                      }
+                    }}
+                  />
+                )}
+              </section>
+            )}
+
+            {/* ─── Group 2: Rides & Crew ─── */}
+            <section className="space-y-3">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide font-montserrat flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Rides & Crew
+              </h3>
+
+              {/* Designated Drivers */}
+              {eventDDs && eventDDs.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Car className="h-5 w-5 text-primary" />
+                      Designated Drivers
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-wrap gap-3">
+                      {eventDDs.map((dd) => (
+                        <div key={dd.id} className="flex items-center gap-2 bg-primary/10 rounded-full pl-1 pr-3 py-1">
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage src={dd.profile?.avatar_url || undefined} />
                             <AvatarFallback>
-                              {attendee.profile?.display_name?.charAt(0)?.toUpperCase()}
+                              {dd.profile?.display_name?.charAt(0)?.toUpperCase()}
                             </AvatarFallback>
                           </Avatar>
-                          {isDD && (
-                            <div className="absolute -top-1 -right-1 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
-                              <Car className="h-3 w-3 text-primary-foreground" />
-                            </div>
-                          )}
-                          <span className="text-xs text-muted-foreground truncate max-w-16">
-                            {attendee.profile?.display_name}
-                          </span>
+                          <span className="text-sm font-medium">{dd.profile?.display_name}</span>
+                          <Badge variant="secondary" className="text-[10px] bg-primary/20 text-primary">
+                            <Car className="h-2.5 w-2.5 mr-0.5" />
+                            DD
+                          </Badge>
                         </div>
-                      );
-                    })}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* All Attendees */}
+              {event.attendees && event.attendees.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">All Attendees</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-wrap gap-3">
+                      {event.attendees.map((attendee) => {
+                        const isDD = attendee.is_dd || eventDDs?.some(dd => dd.profile_id === attendee.profile?.id);
+                        return (
+                          <div key={attendee.id} className="flex flex-col items-center gap-1 relative">
+                            <Avatar className="h-12 w-12">
+                              <AvatarImage src={attendee.profile?.avatar_url || undefined} />
+                              <AvatarFallback>
+                                {attendee.profile?.display_name?.charAt(0)?.toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            {isDD && (
+                              <div className="absolute -top-1 -right-1 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+                                <Car className="h-3 w-3 text-primary-foreground" />
+                              </div>
+                            )}
+                            <span className="text-xs text-muted-foreground truncate max-w-16">
+                              {attendee.profile?.display_name}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </section>
 
             {/* Bar Hop Stops - Show only in After R@lly when bar hop mode is enabled */}
             {isAfterRally && event.is_barhop && (
