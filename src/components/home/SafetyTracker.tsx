@@ -81,17 +81,17 @@ function SafetyStateBadge({ state }: { state: SafetyState }) {
 function getStateBackgroundColor(state: SafetyState): string {
   switch (state) {
     case 'participating':
-      return 'bg-orange-50 border-orange-200';
+      return 'bg-orange-50';
     case 'arrived_safely':
-      return 'bg-green-50 border-green-200';
+      return 'bg-green-50';
     case 'not_participating':
-      return 'bg-muted border-muted';
+      return 'bg-muted';
     case 'undecided':
-      return 'bg-amber-50 border-amber-200';
+      return 'bg-amber-50';
     case 'opted_in':
-      return 'bg-blue-50 border-blue-200';
+      return 'bg-blue-50';
     case 'dd_pending':
-      return 'bg-primary/5 border-primary/20';
+      return 'bg-primary/5';
   }
 }
 
@@ -192,7 +192,7 @@ export function SafetyTracker({ eventId }: SafetyTrackerProps) {
   });
 
   return (
-    <Card className="rounded-xl border border-border shadow-sm bg-card">
+    <Card className="rounded-xl border-0 shadow-[0_4px_12px_rgba(0,0,0,0.04)] bg-card">
       <CardHeader className="pb-2">
         <CardTitle className="text-lg flex items-center gap-2 font-montserrat">
           <Shield className="h-5 w-5 text-primary" />
@@ -204,7 +204,7 @@ export function SafetyTracker({ eventId }: SafetyTrackerProps) {
       </CardHeader>
       <CardContent className="space-y-3">
         {/* Summary badges */}
-        <div className="flex flex-wrap gap-2 pb-2 border-b">
+        <div className="flex flex-wrap gap-2 pb-2">
           {participatingCount > 0 && (
             <Badge variant="outline" className="text-orange-600 border-orange-300">
               <Navigation className="h-3 w-3 mr-1" />
@@ -233,7 +233,7 @@ export function SafetyTracker({ eventId }: SafetyTrackerProps) {
 
         {/* Arrived safely section - Celebrate arrivals! */}
         {arrivedCount > 0 && (
-          <div className="pb-2 border-b border-green-200">
+          <div className="pb-2">
             <p className="text-xs font-semibold text-green-700 mb-2 flex items-center gap-1">
               <CheckCircle2 className="h-3.5 w-3.5" />
               Arrived Safely ({arrivedCount})
@@ -244,7 +244,7 @@ export function SafetyTracker({ eventId }: SafetyTrackerProps) {
                 .map((attendee) => (
                   <div 
                     key={attendee.id}
-                    className="flex items-center gap-1.5 bg-green-100 rounded-full px-2.5 py-1 border border-green-200"
+                    className="flex items-center gap-1.5 bg-green-100 rounded-full px-2.5 py-1"
                   >
                     <Avatar className="h-5 w-5">
                       <AvatarImage src={attendee.profile?.avatar_url || undefined} />
@@ -271,7 +271,7 @@ export function SafetyTracker({ eventId }: SafetyTrackerProps) {
           return (
             <div
               key={attendee.id}
-              className={`flex items-center gap-3 p-3 rounded-xl transition-all border ${getStateBackgroundColor(state)}`}
+              className={`flex items-center gap-3 p-3 rounded-xl transition-all ${getStateBackgroundColor(state)}`}
             >
               <div className="relative">
                 <Avatar className="h-10 w-10">
