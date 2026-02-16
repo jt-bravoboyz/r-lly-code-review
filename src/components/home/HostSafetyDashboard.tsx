@@ -112,7 +112,7 @@ export function HostSafetyDashboard({
     }
     onCompleteRally?.();
   };
-  return <Card className="border-secondary/50 bg-gradient-to-br from-secondary/5 to-background">
+  return <Card className="border-0 shadow-none bg-transparent">
       <CardHeader className="pb-3">
         <CardTitle className="text-lg flex items-center gap-2 font-montserrat">
           <Shield className="h-5 w-5 text-primary" />
