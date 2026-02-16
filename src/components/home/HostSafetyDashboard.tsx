@@ -112,7 +112,8 @@ export function HostSafetyDashboard({
     }
     onCompleteRally?.();
   };
-  return <Card className="border-0 shadow-none bg-transparent">
+  return <>
+    <Card className="rounded-xl border border-border shadow-sm bg-card">
       <CardHeader className="pb-3">
         <CardTitle className="text-lg flex items-center gap-2 font-montserrat">
           <Shield className="h-5 w-5 text-primary" />
@@ -182,9 +183,13 @@ export function HostSafetyDashboard({
             </Tooltip>
           </TooltipProvider>
         </div>
+      </CardContent>
+    </Card>
 
+    <Card className="rounded-xl border border-border shadow-sm bg-card">
+      <CardContent className="space-y-4 pt-4">
         {/* DD + All Attendees grouped together */}
-        <div className="rounded-lg border border-secondary/20 p-3 space-y-3">
+        <div className="space-y-3">
           {/* DD Section */}
           {allDDs.length > 0 && <div className="bg-primary/5 border border-primary/20 rounded-lg p-3">
               <div className="flex items-center justify-between mb-2">
@@ -293,5 +298,6 @@ export function HostSafetyDashboard({
             R@lly can only be completed when all attendees have confirmed their safety status.
           </p>}
       </CardContent>
-    </Card>;
+    </Card>
+  </>;
 }
