@@ -599,23 +599,23 @@ export default function EventDetail() {
         )}
 
 
-        {/* Safety Tracker - Component handles its own visibility based on safety completion */}
-        <SafetyTracker eventId={event.id} />
-        
-        {/* Host Safety Dashboard - For hosts and co-hosts */}
-        {canManage && (isLiveEvent || isAfterRally) && (
-          <HostSafetyDashboard 
-            eventId={event.id} 
-            onCompleteRally={async () => {
-              try {
-                await completeRally.mutateAsync(event.id);
-                setShowRallyComplete(true);
-              } catch (error: any) {
-                toast.error(error.message || 'Failed to complete rally');
-              }
-            }}
-          />
-        )}
+        {/* Safety Tracker + Host Safety Dashboard grouped together */}
+        <div className="space-y-3 rounded-xl border border-secondary/30 bg-gradient-to-br from-secondary/5 to-background p-3">
+          <SafetyTracker eventId={event.id} />
+          {canManage && (isLiveEvent || isAfterRally) && (
+            <HostSafetyDashboard 
+              eventId={event.id} 
+              onCompleteRally={async () => {
+                try {
+                  await completeRally.mutateAsync(event.id);
+                  setShowRallyComplete(true);
+                } catch (error: any) {
+                  toast.error(error.message || 'Failed to complete rally');
+                }
+              }}
+            />
+          )}
+        </div>
 
         {/* DD Arrived Button - For designated drivers to confirm their own arrival */}
         {isDD && (isLiveEvent || isAfterRally) && (
