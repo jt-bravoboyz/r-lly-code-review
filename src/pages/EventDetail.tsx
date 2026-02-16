@@ -599,8 +599,8 @@ export default function EventDetail() {
         )}
 
 
-        {/* Safety Tracker + Host Safety Dashboard grouped together */}
-        {(isLiveEvent || isAfterRally) && (
+        {/* Safety Tracker + Host Safety Dashboard - only show when R@lly Home is active */}
+        {isAfterRally ? (
           <div className="space-y-3">
             <SafetyTracker eventId={event.id} />
             {canManage && (
@@ -617,7 +617,12 @@ export default function EventDetail() {
               />
             )}
           </div>
-        )}
+        ) : (isLiveEvent || isScheduled) && isAttending ? (
+          <div className="rounded-xl bg-muted/40 px-4 py-3">
+            <p className="text-sm font-medium text-muted-foreground">R@lly Home is not active yet</p>
+            <p className="text-xs text-muted-foreground/70 mt-0.5">It activates when you hit R@lly Home or when the host ends the R@lly.</p>
+          </div>
+        ) : null}
 
         {/* DD Arrived Button - For designated drivers to confirm their own arrival */}
         {isDD && (isLiveEvent || isAfterRally) && (
