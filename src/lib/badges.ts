@@ -149,7 +149,7 @@ export const getTierQuote = (tierKey: string): string => {
     bronze: '"B stands for bitch cup. Hold up, drink this."',
     silver: '"Private, you\'ve moved up in rank! You\'re officially moving out of the dorm basement and into sophomore year of the R@lly army. Thank you for your service."',
     gold: '"Look at you, a professional pussy footer! We\'re definitely seeing your potential but there is more work to be done if you want to be a champion."',
-    emerald: '"If ya look good, ya feel good. If ya feel good, you play good. And if you play good, they pay good."\n— Deion Sanders',
+    emerald: '"If ya look good, ya feel good. If ya feel good, ya play good. And if ya play good, they pay good."\n— Deion Sanders',
     sapphire: '"Wow… you\'ve done a lot of drinking. We\'re not sure if that\'s an achievement or a cry for help, but either way—we\'re celebrating you tonight."',
     ruby: '"Damn you might actually be a penis stomper! Keep showing out in practice and maybe you\'ll see the field."',
     amethyst: '"You honestly could have gone D1 for drinking. Too bad it\'s just another reason for your parents to disapprove of your life choices."',
