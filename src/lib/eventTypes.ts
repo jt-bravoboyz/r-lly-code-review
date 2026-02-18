@@ -4,6 +4,7 @@
 export const EVENT_TYPES = [
   // Social
   { value: 'rally', label: 'R@lly', icon: 'Zap' },
+  { value: 'pre_game', label: 'Pre-Game', icon: 'Flag' },
   { value: 'party', label: 'Party', icon: 'PartyPopper' },
   { value: 'bar', label: 'Bar / Club', icon: 'Wine' },
   { value: 'happy_hour', label: 'Happy Hour', icon: 'Beer' },
