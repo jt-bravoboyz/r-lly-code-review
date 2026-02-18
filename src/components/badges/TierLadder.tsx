@@ -32,16 +32,6 @@ export function TierLadder({ tiers, currentTierKey, totalPoints, className }: Ti
               !isUnlocked && 'opacity-60'
             )}
           >
-            {/* Connector line */}
-            {index < tiers.length - 1 && (
-              <div 
-                className={cn(
-                  'absolute left-[26px] top-[52px] w-0.5 h-6 -ml-px',
-                  index < currentTierIndex ? 'bg-primary' : 'bg-border'
-                )}
-              />
-            )}
-
             {/* Badge icon */}
             <TierBadgeIcon 
               tier={tier} 
