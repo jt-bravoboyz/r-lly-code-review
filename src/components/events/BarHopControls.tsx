@@ -136,11 +136,8 @@ export function BarHopControls({ eventId, stops, canManage, hostName, onTransiti
 
       if (error) throw error;
 
-      // Update event status to 'live' if not already
-      await supabase
-        .from('events')
-        .update({ status: 'live' })
-        .eq('id', eventId);
+      // Note: Do NOT reset event status here.
+      // If we're in after_rally phase, changing status to 'live' would break the After R@lly theme.
 
       // Send notification to chat
       const chatId = await getChatId();
