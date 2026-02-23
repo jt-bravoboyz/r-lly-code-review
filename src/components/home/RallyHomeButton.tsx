@@ -87,7 +87,9 @@ export function RallyHomeButton({ eventId, trigger, eventStatus, autoOpen, onAut
   const notParticipating = !!myStatus?.not_participating_rally_home_confirmed;
   const hasDestinationSet = !!(myStatus as any)?.destination_name && (myStatus as any)?.after_rally_opted_in;
   const isEventOver = eventStatus === 'after_rally' || eventStatus === 'completed';
-  const hasRidePlan = !!(myStatus?.is_dd || myStatus?.needs_ride);
+  // A ride plan is "set" if the user completed the onboarding flow (location_prompt_shown)
+  // OR explicitly chose DD/rider. This prevents re-prompting on every R@lly Home click.
+  const hasRidePlan = !!(myStatus?.is_dd || myStatus?.needs_ride || myStatus?.location_prompt_shown);
 
   // Auto-open when autoOpen prop is set
   useEffect(() => {
@@ -431,6 +433,7 @@ export function RallyHomeButton({ eventId, trigger, eventStatus, autoOpen, onAut
 
   const handleSafetyImGood = async () => {
     // Mark as self-transport (not needing rally rides, not a DD)
+    // Also mark location_prompt_shown so they don't get re-prompted
     if (!profile?.id) return;
     setIsLoading(true);
     try {
@@ -439,6 +442,7 @@ export function RallyHomeButton({ eventId, trigger, eventStatus, autoOpen, onAut
         .update({
           needs_ride: false,
           is_dd: false,
+          location_prompt_shown: true,
         } as any)
         .eq('event_id', eventId)
         .eq('profile_id', profile.id);
@@ -503,7 +507,7 @@ export function RallyHomeButton({ eventId, trigger, eventStatus, autoOpen, onAut
         isLoading={isLoading}
       />
 
-      {/* Change Plan Modal - reuses RidesSelectionModal */}
+      {/* Change Plan Modal - reuses RidesSelectionModal, skips location prompt */}
       <RidesSelectionModal
         open={showChangePlan}
         onOpenChange={setShowChangePlan}
@@ -514,6 +518,7 @@ export function RallyHomeButton({ eventId, trigger, eventStatus, autoOpen, onAut
         eventLocationName={eventLocationName}
         eventLocationLat={eventLocationLat}
         eventLocationLng={eventLocationLng}
+        skipLocationPrompt={true}
       />
 
       {/* Destination Selection Dialog */}
