@@ -27,6 +27,8 @@ interface RidesSelectionModalProps {
   eventLocationName?: string;
   eventLocationLat?: number;
   eventLocationLng?: number;
+  /** Skip location sharing prompt (e.g. when changing plan after initial setup) */
+  skipLocationPrompt?: boolean;
 }
 
 type View = 'choice' | 'request-ride';
@@ -41,6 +43,7 @@ export function RidesSelectionModal({
   eventLocationName,
   eventLocationLat,
   eventLocationLng,
+  skipLocationPrompt = false,
 }: RidesSelectionModalProps) {
   const { profile } = useAuth();
   const queryClient = useQueryClient();
@@ -132,8 +135,13 @@ export function RidesSelectionModal({
       
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
       // Show location modal instead of completing immediately
+      // Show location modal only if not skipping (first-time setup)
       onOpenChange(false);
-      setShowLocationModal(true);
+      if (skipLocationPrompt) {
+        onComplete();
+      } else {
+        setShowLocationModal(true);
+      }
     } catch (error: any) {
       toast.error(error.message || 'Failed to request ride');
     } finally {
@@ -143,8 +151,11 @@ export function RidesSelectionModal({
 
   const handleDDComplete = () => {
     setShowDDSetup(false);
-    // Show location modal instead of completing immediately
-    setShowLocationModal(true);
+    if (skipLocationPrompt) {
+      onComplete();
+    } else {
+      setShowLocationModal(true);
+    }
   };
 
   const handleLocationComplete = () => {

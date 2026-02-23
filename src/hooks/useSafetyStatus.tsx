@@ -15,6 +15,7 @@ export interface AttendeeWithSafetyStatus {
   destination_name?: string | null;
   needs_ride?: boolean | null;
   ride_pickup_location?: string | null;
+  location_prompt_shown?: boolean | null;
   profile?: {
     id: string;
     display_name: string | null;
@@ -203,7 +204,8 @@ export function useMyAttendeeStatus(eventId: string | undefined) {
           dd_dropoff_confirmed_by,
           destination_name,
           needs_ride,
-          ride_pickup_location
+          ride_pickup_location,
+          location_prompt_shown
         `)
         .eq('event_id', eventId)
         .eq('profile_id', profile.id)
@@ -226,6 +228,7 @@ export function useMyAttendeeStatus(eventId: string | undefined) {
         destination_name: (data as any).destination_name ?? null,
         needs_ride: (data as any).needs_ride ?? false,
         ride_pickup_location: (data as any).ride_pickup_location ?? null,
+        location_prompt_shown: (data as any).location_prompt_shown ?? false,
       } as AttendeeWithSafetyStatus;
     },
     enabled: !!eventId && !!profile?.id,
