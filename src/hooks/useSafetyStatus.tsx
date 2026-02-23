@@ -12,7 +12,9 @@ export interface AttendeeWithSafetyStatus {
   dd_dropoff_confirmed_by: string | null;
   is_dd: boolean;
   after_rally_opted_in: boolean | null;
-  destination_name?: string | null;  // NEW: For detecting opted_in state
+  destination_name?: string | null;
+  needs_ride?: boolean | null;
+  ride_pickup_location?: string | null;
   profile?: {
     id: string;
     display_name: string | null;
@@ -199,7 +201,9 @@ export function useMyAttendeeStatus(eventId: string | undefined) {
           not_participating_rally_home_confirmed,
           dd_dropoff_confirmed_at,
           dd_dropoff_confirmed_by,
-          destination_name
+          destination_name,
+          needs_ride,
+          ride_pickup_location
         `)
         .eq('event_id', eventId)
         .eq('profile_id', profile.id)
@@ -220,6 +224,8 @@ export function useMyAttendeeStatus(eventId: string | undefined) {
         is_dd: data.is_dd ?? false,
         after_rally_opted_in: data.after_rally_opted_in ?? null,
         destination_name: (data as any).destination_name ?? null,
+        needs_ride: (data as any).needs_ride ?? false,
+        ride_pickup_location: (data as any).ride_pickup_location ?? null,
       } as AttendeeWithSafetyStatus;
     },
     enabled: !!eventId && !!profile?.id,

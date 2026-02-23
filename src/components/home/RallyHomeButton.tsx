@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,6 +14,9 @@ import { useSafetyNotifications } from '@/hooks/useSafetyNotifications';
 import { useMapboxToken } from '@/hooks/useMapboxToken';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { RidePlanCard } from './RidePlanCard';
+import { RidesSelectionModal } from '@/components/events/RidesSelectionModal';
+import { SafetyChoiceModal } from '@/components/events/SafetyChoiceModal';
 
 type DestinationType = 'home' | 'friend' | 'hotel' | 'custom';
 type VisibilityType = 'none' | 'squad' | 'selected' | 'all';
@@ -30,13 +33,19 @@ interface EventAttendee {
 interface RallyHomeButtonProps {
   eventId: string;
   trigger?: React.ReactNode;
-  eventStatus?: string;  // NEW: to determine if event is over
-  autoOpen?: boolean;     // Auto-open the initial choice dialog on mount
-  onAutoOpenComplete?: () => void; // Callback after auto-open is handled
+  eventStatus?: string;
+  autoOpen?: boolean;
+  onAutoOpenComplete?: () => void;
+  eventTitle?: string;
+  eventLocationName?: string;
+  eventLocationLat?: number;
+  eventLocationLng?: number;
 }
 
-export function RallyHomeButton({ eventId, trigger, eventStatus, autoOpen, onAutoOpenComplete }: RallyHomeButtonProps) {
-  const [showInitialChoice, setShowInitialChoice] = useState(false);
+export function RallyHomeButton({ eventId, trigger, eventStatus, autoOpen, onAutoOpenComplete, eventTitle, eventLocationName, eventLocationLat, eventLocationLng }: RallyHomeButtonProps) {
+  const [showInitialChoice, setShowInitialChoice] = useState(false); // kept for handleNotParticipating
+  const [showChangePlan, setShowChangePlan] = useState(false);
+  const [showSafetyChoice, setShowSafetyChoice] = useState(false);
   const [open, setOpen] = useState(false);
   const [destinationType, setDestinationType] = useState<DestinationType>('home');
   const [customAddress, setCustomAddress] = useState('');
@@ -78,15 +87,19 @@ export function RallyHomeButton({ eventId, trigger, eventStatus, autoOpen, onAut
   const notParticipating = !!myStatus?.not_participating_rally_home_confirmed;
   const hasDestinationSet = !!(myStatus as any)?.destination_name && (myStatus as any)?.after_rally_opted_in;
   const isEventOver = eventStatus === 'after_rally' || eventStatus === 'completed';
+  const hasRidePlan = !!(myStatus?.is_dd || myStatus?.needs_ride);
 
-  // Auto-open the initial choice dialog when autoOpen prop is set
+  // Auto-open when autoOpen prop is set
   useEffect(() => {
     if (autoOpen && !isGoingHome && !hasArrived && !notParticipating) {
-      // If destination already set and event is over, skip dialog - just start journey
       if (hasDestinationSet && isEventOver) {
         // Already has destination, no need to show dialog
-      } else if (!hasDestinationSet) {
-        setShowInitialChoice(true);
+      } else if (hasRidePlan && !hasDestinationSet) {
+        // Has ride plan but no destination - open destination dialog
+        setOpen(true);
+      } else if (!hasRidePlan) {
+        // No ride plan at all - show safety choice
+        setShowSafetyChoice(true);
       }
       onAutoOpenComplete?.();
     }
@@ -405,52 +418,103 @@ export function RallyHomeButton({ eventId, trigger, eventStatus, autoOpen, onAut
     }
   }
 
-  // For undecided users - show initial choice dialog
+  // For undecided users - show ride plan card (if plan exists) or safety choice
+  const handleChangePlanComplete = () => {
+    setShowChangePlan(false);
+    refetchStatus();
+  };
+
+  const handleSafetyRallyGotMe = () => {
+    setShowSafetyChoice(false);
+    setShowChangePlan(true);
+  };
+
+  const handleSafetyImGood = async () => {
+    // Mark as self-transport (not needing rally rides, not a DD)
+    if (!profile?.id) return;
+    setIsLoading(true);
+    try {
+      await supabase
+        .from('event_attendees')
+        .update({
+          needs_ride: false,
+          is_dd: false,
+        } as any)
+        .eq('event_id', eventId)
+        .eq('profile_id', profile.id);
+      
+      await refetchStatus();
+      setShowSafetyChoice(false);
+      toast.success('Got it! You\'re getting home on your own.', {
+        description: 'You can change this anytime.',
+      });
+    } catch (error) {
+      toast.error('Something went wrong');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <>
-      {/* Initial Choice Dialog */}
-      <Dialog open={showInitialChoice} onOpenChange={setShowInitialChoice}>
-        <DialogTrigger asChild>
-          {trigger || (
-            <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-full font-montserrat h-14 text-lg shadow-lg">
+      {/* Show ride plan card if user already has a plan from join flow */}
+      {hasRidePlan && myStatus ? (
+        <div className="space-y-3">
+          <RidePlanCard
+            myStatus={myStatus}
+            eventId={eventId}
+            onChangePlan={() => setShowChangePlan(true)}
+            onSetDestination={() => setOpen(true)}
+            hasDestination={hasDestinationSet}
+          />
+          {!hasDestinationSet && (
+            <Button
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-full font-montserrat h-14 text-lg shadow-lg"
+              onClick={() => setOpen(true)}
+            >
+              <Navigation className="h-5 w-5 mr-2" />
+              Set R@lly Home Destination
+            </Button>
+          )}
+        </div>
+      ) : (
+        /* No ride plan set yet - show trigger button that opens safety choice */
+        <>
+          {trigger ? (
+            <div onClick={() => setShowSafetyChoice(true)}>{trigger}</div>
+          ) : (
+            <Button
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-full font-montserrat h-14 text-lg shadow-lg"
+              onClick={() => setShowSafetyChoice(true)}
+            >
               <Home className="h-5 w-5 mr-2" />
               R@lly Home
             </Button>
           )}
-        </DialogTrigger>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 font-montserrat text-xl">
-              <Shield className="h-6 w-6 text-secondary" />
-              R@lly Home Safety
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <p className="text-sm text-muted-foreground text-center">
-              Let your squad know your plans for getting home safely.
-            </p>
-            <Button
-              className="w-full bg-primary hover:bg-primary/90 h-14"
-              onClick={() => {
-                setShowInitialChoice(false);
-                setOpen(true);
-              }}
-            >
-              <Navigation className="h-5 w-5 mr-2" />
-              Participate in R@lly Home
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full h-14"
-              onClick={handleNotParticipating}
-              disabled={isLoading}
-            >
-              <XCircle className="h-5 w-5 mr-2" />
-              {isLoading ? 'Confirming...' : "I'm Not Participating in R@lly Home"}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+        </>
+      )}
+
+      {/* Safety Choice Modal - for users who haven't set a plan */}
+      <SafetyChoiceModal
+        open={showSafetyChoice}
+        onOpenChange={setShowSafetyChoice}
+        onRallyGotMe={handleSafetyRallyGotMe}
+        onDoingItMyself={handleSafetyImGood}
+        isLoading={isLoading}
+      />
+
+      {/* Change Plan Modal - reuses RidesSelectionModal */}
+      <RidesSelectionModal
+        open={showChangePlan}
+        onOpenChange={setShowChangePlan}
+        onBack={() => setShowChangePlan(false)}
+        onComplete={handleChangePlanComplete}
+        eventId={eventId}
+        eventTitle={eventTitle || 'Rally'}
+        eventLocationName={eventLocationName}
+        eventLocationLat={eventLocationLat}
+        eventLocationLng={eventLocationLng}
+      />
 
       {/* Destination Selection Dialog */}
       <Dialog open={open} onOpenChange={setOpen}>
@@ -511,8 +575,8 @@ export function RallyHomeButton({ eventId, trigger, eventStatus, autoOpen, onAut
             )}
 
             {destinationType === 'home' && !profile?.home_address && (
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                <p className="text-sm text-amber-800">
+              <div className="bg-accent/50 border border-accent rounded-lg p-3">
+                <p className="text-sm text-accent-foreground">
                   You haven't set your home address yet. Add it in your profile for one-tap access!
                 </p>
                 <Input
@@ -615,7 +679,7 @@ export function RallyHomeButton({ eventId, trigger, eventStatus, autoOpen, onAut
               {isLoading ? 'Starting...' : (
                 <>
                   <Navigation className="h-5 w-5 mr-2" />
-                  Start Navigation
+                  {isEventOver ? 'Start Navigation' : 'Save Destination'}
                 </>
               )}
             </Button>
