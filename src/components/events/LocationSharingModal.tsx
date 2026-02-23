@@ -123,11 +123,8 @@ export function LocationSharingModal({
         onEscapeKeyDown={(e) => e.preventDefault()}
       >
         <DialogHeader className="text-center">
-          <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-2 relative">
+          <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-2">
             <MapPin className="h-8 w-8 text-primary" />
-            <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-secondary flex items-center justify-center">
-              <Shield className="h-3 w-3 text-secondary-foreground" />
-            </div>
           </div>
           <DialogTitle className="text-xl font-bold font-montserrat">
             NO MAN LEFT BEHIND
