@@ -567,6 +567,10 @@ export default function EventDetail() {
             <RallyHomeButton 
               eventId={event.id}
               eventStatus={event.status}
+              eventTitle={event.title}
+              eventLocationName={event.location_name || undefined}
+              eventLocationLat={event.location_lat || undefined}
+              eventLocationLng={event.location_lng || undefined}
               trigger={
                 <Card className="bg-gradient-to-r from-primary to-primary/85 border-0 shadow-lg cursor-pointer hover:shadow-xl transition-shadow">
                   <CardContent className="p-4 flex items-center justify-between">
@@ -941,6 +945,10 @@ export default function EventDetail() {
         <RallyHomeButton 
           eventId={event.id}
           eventStatus={event.status}
+          eventTitle={event.title}
+          eventLocationName={event.location_name || undefined}
+          eventLocationLat={event.location_lat || undefined}
+          eventLocationLng={event.location_lng || undefined}
           autoOpen={true}
           onAutoOpenComplete={() => setShowRallyHomeDialog(false)}
           trigger={<></>}
