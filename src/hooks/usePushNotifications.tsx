@@ -72,7 +72,7 @@ export function usePushNotifications() {
     }
 
     const registration = await navigator.serviceWorker.register('/sw.js');
-    console.log('Service Worker registered:', registration);
+    if (import.meta.env.DEV) console.log('Service Worker registered:', registration);
     return registration;
   }, []);
 
@@ -109,7 +109,7 @@ export function usePushNotifications() {
         applicationServerKey: applicationServerKey.buffer as ArrayBuffer
       });
 
-      console.log('Push subscription:', subscription);
+      if (import.meta.env.DEV) console.log('Push subscription:', subscription);
 
       const subscriptionJson = subscription.toJSON();
       

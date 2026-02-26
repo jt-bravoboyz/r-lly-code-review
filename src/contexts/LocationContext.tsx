@@ -416,7 +416,7 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
     if (isNativePlatform) {
       // Start native tracking
       nativeGeolocation.startTracking().then(() => {
-        console.log('Native geolocation tracking started');
+        if (import.meta.env.DEV) console.log('Native geolocation tracking started');
       }).catch(handleError);
     } else {
       // Web fallback using browser geolocation

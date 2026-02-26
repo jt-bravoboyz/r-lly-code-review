@@ -200,7 +200,7 @@ export function useIndoorPositioning(): UseIndoorPositioningResult {
         try {
           await BleClient.initialize({ androidNeverForLocation: false });
           setBleInitialized(true);
-          console.log('BLE initialized successfully');
+          if (import.meta.env.DEV) console.log('BLE initialized successfully');
         } catch (err) {
           console.error('Failed to initialize BLE:', err);
           setError('Failed to initialize Bluetooth');
