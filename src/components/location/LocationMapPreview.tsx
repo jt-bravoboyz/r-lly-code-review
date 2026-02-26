@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, forwardRef } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { useMapboxToken } from '@/hooks/useMapboxToken';
+import { useTheme } from '@/contexts/ThemeContext';
 import { MapPin, Loader2, Navigation } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -29,10 +30,14 @@ export const LocationMapPreview = forwardRef<HTMLDivElement, LocationMapPreviewP
     showDirections = true,
   }, ref) {
     const { token, isLoading, error } = useMapboxToken();
+    const { resolvedTheme } = useTheme();
     const mapContainer = useRef<HTMLDivElement>(null);
     const map = useRef<mapboxgl.Map | null>(null);
     const marker = useRef<mapboxgl.Marker | null>(null);
     const [mapReady, setMapReady] = useState(false);
+    
+    // POL-5: Theme-aware map style
+    const mapStyle = resolvedTheme === 'dark' ? 'mapbox://styles/mapbox/dark-v11' : 'mapbox://styles/mapbox/streets-v12';
 
     // Open directions in Google Maps (always use Google Maps for consistency)
     const handleGetDirections = () => {
@@ -48,7 +53,7 @@ export const LocationMapPreview = forwardRef<HTMLDivElement, LocationMapPreviewP
 
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
-        style: 'mapbox://styles/mapbox/streets-v12',
+        style: mapStyle,
         center: [lng, lat],
         zoom: 15,
         interactive: interactive,

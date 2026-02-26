@@ -183,20 +183,24 @@ export const QuickRallyDialog = forwardRef<HTMLButtonElement, QuickRallyDialogPr
         // Auto-join the event - This triggers chat_participants sync
         await joinEvent.mutateAsync({ eventId: result.id, profileId: profile.id });
         
-        console.log('[R@lly Debug] Quick Rally completed:', { 
-          event_id: result.id, 
-          creator_joined: true,
-          event_type: data.event_type,
-        });
+        if (import.meta.env.DEV) {
+          console.log('[R@lly Debug] Quick Rally completed:', { 
+            event_id: result.id, 
+            creator_joined: true,
+            event_type: data.event_type,
+          });
+        }
         
         // Auto-invite all members from selected squads
         if (selectedSquads.length > 0) {
           // Collect all member profile IDs from selected squads, excluding the host
           const allMemberIds = new Set<string>();
           
-          console.log('[R@lly Debug] Processing squad invites:', { 
-            selectedSquads: selectedSquads.map(s => ({ id: s.id, name: s.name, memberCount: s.members?.length }))
-          });
+          if (import.meta.env.DEV) {
+            console.log('[R@lly Debug] Processing squad invites:', { 
+              selectedSquads: selectedSquads.map(s => ({ id: s.id, name: s.name, memberCount: s.members?.length }))
+            });
+          }
           
           selectedSquads.forEach(squad => {
             // Also add the squad owner if it's not the current user
@@ -207,11 +211,13 @@ export const QuickRallyDialog = forwardRef<HTMLButtonElement, QuickRallyDialogPr
             squad.members?.forEach(member => {
               // Use profile_id directly from squad_members, with profile.id as fallback
               const memberId = member.profile_id || member.profile?.id;
-              console.log('[R@lly Debug] Processing member:', { 
-                profile_id: member.profile_id, 
-                nested_profile_id: member.profile?.id,
-                resolved_memberId: memberId 
-              });
+              if (import.meta.env.DEV) {
+                console.log('[R@lly Debug] Processing member:', { 
+                  profile_id: member.profile_id, 
+                  nested_profile_id: member.profile?.id,
+                  resolved_memberId: memberId 
+                });
+              }
               // Exclude host's own profile ID and ensure ID exists
               if (memberId && memberId !== profile.id) {
                 allMemberIds.add(memberId);
@@ -221,7 +227,7 @@ export const QuickRallyDialog = forwardRef<HTMLButtonElement, QuickRallyDialogPr
           
           const uniqueMemberIds = Array.from(allMemberIds);
           
-          console.log('[R@lly Debug] Unique member IDs to invite:', uniqueMemberIds);
+          if (import.meta.env.DEV) console.log('[R@lly Debug] Unique member IDs to invite:', uniqueMemberIds);
           
           if (uniqueMemberIds.length > 0) {
             try {
@@ -237,7 +243,7 @@ export const QuickRallyDialog = forwardRef<HTMLButtonElement, QuickRallyDialogPr
               toast.error('Rally created but some invites failed');
             }
           } else {
-            console.log('[R@lly Debug] No members to invite (all excluded or empty)');
+            if (import.meta.env.DEV) console.log('[R@lly Debug] No members to invite (all excluded or empty)');
           }
         }
         

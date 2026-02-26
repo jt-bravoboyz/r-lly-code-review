@@ -45,8 +45,8 @@ export function useEventChat(eventId: string) {
   const { data: chat, isLoading: chatLoading } = useQuery({
     queryKey: ['event-chat', eventId],
     queryFn: async () => {
-      // Debug logging for Phase 9 validation
-      console.log('[R@lly Debug] useEventChat fetching:', { event_id: eventId });
+      // POL-2: Debug logging wrapped in dev check
+      if (import.meta.env.DEV) console.log('[R@lly Debug] useEventChat fetching:', { event_id: eventId });
 
       // First check if a squad chat is already linked to this event
       const { data: linkedSquadChat } = await supabase
@@ -57,7 +57,7 @@ export function useEventChat(eventId: string) {
         .maybeSingle();
 
       if (linkedSquadChat) {
-        console.log('[R@lly Debug] Found linked squad chat:', { event_id: eventId, chat_id: linkedSquadChat.id });
+        if (import.meta.env.DEV) console.log('[R@lly Debug] Found linked squad chat:', { event_id: eventId, chat_id: linkedSquadChat.id });
         return linkedSquadChat;
       }
 
@@ -70,7 +70,7 @@ export function useEventChat(eventId: string) {
         .maybeSingle();
 
       if (existingEventChat) {
-        console.log('[R@lly Debug] Found existing event chat:', { event_id: eventId, chat_id: existingEventChat.id });
+        if (import.meta.env.DEV) console.log('[R@lly Debug] Found existing event chat:', { event_id: eventId, chat_id: existingEventChat.id });
         return existingEventChat;
       }
 
@@ -99,13 +99,13 @@ export function useEventChat(eventId: string) {
           .eq('id', eligibility.chatId)
           .single();
 
-        console.log('[R@lly Debug] Linked squad chat to event:', { event_id: eventId, chat_id: squadChat?.id });
+        if (import.meta.env.DEV) console.log('[R@lly Debug] Linked squad chat to event:', { event_id: eventId, chat_id: squadChat?.id });
         return squadChat;
       }
 
       // PHASE 8: Instead of lazily creating chat, log error and return null
       // Event chats should be created via database trigger at event creation
-      console.warn('[R@lly Debug] No chat found for event - chat should exist from event creation:', { event_id: eventId });
+      if (import.meta.env.DEV) console.warn('[R@lly Debug] No chat found for event - chat should exist from event creation:', { event_id: eventId });
       
       // Still attempt creation as fallback, but log it as unexpected
       const { data: newChat, error } = await supabase
@@ -115,12 +115,12 @@ export function useEventChat(eventId: string) {
         .single();
 
       if (error) {
-        console.error('[R@lly Debug] Failed to create fallback chat:', { event_id: eventId, error: error.message });
+        if (import.meta.env.DEV) console.error('[R@lly Debug] Failed to create fallback chat:', { event_id: eventId, error: error.message });
         // Return null instead of throwing - component should handle null chat
         return null;
       }
       
-      console.log('[R@lly Debug] Created fallback chat (unexpected):', { event_id: eventId, chat_id: newChat?.id });
+      if (import.meta.env.DEV) console.log('[R@lly Debug] Created fallback chat (unexpected):', { event_id: eventId, chat_id: newChat?.id });
       return newChat;
     },
     enabled: !!eventId,

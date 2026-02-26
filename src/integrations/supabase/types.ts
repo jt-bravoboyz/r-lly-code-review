@@ -320,6 +320,9 @@ export type Database = {
           needs_ride: boolean | null
           not_participating_rally_home_confirmed: boolean | null
           profile_id: string
+          ride_dropoff_lat: number | null
+          ride_dropoff_lng: number | null
+          ride_dropoff_location: string | null
           ride_pickup_lat: number | null
           ride_pickup_lng: number | null
           ride_pickup_location: string | null
@@ -351,6 +354,9 @@ export type Database = {
           needs_ride?: boolean | null
           not_participating_rally_home_confirmed?: boolean | null
           profile_id: string
+          ride_dropoff_lat?: number | null
+          ride_dropoff_lng?: number | null
+          ride_dropoff_location?: string | null
           ride_pickup_lat?: number | null
           ride_pickup_lng?: number | null
           ride_pickup_location?: string | null
@@ -382,6 +388,9 @@ export type Database = {
           needs_ride?: boolean | null
           not_participating_rally_home_confirmed?: boolean | null
           profile_id?: string
+          ride_dropoff_lat?: number | null
+          ride_dropoff_lng?: number | null
+          ride_dropoff_location?: string | null
           ride_pickup_lat?: number | null
           ride_pickup_lng?: number | null
           ride_pickup_location?: string | null
@@ -2974,6 +2983,38 @@ export type Database = {
       rly_update_activity_badges: {
         Args: { p_user_id: string }
         Returns: undefined
+      }
+      transition_event_status: {
+        Args: { p_event_id: string; p_new_status: string }
+        Returns: {
+          after_rally_location_lat: number | null
+          after_rally_location_lng: number | null
+          after_rally_location_name: string | null
+          created_at: string | null
+          creator_id: string
+          description: string | null
+          end_time: string | null
+          event_type: string
+          id: string
+          image_url: string | null
+          invite_code: string | null
+          is_barhop: boolean | null
+          is_quick_rally: boolean | null
+          location_lat: number | null
+          location_lng: number | null
+          location_name: string | null
+          max_attendees: number | null
+          start_time: string
+          status: string | null
+          title: string
+          updated_at: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "events"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
     }
     Enums: {

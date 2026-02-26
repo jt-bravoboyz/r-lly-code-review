@@ -53,15 +53,17 @@ export function DDArrivedButton({ eventId }: DDArrivedButtonProps) {
 
       if (error) throw error;
 
-      // Award safe arrival points
-      try {
-        await supabase.rpc('rly_award_points_by_profile', {
-          p_profile_id: profile.id,
-          p_event_type: 'safe_arrival',
-          p_source_id: eventId
-        });
-      } catch (pointsError) {
-        console.error('Failed to award safe_arrival points:', pointsError);
+      // MED-4: Guard against duplicate point awarding
+      if (!myStatus?.arrived_safely) {
+        try {
+          await supabase.rpc('rly_award_points_by_profile', {
+            p_profile_id: profile.id,
+            p_event_type: 'safe_arrival',
+            p_source_id: eventId
+          });
+        } catch (pointsError) {
+          console.error('Failed to award safe_arrival points:', pointsError);
+        }
       }
 
       // Send notification to host/cohosts

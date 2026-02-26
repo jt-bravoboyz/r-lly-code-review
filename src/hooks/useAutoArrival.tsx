@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 
 // Haversine formula to calculate distance in meters between two coordinates
 function calculateDistanceMeters(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const R = 6371e3; // Earth's radius in meters
+  const R = 6371e3;
   const φ1 = (lat1 * Math.PI) / 180;
   const φ2 = (lat2 * Math.PI) / 180;
   const Δφ = ((lat2 - lat1) * Math.PI) / 180;
@@ -20,7 +20,6 @@ function calculateDistanceMeters(lat1: number, lng1: number, lat2: number, lng2:
   return R * c;
 }
 
-// Arrival detection threshold in meters (100m radius)
 const ARRIVAL_THRESHOLD_METERS = 100;
 
 interface UseAutoArrivalProps {
@@ -35,8 +34,6 @@ export function useAutoArrival({ eventId, eventStatus }: UseAutoArrivalProps) {
   const watchIdRef = useRef<number | null>(null);
   const hasMarkedArrivalRef = useRef(false);
 
-  // Only enable auto-arrival when event is in 'after_rally' or 'completed' status
-  // AND user is participating (has going_home_at) AND hasn't arrived yet
   const shouldTrack = 
     profile?.id && 
     myStatus && 
@@ -47,6 +44,9 @@ export function useAutoArrival({ eventId, eventStatus }: UseAutoArrivalProps) {
 
   const markArrivedSafely = useCallback(async () => {
     if (!profile?.id || hasMarkedArrivalRef.current) return;
+    
+    // MED-4: Guard against duplicate points if already arrived
+    if (myStatus?.arrived_safely) return;
     
     hasMarkedArrivalRef.current = true;
 
@@ -62,7 +62,7 @@ export function useAutoArrival({ eventId, eventStatus }: UseAutoArrivalProps) {
 
       if (error) throw error;
 
-      // Award safe arrival points
+      // MED-4: Only award points if not already arrived
       try {
         await supabase.rpc('rly_award_points_by_profile', {
           p_profile_id: profile.id,
@@ -70,26 +70,28 @@ export function useAutoArrival({ eventId, eventStatus }: UseAutoArrivalProps) {
           p_source_id: eventId
         });
       } catch (pointsError) {
-        console.error('Failed to award safe_arrival points:', pointsError);
+        if (import.meta.env.DEV) {
+          console.error('Failed to award safe_arrival points:', pointsError);
+        }
       }
 
       await refetchStatus();
       
-      // Send notification to host/cohosts/squad
       notifyArrivedSafe(eventId);
       
       toast.success('🏠 You made it home safely!', {
         description: 'Auto-detected your arrival. Your squad has been notified.',
       });
     } catch (error) {
-      console.error('Auto-arrival failed:', error);
-      hasMarkedArrivalRef.current = false; // Allow retry
+      if (import.meta.env.DEV) {
+        console.error('Auto-arrival failed:', error);
+      }
+      hasMarkedArrivalRef.current = false;
     }
-  }, [eventId, profile?.id, refetchStatus, notifyArrivedSafe]);
+  }, [eventId, profile?.id, refetchStatus, notifyArrivedSafe, myStatus?.arrived_safely]);
 
   useEffect(() => {
     if (!shouldTrack) {
-      // Clear watch if we shouldn't track
       if (watchIdRef.current !== null) {
         navigator.geolocation.clearWatch(watchIdRef.current);
         watchIdRef.current = null;
@@ -97,7 +99,6 @@ export function useAutoArrival({ eventId, eventStatus }: UseAutoArrivalProps) {
       return;
     }
 
-    // Fetch destination coordinates
     const fetchDestinationAndWatch = async () => {
       const { data: attendeeData } = await supabase
         .from('event_attendees')
@@ -109,29 +110,37 @@ export function useAutoArrival({ eventId, eventStatus }: UseAutoArrivalProps) {
       const destLat = attendeeData?.destination_lat;
       const destLng = attendeeData?.destination_lng;
 
-      // If no coordinates, we can't auto-detect
       if (!destLat || !destLng) {
-        console.log('[AutoArrival] No destination coordinates set, skipping auto-detection');
+        if (import.meta.env.DEV) {
+          console.log('[AutoArrival] No destination coordinates set, skipping auto-detection');
+        }
         return;
       }
 
-      console.log('[AutoArrival] Starting location watch for auto-arrival detection');
+      if (import.meta.env.DEV) {
+        console.log('[AutoArrival] Starting location watch for auto-arrival detection');
+      }
 
-      // Start watching location
       watchIdRef.current = navigator.geolocation.watchPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
           const distance = calculateDistanceMeters(latitude, longitude, destLat, destLng);
 
-          console.log(`[AutoArrival] Distance to destination: ${distance.toFixed(0)}m`);
+          if (import.meta.env.DEV) {
+            console.log(`[AutoArrival] Distance to destination: ${distance.toFixed(0)}m`);
+          }
 
           if (distance <= ARRIVAL_THRESHOLD_METERS) {
-            console.log('[AutoArrival] User has arrived at destination!');
+            if (import.meta.env.DEV) {
+              console.log('[AutoArrival] User has arrived at destination!');
+            }
             markArrivedSafely();
           }
         },
         (error) => {
-          console.error('[AutoArrival] Geolocation error:', error);
+          if (import.meta.env.DEV) {
+            console.error('[AutoArrival] Geolocation error:', error);
+          }
         },
         {
           enableHighAccuracy: true,
@@ -151,7 +160,6 @@ export function useAutoArrival({ eventId, eventStatus }: UseAutoArrivalProps) {
     };
   }, [shouldTrack, eventId, profile?.id, markArrivedSafely]);
 
-  // Reset the arrival flag when the hook is re-initialized with new event/status
   useEffect(() => {
     hasMarkedArrivalRef.current = false;
   }, [eventId]);
