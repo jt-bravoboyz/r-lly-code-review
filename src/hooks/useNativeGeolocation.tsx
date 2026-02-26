@@ -154,7 +154,7 @@ export function useNativeGeolocation(
           };
         }
       } catch (err) {
-        console.log('Battery API not available');
+        if (import.meta.env.DEV) console.log('Battery API not available');
       }
     };
     

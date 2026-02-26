@@ -142,7 +142,7 @@ export function SafetyTracker({ eventId }: SafetyTrackerProps) {
 
   // Debug logging for validation
   useEffect(() => {
-    if (attendees && attendees.length > 0) {
+    if (import.meta.env.DEV && attendees && attendees.length > 0) {
       console.log('[R@lly Debug] SafetyTracker loaded:', { 
         event_id: eventId, 
         attendee_count: attendees.length,
