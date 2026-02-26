@@ -28,34 +28,13 @@ export function useMyAfterRallyStatus(eventId: string | undefined) {
   });
 }
 
-/**
- * ARCH-1: Uses transition_event_status RPC with graceful fallback.
- */
 async function transitionStatus(eventId: string, newStatus: string) {
-  try {
-    const { data, error } = await supabase.rpc('transition_event_status', {
-      p_event_id: eventId,
-      p_new_status: newStatus,
-    });
-    if (error) throw error;
-    return data;
-  } catch (rpcError: any) {
-    // Graceful fallback if RPC not deployed yet
-    if (rpcError?.message?.includes('function') || rpcError?.code === '42883') {
-      if (import.meta.env.DEV) {
-        console.warn('[R@lly] transition_event_status RPC not found, using direct update fallback');
-      }
-      const { data, error } = await supabase
-        .from('events')
-        .update({ status: newStatus })
-        .eq('id', eventId)
-        .select()
-        .single();
-      if (error) throw error;
-      return data;
-    }
-    throw rpcError;
-  }
+  const { data, error } = await supabase.rpc('transition_event_status', {
+    p_event_id: eventId,
+    p_new_status: newStatus,
+  });
+  if (error) throw error;
+  return data;
 }
 
 export function useStartRally() {

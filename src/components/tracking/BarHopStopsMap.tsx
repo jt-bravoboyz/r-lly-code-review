@@ -72,9 +72,10 @@ export function BarHopStopsMap({ stops, eventLocation, currentStopIndex = 0 }: B
   useEffect(() => {
     if (!map.current) return;
     map.current.setStyle(mapStyle);
+    routeCoordsHashRef.current = '';
   }, [mapStyle]);
 
-  // MAP-1: Update markers/routes separately (depends on stops/currentStopIndex)
+  // MAP-1: Update markers/routes separately (depends on stops/currentStopIndex/mapStyle)
   useEffect(() => {
     if (!map.current || stopsWithCoords.length === 0) return;
 
@@ -82,6 +83,11 @@ export function BarHopStopsMap({ stops, eventLocation, currentStopIndex = 0 }: B
       // Clear existing markers
       markersRef.current.forEach(m => m.remove());
       markersRef.current = [];
+
+      // Clean up existing cluster layers/source before re-adding
+      if (map.current?.getLayer('cluster-count')) map.current.removeLayer('cluster-count');
+      if (map.current?.getLayer('clusters')) map.current.removeLayer('clusters');
+      if (map.current?.getSource('stops-cluster')) map.current.removeSource('stops-cluster');
 
       stopsWithCoords.forEach((stop, index) => {
         const el = document.createElement('div');
@@ -126,6 +132,48 @@ export function BarHopStopsMap({ stops, eventLocation, currentStopIndex = 0 }: B
         marker.setPopup(popup);
         markersRef.current.push(marker);
       });
+
+      // MAP-2: Add clustering source for stops
+      if (stopsWithCoords.length > 1 && map.current) {
+        const clusterFeatures = stopsWithCoords.map(stop => ({
+          type: 'Feature' as const,
+          properties: { stop_order: stop.stop_order, name: stop.name },
+          geometry: { type: 'Point' as const, coordinates: [stop.lng!, stop.lat!] },
+        }));
+
+        map.current.addSource('stops-cluster', {
+          type: 'geojson',
+          data: { type: 'FeatureCollection', features: clusterFeatures },
+          cluster: true,
+          clusterMaxZoom: 14,
+          clusterRadius: 50,
+        });
+
+        map.current.addLayer({
+          id: 'clusters',
+          type: 'circle',
+          source: 'stops-cluster',
+          filter: ['has', 'point_count'],
+          paint: {
+            'circle-color': '#f97316',
+            'circle-radius': ['step', ['get', 'point_count'], 18, 4, 24, 8, 30],
+            'circle-opacity': 0.7,
+          },
+        });
+
+        map.current.addLayer({
+          id: 'cluster-count',
+          type: 'symbol',
+          source: 'stops-cluster',
+          filter: ['has', 'point_count'],
+          layout: {
+            'text-field': '{point_count_abbreviated}',
+            'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
+            'text-size': 14,
+          },
+          paint: { 'text-color': '#ffffff' },
+        });
+      }
 
       // MAP-3: Fetch road-based route, memoized by coordinate hash
       if (stopsWithCoords.length > 1) {
@@ -208,7 +256,7 @@ export function BarHopStopsMap({ stops, eventLocation, currentStopIndex = 0 }: B
     } else {
       map.current.once('style.load', updateMarkersAndRoute);
     }
-  }, [stopsWithCoords, currentStopIndex, token]);
+  }, [stopsWithCoords, currentStopIndex, token, mapStyle]);
 
   if (isLoading) {
     return (
