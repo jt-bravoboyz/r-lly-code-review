@@ -29,6 +29,8 @@ interface RidesSelectionModalProps {
   eventLocationLng?: number;
   /** Skip location sharing prompt (e.g. when changing plan after initial setup) */
   skipLocationPrompt?: boolean;
+  /** BUG-2: Event status for phase-aware labels */
+  eventStatus?: string;
 }
 
 type View = 'choice' | 'request-ride';
@@ -44,6 +46,7 @@ export function RidesSelectionModal({
   eventLocationLat,
   eventLocationLng,
   skipLocationPrompt = false,
+  eventStatus,
 }: RidesSelectionModalProps) {
   const { profile } = useAuth();
   const queryClient = useQueryClient();
@@ -52,9 +55,12 @@ export function RidesSelectionModal({
   const [showDDSetup, setShowDDSetup] = useState(false);
   const [showLocationModal, setShowLocationModal] = useState(false);
   
-  // Request ride state
-  const [pickupLocation, setPickupLocation] = useState('');
-  const [pickupCoords, setPickupCoords] = useState<{ lat: number; lng: number } | null>(null);
+  // BUG-2: Phase-aware semantics
+  const isPostEvent = eventStatus === 'after_rally' || eventStatus === 'completed';
+  
+  // Location state (pickup or dropoff depending on phase)
+  const [locationValue, setLocationValue] = useState('');
+  const [locationCoords, setLocationCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleRequestRide = async () => {
@@ -63,8 +69,8 @@ export function RidesSelectionModal({
       return;
     }
 
-    if (!pickupLocation.trim()) {
-      toast.error('Please enter a pickup location');
+    if (!locationValue.trim()) {
+      toast.error(isPostEvent ? 'Please enter a drop off location' : 'Please enter a pickup location');
       return;
     }
 
@@ -91,7 +97,11 @@ export function RidesSelectionModal({
         (id) => id && id !== profile.id
       );
 
-      // Send notification to DDs
+      // BUG-2: Phase-aware notification
+      const notifBody = isPostEvent
+        ? `${profile.display_name || 'Someone'} needs a ride to ${locationValue}`
+        : `${profile.display_name || 'Someone'} needs a ride from ${locationValue}`;
+
       try {
         await supabase.functions.invoke('send-event-notification', {
           body: {
@@ -100,10 +110,11 @@ export function RidesSelectionModal({
             targetProfileIds: recipientIds,
             excludeProfileId: profile.id,
             title: '🚗 New Ride Request!',
-            body: `${profile.display_name || 'Someone'} needs a ride from ${pickupLocation}`,
+            body: notifBody,
             data: {
               event_id: eventId,
-              pickup_location: pickupLocation,
+              pickup_location: isPostEvent ? undefined : locationValue,
+              dropoff_location: isPostEvent ? locationValue : undefined,
               requester_id: profile.id,
               requester_name: profile.display_name,
               url: `/events/${eventId}`,
@@ -114,18 +125,27 @@ export function RidesSelectionModal({
         console.error('Failed to send ride request notification:', notifError);
       }
 
-      // Mark safety choice and ride need in attendee record
+      // BUG-2: Save to correct columns based on phase
+      const updatePayload: Record<string, any> = {
+        not_participating_rally_home_confirmed: false,
+        going_home_at: null,
+        needs_ride: true,
+        ride_requested_at: new Date().toISOString(),
+      };
+
+      if (isPostEvent) {
+        updatePayload.ride_dropoff_location = locationValue.trim() || null;
+        updatePayload.ride_dropoff_lat = locationCoords?.lat || null;
+        updatePayload.ride_dropoff_lng = locationCoords?.lng || null;
+      } else {
+        updatePayload.ride_pickup_location = locationValue.trim() || null;
+        updatePayload.ride_pickup_lat = locationCoords?.lat || null;
+        updatePayload.ride_pickup_lng = locationCoords?.lng || null;
+      }
+
       await supabase
         .from('event_attendees')
-        .update({ 
-          not_participating_rally_home_confirmed: false,
-          going_home_at: null,
-          needs_ride: true,
-          ride_requested_at: new Date().toISOString(),
-          ride_pickup_location: pickupLocation.trim() || null,
-          ride_pickup_lat: pickupCoords?.lat || null,
-          ride_pickup_lng: pickupCoords?.lng || null,
-        })
+        .update(updatePayload)
         .eq('event_id', eventId)
         .eq('profile_id', profile.id);
 
@@ -134,8 +154,6 @@ export function RidesSelectionModal({
       });
       
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
-      // Show location modal instead of completing immediately
-      // Show location modal only if not skipping (first-time setup)
       onOpenChange(false);
       if (skipLocationPrompt) {
         onComplete();
@@ -165,13 +183,19 @@ export function RidesSelectionModal({
 
   const handleClose = (openState: boolean) => {
     if (!openState) {
-      // Reset state when closing
       setView('choice');
-      setPickupLocation('');
-      setPickupCoords(null);
+      setLocationValue('');
+      setLocationCoords(null);
     }
     onOpenChange(openState);
   };
+
+  // BUG-2: Phase-aware labels
+  const locationLabel = isPostEvent ? 'Drop Off Location' : 'Pickup Location';
+  const locationPlaceholder = isPostEvent ? 'Enter drop off address...' : 'Enter pickup address...';
+  const locationDescription = isPostEvent
+    ? 'Where should we take you?'
+    : 'Where should we pick you up?';
 
   return (
     <>
@@ -241,30 +265,30 @@ export function RidesSelectionModal({
                   Request a Ride
                 </DialogTitle>
                 <DialogDescription>
-                  Where should we pick you up?
+                  {locationDescription}
                 </DialogDescription>
               </DialogHeader>
 
               <div className="space-y-4 pt-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Drop Off Location</label>
+                  <label className="text-sm font-medium">{locationLabel}</label>
                   <LocationSearch
-                    value={pickupLocation}
-                    onChange={setPickupLocation}
+                    value={locationValue}
+                    onChange={setLocationValue}
                     onLocationSelect={(loc) => {
-                      setPickupLocation(loc.name);
-                      setPickupCoords({ lat: loc.lat, lng: loc.lng });
+                      setLocationValue(loc.name);
+                      setLocationCoords({ lat: loc.lat, lng: loc.lng });
                     }}
-                    placeholder="Enter pickup address..."
+                    placeholder={locationPlaceholder}
                     showMapPreview={false}
                   />
                 </div>
 
-                {pickupCoords && (
+                {locationCoords && (
                   <LocationMapPreview
-                    lat={pickupCoords.lat}
-                    lng={pickupCoords.lng}
-                    name="Pickup"
+                    lat={locationCoords.lat}
+                    lng={locationCoords.lng}
+                    name={isPostEvent ? 'Drop Off' : 'Pickup'}
                     height="h-32"
                     interactive={false}
                   />
@@ -277,7 +301,7 @@ export function RidesSelectionModal({
                 <Button 
                   className="w-full gradient-accent"
                   onClick={handleRequestRide}
-                  disabled={isSubmitting || !pickupLocation.trim()}
+                  disabled={isSubmitting || !locationValue.trim()}
                 >
                   {isSubmitting ? (
                     <>

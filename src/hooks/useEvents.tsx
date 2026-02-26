@@ -51,16 +51,23 @@ export function usePastEvents() {
 
       const attendedEventIds = attendedEvents?.map(a => a.event_id) || [];
 
-      // Get past events where user is creator OR attendee
-      const { data, error } = await supabase
+      // MED-5: Guard empty array to avoid invalid SQL
+      let query = supabase
         .from('events')
         .select(`
           *,
           creator:profiles!events_creator_id_fkey(id, display_name, avatar_url),
           attendees:event_attendees(count)
         `)
-        .lt('start_time', new Date().toISOString())
-        .or(`creator_id.eq.${profile.id},id.in.(${attendedEventIds.join(',')})`)
+        .lt('start_time', new Date().toISOString());
+
+      if (attendedEventIds.length > 0) {
+        query = query.or(`creator_id.eq.${profile.id},id.in.(${attendedEventIds.join(',')})`);
+      } else {
+        query = query.eq('creator_id', profile.id);
+      }
+
+      const { data, error } = await query
         .order('start_time', { ascending: false })
         .limit(20);
       

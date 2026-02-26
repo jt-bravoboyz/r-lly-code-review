@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Beer, MapPin, Navigation } from 'lucide-react';
+import { Beer, MapPin } from 'lucide-react';
 import { useMapboxToken } from '@/hooks/useMapboxToken';
+import { useTheme } from '@/contexts/ThemeContext';
 import { escapeHtml } from '@/lib/sanitize';
 interface BarHopStop {
   id: string;
@@ -31,17 +32,22 @@ export function BarHopStopsMap({ stops, eventLocation, currentStopIndex = 0 }: B
   const map = useRef<mapboxgl.Map | null>(null);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
   const { token, isLoading } = useMapboxToken();
+  const { resolvedTheme } = useTheme();
+  const routeCoordsHashRef = useRef<string>('');
 
   // Filter stops with valid coordinates
-  const stopsWithCoords = stops.filter(s => s.lat && s.lng);
+  const stopsWithCoords = useMemo(() => stops.filter(s => s.lat && s.lng), [stops]);
 
+  // MAP-4/POL-5: Theme-aware map style
+  const mapStyle = resolvedTheme === 'dark' ? 'mapbox://styles/mapbox/dark-v11' : 'mapbox://styles/mapbox/streets-v12';
+
+  // MAP-1: Initialize map once (depends on token only)
   useEffect(() => {
     if (!mapContainer.current || !token || stopsWithCoords.length === 0) return;
+    if (map.current) return; // Already initialized
 
-    // Initialize map
     mapboxgl.accessToken = token;
     
-    // Calculate center from all stops
     const lats = stopsWithCoords.map(s => s.lat!);
     const lngs = stopsWithCoords.map(s => s.lng!);
     const centerLat = lats.reduce((a, b) => a + b, 0) / lats.length;
@@ -49,28 +55,41 @@ export function BarHopStopsMap({ stops, eventLocation, currentStopIndex = 0 }: B
 
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/dark-v11',
+      style: mapStyle,
       center: [centerLng, centerLat],
       zoom: 13,
     });
 
     map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
-    // Add markers for each stop
-    map.current.on('load', () => {
+    return () => {
+      map.current?.remove();
+      map.current = null;
+    };
+  }, [token]); // Only token - map initialized once
+
+  // Handle theme changes by updating style
+  useEffect(() => {
+    if (!map.current) return;
+    map.current.setStyle(mapStyle);
+  }, [mapStyle]);
+
+  // MAP-1: Update markers/routes separately (depends on stops/currentStopIndex)
+  useEffect(() => {
+    if (!map.current || stopsWithCoords.length === 0) return;
+
+    const updateMarkersAndRoute = () => {
       // Clear existing markers
       markersRef.current.forEach(m => m.remove());
       markersRef.current = [];
 
       stopsWithCoords.forEach((stop, index) => {
-        // Create custom marker element
         const el = document.createElement('div');
         el.className = 'flex flex-col items-center';
         
         const isCurrentStop = index === currentStopIndex;
         const isPastStop = index < currentStopIndex;
         
-        // Use escapeHtml to prevent XSS attacks from user-controlled stop names
         const escapedName = escapeHtml(stop.name);
         const escapedAddress = escapeHtml(stop.address);
         
@@ -96,7 +115,6 @@ export function BarHopStopsMap({ stops, eventLocation, currentStopIndex = 0 }: B
           .setLngLat([stop.lng!, stop.lat!])
           .addTo(map.current!);
 
-        // Add popup with sanitized content - dark theme for After R@lly readability
         const popup = new mapboxgl.Popup({ offset: 25, className: 'barhop-popup-dark' }).setHTML(`
           <div style="background:#1e1b2e;color:#c4b5fd;padding:10px 14px;border-radius:8px;min-width:160px;">
             <p style="font-weight:700;color:#d8b4fe;margin:0 0 4px;">Stop ${stop.stop_order}: ${escapedName}</p>
@@ -109,50 +127,88 @@ export function BarHopStopsMap({ stops, eventLocation, currentStopIndex = 0 }: B
         markersRef.current.push(marker);
       });
 
-      // Draw route line between stops
+      // MAP-3: Fetch road-based route, memoized by coordinate hash
       if (stopsWithCoords.length > 1) {
-        const coordinates = stopsWithCoords
-          .sort((a, b) => a.stop_order - b.stop_order)
-          .map(s => [s.lng!, s.lat!]);
+        const sortedStops = [...stopsWithCoords].sort((a, b) => a.stop_order - b.stop_order);
+        const coordinates = sortedStops.map(s => [s.lng!, s.lat!]);
+        const coordsHash = JSON.stringify(coordinates);
 
-        map.current?.addSource('route', {
-          type: 'geojson',
-          data: {
-            type: 'Feature',
-            properties: {},
-            geometry: {
-              type: 'LineString',
-              coordinates,
-            },
-          },
-        });
+        // Only refetch if coordinates changed
+        if (coordsHash !== routeCoordsHashRef.current) {
+          routeCoordsHashRef.current = coordsHash;
+          
+          // Remove existing route
+          if (map.current?.getSource('route')) {
+            map.current.removeLayer('route');
+            map.current.removeSource('route');
+          }
 
-        map.current?.addLayer({
-          id: 'route',
-          type: 'line',
-          source: 'route',
-          layout: {
-            'line-join': 'round',
-            'line-cap': 'round',
-          },
-          paint: {
-            'line-color': '#f97316',
-            'line-width': 3,
-            'line-dasharray': [2, 2],
-          },
-        });
+          // Try Directions API first, fall back to straight line
+          const coordString = coordinates.map(c => c.join(',')).join(';');
+          fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${coordString}?geometries=geojson&access_token=${token}`)
+            .then(res => res.json())
+            .then(data => {
+              if (!map.current) return;
+              const geometry = data.routes?.[0]?.geometry || {
+                type: 'LineString',
+                coordinates,
+              };
+
+              if (map.current.getSource('route')) {
+                (map.current.getSource('route') as mapboxgl.GeoJSONSource).setData({
+                  type: 'Feature',
+                  properties: {},
+                  geometry,
+                });
+              } else {
+                map.current.addSource('route', {
+                  type: 'geojson',
+                  data: { type: 'Feature', properties: {}, geometry },
+                });
+                map.current.addLayer({
+                  id: 'route',
+                  type: 'line',
+                  source: 'route',
+                  layout: { 'line-join': 'round', 'line-cap': 'round' },
+                  paint: { 'line-color': '#f97316', 'line-width': 3, 'line-dasharray': [2, 2] },
+                });
+              }
+            })
+            .catch(() => {
+              // Fallback to straight line
+              if (!map.current || map.current.getSource('route')) return;
+              map.current.addSource('route', {
+                type: 'geojson',
+                data: {
+                  type: 'Feature',
+                  properties: {},
+                  geometry: { type: 'LineString', coordinates },
+                },
+              });
+              map.current.addLayer({
+                id: 'route',
+                type: 'line',
+                source: 'route',
+                layout: { 'line-join': 'round', 'line-cap': 'round' },
+                paint: { 'line-color': '#f97316', 'line-width': 3, 'line-dasharray': [2, 2] },
+              });
+            });
+        }
       }
 
-      // Fit bounds to show all stops
+      // Fit bounds
       const bounds = new mapboxgl.LngLatBounds();
       stopsWithCoords.forEach(s => bounds.extend([s.lng!, s.lat!]));
       map.current?.fitBounds(bounds, { padding: 50 });
-    });
-
-    return () => {
-      map.current?.remove();
     };
-  }, [token, stopsWithCoords, currentStopIndex]);
+
+    // Wait for map style to load before adding layers
+    if (map.current.isStyleLoaded()) {
+      updateMarkersAndRoute();
+    } else {
+      map.current.once('style.load', updateMarkersAndRoute);
+    }
+  }, [stopsWithCoords, currentStopIndex, token]);
 
   if (isLoading) {
     return (

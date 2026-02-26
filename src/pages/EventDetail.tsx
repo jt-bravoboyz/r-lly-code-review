@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, Navigate, Link, useNavigate } from 'react-router-dom';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { getEventTypeLabel } from '@/lib/eventTypes';
 import { ArrowLeft, Calendar, MapPin, Users, Beer, Check, X, MessageCircle, Navigation, Home, Plus, Zap, Crown, UserPlus, Car, Play, Moon, PartyPopper } from 'lucide-react';
 import { format } from 'date-fns';
@@ -18,6 +18,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useEvent, useJoinEvent, useLeaveEvent, useUpdateEvent } from '@/hooks/useEvents';
 import { useRides } from '@/hooks/useRides';
 import { useAuth } from '@/hooks/useAuth';
+import { useMyAttendeeStatus } from '@/hooks/useSafetyStatus';
 import { useCohosts } from '@/hooks/useCohosts';
 import { useMyDDRequest, useEventDDs } from '@/hooks/useDDManagement';
 import { useStartRally, useEndRally, useCompleteRally } from '@/hooks/useAfterRally';
@@ -102,21 +103,9 @@ export default function EventDetail() {
     navigate('/', { replace: true });
   }, [navigate]);
   
-  // Query user's personal After R@lly opt-in status AND safety choice status
-  const { data: myAttendee, refetch: refetchMyAttendee } = useQuery({
-    queryKey: ['my-attendee', id, profile?.id],
-    queryFn: async () => {
-      if (!id || !profile?.id) return null;
-      const { data } = await supabase
-        .from('event_attendees')
-        .select('after_rally_opted_in, going_home_at, not_participating_rally_home_confirmed, is_dd')
-        .eq('event_id', id)
-        .eq('profile_id', profile.id)
-        .maybeSingle();
-      return data;
-    },
-    enabled: !!id && !!profile?.id,
-  });
+  // ARCH-4: Use consolidated hook instead of inline query
+  // ARCH-2: DB flags for gating instead of sessionStorage
+  const { data: myAttendee, refetch: refetchMyAttendee } = useMyAttendeeStatus(id);
   
   
   // Auto-arrival detection for R@lly Home - only active after event ends
@@ -138,9 +127,9 @@ export default function EventDetail() {
     }
   }, [id]);
 
-  // Debug logging for Phase 9 validation
+  // POL-2: Debug logging wrapped in dev check
   useEffect(() => {
-    if (event?.id) {
+    if (import.meta.env.DEV && event?.id) {
       console.log('[R@lly Debug] EventDetail loaded:', { 
         event_id: event.id,
         event_status: event.status,
@@ -162,27 +151,25 @@ export default function EventDetail() {
   const isLive = event?.status === 'live';
   const isAfterRally = event?.status === 'after_rally';
   
-  // Determine if user needs to make safety choice (entry gate for existing attendees)
+  // ARCH-2: Use DB flags instead of sessionStorage for safety choice gating
   const needsSafetyChoice = isAttending && 
     myAttendee?.going_home_at === null && 
     myAttendee?.not_participating_rally_home_confirmed === null &&
     !myAttendee?.is_dd &&
+    !myAttendee?.needs_ride &&
+    !myAttendee?.location_prompt_shown &&
     event?.status !== 'completed';
   
   // Show safety choice modal on page load for existing attendees who haven't chosen yet
   useEffect(() => {
     if (needsSafetyChoice && !showSafetyChoice && !showRidesSelection) {
-      const shownKey = `safety_choice_entry_${id}`;
-      if (!sessionStorage.getItem(shownKey)) {
-        sessionStorage.setItem(shownKey, 'true');
-        // Small delay to let page load first
-        const timer = setTimeout(() => {
-          setShowSafetyChoice(true);
-        }, 500);
-        return () => clearTimeout(timer);
-      }
+      // ARCH-2: No sessionStorage gating - DB flags handle deduplication
+      const timer = setTimeout(() => {
+        setShowSafetyChoice(true);
+      }, 500);
+      return () => clearTimeout(timer);
     }
-  }, [needsSafetyChoice, id, showSafetyChoice, showRidesSelection]);
+  }, [needsSafetyChoice, showSafetyChoice, showRidesSelection]);
   
   // R@lly Home prompt status for current user
   const myPromptStatus = useMyRallyHomePrompt(id);
@@ -995,6 +982,7 @@ export default function EventDetail() {
         eventLocationName={event.location_name || undefined}
         eventLocationLat={event.location_lat ?? undefined}
         eventLocationLng={event.location_lng ?? undefined}
+        eventStatus={event.status || undefined}
       />
 
       {/* Location Sharing Modal - shows after "I'm good" safety choice */}

@@ -274,15 +274,17 @@ export function RallyHomeButton({ eventId, trigger, eventStatus, autoOpen, onAut
 
       if (error) throw error;
 
-      // Award safe arrival points
-      try {
-        await supabase.rpc('rly_award_points_by_profile', {
-          p_profile_id: profile.id,
-          p_event_type: 'safe_arrival',
-          p_source_id: eventId
-        });
-      } catch (pointsError) {
-        console.error('Failed to award safe_arrival points:', pointsError);
+      // MED-4: Guard against duplicate point awarding
+      if (!myStatus?.arrived_safely) {
+        try {
+          await supabase.rpc('rly_award_points_by_profile', {
+            p_profile_id: profile.id,
+            p_event_type: 'safe_arrival',
+            p_source_id: eventId
+          });
+        } catch (pointsError) {
+          console.error('Failed to award safe_arrival points:', pointsError);
+        }
       }
 
       await refetchStatus();
@@ -316,10 +318,10 @@ export function RallyHomeButton({ eventId, trigger, eventStatus, autoOpen, onAut
     return (
       <Button
         disabled
-        className="w-full bg-muted text-muted-foreground rounded-full font-montserrat h-14 text-lg cursor-default"
+        className="bg-muted text-muted-foreground rounded-full font-montserrat h-8 text-xs px-4 cursor-default"
       >
-        <XCircle className="h-5 w-5 mr-2" />
-        Not Participating in R@lly Home ✓
+        <XCircle className="h-3 w-3 mr-1" />
+        Not Participating ✓
       </Button>
     );
   }
@@ -470,6 +472,7 @@ export function RallyHomeButton({ eventId, trigger, eventStatus, autoOpen, onAut
             onChangePlan={() => setShowChangePlan(true)}
             onSetDestination={() => setOpen(true)}
             hasDestination={hasDestinationSet}
+            eventStatus={eventStatus}
           />
           {!hasDestinationSet && (
             <Button
@@ -519,6 +522,7 @@ export function RallyHomeButton({ eventId, trigger, eventStatus, autoOpen, onAut
         eventLocationLat={eventLocationLat}
         eventLocationLng={eventLocationLng}
         skipLocationPrompt={true}
+        eventStatus={eventStatus}
       />
 
       {/* Destination Selection Dialog */}

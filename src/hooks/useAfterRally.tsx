@@ -3,19 +3,20 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 
 /**
- * Hook to get current user's After R@lly status for an event
+ * ARCH-4: useMyAfterRallyStatus now uses consolidated query key
+ * to share cache with useMyAttendeeStatus.
  */
 export function useMyAfterRallyStatus(eventId: string | undefined) {
   const { profile } = useAuth();
   
   return useQuery({
-    queryKey: ['after-rally-status', eventId, profile?.id],
+    queryKey: ['my-attendee-status', eventId, profile?.id],
     queryFn: async () => {
       if (!eventId || !profile?.id) return null;
       
       const { data, error } = await supabase
         .from('event_attendees')
-        .select('after_rally_opted_in, arrived_safely, dd_dropoff_confirmed_at')
+        .select('after_rally_opted_in, arrived_safely, dd_dropoff_confirmed_at, going_home_at, not_participating_rally_home_confirmed, is_dd, needs_ride, destination_name, ride_pickup_location, location_prompt_shown, status, id, profile_id, dd_dropoff_confirmed_by, after_rally_location_name')
         .eq('event_id', eventId)
         .eq('profile_id', profile.id)
         .maybeSingle();
@@ -26,21 +27,42 @@ export function useMyAfterRallyStatus(eventId: string | undefined) {
     enabled: !!eventId && !!profile?.id,
   });
 }
+
+/**
+ * ARCH-1: Uses transition_event_status RPC with graceful fallback.
+ */
+async function transitionStatus(eventId: string, newStatus: string) {
+  try {
+    const { data, error } = await supabase.rpc('transition_event_status', {
+      p_event_id: eventId,
+      p_new_status: newStatus,
+    });
+    if (error) throw error;
+    return data;
+  } catch (rpcError: any) {
+    // Graceful fallback if RPC not deployed yet
+    if (rpcError?.message?.includes('function') || rpcError?.code === '42883') {
+      if (import.meta.env.DEV) {
+        console.warn('[R@lly] transition_event_status RPC not found, using direct update fallback');
+      }
+      const { data, error } = await supabase
+        .from('events')
+        .update({ status: newStatus })
+        .eq('id', eventId)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    }
+    throw rpcError;
+  }
+}
+
 export function useStartRally() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (eventId: string) => {
-      const { data, error } = await supabase
-        .from('events')
-        .update({ status: 'live' })
-        .eq('id', eventId)
-        .select()
-        .single();
-      
-      if (error) throw error;
-      return data;
-    },
+    mutationFn: async (eventId: string) => transitionStatus(eventId, 'live'),
     onSuccess: (_, eventId) => {
       queryClient.invalidateQueries({ queryKey: ['event', eventId] });
       queryClient.invalidateQueries({ queryKey: ['events'] });
@@ -52,17 +74,7 @@ export function useEndRally() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (eventId: string) => {
-      const { data, error } = await supabase
-        .from('events')
-        .update({ status: 'after_rally' })
-        .eq('id', eventId)
-        .select()
-        .single();
-      
-      if (error) throw error;
-      return data;
-    },
+    mutationFn: async (eventId: string) => transitionStatus(eventId, 'after_rally'),
     onSuccess: (_, eventId) => {
       queryClient.invalidateQueries({ queryKey: ['event', eventId] });
       queryClient.invalidateQueries({ queryKey: ['events'] });
@@ -74,17 +86,7 @@ export function useCompleteRally() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (eventId: string) => {
-      const { data, error } = await supabase
-        .from('events')
-        .update({ status: 'completed' })
-        .eq('id', eventId)
-        .select()
-        .single();
-      
-      if (error) throw error;
-      return data;
-    },
+    mutationFn: async (eventId: string) => transitionStatus(eventId, 'completed'),
     onSuccess: (_, eventId) => {
       queryClient.invalidateQueries({ queryKey: ['event', eventId] });
       queryClient.invalidateQueries({ queryKey: ['events'] });
@@ -122,10 +124,9 @@ export function useOptIntoAfterRally() {
       return data;
     },
     onSuccess: (_, variables) => {
-      // Invalidate all relevant queries so UI updates immediately
+      // ARCH-4: Invalidate consolidated query key
       queryClient.invalidateQueries({ queryKey: ['event', variables.eventId] });
-      queryClient.invalidateQueries({ queryKey: ['my-attendee', variables.eventId, variables.profileId] });
-      queryClient.invalidateQueries({ queryKey: ['after-rally-status', variables.eventId, variables.profileId] });
+      queryClient.invalidateQueries({ queryKey: ['my-attendee-status', variables.eventId, variables.profileId] });
     }
   });
 }
