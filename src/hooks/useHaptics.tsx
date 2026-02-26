@@ -93,7 +93,7 @@ export function useHaptics() {
         }
       }
     } catch (e) {
-      console.log('Haptic feedback not available');
+      if (import.meta.env.DEV) console.log('Haptic feedback not available');
     }
   }, [isNative]);
 

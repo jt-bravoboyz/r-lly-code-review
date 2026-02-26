@@ -20,7 +20,7 @@ export function useBarHopStopsRealtime(eventId: string | undefined) {
           filter: `event_id=eq.${eventId}`,
         },
         (payload) => {
-          console.log('Bar hop stop change:', payload);
+          if (import.meta.env.DEV) console.log('Bar hop stop change:', payload);
           
           // Invalidate event query to refresh stops
           queryClient.invalidateQueries({ queryKey: ['event', eventId] });

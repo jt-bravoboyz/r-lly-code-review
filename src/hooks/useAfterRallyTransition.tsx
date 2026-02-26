@@ -74,7 +74,7 @@ export function useAfterRallyTransition() {
       noiseSource.stop(now + 0.5);
 
     } catch (error) {
-      console.log('Audio not available for transition sound');
+      if (import.meta.env.DEV) console.log('Audio not available for transition sound');
     }
   }, [getAudioContext]);
 

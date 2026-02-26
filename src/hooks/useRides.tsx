@@ -173,7 +173,7 @@ export function useUpdateRideRequest() {
       passengerName?: string;
       driverName?: string;
     }) => {
-      console.log('[useUpdateRideRequest] Updating ride request:', { requestId, status, eventId });
+      if (import.meta.env.DEV) console.log('[useUpdateRideRequest] Updating ride request:', { requestId, status, eventId });
       
       // Fetch ride info along with the update for points awarding
       const { data, error } = await supabase
@@ -199,7 +199,7 @@ export function useUpdateRideRequest() {
         throw new Error(error.message || 'Failed to update ride request');
       }
 
-      console.log('[useUpdateRideRequest] Update successful:', data);
+      if (import.meta.env.DEV) console.log('[useUpdateRideRequest] Update successful:', data);
 
       // Award points when ride is completed
       if (status === 'completed' && data.ride?.driver_id) {
@@ -209,7 +209,7 @@ export function useUpdateRideRequest() {
             p_event_type: 'drive_event',
             p_source_id: data.ride.id
           });
-          console.log('[useUpdateRideRequest] Points awarded for completed ride');
+          if (import.meta.env.DEV) console.log('[useUpdateRideRequest] Points awarded for completed ride');
         } catch (pointsError) {
           console.error('[useUpdateRideRequest] Failed to award drive_event points:', pointsError);
         }
@@ -269,7 +269,7 @@ export function useUpdateRideRequest() {
                 }
               }
             });
-            console.log('[useUpdateRideRequest] Push notification sent to passenger');
+            if (import.meta.env.DEV) console.log('[useUpdateRideRequest] Push notification sent to passenger');
           }
         } catch (notifError) {
           console.error('[useUpdateRideRequest] Failed to send notification:', notifError);

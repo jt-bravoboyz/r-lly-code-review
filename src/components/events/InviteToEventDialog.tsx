@@ -109,7 +109,7 @@ export function InviteToEventDialog({
       }
     }
 
-    console.log('[R@lly Debug] InviteToEventDialog squad invite:', {
+    if (import.meta.env.DEV) console.log('[R@lly Debug] InviteToEventDialog squad invite:', {
       squad_id: squad.id,
       squad_name: squad.name,
       owner_id: squad.owner_id,

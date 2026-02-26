@@ -217,7 +217,7 @@ export function useAcceptRideRequest() {
               }
             }
           });
-          console.log('[useAcceptRideRequest] Push notification sent to requester');
+          if (import.meta.env.DEV) console.log('[useAcceptRideRequest] Push notification sent to requester');
         }
       } catch (pushError) {
         console.error('[useAcceptRideRequest] Failed to send push notification:', pushError);

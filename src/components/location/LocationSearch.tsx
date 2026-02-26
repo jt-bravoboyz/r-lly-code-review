@@ -97,7 +97,7 @@ export function LocationSearch({
           });
         },
         (error) => {
-          console.log('Could not get user location for search bias:', error);
+          if (import.meta.env.DEV) console.log('Could not get user location for search bias:', error);
         },
         { enableHighAccuracy: false, timeout: 5000 }
       );

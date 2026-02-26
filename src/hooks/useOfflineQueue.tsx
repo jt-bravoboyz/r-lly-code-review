@@ -35,7 +35,7 @@ export function useOfflineQueue() {
         try {
           await (registration as any).sync.register('sync-rally-updates');
         } catch (error) {
-          console.log('Background sync not supported');
+          if (import.meta.env.DEV) console.log('Background sync not supported');
           // Fallback: manually sync
           syncPendingUpdates();
         }

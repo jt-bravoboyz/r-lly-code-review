@@ -124,7 +124,7 @@ export function useBatteryOptimizedLocation(
           };
         }
       } catch (error) {
-        console.log('Battery API not available');
+        if (import.meta.env.DEV) console.log('Battery API not available');
       }
     };
     
