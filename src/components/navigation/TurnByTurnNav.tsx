@@ -630,7 +630,7 @@ export function TurnByTurnNav({ target, onClose }: TurnByTurnNavProps) {
               }
             }}
           >
-            Open in Google Maps
+            Open in Maps
           </Button>
         </div>
       </div>
