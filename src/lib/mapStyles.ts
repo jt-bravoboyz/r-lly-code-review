@@ -103,7 +103,10 @@ export function applyRallyMapOverrides(
         layer.id.includes('transit') ||
         layer.id.includes('airport') ||
         layer.id.includes('parking') ||
-        layer.id.includes('ferry')
+        layer.id.includes('ferry') ||
+        layer.id.includes('medical') ||
+        layer.id.includes('industrial') ||
+        layer.id.includes('government')
       ) {
         map.setLayoutProperty(layer.id, 'visibility', 'none');
       }
