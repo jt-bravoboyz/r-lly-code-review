@@ -199,7 +199,10 @@ export function TutorialOverlay() {
             <Button
               onClick={() => {
                 navigate(currentStep.ctaButton!.route);
-                completeAction('complete');
+                // Let user view the page briefly, then end tutorial
+                setTimeout(() => {
+                  skipTutorial();
+                }, 600);
               }}
               variant="outline"
               className="w-full h-10 rounded-full font-bold text-sm mt-3 border-white/30 text-white hover:bg-white/10"
