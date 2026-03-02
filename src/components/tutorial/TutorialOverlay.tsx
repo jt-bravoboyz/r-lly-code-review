@@ -2,6 +2,8 @@ import { useEffect, useState, useCallback } from 'react';
 import { useTutorial } from '@/hooks/useTutorial';
 import { Button } from '@/components/ui/button';
 import { ChevronRight, X, Target, Shield } from 'lucide-react';
+import { SafetyDashboardPreview } from './SafetyDashboardPreview';
+import { LiveStatusPreview } from './LiveStatusPreview';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 export function TutorialOverlay() {
@@ -167,9 +169,13 @@ export function TutorialOverlay() {
           </h2>
 
           {/* Instruction */}
-          <p className="text-white/70 mb-6 leading-relaxed">
+          <p className="text-white/70 mb-4 leading-relaxed">
             {currentStep.instruction}
           </p>
+
+          {/* Inline illustration mockups */}
+          {currentStep.illustration === 'safety-dashboard' && <SafetyDashboardPreview />}
+          {currentStep.illustration === 'live-status' && <LiveStatusPreview />}
 
           {/* Action button for completion steps */}
           {isCompletionStep && (

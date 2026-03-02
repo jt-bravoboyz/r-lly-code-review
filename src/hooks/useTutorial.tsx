@@ -14,6 +14,7 @@ export interface TutorialStep {
     label: string;
     route: string;
   };
+  illustration?: 'safety-dashboard' | 'live-status';
 }
 
 const TUTORIAL_STEPS: TutorialStep[] = [
@@ -78,6 +79,7 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     instruction: 'When the night winds down, everyone confirms they made it home. Hosts see a live safety dashboard. No one gets left behind.\n\nThis is what makes R@lly different.',
     requiredAction: 'complete',
     position: 'center',
+    illustration: 'safety-dashboard',
   },
   {
     id: 'live-tracking-intro',
@@ -86,6 +88,7 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     instruction: 'During a R@lly, you can share your live status. See who\'s arrived. Who\'s en route. Who\'s still out.\n\nReal-time. No guessing.',
     requiredAction: 'complete',
     position: 'center',
+    illustration: 'live-status',
   },
   {
     id: 'alerts-intro',
