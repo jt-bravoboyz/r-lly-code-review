@@ -1,130 +1,130 @@
 
 
-# R@lly Map Stabilization -- Directions Fix + Attribution Compliance
+# R@lly Map Branding and Provider Unification
 
 ## Summary
 
-8 files modified. Fix all `window.open` calls for map navigation with device-aware behavior, add compact attribution to all Mapbox maps, apply two defensive refinements (null link guard + attribution dedup guard). No lifecycle, routing, clustering, or theme switching changes.
+Remove Google Static Maps from AttendeeMap, replace with Mapbox Static Images API, delete the Google Maps key hook and edge function, and enhance the existing `applyRallyMapOverrides` with additional layer filtering. No changes to map lifecycle, routing, clustering, or theme switching.
 
 ---
 
-## File 1: `src/lib/mapStyles.ts` -- Add `openDirections` helper
+## File Changes (5 files modified, 2 files deleted)
 
-Add at the end of the file:
+### 1. `src/components/tracking/AttendeeMap.tsx` -- Replace Google Static with Mapbox Static
 
-```typescript
-export function openDirections(url: string) {
-  const isMobile =
-    /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ||
-    window.matchMedia("(pointer: coarse)").matches;
+**Remove:**
+- `useGoogleMapsKey` import
+- `googleMapsKey` / `loadingKey` usage
+- `generateMapUrl()` function using Google Static API
 
-  if (isMobile) {
-    window.location.href = url;
-  } else {
-    window.open(url, '_blank', 'noopener,noreferrer');
-  }
-}
+**Add:**
+- `useMapboxToken` import
+- `useTheme` import (for theme-aware style selection)
+- New `generateMapUrl()` using Mapbox Static Images API
+
+**Mapbox Static URL format:**
+```
+https://api.mapbox.com/styles/v1/mapbox/{style}/static/{markers}/{auto}/{width}x{height}@2x?access_token={token}
 ```
 
-Used only in deep callback chains (toast actions in RallyHomeButton and RallyHomeDialog) where anchor tags are impossible.
+- Light mode style: `streets-v12`
+- Dark mode style: `dark-v11`
+- Marker format: `pin-s+F26C15({lng},{lat})` (R@lly orange pins)
+- Event location marker: `pin-l+0A0A0A({lng},{lat})` (dark pin for venue)
+- Use `auto` for automatic bounds fitting when multiple markers exist
+- Use `{lng},{lat},14` center when only event location (no sharing attendees)
+- Size: `600x300@2x` for retina quality
+
+**Loading state:** Replace `loadingKey` with `isLoading` from `useMapboxToken`
+
+**Hover overlay text:** Change "Open in Google Maps" to "Open in Maps" (provider-neutral)
+
+The map link URL remains Google Maps directions (this is navigation, not map rendering).
 
 ---
 
-## File 2: `src/components/location/LocationMapPreview.tsx`
+### 2. `src/hooks/useGoogleMapsKey.tsx` -- DELETE
 
-1. **Remove** `handleGetDirections` function (lines 43-48)
-2. **Add** `directionsUrl` computed value: `` `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}` ``
-3. **Remove** `Button` import (no longer needed)
-4. **Fallback UI** (lines 123-134): Replace `<Button>` with `<a>` styled as button
-5. **Map overlay** (lines 151-162): Replace `<Button>` with `<a>` styled as button
-6. **Attribution** (after map creation, line 62): Add compact attribution with dedup guard:
-   ```typescript
-   const hasAttribution = (map.current as any)._controls?.some(
-     (c: any) => c instanceof mapboxgl.AttributionControl
-   );
-   if (!hasAttribution) {
-     map.current.addControl(new mapboxgl.AttributionControl({ compact: true }), 'bottom-left');
-   }
-   ```
+No longer needed. Only consumer was AttendeeMap.
 
 ---
 
-## File 3: `src/components/rides/NavigateToPickupButton.tsx`
+### 3. `supabase/functions/get-google-maps-key/index.ts` -- DELETE
 
-1. **Remove** `handleNavigate` function and `Button` import
-2. **Compute URL** at component level -- return `null` if no URL available (hides button entirely)
-3. **Convert both renders** (icon + default) from `<Button>` to `<a>` tags with same styling classes
-4. **Keep** `onClick` on anchors for toast notification (anchors support both `href` + `onClick`)
+Edge function no longer needed. The `GOOGLE_PLACES_API_KEY` secret can remain for now (used by `search-places` if applicable) but this edge function is removed.
 
 ---
 
-## File 4: `src/components/tracking/AttendeeMap.tsx`
+### 4. `src/lib/mapStyles.ts` -- Enhance POI filtering
 
-1. **Remove** `openFullMap` function (lines 119-131)
-2. **Compute** `mapLinkUrl` from first sharing attendee or event location
-3. **Conditional render** (Refinement 1 -- null guard): If `mapLinkUrl` exists, render `<a>` with hover overlay. If null, render plain `<div>` with no link behavior or hover effects. No `href="#"` fallback.
-4. **Remove** unused `Button` import
+**Current state:** Filters POI to `food_and_drink` and `entertainment` only. Hides transit, airport, parking, ferry.
 
----
+**Add to the hide list in `applyRallyMapOverrides`:**
+- `layer.id.includes('medical')`
+- `layer.id.includes('industrial')`
+- `layer.id.includes('government')`
 
-## File 5: `src/components/home/RallyHomeButton.tsx`
+These are already partially covered by the POI class filter, but some Mapbox styles have dedicated layers for these categories that bypass the class-based filter. Adding explicit visibility:none ensures complete coverage.
 
-1. **Import** `openDirections` from `@/lib/mapStyles`
-2. **Line 240**: Replace `window.open(...)` with `openDirections(...)`
-3. **Line 389**: Replace `window.open(...)` with `openDirections(...)`
+No other changes to this file. The existing color tokens for land, water, and roads already match the R@lly design system as specified in the request.
 
 ---
 
-## File 6: `src/components/home/RallyHomeDialog.tsx`
+### 5. `src/components/location/LocationMapPreview.tsx` -- Camera feel refinement
 
-1. **Import** `openDirections` from `@/lib/mapStyles`
-2. **Line 73**: Replace `window.open(...)` with `openDirections(...)`
+**Current:** `flyTo` uses `duration: 1100` and `zoom: 15`
 
----
+**Change:** Update to `duration: 1100` (already correct) -- no change needed here.
 
-## File 7: `src/components/tracking/BarHopStopsMap.tsx`
-
-1. **Add** `attributionControl: false` to map options (line 58)
-2. **Add** compact attribution with dedup guard after map creation (after line 66):
-   ```typescript
-   const hasAttribution = (map.current as any)._controls?.some(
-     (c: any) => c instanceof mapboxgl.AttributionControl
-   );
-   if (!hasAttribution) {
-     map.current.addControl(new mapboxgl.AttributionControl({ compact: true }), 'bottom-left');
-   }
-   ```
+Actually, reviewing the code, the camera feel is already correct:
+- `flyTo` duration is 1100ms (within the 1000-1100ms spec)
+- Zoom is 15
+- No changes needed
 
 ---
 
-## File 8: `src/components/navigation/TurnByTurnNav.tsx`
+### 6. `src/components/tracking/BarHopStopsMap.tsx` -- Already correct
 
-1. **Add** `attributionControl: false` to map options (line 201)
-2. **Add** compact attribution with dedup guard after map creation (inside `on('load')` callback):
-   ```typescript
-   const hasAttribution = (map.current as any)._controls?.some(
-     (c: any) => c instanceof mapboxgl.AttributionControl
-   );
-   if (!hasAttribution) {
-     map.current.addControl(new mapboxgl.AttributionControl({ compact: true }), 'bottom-left');
-   }
-   ```
+Reviewing against the spec:
+- Pitch 20: already set (line 63)
+- FlyTo duration 1200ms with easeOutQuad: already set (lines 282-286)
+- Route colors use `RALLY_ROUTE_COLORS.afterRally`: already set
+- Marker styles with orange/white/green check: already implemented
+- No changes needed
 
 ---
+
+## What IS Changed
+
+| Item | Change |
+|------|--------|
+| AttendeeMap provider | Google Static -> Mapbox Static Images API |
+| useGoogleMapsKey hook | Deleted |
+| get-google-maps-key edge function | Deleted |
+| POI filter coverage | Added medical, industrial, government to hide list |
 
 ## What Is NOT Changed
 
 - Map initialization logic
-- Route fetching / Directions API calls
-- Route hash memoization (`routeCoordsHashRef`)
-- Clustering source/layers
-- Theme switching (`setStyle` + hash reset)
-- Token handling (`useMapboxToken`)
-- TurnByTurnNav navigation style (`navigation-night-v1`)
-- Any backend logic
+- Route fetching / Directions API
+- Route hash memoization
+- Clustering
+- Theme switching
+- Token handling (useMapboxToken)
+- Attribution controls
+- Camera animations (already match spec)
+- Marker styles (already match spec)
+- Land/water/road color overrides (already match spec)
+- Navigation-night style in TurnByTurnNav
+- openDirections helper
+- Any backend logic beyond removing the unused edge function
 
-## Minor Refinements Included
+## Expected Result
 
-1. **AttendeeMap null link guard** -- Conditional `<a>` vs `<div>` based on `mapLinkUrl` existence. No `href="#"`.
-2. **Attribution dedup guard** -- All 3 Mapbox maps check `_controls` before adding `AttributionControl` to prevent duplicates on re-mount edge cases.
+- 100% Mapbox ecosystem (zero Google dependency for map rendering)
+- Brand-consistent static map in AttendeeMap with R@lly orange markers
+- Theme-aware static images (light/dark)
+- Retina-quality static map (@2x)
+- Complete POI filtering for irrelevant categories
+- No performance degradation (still a static image, zero WebGL)
 
