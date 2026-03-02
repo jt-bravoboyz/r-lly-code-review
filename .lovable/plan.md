@@ -1,75 +1,124 @@
 
 
-# R@lly Final Beta Stabilization -- 3 Fixes
+# R@lly Map Refinement -- 3 Defensive Safeguards
 
-## Fix 1: Wrap 30 `console.log` Calls Across 12 Files
-
-Every `console.log` (NOT `console.error`) gets wrapped in `if (import.meta.env.DEV)`. Here are the exact files and line counts:
-
-| File | Lines to Wrap |
-|------|--------------|
-| `src/hooks/useRides.tsx` | 4 logs (lines 176, 202, 212, 272) |
-| `src/hooks/useRideRequests.tsx` | 1 log (line 220) |
-| `src/hooks/usePushNotifications.tsx` | 2 logs (lines 75, 112) |
-| `src/hooks/useBarHopStopsRealtime.tsx` | 1 log (line 23) |
-| `src/hooks/useAfterRallyTransition.tsx` | 1 log (line 77) |
-| `src/hooks/useBatteryOptimizedLocation.tsx` | 1 log (line 127) |
-| `src/hooks/useHaptics.tsx` | 1 log (line 96) |
-| `src/contexts/LocationContext.tsx` | 1 log (line 419) |
-| `src/components/location/LocationSearch.tsx` | 1 log (line 100) |
-| `src/hooks/useOfflineQueue.tsx` | 1 log (line 38) |
-| `src/hooks/useIndoorPositioning.tsx` | 1 log (line 203) |
-| `src/components/events/InviteToEventDialog.tsx` | 1 log (line 112) |
-
-`DDArrivedButton.tsx` has no unwrapped `console.log` calls -- verified clean.
-
-All `console.error` and `console.warn` calls remain untouched.
-
----
-
-## Fix 2: Fix Skeleton forwardRef Warning
-
-The console warning says "Function components cannot be given refs" pointing to `Skeleton` inside `PendingInvites`. The `Skeleton` component in `src/components/ui/skeleton.tsx` is a plain function -- not wrapped in `forwardRef`. React is attempting to pass a ref to it (likely via Radix internals or animation library).
-
-**Fix**: Convert `Skeleton` to use `forwardRef`:
-
-```typescript
-import { forwardRef } from "react";
-import { cn } from "@/lib/utils";
-
-const Skeleton = forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => (
-    <div ref={ref} className={cn("animate-pulse rounded-md bg-muted", className)} {...props} />
-  )
-);
-Skeleton.displayName = "Skeleton";
-
-export { Skeleton };
-```
-
-This eliminates the React warning. No behavioral change.
-
-Note: The `QuickRallyDialog` already uses `forwardRef` correctly -- no fix needed there. The console warning was misattributed in earlier analysis; it originates from `Skeleton`.
-
----
-
-## Fix 3: Lifecycle Verification
-
-After applying fixes 1 and 2, verify the console is clean by checking:
-- No `console.log` output in production mode
-- No React warnings (forwardRef resolved)
-- No unhandled promise rejections
-
-This is a verification step, not a code change.
-
----
+These are additive safeguards layered into the existing approved refinement plan. No design changes -- only defensive engineering.
 
 ## Files Changed
 
 | File | Change |
 |------|--------|
-| `src/components/ui/skeleton.tsx` | Add `forwardRef` |
-| 12 hook/component files | Wrap `console.log` in `import.meta.env.DEV` |
+| `src/lib/mapStyles.ts` | **NEW** -- Updated `applyRallyMapOverrides()` with all 3 safeguards built in |
+| `src/components/tracking/BarHopStopsMap.tsx` | Route layer ordering, marker CSS, POI overrides, popup, camera, flyTo |
+| `src/components/location/LocationMapPreview.tsx` | Marker CSS, POI overrides, flyTo duration |
 
-**No new dependencies. No schema changes. No behavioral changes. Console cleanup only.**
+---
+
+## Safeguard 1: Composable POI Filter
+
+Instead of replacing `poi-label` filter outright, compose with the existing filter:
+
+```typescript
+// Inside applyRallyMapOverrides()
+const nightlifeFilter = ["match", ["get", "class"], 
+  ["food_and_drink", "entertainment"], true, false];
+
+map.getStyle().layers.forEach(layer => {
+  if (layer.type === 'symbol' && layer.id.includes('poi')) {
+    const existing = map.getFilter(layer.id);
+    map.setFilter(layer.id, existing 
+      ? ["all", existing, nightlifeFilter] 
+      : nightlifeFilter
+    );
+  }
+});
+```
+
+This preserves Mapbox's internal zoom-level conditions and label collision logic while layering our brand filtering on top. Applied to ALL poi-related symbol layers, not just `poi-label`.
+
+---
+
+## Safeguard 2: Pattern-Based Layer Detection
+
+Instead of hardcoded layer IDs like `land`, `water`, `road-primary`, use pattern matching:
+
+```typescript
+map.getStyle().layers.forEach(layer => {
+  // Land layers
+  if (layer.type === 'background') {
+    map.setPaintProperty(layer.id, 'background-color', colors.land);
+  }
+  // Water layers
+  if (layer.id.includes('water') && layer.type === 'fill') {
+    map.setPaintProperty(layer.id, 'fill-color', colors.water);
+  }
+  // Road layers
+  if (layer.id.includes('road') && layer.type === 'line') {
+    map.setPaintProperty(layer.id, 'line-color', colors.road);
+  }
+  // Transit/parking -- hide
+  if (layer.id.includes('transit') || layer.id.includes('airport') || layer.id.includes('parking')) {
+    map.setLayoutProperty(layer.id, 'visibility', 'none');
+  }
+});
+```
+
+This survives Mapbox style version updates (e.g., `dark-v12` renaming `poi-label` to `poi-label-major`). No `getLayer()` checks needed since we're iterating actual layers.
+
+---
+
+## Safeguard 3: Explicit Route Layer Stacking
+
+When adding dual route layers in `BarHopStopsMap.tsx`, anchor them below the cluster layer using `addLayer`'s `beforeId` parameter:
+
+```typescript
+// Find a suitable anchor layer (clusters or first symbol layer)
+const anchorLayer = map.getLayer('clusters') 
+  ? 'clusters' 
+  : map.getStyle().layers.find(l => l.type === 'symbol')?.id;
+
+map.addLayer({
+  id: 'route-glow',
+  type: 'line',
+  source: 'route',
+  paint: { 'line-color': '#4B2E83', 'line-width': 12, 'line-opacity': 0.3, 'line-blur': 2 }
+}, anchorLayer);
+
+map.addLayer({
+  id: 'route',
+  type: 'line',
+  source: 'route',
+  layout: { 'line-join': 'round', 'line-cap': 'round' },
+  paint: { 'line-color': '#5B2D8C', 'line-width': 5, 'line-opacity': 0.95 }
+}, anchorLayer);
+```
+
+Stacking order guaranteed:
+- Base roads (bottom)
+- `route-glow` (above roads)
+- `route` (above glow)
+- `clusters` / `cluster-count` (above routes)
+- DOM markers (always on top, outside GL layer stack)
+
+On theme switch (`setStyle`), `routeCoordsHashRef` is already reset, so layers are re-added in correct order.
+
+---
+
+## Implementation Sequence
+
+1. Create `src/lib/mapStyles.ts` with `applyRallyMapOverrides(map, theme)` containing safeguards 1 and 2
+2. Update `BarHopStopsMap.tsx`: import helper, call on `style.load`, apply safeguard 3 to route layer adds, update marker CSS/popup/camera/flyTo
+3. Update `LocationMapPreview.tsx`: import helper, call on map load, update marker CSS and flyTo duration
+
+---
+
+## What Is NOT Changed
+
+- Map initialization logic
+- Route hash memoization / Directions API fetching
+- Clustering source/radius/maxZoom
+- Realtime subscriptions
+- Theme switching mechanism (`setStyle` + `routeCoordsHashRef` reset)
+- `TurnByTurnNav.tsx`
+- Any database or RPC
 
