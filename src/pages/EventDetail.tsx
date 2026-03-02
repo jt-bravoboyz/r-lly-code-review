@@ -256,6 +256,17 @@ export default function EventDetail() {
     }
   };
 
+  // Handler extraction: startRally (variable assignment only)
+  const handleStartRally = async () => {
+    try {
+      await startRally.mutateAsync(event.id);
+      toast.success('R@lly is live! 🎉');
+      sessionStorage.removeItem(`rally_home_prompt_${event.id}`);
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to start rally');
+    }
+  };
+
   // Handler for safety choice: "I'm good" (self-transport)
   const handleDoingItMyself = async () => {
     if (!profile) return;
@@ -336,6 +347,17 @@ export default function EventDetail() {
                 )}
               </div>
               <h1 className="text-2xl font-bold">{event.title}</h1>
+              {/* Social momentum indicators */}
+              {attendeeCount > 0 && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  {attendeeCount} confirmed
+                  {(eventDDs?.length ?? 0) > 0 && ` · ${eventDDs?.length ?? 0} DDs`}
+                </p>
+              )}
+              {/* Header context line */}
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {format(new Date(event.start_time), 'EEEE')} · {format(new Date(event.start_time), 'h:mm a')}{event.location_name ? ` · ${event.location_name}` : ''}
+              </p>
             </div>
             <InviteToEventDialog
               eventId={event.id}
@@ -354,7 +376,7 @@ export default function EventDetail() {
             <p className="text-muted-foreground">{event.description}</p>
           )}
 
-          <div className="space-y-2 text-sm">
+          <div className="space-y-1 text-sm">
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4 text-primary" />
               <span>{format(new Date(event.start_time), 'EEEE, MMMM d · h:mm a')}</span>
@@ -451,77 +473,43 @@ export default function EventDetail() {
           {canManage && <PendingJoinRequests eventId={event.id} />}
 
 
-          {/* Join Button - Only for non-attendees */}
+          {/* Primary Action Bar */}
           {!isCreator && !isAttending && (
             <div className="pt-2">
               <Button 
-                className="w-full gradient-primary"
+                className="w-full btn-gradient-primary h-14 flex-col gap-0.5"
                 onClick={handleJoin}
                 disabled={joinEvent.isPending}
               >
-                <Check className="h-4 w-4 mr-2" />
-                Join Event
+                <span className="font-bold text-base font-montserrat">JOIN R@LLY</span>
+                <span className="text-xs opacity-80 font-normal">Jump in — your crew is waiting.</span>
               </Button>
             </div>
           )}
-        </div>
-
-
-        {/* Host Rally Controls - Start/End Rally */}
-        {canManage && isLiveEvent && !isAfterRally && (
-          <Card className="bg-gradient-to-r from-primary to-primary/80 border-0 shadow-lg">
-            <CardContent className="p-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
-                  {isScheduled ? (
-                    <Play className="h-6 w-6 text-white" />
-                  ) : (
-                    <Moon className="h-6 w-6 text-white" />
-                  )}
-                </div>
-                <div>
-                  <h3 className="font-bold text-white text-lg font-montserrat">
-                    {isScheduled ? 'Start R@lly' : 'End R@lly'}
-                  </h3>
-                  <p className="text-white/80 text-sm font-montserrat">
-                    {isScheduled 
-                      ? 'Go live and notify your crew' 
-                      : 'Transition to After R@lly'
-                    }
-                  </p>
-                </div>
-              </div>
-              {isScheduled ? (
-                <Button
-                  variant="secondary"
-                  onClick={async () => {
-                    try {
-                      await startRally.mutateAsync(event.id);
-                      toast.success('R@lly is live! 🎉');
-                      // Clear session flag so R@lly Home prompt can show for host
-                      sessionStorage.removeItem(`rally_home_prompt_${event.id}`);
-                    } catch (error: any) {
-                      toast.error(error.message || 'Failed to start rally');
-                    }
-                  }}
-                  disabled={startRally.isPending}
-                >
-                  <Play className="h-4 w-4 mr-2" />
-                  Start
-                </Button>
-              ) : (
-                <Button
-                  variant="secondary"
-                  onClick={() => setShowEndRallyDialog(true)}
-                  disabled={endRally.isPending}
-                >
-                  <Moon className="h-4 w-4 mr-2" />
-                  End R@lly
-                </Button>
-              )}
-            </CardContent>
-          </Card>
-        )}
+          {canManage && isScheduled && isLiveEvent && (
+            <div className="pt-2">
+              <Button 
+                className="w-full btn-gradient-primary h-14 flex-col gap-0.5"
+                onClick={handleStartRally}
+                disabled={startRally.isPending}
+              >
+                <span className="font-bold text-base font-montserrat">START R@LLY</span>
+                <span className="text-xs opacity-80 font-normal">Go live and rally up.</span>
+              </Button>
+            </div>
+          )}
+          {canManage && isLive && (
+            <div className="pt-2">
+              <Button 
+                className="w-full btn-gradient-primary h-14 flex-col gap-0.5"
+                onClick={() => setShowEndRallyDialog(true)}
+                disabled={endRally.isPending}
+              >
+                <span className="font-bold text-base font-montserrat">END R@LLY</span>
+                <span className="text-xs opacity-80 font-normal">Transition to After R@lly mode.</span>
+              </Button>
+            </div>
+          )}
 
         {/* After R@lly Banner - Show when in after_rally status */}
         {isAfterRally && (
@@ -587,7 +575,8 @@ export default function EventDetail() {
             isOptedIn={myAttendee?.after_rally_opted_in === true}
             onJoinClick={() => setShowAfterRallyOptIn(true)}
           />
-        )}
+          )}
+        </div>
 
 
         {/* Safety Tracker + Host Safety Dashboard - only show when R@lly Home is active */}
@@ -610,7 +599,7 @@ export default function EventDetail() {
           </div>
         ) : (isLiveEvent || isScheduled) && isAttending ? (
           <div className="rounded-xl bg-muted/40 px-4 py-3">
-            <p className="text-sm font-medium text-muted-foreground">R@lly Home is not active yet</p>
+            <p className="text-sm font-medium text-muted-foreground">R@lly Home activates when the night wraps up.</p>
             <p className="text-xs text-muted-foreground/70 mt-0.5">It activates when you hit R@lly Home or when the host ends the R@lly.</p>
           </div>
         ) : null}
@@ -751,7 +740,7 @@ export default function EventDetail() {
 
           <TabsContent value="chat" className="mt-4">
             <Card className="h-[400px] overflow-hidden">
-              <EventChat eventId={event.id} eventTitle={event.title} />
+              <EventChat eventId={event.id} eventTitle={event.title} eventStatus={event.status || undefined} />
             </Card>
           </TabsContent>
 
@@ -886,7 +875,7 @@ export default function EventDetail() {
               disabled={leaveEvent.isPending}
             >
               <X className="h-4 w-4 mr-2" />
-              Leave Event
+              Leave R@lly
             </Button>
           </div>
         )}

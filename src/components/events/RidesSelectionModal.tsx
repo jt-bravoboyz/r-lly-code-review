@@ -216,7 +216,7 @@ export function RidesSelectionModal({
                   R@LLY RIDES
                 </DialogTitle>
                 <DialogDescription className="text-base">
-                  Choose how R@lly is getting you home safe
+                  How should we get you home?
                 </DialogDescription>
               </DialogHeader>
 

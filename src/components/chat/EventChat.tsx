@@ -13,12 +13,13 @@ import { supabase } from '@/integrations/supabase/client';
 interface EventChatProps {
   eventId: string;
   eventTitle: string;
+  eventStatus?: string;
 }
 
 // URL regex for link detection
 const URL_REGEX = /(https?:\/\/[^\s]+)/g;
 
-export function EventChat({ eventId, eventTitle }: EventChatProps) {
+export function EventChat({ eventId, eventTitle, eventStatus }: EventChatProps) {
   const [newMessage, setNewMessage] = useState('');
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -130,6 +131,18 @@ export function EventChat({ eventId, eventTitle }: EventChatProps) {
 
   return (
     <div className="flex flex-col h-full">
+      {/* Phase context banner */}
+      {eventStatus === 'live' && (
+        <div className="px-4 py-2 bg-orange-500 text-white text-xs font-semibold font-montserrat text-center">
+          R@lly is live. Move out.
+        </div>
+      )}
+      {eventStatus === 'after_rally' && (
+        <div className="px-4 py-2 bg-purple-600 text-white text-xs font-semibold font-montserrat text-center">
+          After R@lly mode active.
+        </div>
+      )}
+
       {/* Messages area */}
       <ScrollArea className="flex-1 p-4" ref={scrollRef}>
         <div className="space-y-4">

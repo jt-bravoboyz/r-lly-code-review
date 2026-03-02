@@ -233,51 +233,41 @@ export function BarHopControls({ eventId, stops, canManage, hostName, onTransiti
   };
 
   if (!canManage) {
-    // Read-only view for non-hosts
+    // Read-only view for non-hosts — flat minimal panel
     return (
-      <Card className="border-secondary/30">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm flex items-center gap-2">
-            <MapPin className="h-4 w-4 text-secondary" />
-            Current Stop
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isTraveling && nextStop ? (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" className="bg-secondary/10 border-secondary text-secondary animate-pulse">
-                  <Navigation className="h-3 w-3 mr-1" />
-                  Traveling
-                </Badge>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">Next:</span>
-                <span className="font-medium">{nextStop.name}</span>
-              </div>
+      <div className="rounded-xl border border-secondary/30 px-4 py-3 space-y-1">
+        {isTraveling && nextStop ? (
+          <>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="bg-secondary/10 border-secondary text-secondary animate-pulse text-xs">
+                <Navigation className="h-3 w-3 mr-1" />
+                Traveling
+              </Badge>
               {nextStop.eta && (
-                <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                <span className="text-xs text-muted-foreground flex items-center gap-1">
                   <Clock className="h-3 w-3" />
-                  ETA: {format(new Date(nextStop.eta), 'h:mm a')}
-                </div>
+                  ETA {format(new Date(nextStop.eta), 'h:mm a')}
+                </span>
               )}
             </div>
-          ) : currentStop ? (
-            <div className="flex items-center gap-2">
-              <Badge variant="secondary" className="text-sm">
-                Stop {currentStop.stop_order}
-              </Badge>
-              <span className="font-medium">{currentStop.name}</span>
-            </div>
-          ) : nextStop ? (
-            <p className="text-muted-foreground text-sm">
-              Next up: {nextStop.name}
+            <p className="font-medium text-sm">{nextStop.name}</p>
+          </>
+        ) : currentStop ? (
+          <>
+            <p className="text-xs text-muted-foreground">
+              Stop {currentStop.stop_order} of {sortedStops.length}
             </p>
-          ) : (
-            <p className="text-muted-foreground text-sm">Bar hop not started</p>
-          )}
-        </CardContent>
-      </Card>
+            <p className="font-medium text-sm">{currentStop.name}</p>
+          </>
+        ) : nextStop ? (
+          <>
+            <p className="text-xs text-muted-foreground">Next up</p>
+            <p className="font-medium text-sm">{nextStop.name}</p>
+          </>
+        ) : (
+          <p className="text-muted-foreground text-sm">Bar hop not started</p>
+        )}
+      </div>
     );
   }
 

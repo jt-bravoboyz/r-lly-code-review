@@ -37,10 +37,10 @@ export function SafetyChoiceModal({
             <Shield className="h-8 w-8 text-primary" />
           </div>
           <DialogTitle className="text-xl font-bold font-montserrat">
-            How are you getting home tonight?
+            How are you getting home?
           </DialogTitle>
           <DialogDescription className="text-base">
-            Plan ahead so you can focus on having fun.
+            Pick a plan so you can enjoy the night.
           </DialogDescription>
         </DialogHeader>
 
