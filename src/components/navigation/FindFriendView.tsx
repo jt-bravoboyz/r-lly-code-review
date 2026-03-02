@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { openDirections } from '@/lib/mapStyles';
 import { ArrowLeft, Navigation, Compass, Target, MapPin, Building2, TreePine, Wifi, Signal, AlertTriangle, CheckCircle2, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -302,7 +303,7 @@ export function FindFriendView({ member, onClose }: FindFriendViewProps) {
               const url = `https://www.google.com/maps/dir/?api=1&destination=${member.lat},${member.lng}${
                 currentPosition ? `&origin=${currentPosition.lat},${currentPosition.lng}` : ''
               }&travelmode=walking`;
-              window.open(url, '_blank');
+              openDirections(url);
             }}
           >
             <MapPin className="h-4 w-4 mr-2" />

@@ -620,7 +620,14 @@ export function TurnByTurnNav({ target, onClose }: TurnByTurnNavProps) {
             className="w-full mt-4"
             onClick={() => {
               const url = `https://www.google.com/maps/dir/?api=1&destination=${target.lat},${target.lng}&travelmode=walking`;
-              window.open(url, '_blank');
+              const isMobile =
+                /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ||
+                window.matchMedia('(pointer: coarse)').matches;
+              if (isMobile) {
+                window.location.href = url;
+              } else {
+                window.open(url, '_blank', 'noopener,noreferrer');
+              }
             }}
           >
             Open in Google Maps

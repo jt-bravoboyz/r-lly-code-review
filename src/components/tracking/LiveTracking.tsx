@@ -98,7 +98,7 @@ export function LiveTracking({ eventId, destination, isLive }: LiveTrackingProps
     toast.success('Location tracking stopped');
   };
 
-  const openDirections = () => {
+  const handleOpenDirections = () => {
     let url: string;
     
     if (destination.lat && destination.lng) {
@@ -113,7 +113,15 @@ export function LiveTracking({ eventId, destination, isLive }: LiveTrackingProps
       url += `&origin=${currentPosition.lat},${currentPosition.lng}`;
     }
 
-    window.open(url, '_blank');
+    const isMobile =
+      /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ||
+      window.matchMedia('(pointer: coarse)').matches;
+
+    if (isMobile) {
+      window.location.href = url;
+    } else {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
   };
 
   const getBatteryIcon = () => {
@@ -227,7 +235,7 @@ export function LiveTracking({ eventId, destination, isLive }: LiveTrackingProps
           </Button>
           
           <Button
-            onClick={openDirections}
+            onClick={handleOpenDirections}
             className="rounded-full bg-primary hover:bg-primary/90 font-montserrat"
           >
             <ExternalLink className="h-4 w-4 mr-2" />
