@@ -1,55 +1,54 @@
 
 
-# Updated New User Walkthrough v2 — Smooth + On-Brand
+# Add Safety Feature Preview to Tutorial
 
-## Summary
+## Overview
 
-Content-only update to the `TUTORIAL_STEPS` array in `src/hooks/useTutorial.tsx`. Replaces the current 9-step walkthrough with a refined 12-step version that is warmer, clearer, and covers all current features including R@lly Home safety, live tracking, Profile setup, and Alerts navigation.
+Add inline visual mockups to the safety-related tutorial steps (`safety-intro` and `live-tracking-intro`) so new users can *see* what these features look like before they ever use them. This is a UI-only enhancement to the `TutorialOverlay` component.
 
-No changes to `TutorialProvider` logic, persistence, overlay rendering, navigation targeting, or data attributes.
+## Approach
 
----
+### 1. Extend the TutorialStep type with an optional `illustration` field
 
-## File Change
+**File:** `src/hooks/useTutorial.tsx`
 
-### `src/hooks/useTutorial.tsx` (lines 19-103)
+Add an optional `illustration` property to the `TutorialStep` interface:
+```
+illustration?: 'safety-dashboard' | 'live-status';
+```
 
-Replace the `TUTORIAL_STEPS` array with the 12-step version below:
+Then set `illustration: 'safety-dashboard'` on the `safety-intro` step and `illustration: 'live-status'` on the `live-tracking-intro` step.
 
-| # | ID | Title | Action Type | Target |
-|---|-----|-------|------------|--------|
-| 1 | welcome | WELCOME TO R@LLY | complete (center) | -- |
-| 2 | nav-intro | YOUR COMMAND CENTER | navigate (top) | nav-home -> / |
-| 3 | events-intro | PLAN THE MISSION | navigate (top) | nav-events -> /events |
-| 4 | quick-rally | QUICK R@LLY | complete (center) | -- |
-| 5 | squads-intro | BUILD YOUR SQUAD | navigate (top) | nav-squads -> /squads |
-| 6 | rides-intro | RIDE COORDINATION | complete (center) | -- |
-| 7 | safety-intro | R@LLY HOME | complete (center) | -- |
-| 8 | live-tracking-intro | LIVE STATUS | complete (center) | -- |
-| 9 | alerts-intro | ALERTS | navigate (top) | nav-notifications -> /notifications |
-| 10 | profile-intro | YOUR PROFILE | navigate (top) | nav-profile -> /profile |
-| 11 | badges-intro | EARN YOUR STRIPES | complete (center) | CTA: View Badges -> /achievements |
-| 12 | graduation | TRAINING COMPLETE | complete (center) | -- |
+### 2. Build inline mini-mockups in the TutorialOverlay
 
-### Key differences from current version
+**File:** `src/components/tutorial/TutorialOverlay.tsx`
 
-- **welcome**: Softer tone -- explains what R@lly is and why it matters, instead of "ATTENTION, RECRUIT!"
-- **nav-intro**: Changed from `tap` to `navigate` action targeting nav-home with route `/`. Lists all 5 tabs by name and function.
-- **rides-intro**: Changed from `navigate` (redundantly going to Events again) to `complete` -- now explains rides live inside events with bullet points.
-- **safety-intro** (new): Introduces R@lly Home safety dashboard -- the core differentiator.
-- **live-tracking-intro** (new): Explains real-time status sharing during events.
-- **alerts-intro** (new): Navigate action to Alerts tab, replacing the old static "notifications" step.
-- **profile-intro** (new): Navigate action to Profile tab, explains home address for safety features.
-- **graduation**: Cleaner sign-off with action verbs.
+Add two small illustrative components rendered inside the command card, between the instruction text and the CONTINUE button:
 
-### What stays the same
+**Safety Dashboard Preview** (`safety-dashboard`):
+- A compact card showing 3 mock attendees with status badges:
+  - "Alex" with a green "Arrived Safely" badge
+  - "Jordan" with an orange "En Route" badge  
+  - "Sam" with a blue "Opted In" badge
+- Uses the same color tokens as the real `HostSafetyDashboard` (green-100/700, orange-100/700, blue-100/700)
+- Small header: "Host Safety Dashboard"
 
-- `TutorialProvider` context, state management, and persistence logic (lines 104-219) -- untouched
-- `TutorialOverlay.tsx` -- already handles all action types generically, no changes needed
-- `BottomNav.tsx` -- already has `data-tutorial` attributes for all 5 tabs (`nav-home`, `nav-events`, `nav-notifications`, `nav-squads`, `nav-profile`)
-- Progress indicator already exists in `TutorialOverlay.tsx` (shows "STEP X/Y" and a progress bar)
+**Live Status Preview** (`live-status`):
+- A compact card showing 3 status rows:
+  - Green dot + "3 Arrived"
+  - Orange dot + "2 En Route"
+  - Blue dot + "1 Still Out"
+- Mimics the real-time feel with a subtle pulse animation on the "En Route" dot
 
-### Progress indicator
+Both mockups are purely visual (no real data), styled to fit within the dark tutorial card, and kept compact (roughly 120px tall) so they don't push the CONTINUE button off-screen on small devices.
 
-The existing overlay already shows `STEP {n}/{total}` and a progress bar. With the new 12-step array, this will automatically read "STEP 3 of 12" etc. No additional work needed.
+### 3. No other file changes needed
+
+- `useTutorial.tsx` provider logic is untouched
+- No database changes
+- No new dependencies
+
+## Technical Details
+
+The mockups use existing UI primitives (`Badge`, `Avatar`) and Tailwind classes already present in the project. They render conditionally based on `currentStep.illustration` in the overlay's command card JSX, placed between the instruction `<p>` and the action `<Button>`.
 
