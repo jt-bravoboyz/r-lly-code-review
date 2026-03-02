@@ -1,6 +1,5 @@
 import { Moon, MapPin, Check, Navigation } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
 interface AfterRallyCardProps {
@@ -23,19 +22,11 @@ export function AfterRallyCard({
 }: AfterRallyCardProps) {
   const hasLocation = !!afterRallyLocation;
   
-  const handleGetDirections = () => {
-    if (afterRallyLat && afterRallyLng) {
-      window.open(
-        `https://www.google.com/maps/dir/?api=1&destination=${afterRallyLat},${afterRallyLng}`,
-        '_blank'
-      );
-    } else if (afterRallyLocation) {
-      window.open(
-        `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(afterRallyLocation)}`,
-        '_blank'
-      );
-    }
-  };
+  const directionsUrl = afterRallyLat && afterRallyLng
+    ? `https://www.google.com/maps/dir/?api=1&destination=${afterRallyLat},${afterRallyLng}`
+    : afterRallyLocation
+      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(afterRallyLocation)}`
+      : null;
 
   return (
     <section className="space-y-4">
@@ -82,23 +73,24 @@ export function AfterRallyCard({
           {/* Actions */}
           <div className="space-y-3">
             {!isOptedIn ? (
-              <Button
+              <button
                 onClick={onJoinClick}
                 disabled={isLoading}
-                className="w-full bg-purple-500 hover:bg-purple-400 text-white font-semibold shadow-lg shadow-purple-900/30"
+                className="w-full inline-flex items-center justify-center rounded-md text-sm font-semibold h-10 px-4 bg-purple-500 hover:bg-purple-400 text-white shadow-lg shadow-purple-900/30 disabled:opacity-50"
               >
                 <Moon className="h-4 w-4 mr-2" />
                 Join After R@lly
-              </Button>
-            ) : hasLocation && (
-              <Button
-                variant="outline"
-                onClick={handleGetDirections}
-                className="w-full border-purple-400/40 text-purple-100 hover:bg-purple-800/50 hover:text-white"
+              </button>
+            ) : hasLocation && directionsUrl && (
+              <a
+                href={directionsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full inline-flex items-center justify-center rounded-md text-sm font-medium h-10 px-4 border border-purple-400/40 text-purple-100 hover:bg-purple-800/50 hover:text-white"
               >
                 <Navigation className="h-4 w-4 mr-2" />
                 Get Directions
-              </Button>
+              </a>
             )}
           </div>
         </CardContent>
