@@ -61,9 +61,18 @@ export function BarHopStopsMap({ stops, eventLocation, currentStopIndex = 0 }: B
       center: [centerLng, centerLat],
       zoom: 13,
       pitch: 20, // Bar Hop slight pitch
+      attributionControl: false,
     });
 
     map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+
+    // Attribution dedup guard
+    const hasAttribution = (map.current as any)._controls?.some(
+      (c: any) => c instanceof mapboxgl.AttributionControl
+    );
+    if (!hasAttribution) {
+      map.current.addControl(new mapboxgl.AttributionControl({ compact: true }), 'bottom-left');
+    }
 
     return () => {
       map.current?.remove();

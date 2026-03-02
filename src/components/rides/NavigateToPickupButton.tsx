@@ -1,5 +1,4 @@
 import { Navigation } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
 interface NavigateToPickupButtonProps {
@@ -21,23 +20,15 @@ export function NavigateToPickupButton({
   variant = 'outline',
   className = '',
 }: NavigateToPickupButtonProps) {
-  const handleNavigate = () => {
-    let url: string;
+  const url = pickupLat && pickupLng
+    ? `https://www.google.com/maps/dir/?api=1&destination=${pickupLat},${pickupLng}`
+    : pickupLocation
+      ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(pickupLocation)}`
+      : null;
 
-    if (pickupLat && pickupLng) {
-      // Use coordinates for precise navigation
-      url = `https://www.google.com/maps/dir/?api=1&destination=${pickupLat},${pickupLng}`;
-    } else if (pickupLocation) {
-      // Fallback to address search
-      url = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(pickupLocation)}`;
-    } else {
-      toast.error('No pickup location available');
-      return;
-    }
+  if (!url) return null;
 
-    // Open in new tab/app
-    window.open(url, '_blank', 'noopener,noreferrer');
-    
+  const handleClick = () => {
     if (passengerName) {
       toast.success(`Navigating to pick up ${passengerName}`);
     }
@@ -45,27 +36,29 @@ export function NavigateToPickupButton({
 
   if (size === 'icon') {
     return (
-      <Button
-        size="icon"
-        variant={variant}
-        className={`h-7 w-7 ${className}`}
-        onClick={handleNavigate}
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={`inline-flex items-center justify-center rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground h-7 w-7 ${className}`}
         title={`Navigate to ${passengerName || 'pickup'}`}
+        onClick={handleClick}
       >
         <Navigation className="h-3.5 w-3.5" />
-      </Button>
+      </a>
     );
   }
 
   return (
-    <Button
-      size={size}
-      variant={variant}
-      className={`${className}`}
-      onClick={handleNavigate}
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={`inline-flex items-center justify-center rounded-md text-sm font-medium border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 px-3 ${className}`}
+      onClick={handleClick}
     >
       <Navigation className="h-3.5 w-3.5 mr-1.5" />
       Navigate
-    </Button>
+    </a>
   );
 }

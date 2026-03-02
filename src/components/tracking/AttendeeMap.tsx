@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { MapPin, Navigation, ExternalLink, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useGoogleMapsKey } from '@/hooks/useGoogleMapsKey';
 import { AttendeeLocationItem } from './AttendeeLocationItem';
@@ -69,14 +67,17 @@ export function AttendeeMap({ eventId, attendees, eventLocation }: AttendeeMapPr
   const sharingAttendees = liveAttendees.filter(a => a.share_location && a.current_lat && a.current_lng);
   const notSharingAttendees = liveAttendees.filter(a => !a.share_location || !a.current_lat);
 
-  const getTimeSinceUpdate = (timestamp: string | null) => {
-    if (!timestamp) return 'Unknown';
-    const diff = Date.now() - new Date(timestamp).getTime();
-    const minutes = Math.floor(diff / 60000);
-    if (minutes < 1) return 'Just now';
-    if (minutes < 60) return `${minutes}m ago`;
-    return `${Math.floor(minutes / 60)}h ago`;
-  };
+  // Compute map link URL
+  const mapLinkUrl = (() => {
+    const first = sharingAttendees[0];
+    if (first?.current_lat && first?.current_lng) {
+      return `https://www.google.com/maps?q=${first.current_lat},${first.current_lng}`;
+    }
+    if (eventLocation?.lat && eventLocation?.lng) {
+      return `https://www.google.com/maps?q=${eventLocation.lat},${eventLocation.lng}`;
+    }
+    return null;
+  })();
 
   // Generate Google Maps Static API URL with markers
   const generateMapUrl = () => {
@@ -93,7 +94,6 @@ export function AttendeeMap({ eventId, attendees, eventLocation }: AttendeeMapPr
     sharingAttendees.forEach((attendee, index) => {
       if (attendee.current_lat && attendee.current_lng) {
         const initial = attendee.profile?.display_name?.charAt(0)?.toUpperCase() || '?';
-        // Use different colors for different attendees
         const colors = ['red', 'blue', 'green', 'purple', 'orange', 'yellow'];
         const color = colors[index % colors.length];
         params.append('markers', `color:${color}|label:${initial}|${attendee.current_lat},${attendee.current_lng}`);
@@ -116,20 +116,6 @@ export function AttendeeMap({ eventId, attendees, eventLocation }: AttendeeMapPr
 
   const mapUrl = generateMapUrl();
 
-  // Open Google Maps with all locations
-  const openFullMap = () => {
-    if (sharingAttendees.length === 0 && eventLocation) {
-      window.open(`https://www.google.com/maps?q=${eventLocation.lat},${eventLocation.lng}`, '_blank');
-      return;
-    }
-    
-    // Open with first attendee location
-    const first = sharingAttendees[0];
-    if (first?.current_lat && first?.current_lng) {
-      window.open(`https://www.google.com/maps?q=${first.current_lat},${first.current_lng}`, '_blank');
-    }
-  };
-
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -147,19 +133,29 @@ export function AttendeeMap({ eventId, attendees, eventLocation }: AttendeeMapPr
                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
               </div>
             ) : mapUrl ? (
-              <button onClick={openFullMap} className="w-full cursor-pointer group">
-                <img 
-                  src={mapUrl} 
-                  alt="Attendee locations map"
-                  className="w-full h-48 object-cover"
-                />
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
-                  <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 rounded-full px-3 py-1.5 flex items-center gap-1.5 text-sm font-medium shadow-lg">
-                    <ExternalLink className="h-4 w-4" />
-                    Open in Google Maps
+              mapLinkUrl ? (
+                <a href={mapLinkUrl} target="_blank" rel="noopener noreferrer" className="w-full cursor-pointer group block">
+                  <img 
+                    src={mapUrl} 
+                    alt="Attendee locations map"
+                    className="w-full h-48 object-cover"
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 rounded-full px-3 py-1.5 flex items-center gap-1.5 text-sm font-medium shadow-lg">
+                      <ExternalLink className="h-4 w-4" />
+                      Open in Google Maps
+                    </div>
                   </div>
+                </a>
+              ) : (
+                <div className="w-full block">
+                  <img 
+                    src={mapUrl} 
+                    alt="Attendee locations map"
+                    className="w-full h-48 object-cover"
+                  />
                 </div>
-              </button>
+              )
             ) : (
               <div className="h-48 flex items-center justify-center text-muted-foreground text-sm">
                 Map unavailable

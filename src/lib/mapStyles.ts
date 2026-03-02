@@ -121,3 +121,20 @@ export function applyRallyMapOverrides(
     }
   });
 }
+
+/**
+ * Device-aware directions opener for deep callback chains (e.g. toast actions).
+ * Mobile/touch → native maps app via location.href
+ * Desktop → new tab via window.open
+ */
+export function openDirections(url: string) {
+  const isMobile =
+    /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ||
+    window.matchMedia('(pointer: coarse)').matches;
+
+  if (isMobile) {
+    window.location.href = url;
+  } else {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }
+}
