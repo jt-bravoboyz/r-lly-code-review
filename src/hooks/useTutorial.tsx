@@ -14,7 +14,7 @@ export interface TutorialStep {
     label: string;
     route: string;
   };
-  illustration?: 'safety-dashboard' | 'live-status';
+  illustration?: 'safety-dashboard' | 'live-status' | 'badge-ladder';
 }
 
 const TUTORIAL_STEPS: TutorialStep[] = [
@@ -116,7 +116,7 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     command: 'RANK & RECOGNITION',
     instruction: 'Earn points for:\n• Hosting\n• Driving\n• Joining\n• Inviting\n• Building squads\n\nClimb from Bronze to Dark Matter.',
     requiredAction: 'complete',
-    position: 'center',
+    illustration: 'badge-ladder',
     ctaButton: {
       label: 'View Badges',
       route: '/achievements',
