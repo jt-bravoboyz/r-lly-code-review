@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { ChevronRight, X, Target, Shield } from 'lucide-react';
 import { SafetyDashboardPreview } from './SafetyDashboardPreview';
 import { LiveStatusPreview } from './LiveStatusPreview';
+import { BadgeLadderPreview } from './BadgeLadderPreview';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 export function TutorialOverlay() {
@@ -176,6 +177,7 @@ export function TutorialOverlay() {
           {/* Inline illustration mockups */}
           {currentStep.illustration === 'safety-dashboard' && <SafetyDashboardPreview />}
           {currentStep.illustration === 'live-status' && <LiveStatusPreview />}
+          {currentStep.illustration === 'badge-ladder' && <BadgeLadderPreview />}
 
           {/* Action button for completion steps */}
           {isCompletionStep && (
