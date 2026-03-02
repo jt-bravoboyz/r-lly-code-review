@@ -6,6 +6,8 @@ import { Beer, MapPin } from 'lucide-react';
 import { useMapboxToken } from '@/hooks/useMapboxToken';
 import { useTheme } from '@/contexts/ThemeContext';
 import { escapeHtml } from '@/lib/sanitize';
+import { applyRallyMapOverrides, RALLY_ROUTE_COLORS, RALLY_MARKER_COLORS } from '@/lib/mapStyles';
+
 interface BarHopStop {
   id: string;
   name: string;
@@ -58,6 +60,7 @@ export function BarHopStopsMap({ stops, eventLocation, currentStopIndex = 0 }: B
       style: mapStyle,
       center: [centerLng, centerLat],
       zoom: 13,
+      pitch: 20, // Bar Hop slight pitch
     });
 
     map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
@@ -80,6 +83,11 @@ export function BarHopStopsMap({ stops, eventLocation, currentStopIndex = 0 }: B
     if (!map.current || stopsWithCoords.length === 0) return;
 
     const updateMarkersAndRoute = () => {
+      if (!map.current) return;
+
+      // Apply R@lly brand overrides (Safeguards 1 & 2)
+      applyRallyMapOverrides(map.current, resolvedTheme);
+
       // Clear existing markers
       markersRef.current.forEach(m => m.remove());
       markersRef.current = [];
@@ -98,19 +106,29 @@ export function BarHopStopsMap({ stops, eventLocation, currentStopIndex = 0 }: B
         
         const escapedName = escapeHtml(stop.name);
         const escapedAddress = escapeHtml(stop.address);
+
+        // Brand-aligned marker styles
+        let markerStyle: string;
+        let extraHtml = '';
+
+        if (isCurrentStop) {
+          // Current: orange center, white number, outer glow, scale
+          markerStyle = `background: ${RALLY_MARKER_COLORS.orange}; color: white; transform: scale(1.1); box-shadow: 0 0 12px rgba(242,108,21,0.35), 0 2px 8px rgba(0,0,0,0.3);`;
+        } else if (isPastStop) {
+          // Completed: gray border, reduced opacity, green check
+          markerStyle = `background: white; border: 2px solid ${RALLY_MARKER_COLORS.completedBorder}; color: #737373; opacity: 0.7;`;
+          extraHtml = `<div class="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center" style="background: ${RALLY_MARKER_COLORS.success};"><svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>`;
+        } else {
+          // Default: white center, orange ring
+          markerStyle = `background: white; border: 2px solid ${RALLY_MARKER_COLORS.orange}; color: ${RALLY_MARKER_COLORS.orange}; box-shadow: 0 2px 8px rgba(0,0,0,0.2);`;
+        }
         
         el.innerHTML = `
           <div class="relative">
-            <div class="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg ${
-              isCurrentStop 
-                ? 'bg-secondary ring-4 ring-secondary/30 animate-pulse' 
-                : isPastStop 
-                  ? 'bg-green-500' 
-                  : 'bg-primary'
-            }">
+            <div class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm" style="${markerStyle}">
               ${stop.stop_order}
             </div>
-            ${isCurrentStop ? '<div class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-secondary rounded-full animate-ping"></div>' : ''}
+            ${extraHtml}
           </div>
           <div class="mt-1 px-2 py-0.5 bg-background/90 rounded text-xs font-medium max-w-24 truncate shadow">
             ${escapedName}
@@ -122,7 +140,7 @@ export function BarHopStopsMap({ stops, eventLocation, currentStopIndex = 0 }: B
           .addTo(map.current!);
 
         const popup = new mapboxgl.Popup({ offset: 25, className: 'barhop-popup-dark' }).setHTML(`
-          <div style="background:#1e1b2e;color:#c4b5fd;padding:10px 14px;border-radius:8px;min-width:160px;">
+          <div style="background:#121212;color:#c4b5fd;padding:10px 14px;border-radius:8px;min-width:160px;">
             <p style="font-weight:700;color:#d8b4fe;margin:0 0 4px;">Stop ${stop.stop_order}: ${escapedName}</p>
             ${stop.address ? `<p style="font-size:13px;color:#a78bfa;margin:0 0 2px;">${escapedAddress}</p>` : ''}
             ${stop.arrived_at ? '<p style="font-size:12px;color:#86efac;margin:4px 0 0;">✓ Visited</p>' : ''}
@@ -185,69 +203,78 @@ export function BarHopStopsMap({ stops, eventLocation, currentStopIndex = 0 }: B
         if (coordsHash !== routeCoordsHashRef.current) {
           routeCoordsHashRef.current = coordsHash;
           
-          // Remove existing route
-          if (map.current?.getSource('route')) {
-            map.current.removeLayer('route');
-            map.current.removeSource('route');
-          }
+          // Remove existing route layers
+          if (map.current?.getLayer('route')) map.current.removeLayer('route');
+          if (map.current?.getLayer('route-glow')) map.current.removeLayer('route-glow');
+          if (map.current?.getSource('route')) map.current.removeSource('route');
+
+          const addRouteLayers = (geometry: GeoJSON.LineString) => {
+            if (!map.current || map.current.getSource('route')) return;
+
+            map.current.addSource('route', {
+              type: 'geojson',
+              data: { type: 'Feature', properties: {}, geometry },
+            });
+
+            // Safeguard 3: Explicit route layer stacking
+            const anchorLayer = map.current.getLayer('clusters')
+              ? 'clusters'
+              : map.current.getStyle().layers.find(l => l.type === 'symbol')?.id;
+
+            const routeColors = RALLY_ROUTE_COLORS.afterRally;
+
+            // Glow layer (below anchor)
+            map.current.addLayer({
+              id: 'route-glow',
+              type: 'line',
+              source: 'route',
+              paint: {
+                'line-color': routeColors.glow,
+                'line-width': 12,
+                'line-opacity': 0.3,
+                'line-blur': 2,
+              },
+            }, anchorLayer);
+
+            // Core layer (below anchor, above glow)
+            map.current.addLayer({
+              id: 'route',
+              type: 'line',
+              source: 'route',
+              layout: { 'line-join': 'round', 'line-cap': 'round' },
+              paint: {
+                'line-color': routeColors.core,
+                'line-width': 5,
+                'line-opacity': 0.95,
+              },
+            }, anchorLayer);
+          };
 
           // Try Directions API first, fall back to straight line
           const coordString = coordinates.map(c => c.join(',')).join(';');
           fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${coordString}?geometries=geojson&access_token=${token}`)
             .then(res => res.json())
             .then(data => {
-              if (!map.current) return;
               const geometry = data.routes?.[0]?.geometry || {
-                type: 'LineString',
+                type: 'LineString' as const,
                 coordinates,
               };
-
-              if (map.current.getSource('route')) {
-                (map.current.getSource('route') as mapboxgl.GeoJSONSource).setData({
-                  type: 'Feature',
-                  properties: {},
-                  geometry,
-                });
-              } else {
-                map.current.addSource('route', {
-                  type: 'geojson',
-                  data: { type: 'Feature', properties: {}, geometry },
-                });
-                map.current.addLayer({
-                  id: 'route',
-                  type: 'line',
-                  source: 'route',
-                  layout: { 'line-join': 'round', 'line-cap': 'round' },
-                  paint: { 'line-color': '#f97316', 'line-width': 3, 'line-dasharray': [2, 2] },
-                });
-              }
+              addRouteLayers(geometry);
             })
             .catch(() => {
-              // Fallback to straight line
-              if (!map.current || map.current.getSource('route')) return;
-              map.current.addSource('route', {
-                type: 'geojson',
-                data: {
-                  type: 'Feature',
-                  properties: {},
-                  geometry: { type: 'LineString', coordinates },
-                },
-              });
-              map.current.addLayer({
-                id: 'route',
-                type: 'line',
-                source: 'route',
-                layout: { 'line-join': 'round', 'line-cap': 'round' },
-                paint: { 'line-color': '#f97316', 'line-width': 3, 'line-dasharray': [2, 2] },
-              });
+              addRouteLayers({ type: 'LineString', coordinates });
             });
         }
       }
 
-      // Fit bounds
+      // Fit bounds with smooth animation
       const bounds = new mapboxgl.LngLatBounds();
       stopsWithCoords.forEach(s => bounds.extend([s.lng!, s.lat!]));
-      map.current?.fitBounds(bounds, { padding: 50 });
+      map.current?.fitBounds(bounds, {
+        padding: 50,
+        duration: 1200,
+        easing: (t) => t * (2 - t), // easeOutQuad
+      });
     };
 
     // Wait for map style to load before adding layers
@@ -256,7 +283,7 @@ export function BarHopStopsMap({ stops, eventLocation, currentStopIndex = 0 }: B
     } else {
       map.current.once('style.load', updateMarkersAndRoute);
     }
-  }, [stopsWithCoords, currentStopIndex, token, mapStyle]);
+  }, [stopsWithCoords, currentStopIndex, token, mapStyle, resolvedTheme]);
 
   if (isLoading) {
     return (
@@ -293,15 +320,15 @@ export function BarHopStopsMap({ stops, eventLocation, currentStopIndex = 0 }: B
         {/* Legend */}
         <div className="p-3 border-t bg-muted/30 flex items-center gap-4 text-xs">
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-green-500" />
+            <div className="w-3 h-3 rounded-full" style={{ background: RALLY_MARKER_COLORS.success }} />
             <span>Visited</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-secondary animate-pulse" />
+            <div className="w-3 h-3 rounded-full" style={{ background: RALLY_MARKER_COLORS.orange }} />
             <span>Current</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-primary" />
+            <div className="w-3 h-3 rounded-full border-2" style={{ borderColor: RALLY_MARKER_COLORS.orange, background: 'white' }} />
             <span>Upcoming</span>
           </div>
         </div>
