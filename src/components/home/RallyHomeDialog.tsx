@@ -8,6 +8,7 @@ import { Home, User, Building2, MapPin, Navigation } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { openDirections } from '@/lib/mapStyles';
 
 type DestinationType = 'home' | 'friend' | 'hotel' | 'custom';
 
@@ -70,7 +71,7 @@ export function RallyHomeDialog({ trigger }: RallyHomeDialogProps) {
           onClick: () => {
             // Open in maps
             const encodedAddress = encodeURIComponent(finalAddress);
-            window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodedAddress}`, '_blank');
+            openDirections(`https://www.google.com/maps/dir/?api=1&destination=${encodedAddress}`);
           }
         }
       });

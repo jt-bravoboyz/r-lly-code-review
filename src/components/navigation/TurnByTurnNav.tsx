@@ -205,7 +205,16 @@ export function TurnByTurnNav({ target, onClose }: TurnByTurnNavProps) {
       zoom: 16,
       pitch: 60,
       bearing: compassHeading || 0,
+      attributionControl: false,
     });
+
+    // Attribution dedup guard
+    const hasAttribution = (map.current as any)._controls?.some(
+      (c: any) => c instanceof mapboxgl.AttributionControl
+    );
+    if (!hasAttribution) {
+      map.current.addControl(new mapboxgl.AttributionControl({ compact: true }), 'bottom-left');
+    }
 
     map.current.on('load', () => {
       // Add route line source

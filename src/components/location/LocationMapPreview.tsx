@@ -4,7 +4,6 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import { useMapboxToken } from '@/hooks/useMapboxToken';
 import { useTheme } from '@/contexts/ThemeContext';
 import { MapPin, Loader2, Navigation } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { applyRallyMapOverrides, RALLY_MARKER_COLORS } from '@/lib/mapStyles';
 
@@ -40,12 +39,7 @@ export const LocationMapPreview = forwardRef<HTMLDivElement, LocationMapPreviewP
     // POL-5: Theme-aware map style
     const mapStyle = resolvedTheme === 'dark' ? 'mapbox://styles/mapbox/dark-v11' : 'mapbox://styles/mapbox/streets-v12';
 
-    // Open directions in Google Maps (always use Google Maps for consistency)
-    const handleGetDirections = () => {
-      const coords = `${lat},${lng}`;
-      const url = `https://www.google.com/maps/dir/?api=1&destination=${coords}`;
-      window.open(url, '_blank');
-    };
+    const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
 
     useEffect(() => {
       if (!token || !mapContainer.current || map.current) return;
@@ -60,6 +54,14 @@ export const LocationMapPreview = forwardRef<HTMLDivElement, LocationMapPreviewP
         interactive: interactive,
         attributionControl: false,
       });
+
+      // Attribution dedup guard
+      const hasAttribution = (map.current as any)._controls?.some(
+        (c: any) => c instanceof mapboxgl.AttributionControl
+      );
+      if (!hasAttribution) {
+        map.current.addControl(new mapboxgl.AttributionControl({ compact: true }), 'bottom-left');
+      }
 
       map.current.on('load', () => {
         setMapReady(true);
@@ -121,16 +123,15 @@ export const LocationMapPreview = forwardRef<HTMLDivElement, LocationMapPreviewP
           <MapPin className="h-5 w-5 text-primary" />
           <span className="text-sm text-muted-foreground text-center">{name || 'Location selected'}</span>
           {showDirections && (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleGetDirections}
-              className="mt-1"
+            <a
+              href={directionsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center rounded-md text-sm font-medium border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 px-3 mt-1"
             >
               <Navigation className="h-3 w-3 mr-1.5" />
               Get Directions
-            </Button>
+            </a>
           )}
         </div>
       );
@@ -149,16 +150,15 @@ export const LocationMapPreview = forwardRef<HTMLDivElement, LocationMapPreviewP
               )}
             </div>
             {showDirections && (
-              <Button
-                type="button"
-                size="sm"
-                variant="secondary"
-                onClick={handleGetDirections}
-                className="shrink-0 h-7 text-xs"
+              <a
+                href={directionsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="shrink-0 h-7 text-xs inline-flex items-center justify-center rounded-md font-medium bg-secondary text-secondary-foreground hover:bg-secondary/80 px-3"
               >
                 <Navigation className="h-3 w-3 mr-1" />
                 Directions
-              </Button>
+              </a>
             )}
           </div>
         </div>

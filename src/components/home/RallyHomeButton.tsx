@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Home, User, Building2, MapPin, Navigation, CheckCircle2, Lock, Users, UserCheck, Globe, Shield, XCircle, Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useMyAttendeeStatus, useUpdateSafetyStatus } from '@/hooks/useSafetyStatus';
+import { openDirections } from '@/lib/mapStyles';
 import { useSafetyNotifications } from '@/hooks/useSafetyNotifications';
 import { useMapboxToken } from '@/hooks/useMapboxToken';
 import { supabase } from '@/integrations/supabase/client';
@@ -237,7 +238,7 @@ export function RallyHomeButton({ eventId, trigger, eventStatus, autoOpen, onAut
             label: 'Get Directions',
             onClick: () => {
               const encodedAddress = encodeURIComponent(finalAddress);
-              window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodedAddress}`, '_blank');
+              openDirections(`https://www.google.com/maps/dir/?api=1&destination=${encodedAddress}`);
             }
           }
         });
@@ -386,7 +387,7 @@ export function RallyHomeButton({ eventId, trigger, eventStatus, autoOpen, onAut
               label: 'Get Directions',
               onClick: () => {
                 const encodedAddress = encodeURIComponent(destinationName);
-                window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodedAddress}`, '_blank');
+                openDirections(`https://www.google.com/maps/dir/?api=1&destination=${encodedAddress}`);
               }
             }
           });
