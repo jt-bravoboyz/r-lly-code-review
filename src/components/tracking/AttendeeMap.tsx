@@ -3,7 +3,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MapPin, Navigation, ExternalLink, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useGoogleMapsKey } from '@/hooks/useGoogleMapsKey';
+import { useMapboxToken } from '@/hooks/useMapboxToken';
+import { useTheme } from '@/contexts/ThemeContext';
 import { AttendeeLocationItem } from './AttendeeLocationItem';
 
 interface Attendee {
@@ -28,7 +29,8 @@ interface AttendeeMapProps {
 
 export function AttendeeMap({ eventId, attendees, eventLocation }: AttendeeMapProps) {
   const [liveAttendees, setLiveAttendees] = useState<Attendee[]>(attendees);
-  const { data: googleMapsKey, isLoading: loadingKey } = useGoogleMapsKey();
+  const { token: mapboxToken, isLoading } = useMapboxToken();
+  const { theme } = useTheme();
 
   // Update when attendees prop changes
   useEffect(() => {
@@ -67,7 +69,7 @@ export function AttendeeMap({ eventId, attendees, eventLocation }: AttendeeMapPr
   const sharingAttendees = liveAttendees.filter(a => a.share_location && a.current_lat && a.current_lng);
   const notSharingAttendees = liveAttendees.filter(a => !a.share_location || !a.current_lat);
 
-  // Compute map link URL
+  // Compute map link URL (navigation — still Google Maps directions)
   const mapLinkUrl = (() => {
     const first = sharingAttendees[0];
     if (first?.current_lat && first?.current_lng) {
@@ -79,39 +81,43 @@ export function AttendeeMap({ eventId, attendees, eventLocation }: AttendeeMapPr
     return null;
   })();
 
-  // Generate Google Maps Static API URL with markers
+  // Generate Mapbox Static Images API URL
   const generateMapUrl = () => {
-    if (!googleMapsKey) return null;
-    
-    const baseUrl = 'https://maps.googleapis.com/maps/api/staticmap';
-    const params = new URLSearchParams({
-      size: '600x300',
-      maptype: 'roadmap',
-      key: googleMapsKey,
-    });
+    if (!mapboxToken) return null;
 
-    // Add markers for each attendee sharing location
-    sharingAttendees.forEach((attendee, index) => {
+    const style = theme === 'dark' ? 'dark-v11' : 'streets-v12';
+
+    // Build marker overlays
+    const markers: string[] = [];
+
+    sharingAttendees.forEach((attendee) => {
       if (attendee.current_lat && attendee.current_lng) {
-        const initial = attendee.profile?.display_name?.charAt(0)?.toUpperCase() || '?';
-        const colors = ['red', 'blue', 'green', 'purple', 'orange', 'yellow'];
-        const color = colors[index % colors.length];
-        params.append('markers', `color:${color}|label:${initial}|${attendee.current_lat},${attendee.current_lng}`);
+        markers.push(`pin-s+F26C15(${attendee.current_lng},${attendee.current_lat})`);
       }
     });
 
-    // Add event location marker if available
     if (eventLocation?.lat && eventLocation?.lng) {
-      params.append('markers', `color:black|label:E|${eventLocation.lat},${eventLocation.lng}`);
+      markers.push(`pin-l+0A0A0A(${eventLocation.lng},${eventLocation.lat})`);
     }
 
-    // If no markers, center on event location or first attendee
-    if (sharingAttendees.length === 0 && eventLocation?.lat && eventLocation?.lng) {
-      params.set('center', `${eventLocation.lat},${eventLocation.lng}`);
-      params.set('zoom', '14');
+    const markerOverlay = markers.join(',');
+
+    // Determine center/bounds
+    let position: string;
+    if (markers.length > 1) {
+      // auto-fit all markers
+      position = 'auto';
+    } else if (eventLocation?.lat && eventLocation?.lng) {
+      position = `${eventLocation.lng},${eventLocation.lat},14`;
+    } else if (sharingAttendees.length > 0) {
+      const first = sharingAttendees[0];
+      position = `${first.current_lng},${first.current_lat},14`;
+    } else {
+      return null;
     }
 
-    return `${baseUrl}?${params.toString()}`;
+    const overlay = markerOverlay ? `${markerOverlay}/` : '';
+    return `https://api.mapbox.com/styles/v1/mapbox/${style}/static/${overlay}${position}/600x300@2x?access_token=${mapboxToken}`;
   };
 
   const mapUrl = generateMapUrl();
@@ -128,7 +134,7 @@ export function AttendeeMap({ eventId, attendees, eventLocation }: AttendeeMapPr
         {/* Map Preview */}
         {(sharingAttendees.length > 0 || eventLocation) && (
           <div className="relative rounded-xl overflow-hidden bg-muted">
-            {loadingKey ? (
+            {isLoading ? (
               <div className="h-48 flex items-center justify-center">
                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
               </div>
@@ -143,7 +149,7 @@ export function AttendeeMap({ eventId, attendees, eventLocation }: AttendeeMapPr
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
                     <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 rounded-full px-3 py-1.5 flex items-center gap-1.5 text-sm font-medium shadow-lg">
                       <ExternalLink className="h-4 w-4" />
-                      Open in Google Maps
+                      Open in Maps
                     </div>
                   </div>
                 </a>
