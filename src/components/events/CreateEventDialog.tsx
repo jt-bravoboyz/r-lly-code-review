@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Calendar as CalendarIcon, Loader2, RotateCcw } from 'lucide-react';
+import { Plus, Calendar as CalendarIcon, Loader2, RotateCcw, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -13,6 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import { useCreateEvent, useJoinEvent } from '@/hooks/useEvents';
 import { useAuth } from '@/hooks/useAuth';
 import { useUploadRallyMedia } from '@/hooks/useRallyMedia';
@@ -182,7 +183,8 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
       </DialogTrigger>
       <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create New Event</DialogTitle>
+          <DialogTitle>Create a R@lly</DialogTitle>
+          <p className="text-sm text-muted-foreground">Set up your R@lly in under 30 seconds.</p>
         </DialogHeader>
         
         <Form {...form}>
@@ -203,58 +205,28 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
 
             <FormField
               control={form.control}
-              name="description"
+              name="event_type"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="What's the plan?" {...field} />
-                  </FormControl>
+                  <FormLabel>Event Type</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent className="max-h-60">
+                      {EVENT_TYPES.map((type) => (
+                        <SelectItem key={type.value} value={type.value}>
+                          {type.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
             />
-
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="event_type"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Event Type</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent className="max-h-60">
-                        {EVENT_TYPES.map((type) => (
-                          <SelectItem key={type.value} value={type.value}>
-                            {type.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="max_attendees"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Max Attendees</FormLabel>
-                    <FormControl>
-                      <Input type="number" placeholder="Optional" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
 
             {/* Date Picker */}
             <FormField
@@ -342,10 +314,49 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
               )}
             />
 
-            {/* Bar Hop Mode removed from creation — now available only in After R@lly */}
+            {/* Advanced options - collapsed by default */}
+            <Collapsible>
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" size="sm" type="button" className="w-full justify-between text-muted-foreground text-xs">
+                  More options
+                  <ChevronDown className="h-3.5 w-3.5" />
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="space-y-4 pt-2">
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description</FormLabel>
+                      <FormControl>
+                        <Textarea placeholder="What's the plan?" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            {/* Staged media picker — files held locally until submit */}
-            <StagedMediaPicker stagedFiles={stagedMedia} onChange={setStagedMedia} />
+                <FormField
+                  control={form.control}
+                  name="max_attendees"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Max Attendees</FormLabel>
+                      <FormControl>
+                        <Input type="number" placeholder="Optional" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Bar Hop Mode removed from creation — now available only in After R@lly */}
+
+                {/* Staged media picker — files held locally until submit */}
+                <StagedMediaPicker stagedFiles={stagedMedia} onChange={setStagedMedia} />
+              </CollapsibleContent>
+            </Collapsible>
 
             {isUploading && (
               <div className="space-y-2">
@@ -364,7 +375,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
               ) : createEvent.isPending || joinEvent.isPending ? (
                 'Creating...'
               ) : (
-                'Create Event'
+                'Create R@lly'
               )}
             </Button>
 
@@ -382,7 +393,6 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
                     setUploadStatus(`Retrying ${f.type} ${i + 1} of ${failedUploads.length}…`);
                     setUploadPercent(0);
                     try {
-                      // We need the event ID from the URL since we already navigated
                       const eventId = window.location.pathname.split('/events/')[1];
                       if (!eventId) { stillFailed.push(f); continue; }
                       await uploadMedia.mutateAsync({

@@ -145,7 +145,7 @@ export function EventChat({ eventId, eventTitle, eventStatus }: EventChatProps) 
 
       {/* Messages area */}
       <ScrollArea className="flex-1 p-4" ref={scrollRef}>
-        <div className="space-y-4">
+        <div className="space-y-4 pt-2">
           {messages.length === 0 ? (
             <div className="text-center text-muted-foreground py-8">
               <p className="font-montserrat">No messages yet</p>
@@ -228,7 +228,7 @@ function MessageBubble({ message, isOwn }: { message: Message; isOwn: boolean })
   if (isSystemMessage) {
     return (
       <div className="flex justify-center my-2">
-        <div className="bg-muted/50 text-muted-foreground text-xs px-3 py-1.5 rounded-full">
+        <div className="bg-muted/30 border border-border/50 text-muted-foreground text-xs px-3 py-1.5 rounded-full">
           {message.content}
         </div>
       </div>
