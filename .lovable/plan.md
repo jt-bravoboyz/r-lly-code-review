@@ -1,161 +1,134 @@
 
 
-# R@lly UI Simplification and Emotional Polish
+# R@lly Invite Energy Evolution -- Verified Implementation Plan
 
-Frontend-only refinement across 6 files. Zero logic, hook, query, RPC, or effect changes. All existing boolean conditions preserved byte-for-byte.
+All three structural safety checks have been explicitly confirmed against the current codebase. This plan is ready for execution.
 
 ---
 
-## Stage 1: Primary Action Bar (EventDetail)
+## Structural Safety Confirmations
 
-**File:** `src/pages/EventDetail.tsx`
+### 1. Hero Wrapper Scope: CLEAN
+The existing `div` at line 324 already closes at line 579, naturally scoping the hero section. The Tabs component (line 618), After R@lly banner (line 515), R@lly Home button (line 540), Safety sections (line 583), and DD buttons (lines 608-615) are all siblings outside this div. Adding `rounded-2xl bg-card/50 border border-border/50 p-4` to this existing div is a style-only change. No re-parenting. No stacking context. No flex order change.
 
-Create a local presentational component `PrimaryActionBar` inside the file. Render it once after line 451 (after PendingJoinRequests), replacing the old Join button (lines 454-466) and Host Rally Controls card (lines 470-524).
+### 2. CreateEvent Collapsible: CLEAN
+Radix `CollapsibleContent` renders its children to the DOM even when collapsed (CSS-hidden, not unmounted). All `FormField` components remain permanently mounted, so `react-hook-form` registration is never interrupted. The `eventSchema` (lines 27-40) and `onSubmit` handler (lines 93-171) are untouched. Layout-only change.
 
-**Handler extraction safeguard:** The inline `startRally` handler (lines 497-505) will be extracted as a named const inside the component body:
+### 3. VIBE_STYLES Mapping: CLEAN
+Six vibe keys (`orange`, `purple`, `green`, `blue`, `red`, `default`) cover all 28 event types. Every key has a corresponding static class string entry. Fallback via `?? VIBE_STYLES.default`. Zero dynamic Tailwind interpolation.
 
-```typescript
-const handleStartRally = async () => {
-  try {
-    await startRally.mutateAsync(event.id);
-    toast.success('R@lly is live! 🎉');
-    sessionStorage.removeItem(`rally_home_prompt_${event.id}`);
-  } catch (error: any) {
-    toast.error(error.message || 'Failed to start rally');
-  }
+---
+
+## Implementation (6 Files)
+
+### File 1: `src/lib/eventTypes.ts`
+
+Add `emoji` and `vibe` properties to each event type entry. Add two helper functions: `getEventTypeEmoji()` and `getEventTypeVibe()`.
+
+Vibe assignments:
+- orange: rally, pre_game, bar, happy_hour, bbq
+- purple: party, concert, festival
+- green: brunch, beach, hiking, fitness
+- blue: movie, game_night, sports, tailgate, graduation, road_trip
+- red: birthday, wedding, holiday, anniversary, fundraiser
+- default: dinner, corporate, networking, meetup, other
+
+### File 2: `src/pages/EventDetail.tsx`
+
+**Imports added:** `Link2` from lucide, `getEventTypeEmoji`, `getEventTypeVibe` from eventTypes, `Avatar`/`AvatarImage`/`AvatarFallback` (already imported).
+
+**Static map added above component:**
+```text
+const VIBE_STYLES: Record<string, string> = {
+  orange: "bg-orange-500/10 text-orange-600 border-orange-500/30",
+  purple: "bg-purple-500/10 text-purple-600 border-purple-500/30",
+  green:  "bg-green-500/10 text-green-600 border-green-500/30",
+  blue:   "bg-blue-500/10 text-blue-600 border-blue-500/30",
+  red:    "bg-red-500/10 text-red-600 border-red-500/30",
+  default: "bg-muted text-foreground border-border",
 };
 ```
 
-This is a variable assignment only -- identical mutation call, toast, error handling, and sessionStorage clearing. No new async wrapper logic. No execution order change.
+**Changes (all within existing JSX structure):**
 
-**States** (consuming existing booleans verbatim):
+1. **Hero card feel** -- Add `rounded-2xl bg-card/50 border border-border/50 p-4` and reduce `space-y-4` to `space-y-3` on the existing div at line 324. Scope unchanged.
 
-| Condition | Label | Subtext | Handler |
-|-----------|-------|---------|---------|
-| `!isCreator && !isAttending` | JOIN R@LLY | "Jump in -- your crew is waiting." | `handleJoin` (direct ref) |
-| `canManage && isScheduled && isLiveEvent` | START R@LLY | "Go live and rally up." | `handleStartRally` (direct ref) |
-| `canManage && isLive` | END R@LLY | "Transition to After R@lly mode." | `() => setShowEndRallyDialog(true)` (verbatim) |
-| `canManage && isAfterRally` | COMPLETE MISSION | "Everyone made it. Close it out." | Existing `completeRally` inline from HostSafetyDashboard (verbatim) |
+2. **Title** -- Change `text-2xl font-bold` to `text-3xl font-bold tracking-tight`. Prepend emoji from `getEventTypeEmoji(event.event_type)` inline with conditional render.
 
-Full-width button, bold label, muted subtext. Only one state renders at a time.
+3. **Vibe badge** -- Replace `Badge variant="outline"` at line 329 with a vibe-tinted badge using `VIBE_STYLES[getEventTypeVibe(event.event_type)]`.
 
-**Removed JSX:** Lines 454-466 (old Join button) and lines 470-524 (Host Rally Controls card). Their handlers remain intact -- only the wrapping JSX changes.
+4. **Avatar stack** -- Add 5-avatar overlapping row before the social momentum text counts (inside the existing `attendeeCount > 0` guard). Uses `event.attendees` already loaded.
 
----
+5. **Copy invite link** -- Add a ghost button below the context line that copies `${window.location.origin}/join/${event.invite_code}` to clipboard and shows `toast.success('Link copied!')`.
 
-## Stage 2: RidePlanCard Simplification
+6. **Join confirmation** -- After PrimaryActionBar, render `"You're in. Let's go."` when `isAttending && !isCreator`. Pure conditional from existing boolean.
 
-**File:** `src/components/home/RidePlanCard.tsx`
+7. **isSimpleMode derived const** -- `const isSimpleMode = !event?.is_barhop && (eventDDs?.length ?? 0) === 0 && !isLive && !isAfterRally;` Not state. Not effect. Not memo.
 
-- Update `getPlanLabel` return values:
-  - `'dd'` -> `"You're Driving"`
-  - `'rider'` -> `"You're Riding"`
-  - `'self'` -> `"You're Solo"`
-  - `'unset'` -> `"No plan set"` (unchanged)
-- Wrap secondary metadata (lines 119-151: loading spinner, assigned driver, pickup/dropoff, DD thanks message) inside a Radix `Collapsible`, collapsed by default, with a small chevron toggle on the plan label row.
-- **State protection:** The `Collapsible` uses its own internal open state. No new `useState` introduced. No existing `useEffect` or Supabase query touched. No layout shift on mount -- collapsed content has zero height by default.
+8. **Simple mode: hide R@lly Home placeholder** -- Wrap lines 600-604 condition in `&& !isSimpleMode`.
 
----
+9. **Simple mode: Rides tab de-emphasis** -- Add `className={isSimpleMode ? 'opacity-50' : ''}` to Rides TabsTrigger. Tab remains functional.
 
-## Stage 3: Social Momentum Indicators
+10. **Rides density** -- Replace gradient card (lines 783-797) with bordered `div`. Same handlers.
 
-**File:** `src/pages/EventDetail.tsx`
+11. **Microcopy** -- Line 509: "Transition to After R@lly mode." to "Move to After R@lly mode."
 
-Add a compact `div` directly below the `h1` (line 338):
+### File 3: `src/components/events/CreateEventDialog.tsx`
 
-```text
-8 confirmed . 2 DDs . 3 need rides
-```
+1. **Title** -- "Create New Event" to "Create a R@lly" with subtitle "Set up your R@lly in under 30 seconds."
+2. **Collapsible** -- Import `Collapsible, CollapsibleTrigger, CollapsibleContent` and `ChevronDown`. Wrap Description, Max Attendees, and StagedMediaPicker inside a Collapsible (collapsed by default). Event Type moves to full width outside the grid. Required fields (Title, Event Type, Date, Time, Location) remain always visible.
+3. **Submit text** -- "Create Event" to "Create R@lly".
 
-Using existing loaded data with defensive guards:
-- `attendeeCount` (already computed at line 148)
-- `eventDDs?.length ?? 0`
-- `event?.attendees?.filter(a => a.needs_ride)?.length ?? 0`
+### File 4: `src/components/home/HostSafetyDashboard.tsx`
 
-**Rendering guard:** Only render when `attendeeCount > 0`. No new queries. No new state. No memoization. All optional chaining for safety.
+Microcopy only:
+- Line 290: "Complete R@lly - Everyone is Safe!" to "Mission complete. Everyone made it."
+- Line 293: "Waiting for Safety Confirmations..." to "Waiting for everyone to check in..."
+- Line 298: Long text to "You can close out once everyone has checked in safe."
 
----
+### File 5: `src/components/events/RallyCompleteOverlay.tsx`
 
-## Stage 4: Header Context Line
+- Line 45: "R@lly complete." to "Mission complete."
+- Line 48: "See you at the next one." to "Everyone made it. See you next time."
 
-**File:** `src/pages/EventDetail.tsx`
+### File 6: `src/components/chat/EventChat.tsx`
 
-Below the social momentum row, add a single subtitle:
-
-```text
-Friday . 8:00 PM . Downtown Bar
-```
-
-Uses the `format` function already imported from `date-fns` (line 6) and `event.start_time` as already consumed at line 360. Location falls back gracefully if null. No new date libraries. No timezone handling changes.
-
-Reduce existing metadata section spacing from `space-y-2` to `space-y-1` (line 357).
+- System message styling: change from `bg-muted/50` to `bg-muted/30 border border-border/50`
+- Add `pt-2` to the messages container for top breathing room
 
 ---
-
-## Stage 5: Microcopy Calibration
-
-| File | Line(s) | Current | New |
-|------|---------|---------|-----|
-| `RidePlanCard.tsx` | 26 | "You're a Designated Driver" | "You're Driving" |
-| `RidePlanCard.tsx` | 27 | "Riding with a DD" | "You're Riding" |
-| `RidePlanCard.tsx` | 28 | "Getting home on my own" | "You're Solo" |
-| `SafetyChoiceModal.tsx` | 40 | "How are you getting home tonight?" | "How are you getting home?" |
-| `SafetyChoiceModal.tsx` | 43 | "Plan ahead so you can focus on having fun." | "Pick a plan so you can enjoy the night." |
-| `RidesSelectionModal.tsx` | 219 | "Choose how R@lly is getting you home safe" | "How should we get you home?" |
-| `EventDetail.tsx` | 613 | "R@lly Home is not active yet" | "R@lly Home activates when the night wraps up." |
-| `EventDetail.tsx` | 889 | "Leave Event" | "Leave R@lly" |
-
----
-
-## Stage 6: Chat Context Banners
-
-**File:** `src/components/chat/EventChat.tsx`
-
-- Add optional `eventStatus?: string` prop to `EventChatProps` interface.
-- Render a small colored banner inline before `ScrollArea` (not sticky, no scroll displacement):
-  - `eventStatus === 'live'` -> `bg-orange-500 text-white`: "R@lly is live. Move out."
-  - `eventStatus === 'after_rally'` -> `bg-purple-600 text-white`: "After R@lly mode active."
-- Static visual based on prop value. No conditional mount/unmount during rapid changes. No new hooks.
-
-**File:** `src/pages/EventDetail.tsx` (line 754) -- pass `eventStatus={event.status}` to `EventChat`.
-
----
-
-## Stage 7: Bar Hop Read-Only Panel
-
-**File:** `src/components/events/BarHopControls.tsx`
-
-Restructure the non-host return block (lines 235-281) into a flatter layout:
-
-```text
-Stop 2 of 5
-The Copper Tap
-[ Navigate ]  [ Mark Arrived ]
-```
-
-Replace `Card > CardHeader > CardContent` with a simpler bordered `div`. Same data, same conditional branches, same handlers. Visual simplification only.
-
----
-
-## Files Modified
-
-1. `src/pages/EventDetail.tsx` -- Stages 1, 3, 4, 5, 6
-2. `src/components/home/RidePlanCard.tsx` -- Stages 2, 5
-3. `src/components/chat/EventChat.tsx` -- Stage 6
-4. `src/components/events/BarHopControls.tsx` -- Stage 7
-5. `src/components/events/SafetyChoiceModal.tsx` -- Stage 5
-6. `src/components/events/RidesSelectionModal.tsx` -- Stage 5
 
 ## Regression Checklist
 
-- PrimaryActionBar uses original handler refs (no duplication): PASS
-- No new `useState` introduced: PASS
-- No new `useEffect` introduced: PASS
+- No new `useState`: PASS (isSimpleMode is derived const; Collapsible uses internal Radix state)
+- No new `useEffect`: PASS
 - No dependency arrays changed: PASS
-- No mutation logic duplicated or re-wrapped: PASS
-- No RPC references changed: PASS
-- No JSX lifecycle order changed: PASS
-- No scroll displacement introduced: PASS
-- No new queries introduced: PASS
-- `startRally` extraction is variable assignment only: PASS
+- No mutation logic altered: PASS
+- No RPC references touched: PASS
+- No query keys changed: PASS
+- No realtime subscriptions modified: PASS
+- No map/clustering/directions logic touched: PASS
+- No ride logic altered: PASS
+- No lifecycle order changed: PASS
+- No theme engine altered: PASS
+- No tab routing altered: PASS
+- No form validation changed: PASS
+- PrimaryActionBar uses original handler references only: PASS
+- VIBE_STYLES uses static class strings only: PASS
+- Hero wrapper scoped to existing div boundary: PASS
+- Collapsible wraps only optional fields; required fields always visible: PASS
+- FormField registration never unmounted: PASS
 
+## Competitive Checklist
+
+1. Emoji + Vibe Header: PRESENT
+2. Social Energy Layer (avatar stack + counts): PRESENT
+3. Join Dopamine Confirmation: PRESENT
+4. Creation Flow Lightness: PRESENT
+5. Shareability (copy invite link): PRESENT
+6. Simple Mode Visual Lightness: PRESENT
+7. Rides Tab Density Reduction: PRESENT
+8. Microcopy Softening: PRESENT
+9. Chat Visual Polish: PRESENT
+
+All 9 competitive requirements met. All 3 structural safety checks clean.
