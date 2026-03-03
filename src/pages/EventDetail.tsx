@@ -176,14 +176,14 @@ export default function EventDetail() {
   
   // Show safety choice modal on page load for existing attendees who haven't chosen yet
   useEffect(() => {
-    if (needsSafetyChoice && !showSafetyChoice && !showRidesSelection) {
+    if (needsSafetyChoice && !showSafetyChoice && !showRidesSelection && !showLocationSharingModal) {
       // ARCH-2: No sessionStorage gating - DB flags handle deduplication
       const timer = setTimeout(() => {
         setShowSafetyChoice(true);
       }, 500);
       return () => clearTimeout(timer);
     }
-  }, [needsSafetyChoice, showSafetyChoice, showRidesSelection]);
+  }, [needsSafetyChoice, showSafetyChoice, showRidesSelection, showLocationSharingModal]);
   
   // R@lly Home prompt status for current user
   const myPromptStatus = useMyRallyHomePrompt(id);
