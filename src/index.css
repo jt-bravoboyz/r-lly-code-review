@@ -378,36 +378,7 @@
     animation: purple-pulse 2s ease-in-out infinite;
   }
 
-  /* Twinkling stars animation */
-  @keyframes twinkle {
-    0% { opacity: 0.3; }
-    50% { opacity: 0.6; }
-    100% { opacity: 0.4; }
-  }
-
-  /* Pulse glow for key elements in after-rally */
-  @keyframes purple-pulse {
-    0%, 100% {
-      box-shadow: 0 0 20px hsl(270 70% 50% / 0.4);
-    }
-    50% {
-      box-shadow: 0 0 40px hsl(270 70% 60% / 0.6), 0 0 60px hsl(280 70% 50% / 0.3);
-    }
-  }
-
-  /* Shimmer effect for after-rally banner */
-  @keyframes shimmer {
-    0% {
-      transform: translateX(-100%);
-    }
-    100% {
-      transform: translateX(100%);
-    }
-  }
-
-  .after-rally-pulse {
-    animation: purple-pulse 2s ease-in-out infinite;
-  }
+  /* Duplicates removed — canonical definitions are at lines 342-379 */
 
   /* Glass card effect for after-rally */
   .after-rally-mode .glass-purple {
@@ -708,7 +679,7 @@
   }
 }
 
-@keyframes shimmer {
+@keyframes shimmer-bg {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
 }

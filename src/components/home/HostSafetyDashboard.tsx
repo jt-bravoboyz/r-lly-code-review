@@ -45,7 +45,7 @@ function SafetyStateBadge({
           {label}
         </Badge>;
     case 'opted_in':
-      return <Badge className="bg-blue-100 text-blue-700 border-blue-300 text-[10px]">
+      return <Badge className="bg-purple-100 text-purple-700 border-purple-300 text-[10px]">
           <Shield className="h-2.5 w-2.5 mr-1" />
           {label}
         </Badge>;
@@ -253,7 +253,7 @@ export function HostSafetyDashboard({
                 needs_dd: 'bg-amber-100 text-amber-700 border-amber-300',
                 self_ride: 'bg-muted text-muted-foreground border-border',
               };
-              return <div key={attendee.id} className={`flex items-center gap-2 p-2 rounded-lg ${state === 'arrived_safely' ? 'bg-green-50/50' : state === 'participating' ? 'bg-orange-50/50' : state === 'undecided' ? 'bg-amber-50/50' : state === 'opted_in' ? 'bg-blue-50/50' : state === 'dd_pending' ? 'bg-primary/5' : 'bg-muted/30'}`}>
+              return <div key={attendee.id} className={`flex items-center gap-2 p-2 rounded-lg ${state === 'arrived_safely' ? 'bg-green-50/50' : state === 'participating' ? 'bg-orange-50/50' : state === 'undecided' ? 'bg-amber-50/50' : state === 'opted_in' ? 'bg-purple-50/50' : state === 'dd_pending' ? 'bg-primary/5' : 'bg-muted/30'}`}>
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={attendee.profile?.avatar_url || undefined} />
                       <AvatarFallback className="text-xs">
