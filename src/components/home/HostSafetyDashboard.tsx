@@ -287,15 +287,15 @@ export function HostSafetyDashboard({
         <Button className="w-full" variant={safetyComplete ? 'default' : 'secondary'} disabled={!safetyComplete} onClick={handleCompleteRally}>
           {safetyComplete ? <>
               <PartyPopper className="h-4 w-4 mr-2" />
-              Complete R@lly - Everyone is Safe!
+              Mission complete. Everyone made it.
             </> : <>
               <Clock className="h-4 w-4 mr-2" />
-              Waiting for Safety Confirmations...
+              Waiting for everyone to check in...
             </>}
         </Button>
 
         {!safetyComplete && <p className="text-xs text-center text-muted-foreground">
-            R@lly can only be completed when all attendees have confirmed their safety status.
+            You can close out once everyone has checked in safe.
           </p>}
       </CardContent>
     </Card>

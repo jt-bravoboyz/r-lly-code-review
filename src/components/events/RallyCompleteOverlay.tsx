@@ -42,10 +42,10 @@ export function RallyCompleteOverlay({ show, onDone }: RallyCompleteOverlayProps
           <PartyPopper className="h-10 w-10 text-primary" />
         </div>
         <h1 className="text-3xl font-bold font-montserrat text-foreground">
-          R@lly complete.
+          Mission complete.
         </h1>
         <p className="text-muted-foreground text-lg">
-          See you at the next one.
+          Everyone made it. See you next time.
         </p>
       </div>
     </div>

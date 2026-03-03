@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, Navigate, Link, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { getEventTypeLabel } from '@/lib/eventTypes';
-import { ArrowLeft, Calendar, MapPin, Users, Beer, Check, X, MessageCircle, Navigation, Home, Plus, Zap, Crown, UserPlus, Car, Play, Moon, PartyPopper } from 'lucide-react';
+import { getEventTypeLabel, getEventTypeEmoji, getEventTypeVibe } from '@/lib/eventTypes';
+import { ArrowLeft, Calendar, MapPin, Users, Beer, Check, X, MessageCircle, Navigation, Home, Plus, Zap, Crown, UserPlus, Car, Play, Moon, PartyPopper, Link2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { Header } from '@/components/layout/Header';
 import { BottomNav } from '@/components/layout/BottomNav';
@@ -63,6 +63,15 @@ import { useMyRallyHomePrompt } from '@/hooks/useRallyHomePrompt';
 import { PendingJoinRequests } from '@/components/events/PendingJoinRequests';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+
+const VIBE_STYLES: Record<string, string> = {
+  orange: "bg-orange-500/10 text-orange-600 border-orange-500/30",
+  purple: "bg-purple-500/10 text-purple-600 border-purple-500/30",
+  green: "bg-green-500/10 text-green-600 border-green-500/30",
+  blue: "bg-blue-500/10 text-blue-600 border-blue-500/30",
+  red: "bg-red-500/10 text-red-600 border-red-500/30",
+  default: "bg-muted text-foreground border-border",
+};
 
 export default function EventDetail() {
   const { id } = useParams<{ id: string }>();
@@ -159,6 +168,11 @@ export default function EventDetail() {
     !myAttendee?.needs_ride &&
     !myAttendee?.location_prompt_shown &&
     event?.status !== 'completed';
+
+  const isSimpleMode = !event?.is_barhop &&
+    (eventDDs?.length ?? 0) === 0 &&
+    !isLive &&
+    !isAfterRally;
   
   // Show safety choice modal on page load for existing attendees who haven't chosen yet
   useEffect(() => {
@@ -321,12 +335,14 @@ export default function EventDetail() {
         {updates.length > 0 && <LiveUpdates updates={updates} />}
 
         {/* Event Header */}
-        <div className="space-y-4">
+        <div className="rounded-2xl bg-card/50 border border-border/50 p-4 space-y-3">
 
           <div className="flex items-start justify-between gap-4">
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <Badge variant="outline">{getEventTypeLabel(event.event_type)}</Badge>
+                <Badge className={`border ${VIBE_STYLES[getEventTypeVibe(event.event_type)] ?? VIBE_STYLES.default}`}>
+                  {getEventTypeLabel(event.event_type)}
+                </Badge>
                 {event.is_quick_rally && (
                   <Badge className="bg-secondary/20 text-secondary border-0">
                     <Zap className="h-3 w-3 mr-1" />
@@ -346,18 +362,47 @@ export default function EventDetail() {
                   </Badge>
                 )}
               </div>
-              <h1 className="text-2xl font-bold">{event.title}</h1>
-              {/* Social momentum indicators */}
+              <h1 className="text-3xl font-bold tracking-tight">
+                {getEventTypeEmoji(event.event_type) && (
+                  <span className="mr-1.5">{getEventTypeEmoji(event.event_type)}</span>
+                )}
+                {event.title}
+              </h1>
+              {/* Social momentum indicators with avatar stack */}
               {attendeeCount > 0 && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  {attendeeCount} confirmed
-                  {(eventDDs?.length ?? 0) > 0 && ` · ${eventDDs?.length ?? 0} DDs`}
-                </p>
+                <div className="flex items-center gap-2 mt-1">
+                  <div className="flex items-center -space-x-2">
+                    {(event.attendees ?? []).slice(0, 5).map((a) => (
+                      <Avatar key={a.id} className="h-6 w-6 border-2 border-background">
+                        <AvatarImage src={a.profile?.avatar_url || undefined} />
+                        <AvatarFallback className="text-[9px]">
+                          {a.profile?.display_name?.charAt(0)?.toUpperCase() || '?'}
+                        </AvatarFallback>
+                      </Avatar>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {attendeeCount} confirmed
+                    {(eventDDs?.length ?? 0) > 0 && ` · ${eventDDs?.length ?? 0} DDs`}
+                  </p>
+                </div>
               )}
               {/* Header context line */}
               <p className="text-xs text-muted-foreground mt-0.5">
                 {format(new Date(event.start_time), 'EEEE')} · {format(new Date(event.start_time), 'h:mm a')}{event.location_name ? ` · ${event.location_name}` : ''}
               </p>
+              {/* Copy invite link */}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs text-muted-foreground gap-1 px-0 h-auto py-0.5 mt-1"
+                onClick={() => {
+                  navigator.clipboard.writeText(`${window.location.origin}/join/${event.invite_code}`);
+                  toast.success('Link copied!');
+                }}
+              >
+                <Link2 className="h-3 w-3" /> Copy invite link
+              </Button>
             </div>
             <InviteToEventDialog
               eventId={event.id}
@@ -486,6 +531,11 @@ export default function EventDetail() {
               </Button>
             </div>
           )}
+          {isAttending && !isCreator && (
+            <p className="text-xs text-green-600 font-medium text-center mt-1">
+              You're in. Let's go.
+            </p>
+          )}
           {canManage && isScheduled && isLiveEvent && (
             <div className="pt-2">
               <Button 
@@ -506,7 +556,7 @@ export default function EventDetail() {
                 disabled={endRally.isPending}
               >
                 <span className="font-bold text-base font-montserrat">END R@LLY</span>
-                <span className="text-xs opacity-80 font-normal">Transition to After R@lly mode.</span>
+                <span className="text-xs opacity-80 font-normal">Move to After R@lly mode.</span>
               </Button>
             </div>
           )}
@@ -597,7 +647,7 @@ export default function EventDetail() {
               />
             )}
           </div>
-        ) : (isLiveEvent || isScheduled) && isAttending ? (
+        ) : !isSimpleMode && (isLiveEvent || isScheduled) && isAttending ? (
           <div className="rounded-xl bg-muted/40 px-4 py-3">
             <p className="text-sm font-medium text-muted-foreground">R@lly Home activates when the night wraps up.</p>
             <p className="text-xs text-muted-foreground/70 mt-0.5">It activates when you hit R@lly Home or when the host ends the R@lly.</p>
@@ -626,7 +676,7 @@ export default function EventDetail() {
               <Navigation className="h-3.5 w-3.5" />
               Track
             </TabsTrigger>
-            <TabsTrigger value="rides">Rides</TabsTrigger>
+            <TabsTrigger value="rides" className={isSimpleMode ? 'opacity-50' : ''}>Rides</TabsTrigger>
           </TabsList>
 
           <TabsContent value="details" className="space-y-4 mt-4">
@@ -781,20 +831,16 @@ export default function EventDetail() {
 
             {/* Request a Ride Card - For attendees who need a ride */}
             {isAttending && (
-              <Card className="bg-gradient-to-r from-blue-500 to-blue-600 border-0 shadow-lg">
-                <CardContent className="p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
-                      <Navigation className="h-5 w-5 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-white font-montserrat">Need a Ride?</h3>
-                      <p className="text-white/80 text-sm">Request a safe ride to the event</p>
-                    </div>
+              <div className="flex items-center justify-between p-3 rounded-lg border">
+                <div className="flex items-center gap-3">
+                  <Navigation className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <h3 className="font-bold font-montserrat text-sm">Need a Ride?</h3>
+                    <p className="text-muted-foreground text-xs">Request a safe ride to the event</p>
                   </div>
-                  <RequestRideDialog eventId={event.id} eventName={event.title} />
-                </CardContent>
-              </Card>
+                </div>
+                <RequestRideDialog eventId={event.id} eventName={event.title} />
+              </div>
             )}
 
             {/* Rider Line - unassigned riders waiting for pickup */}
