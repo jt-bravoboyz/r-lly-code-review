@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, Navigate, Link, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { getEventTypeLabel, getEventTypeEmoji, getEventTypeVibe } from '@/lib/eventTypes';
+import { trackEvent } from '@/lib/analytics';
 import { ArrowLeft, Calendar, MapPin, Users, Beer, Check, X, MessageCircle, Navigation, Home, Plus, Zap, Crown, UserPlus, Car, Play, Moon, PartyPopper, Link2, CheckCircle2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { Header } from '@/components/layout/Header';
@@ -103,6 +104,7 @@ export default function EventDetail() {
   const [savingSafetyChoice, setSavingSafetyChoice] = useState(false);
   const [showLocationSharingModal, setShowLocationSharingModal] = useState(false);
   const afterRallyTriggeredRef = useRef(false);
+  const hasTrackedViewRef = useRef(false);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [showRallyComplete, setShowRallyComplete] = useState(false);
@@ -136,9 +138,10 @@ export default function EventDetail() {
     }
   }, [id]);
 
-  // POL-2: Debug logging wrapped in dev check
+  // POL-2: Debug logging wrapped in dev check + production analytics
   useEffect(() => {
-    if (import.meta.env.DEV && event?.id) {
+    if (!event?.id) return;
+    if (import.meta.env.DEV) {
       console.log('[R@lly Debug] EventDetail loaded:', { 
         event_id: event.id,
         event_status: event.status,
@@ -146,7 +149,18 @@ export default function EventDetail() {
         is_barhop: event.is_barhop,
       });
     }
-  }, [event?.id, event?.status, event?.attendees?.length, event?.is_barhop]);
+    if (!hasTrackedViewRef.current) {
+      hasTrackedViewRef.current = true;
+      trackEvent('event_viewed', {
+        event_id: event.id,
+        event_type: event.event_type,
+        status: event.status,
+        is_barhop: event.is_barhop,
+        attendee_count: event.attendees?.length || 0,
+        simple_mode: event.is_quick_rally,
+      });
+    }
+  }, [event?.id]);
 
   // Calculate derived values after all hooks (to avoid conditional hook calls)
   const activeProfile = profile;
@@ -295,6 +309,7 @@ export default function EventDetail() {
       if (error) throw error;
       
       toast.success('Got it! Have a great time 🎉');
+      trackEvent('safety_confirmed', { event_id: event.id, choice: 'self_transport' });
       queryClient.invalidateQueries({ queryKey: ['event', event.id] });
       setShowSafetyChoice(false);
       // Show location sharing prompt after safety choice
@@ -409,8 +424,9 @@ export default function EventDetail() {
                 size="sm"
                 className="text-xs text-muted-foreground gap-1 px-0 h-auto py-0.5 mt-1"
                 onClick={() => {
-                  navigator.clipboard.writeText(`${window.location.origin}/join/${event.invite_code}`);
-                  toast.success('Link copied!');
+                   navigator.clipboard.writeText(`${window.location.origin}/join/${event.invite_code}`);
+                   trackEvent('invite_link_copied', { event_id: event.id });
+                   toast.success('Link copied!');
                 }}
               >
                 <Link2 className="h-3 w-3" /> Copy invite link
@@ -647,7 +663,8 @@ export default function EventDetail() {
             <SafetyTracker eventId={event.id} />
             {canManage && (
               <HostSafetyDashboard 
-                eventId={event.id} 
+                eventId={event.id}
+                isAfterRally={isAfterRally}
                 onCompleteRally={async () => {
                   try {
                     await completeRally.mutateAsync(event.id);

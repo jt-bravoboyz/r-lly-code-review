@@ -11,8 +11,10 @@ import { useSafetyNotifications } from '@/hooks/useSafetyNotifications';
 import { useRides } from '@/hooks/useRides';
 import { getRideStatus, type RideStatus } from '@/lib/rideStatus';
 import { toast } from 'sonner';
+import { trackEvent } from '@/lib/analytics';
 interface HostSafetyDashboardProps {
   eventId: string;
+  isAfterRally?: boolean;
   onCompleteRally?: () => void;
 }
 
@@ -58,6 +60,7 @@ function SafetyStateBadge({
 }
 export function HostSafetyDashboard({
   eventId,
+  isAfterRally,
   onCompleteRally
 }: HostSafetyDashboardProps) {
   const {
@@ -72,6 +75,7 @@ export function HostSafetyDashboard({
     notifySafetyComplete
   } = useSafetyNotifications();
   const previousSafetyComplete = useRef<boolean | undefined>(undefined);
+  const hasTrackedOpenRef = useRef(false);
 
   // Notify when safety becomes complete
   useEffect(() => {
@@ -81,6 +85,17 @@ export function HostSafetyDashboard({
     }
     previousSafetyComplete.current = safetyComplete;
   }, [safetyComplete, eventId, notifySafetyComplete]);
+
+  // Track rally_home_opened once when dashboard becomes visible in after_rally
+  useEffect(() => {
+    if (!isAfterRally || !attendees?.length || hasTrackedOpenRef.current) return;
+    hasTrackedOpenRef.current = true;
+    trackEvent('rally_home_opened', {
+      event_id: eventId,
+      attendee_count: attendees.length,
+      dd_count: attendees.filter(a => a.is_dd).length,
+    });
+  }, [attendees?.length, isAfterRally, eventId]);
 
   // Persist until safety is complete - don't hide when safetyComplete becomes true
   // This allows hosts to see the final "all safe" state before completing
