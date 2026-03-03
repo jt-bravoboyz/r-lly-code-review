@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      analytics_events: {
+        Row: {
+          created_at: string | null
+          event_name: string
+          id: string
+          metadata: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_name: string
+          id?: string
+          metadata?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          event_name?: string
+          id?: string
+          metadata?: Json | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       arrival_notification_settings: {
         Row: {
           created_at: string
@@ -2527,6 +2551,15 @@ export type Database = {
       }
     }
     Views: {
+      analytics_funnel_summary: {
+        Row: {
+          day: string | null
+          event_count: number | null
+          event_name: string | null
+          unique_users: number | null
+        }
+        Relationships: []
+      }
       event_safety_summary: {
         Row: {
           arrived_safely_count: number | null
