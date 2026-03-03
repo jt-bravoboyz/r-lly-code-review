@@ -11,18 +11,18 @@ interface OnboardingSlide {
 const slides: OnboardingSlide[] = [
   {
     icon: <Zap className="h-12 w-12" strokeWidth={2} />,
-    title: "Spontaneous Hangouts",
-    description: "Plan it. Rally up. Get everyone home safe."
+    title: "Nights That Matter",
+    description: "Plan it. R@lly up. Everyone gets home."
   },
   {
     icon: <MapPin className="h-12 w-12" strokeWidth={2} />,
     title: "Real-time Coordination",
-    description: "Chat, share locations, and keep everyone in the loop"
+    description: "Live tracking. Group chat. No one left behind."
   },
   {
     icon: <Users className="h-12 w-12" strokeWidth={2} />,
     title: "Rally Your Squad",
-    description: "Plan multi-stop events with ease and keep track of your crew"
+    description: "Bar hops, pre-games, big nights — all coordinated."
   }
 ];
 

@@ -407,9 +407,9 @@ export default function EventDetail() {
                     {attendeeCount} confirmed
                     {(eventDDs?.length ?? 0) > 0 && ` · ${eventDDs?.length ?? 0} DDs`}
                   </p>
-                  {attendeeCount >= 5 && (
+                  {attendeeCount >= 3 && (
                     <p className="text-[10px] text-muted-foreground italic mt-0.5">
-                      This one's gaining momentum.
+                      {isCreator ? "Your crew is locked in." : "The crew's growing."}
                     </p>
                   )}
                 </div>
@@ -1063,6 +1063,9 @@ export default function EventDetail() {
         onDone={handleRallyCompleteDone}
         attendeeCount={attendeeCount}
         ddCount={eventDDs?.length ?? 0}
+        eventId={event.id}
+        eventTitle={event.title}
+        inviteCode={event.invite_code}
       />
     </div>
   );
