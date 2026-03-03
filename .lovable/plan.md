@@ -1,96 +1,69 @@
 
 
-# R@lly Conversion Acceleration — Phase 2
+# R@lly Phase 3 -- Differentiation & Moat Expansion
 
-Phase 2 changes are NOT yet implemented. Simple R@lly IS fully implemented. This plan covers only the missing Phase 2 items.
-
----
-
-## Verified: Simple R@lly is Complete
-
-All four conditions confirmed in the current codebase:
-- Derived const at line 172 (not state)
-- R@lly Home placeholder guarded at line 650
-- Rides tab opacity at line 679
-- RidePlanCard inherently hidden (parent guard `isLiveEvent || isAfterRally` is mutually exclusive with `isSimpleMode`)
-
-No changes needed for Simple R@lly.
+All structural risks verified. Proceeding with implementation.
 
 ---
 
-## File 1: `src/components/events/CreateEventDialog.tsx`
+## 1. RallyCompleteOverlay Recap Screen
 
-### 1a. Static Step Indicator
-After the subtitle and before the `<Form>` tag, add a decorative progress row:
+**File:** `src/components/events/RallyCompleteOverlay.tsx`
 
-```tsx
-<div className="flex items-center justify-center gap-2 text-[10px] text-muted-foreground font-montserrat uppercase tracking-wider pb-1">
-  <span>Details</span>
-  <span className="text-border">·</span>
-  <span>Time & Place</span>
-  <span className="text-border">·</span>
-  <span>Review</span>
-</div>
-```
+- Extend props to accept `attendeeCount` and `ddCount` (both optional, default 0)
+- After existing "Mission complete." heading, add a recap block:
+  - "{attendeeCount} confirmed" 
+  - "{ddCount} DDs deployed" (only if ddCount > 0)
+  - "100% accounted for"
+- Add `<Progress value={100} />` bar below the recap for visual closure
+- Change auto-navigate timer from 2000ms to 5000ms
 
-No state. No step logic. Pure decoration.
+**File:** `src/pages/EventDetail.tsx`
 
-### 1b. Essentials / Optional Labels
-- Add `<p className="text-[10px] uppercase tracking-wider text-muted-foreground font-montserrat">Essentials</p>` above the Title field
-- Change the Collapsible trigger text from `"More options"` to `"Optional details"`
-
-### 1c. Validity Reinforcement
-After the submit button, add:
-
-```tsx
-{form.formState.isValid && (
-  <p className="text-xs text-green-600 font-medium text-center mt-1">
-    Ready to rally.
-  </p>
-)}
-```
-
-Uses existing `form.formState.isValid`. No new state.
+- Pass `attendeeCount` and `eventDDs?.length ?? 0` to the overlay component
 
 ---
 
-## File 2: `src/pages/EventDetail.tsx`
+## 2. HostSafetyDashboard Elevation
 
-### 2a. Join Confirmation Animation
-Add `animate-text-fade-in` class to the existing "You're in. Let's go." text. The keyframe already exists in `src/index.css`.
+**File:** `src/components/home/HostSafetyDashboard.tsx`
 
-### 2b. Primary Button Micro-Interaction
-Add `transition-transform active:scale-[0.98]` to the JOIN, START, and END button classNames in the PrimaryActionBar section. Pure CSS utility, zero logic.
-
-### 2c. Social Momentum Text
-After the avatar stack (inside the `attendeeCount > 0` guard), add:
-
-```tsx
-{attendeeCount >= 5 && (
-  <p className="text-[10px] text-muted-foreground italic mt-0.5">
-    This one's gaining momentum.
-  </p>
-)}
-```
-
-Conditional from existing `attendeeCount`. No new state.
+- Rename header from "Safety Dashboard" to "R@lly Home Command"
+- Add completion counter subtitle using existing computed values: `"{arrivedSafely} of {total} confirmed safe"`
 
 ---
 
-## File 3: `src/components/chat/EventChat.tsx`
+## 3. Safety Completion Badge in Event Header
 
-No changes. `attendeeCount` is not passed as a prop. Skipped per the "no new data plumbing" rule.
+**File:** `src/pages/EventDetail.tsx`
+
+- Add `useIsEventSafetyComplete(id)` call -- verified: React Query, stable key `['event-safety-status', eventId]`, shared cache, no redundant requests
+- Render green badge below event title when `isAfterRally && safetyComplete`:
+  ```
+  [CheckCircle2 icon] Everyone made it home safe
+  ```
+
+---
+
+## 4. Onboarding Microcopy
+
+**File:** `src/components/Onboarding.tsx`
+
+- Update slide 1 description from "Create and join events on the fly with friends nearby" to "Plan it. Rally up. Get everyone home safe."
+
+---
+
+## 5. Profile Badge -- SKIPPED
+
+No host-count query exists on the Profile page. Skipped per guardrail.
 
 ---
 
 ## Structural Safety
 
 - No new useState: PASS
-- No new useEffect: PASS
-- No dependency array changes: PASS
-- No mutation wrappers: PASS
-- No form field unmounting: PASS
-- No routing changes: PASS
-- No data shape changes: PASS
-- form.formState.isValid is existing react-hook-form API: PASS
+- No new useEffect: PASS  
+- No new mutations/RPCs: PASS
+- No schema changes: PASS
+- Hook reuse verified: useIsEventSafetyComplete shares React Query cache with key `['event-safety-status', eventId]` -- zero redundant calls: PASS
 
