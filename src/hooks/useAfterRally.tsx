@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
+import { trackEvent } from '@/lib/analytics';
 
 /**
  * ARCH-4: useMyAfterRallyStatus now uses consolidated query key
@@ -45,6 +46,7 @@ export function useStartRally() {
     onSuccess: (_, eventId) => {
       queryClient.invalidateQueries({ queryKey: ['event', eventId] });
       queryClient.invalidateQueries({ queryKey: ['events'] });
+      trackEvent('rally_started', { event_id: eventId });
     }
   });
 }
@@ -57,6 +59,7 @@ export function useEndRally() {
     onSuccess: (_, eventId) => {
       queryClient.invalidateQueries({ queryKey: ['event', eventId] });
       queryClient.invalidateQueries({ queryKey: ['events'] });
+      trackEvent('rally_ended', { event_id: eventId });
     }
   });
 }
@@ -69,6 +72,7 @@ export function useCompleteRally() {
     onSuccess: (_, eventId) => {
       queryClient.invalidateQueries({ queryKey: ['event', eventId] });
       queryClient.invalidateQueries({ queryKey: ['events'] });
+      trackEvent('rally_completed', { event_id: eventId });
     }
   });
 }

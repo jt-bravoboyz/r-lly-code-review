@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Tables, TablesInsert } from '@/integrations/supabase/types';
+import { trackEvent } from '@/lib/analytics';
 
 type Event = Tables<'events'>;
 type EventInsert = TablesInsert<'events'>;
@@ -159,6 +160,7 @@ export function useCreateEvent() {
     },
     onSuccess: async (data) => {
       queryClient.invalidateQueries({ queryKey: ['events'] });
+      trackEvent('event_created', { event_id: data.id, event_type: data.event_type, is_barhop: data.is_barhop });
       
       // Award points for creating event
       try {
@@ -196,6 +198,7 @@ export function useJoinEvent() {
 
       // Only award “join_event” points once the user is actually attending.
       if (result?.status !== 'attending') return;
+      trackEvent('event_joined', { event_id: variables.eventId });
 
       try {
         await supabase.rpc('rly_award_points_by_profile', {
