@@ -77,7 +77,7 @@ export function InviteToEventDialog({
       try {
         await navigator.share({
           title: `Join ${eventTitle}`,
-          text: `Join my R@lly! Use code: ${inviteCode}`,
+          text: `You're invited to ${eventTitle} 🎉 — Tap to join the crew`,
           url: shareLink,
         });
       } catch (err) {
