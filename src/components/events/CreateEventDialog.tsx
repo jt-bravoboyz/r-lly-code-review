@@ -186,9 +186,18 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
           <DialogTitle>Create a R@lly</DialogTitle>
           <p className="text-sm text-muted-foreground">Set up your R@lly in under 30 seconds.</p>
         </DialogHeader>
+
+        <div className="flex items-center justify-center gap-2 text-[10px] text-muted-foreground font-montserrat uppercase tracking-wider pb-1">
+          <span>Details</span>
+          <span className="text-border">·</span>
+          <span>Time & Place</span>
+          <span className="text-border">·</span>
+          <span>Review</span>
+        </div>
         
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-montserrat">Essentials</p>
             <FormField
               control={form.control}
               name="title"
@@ -318,7 +327,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
             <Collapsible>
               <CollapsibleTrigger asChild>
                 <Button variant="ghost" size="sm" type="button" className="w-full justify-between text-muted-foreground text-xs">
-                  More options
+                  Optional details
                   <ChevronDown className="h-3.5 w-3.5" />
                 </Button>
               </CollapsibleTrigger>
@@ -378,6 +387,12 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
                 'Create R@lly'
               )}
             </Button>
+
+            {form.formState.isValid && (
+              <p className="text-xs text-green-600 font-medium text-center mt-1">
+                Ready to rally.
+              </p>
+            )}
 
             {failedUploads.length > 0 && !isUploading && (
               <Button

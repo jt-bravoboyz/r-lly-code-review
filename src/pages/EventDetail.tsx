@@ -385,6 +385,11 @@ export default function EventDetail() {
                     {attendeeCount} confirmed
                     {(eventDDs?.length ?? 0) > 0 && ` · ${eventDDs?.length ?? 0} DDs`}
                   </p>
+                  {attendeeCount >= 5 && (
+                    <p className="text-[10px] text-muted-foreground italic mt-0.5">
+                      This one's gaining momentum.
+                    </p>
+                  )}
                 </div>
               )}
               {/* Header context line */}
@@ -522,7 +527,7 @@ export default function EventDetail() {
           {!isCreator && !isAttending && (
             <div className="pt-2">
               <Button 
-                className="w-full btn-gradient-primary h-14 flex-col gap-0.5"
+                className="w-full btn-gradient-primary h-14 flex-col gap-0.5 transition-transform active:scale-[0.98]"
                 onClick={handleJoin}
                 disabled={joinEvent.isPending}
               >
@@ -532,14 +537,14 @@ export default function EventDetail() {
             </div>
           )}
           {isAttending && !isCreator && (
-            <p className="text-xs text-green-600 font-medium text-center mt-1">
+            <p className="text-xs text-green-600 font-medium text-center mt-1 animate-text-fade-in">
               You're in. Let's go.
             </p>
           )}
           {canManage && isScheduled && isLiveEvent && (
             <div className="pt-2">
               <Button 
-                className="w-full btn-gradient-primary h-14 flex-col gap-0.5"
+                className="w-full btn-gradient-primary h-14 flex-col gap-0.5 transition-transform active:scale-[0.98]"
                 onClick={handleStartRally}
                 disabled={startRally.isPending}
               >
@@ -551,7 +556,7 @@ export default function EventDetail() {
           {canManage && isLive && (
             <div className="pt-2">
               <Button 
-                className="w-full btn-gradient-primary h-14 flex-col gap-0.5"
+                className="w-full btn-gradient-primary h-14 flex-col gap-0.5 transition-transform active:scale-[0.98]"
                 onClick={() => setShowEndRallyDialog(true)}
                 disabled={endRally.isPending}
               >
