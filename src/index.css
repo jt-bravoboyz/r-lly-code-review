@@ -679,10 +679,6 @@
   }
 }
 
-@keyframes shimmer-bg {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
 
 @keyframes slide-up-fade {
   0% { opacity: 0; transform: translateY(30px); }
