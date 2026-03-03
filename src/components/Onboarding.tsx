@@ -12,7 +12,7 @@ const slides: OnboardingSlide[] = [
   {
     icon: <Zap className="h-12 w-12" strokeWidth={2} />,
     title: "Spontaneous Hangouts",
-    description: "Create and join events on the fly with friends nearby"
+    description: "Plan it. Rally up. Get everyone home safe."
   },
   {
     icon: <MapPin className="h-12 w-12" strokeWidth={2} />,
