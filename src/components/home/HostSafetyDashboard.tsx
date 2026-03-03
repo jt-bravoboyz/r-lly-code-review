@@ -115,14 +115,17 @@ export function HostSafetyDashboard({
   return <>
     <Card className="rounded-xl border-0 shadow-[0_4px_12px_rgba(0,0,0,0.04)] bg-card">
       <CardHeader className="pb-3">
-        <CardTitle className="text-lg flex items-center gap-2 font-montserrat">
+      <CardTitle className="text-lg flex items-center gap-2 font-montserrat">
           <Shield className="h-5 w-5 text-primary" />
-          Safety Dashboard
+          R@lly Home Command
           {safetyComplete && <Badge className="ml-auto bg-green-500 text-white">
               <CheckCircle2 className="h-3 w-3 mr-1" />
               All Safe
             </Badge>}
         </CardTitle>
+        <p className="text-xs text-muted-foreground mt-1">
+          {arrivedSafely.length} of {attendees.length} confirmed safe
+        </p>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Summary Stats */}

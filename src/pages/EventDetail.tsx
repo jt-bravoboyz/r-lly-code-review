@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, Navigate, Link, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { getEventTypeLabel, getEventTypeEmoji, getEventTypeVibe } from '@/lib/eventTypes';
-import { ArrowLeft, Calendar, MapPin, Users, Beer, Check, X, MessageCircle, Navigation, Home, Plus, Zap, Crown, UserPlus, Car, Play, Moon, PartyPopper, Link2 } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Users, Beer, Check, X, MessageCircle, Navigation, Home, Plus, Zap, Crown, UserPlus, Car, Play, Moon, PartyPopper, Link2, CheckCircle2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { Header } from '@/components/layout/Header';
 import { BottomNav } from '@/components/layout/BottomNav';
@@ -18,7 +18,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useEvent, useJoinEvent, useLeaveEvent, useUpdateEvent } from '@/hooks/useEvents';
 import { useRides } from '@/hooks/useRides';
 import { useAuth } from '@/hooks/useAuth';
-import { useMyAttendeeStatus } from '@/hooks/useSafetyStatus';
+import { useMyAttendeeStatus, useIsEventSafetyComplete } from '@/hooks/useSafetyStatus';
 import { useCohosts } from '@/hooks/useCohosts';
 import { useMyDDRequest, useEventDDs } from '@/hooks/useDDManagement';
 import { useStartRally, useEndRally, useCompleteRally } from '@/hooks/useAfterRally';
@@ -115,7 +115,7 @@ export default function EventDetail() {
   // ARCH-4: Use consolidated hook instead of inline query
   // ARCH-2: DB flags for gating instead of sessionStorage
   const { data: myAttendee, refetch: refetchMyAttendee } = useMyAttendeeStatus(id);
-  
+  const { data: safetyComplete } = useIsEventSafetyComplete(id);
   
   // Auto-arrival detection for R@lly Home - only active after event ends
   useAutoArrival({ 
@@ -368,6 +368,13 @@ export default function EventDetail() {
                 )}
                 {event.title}
               </h1>
+              {/* Safety completion badge */}
+              {isAfterRally && safetyComplete && (
+                <p className="text-xs text-green-600 font-medium flex items-center gap-1 mt-1">
+                  <CheckCircle2 className="h-3 w-3" />
+                  Everyone made it home safe
+                </p>
+              )}
               {/* Social momentum indicators with avatar stack */}
               {attendeeCount > 0 && (
                 <div className="flex items-center gap-2 mt-1">
@@ -1037,6 +1044,8 @@ export default function EventDetail() {
       <RallyCompleteOverlay
         show={showRallyComplete}
         onDone={handleRallyCompleteDone}
+        attendeeCount={attendeeCount}
+        ddCount={eventDDs?.length ?? 0}
       />
     </div>
   );
