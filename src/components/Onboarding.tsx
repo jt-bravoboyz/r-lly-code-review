@@ -180,6 +180,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
             <button
               key={index}
               onClick={() => setCurrentSlide(index)}
+              aria-label={`Go to slide ${index + 1}`}
               className={`rounded-full transition-all duration-300 ${
                 index === currentSlide 
                   ? 'w-8 h-2' 
