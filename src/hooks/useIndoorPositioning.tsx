@@ -146,8 +146,8 @@ export function useIndoorPositioning(): UseIndoorPositioningResult {
   const [databaseBeacons, setDatabaseBeacons] = useState<DatabaseBeacon[]>([]);
   const [bleInitialized, setBleInitialized] = useState(false);
   
-  const scanIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const simulationIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const scanIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const simulationIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const detectedDevicesRef = useRef<Map<string, { rssi: number; timestamp: number }>>(new Map());
   
   const platform = detectPlatform();
