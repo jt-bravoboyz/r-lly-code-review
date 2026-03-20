@@ -83,7 +83,7 @@ export function LocationSearch({
   const [customName, setCustomName] = useState('');
   const [showCustomNameInput, setShowCustomNameInput] = useState(false);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const searchTimeout = useRef<NodeJS.Timeout | null>(null);
+  const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Get user's current location for proximity bias

@@ -358,13 +358,14 @@ export function useIndoorPositioning(): UseIndoorPositioningResult {
   }, [bleInitialized, platform, processBeaconData]);
 
   const startWebBluetoothScanning = useCallback(async () => {
-    if (!supportsWebBluetooth || !navigator.bluetooth) {
+    const nav = navigator as any;
+    if (!supportsWebBluetooth || !nav.bluetooth) {
       throw new Error(platformInfo.recommendation);
     }
 
     // Web Bluetooth requires user interaction and has limitations
     // It's mainly for connecting to specific devices, not for beacon scanning
-    const device = await navigator.bluetooth.requestDevice({
+    const device = await nav.bluetooth.requestDevice({
       acceptAllDevices: true,
       optionalServices: ['battery_service', 'device_information'],
     });

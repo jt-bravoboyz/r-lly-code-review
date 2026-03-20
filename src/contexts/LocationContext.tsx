@@ -152,7 +152,7 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
   const eventIdRef = useRef<string | null>(null);
   const smoothedHeadingRef = useRef<number>(0);
   const smoothedPositionRef = useRef<{ lat: number; lng: number } | null>(null);
-  const updateIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const updateIntervalRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastDbUpdateRef = useRef<number>(0);
 
   // Battery optimization hook

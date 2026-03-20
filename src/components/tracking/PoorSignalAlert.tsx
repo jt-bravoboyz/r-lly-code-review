@@ -27,7 +27,7 @@ export function PoorSignalAlert({
 
   // Show alert when signal is poor for a sustained period
   useEffect(() => {
-    let timeout: NodeJS.Timeout;
+    let timeout: ReturnType<typeof setTimeout>;
     
     if (signalQuality === 'poor' && accuracy > 50) {
       // Wait 5 seconds of poor signal before showing alert

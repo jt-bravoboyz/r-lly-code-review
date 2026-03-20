@@ -128,7 +128,7 @@ export function useNativeGeolocation(
   const webWatchIdRef = useRef<number | null>(null);
   const speedHistoryRef = useRef<number[]>([]);
   const lastPositionRef = useRef<{ lat: number; lng: number; timestamp: number } | null>(null);
-  const intervalIdRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalIdRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Monitor battery status
   useEffect(() => {

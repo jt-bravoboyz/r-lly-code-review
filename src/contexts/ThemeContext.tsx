@@ -48,7 +48,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     updateResolvedTheme();
 
     // For system theme, check every minute if we need to switch based on time
-    let intervalId: NodeJS.Timeout | null = null;
+    let intervalId: ReturnType<typeof setInterval> | null = null;
     if (theme === 'system') {
       intervalId = setInterval(() => {
         const newTheme = getTimeBasedTheme();
