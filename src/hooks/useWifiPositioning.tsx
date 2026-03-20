@@ -126,7 +126,7 @@ export function useWifiPositioning(): UseWifiPositioningResult {
   const accuracyHistoryRef = useRef<number[]>([]);
   const altitudeHistoryRef = useRef<(number | null)[]>([]);
   const lastPositionRef = useRef<{ lat: number; lng: number } | null>(null);
-  const scanIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const scanIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   
   // Check if Network Information API is supported
   const isSupported = typeof navigator !== 'undefined' && 
