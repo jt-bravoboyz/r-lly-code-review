@@ -3,6 +3,7 @@
   "short_name": "R@lly",
   "description": "Real-time social coordination app for groups moving together",
   "start_url": "/",
+  "id": "/?source=pwa",
   "display": "standalone",
   "background_color": "#FF6B35",
   "theme_color": "#FF6B35",
@@ -18,7 +19,7 @@
       "src": "/rally-icon-192.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ],
   "categories": ["social", "navigation", "lifestyle"],

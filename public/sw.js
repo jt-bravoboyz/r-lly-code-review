@@ -55,6 +55,11 @@ self.addEventListener('fetch', function(event) {
     return;
   }
 
+  // Never intercept auth/OAuth routes — must always hit network
+  if (url.pathname.includes('~oauth') || url.pathname.startsWith('/auth')) {
+    return;
+  }
+
   // Skip API calls and Supabase requests
   if (
     url.pathname.startsWith('/api') ||
