@@ -11,6 +11,10 @@
 /* Primary: #F26C15 | Cream: #FFF3E9 | Light accent: #FFD0C2 */
 
 @layer base {
+  body {
+    padding-top: env(safe-area-inset-top);
+  }
+
   :root {
     /* Core backgrounds */
     --background: 0 0% 98%;
