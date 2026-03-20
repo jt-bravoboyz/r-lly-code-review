@@ -1,95 +1,95 @@
 
 
-# Phase 5: Growth & Competitive Positioning — Implementation Plan
+# Cross-Platform Compatibility Plan — Implementation
 
-Phase 5 has **not yet been implemented**. All six files are in pre-Phase 5 state. This plan implements the full approved scope with all stability safeguards applied.
+All existing features (PWA prompt, service worker caching strategy, browser-safe timer types) are preserved. Six targeted changes across 5 files.
 
 ---
 
-## Files to Modify (5) + Create (1)
+## 1. index.html — Viewport & Mobile Meta Tags
 
-### 1. `index.html` — OG Metadata
-- `og:title` → "R@lly — The app for nights that matter"
-- `og:description` → "Rally your squad. Track your crew. Get everyone home safe. 🎯"
-- `twitter:card` → "summary"
-- Add `twitter:title` + `twitter:description` matching OG tags
+Update viewport meta (line 5) to:
+```html
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover">
+```
 
-### 2. `src/components/Onboarding.tsx` — Copy Alignment
-- Slide 1: title → "Nights That Matter", desc → "Plan it. R@lly up. Everyone gets home."
-- Slide 2: desc → "Live tracking. Group chat. No one left behind."
-- Slide 3: desc → "Bar hops, pre-games, big nights — all coordinated."
+Add three tags before `</head>` (after line 24):
+```html
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+```
 
-### 3. `src/components/events/InviteToEventDialog.tsx` — Share Text (line 80)
-- Change `"Join my R@lly! Use code: ${inviteCode}"` → `` `You're invited to ${eventTitle} 🎉 — Tap to join the crew` ``
-- Existing try/catch + navigator.share detection already safe — no structural changes
+Theme color `#F97316` already present — no change needed.
 
-### 4. `src/components/events/RallyCompleteOverlay.tsx` — Major Update
+---
 
-**New optional props:** `eventId?`, `eventTitle?`, `inviteCode?`
+## 2. public/sw.js — Auth Route Bypass
 
-**Timer safety (Adjustment 1):**
-- `timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)` — browser-safe, no NodeJS types
-- `doneCalledRef = useRef(false)` — checked before every `onDone()` call, set `true` before invoking
-- Reset both refs when `show` becomes `false` (inside existing effect)
-- Timer callback and all CTA handlers share same guard pattern
+Insert after line 56 (after the `/assets/` and `/src/` exclusion):
+```javascript
+// Never intercept auth/OAuth routes — must always hit network
+if (url.pathname.includes('~oauth') || url.pathname.startsWith('/auth')) {
+  return;
+}
+```
 
-**Copy:** Subhead → "Everyone made it. That's the mission."
+Prevents "white screen" during login flows on mobile.
 
-**Social proof:** When `attendeeCount >= 3`, render "This crew rallies." below mission summary
+---
 
-**Growth CTAs** (below mission summary, only when `attendeeCount > 0`):
-- **"Share the Recap"** — only renders if `eventTitle` exists; uses safe share pattern:
-  ```typescript
-  if (navigator.share) {
-    try { await navigator.share({...}) } catch {}
-  } else {
-    await navigator.clipboard.writeText(...)
-    toast.success(...)
+## 3. public/manifest.json — PWA Identity & Icons
+
+- Add `"id": "/?source=pwa"` to root
+- 192px icon: keep `"purpose": "any maskable"`
+- 512px icon: change `"purpose"` to `"any"` (splash screen usage)
+
+---
+
+## 4. capacitor.config.ts — Native Config
+
+```typescript
+const config: CapacitorConfig = {
+  appId: 'app.lovable.30a08aa7cdeb4250a60c0605f836113c',
+  appName: 'R@lly',
+  webDir: 'dist',
+  server: {
+    androidScheme: 'https',
+    url: 'https://30a08aa7-cdeb-4250-a60c-0605f836113c.lovableproject.com?forceHideBadge=true',
+    cleartext: true,
   }
-  ```
-- **"Invite This Crew Again"** — only renders if `inviteCode` exists; opens `InviteToEventDialog`
-- **"Make This a Squad"** — navigates to `/squads` with toast
-
-Each CTA: clears `timerRef`, checks `doneCalledRef`, calls `onDone()` once after action.
-
-### 5. `src/components/events/RallyRecapCard.tsx` — New File
-
-Pure presentational component. Props: `eventTitle`, `eventType`, `attendeeCount`, `ddCount`.
-
-- Uses `getEventTypeEmoji` + `getEventTypeVibe` from `eventTypes.ts`
-- Static object map for vibe → gradient classes (no dynamic Tailwind interpolation):
-  ```typescript
-  const VIBE_GRADIENTS: Record<string, string> = {
-    orange: 'from-orange-500/20 to-orange-600/10',
-    purple: 'from-purple-500/20 to-purple-600/10',
-    // ... etc
-  };
-  ```
-- Renders: emoji + title, attendee/DD counts with icons, "Everyone made it home safe ✅", R@lly branding footer
-- No hooks, no queries, no state — pure props-in, JSX-out
-
-### 6. `src/pages/EventDetail.tsx` — Two Changes
-
-**Line 1061-1066:** Pass new props to `<RallyCompleteOverlay>`:
+};
 ```
-eventId={event.id}
-eventTitle={event.title}
-inviteCode={event.invite_code}
-```
-
-**Lines 410-414:** Social proof threshold `>= 5` → `>= 3`, copy:
-- If `isCreator`: "Your crew is locked in."
-- Else: "The crew's growing."
 
 ---
 
-## Stability Safeguards Confirmed
+## 5. Safe-Area CSS — Bottom Nav & Global Layout
 
-1. **Timer:** `ReturnType<typeof setTimeout>` (no NodeJS types), `doneCalledRef` prevents double-fire, cleanup idempotent, refs reset in effect
-2. **CTA guarding:** Each CTA conditionally renders based on prop existence — no assumptions
-3. **Share safety:** All `navigator.share()` calls feature-detected, try/catch wrapped, clipboard fallback with toast
-4. **Styling:** Static object map for vibe classes, no dynamic Tailwind interpolation
+**src/index.css** — Add at the end of the base layer:
+```css
+body {
+  padding-top: env(safe-area-inset-top);
+}
+```
 
-## Guardrails
-No new database tables, analytics events, hooks, global state, queries, routing changes, mutation changes, or lifecycle restructuring.
+**src/components/layout/BottomNav.tsx** — Update the nav element to respect the home indicator:
+- Change the bottom safe-area div from `h-safe-area-inset-bottom` to use `env(safe-area-inset-bottom)` via inline style or a utility class
+- Add `pb-[env(safe-area-inset-bottom)]` to the nav container so buttons sit above the iPhone home bar
+
+---
+
+## Summary
+
+| File | Change |
+|---|---|
+| `index.html` | Viewport update + 3 mobile meta tags |
+| `public/sw.js` | Auth route bypass |
+| `public/manifest.json` | Add `id`, fix 512px icon purpose |
+| `capacitor.config.ts` | Update appId, add hot-reload server |
+| `src/index.css` | Safe-area top padding |
+| `src/components/layout/BottomNav.tsx` | Safe-area bottom padding |
+
+6 changes across 5 files (BottomNav + index.css for safe-area). No new dependencies. No backend changes.
+
+**Post-implementation reminder:** Once you upload a 1024x1024 source icon and splash screen to the `assets/` folder, run `npx @capacitor/assets generate` to produce all required native icon and splash sizes.
 
