@@ -77,7 +77,7 @@ export function PolicyAcceptanceDialog({ open, onOpenChange, onAccept }: PolicyA
           </div>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 pr-4 max-h-[50vh]">
+        <ScrollArea className="flex-1 pr-4 max-h-[45vh] overflow-y-auto">
           <div className="space-y-2">
             {policySections.map((section) => {
               const ContentComponent = section.content;
