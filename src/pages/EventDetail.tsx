@@ -273,21 +273,39 @@ export default function EventDetail() {
 
   const handleJoin = async () => {
     if (!profile) return;
+    // If event has a cover charge, show payment gate first
+    if ((event as any)?.cover_charge > 0 && !showPaymentGate) {
+      setShowPaymentGate(true);
+      return;
+    }
     try {
       const result = await joinEvent.mutateAsync({ eventId: event.id, profileId: profile.id });
       
-      // Check if successfully joined (attending status) - show safety choice modal
+      // For paid events, default to signal-only mode (privacy)
+      if ((event as any)?.cover_charge > 0) {
+        await supabase
+          .from('event_attendees')
+          .update({ share_location: false } as any)
+          .eq('event_id', event.id)
+          .eq('profile_id', profile.id);
+      }
+      
+      // Check if successfully joined (attending status) - show transport selector then safety choice
       if (result?.status === 'attending') {
         toast.success("You're in! 🎉");
-        // Show safety choice modal for new attendees (blocking flow)
-        setShowSafetyChoice(true);
+        setShowTransportSelector(true);
       } else if (result?.status === 'pending') {
-        // Pending approval - don't show safety modal yet
         toast.success('Request sent! Waiting for host approval...');
       }
     } catch (error: any) {
       toast.error(error.message || 'Failed to join event');
     }
+  };
+
+  const handlePaymentSuccess = () => {
+    setShowPaymentGate(false);
+    // After payment, proceed with join
+    handleJoin();
   };
 
   // Handler extraction: startRally (variable assignment only)
