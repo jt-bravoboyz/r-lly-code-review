@@ -239,7 +239,7 @@ export default function Index() {
             <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <History className="h-5 w-5 text-muted-foreground" />
-              <h3 className="text-xl font-bold text-foreground font-montserrat">Past R@llies</h3>
+              <h3 className="text-xl font-bold font-montserrat animate-text-shimmer bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">Past R@llies</h3>
             </div>
             </div>
 
