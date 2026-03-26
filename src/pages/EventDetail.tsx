@@ -1085,6 +1085,42 @@ export default function EventDetail() {
         onComplete={() => setShowLocationSharingModal(false)}
       />
 
+      {/* Transport Mode Selector - shown after joining */}
+      {profile && (
+        <TransportModeSelector
+          open={showTransportSelector}
+          onOpenChange={setShowTransportSelector}
+          eventId={event.id}
+          profileId={profile.id}
+          onComplete={() => {
+            setShowTransportSelector(false);
+            setShowSafetyChoice(true);
+          }}
+        />
+      )}
+
+      {/* Payment Gate Dialog - shown for paid events before join */}
+      <PaymentGateDialog
+        open={showPaymentGate}
+        onOpenChange={setShowPaymentGate}
+        amount={Number((event as any)?.cover_charge) || 0}
+        eventTitle={event.title}
+        onPaymentSuccess={handlePaymentSuccess}
+      />
+
+      {/* Rideshare Drawer - departure flow */}
+      {profile && (
+        <RideshareDrawer
+          open={showRideshareDrawer}
+          onOpenChange={setShowRideshareDrawer}
+          eventId={event.id}
+          profileId={profile.id}
+          destinationLat={profile.home_lat ?? undefined}
+          destinationLng={profile.home_lng ?? undefined}
+          destinationName={profile.home_address ?? undefined}
+        />
+      )}
+
       {/* Rally Complete Celebration Overlay */}
       <RallyCompleteOverlay
         show={showRallyComplete}
