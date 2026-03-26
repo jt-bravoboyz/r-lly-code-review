@@ -1,47 +1,35 @@
 
 
-# Fix Squad Security Findings
+# Fix: Update @capacitor/cli to Resolve tar Vulnerabilities
 
-Two database migrations to restrict unauthenticated access.
+## Context
 
-## Migration 1: Fix `squad_invites` SELECT policy
+`@capacitor/cli` at `^8.0.0` pulls in `tar` as a transitive dependency, which has two high-severity advisories:
 
-Drop the current `"Anyone can view pending invites"` policy and replace it with one scoped to `{authenticated}` that also restricts visibility to squad members/owners or the invite creator:
+1. **GHSA-8qq5-rm4j-mr97** — Arbitrary file overwrite via insufficient path sanitization
+2. **GHSA-r6q2-hw4h-h46w** — Race condition via Unicode ligature collisions on macOS APFS
 
-```sql
-DROP POLICY "Anyone can view pending invites" ON public.squad_invites;
+These affect the CLI tool used during `npx cap sync` / `npx cap add` — not the runtime app — but should still be patched.
 
-CREATE POLICY "Authenticated users can view pending invites"
-ON public.squad_invites
-FOR SELECT
-TO authenticated
-USING (
-  status = 'pending'
-  AND expires_at > now()
-);
+## Plan
+
+### 1. Update `package.json`
+
+Bump `@capacitor/cli` (and sibling packages for consistency) to latest 8.x:
+
+```json
+"@capacitor/android": "^8.0.1",
+"@capacitor/cli": "^8.0.1",
+"@capacitor/core": "^8.0.1"
 ```
 
-This prevents unauthenticated users from harvesting phone numbers while preserving the join flow (JoinSquad page already requires auth).
+The patched `tar` dependency is resolved in newer Capacitor CLI releases.
 
-## Migration 2: Fix `squads` SELECT invite policy
+### 2. No code changes required
 
-Drop and recreate scoped to `authenticated`:
+This is a dev-dependency version bump only. No application logic, configuration, or runtime behavior changes.
 
-```sql
-DROP POLICY "Anyone can view squads via valid invite" ON public.squads;
+---
 
-CREATE POLICY "Authenticated users can view squads via valid invite"
-ON public.squads
-FOR SELECT
-TO authenticated
-USING (
-  public.is_valid_squad_invite(id)
-);
-```
-
-## Impact
-
-- **No code changes needed** — JoinSquad page already redirects unauthenticated users to login
-- Both policies simply add `TO authenticated`, closing the unauthenticated access gap
-- All existing squad invite/join flows remain functional
+**Risk:** None — `@capacitor/cli` is a build/dev tool, not bundled into the app. Updating it does not affect runtime behavior.
 
