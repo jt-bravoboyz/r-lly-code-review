@@ -874,10 +874,10 @@
 
 @keyframes pulse-glow {
   0%, 100% { 
-    box-shadow: 0 0 20px hsl(27 100% 55% / 0.4), 0 0 40px hsl(27 100% 55% / 0.2);
+    box-shadow: 0 0 20px hsl(22 90% 52% / 0.4), 0 0 40px hsl(22 90% 52% / 0.2);
   }
   50% { 
-    box-shadow: 0 0 40px hsl(27 100% 55% / 0.6), 0 0 80px hsl(27 100% 55% / 0.3);
+    box-shadow: 0 0 40px hsl(22 90% 52% / 0.6), 0 0 80px hsl(22 90% 52% / 0.3);
   }
 }
 
