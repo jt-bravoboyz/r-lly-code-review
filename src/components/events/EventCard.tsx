@@ -43,7 +43,7 @@ export const EventCard = forwardRef<HTMLAnchorElement, EventCardProps>(
     
     return (
       <Link ref={ref} to={`/events/${event.id}`}>
-        <Card className="relative bg-card/50 backdrop-blur-xl border border-white/[0.08] shadow-[0_8px_32px_hsl(0_0%_0%/0.3)] rounded-2xl overflow-hidden group hover:shadow-[0_12px_40px_hsl(0_0%_0%/0.4)] hover:border-white/[0.12] transition-all duration-300 hover:-translate-y-1 ripple-container" style={{ WebkitBackdropFilter: 'blur(20px)' }}>
+        <Card className="relative bg-card/80 dark:bg-card/50 backdrop-blur-xl border border-border/50 dark:border-white/[0.08] shadow-[0_4px_20px_hsl(0_0%_0%/0.06)] dark:shadow-[0_8px_32px_hsl(0_0%_0%/0.3)] rounded-2xl overflow-hidden group hover:shadow-[0_8px_32px_hsl(0_0%_0%/0.1)] dark:hover:shadow-[0_12px_40px_hsl(0_0%_0%/0.4)] hover:border-primary/20 dark:hover:border-white/[0.12] transition-all duration-300 hover:-translate-y-1 ripple-container" style={{ WebkitBackdropFilter: 'blur(20px)' }}>
           {/* Shimmer overlay on hover */}
           <div className="shimmer-overlay rounded-2xl" />
           
