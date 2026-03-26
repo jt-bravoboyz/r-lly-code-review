@@ -92,21 +92,6 @@ export default function Notifications() {
         </div>
       </header>
 
-      {/* System Status Bar */}
-      <div className="sticky top-[calc(env(safe-area-inset-top,1.5rem)+3.5rem)] z-30 backdrop-blur-xl border-b border-white/10" style={{ WebkitBackdropFilter: 'blur(20px)' }}>
-        <div className="flex items-center justify-between px-4 py-2 bg-card/60">
-          <div className="flex items-center gap-2">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-command-pulse absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500" />
-            </span>
-            <span className="text-xs font-semibold text-foreground/80 tracking-wide">R@lly System Active</span>
-          </div>
-          <span className="text-xs text-muted-foreground">
-            Last sync: {syncAgo === 'less than a minute' ? 'just now' : `${syncAgo} ago`}
-          </span>
-        </div>
-      </div>
 
       <main className="relative z-10 px-4 py-6 space-y-4">
         {/* Header with count */}
