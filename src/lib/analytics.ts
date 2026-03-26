@@ -2,7 +2,11 @@ import { supabase } from '@/integrations/supabase/client';
 import type { Json } from '@/integrations/supabase/types';
 
 export function trackEvent(name: string, metadata?: Record<string, unknown>) {
-  if (!import.meta.env.PROD) return;
+  const host = window.location.hostname;
+  const isAllowed = import.meta.env.PROD
+    || host.endsWith('.lovable.app')
+    || host.endsWith('.lovableproject.com');
+  if (!isAllowed) return;
 
   try {
     const sessionPromise = supabase.auth.getSession();
