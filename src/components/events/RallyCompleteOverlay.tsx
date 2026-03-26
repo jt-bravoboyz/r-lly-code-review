@@ -63,10 +63,14 @@ export function RallyCompleteOverlay({
     confettiRef.current();
     setTimeout(() => confettiRef.current(), 600);
 
-    // Auto-navigate after 5 seconds
+    // Show feedback modal after 3 seconds, then auto-dismiss after 8 total
     timerRef.current = setTimeout(() => {
+      if (eventId) setShowFeedback(true);
+    }, 3000);
+
+    const autoClose = setTimeout(() => {
       callDone();
-    }, 5000);
+    }, 8000);
 
     return () => {
       if (timerRef.current) {
