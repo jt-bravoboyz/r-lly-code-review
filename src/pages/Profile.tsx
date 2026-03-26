@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Settings, LogOut, MapPin, Award, Camera, Users, Home, Shield, Pencil, Save, X, FileText, ChevronRight, Navigation, Phone } from 'lucide-react';
+import { Settings, LogOut, MapPin, Award, Camera, Users, Home, Shield, Pencil, Save, X, FileText, ChevronRight, Navigation, Phone, CreditCard } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useLocation } from '@/hooks/useLocation';
@@ -484,6 +484,19 @@ export default function Profile() {
             <ChevronRight className="h-5 w-5 text-primary/60" />
           </button>
         )}
+
+        {/* Payments Placeholder */}
+        <Card className="card-rally">
+          <CardContent className="p-4 flex items-center gap-4">
+            <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+              <CreditCard className="h-5 w-5 text-muted-foreground" />
+            </div>
+            <div>
+              <p className="font-medium">Payments</p>
+              <p className="text-xs text-muted-foreground">Founder 25: Coming Soon</p>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Settings */}
         <Card className="card-rally">

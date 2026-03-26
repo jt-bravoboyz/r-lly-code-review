@@ -12,11 +12,12 @@ import { LiveActivityFeed } from '@/components/admin/LiveActivityFeed';
 import { FeatureFlags } from '@/components/admin/FeatureFlags';
 import { ErrorLogFeed } from '@/components/admin/ErrorLogFeed';
 import { OnboardingDropoff } from '@/components/admin/OnboardingDropoff';
+import { CommercialDashboard } from '@/components/admin/CommercialDashboard';
 import { Shield, Loader2 } from 'lucide-react';
 import { Navigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
-type ViewMode = 'partner' | 'technical';
+type ViewMode = 'partner' | 'technical' | 'commercial';
 
 export default function AdminDashboard() {
   const { isAdmin, loading: authLoading } = useAdminAuth();
@@ -44,7 +45,7 @@ export default function AdminDashboard() {
 
           {/* Partner / Technical toggle */}
           <div className="ml-auto flex items-center gap-1 bg-muted rounded-full p-0.5">
-            {(['partner', 'technical'] as const).map(mode => (
+            {(['partner', 'technical', 'commercial'] as const).map(mode => (
               <button
                 key={mode}
                 onClick={() => setViewMode(mode)}
@@ -86,6 +87,13 @@ export default function AdminDashboard() {
               <FeedbackPanel feedback={data.feedback} profiles={data.profiles} />
             </div>
           </>
+        ) : viewMode === 'commercial' ? (
+          <CommercialDashboard
+            totalGMV={data.commercial?.totalGMV ?? 0}
+            paidEventsCount={data.commercial?.paidEventsCount ?? 0}
+            providerSplit={data.transit?.providerSplit ?? {}}
+            eventsByCity={data.commercial?.eventsByCity ?? []}
+          />
         ) : (
           <>
             {/* Technical View: System health */}

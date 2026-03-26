@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Calendar as CalendarIcon, Loader2, RotateCcw, ChevronDown } from 'lucide-react';
+import { Plus, Calendar as CalendarIcon, Loader2, RotateCcw, ChevronDown, DollarSign } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -14,6 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { useCreateEvent, useJoinEvent } from '@/hooks/useEvents';
 import { useAuth } from '@/hooks/useAuth';
 import { useUploadRallyMedia } from '@/hooks/useRallyMedia';
@@ -37,7 +39,9 @@ const eventSchema = z.object({
   location_lat: z.number().optional(),
   location_lng: z.number().optional(),
   is_barhop: z.boolean(),
-  max_attendees: z.string().optional()
+  max_attendees: z.string().optional(),
+  cover_charge: z.string().optional(),
+  split_check: z.boolean(),
 });
 
 type EventFormData = z.infer<typeof eventSchema>;
@@ -87,7 +91,9 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
       location_lat: undefined,
       location_lng: undefined,
       is_barhop: false,
-      max_attendees: ''
+      max_attendees: '',
+      cover_charge: '',
+      split_check: false,
     }
   });
 
@@ -112,8 +118,10 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
         location_lat: data.location_lat || null,
         location_lng: data.location_lng || null,
         is_barhop: data.is_barhop,
-        max_attendees: data.max_attendees ? parseInt(data.max_attendees) : null
-      });
+        max_attendees: data.max_attendees ? parseInt(data.max_attendees) : null,
+        cover_charge: data.cover_charge ? parseFloat(data.cover_charge) : 0,
+        split_check: data.split_check,
+      } as any);
 
       await joinEvent.mutateAsync({ eventId: result.id, profileId: profile.id });
 
@@ -361,6 +369,34 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
                 />
 
                 {/* Bar Hop Mode removed from creation — now available only in After R@lly */}
+
+                {/* Cover Charge */}
+                <FormField
+                  control={form.control}
+                  name="cover_charge"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-1">
+                        <DollarSign className="h-3.5 w-3.5" />
+                        Cover Charge ($)
+                      </FormLabel>
+                      <FormControl>
+                        <Input type="number" step="0.01" min="0" placeholder="0.00" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Split Check */}
+                <div className="flex items-center justify-between py-2">
+                  <Label htmlFor="split-check" className="text-sm">Split Check</Label>
+                  <Switch
+                    id="split-check"
+                    checked={form.watch('split_check')}
+                    onCheckedChange={(v) => form.setValue('split_check', v)}
+                  />
+                </div>
 
                 {/* Staged media picker — files held locally until submit */}
                 <StagedMediaPicker stagedFiles={stagedMedia} onChange={setStagedMedia} />

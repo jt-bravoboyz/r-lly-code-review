@@ -62,6 +62,9 @@ import { RallyHeroMediaCarousel } from '@/components/events/RallyHeroMediaCarous
 import { RallyCompleteOverlay } from '@/components/events/RallyCompleteOverlay';
 import { useMyRallyHomePrompt } from '@/hooks/useRallyHomePrompt';
 import { PendingJoinRequests } from '@/components/events/PendingJoinRequests';
+import { TransportModeSelector } from '@/components/events/TransportModeSelector';
+import { PaymentGateDialog } from '@/components/events/PaymentGateDialog';
+import { RideshareDrawer } from '@/components/rides/RideshareDrawer';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -108,6 +111,9 @@ export default function EventDetail() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [showRallyComplete, setShowRallyComplete] = useState(false);
+  const [showTransportSelector, setShowTransportSelector] = useState(false);
+  const [showPaymentGate, setShowPaymentGate] = useState(false);
+  const [showRideshareDrawer, setShowRideshareDrawer] = useState(false);
 
   const handleRallyCompleteDone = useCallback(() => {
     setShowRallyComplete(false);
@@ -267,21 +273,39 @@ export default function EventDetail() {
 
   const handleJoin = async () => {
     if (!profile) return;
+    // If event has a cover charge, show payment gate first
+    if ((event as any)?.cover_charge > 0 && !showPaymentGate) {
+      setShowPaymentGate(true);
+      return;
+    }
     try {
       const result = await joinEvent.mutateAsync({ eventId: event.id, profileId: profile.id });
       
-      // Check if successfully joined (attending status) - show safety choice modal
+      // For paid events, default to signal-only mode (privacy)
+      if ((event as any)?.cover_charge > 0) {
+        await supabase
+          .from('event_attendees')
+          .update({ share_location: false } as any)
+          .eq('event_id', event.id)
+          .eq('profile_id', profile.id);
+      }
+      
+      // Check if successfully joined (attending status) - show transport selector then safety choice
       if (result?.status === 'attending') {
         toast.success("You're in! 🎉");
-        // Show safety choice modal for new attendees (blocking flow)
-        setShowSafetyChoice(true);
+        setShowTransportSelector(true);
       } else if (result?.status === 'pending') {
-        // Pending approval - don't show safety modal yet
         toast.success('Request sent! Waiting for host approval...');
       }
     } catch (error: any) {
       toast.error(error.message || 'Failed to join event');
     }
+  };
+
+  const handlePaymentSuccess = () => {
+    setShowPaymentGate(false);
+    // After payment, proceed with join
+    handleJoin();
   };
 
   // Handler extraction: startRally (variable assignment only)
@@ -554,8 +578,12 @@ export default function EventDetail() {
                 onClick={handleJoin}
                 disabled={joinEvent.isPending}
               >
-                <span className="font-bold text-base font-montserrat">JOIN R@LLY</span>
-                <span className="text-xs opacity-80 font-normal">Jump in — your crew is waiting.</span>
+                <span className="font-bold text-base font-montserrat">
+                  {(event as any)?.cover_charge > 0 ? `PAY $${Number((event as any).cover_charge).toFixed(2)} & JOIN` : 'JOIN R@LLY'}
+                </span>
+                <span className="text-xs opacity-80 font-normal">
+                  {(event as any)?.cover_charge > 0 ? 'Cover charge required to enter' : "Jump in — your crew is waiting."}
+                </span>
               </Button>
             </div>
           )}
@@ -665,6 +693,7 @@ export default function EventDetail() {
               <HostSafetyDashboard 
                 eventId={event.id}
                 isAfterRally={isAfterRally}
+                onRequestRide={() => setShowRideshareDrawer(true)}
                 onCompleteRally={async () => {
                   try {
                     await completeRally.mutateAsync(event.id);
@@ -1056,6 +1085,42 @@ export default function EventDetail() {
         eventId={event.id}
         onComplete={() => setShowLocationSharingModal(false)}
       />
+
+      {/* Transport Mode Selector - shown after joining */}
+      {profile && (
+        <TransportModeSelector
+          open={showTransportSelector}
+          onOpenChange={setShowTransportSelector}
+          eventId={event.id}
+          profileId={profile.id}
+          onComplete={() => {
+            setShowTransportSelector(false);
+            setShowSafetyChoice(true);
+          }}
+        />
+      )}
+
+      {/* Payment Gate Dialog - shown for paid events before join */}
+      <PaymentGateDialog
+        open={showPaymentGate}
+        onOpenChange={setShowPaymentGate}
+        amount={Number((event as any)?.cover_charge) || 0}
+        eventTitle={event.title}
+        onPaymentSuccess={handlePaymentSuccess}
+      />
+
+      {/* Rideshare Drawer - departure flow */}
+      {profile && (
+        <RideshareDrawer
+          open={showRideshareDrawer}
+          onOpenChange={setShowRideshareDrawer}
+          eventId={event.id}
+          profileId={profile.id}
+          destinationLat={profile.home_lat ?? undefined}
+          destinationLng={profile.home_lng ?? undefined}
+          destinationName={profile.home_address ?? undefined}
+        />
+      )}
 
       {/* Rally Complete Celebration Overlay */}
       <RallyCompleteOverlay
