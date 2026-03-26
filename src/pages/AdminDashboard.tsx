@@ -12,6 +12,7 @@ import { LiveActivityFeed } from '@/components/admin/LiveActivityFeed';
 import { FeatureFlags } from '@/components/admin/FeatureFlags';
 import { ErrorLogFeed } from '@/components/admin/ErrorLogFeed';
 import { OnboardingDropoff } from '@/components/admin/OnboardingDropoff';
+import { CommercialDashboard } from '@/components/admin/CommercialDashboard';
 import { Shield, Loader2 } from 'lucide-react';
 import { Navigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
