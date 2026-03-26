@@ -1,7 +1,8 @@
+import { useState, useEffect } from 'react';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Bell, Car, MapPin, Users, CheckCircle, Clock } from 'lucide-react';
+import { Bell, Car, MapPin, Users, CheckCircle, Clock, Zap } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useNotifications, useMarkNotificationRead } from '@/hooks/useNotifications';
 import { usePendingInvites } from '@/hooks/useEventInvites';
@@ -9,6 +10,7 @@ import { Link } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { formatDistanceToNow } from 'date-fns';
 import { PendingInvites } from '@/components/events/PendingInvites';
+import { Button } from '@/components/ui/button';
 import rallyLogo from '@/assets/rally-logo.png';
 
 export default function Notifications() {
@@ -16,6 +18,13 @@ export default function Notifications() {
   const { data: notifications, isLoading } = useNotifications();
   const { data: pendingInvites } = usePendingInvites();
   const markRead = useMarkNotificationRead();
+  const [lastSync, setLastSync] = useState(new Date());
+
+  // Update "last sync" timestamp periodically
+  useEffect(() => {
+    const interval = setInterval(() => setLastSync(new Date()), 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   if (authLoading) {
     return (
@@ -53,41 +62,74 @@ export default function Notifications() {
   const unreadCount = notifications?.filter(n => !n.read).length || 0;
   const pendingInviteCount = pendingInvites?.length || 0;
   const totalUnread = unreadCount + pendingInviteCount;
+  const hasNotifications = (notifications && notifications.length > 0) || pendingInviteCount > 0;
+
+  const syncAgo = formatDistanceToNow(lastSync, { addSuffix: false });
 
   return (
-    <div className="min-h-[100dvh] pb-24 bg-background">
-      {/* Custom Header */}
-      <header className="sticky top-0 z-40 bg-white shadow-sm">
-        <div className="h-6" />
+    <div className="min-h-[100dvh] pb-24 bg-background relative overflow-hidden">
+      {/* Ambient Background Orbs */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-1/4 -right-20 w-72 h-72 rounded-full bg-primary/[0.04] blur-3xl animate-orb-float" />
+        <div className="absolute bottom-1/3 -left-16 w-56 h-56 rounded-full bg-primary/[0.03] blur-3xl animate-orb-float-reverse" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_50%,hsl(var(--background))_100%)]" />
+      </div>
+
+      {/* Header */}
+      <header className="sticky top-0 z-40 bg-primary shadow-[0_4px_30px_hsl(27,91%,53%/0.2)] backdrop-blur-xl border-b border-white/[0.12]" style={{ WebkitBackdropFilter: 'blur(20px)' }}>
+        <div style={{ height: 'env(safe-area-inset-top, 1.5rem)' }} />
         <div className="flex items-center justify-between px-4 py-3">
-          <Link to="/">
-            <img src={rallyLogo} alt="R@lly" className="h-10 w-10 object-contain" />
+          <Link to="/" className="relative">
+            <div className="absolute inset-0 rounded-full blur-md bg-white/20" />
+            <img src={rallyLogo} alt="R@lly" className="h-11 w-11 object-contain relative filter drop-shadow-lg brightness-0 invert" />
           </Link>
-          <h1 className="text-xl font-bold text-rally-dark font-montserrat">Notifications</h1>
-          <Link to="/profile">
-            <Avatar className="h-10 w-10 ring-2 ring-primary/30 hover:ring-primary/50 transition-all">
+          <h1 className="text-xl font-bold text-white font-montserrat drop-shadow-sm flex items-center gap-2">
+            <Bell className="h-5 w-5" strokeWidth={2.5} />
+            Command
+          </h1>
+          <Link to="/profile" className="relative group">
+            <div className="absolute inset-0 rounded-full blur-md scale-110 bg-white/20" />
+            <Avatar className="h-11 w-11 ring-2 ring-white/40 hover:ring-white transition-all relative shadow-lg">
               <AvatarImage src={profile?.avatar_url || undefined} />
-              <AvatarFallback className="bg-primary text-primary-foreground text-sm font-bold">
+              <AvatarFallback className="bg-white/10 text-white backdrop-blur-sm text-sm font-bold">
                 {profile?.display_name?.charAt(0)?.toUpperCase() || '?'}
               </AvatarFallback>
             </Avatar>
           </Link>
         </div>
       </header>
-      
-      <main className="px-4 py-6 space-y-4">
-        {/* Header with count */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-bold text-rally-dark font-montserrat">Activity</h2>
-            <p className="text-sm text-muted-foreground">Stay updated on your squad</p>
+
+      {/* System Status Bar */}
+      <div className="sticky top-[calc(env(safe-area-inset-top,1.5rem)+3.5rem)] z-30 backdrop-blur-xl border-b border-white/10" style={{ WebkitBackdropFilter: 'blur(20px)' }}>
+        <div className="flex items-center justify-between px-4 py-2 bg-card/60">
+          <div className="flex items-center gap-2">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-command-pulse absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500" />
+            </span>
+            <span className="text-xs font-semibold text-foreground/80 tracking-wide">R@lly System Active</span>
           </div>
-          {totalUnread > 0 && (
-            <Badge className="bg-primary text-white">
-              {totalUnread} new
-            </Badge>
-          )}
+          <span className="text-xs text-muted-foreground">
+            Last sync: {syncAgo === 'less than a minute' ? 'just now' : `${syncAgo} ago`}
+          </span>
         </div>
+      </div>
+
+      <main className="relative z-10 px-4 py-6 space-y-4">
+        {/* Header with count */}
+        {hasNotifications && (
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-bold text-foreground font-montserrat">Activity</h2>
+              <p className="text-sm text-muted-foreground">Stay updated on your squad</p>
+            </div>
+            {totalUnread > 0 && (
+              <Badge className="bg-primary text-white shadow-[0_0_12px_hsl(27_91%_53%/0.3)]">
+                {totalUnread} new
+              </Badge>
+            )}
+          </div>
+        )}
 
         {/* Pending Rally Invites */}
         <PendingInvites />
@@ -95,34 +137,34 @@ export default function Notifications() {
         {isLoading ? (
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
-              <Card key={i} className="h-20 animate-pulse bg-muted border-0 rounded-xl" />
+              <Card key={i} className="h-20 animate-pulse bg-card/40 border-white/5 rounded-xl backdrop-blur-xl" />
             ))}
           </div>
         ) : notifications && notifications.length > 0 ? (
           <div className="space-y-3">
             {notifications.map((notification) => (
-              <Card 
-                key={notification.id} 
-                className={`rounded-xl transition-all cursor-pointer ${
-                  notification.read 
-                    ? 'bg-white' 
-                    : 'bg-primary/5 border-primary/20'
+              <Card
+                key={notification.id}
+                className={`rounded-xl transition-all duration-300 cursor-pointer backdrop-blur-xl ${
+                  notification.read
+                    ? 'bg-card/60 border-white/10'
+                    : 'bg-card/70 border-primary/15 shadow-[0_0_20px_hsl(27_91%_53%/0.06)]'
                 }`}
                 onClick={() => handleNotificationClick(notification.id, notification.read)}
+                style={{ WebkitBackdropFilter: 'blur(20px)' }}
               >
                 <CardContent className="p-4">
                   <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center shrink-0">
+                    <div className="w-10 h-10 rounded-full bg-muted/60 backdrop-blur-sm flex items-center justify-center shrink-0 border border-white/10">
                       {getNotificationIcon(notification.type)}
                     </div>
-                    
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
-                        <p className={`font-semibold text-sm ${notification.read ? 'text-rally-dark' : 'text-primary'}`}>
+                        <p className={`font-semibold text-sm ${notification.read ? 'text-foreground' : 'text-primary'}`}>
                           {notification.title}
                         </p>
                         {!notification.read && (
-                          <span className="w-2 h-2 rounded-full bg-primary shrink-0 mt-1.5" />
+                          <span className="w-2 h-2 rounded-full bg-primary shrink-0 mt-1.5 shadow-[0_0_6px_hsl(27_91%_53%/0.5)]" />
                         )}
                       </div>
                       {notification.body && (
@@ -133,7 +175,7 @@ export default function Notifications() {
                       <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
                         <Clock className="h-3 w-3" />
                         <span>
-                          {notification.created_at 
+                          {notification.created_at
                             ? formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })
                             : 'Just now'}
                         </span>
@@ -145,17 +187,47 @@ export default function Notifications() {
             ))}
           </div>
         ) : (
-          <Card className="bg-white shadow-sm rounded-2xl">
-            <CardContent className="p-8 text-center">
-              <div className="w-16 h-16 rounded-full bg-muted mx-auto mb-4 flex items-center justify-center">
-                <Bell className="h-8 w-8 text-muted-foreground" />
+          /* Enhanced Empty State */
+          <div className="flex flex-col items-center justify-center pt-12 pb-6 space-y-8">
+            {/* Bell icon with breathing glow */}
+            <div className="relative flex items-center justify-center">
+              <div className="absolute w-28 h-28 rounded-full animate-icon-glow-breathe" />
+              <div className="relative w-20 h-20 rounded-full bg-card/60 backdrop-blur-xl border border-white/10 flex items-center justify-center shadow-lg" style={{ WebkitBackdropFilter: 'blur(20px)' }}>
+                <Bell className="h-10 w-10 text-primary drop-shadow-sm" />
               </div>
-              <h3 className="text-lg font-bold mb-2 text-rally-dark font-montserrat">All caught up!</h3>
-              <p className="text-muted-foreground font-montserrat">
-                Notifications for rides, events, and your squad will appear here
+            </div>
+
+            {/* Headline with shimmer */}
+            <div className="text-center space-y-2">
+              <h3 className="text-2xl font-bold font-montserrat animate-text-shimmer bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">
+                You're locked in
+              </h3>
+              <p className="text-muted-foreground text-sm max-w-[260px] mx-auto">
+                We'll keep you posted when your crew makes a move
               </p>
-            </CardContent>
-          </Card>
+            </div>
+
+            {/* Smart Anticipation Card */}
+            <Card className="w-full max-w-sm animate-card-float backdrop-blur-xl bg-card/60 border-primary/10 shadow-[0_8px_32px_hsl(27_91%_53%/0.06)] hover:shadow-[0_12px_40px_hsl(27_91%_53%/0.1)] hover:-translate-y-0.5 transition-all duration-500" style={{ WebkitBackdropFilter: 'blur(20px)' }}>
+              <CardContent className="p-5 space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Zap className="h-4.5 w-4.5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">Your squad hasn't made a move yet tonight</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Be the one to get things started</p>
+                  </div>
+                </div>
+                <Link to="/events">
+                  <Button className="w-full" size="sm">
+                    <Zap className="h-4 w-4 mr-1.5" />
+                    Start a R@lly
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          </div>
         )}
       </main>
 
