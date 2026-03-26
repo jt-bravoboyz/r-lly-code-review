@@ -64,8 +64,8 @@ export default function Events() {
       {/* Living background orbs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 -right-20 w-72 h-72 bg-primary/8 rounded-full blur-[80px] animate-orb-float" />
-        <div className="absolute top-1/2 -left-20 w-96 h-96 bg-orange-500/6 rounded-full blur-[100px] animate-orb-float-reverse" />
-        <div className="absolute bottom-40 right-10 w-48 h-48 bg-amber-500/5 rounded-full blur-[60px] animate-orb-float" style={{ animationDelay: '-3s' }} />
+        <div className="absolute top-1/2 -left-20 w-96 h-96 bg-primary/6 rounded-full blur-[100px] animate-orb-float-reverse" />
+        <div className="absolute bottom-40 right-10 w-48 h-48 bg-primary/5 rounded-full blur-[60px] animate-orb-float" style={{ animationDelay: '-3s' }} />
       </div>
 
       {/* Glass header */}
