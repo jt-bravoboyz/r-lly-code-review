@@ -125,8 +125,8 @@ export const EventCard = forwardRef<HTMLAnchorElement, EventCardProps>(
 
               {/* Right: Arrow with enhanced animation */}
               <div className="shrink-0 self-center">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/5 to-orange-100/50 flex items-center justify-center group-hover:bg-gradient-to-br group-hover:from-primary group-hover:to-orange-500 transition-all duration-300">
-                  <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-white group-hover:translate-x-0.5 transition-all duration-300" />
+                <div className="w-8 h-8 rounded-full bg-white/[0.06] flex items-center justify-center group-hover:bg-primary/20 transition-all duration-300 border border-white/[0.08] group-hover:border-primary/30">
+                  <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all duration-300" />
                 </div>
               </div>
             </div>
