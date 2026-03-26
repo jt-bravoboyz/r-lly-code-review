@@ -34,6 +34,7 @@ export function RallyCompleteOverlay({
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const doneCalledRef = useRef(false);
   const navigate = useNavigate();
+  const [showFeedback, setShowFeedback] = useState(false);
 
   const callDone = () => {
     if (doneCalledRef.current) return;
