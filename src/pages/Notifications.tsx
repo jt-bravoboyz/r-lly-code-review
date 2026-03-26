@@ -188,15 +188,7 @@ export default function Notifications() {
             {/* Smart Anticipation Card */}
             <Card className="w-full max-w-sm animate-card-float backdrop-blur-xl bg-card/60 border-primary/10 shadow-[0_8px_32px_hsl(27_91%_53%/0.06)] hover:shadow-[0_12px_40px_hsl(27_91%_53%/0.1)] hover:-translate-y-0.5 transition-all duration-500" style={{ WebkitBackdropFilter: 'blur(20px)' }}>
               <CardContent className="p-5 space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Zap className="h-4.5 w-4.5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">Your squad hasn't made a move yet tonight</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">Be the one to get things started</p>
-                  </div>
-                </div>
+                <p className="text-base font-bold text-foreground text-center">Be the one to get things started</p>
                 <Link to="/events">
                   <Button className="w-full" size="sm">
                     <Zap className="h-4 w-4 mr-1.5" />
