@@ -73,6 +73,7 @@ const App = () => (
                       <Route path="/docs" element={<Documentation />} />
                       <Route path="/join-squad/:code" element={<JoinSquad />} />
                       <Route path="/invite-history" element={<InviteHistory />} />
+                      <Route path="/admin" element={<AdminDashboard />} />
                       <Route path="*" element={<NotFound />} />
                     </Routes>
                   </TutorialProvider>
