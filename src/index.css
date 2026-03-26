@@ -1785,3 +1785,35 @@
 .animate-badge-active-ring {
   animation: badge-active-ring 2.5s ease-in-out infinite;
 }
+
+/* Tier-specific animation overrides */
+@keyframes badge-heartbeat {
+  0%, 100% { transform: scale(1); }
+  15% { transform: scale(1.06); }
+  30% { transform: scale(1); }
+  45% { transform: scale(1.04); }
+  60% { transform: scale(1); }
+}
+
+@keyframes badge-cosmic-drift {
+  0% { transform: scale(1) rotate(0deg); }
+  50% { transform: scale(1.03) rotate(2deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+@keyframes badge-void-pulse {
+  0%, 100% { transform: scale(1); filter: brightness(1); }
+  50% { transform: scale(1.04); filter: brightness(1.1); }
+}
+
+.animate-badge-heartbeat {
+  animation: badge-heartbeat 2s ease-in-out infinite;
+}
+
+.animate-badge-cosmic {
+  animation: badge-cosmic-drift 5s ease-in-out infinite;
+}
+
+.animate-badge-void {
+  animation: badge-void-pulse 3s ease-in-out infinite;
+}
