@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#F47A19"/>
+  <g transform="translate(128, 96)">
+    <!-- Flag pole -->
+    <rect x="16" y="0" width="16" height="320" rx="8" fill="white"/>
+    <!-- Waving flag -->
+    <path d="M32 16 C80 0, 140 40, 200 16 C220 8, 240 4, 256 8 L256 152 C240 148, 220 152, 200 160 C140 184, 80 144, 32 160 Z" fill="white" opacity="0.95"/>
+    <!-- Flag wave detail -->
+    <path d="M32 40 C80 24, 140 64, 200 40" stroke="rgba(244,122,25,0.3)" stroke-width="4" fill="none"/>
+    <path d="M32 80 C80 64, 140 104, 200 80" stroke="rgba(244,122,25,0.2)" stroke-width="3" fill="none"/>
+  </g>
+</svg>
