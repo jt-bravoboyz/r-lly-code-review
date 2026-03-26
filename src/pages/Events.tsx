@@ -126,20 +126,19 @@ export default function Events() {
         </div>
 
         {/* Quick R@lly Card - BOLD & VIBRANT */}
-        <Card className="bg-gradient-to-r from-yellow-400 via-orange-500 to-primary border-0 shadow-xl shadow-orange-500/30 overflow-hidden group hover:shadow-2xl hover:shadow-orange-500/40 transition-all duration-300 hover:scale-[1.01] animate-fade-in" style={{ animationDelay: '0.1s' }}>
+        <Card className="bg-gradient-to-r from-amber-500/80 via-orange-500/80 to-primary/80 border border-white/[0.1] shadow-xl shadow-primary/15 overflow-hidden group hover:shadow-2xl hover:shadow-primary/25 transition-all duration-300 hover:scale-[1.01] animate-fade-in backdrop-blur-sm" style={{ animationDelay: '0.1s' }}>
           <CardContent className="p-5 flex items-center justify-between relative">
-            {/* Decorative elements */}
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 group-hover:scale-110 transition-transform" />
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 group-hover:scale-110 transition-transform blur-sm" />
             <div className="absolute bottom-0 left-10 w-20 h-20 bg-white/5 rounded-full translate-y-1/2" />
             
             <div className="relative z-10">
               <h3 className="font-extrabold text-white text-xl font-montserrat flex items-center gap-2 drop-shadow-sm">
-                <div className="w-10 h-10 rounded-xl bg-white/25 backdrop-blur-sm flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center border border-white/20">
                   <Zap className="h-6 w-6 text-white" strokeWidth={2.5} fill="currentColor" />
                 </div>
                 Quick R@lly
               </h3>
-              <p className="text-white/90 text-sm font-montserrat mt-1 ml-12">Start rallying in seconds</p>
+              <p className="text-white/80 text-sm font-montserrat mt-1 ml-12">Start rallying in seconds</p>
             </div>
             <QuickRallyDialog preselectedSquad={preselectedSquad} />
           </CardContent>
