@@ -69,7 +69,7 @@
     --sidebar-primary: 23 87% 48%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 22 100% 95%;
-    --sidebar-accent-foreground: 22 90% 40%;
+    --sidebar-accent-foreground: 23 87% 40%;
     --sidebar-border: 25 15% 85%;
     --sidebar-ring: 23 87% 48%;
   }
@@ -774,7 +774,7 @@
 
   /* Text Gradients */
   .text-gradient-rally {
-    background: linear-gradient(135deg, hsl(23 87% 48%) 0%, hsl(22 90% 58%) 100%);
+    background: linear-gradient(135deg, hsl(23 87% 48%) 0%, hsl(24 87% 52%) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
