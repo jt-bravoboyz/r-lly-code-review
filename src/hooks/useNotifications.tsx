@@ -104,6 +104,9 @@ export function useDeleteNotification() {
         queryClient.setQueryData(['notifications', profile?.id], context.previous);
       }
     },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications', profile?.id] });
+    },
   });
 }
 
