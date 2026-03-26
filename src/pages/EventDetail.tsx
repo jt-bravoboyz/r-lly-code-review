@@ -693,6 +693,7 @@ export default function EventDetail() {
               <HostSafetyDashboard 
                 eventId={event.id}
                 isAfterRally={isAfterRally}
+                onRequestRide={() => setShowRideshareDrawer(true)}
                 onCompleteRally={async () => {
                   try {
                     await completeRally.mutateAsync(event.id);
