@@ -61,7 +61,7 @@ export const LiveActivityFeed = React.forwardRef<HTMLDivElement>((_, ref) => {
   }, []);
 
   return (
-    <Card>
+    <Card ref={ref}>
       <CardHeader>
         <CardTitle className="text-lg flex items-center gap-2">
           <Activity className="h-5 w-5 text-green-500 animate-pulse" />
