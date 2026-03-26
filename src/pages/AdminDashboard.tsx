@@ -17,7 +17,7 @@ import { Shield, Loader2 } from 'lucide-react';
 import { Navigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
-type ViewMode = 'partner' | 'technical';
+type ViewMode = 'partner' | 'technical' | 'commercial';
 
 export default function AdminDashboard() {
   const { isAdmin, loading: authLoading } = useAdminAuth();
