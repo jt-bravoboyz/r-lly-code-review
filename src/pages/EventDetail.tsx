@@ -578,8 +578,12 @@ export default function EventDetail() {
                 onClick={handleJoin}
                 disabled={joinEvent.isPending}
               >
-                <span className="font-bold text-base font-montserrat">JOIN R@LLY</span>
-                <span className="text-xs opacity-80 font-normal">Jump in — your crew is waiting.</span>
+                <span className="font-bold text-base font-montserrat">
+                  {(event as any)?.cover_charge > 0 ? `PAY $${Number((event as any).cover_charge).toFixed(2)} & JOIN` : 'JOIN R@LLY'}
+                </span>
+                <span className="text-xs opacity-80 font-normal">
+                  {(event as any)?.cover_charge > 0 ? 'Cover charge required to enter' : "Jump in — your crew is waiting."}
+                </span>
               </Button>
             </div>
           )}
