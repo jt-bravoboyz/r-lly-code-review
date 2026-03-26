@@ -47,7 +47,7 @@ export default function Index() {
     return (
       <div className="min-h-[100dvh] flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-28 h-28 rounded-full bg-white/[0.06] backdrop-blur-xl flex items-center justify-center shadow-2xl ring-2 ring-white/[0.08] animate-glass-breathe">
+          <div className="w-28 h-28 rounded-full bg-muted/60 dark:bg-white/[0.06] backdrop-blur-xl flex items-center justify-center shadow-2xl ring-2 ring-border/30 dark:ring-white/[0.08] animate-glass-breathe">
             <img 
               src={rallyLogo} 
               alt="R@lly" 
