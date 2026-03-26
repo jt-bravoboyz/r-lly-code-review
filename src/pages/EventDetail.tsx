@@ -111,6 +111,9 @@ export default function EventDetail() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [showRallyComplete, setShowRallyComplete] = useState(false);
+  const [showTransportSelector, setShowTransportSelector] = useState(false);
+  const [showPaymentGate, setShowPaymentGate] = useState(false);
+  const [showRideshareDrawer, setShowRideshareDrawer] = useState(false);
 
   const handleRallyCompleteDone = useCallback(() => {
     setShowRallyComplete(false);
