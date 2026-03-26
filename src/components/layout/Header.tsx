@@ -19,7 +19,7 @@ export function Header({ title, icon, afterRallyMode }: HeaderProps) {
     <header className={`sticky top-0 z-40 ${
       afterRallyMode 
         ? 'bg-gradient-to-r from-[hsl(270,60%,15%/0.85)] via-[hsl(270,55%,18%/0.85)] to-[hsl(280,60%,16%/0.85)] shadow-[0_4px_30px_hsl(270,60%,30%/0.2)]' 
-        : 'bg-gradient-to-r from-primary/95 via-primary/90 to-primary/85 shadow-[0_4px_30px_hsl(22,90%,52%/0.2)]'
+        : 'bg-primary shadow-[0_4px_30px_hsl(22,90%,52%/0.2)]'
     } backdrop-blur-xl border-b border-white/[0.12]`} style={{ WebkitBackdropFilter: 'blur(20px)' }}>
       <div style={{ height: 'env(safe-area-inset-top, 1.5rem)' }} />
       <div className="flex items-center justify-between px-4 py-3">
