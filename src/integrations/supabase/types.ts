@@ -816,6 +816,7 @@ export type Database = {
           after_rally_location_lat: number | null
           after_rally_location_lng: number | null
           after_rally_location_name: string | null
+          cover_charge: number | null
           created_at: string | null
           creator_id: string
           description: string | null
@@ -830,6 +831,7 @@ export type Database = {
           location_lng: number | null
           location_name: string | null
           max_attendees: number | null
+          split_check: boolean | null
           start_time: string
           status: string | null
           title: string
@@ -839,6 +841,7 @@ export type Database = {
           after_rally_location_lat?: number | null
           after_rally_location_lng?: number | null
           after_rally_location_name?: string | null
+          cover_charge?: number | null
           created_at?: string | null
           creator_id: string
           description?: string | null
@@ -853,6 +856,7 @@ export type Database = {
           location_lng?: number | null
           location_name?: string | null
           max_attendees?: number | null
+          split_check?: boolean | null
           start_time: string
           status?: string | null
           title: string
@@ -862,6 +866,7 @@ export type Database = {
           after_rally_location_lat?: number | null
           after_rally_location_lng?: number | null
           after_rally_location_name?: string | null
+          cover_charge?: number | null
           created_at?: string | null
           creator_id?: string
           description?: string | null
@@ -876,6 +881,7 @@ export type Database = {
           location_lng?: number | null
           location_name?: string | null
           max_attendees?: number | null
+          split_check?: boolean | null
           start_time?: string
           status?: string | null
           title?: string
@@ -3142,6 +3148,7 @@ export type Database = {
           after_rally_location_lat: number | null
           after_rally_location_lng: number | null
           after_rally_location_name: string | null
+          cover_charge: number | null
           created_at: string | null
           creator_id: string
           description: string | null
@@ -3156,6 +3163,7 @@ export type Database = {
           location_lng: number | null
           location_name: string | null
           max_attendees: number | null
+          split_check: boolean | null
           start_time: string
           status: string | null
           title: string
