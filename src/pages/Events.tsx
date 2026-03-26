@@ -211,7 +211,7 @@ export default function Events() {
               ))}
             </div>
           ) : (
-            <Card className="glass-elevated rounded-2xl border-white/[0.08] overflow-hidden animate-fade-in" style={{ animationDelay: '0.3s' }}>
+            <Card className="glass-elevated rounded-2xl overflow-hidden animate-fade-in" style={{ animationDelay: '0.3s' }}>
               <CardContent className="p-8 text-center relative">
                 <div className="absolute top-0 left-1/2 w-32 h-32 bg-primary/5 rounded-full -translate-x-1/2 -translate-y-1/2 blur-xl" />
                 <div className="w-16 h-16 rounded-2xl bg-primary/15 mx-auto mb-4 flex items-center justify-center relative border border-primary/20">
