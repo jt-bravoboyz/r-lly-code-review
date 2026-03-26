@@ -207,8 +207,8 @@ export default function Index() {
           {eventsLoading ? (
             <div className="space-y-3">
               {[1, 2].map((i) => (
-                <Card key={i} className="h-72 bg-white/[0.04] border-white/[0.06] rounded-2xl overflow-hidden relative">
-                  <div className="absolute inset-0 -translate-x-full animate-[shimmer-slide_2s_ease-in-out_infinite] bg-gradient-to-r from-transparent via-white/[0.04] to-transparent" />
+                <Card key={i} className="h-72 bg-muted/50 dark:bg-white/[0.04] border-border/40 dark:border-white/[0.06] rounded-2xl overflow-hidden relative">
+                  <div className="absolute inset-0 -translate-x-full animate-[shimmer-slide_2s_ease-in-out_infinite] bg-gradient-to-r from-transparent via-foreground/[0.03] to-transparent" />
                 </Card>
               ))}
             </div>
