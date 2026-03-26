@@ -62,6 +62,9 @@ import { RallyHeroMediaCarousel } from '@/components/events/RallyHeroMediaCarous
 import { RallyCompleteOverlay } from '@/components/events/RallyCompleteOverlay';
 import { useMyRallyHomePrompt } from '@/hooks/useRallyHomePrompt';
 import { PendingJoinRequests } from '@/components/events/PendingJoinRequests';
+import { TransportModeSelector } from '@/components/events/TransportModeSelector';
+import { PaymentGateDialog } from '@/components/events/PaymentGateDialog';
+import { RideshareDrawer } from '@/components/rides/RideshareDrawer';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
