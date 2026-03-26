@@ -16,6 +16,7 @@ interface HostSafetyDashboardProps {
   eventId: string;
   isAfterRally?: boolean;
   onCompleteRally?: () => void;
+  onRequestRide?: () => void;
 }
 
 // Badge component for safety states with full terminology
