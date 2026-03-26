@@ -57,7 +57,7 @@ export default function Notifications() {
   const totalUnread = unreadCount + pendingInviteCount;
   const hasNotifications = (notifications && notifications.length > 0) || pendingInviteCount > 0;
 
-  const syncAgo = formatDistanceToNow(lastSync, { addSuffix: false });
+  
 
   return (
     <div className="min-h-[100dvh] pb-24 bg-background relative overflow-hidden">
