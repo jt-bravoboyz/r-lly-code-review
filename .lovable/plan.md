@@ -1,31 +1,12 @@
 
 
-# Notifications — Content Simplification
+# Anticipation Card Spacing Refinement
 
-## Changes
+## Change — `src/pages/Notifications.tsx` (line 190)
 
-### 1. Remove System Status Bar (lines 102–116)
-Delete the entire sticky status bar block (green dot, "R@lly System Active", "Last sync" text). Also remove the `lastSync`/`syncAgo` state and effect since they're no longer needed.
+Update the `CardContent` classes:
+- Change `p-5 space-y-4` → `px-5 pt-6 pb-7 space-y-6`
+- This adds more top padding (pushes headline up within card), more bottom padding (breathing room below button), and increases gap between headline and button from `1rem` to `1.5rem`
 
-### 2. Simplify Anticipation Card (lines 211–228)
-Replace the current two-line layout (icon + title + subtitle) with a single centered bold line:
-
-**"Be the one to get things started"**
-
-- Remove the Zap icon circle and the "Your squad hasn't made a move yet tonight" line
-- Make the remaining text `text-base font-bold text-foreground text-center`
-- Keep the "Start a R@lly" button directly below with proper spacing
-
-### 3. Unchanged
-- All glass effects, glow, background orbs, icon breathing animation
-- "You're locked in" section
-- Motion system, layout structure, BottomNav
-
-## Files
-
-| File | Change |
-|------|--------|
-| `src/pages/Notifications.tsx` | Remove status bar block + `lastSync`/`syncAgo` state; simplify anticipation card content |
-
-1 file, surgical content removal only.
+1 line edit. Pure spacing. No content, style, or structure changes.
 
