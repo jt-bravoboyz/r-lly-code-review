@@ -21,7 +21,7 @@ export function Header({ title, icon, afterRallyMode }: HeaderProps) {
         ? 'bg-gradient-to-r from-[hsl(270,60%,25%)] via-[hsl(270,55%,30%)] to-[hsl(280,60%,28%)] shadow-purple-500/20' 
         : 'bg-gradient-to-r from-primary via-primary to-orange-500 shadow-primary/20'
     }`}>
-      <div className="h-6" />
+      <div style={{ height: 'env(safe-area-inset-top, 1.5rem)' }} />
       <div className="flex items-center justify-between px-4 py-3">
         <Link to="/" className="relative">
           <div className={`absolute inset-0 rounded-full blur-sm ${afterRallyMode ? 'bg-purple-300/30' : 'bg-white/30'}`} />

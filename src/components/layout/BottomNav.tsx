@@ -43,7 +43,7 @@ export function BottomNav() {
             >
               <div
                 className={cn(
-                  "p-2.5 rounded-2xl transition-all duration-300 relative",
+                  "p-3 rounded-2xl transition-all duration-300 relative",
                   isActive
                     ? "bg-gradient-to-br from-primary to-orange-500 shadow-lg shadow-primary/30"
                     : "bg-transparent hover:bg-muted"

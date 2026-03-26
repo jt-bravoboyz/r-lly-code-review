@@ -45,7 +45,7 @@ export default function Index() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary via-primary to-orange-600">
+      <div className="min-h-[100dvh] flex items-center justify-center bg-gradient-to-br from-primary via-primary to-orange-600">
         <div className="flex flex-col items-center gap-4">
           <div className="w-28 h-28 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center animate-pulse shadow-2xl ring-4 ring-white/30">
             <img 
@@ -71,7 +71,7 @@ export default function Index() {
   const userInitials = userName.slice(0, 2).toUpperCase();
 
   return (
-    <div className="min-h-screen pb-28 bg-gradient-to-b from-background via-background to-secondary/30 relative overflow-hidden">
+    <div className="min-h-[100dvh] pb-28 bg-gradient-to-b from-background via-background to-secondary/30 relative overflow-hidden">
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-40 -right-20 w-60 h-60 bg-primary/5 rounded-full blur-3xl animate-pulse" />
@@ -265,7 +265,7 @@ export default function Index() {
 function LandingScreen() {
   return (
     <div 
-      className="min-h-screen flex flex-col relative overflow-hidden"
+      className="min-h-[100dvh] flex flex-col relative overflow-hidden"
       style={{ backgroundColor: "#121212" }}
     >
       {/* Radial gradient glow */}

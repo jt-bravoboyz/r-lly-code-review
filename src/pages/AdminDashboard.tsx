@@ -13,8 +13,8 @@ import { FeatureFlags } from '@/components/admin/FeatureFlags';
 import { ErrorLogFeed } from '@/components/admin/ErrorLogFeed';
 import { OnboardingDropoff } from '@/components/admin/OnboardingDropoff';
 import { CommercialDashboard } from '@/components/admin/CommercialDashboard';
-import { Shield, Loader2 } from 'lucide-react';
-import { Navigate } from 'react-router-dom';
+import { Shield, Loader2, Home } from 'lucide-react';
+import { Navigate, Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
 type ViewMode = 'partner' | 'technical' | 'commercial';
@@ -26,7 +26,7 @@ export default function AdminDashboard() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-[100dvh] flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
@@ -37,11 +37,16 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-[100dvh] bg-background">
       <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="container flex items-center gap-3 py-4">
           <Shield className="h-6 w-6 text-primary" />
           <h1 className="text-xl font-bold font-montserrat">R@lly Admin</h1>
+
+          <Link to="/" className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 transition-colors min-h-[44px]">
+            <Home className="h-4 w-4" />
+            <span className="hidden sm:inline">Return to App</span>
+          </Link>
 
           {/* Partner / Technical toggle */}
           <div className="ml-auto flex items-center gap-1 bg-muted rounded-full p-0.5">

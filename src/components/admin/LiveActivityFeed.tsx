@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { Activity, Calendar, Users, Zap, ShieldCheck, PartyPopper } from 'lucide-react';
@@ -30,7 +30,7 @@ const EVENT_LABELS: Record<string, string> = {
   recap_shared: 'Shared recap',
 };
 
-export function LiveActivityFeed() {
+export const LiveActivityFeed = React.forwardRef<HTMLDivElement>((_, ref) => {
   const [items, setItems] = useState<ActivityItem[]>([]);
 
   useEffect(() => {
@@ -61,7 +61,7 @@ export function LiveActivityFeed() {
   }, []);
 
   return (
-    <Card>
+    <Card ref={ref}>
       <CardHeader>
         <CardTitle className="text-lg flex items-center gap-2">
           <Activity className="h-5 w-5 text-green-500 animate-pulse" />
@@ -91,4 +91,5 @@ export function LiveActivityFeed() {
       </CardContent>
     </Card>
   );
-}
+});
+LiveActivityFeed.displayName = 'LiveActivityFeed';

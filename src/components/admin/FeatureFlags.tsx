@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { supabase } from '@/integrations/supabase/client';
@@ -11,7 +11,7 @@ interface Flag {
   description: string | null;
 }
 
-export function FeatureFlags() {
+export const FeatureFlags = React.forwardRef<HTMLDivElement>((_, ref) => {
   const [flags, setFlags] = useState<Flag[]>([]);
 
   useEffect(() => {
@@ -39,7 +39,7 @@ export function FeatureFlags() {
   };
 
   return (
-    <Card>
+    <Card ref={ref}>
       <CardHeader>
         <CardTitle className="text-lg flex items-center gap-2">
           <Settings className="h-5 w-5" />
@@ -66,4 +66,5 @@ export function FeatureFlags() {
       </CardContent>
     </Card>
   );
-}
+});
+FeatureFlags.displayName = 'FeatureFlags';
