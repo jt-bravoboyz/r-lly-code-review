@@ -39,7 +39,7 @@ export const FeatureFlags = React.forwardRef<HTMLDivElement>((_, ref) => {
   };
 
   return (
-    <Card>
+    <Card ref={ref}>
       <CardHeader>
         <CardTitle className="text-lg flex items-center gap-2">
           <Settings className="h-5 w-5" />
