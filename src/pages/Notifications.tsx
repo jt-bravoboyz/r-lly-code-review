@@ -18,13 +18,6 @@ export default function Notifications() {
   const { data: notifications, isLoading } = useNotifications();
   const { data: pendingInvites } = usePendingInvites();
   const markRead = useMarkNotificationRead();
-  const [lastSync, setLastSync] = useState(new Date());
-
-  // Update "last sync" timestamp periodically
-  useEffect(() => {
-    const interval = setInterval(() => setLastSync(new Date()), 30000);
-    return () => clearInterval(interval);
-  }, []);
 
   if (authLoading) {
     return (
