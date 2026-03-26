@@ -187,7 +187,7 @@ export default function Notifications() {
 
             {/* Smart Anticipation Card */}
             <Card className="w-full max-w-sm animate-card-float backdrop-blur-xl bg-card/60 border-primary/10 shadow-[0_8px_32px_hsl(27_91%_53%/0.06)] hover:shadow-[0_12px_40px_hsl(27_91%_53%/0.1)] hover:-translate-y-0.5 transition-all duration-500" style={{ WebkitBackdropFilter: 'blur(20px)' }}>
-              <CardContent className="px-5 pt-5 pb-7 space-y-6">
+              <CardContent className="px-5 pt-6 pb-7 space-y-6">
                 <p className="text-base font-bold text-foreground text-center">Be the one to get things started</p>
                 <Link to="/events">
                   <Button className="w-full" size="sm">
