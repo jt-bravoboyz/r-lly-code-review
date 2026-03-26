@@ -70,6 +70,7 @@ export default function Profile() {
   const { user, profile, loading, signOut, refreshProfile } = useAuth();
   const { toggleLocationSharing } = useLocation();
   const navigate = useNavigate();
+  const { isAdmin } = useAdminAuth();
   
   // Badge system hooks
   const { state: badgeState, currentTier, nextTier, progress } = useBadgeState();
