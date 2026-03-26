@@ -53,12 +53,12 @@ export function useAdminAnalytics(filterAdminData = false) {
       // Fetch real event data (paginated)
       const { data: rallyEvents } = await supabase
         .from('events')
-        .select('id, created_at, status, creator_id')
+        .select('id, created_at, status, creator_id, cover_charge, location_name')
         .range(0, 9999);
 
       const { data: rawAttendees } = await supabase
         .from('event_attendees')
-        .select('id, event_id, profile_id, arrived_safely, is_dd, going_home_at, not_participating_rally_home_confirmed, status')
+        .select('id, event_id, profile_id, arrived_safely, is_dd, going_home_at, not_participating_rally_home_confirmed, status, arrival_transport_mode, departure_transport_mode, departure_provider')
         .range(0, 9999);
 
       const { data: feedback } = await supabase
