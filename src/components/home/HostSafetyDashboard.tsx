@@ -143,6 +143,33 @@ export function HostSafetyDashboard({
         <p className="text-xs text-muted-foreground mt-1">
           {arrivedSafely.length} of {attendees.length} confirmed safe
         </p>
+
+        {/* Arrival Transport Mode Summary */}
+        {(() => {
+          const modeCounts: Record<string, number> = {};
+          attendees.forEach(a => {
+            const mode = (a as any).arrival_transport_mode;
+            if (mode) modeCounts[mode] = (modeCounts[mode] || 0) + 1;
+          });
+          const icons: Record<string, React.ReactNode> = {
+            dd: <Car className="h-3 w-3" />,
+            rideshare: <Navigation className="h-3 w-3" />,
+            driving: <Car className="h-3 w-3" />,
+            walking: <Footprints className="h-3 w-3" />,
+            public_transit: <Train className="h-3 w-3" />,
+          };
+          const entries = Object.entries(modeCounts);
+          if (entries.length === 0) return null;
+          return (
+            <div className="flex flex-wrap gap-2 mt-2">
+              {entries.map(([mode, count]) => (
+                <Badge key={mode} variant="outline" className="text-[10px] gap-1">
+                  {icons[mode] || null} {count}
+                </Badge>
+              ))}
+            </div>
+          );
+        })()}
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Summary Stats */}
