@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useConfetti } from '@/hooks/useConfetti';
 import { PartyPopper, Users, Car, ShieldCheck, Share2, UserPlus, UsersRound } from 'lucide-react';
+import { RallyFeedbackModal } from '@/components/events/RallyFeedbackModal';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { InviteToEventDialog } from '@/components/events/InviteToEventDialog';
