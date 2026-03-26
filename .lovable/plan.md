@@ -1,38 +1,39 @@
 
 
-# Fix Swipe-to-Dismiss Persistence
+# Sync App Icon & Splash Screen to Brand Orange (#F47A19)
 
-## Root Cause
-The `notifications` table has RLS policies for SELECT, INSERT, and UPDATE — but **no DELETE policy**. The `supabase.from('notifications').delete()` call silently returns no error but deletes nothing. The optimistic cache removal works instantly, but on tab switch the query refetches from the database where the record still exists.
+## Current State
+Three different orange values are used across installation metadata:
+- `manifest.json`: `#FF6B35` (old brand orange)
+- `index.html` theme-color: `#F97316` (Tailwind orange-500)
+- In-app CSS token: `hsl(27 91% 53%)` which equals `#F47A19`
 
-## Fix
+All three need to unify to `#F47A19`.
 
-### Database Migration
-Add a DELETE RLS policy so users can delete their own notifications:
+## Changes
 
-```sql
-CREATE POLICY "Users can delete own notifications"
-ON public.notifications FOR DELETE
-USING (
-  profile_id IN (SELECT id FROM public.profiles WHERE user_id = auth.uid())
-);
-```
+### 1. `public/manifest.json` (lines 8-9)
+- `background_color`: `#FF6B35` → `#F47A19`
+- `theme_color`: `#FF6B35` → `#F47A19`
 
-### Code Change — `src/hooks/useNotifications.tsx`
-Add `onSettled` to the `useDeleteNotification` mutation to invalidate the query cache after the mutation completes (success or failure). This ensures the cache stays in sync even if something goes wrong:
+### 2. `index.html` (line 24)
+- `theme-color` meta: `#F97316` → `#F47A19`
 
-```typescript
-onSettled: () => {
-  queryClient.invalidateQueries({ queryKey: ['notifications', profile?.id] });
-},
-```
+This single meta tag controls Android Chrome's address bar color, so it also resolves the Android nav bar requirement.
+
+### 3. Logo Assets
+The icon PNGs (`rally-icon-192.png`, `rally-icon-1024.png`) were generated with the old orange. These are raster files that cannot be color-corrected in code — they would need to be regenerated. I'll flag this for you but cannot recolor PNGs automatically. If the difference is noticeable, you'd re-export the icon with the correct `#F47A19` background and re-upload.
+
+## What Does NOT Change
+- `apple-mobile-web-app-status-bar-style` stays `black-translucent` (this is correct for notched iPhones — it makes the status bar transparent over your app content)
+- Layout, components, functionality
 
 ## Files
 
 | File | Change |
 |------|--------|
-| New migration | Add DELETE RLS policy for notifications |
-| `src/hooks/useNotifications.tsx` | Add `onSettled` invalidation to delete mutation |
+| `public/manifest.json` | Update `background_color` and `theme_color` to `#F47A19` |
+| `index.html` | Update `theme-color` meta to `#F47A19` |
 
-2 changes. The RLS policy is the critical fix; the `onSettled` is a safety net.
+2 files, 3 line edits. Pure metadata alignment.
 
