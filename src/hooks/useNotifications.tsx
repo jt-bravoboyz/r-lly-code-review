@@ -78,6 +78,35 @@ export function useMarkNotificationRead() {
   });
 }
 
+export function useDeleteNotification() {
+  const queryClient = useQueryClient();
+  const { profile } = useAuth();
+
+  return useMutation({
+    mutationFn: async (notificationId: string) => {
+      const { error } = await supabase
+        .from('notifications')
+        .delete()
+        .eq('id', notificationId);
+      
+      if (error) throw error;
+    },
+    onMutate: async (notificationId: string) => {
+      await queryClient.cancelQueries({ queryKey: ['notifications', profile?.id] });
+      const previous = queryClient.getQueryData<Notification[]>(['notifications', profile?.id]);
+      queryClient.setQueryData(['notifications', profile?.id], (old: Notification[] | undefined) =>
+        old?.filter(n => n.id !== notificationId) ?? []
+      );
+      return { previous };
+    },
+    onError: (_err, _id, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['notifications', profile?.id], context.previous);
+      }
+    },
+  });
+}
+
 export function useUnreadCount() {
   const { data: notifications } = useNotifications();
   return notifications?.filter(n => !n.read).length || 0;

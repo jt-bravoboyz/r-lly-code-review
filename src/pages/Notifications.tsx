@@ -4,7 +4,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Bell, Car, MapPin, Users, CheckCircle, Clock, Zap } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { useNotifications, useMarkNotificationRead } from '@/hooks/useNotifications';
+import { useNotifications, useMarkNotificationRead, useDeleteNotification } from '@/hooks/useNotifications';
+import { SwipeDismissCard } from '@/components/notifications/SwipeDismissCard';
 import { usePendingInvites } from '@/hooks/useEventInvites';
 import { Link } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -18,6 +19,7 @@ export default function Notifications() {
   const { data: notifications, isLoading } = useNotifications();
   const { data: pendingInvites } = usePendingInvites();
   const markRead = useMarkNotificationRead();
+  const deleteNotification = useDeleteNotification();
 
   if (authLoading) {
     return (
@@ -121,47 +123,51 @@ export default function Notifications() {
         ) : notifications && notifications.length > 0 ? (
           <div className="space-y-3">
             {notifications.map((notification) => (
-              <Card
+              <SwipeDismissCard
                 key={notification.id}
-                className={`rounded-xl transition-all duration-300 cursor-pointer backdrop-blur-xl ${
-                  notification.read
-                    ? 'bg-card/60 border-white/10'
-                    : 'bg-card/70 border-primary/15 shadow-[0_0_20px_hsl(27_91%_53%/0.06)]'
-                }`}
-                onClick={() => handleNotificationClick(notification.id, notification.read)}
-                style={{ WebkitBackdropFilter: 'blur(20px)' }}
+                onDismiss={() => deleteNotification.mutate(notification.id)}
               >
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-full bg-muted/60 backdrop-blur-sm flex items-center justify-center shrink-0 border border-white/10">
-                      {getNotificationIcon(notification.type)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2">
-                        <p className={`font-semibold text-sm ${notification.read ? 'text-foreground' : 'text-primary'}`}>
-                          {notification.title}
-                        </p>
-                        {!notification.read && (
-                          <span className="w-2 h-2 rounded-full bg-primary shrink-0 mt-1.5 shadow-[0_0_6px_hsl(27_91%_53%/0.5)]" />
+                <Card
+                  className={`rounded-xl transition-all duration-300 cursor-pointer backdrop-blur-xl ${
+                    notification.read
+                      ? 'bg-card/60 border-white/10'
+                      : 'bg-card/70 border-primary/15 shadow-[0_0_20px_hsl(27_91%_53%/0.06)]'
+                  }`}
+                  onClick={() => handleNotificationClick(notification.id, notification.read)}
+                  style={{ WebkitBackdropFilter: 'blur(20px)' }}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-full bg-muted/60 backdrop-blur-sm flex items-center justify-center shrink-0 border border-white/10">
+                        {getNotificationIcon(notification.type)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2">
+                          <p className={`font-semibold text-sm ${notification.read ? 'text-foreground' : 'text-primary'}`}>
+                            {notification.title}
+                          </p>
+                          {!notification.read && (
+                            <span className="w-2 h-2 rounded-full bg-primary shrink-0 mt-1.5 shadow-[0_0_6px_hsl(27_91%_53%/0.5)]" />
+                          )}
+                        </div>
+                        {notification.body && (
+                          <p className="text-sm text-muted-foreground mt-0.5 line-clamp-2">
+                            {notification.body}
+                          </p>
                         )}
-                      </div>
-                      {notification.body && (
-                        <p className="text-sm text-muted-foreground mt-0.5 line-clamp-2">
-                          {notification.body}
-                        </p>
-                      )}
-                      <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
-                        <Clock className="h-3 w-3" />
-                        <span>
-                          {notification.created_at
-                            ? formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })
-                            : 'Just now'}
-                        </span>
+                        <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
+                          <Clock className="h-3 w-3" />
+                          <span>
+                            {notification.created_at
+                              ? formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })
+                              : 'Just now'}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </SwipeDismissCard>
             ))}
           </div>
         ) : (
