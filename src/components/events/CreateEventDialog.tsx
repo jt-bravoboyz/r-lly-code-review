@@ -39,7 +39,9 @@ const eventSchema = z.object({
   location_lat: z.number().optional(),
   location_lng: z.number().optional(),
   is_barhop: z.boolean(),
-  max_attendees: z.string().optional()
+  max_attendees: z.string().optional(),
+  cover_charge: z.string().optional(),
+  split_check: z.boolean(),
 });
 
 type EventFormData = z.infer<typeof eventSchema>;
