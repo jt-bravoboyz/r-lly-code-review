@@ -145,18 +145,18 @@ export default function Events() {
         </Card>
 
         {/* Create Event Button */}
-        <Card className="bg-gradient-to-r from-primary/90 via-primary to-orange-600 border-0 shadow-lg shadow-primary/20 overflow-hidden group hover:shadow-xl transition-all duration-300 hover:scale-[1.01] animate-fade-in" style={{ animationDelay: '0.2s' }}>
+        <Card className="bg-gradient-to-r from-primary/70 via-primary/60 to-orange-600/70 border border-white/[0.1] shadow-lg shadow-primary/10 overflow-hidden group hover:shadow-xl transition-all duration-300 hover:scale-[1.01] animate-fade-in backdrop-blur-sm" style={{ animationDelay: '0.2s' }}>
           <CardContent className="p-5 flex items-center justify-between relative">
-            <div className="absolute top-0 right-20 w-24 h-24 bg-white/5 rounded-full -translate-y-1/2" />
+            <div className="absolute top-0 right-20 w-24 h-24 bg-white/5 rounded-full -translate-y-1/2 blur-sm" />
             
             <div className="relative z-10">
               <h3 className="font-bold text-white text-lg font-montserrat flex items-center gap-2">
-                <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center">
+                <div className="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center border border-white/20">
                   <Calendar className="h-5 w-5 text-white" strokeWidth={2} />
                 </div>
                 Plan a R@lly
               </h3>
-              <p className="text-white/80 text-sm font-montserrat ml-11">Schedule for later</p>
+              <p className="text-white/70 text-sm font-montserrat ml-11">Schedule for later</p>
             </div>
             <CreateEventDialog />
           </CardContent>
