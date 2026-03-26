@@ -152,11 +152,11 @@ export default function Index() {
             
             <QuickRallyDialog 
               trigger={
-                <Card className="group bg-gradient-to-br from-yellow-400 via-orange-400 to-primary shadow-lg hover:shadow-2xl hover:shadow-orange-500/30 rounded-2xl border-0 overflow-hidden cursor-pointer transition-all duration-300 hover:scale-[1.02]">
+                <Card className="group bg-gradient-to-br from-amber-500/90 via-orange-500/90 to-primary/90 shadow-xl shadow-primary/20 rounded-2xl border border-white/[0.1] overflow-hidden cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-primary/30 backdrop-blur-sm">
                   <CardContent className="p-6 flex flex-col items-center justify-center text-center gap-4 relative">
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-                    <div className="absolute bottom-0 left-0 w-16 h-16 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2" />
-                    <div className="w-14 h-14 rounded-2xl bg-white/25 backdrop-blur-sm flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg">
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-sm" />
+                    <div className="absolute bottom-0 left-0 w-16 h-16 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
+                    <div className="w-14 h-14 rounded-2xl bg-white/15 backdrop-blur-sm flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg border border-white/20">
                       <Zap className="h-8 w-8 text-white drop-shadow-lg" strokeWidth={2.5} fill="currentColor" />
                     </div>
                     <span className="font-extrabold text-base text-white font-montserrat drop-shadow-sm">Quick R@lly</span>
