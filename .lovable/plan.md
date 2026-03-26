@@ -1,39 +1,39 @@
 
 
-# Sync App Icon & Splash Screen to Brand Orange (#F47A19)
+# Brand-Accurate SVG Icon + Reference Updates
 
-## Current State
-Three different orange values are used across installation metadata:
-- `manifest.json`: `#FF6B35` (old brand orange)
-- `index.html` theme-color: `#F97316` (Tailwind orange-500)
-- In-app CSS token: `hsl(27 91% 53%)` which equals `#F47A19`
+## What gets built
 
-All three need to unify to `#F47A19`.
+### 1. New file: `public/logo.svg`
+A clean SVG app icon — rounded-rect orange background (`#F47A19`) with a white waving flag silhouette centered inside. Simplified, high-contrast, suitable for favicon and app icon use at any size.
 
-## Changes
+### 2. `index.html` updates (lines 21-22)
+- Favicon: `<link rel="icon" type="image/svg+xml" href="/logo.svg" />`
+- Apple touch icon: keep the PNG fallback (`rally-icon-192.png`) since iOS Safari does not support SVG for `apple-touch-icon`
+- OG/Twitter image tags: keep PNG (social crawlers don't support SVG)
 
-### 1. `public/manifest.json` (lines 8-9)
-- `background_color`: `#FF6B35` → `#F47A19`
-- `theme_color`: `#FF6B35` → `#F47A19`
+### 3. `public/manifest.json` updates
+Add the SVG entry to the icons array:
+```json
+{
+  "src": "/logo.svg",
+  "sizes": "any",
+  "type": "image/svg+xml",
+  "purpose": "any maskable"
+}
+```
+Existing PNG entries remain as fallbacks.
 
-### 2. `index.html` (line 24)
-- `theme-color` meta: `#F97316` → `#F47A19`
-
-This single meta tag controls Android Chrome's address bar color, so it also resolves the Android nav bar requirement.
-
-### 3. Logo Assets
-The icon PNGs (`rally-icon-192.png`, `rally-icon-1024.png`) were generated with the old orange. These are raster files that cannot be color-corrected in code — they would need to be regenerated. I'll flag this for you but cannot recolor PNGs automatically. If the difference is noticeable, you'd re-export the icon with the correct `#F47A19` background and re-upload.
-
-## What Does NOT Change
-- `apple-mobile-web-app-status-bar-style` stays `black-translucent` (this is correct for notched iPhones — it makes the status bar transparent over your app content)
-- Layout, components, functionality
+### 4. PNG generation
+Not possible in this environment — raster conversion requires external tooling. The SVG becomes the source of truth; you can run it through any SVG-to-PNG converter to regenerate the 192/512/1024 PNGs with the correct `#F47A19`.
 
 ## Files
 
 | File | Change |
 |------|--------|
-| `public/manifest.json` | Update `background_color` and `theme_color` to `#F47A19` |
-| `index.html` | Update `theme-color` meta to `#F47A19` |
+| `public/logo.svg` | New — brand icon SVG |
+| `index.html` | Update favicon link to SVG |
+| `public/manifest.json` | Add SVG icon entry |
 
-2 files, 3 line edits. Pure metadata alignment.
+3 files. Pure asset + metadata work.
 
