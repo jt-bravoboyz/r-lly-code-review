@@ -99,36 +99,27 @@ export default function JoinSquad() {
 
     setIsJoining(true);
     try {
-      // Check if already a member
-      const { data: existingMember } = await supabase
-        .from('squad_members')
-        .select('id')
-        .eq('squad_id', invite.squad_id)
-        .eq('profile_id', profile.id)
-        .maybeSingle();
+      const { data, error: joinError } = await supabase
+        .rpc('join_squad_by_invite_code', { p_invite_code: code! });
 
-      if (existingMember) {
+      if (joinError) throw joinError;
+
+      if (data?.error === 'Already a member') {
         toast.info('You are already a member of this squad!');
         navigate('/squads');
         return;
       }
 
-      // Add as member
-      const { error: joinError } = await supabase
-        .from('squad_members')
-        .insert({
-          squad_id: invite.squad_id,
-          profile_id: profile.id,
-        });
-
-      if (joinError) throw joinError;
+      if (data?.error) {
+        throw new Error(data.error);
+      }
 
       // Award points for joining a squad
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user?.id) {
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        if (authUser?.id) {
           await supabase.rpc('rly_award_points', {
-            p_user_id: user.id,
+            p_user_id: authUser.id,
             p_event_type: 'join_squad',
             p_source_id: invite.squad_id
           });
@@ -136,12 +127,6 @@ export default function JoinSquad() {
       } catch (pointsError) {
         console.error('Failed to award join_squad points:', pointsError);
       }
-
-      // Update invite status
-      await supabase
-        .from('squad_invites')
-        .update({ status: 'accepted' })
-        .eq('id', invite.id);
 
       toast.success(`Welcome to ${invite.squad.name}! 🎉`);
       navigate('/squads');
