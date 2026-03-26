@@ -126,7 +126,7 @@ export default function Events() {
         </div>
 
         {/* Quick R@lly Card - BOLD & VIBRANT */}
-        <Card className="bg-gradient-to-r from-primary/85 via-primary/80 to-primary/75 border border-white/[0.1] shadow-xl shadow-primary/15 overflow-hidden group hover:shadow-2xl hover:shadow-primary/25 transition-all duration-300 hover:scale-[1.01] animate-fade-in backdrop-blur-sm" style={{ animationDelay: '0.1s' }}>
+        <Card className="bg-gradient-to-r from-primary via-primary to-primary/95 border border-white/[0.1] shadow-xl shadow-primary/15 overflow-hidden group hover:shadow-2xl hover:shadow-primary/25 transition-all duration-300 hover:scale-[1.01] animate-fade-in backdrop-blur-sm" style={{ animationDelay: '0.1s' }}>
           <CardContent className="p-5 flex items-center justify-between relative">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 group-hover:scale-110 transition-transform blur-sm" />
             <div className="absolute bottom-0 left-10 w-20 h-20 bg-white/5 rounded-full translate-y-1/2" />
