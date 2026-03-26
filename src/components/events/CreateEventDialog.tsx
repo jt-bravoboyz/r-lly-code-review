@@ -91,7 +91,9 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
       location_lat: undefined,
       location_lng: undefined,
       is_barhop: false,
-      max_attendees: ''
+      max_attendees: '',
+      cover_charge: '',
+      split_check: false,
     }
   });
 
