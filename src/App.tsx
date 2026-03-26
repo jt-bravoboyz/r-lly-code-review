@@ -31,6 +31,7 @@ import Settings from "./pages/Settings";
 import Documentation from "./pages/Documentation";
 import NotFound from "./pages/NotFound";
 import InviteHistory from "./pages/InviteHistory";
+import AdminDashboard from "./pages/AdminDashboard";
 
 const queryClient = new QueryClient();
 
