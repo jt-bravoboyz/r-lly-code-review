@@ -104,13 +104,13 @@ export default function Events() {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <Button variant="outline" size="icon" className="rounded-full shrink-0 bg-white/80 backdrop-blur-sm border-primary/20 hover:bg-primary hover:text-white hover:border-primary transition-all" asChild>
+          <Button variant="outline" size="icon" className="rounded-xl shrink-0 bg-white/[0.06] backdrop-blur-sm border-white/[0.1] hover:bg-primary/20 hover:text-primary hover:border-primary/30 transition-all" asChild>
             <Link to="/join">
               <Link2 className="h-4 w-4" />
             </Link>
           </Button>
           <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="w-[130px] rounded-full bg-white/80 backdrop-blur-sm border-primary/20 hover:border-primary/40 transition-all">
+            <SelectTrigger className="w-[130px] rounded-xl bg-white/[0.06] backdrop-blur-sm border-white/[0.1] hover:border-white/[0.15] transition-all">
               <Filter className="h-4 w-4 mr-2 text-muted-foreground" />
               <SelectValue placeholder="Filter" />
             </SelectTrigger>
