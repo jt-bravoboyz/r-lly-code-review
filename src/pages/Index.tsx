@@ -265,7 +265,7 @@ export default function Index() {
 function LandingScreen() {
   return (
     <div 
-      className="min-h-screen flex flex-col relative overflow-hidden"
+      className="min-h-[100dvh] flex flex-col relative overflow-hidden"
       style={{ backgroundColor: "#121212" }}
     >
       {/* Radial gradient glow */}

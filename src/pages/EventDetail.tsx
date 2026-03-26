@@ -356,7 +356,7 @@ export default function EventDetail() {
   };
 
   return (
-    <div className={`min-h-screen pb-20 ${showAfterRallyTheme ? 'after-rally-mode' : ''}`}>
+    <div className={`min-h-[100dvh] pb-20 ${showAfterRallyTheme ? 'after-rally-mode' : ''}`}>
       <Header afterRallyMode={showAfterRallyTheme} />
       
       <main className="container py-6 space-y-6 relative z-10">
