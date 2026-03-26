@@ -256,7 +256,7 @@ export default function EventDetail() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen pb-20">
+      <div className="min-h-[100dvh] pb-20">
         <Header afterRallyMode={false} />
         <main className="container py-6 space-y-6">
           <Skeleton className="h-48 w-full rounded-lg" />
