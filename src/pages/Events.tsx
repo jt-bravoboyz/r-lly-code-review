@@ -211,10 +211,10 @@ export default function Events() {
               ))}
             </div>
           ) : (
-            <Card className="bg-gradient-to-br from-white to-secondary/30 shadow-lg rounded-2xl border-0 overflow-hidden animate-fade-in" style={{ animationDelay: '0.3s' }}>
+            <Card className="glass-elevated rounded-2xl border-white/[0.08] overflow-hidden animate-fade-in" style={{ animationDelay: '0.3s' }}>
               <CardContent className="p-8 text-center relative">
-                <div className="absolute top-0 left-1/2 w-32 h-32 bg-primary/5 rounded-full -translate-x-1/2 -translate-y-1/2" />
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-orange-400/20 mx-auto mb-4 flex items-center justify-center relative">
+                <div className="absolute top-0 left-1/2 w-32 h-32 bg-primary/5 rounded-full -translate-x-1/2 -translate-y-1/2 blur-xl" />
+                <div className="w-16 h-16 rounded-2xl bg-primary/15 mx-auto mb-4 flex items-center justify-center relative border border-primary/20">
                   <Zap className="h-8 w-8 text-primary" strokeWidth={2} />
                 </div>
                 <h3 className="text-lg font-bold mb-2 text-foreground font-montserrat">No upcoming R@lly</h3>
