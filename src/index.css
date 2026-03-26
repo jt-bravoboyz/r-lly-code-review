@@ -161,7 +161,7 @@
   .dark .timeline-slider-track {
     background: linear-gradient(
       to right,
-      hsl(27 95% 50%) 0%,       /* R@lly Orange */
+      hsl(22 90% 50%) 0%,       /* R@lly Orange */
       hsl(270 55% 40%) 100%     /* Purple */
     );
   }
