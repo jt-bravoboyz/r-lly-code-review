@@ -53,12 +53,12 @@ export function useAdminAnalytics(filterAdminData = false) {
       // Fetch real event data (paginated)
       const { data: rallyEvents } = await supabase
         .from('events')
-        .select('id, created_at, status, creator_id')
+        .select('id, created_at, status, creator_id, cover_charge, location_name')
         .range(0, 9999);
 
       const { data: rawAttendees } = await supabase
         .from('event_attendees')
-        .select('id, event_id, profile_id, arrived_safely, is_dd, going_home_at, not_participating_rally_home_confirmed, status')
+        .select('id, event_id, profile_id, arrived_safely, is_dd, going_home_at, not_participating_rally_home_confirmed, status, arrival_transport_mode, departure_transport_mode, departure_provider')
         .range(0, 9999);
 
       const { data: feedback } = await supabase
@@ -172,14 +172,14 @@ export function useAdminAnalytics(filterAdminData = false) {
       const founders = profiles?.filter(p => p.founding_member) || [];
 
       // Commercial metrics
-      const paidEvents = filteredRallyEvents.filter(e => (e as any).cover_charge > 0);
-      const totalGMV = paidEvents.reduce((sum, e) => sum + (Number((e as any).cover_charge) || 0), 0);
+      const paidEvents = filteredRallyEvents.filter(e => e.cover_charge && Number(e.cover_charge) > 0);
+      const totalGMV = paidEvents.reduce((sum, e) => sum + (Number(e.cover_charge) || 0), 0);
       const paidEventsCount = paidEvents.length;
 
       // Event density by city (group by location_name)
       const cityMap: Record<string, number> = {};
       filteredRallyEvents.forEach(e => {
-        const loc = (e as any).location_name;
+        const loc = e.location_name;
         if (loc) {
           cityMap[loc] = (cityMap[loc] || 0) + 1;
         }
@@ -193,9 +193,9 @@ export function useAdminAnalytics(filterAdminData = false) {
       const departureModeCounts: Record<string, number> = {};
       const providerSplit: Record<string, number> = {};
       attendees.forEach(a => {
-        const arrival = (a as any).arrival_transport_mode;
-        const departure = (a as any).departure_transport_mode;
-        const provider = (a as any).departure_provider;
+        const arrival = a.arrival_transport_mode;
+        const departure = a.departure_transport_mode;
+        const provider = a.departure_provider;
         if (arrival) arrivalModeCounts[arrival] = (arrivalModeCounts[arrival] || 0) + 1;
         if (departure) departureModeCounts[departure] = (departureModeCounts[departure] || 0) + 1;
         if (provider) providerSplit[provider] = (providerSplit[provider] || 0) + 1;
