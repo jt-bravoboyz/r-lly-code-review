@@ -2,7 +2,7 @@ import { Users, Car, ShieldCheck } from 'lucide-react';
 import { getEventTypeEmoji, getEventTypeVibe } from '@/lib/eventTypes';
 
 const VIBE_GRADIENTS: Record<string, string> = {
-  orange: 'from-orange-500/20 to-orange-600/10',
+  orange: 'from-primary/20 to-primary/10',
   purple: 'from-purple-500/20 to-purple-600/10',
   green: 'from-green-500/20 to-green-600/10',
   blue: 'from-blue-500/20 to-blue-600/10',

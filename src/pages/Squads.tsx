@@ -18,7 +18,7 @@ export default function Squads() {
 
   if (authLoading) {
     return (
-      <div className="min-h-[100dvh] flex items-center justify-center bg-gradient-to-br from-primary via-primary to-orange-600">
+      <div className="min-h-[100dvh] flex items-center justify-center bg-gradient-to-br from-primary via-primary to-primary/80">
         <div className="flex flex-col items-center gap-4">
           <div className="w-28 h-28 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center animate-pulse shadow-2xl ring-4 ring-white/30">
             <img src={rallyLogo} alt="R@lly" className="w-16 h-16 object-contain" />
@@ -42,7 +42,7 @@ export default function Squads() {
       </div>
 
       {/* Modern gradient header */}
-      <header className="sticky top-0 z-40 bg-gradient-to-r from-primary via-primary to-orange-500 shadow-lg shadow-primary/20">
+      <header className="sticky top-0 z-40 bg-gradient-to-r from-primary via-primary to-primary/90 shadow-lg shadow-primary/20">
         <div className="h-6" />
         <div className="flex items-center justify-between px-4 py-3">
           <Link to="/" className="relative">
@@ -110,7 +110,7 @@ export default function Squads() {
               <Card className="bg-gradient-to-br from-white to-secondary/30 shadow-lg rounded-2xl border-0 overflow-hidden">
                 <CardContent className="p-8 text-center relative">
                   <div className="absolute top-0 left-1/2 w-32 h-32 bg-primary/5 rounded-full -translate-x-1/2 -translate-y-1/2" />
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-orange-400/20 mx-auto mb-4 flex items-center justify-center relative">
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/15 mx-auto mb-4 flex items-center justify-center relative">
                     <Users className="h-8 w-8 text-primary" />
                   </div>
                   <h3 className="text-lg font-bold mb-2 text-foreground font-montserrat">No squads yet</h3>

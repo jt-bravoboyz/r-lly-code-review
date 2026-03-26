@@ -87,7 +87,7 @@ export function LocationSharingBanner() {
 
         {/* Header with icon */}
         <div className="px-6 pt-4 pb-2 text-center">
-          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary/20 to-orange-400/20 flex items-center justify-center mx-auto mb-4 relative">
+          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary/20 to-primary/15 flex items-center justify-center mx-auto mb-4 relative">
             <MapPin className="h-10 w-10 text-primary" />
             <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-green-500 flex items-center justify-center border-4 border-card">
               <Shield className="h-4 w-4 text-white" />
@@ -134,7 +134,7 @@ export function LocationSharingBanner() {
           <Button
             onClick={handleShareLocation}
             disabled={isEnabling}
-            className="w-full h-14 text-lg font-bold rounded-xl bg-gradient-to-r from-primary via-primary to-orange-500 hover:opacity-90 text-white shadow-lg shadow-primary/30"
+            className="w-full h-14 text-lg font-bold rounded-xl bg-gradient-to-r from-primary via-primary to-primary/85 hover:opacity-90 text-white shadow-lg shadow-primary/30"
           >
             <MapPin className="h-5 w-5 mr-2" />
             {isEnabling ? 'Enabling...' : 'Share My Location'}

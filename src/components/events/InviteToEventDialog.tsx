@@ -383,9 +383,9 @@ export function InviteToEventDialog({
             </div>
 
             {/* Invite Code Display */}
-            <div className="bg-gradient-to-br from-primary/10 via-orange-100 to-yellow-50 dark:from-primary/20 dark:via-orange-900/20 dark:to-yellow-900/10 rounded-xl p-4 border-2 border-primary/20">
+            <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-primary/[0.02] dark:from-primary/20 dark:via-primary/10 dark:to-primary/5 rounded-xl p-4 border-2 border-primary/20">
               <p className="text-xs text-center text-muted-foreground mb-2">Invite Code</p>
-              <p className="text-3xl font-bold tracking-widest font-montserrat text-center bg-gradient-to-r from-primary to-orange-500 bg-clip-text text-transparent">
+              <p className="text-3xl font-bold tracking-widest font-montserrat text-center bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
                 {inviteCode || 'N/A'}
               </p>
             </div>

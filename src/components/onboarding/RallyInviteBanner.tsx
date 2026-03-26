@@ -149,7 +149,7 @@ export function RallyInviteBanner() {
           <Button
             onClick={handleAccept}
             disabled={isResponding}
-            className="w-full h-14 text-lg font-bold rounded-xl bg-gradient-to-r from-primary via-primary to-orange-500 hover:opacity-90 text-white shadow-lg shadow-primary/30"
+            className="w-full h-14 text-lg font-bold rounded-xl bg-gradient-to-r from-primary via-primary to-primary/85 hover:opacity-90 text-white shadow-lg shadow-primary/30"
           >
             {isResponding ? 'Joining...' : "I'm In!"}
           </Button>

@@ -75,14 +75,14 @@ export default function Index() {
       {/* Living background orbs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-40 -right-20 w-72 h-72 bg-primary/10 rounded-full blur-[80px] animate-orb-float" />
-        <div className="absolute top-1/3 -left-20 w-96 h-96 bg-orange-500/8 rounded-full blur-[100px] animate-orb-float-reverse" />
-        <div className="absolute bottom-60 right-10 w-48 h-48 bg-amber-500/6 rounded-full blur-[60px] animate-orb-float" style={{ animationDelay: '-3s' }} />
+        <div className="absolute top-1/3 -left-20 w-96 h-96 bg-primary/8 rounded-full blur-[100px] animate-orb-float-reverse" />
+        <div className="absolute bottom-60 right-10 w-48 h-48 bg-primary/6 rounded-full blur-[60px] animate-orb-float" style={{ animationDelay: '-3s' }} />
       </div>
       {/* PWA Install Prompt */}
       <PWAInstallPrompt />
       
       {/* Modern gradient header */}
-      <header className="sticky top-0 z-40 bg-primary/80 backdrop-blur-xl border-b border-white/[0.08] shadow-[0_4px_30px_hsl(22,90%,52%/0.15)]" style={{ WebkitBackdropFilter: 'blur(20px)' }}>
+      <header className="sticky top-0 z-40 bg-primary/90 backdrop-blur-xl border-b border-white/[0.12] shadow-[0_4px_30px_hsl(22,90%,52%/0.15)]" style={{ WebkitBackdropFilter: 'blur(20px)' }}>
         <div style={{ height: 'env(safe-area-inset-top, 1.5rem)' }} />
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center">
@@ -152,7 +152,7 @@ export default function Index() {
             
             <QuickRallyDialog 
               trigger={
-                <Card className="group bg-gradient-to-br from-amber-500/90 via-orange-500/90 to-primary/90 shadow-xl shadow-primary/20 rounded-2xl border border-white/[0.15] overflow-hidden cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-primary/30 backdrop-blur-sm">
+                <Card className="group bg-gradient-to-br from-primary/95 via-primary/90 to-primary/80 shadow-xl shadow-primary/20 rounded-2xl border border-white/[0.15] overflow-hidden cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-primary/30 backdrop-blur-sm">
                   <CardContent className="p-6 flex flex-col items-center justify-center text-center gap-4 relative">
                     <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-sm" />
                     <div className="absolute bottom-0 left-0 w-16 h-16 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />

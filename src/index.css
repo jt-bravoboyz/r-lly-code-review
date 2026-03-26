@@ -82,19 +82,19 @@
     --card-foreground: 0 0% 95%;
     --popover: 220 20% 10%;
     --popover-foreground: 0 0% 95%;
-    --primary: 22 95% 54%;
+    --primary: 22 90% 52%;
     --primary-foreground: 0 0% 100%;
     --secondary: 220 18% 14%;
     --secondary-foreground: 0 0% 90%;
     --muted: 220 15% 16%;
     --muted-foreground: 220 10% 55%;
-    --accent: 22 95% 56%;
+    --accent: 22 90% 52%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
     --border: 220 15% 20%;
     --input: 220 15% 18%;
-    --ring: 22 95% 54%;
+    --ring: 22 90% 52%;
     --success: 152 76% 50%;
     --success-foreground: 0 0% 100%;
     --warning: 45 93% 52%;
@@ -106,12 +106,12 @@
     --glass-shadow: 0 8px 32px hsl(0 0% 0% / 0.4);
     --sidebar-background: 220 20% 8%;
     --sidebar-foreground: 0 0% 90%;
-    --sidebar-primary: 22 95% 54%;
+    --sidebar-primary: 22 90% 52%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 22 100% 12%;
     --sidebar-accent-foreground: 22 100% 70%;
     --sidebar-border: 220 15% 20%;
-    --sidebar-ring: 22 95% 54%;
+    --sidebar-ring: 22 90% 52%;
   }
 }
 
@@ -153,7 +153,7 @@
   .timeline-slider-track {
     background: linear-gradient(
       to right,
-      hsl(27 100% 55%) 0%,      /* R@lly Orange */
+      hsl(22 90% 52%) 0%,       /* R@lly Orange */
       hsl(270 60% 45%) 100%     /* Purple */
     );
   }
@@ -161,14 +161,14 @@
   .dark .timeline-slider-track {
     background: linear-gradient(
       to right,
-      hsl(27 95% 50%) 0%,       /* R@lly Orange */
+      hsl(22 90% 50%) 0%,       /* R@lly Orange */
       hsl(270 55% 40%) 100%     /* Purple */
     );
   }
 
   /* Primary button gradient - Glass-over-orange surface */
   .btn-gradient-primary {
-    background: linear-gradient(180deg, hsl(22 90% 55% / 0.85) 0%, hsl(18 92% 44% / 0.9) 100%);
+    background: linear-gradient(180deg, hsl(22 90% 52% / 0.9) 0%, hsl(22 90% 42% / 0.95) 100%);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     box-shadow:
@@ -210,7 +210,7 @@
 
   /* CTA gradient class used on primary action buttons */
   .gradient-primary {
-    background: linear-gradient(180deg, hsl(22 90% 55% / 0.85) 0%, hsl(18 92% 44% / 0.9) 100%) !important;
+    background: linear-gradient(180deg, hsl(22 90% 52% / 0.9) 0%, hsl(22 90% 42% / 0.95) 100%) !important;
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     box-shadow:
@@ -314,11 +314,11 @@
 
   /* Gradients */
   .gradient-rally {
-    background: linear-gradient(135deg, hsl(27 100% 55%) 0%, hsl(35 100% 50%) 100%);
+    background: linear-gradient(135deg, hsl(22 90% 52%) 0%, hsl(22 90% 48%) 100%);
   }
 
   .gradient-rally-intense {
-    background: linear-gradient(135deg, hsl(20 100% 50%) 0%, hsl(35 100% 55%) 50%, hsl(27 100% 60%) 100%);
+    background: linear-gradient(135deg, hsl(22 90% 46%) 0%, hsl(22 90% 52%) 50%, hsl(22 90% 56%) 100%);
   }
 
   .gradient-dark {
@@ -326,7 +326,7 @@
   }
 
   .gradient-radial {
-    background: radial-gradient(ellipse at center, hsl(27 100% 55% / 0.15) 0%, transparent 70%);
+    background: radial-gradient(ellipse at center, hsl(22 90% 52% / 0.15) 0%, transparent 70%);
   }
 
   /* After R@lly Purple Night Theme - Complete Override */
@@ -682,17 +682,17 @@
   /* Glow Effects */
   .glow-primary {
     box-shadow: 
-      0 0 20px hsl(27 100% 55% / 0.5), 
-      0 0 40px hsl(27 100% 55% / 0.3),
-      0 0 60px hsl(27 100% 55% / 0.15);
+      0 0 20px hsl(22 90% 52% / 0.5), 
+      0 0 40px hsl(22 90% 52% / 0.3),
+      0 0 60px hsl(22 90% 52% / 0.15);
   }
 
   .glow-primary-sm {
-    box-shadow: 0 0 15px hsl(27 100% 55% / 0.4);
+    box-shadow: 0 0 15px hsl(22 90% 52% / 0.4);
   }
 
   .glow-text {
-    text-shadow: 0 0 30px hsl(27 100% 55% / 0.6);
+    text-shadow: 0 0 30px hsl(22 90% 52% / 0.6);
   }
 
   /* Glass Effects - 2026 Liquid UI */
@@ -774,7 +774,7 @@
 
   /* Text Gradients */
   .text-gradient-rally {
-    background: linear-gradient(135deg, hsl(22 90% 55%) 0%, hsl(35 100% 60%) 100%);
+    background: linear-gradient(135deg, hsl(22 90% 52%) 0%, hsl(22 90% 58%) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -800,11 +800,11 @@
   .btn-rally {
     @apply bg-primary text-primary-foreground font-bold tracking-tight rounded-xl;
     @apply hover:brightness-110 active:scale-[0.98] transition-all duration-200;
-    box-shadow: 0 4px 20px hsl(27 100% 55% / 0.35);
+    box-shadow: 0 4px 20px hsl(22 90% 52% / 0.35);
   }
 
   .btn-rally:hover {
-    box-shadow: 0 6px 30px hsl(27 100% 55% / 0.5);
+    box-shadow: 0 6px 30px hsl(22 90% 52% / 0.5);
   }
 
   /* Navigation */
@@ -874,10 +874,10 @@
 
 @keyframes pulse-glow {
   0%, 100% { 
-    box-shadow: 0 0 20px hsl(27 100% 55% / 0.4), 0 0 40px hsl(27 100% 55% / 0.2);
+    box-shadow: 0 0 20px hsl(22 90% 52% / 0.4), 0 0 40px hsl(22 90% 52% / 0.2);
   }
   50% { 
-    box-shadow: 0 0 40px hsl(27 100% 55% / 0.6), 0 0 80px hsl(27 100% 55% / 0.3);
+    box-shadow: 0 0 40px hsl(22 90% 52% / 0.6), 0 0 80px hsl(22 90% 52% / 0.3);
   }
 }
 
