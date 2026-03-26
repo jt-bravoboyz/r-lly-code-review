@@ -9,7 +9,7 @@ export function useConfetti() {
       gravity: 0.8,
       decay: 0.94,
       startVelocity: 30,
-      colors: ['#F26C15', '#FFD93D', '#FF6B35', '#FF8C42', '#FFA500', '#FFCC00'],
+      colors: ['#E66210', '#FFD93D', '#FF6B35', '#FF8C42', '#FFA500', '#FFCC00'],
     };
 
     confetti({
