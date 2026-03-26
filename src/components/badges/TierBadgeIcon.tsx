@@ -320,13 +320,14 @@ export function TierBadgeIcon({
     );
   }
 
+  const tierAnim = TIER_ANIMATION[tierKey] || 'animate-badge-breathe';
+
   return (
     <div
       className={cn(
         sizeClasses[size],
         'relative flex items-center justify-center group',
-        /* Idle glow pulse */
-        'animate-badge-breathe',
+        tierAnim,
         /* Hover/focus lift */
         'transition-transform duration-300 hover:scale-105',
         className
