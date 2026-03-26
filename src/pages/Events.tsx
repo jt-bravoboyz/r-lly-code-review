@@ -104,7 +104,7 @@ export default function Events() {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <Button variant="outline" size="icon" className="rounded-xl shrink-0 bg-white/[0.06] backdrop-blur-sm border-white/[0.1] hover:bg-primary/20 hover:text-primary hover:border-primary/30 transition-all" asChild>
+          <Button variant="outline" size="icon" className="rounded-xl shrink-0 bg-background/60 dark:bg-white/[0.06] backdrop-blur-sm border-border/50 dark:border-white/[0.1] hover:bg-primary/20 hover:text-primary hover:border-primary/30 transition-all" asChild>
             <Link to="/join">
               <Link2 className="h-4 w-4" />
             </Link>
