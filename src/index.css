@@ -132,6 +132,13 @@
   .text-rally-gray { @apply text-muted-foreground; }
   .text-rally-light-gray { @apply text-muted-foreground; }
   .border-rally-gray { @apply border-border; }
+
+  /* Living background - slow ambient gradient drift */
+  body {
+    background: linear-gradient(135deg, hsl(220 20% 6%) 0%, hsl(225 22% 8%) 50%, hsl(220 18% 5%) 100%) !important;
+    background-size: 400% 400% !important;
+    animation: ambient-drift 20s ease-in-out infinite;
+  }
 }
 
 @layer utilities {
