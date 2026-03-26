@@ -1,10 +1,9 @@
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { Shield, CheckCircle2, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
   PrivacyPolicy,
@@ -38,9 +37,21 @@ export function PolicyAcceptanceDialog({ open, onOpenChange, onAccept }: PolicyA
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const [acceptedPolicies, setAcceptedPolicies] = useState(false);
   const [acknowledgedLiability, setAcknowledgedLiability] = useState(false);
+  const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const handleScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    if (el.scrollHeight - el.scrollTop <= el.clientHeight + 20) {
+      setHasScrolledToBottom(true);
+    }
+  }, []);
+
+  const canAccept = acceptedPolicies && acknowledgedLiability && hasScrolledToBottom;
 
   const handleAccept = () => {
-    if (acceptedPolicies && acknowledgedLiability) {
+    if (canAccept) {
       localStorage.setItem('rally-policies-accepted', 'true');
       localStorage.setItem('rally-policies-accepted-date', new Date().toISOString());
       onAccept();
@@ -52,7 +63,7 @@ export function PolicyAcceptanceDialog({ open, onOpenChange, onAccept }: PolicyA
     <Dialog open={open} onOpenChange={() => {}}>
       <DialogContent 
         className="max-w-md max-h-[90vh] flex flex-col"
-        style={{ backgroundColor: "#1E1E1E", borderColor: "rgba(255, 106, 0, 0.2)" }}
+        style={{ backgroundColor: "#1E1E1E", borderColor: "rgba(255, 106, 0, 0.2)", paddingBottom: 'env(keyboard-inset-height, 1rem)' }}
         hideCloseButton
       >
         <DialogHeader>
@@ -77,7 +88,11 @@ export function PolicyAcceptanceDialog({ open, onOpenChange, onAccept }: PolicyA
           </div>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 pr-4 max-h-[45vh] overflow-y-auto">
+        <div
+          ref={scrollRef}
+          onScroll={handleScroll}
+          className="flex-1 pr-2 max-h-[45vh] overflow-y-auto"
+        >
           <div className="space-y-2">
             {policySections.map((section) => {
               const ContentComponent = section.content;
@@ -91,7 +106,7 @@ export function PolicyAcceptanceDialog({ open, onOpenChange, onAccept }: PolicyA
                 >
                   <CollapsibleTrigger asChild>
                     <button 
-                      className="w-full flex items-center justify-between p-3 rounded-lg transition-colors text-left"
+                      className="w-full flex items-center justify-between p-3 rounded-lg transition-colors text-left min-h-[44px]"
                       style={{ 
                         backgroundColor: isExpanded ? "rgba(255, 106, 0, 0.1)" : "rgba(255, 255, 255, 0.05)",
                         borderWidth: "1px",
@@ -123,11 +138,17 @@ export function PolicyAcceptanceDialog({ open, onOpenChange, onAccept }: PolicyA
               );
             })}
           </div>
-        </ScrollArea>
+        </div>
+
+        {!hasScrolledToBottom && (
+          <p className="text-xs text-center animate-pulse" style={{ color: "rgba(255, 106, 0, 0.7)" }}>
+            ↓ Scroll to review all policies
+          </p>
+        )}
 
         <div 
-          className="space-y-4 pt-4 border-t mt-4"
-          style={{ borderColor: "rgba(255, 255, 255, 0.1)" }}
+          className="space-y-4 pt-4 border-t mt-2 sticky bottom-0"
+          style={{ borderColor: "rgba(255, 255, 255, 0.1)", backgroundColor: "#1E1E1E" }}
         >
           <div className="flex items-start gap-3">
             <Checkbox 
@@ -164,15 +185,15 @@ export function PolicyAcceptanceDialog({ open, onOpenChange, onAccept }: PolicyA
           <Button 
             className="w-full h-12 rounded-full font-bold shadow-lg transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
             style={{
-              background: acceptedPolicies && acknowledgedLiability 
+              background: canAccept 
                 ? "linear-gradient(135deg, #FF6A00 0%, #FF8C42 100%)" 
                 : "rgba(255, 255, 255, 0.1)",
-              color: acceptedPolicies && acknowledgedLiability ? "#FFFFFF" : "rgba(255, 255, 255, 0.4)",
-              boxShadow: acceptedPolicies && acknowledgedLiability 
+              color: canAccept ? "#FFFFFF" : "rgba(255, 255, 255, 0.4)",
+              boxShadow: canAccept 
                 ? "0 8px 32px rgba(255, 106, 0, 0.4)" 
                 : "none",
             }}
-            disabled={!acceptedPolicies || !acknowledgedLiability}
+            disabled={!canAccept}
             onClick={handleAccept}
           >
             <CheckCircle2 className="h-5 w-5 mr-2" />

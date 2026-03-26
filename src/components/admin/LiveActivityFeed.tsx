@@ -91,4 +91,5 @@ export const LiveActivityFeed = React.forwardRef<HTMLDivElement>((_, ref) => {
       </CardContent>
     </Card>
   );
-}
+});
+LiveActivityFeed.displayName = 'LiveActivityFeed';

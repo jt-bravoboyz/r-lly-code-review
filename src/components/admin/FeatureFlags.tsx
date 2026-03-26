@@ -66,4 +66,5 @@ export const FeatureFlags = React.forwardRef<HTMLDivElement>((_, ref) => {
       </CardContent>
     </Card>
   );
-}
+});
+FeatureFlags.displayName = 'FeatureFlags';
