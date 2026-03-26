@@ -92,25 +92,22 @@ export default function Index() {
             </div>
           </div>
 
-          {/* Right side - notifications & avatar */}
           <div className="flex items-center gap-4">
-            {/* Notification bell */}
             <Link to="/notifications" className="relative group">
-              <div className="absolute inset-0 bg-white/20 rounded-full blur-sm group-hover:bg-white/30 transition-all" />
+              <div className="absolute inset-0 bg-white/10 rounded-full blur-sm group-hover:bg-white/20 transition-all" />
               <Bell className="h-6 w-6 text-white relative" strokeWidth={2} />
               {totalUnread > 0 && (
-                <span className="absolute -top-1 -right-1 w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center text-[10px] text-black font-bold shadow-lg animate-pulse">
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-amber-400 rounded-full flex items-center justify-center text-[10px] text-black font-bold shadow-lg animate-pulse">
                   {totalUnread > 9 ? '9+' : totalUnread}
                 </span>
               )}
             </Link>
             
-            {/* User avatar with ring */}
             <Link to="/profile" className="relative group">
-              <div className="absolute inset-0 bg-white/30 rounded-full blur-sm scale-110" />
-              <Avatar className="h-11 w-11 ring-2 ring-white/50 hover:ring-white transition-all relative shadow-lg">
+              <div className="absolute inset-0 bg-white/15 rounded-full blur-sm scale-110" />
+              <Avatar className="h-11 w-11 ring-2 ring-white/30 hover:ring-white/60 transition-all relative shadow-lg">
                 <AvatarImage src={profile?.avatar_url || undefined} />
-                <AvatarFallback className="text-sm font-bold bg-white text-primary">
+                <AvatarFallback className="text-sm font-bold bg-white/10 text-white backdrop-blur-sm">
                   {userInitials}
                 </AvatarFallback>
               </Avatar>
