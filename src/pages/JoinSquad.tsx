@@ -104,14 +104,16 @@ export default function JoinSquad() {
 
       if (joinError) throw joinError;
 
-      if (data?.error === 'Already a member') {
+      const result = data as Record<string, unknown> | null;
+
+      if (result?.error === 'Already a member') {
         toast.info('You are already a member of this squad!');
         navigate('/squads');
         return;
       }
 
-      if (data?.error) {
-        throw new Error(data.error);
+      if (result?.error) {
+        throw new Error(String(result.error));
       }
 
       // Award points for joining a squad
