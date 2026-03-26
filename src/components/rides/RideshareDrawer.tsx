@@ -53,6 +53,8 @@ export function RideshareDrawer({
         .eq('event_id', eventId)
         .eq('profile_id', profileId);
 
+      trackEvent('rideshare_selected', { provider });
+
       // Open deep link using device-aware navigation
       if (isMobile()) {
         window.location.href = url;

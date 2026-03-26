@@ -157,7 +157,7 @@ export default function Profile() {
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ home_address: location.address })
+        .update({ home_address: location.address, home_lat: location.lat, home_lng: location.lng })
         .eq('id', profile.id);
 
       if (error) throw error;
