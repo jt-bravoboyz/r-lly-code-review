@@ -2907,6 +2907,19 @@ export type Database = {
           unique_accessors: number
         }[]
       }
+      get_squad_invite_preview: {
+        Args: { p_invite_code: string }
+        Returns: {
+          expires_at: string
+          id: string
+          invite_code: string
+          owner_avatar_url: string
+          owner_display_name: string
+          squad_id: string
+          squad_name: string
+          status: string
+        }[]
+      }
       is_attendee_rally_home_undecided: {
         Args: { p_event_id: string; p_profile_id: string }
         Returns: boolean
@@ -2938,6 +2951,10 @@ export type Database = {
         Returns: boolean
       }
       is_valid_squad_invite: { Args: { p_squad_id: string }; Returns: boolean }
+      join_squad_by_invite_code: {
+        Args: { p_invite_code: string }
+        Returns: Json
+      }
       log_profile_access: {
         Args: { p_accessed_fields?: string[]; p_accessed_profile_id: string }
         Returns: undefined

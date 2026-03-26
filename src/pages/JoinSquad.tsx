@@ -47,42 +47,33 @@ export default function JoinSquad() {
 
       try {
         const { data, error: fetchError } = await supabase
-          .from('squad_invites')
-          .select(`
-            id,
-            squad_id,
-            invite_code,
-            status,
-            expires_at,
-            squad:squads(
-              id,
-              name,
-              owner:safe_profiles!squads_owner_id_fkey(id, display_name, avatar_url)
-            )
-          `)
-          .eq('invite_code', code.toUpperCase())
-          .maybeSingle();
+          .rpc('get_squad_invite_preview', { p_invite_code: code });
 
         if (fetchError) throw fetchError;
 
-        if (!data) {
+        if (!data || data.length === 0) {
           setError('Invite not found or expired');
           setIsLoading(false);
           return;
         }
 
-        // Check if expired
-        if (new Date(data.expires_at) < new Date()) {
-          setError('This invite has expired');
-          setIsLoading(false);
-          return;
-        }
-
-        // Transform the data to match our interface
-        const inviteData = {
-          ...data,
-          squad: Array.isArray(data.squad) ? data.squad[0] : data.squad,
-        } as SquadInvite;
+        const row = data[0];
+        const inviteData: SquadInvite = {
+          id: row.id,
+          squad_id: row.squad_id,
+          invite_code: row.invite_code,
+          status: row.status,
+          expires_at: row.expires_at,
+          squad: {
+            id: row.squad_id,
+            name: row.squad_name,
+            owner: {
+              id: '',
+              display_name: row.owner_display_name,
+              avatar_url: row.owner_avatar_url,
+            },
+          },
+        };
 
         setInvite(inviteData);
       } catch (err) {
@@ -108,36 +99,29 @@ export default function JoinSquad() {
 
     setIsJoining(true);
     try {
-      // Check if already a member
-      const { data: existingMember } = await supabase
-        .from('squad_members')
-        .select('id')
-        .eq('squad_id', invite.squad_id)
-        .eq('profile_id', profile.id)
-        .maybeSingle();
+      const { data, error: joinError } = await supabase
+        .rpc('join_squad_by_invite_code', { p_invite_code: code! });
 
-      if (existingMember) {
+      if (joinError) throw joinError;
+
+      const result = data as Record<string, unknown> | null;
+
+      if (result?.error === 'Already a member') {
         toast.info('You are already a member of this squad!');
         navigate('/squads');
         return;
       }
 
-      // Add as member
-      const { error: joinError } = await supabase
-        .from('squad_members')
-        .insert({
-          squad_id: invite.squad_id,
-          profile_id: profile.id,
-        });
-
-      if (joinError) throw joinError;
+      if (result?.error) {
+        throw new Error(String(result.error));
+      }
 
       // Award points for joining a squad
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user?.id) {
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        if (authUser?.id) {
           await supabase.rpc('rly_award_points', {
-            p_user_id: user.id,
+            p_user_id: authUser.id,
             p_event_type: 'join_squad',
             p_source_id: invite.squad_id
           });
@@ -145,12 +129,6 @@ export default function JoinSquad() {
       } catch (pointsError) {
         console.error('Failed to award join_squad points:', pointsError);
       }
-
-      // Update invite status
-      await supabase
-        .from('squad_invites')
-        .update({ status: 'accepted' })
-        .eq('id', invite.id);
 
       toast.success(`Welcome to ${invite.squad.name}! 🎉`);
       navigate('/squads');
