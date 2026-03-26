@@ -12,6 +12,7 @@ import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Settings, LogOut, MapPin, Award, Camera, Users, Home, Shield, Pencil, Save, X, FileText, ChevronRight, Navigation, Phone } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useLocation } from '@/hooks/useLocation';
 import { supabase } from '@/integrations/supabase/client';
 import { Navigate, useNavigate } from 'react-router-dom';
