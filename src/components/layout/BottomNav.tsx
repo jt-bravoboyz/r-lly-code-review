@@ -44,7 +44,7 @@ export function BottomNav() {
                 className={cn(
                   "p-3 rounded-2xl transition-all duration-300 relative",
                   isActive
-                    ? "bg-gradient-to-br from-primary to-orange-500 shadow-lg shadow-primary/30"
+                    ? "bg-gradient-to-br from-primary to-primary/80 shadow-lg shadow-primary/30"
                     : "bg-transparent hover:bg-white/[0.06]"
                 )}
               >
