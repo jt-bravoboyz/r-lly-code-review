@@ -11,7 +11,7 @@ interface Flag {
   description: string | null;
 }
 
-export function FeatureFlags() {
+export const FeatureFlags = React.forwardRef<HTMLDivElement>((_, ref) => {
   const [flags, setFlags] = useState<Flag[]>([]);
 
   useEffect(() => {
