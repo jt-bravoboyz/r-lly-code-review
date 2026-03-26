@@ -138,10 +138,10 @@ export default function Index() {
           <div className="grid grid-cols-2 gap-4">
             <CreateEventDialog
               trigger={
-                <Card className="group bg-gradient-to-br from-white to-secondary/50 shadow-lg hover:shadow-xl rounded-2xl border-0 overflow-hidden transition-all duration-300 hover:scale-[1.02] cursor-pointer">
+                <Card className="group glass-elevated rounded-2xl border-white/[0.08] overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:border-primary/20 cursor-pointer">
                   <CardContent className="p-6 flex flex-col items-center justify-center text-center gap-4 relative">
-                    <div className="absolute top-0 right-0 w-20 h-20 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform shadow-inner">
+                    <div className="absolute top-0 right-0 w-20 h-20 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-xl" />
+                    <div className="w-14 h-14 rounded-2xl bg-primary/15 flex items-center justify-center group-hover:scale-110 transition-transform shadow-inner border border-primary/20">
                       <Plus className="h-7 w-7 text-primary" strokeWidth={2.5} />
                     </div>
                     <span className="font-bold text-base text-foreground font-montserrat">Create Event</span>
