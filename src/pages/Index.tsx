@@ -218,10 +218,10 @@ export default function Index() {
               ))}
             </div>
           ) : (
-            <Card className="bg-gradient-to-br from-white to-secondary/30 shadow-lg rounded-2xl border-0 overflow-hidden">
+            <Card className="glass-elevated rounded-2xl border-white/[0.08] overflow-hidden">
               <CardContent className="p-8 text-center relative">
-                <div className="absolute top-0 left-1/2 w-32 h-32 bg-primary/5 rounded-full -translate-x-1/2 -translate-y-1/2" />
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10 mx-auto mb-4 flex items-center justify-center relative">
+                <div className="absolute top-0 left-1/2 w-32 h-32 bg-primary/5 rounded-full -translate-x-1/2 -translate-y-1/2 blur-xl" />
+                <div className="w-16 h-16 rounded-2xl bg-primary/15 mx-auto mb-4 flex items-center justify-center relative border border-primary/20">
                   <Zap className="h-8 w-8 text-primary" strokeWidth={2} />
                 </div>
                 <h4 className="font-bold text-lg mb-2 text-foreground font-montserrat">No upcoming events</h4>
