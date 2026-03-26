@@ -192,6 +192,18 @@ export function RallyCompleteOverlay({
           </div>
         )}
       </div>
+
+      {/* Feedback modal */}
+      {eventId && (
+        <RallyFeedbackModal
+          open={showFeedback}
+          onClose={() => {
+            setShowFeedback(false);
+            callDone();
+          }}
+          eventId={eventId}
+        />
+      )}
     </div>
   );
 }
