@@ -191,7 +191,7 @@ export default function Events() {
               <Sparkles className="h-5 w-5 text-primary" />
               Upcoming R@lly
             </h2>
-            <span className="text-sm text-muted-foreground bg-white/[0.06] backdrop-blur-sm px-3 py-1 rounded-full border border-white/[0.08]">{filteredUpcoming.length} events</span>
+            <span className="text-sm text-muted-foreground bg-muted/50 dark:bg-white/[0.06] backdrop-blur-sm px-3 py-1 rounded-full border border-border/40 dark:border-white/[0.08]">{filteredUpcoming.length} events</span>
           </div>
 
           {isLoading ? (
