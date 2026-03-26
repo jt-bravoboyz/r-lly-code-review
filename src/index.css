@@ -73,49 +73,43 @@
     --sidebar-ring: 22 90% 52%;
   }
 
+  /* Dark mode is now the default - keep .dark identical */
   .dark {
-    --background: 0 0% 4%;
-    --foreground: 0 0% 98%;
-
-    --card: 0 0% 7%;
-    --card-foreground: 0 0% 98%;
-
-    --popover: 0 0% 7%;
-    --popover-foreground: 0 0% 98%;
-
-    /* Vibrant R@lly Orange - even brighter in dark mode */
+    --background: 220 20% 6%;
+    --foreground: 0 0% 95%;
+    --card: 220 20% 10%;
+    --card-foreground: 0 0% 95%;
+    --popover: 220 20% 10%;
+    --popover-foreground: 0 0% 95%;
     --primary: 22 95% 54%;
-    --primary-foreground: 0 0% 0%;
-
-    --secondary: 0 0% 12%;
-    --secondary-foreground: 0 0% 98%;
-
-    --muted: 0 0% 14%;
-    --muted-foreground: 0 0% 55%;
-
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 18% 14%;
+    --secondary-foreground: 0 0% 90%;
+    --muted: 220 15% 16%;
+    --muted-foreground: 220 10% 55%;
     --accent: 22 95% 56%;
-    --accent-foreground: 0 0% 0%;
-
+    --accent-foreground: 0 0% 100%;
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
-
-    --border: 0 0% 16%;
-    --input: 0 0% 16%;
+    --border: 220 15% 20%;
+    --input: 220 15% 18%;
     --ring: 22 95% 54%;
-
     --success: 152 76% 50%;
-    --success-foreground: 0 0% 0%;
-
+    --success-foreground: 0 0% 100%;
     --warning: 45 93% 52%;
     --warning-foreground: 0 0% 0%;
-
-    --sidebar-background: 0 0% 5%;
+    --glass-bg: 220 20% 12% / 0.6;
+    --glass-border: 0 0% 100% / 0.08;
+    --glass-highlight: 0 0% 100% / 0.05;
+    --glass-blur: 20px;
+    --glass-shadow: 0 8px 32px hsl(0 0% 0% / 0.4);
+    --sidebar-background: 220 20% 8%;
     --sidebar-foreground: 0 0% 90%;
     --sidebar-primary: 22 95% 54%;
-    --sidebar-primary-foreground: 0 0% 0%;
+    --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 22 100% 12%;
     --sidebar-accent-foreground: 22 100% 70%;
-    --sidebar-border: 0 0% 16%;
+    --sidebar-border: 220 15% 20%;
     --sidebar-ring: 22 95% 54%;
   }
 }
