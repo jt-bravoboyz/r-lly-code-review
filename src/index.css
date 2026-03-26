@@ -1700,3 +1700,41 @@
 .animate-glass-breathe {
   animation: glass-breathe 3s ease-in-out infinite;
 }
+
+/* Command Center — Notifications */
+@keyframes command-pulse {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+
+@keyframes icon-glow-breathe {
+  0%, 100% { box-shadow: 0 0 30px 8px hsl(27 91% 53% / 0.15), 0 0 60px 20px hsl(27 91% 53% / 0.05); }
+  50% { box-shadow: 0 0 40px 12px hsl(27 91% 53% / 0.25), 0 0 80px 30px hsl(27 91% 53% / 0.08); }
+}
+
+@keyframes text-shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes card-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+.animate-command-pulse {
+  animation: command-pulse 2s ease-in-out infinite;
+}
+
+.animate-icon-glow-breathe {
+  animation: icon-glow-breathe 3.5s ease-in-out infinite;
+}
+
+.animate-text-shimmer {
+  background-size: 200% auto;
+  animation: text-shimmer 7s linear infinite;
+}
+
+.animate-card-float {
+  animation: card-float 4s ease-in-out infinite;
+}
