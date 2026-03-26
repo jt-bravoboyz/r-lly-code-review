@@ -42,7 +42,7 @@ export default function Squads() {
       </div>
 
       {/* Modern gradient header */}
-      <header className="sticky top-0 z-40 bg-gradient-to-r from-primary via-primary to-orange-500 shadow-lg shadow-primary/20">
+      <header className="sticky top-0 z-40 bg-gradient-to-r from-primary via-primary to-primary/90 shadow-lg shadow-primary/20">
         <div className="h-6" />
         <div className="flex items-center justify-between px-4 py-3">
           <Link to="/" className="relative">
