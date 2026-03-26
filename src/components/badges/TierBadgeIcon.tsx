@@ -267,6 +267,13 @@ interface TierBadgeIconProps {
 }
 
 const sizePx = { sm: 36, md: 52, lg: 68, xl: 100 };
+
+// Tier-specific idle animation overrides
+const TIER_ANIMATION: Record<string, string> = {
+  ruby: 'animate-badge-heartbeat',
+  galaxy_opal: 'animate-badge-cosmic',
+  dark_matter: 'animate-badge-void',
+};
 const sizeClasses = { sm: 'w-9 h-9', md: 'w-13 h-13', lg: 'w-[68px] h-[68px]', xl: 'w-[100px] h-[100px]' };
 
 export function TierBadgeIcon({
