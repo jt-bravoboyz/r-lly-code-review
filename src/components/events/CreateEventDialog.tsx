@@ -118,8 +118,10 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
         location_lat: data.location_lat || null,
         location_lng: data.location_lng || null,
         is_barhop: data.is_barhop,
-        max_attendees: data.max_attendees ? parseInt(data.max_attendees) : null
-      });
+        max_attendees: data.max_attendees ? parseInt(data.max_attendees) : null,
+        cover_charge: data.cover_charge ? parseFloat(data.cover_charge) : 0,
+        split_check: data.split_check,
+      } as any);
 
       await joinEvent.mutateAsync({ eventId: result.id, profileId: profile.id });
 
