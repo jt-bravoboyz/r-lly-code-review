@@ -60,20 +60,20 @@ export default function Events() {
   const filteredPast = filterEvents(pastEvents);
 
   return (
-    <div className="min-h-[100dvh] pb-28 bg-gradient-to-b from-secondary/30 via-background to-secondary/20 relative overflow-hidden">
-      {/* Animated background elements */}
+    <div className="min-h-[100dvh] pb-28 bg-transparent relative overflow-hidden">
+      {/* Living background orbs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 -right-20 w-60 h-60 bg-primary/5 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute top-1/2 -left-20 w-80 h-80 bg-orange-400/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-40 right-10 w-40 h-40 bg-yellow-400/5 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-20 -right-20 w-72 h-72 bg-primary/8 rounded-full blur-[80px] animate-orb-float" />
+        <div className="absolute top-1/2 -left-20 w-96 h-96 bg-orange-500/6 rounded-full blur-[100px] animate-orb-float-reverse" />
+        <div className="absolute bottom-40 right-10 w-48 h-48 bg-amber-500/5 rounded-full blur-[60px] animate-orb-float" style={{ animationDelay: '-3s' }} />
       </div>
 
-      {/* Modern gradient header */}
-      <header className="sticky top-0 z-40 bg-gradient-to-r from-primary via-primary to-orange-500 shadow-lg shadow-primary/20">
-        <div className="h-6" />
+      {/* Glass header */}
+      <header className="sticky top-0 z-40 bg-primary/80 backdrop-blur-xl border-b border-white/[0.08] shadow-[0_4px_30px_hsl(22,90%,52%/0.15)]" style={{ WebkitBackdropFilter: 'blur(20px)' }}>
+        <div style={{ height: 'env(safe-area-inset-top, 1.5rem)' }} />
         <div className="flex items-center justify-between px-4 py-3">
           <Link to="/" className="relative">
-            <div className="absolute inset-0 bg-white/30 rounded-full blur-sm" />
+            <div className="absolute inset-0 bg-white/15 rounded-full blur-md" />
             <img src={rallyLogo} alt="R@lly" className="h-11 w-11 object-contain relative filter drop-shadow-lg brightness-0 invert" />
           </Link>
           <h1 className="text-xl font-bold text-white font-montserrat drop-shadow-sm flex items-center gap-2">
@@ -81,10 +81,10 @@ export default function Events() {
             R@lly
           </h1>
           <Link to="/profile" className="relative group">
-            <div className="absolute inset-0 bg-white/30 rounded-full blur-sm scale-110" />
-            <Avatar className="h-11 w-11 ring-2 ring-white/50 hover:ring-white transition-all relative shadow-lg">
+            <div className="absolute inset-0 bg-white/15 rounded-full blur-sm scale-110" />
+            <Avatar className="h-11 w-11 ring-2 ring-white/30 hover:ring-white/60 transition-all relative shadow-lg">
               <AvatarImage src={profile?.avatar_url || undefined} />
-              <AvatarFallback className="bg-white text-primary text-sm font-bold">
+              <AvatarFallback className="bg-white/10 text-white text-sm font-bold backdrop-blur-sm">
                 {profile?.display_name?.charAt(0)?.toUpperCase() || '?'}
               </AvatarFallback>
             </Avatar>
