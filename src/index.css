@@ -15,61 +15,62 @@
     padding-top: env(safe-area-inset-top);
   }
 
-  :root {
-    /* Core backgrounds - deep dark for glass layering */
-    --background: 220 20% 6%;
-    --foreground: 0 0% 95%;
+  :root,
+  .light {
+    /* Core backgrounds - warm off-white for premium light mode */
+    --background: 25 30% 96%;
+    --foreground: 220 20% 12%;
 
-    --card: 220 20% 10%;
-    --card-foreground: 0 0% 95%;
+    --card: 25 20% 98%;
+    --card-foreground: 220 20% 12%;
 
-    --popover: 220 20% 10%;
-    --popover-foreground: 0 0% 95%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 20% 12%;
 
     /* R@lly Orange - #F26C15 = hsl(22, 90%, 52%) */
     --primary: 22 90% 52%;
     --primary-foreground: 0 0% 100%;
 
-    /* Dark secondary surfaces */
-    --secondary: 220 18% 14%;
-    --secondary-foreground: 0 0% 90%;
+    /* Light secondary surfaces */
+    --secondary: 25 18% 92%;
+    --secondary-foreground: 220 18% 20%;
 
-    --muted: 220 15% 16%;
-    --muted-foreground: 220 10% 55%;
+    --muted: 25 12% 90%;
+    --muted-foreground: 220 10% 42%;
 
     --accent: 22 90% 52%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 84% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Border - subtle glass edges */
-    --border: 220 15% 20%;
-    --input: 220 15% 18%;
+    /* Border - subtle warm edges */
+    --border: 25 15% 85%;
+    --input: 25 12% 88%;
     --ring: 22 90% 52%;
 
     --radius: 0.75rem;
 
-    --success: 152 76% 45%;
+    --success: 152 76% 38%;
     --success-foreground: 0 0% 100%;
 
     --warning: 45 93% 47%;
     --warning-foreground: 0 0% 0%;
 
-    /* Glass design tokens */
-    --glass-bg: 220 20% 12% / 0.6;
-    --glass-border: 0 0% 100% / 0.08;
-    --glass-highlight: 0 0% 100% / 0.05;
+    /* Glass design tokens - light mode: frosted white glass */
+    --glass-bg: 25 20% 98% / 0.7;
+    --glass-border: 220 15% 30% / 0.1;
+    --glass-highlight: 0 0% 100% / 0.6;
     --glass-blur: 20px;
-    --glass-shadow: 0 8px 32px hsl(0 0% 0% / 0.4);
+    --glass-shadow: 0 8px 32px hsl(220 15% 20% / 0.08);
 
-    --sidebar-background: 220 20% 8%;
-    --sidebar-foreground: 0 0% 90%;
+    --sidebar-background: 25 20% 95%;
+    --sidebar-foreground: 220 20% 15%;
     --sidebar-primary: 22 90% 52%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 22 100% 12%;
-    --sidebar-accent-foreground: 22 100% 70%;
-    --sidebar-border: 220 15% 20%;
+    --sidebar-accent: 22 100% 95%;
+    --sidebar-accent-foreground: 22 90% 40%;
+    --sidebar-border: 25 15% 85%;
     --sidebar-ring: 22 90% 52%;
   }
 
@@ -135,6 +136,12 @@
 
   /* Living background - slow ambient gradient drift */
   body {
+    background: linear-gradient(135deg, hsl(25 30% 96%) 0%, hsl(28 25% 95%) 50%, hsl(25 28% 97%) 100%) !important;
+    background-size: 400% 400% !important;
+    animation: ambient-drift 20s ease-in-out infinite;
+  }
+  .dark body,
+  .dark {
     background: linear-gradient(135deg, hsl(220 20% 6%) 0%, hsl(225 22% 8%) 50%, hsl(220 18% 5%) 100%) !important;
     background-size: 400% 400% !important;
     animation: ambient-drift 20s ease-in-out infinite;
@@ -255,6 +262,12 @@
     box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
     transition: all 0.2s ease-out;
   }
+  .light .btn-glass,
+  :root:not(.dark) .btn-glass {
+    background: rgba(0,0,0,0.03);
+    border: 1px solid rgba(0,0,0,0.08);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.8), 0 1px 3px rgba(0,0,0,0.06);
+  }
   .btn-glass:hover {
     background: rgba(255,255,255,0.1);
     border-color: rgba(255,255,255,0.18);
@@ -262,6 +275,12 @@
       0 4px 16px rgba(0,0,0,0.3),
       inset 0 1px 0 rgba(255,255,255,0.08);
     transform: translateY(-1px);
+  }
+  .light .btn-glass:hover,
+  :root:not(.dark) .btn-glass:hover {
+    background: rgba(0,0,0,0.05);
+    border-color: rgba(0,0,0,0.12);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.8);
   }
   .btn-glass:active {
     transform: scale(0.96);
@@ -692,6 +711,12 @@
     border: 1px solid hsl(0 0% 100% / 0.1);
     box-shadow: 0 12px 40px hsl(0 0% 0% / 0.5), inset 0 1px 0 hsl(0 0% 100% / 0.06);
   }
+  .light .glass-elevated,
+  :root:not(.dark) .glass-elevated {
+    background: hsl(0 0% 100% / 0.75);
+    border: 1px solid hsl(220 15% 30% / 0.1);
+    box-shadow: 0 8px 32px hsl(220 15% 20% / 0.08), inset 0 1px 0 hsl(0 0% 100% / 0.8);
+  }
 
   .glass-dark {
     background: hsl(220 20% 8% / 0.85);
@@ -705,6 +730,26 @@
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid hsl(0 0% 100% / 0.1);
+  }
+  .light .glass-light,
+  :root:not(.dark) .glass-light {
+    background: hsl(0 0% 100% / 0.7);
+    border: 1px solid hsl(220 15% 30% / 0.08);
+  }
+
+  /* ====== LIGHT MODE GLOBAL OVERRIDES ====== */
+  /* In light mode, living orbs should use warm tones */
+  .light .animate-orb-float,
+  .light .animate-orb-float-reverse,
+  :root:not(.dark) .animate-orb-float,
+  :root:not(.dark) .animate-orb-float-reverse {
+    opacity: 0.5;
+  }
+
+  /* Light mode glass glow adjustments */
+  .light .glass-glow-primary,
+  :root:not(.dark) .glass-glow-primary {
+    box-shadow: 0 0 20px hsl(22 90% 52% / 0.1), 0 4px 16px hsl(0 0% 0% / 0.06), inset 0 1px 0 hsl(0 0% 100% / 0.8);
   }
 
   .glass-glow-primary {

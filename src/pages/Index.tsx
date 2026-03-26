@@ -47,7 +47,7 @@ export default function Index() {
     return (
       <div className="min-h-[100dvh] flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-28 h-28 rounded-full bg-white/[0.06] backdrop-blur-xl flex items-center justify-center shadow-2xl ring-2 ring-white/[0.08] animate-glass-breathe">
+          <div className="w-28 h-28 rounded-full bg-muted/60 dark:bg-white/[0.06] backdrop-blur-xl flex items-center justify-center shadow-2xl ring-2 ring-border/30 dark:ring-white/[0.08] animate-glass-breathe">
             <img 
               src={rallyLogo} 
               alt="R@lly" 
@@ -138,7 +138,7 @@ export default function Index() {
           <div className="grid grid-cols-2 gap-4">
             <CreateEventDialog
               trigger={
-                <Card className="group glass-elevated rounded-2xl border-white/[0.08] overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:border-primary/20 cursor-pointer">
+                <Card className="group glass-elevated rounded-2xl overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:border-primary/20 cursor-pointer">
                   <CardContent className="p-6 flex flex-col items-center justify-center text-center gap-4 relative">
                     <div className="absolute top-0 right-0 w-20 h-20 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-xl" />
                     <div className="w-14 h-14 rounded-2xl bg-primary/15 flex items-center justify-center group-hover:scale-110 transition-transform shadow-inner border border-primary/20">
@@ -152,7 +152,7 @@ export default function Index() {
             
             <QuickRallyDialog 
               trigger={
-                <Card className="group bg-gradient-to-br from-amber-500/90 via-orange-500/90 to-primary/90 shadow-xl shadow-primary/20 rounded-2xl border border-white/[0.1] overflow-hidden cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-primary/30 backdrop-blur-sm">
+                <Card className="group bg-gradient-to-br from-amber-500/90 via-orange-500/90 to-primary/90 shadow-xl shadow-primary/20 rounded-2xl border border-white/[0.15] overflow-hidden cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-primary/30 backdrop-blur-sm">
                   <CardContent className="p-6 flex flex-col items-center justify-center text-center gap-4 relative">
                     <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-sm" />
                     <div className="absolute bottom-0 left-0 w-16 h-16 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
@@ -207,8 +207,8 @@ export default function Index() {
           {eventsLoading ? (
             <div className="space-y-3">
               {[1, 2].map((i) => (
-                <Card key={i} className="h-72 bg-white/[0.04] border-white/[0.06] rounded-2xl overflow-hidden relative">
-                  <div className="absolute inset-0 -translate-x-full animate-[shimmer-slide_2s_ease-in-out_infinite] bg-gradient-to-r from-transparent via-white/[0.04] to-transparent" />
+                <Card key={i} className="h-72 bg-muted/50 dark:bg-white/[0.04] border-border/40 dark:border-white/[0.06] rounded-2xl overflow-hidden relative">
+                  <div className="absolute inset-0 -translate-x-full animate-[shimmer-slide_2s_ease-in-out_infinite] bg-gradient-to-r from-transparent via-foreground/[0.03] to-transparent" />
                 </Card>
               ))}
             </div>
@@ -219,7 +219,7 @@ export default function Index() {
               ))}
             </div>
           ) : (
-            <Card className="glass-elevated rounded-2xl border-white/[0.08] overflow-hidden">
+            <Card className="glass-elevated rounded-2xl overflow-hidden">
               <CardContent className="p-8 text-center relative">
                 <div className="absolute top-0 left-1/2 w-32 h-32 bg-primary/5 rounded-full -translate-x-1/2 -translate-y-1/2 blur-xl" />
                 <div className="w-16 h-16 rounded-2xl bg-primary/15 mx-auto mb-4 flex items-center justify-center relative border border-primary/20">

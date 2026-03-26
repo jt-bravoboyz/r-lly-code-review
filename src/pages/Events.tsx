@@ -29,7 +29,7 @@ export default function Events() {
     return (
       <div className="min-h-[100dvh] flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-28 h-28 rounded-full bg-white/[0.06] backdrop-blur-xl flex items-center justify-center shadow-2xl ring-2 ring-white/[0.08] animate-glass-breathe">
+          <div className="w-28 h-28 rounded-full bg-muted/60 dark:bg-white/[0.06] backdrop-blur-xl flex items-center justify-center shadow-2xl ring-2 ring-border/30 dark:ring-white/[0.08] animate-glass-breathe">
             <img 
               src={rallyLogo} 
               alt="R@lly" 
@@ -99,18 +99,18 @@ export default function Events() {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input 
               placeholder="Search rally..." 
-              className="pl-11 rounded-xl bg-white/[0.06] backdrop-blur-sm border-white/[0.1] shadow-sm focus:shadow-md focus:border-primary/30 transition-all"
+              className="pl-11 rounded-xl bg-background/60 dark:bg-white/[0.06] backdrop-blur-sm border-border/50 dark:border-white/[0.1] shadow-sm focus:shadow-md focus:border-primary/30 transition-all"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <Button variant="outline" size="icon" className="rounded-xl shrink-0 bg-white/[0.06] backdrop-blur-sm border-white/[0.1] hover:bg-primary/20 hover:text-primary hover:border-primary/30 transition-all" asChild>
+          <Button variant="outline" size="icon" className="rounded-xl shrink-0 bg-background/60 dark:bg-white/[0.06] backdrop-blur-sm border-border/50 dark:border-white/[0.1] hover:bg-primary/20 hover:text-primary hover:border-primary/30 transition-all" asChild>
             <Link to="/join">
               <Link2 className="h-4 w-4" />
             </Link>
           </Button>
           <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="w-[130px] rounded-xl bg-white/[0.06] backdrop-blur-sm border-white/[0.1] hover:border-white/[0.15] transition-all">
+            <SelectTrigger className="w-[130px] rounded-xl bg-background/60 dark:bg-white/[0.06] backdrop-blur-sm border-border/50 dark:border-white/[0.1] hover:border-border dark:hover:border-white/[0.15] transition-all">
               <Filter className="h-4 w-4 mr-2 text-muted-foreground" />
               <SelectValue placeholder="Filter" />
             </SelectTrigger>
@@ -191,14 +191,14 @@ export default function Events() {
               <Sparkles className="h-5 w-5 text-primary" />
               Upcoming R@lly
             </h2>
-            <span className="text-sm text-muted-foreground bg-white/[0.06] backdrop-blur-sm px-3 py-1 rounded-full border border-white/[0.08]">{filteredUpcoming.length} events</span>
+            <span className="text-sm text-muted-foreground bg-muted/50 dark:bg-white/[0.06] backdrop-blur-sm px-3 py-1 rounded-full border border-border/40 dark:border-white/[0.08]">{filteredUpcoming.length} events</span>
           </div>
 
           {isLoading ? (
             <div className="space-y-4">
               {[1, 2, 3].map((i) => (
-                <Card key={i} className="h-28 bg-white/[0.04] border-white/[0.06] rounded-2xl overflow-hidden relative">
-                  <div className="absolute inset-0 -translate-x-full animate-[shimmer-slide_2s_ease-in-out_infinite] bg-gradient-to-r from-transparent via-white/[0.04] to-transparent" />
+                <Card key={i} className="h-28 bg-muted/50 dark:bg-white/[0.04] border-border/40 dark:border-white/[0.06] rounded-2xl overflow-hidden relative">
+                  <div className="absolute inset-0 -translate-x-full animate-[shimmer-slide_2s_ease-in-out_infinite] bg-gradient-to-r from-transparent via-foreground/[0.03] to-transparent" />
                 </Card>
               ))}
             </div>
@@ -211,7 +211,7 @@ export default function Events() {
               ))}
             </div>
           ) : (
-            <Card className="glass-elevated rounded-2xl border-white/[0.08] overflow-hidden animate-fade-in" style={{ animationDelay: '0.3s' }}>
+            <Card className="glass-elevated rounded-2xl overflow-hidden animate-fade-in" style={{ animationDelay: '0.3s' }}>
               <CardContent className="p-8 text-center relative">
                 <div className="absolute top-0 left-1/2 w-32 h-32 bg-primary/5 rounded-full -translate-x-1/2 -translate-y-1/2 blur-xl" />
                 <div className="w-16 h-16 rounded-2xl bg-primary/15 mx-auto mb-4 flex items-center justify-center relative border border-primary/20">
@@ -232,7 +232,7 @@ export default function Events() {
               <History className="h-5 w-5 text-muted-foreground" />
               Past R@lly
             </h2>
-            <span className="text-sm text-muted-foreground bg-white/[0.06] backdrop-blur-sm px-3 py-1 rounded-full border border-white/[0.08]">
+            <span className="text-sm text-muted-foreground bg-muted/50 dark:bg-white/[0.06] backdrop-blur-sm px-3 py-1 rounded-full border border-border/40 dark:border-white/[0.08]">
               {filteredPast.length} events
             </span>
           </div>
@@ -252,7 +252,7 @@ export default function Events() {
               ))}
             </div>
           ) : (
-            <Card className="bg-white/[0.03] border-dashed border-2 border-white/[0.1] rounded-2xl animate-fade-in" style={{ animationDelay: '0.4s' }}>
+            <Card className="bg-muted/30 dark:bg-white/[0.03] border-dashed border-2 border-border/40 dark:border-white/[0.1] rounded-2xl animate-fade-in" style={{ animationDelay: '0.4s' }}>
               <CardContent className="p-6 text-center">
                 <History className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
                 <p className="text-muted-foreground font-montserrat text-sm">No past R@llys yet</p>

@@ -43,7 +43,7 @@ export const EventCard = forwardRef<HTMLAnchorElement, EventCardProps>(
     
     return (
       <Link ref={ref} to={`/events/${event.id}`}>
-        <Card className="relative bg-card/50 backdrop-blur-xl border border-white/[0.08] shadow-[0_8px_32px_hsl(0_0%_0%/0.3)] rounded-2xl overflow-hidden group hover:shadow-[0_12px_40px_hsl(0_0%_0%/0.4)] hover:border-white/[0.12] transition-all duration-300 hover:-translate-y-1 ripple-container" style={{ WebkitBackdropFilter: 'blur(20px)' }}>
+        <Card className="relative bg-card/80 dark:bg-card/50 backdrop-blur-xl border border-border/50 dark:border-white/[0.08] shadow-[0_4px_20px_hsl(0_0%_0%/0.06)] dark:shadow-[0_8px_32px_hsl(0_0%_0%/0.3)] rounded-2xl overflow-hidden group hover:shadow-[0_8px_32px_hsl(0_0%_0%/0.1)] dark:hover:shadow-[0_12px_40px_hsl(0_0%_0%/0.4)] hover:border-primary/20 dark:hover:border-white/[0.12] transition-all duration-300 hover:-translate-y-1 ripple-container" style={{ WebkitBackdropFilter: 'blur(20px)' }}>
           {/* Shimmer overlay on hover */}
           <div className="shimmer-overlay rounded-2xl" />
           
@@ -51,7 +51,7 @@ export const EventCard = forwardRef<HTMLAnchorElement, EventCardProps>(
             <div className="flex items-start gap-4">
               {/* Left: Date badge with glass effect */}
               <div className="shrink-0 text-center">
-                <div className="w-14 h-14 rounded-xl bg-white/[0.06] backdrop-blur-sm flex flex-col items-center justify-center shadow-sm border border-white/[0.1] group-hover:border-primary/20 transition-all duration-300">
+                <div className="w-14 h-14 rounded-xl bg-muted/50 dark:bg-white/[0.06] backdrop-blur-sm flex flex-col items-center justify-center shadow-sm border border-border/40 dark:border-white/[0.1] group-hover:border-primary/20 transition-all duration-300">
                   <span className="text-[10px] font-bold text-primary uppercase tracking-wide">
                     {format(eventDate, 'MMM')}
                   </span>
@@ -110,7 +110,7 @@ export const EventCard = forwardRef<HTMLAnchorElement, EventCardProps>(
                     {[1, 2, 3].slice(0, Math.min(Math.max(attendeeCount, 1), 3)).map((_, i) => (
                       <div 
                         key={i} 
-                        className="w-6 h-6 rounded-full bg-gradient-to-br from-primary/30 to-orange-400/50 border-2 border-white flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform duration-300"
+                        className="w-6 h-6 rounded-full bg-gradient-to-br from-primary/30 to-orange-400/50 border-2 border-card dark:border-white flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform duration-300"
                         style={{ transitionDelay: `${i * 50}ms` }}
                       >
                         <Users className="h-3 w-3 text-primary" />
@@ -125,7 +125,7 @@ export const EventCard = forwardRef<HTMLAnchorElement, EventCardProps>(
 
               {/* Right: Arrow with enhanced animation */}
               <div className="shrink-0 self-center">
-                <div className="w-8 h-8 rounded-full bg-white/[0.06] flex items-center justify-center group-hover:bg-primary/20 transition-all duration-300 border border-white/[0.08] group-hover:border-primary/30">
+                <div className="w-8 h-8 rounded-full bg-muted/50 dark:bg-white/[0.06] flex items-center justify-center group-hover:bg-primary/20 transition-all duration-300 border border-border/40 dark:border-white/[0.08] group-hover:border-primary/30">
                   <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all duration-300" />
                 </div>
               </div>
