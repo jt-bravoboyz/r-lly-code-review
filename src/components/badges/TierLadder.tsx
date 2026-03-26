@@ -38,6 +38,7 @@ export function TierLadder({ tiers, currentTierKey, totalPoints, className }: Ti
               size="sm" 
               locked={!isUnlocked}
               showGlow={isCurrent}
+              isCurrent={isCurrent}
             />
 
             {/* Tier info */}
