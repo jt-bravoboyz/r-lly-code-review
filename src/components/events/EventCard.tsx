@@ -81,8 +81,8 @@ export const EventCard = forwardRef<HTMLAnchorElement, EventCardProps>(
                         </span>
                       )}
                       {isLive && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 text-[10px] font-bold border border-green-200/50 shadow-sm">
-                          <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse shadow-sm shadow-green-500/50" />
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-500/15 text-green-400 text-[10px] font-bold border border-green-500/20 shadow-sm">
+                          <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse shadow-sm shadow-green-500/50" />
                           LIVE
                         </span>
                       )}
