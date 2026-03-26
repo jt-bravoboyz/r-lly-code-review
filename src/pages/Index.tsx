@@ -71,7 +71,7 @@ export default function Index() {
   const userInitials = userName.slice(0, 2).toUpperCase();
 
   return (
-    <div className="min-h-screen pb-28 bg-gradient-to-b from-background via-background to-secondary/30 relative overflow-hidden">
+    <div className="min-h-[100dvh] pb-28 bg-gradient-to-b from-background via-background to-secondary/30 relative overflow-hidden">
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-40 -right-20 w-60 h-60 bg-primary/5 rounded-full blur-3xl animate-pulse" />
