@@ -18,7 +18,7 @@ export default function Squads() {
 
   if (authLoading) {
     return (
-      <div className="min-h-[100dvh] flex items-center justify-center bg-gradient-to-br from-primary via-primary to-orange-600">
+      <div className="min-h-[100dvh] flex items-center justify-center bg-gradient-to-br from-primary via-primary to-primary/80">
         <div className="flex flex-col items-center gap-4">
           <div className="w-28 h-28 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center animate-pulse shadow-2xl ring-4 ring-white/30">
             <img src={rallyLogo} alt="R@lly" className="w-16 h-16 object-contain" />
