@@ -172,14 +172,14 @@ export function useAdminAnalytics(filterAdminData = false) {
       const founders = profiles?.filter(p => p.founding_member) || [];
 
       // Commercial metrics
-      const paidEvents = filteredRallyEvents.filter(e => (e as any).cover_charge > 0);
-      const totalGMV = paidEvents.reduce((sum, e) => sum + (Number((e as any).cover_charge) || 0), 0);
+      const paidEvents = filteredRallyEvents.filter(e => e.cover_charge && Number(e.cover_charge) > 0);
+      const totalGMV = paidEvents.reduce((sum, e) => sum + (Number(e.cover_charge) || 0), 0);
       const paidEventsCount = paidEvents.length;
 
       // Event density by city (group by location_name)
       const cityMap: Record<string, number> = {};
       filteredRallyEvents.forEach(e => {
-        const loc = (e as any).location_name;
+        const loc = e.location_name;
         if (loc) {
           cityMap[loc] = (cityMap[loc] || 0) + 1;
         }
