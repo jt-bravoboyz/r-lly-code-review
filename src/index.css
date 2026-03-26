@@ -800,11 +800,11 @@
   .btn-rally {
     @apply bg-primary text-primary-foreground font-bold tracking-tight rounded-xl;
     @apply hover:brightness-110 active:scale-[0.98] transition-all duration-200;
-    box-shadow: 0 4px 20px hsl(27 100% 55% / 0.35);
+    box-shadow: 0 4px 20px hsl(22 90% 52% / 0.35);
   }
 
   .btn-rally:hover {
-    box-shadow: 0 6px 30px hsl(27 100% 55% / 0.5);
+    box-shadow: 0 6px 30px hsl(22 90% 52% / 0.5);
   }
 
   /* Navigation */
