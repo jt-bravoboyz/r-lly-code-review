@@ -51,7 +51,7 @@ export const EventCard = forwardRef<HTMLAnchorElement, EventCardProps>(
             <div className="flex items-start gap-4">
               {/* Left: Date badge with glass effect */}
               <div className="shrink-0 text-center">
-                <div className="w-14 h-14 rounded-xl bg-white/[0.06] backdrop-blur-sm flex flex-col items-center justify-center shadow-sm border border-white/[0.1] group-hover:border-primary/20 transition-all duration-300">
+                <div className="w-14 h-14 rounded-xl bg-muted/50 dark:bg-white/[0.06] backdrop-blur-sm flex flex-col items-center justify-center shadow-sm border border-border/40 dark:border-white/[0.1] group-hover:border-primary/20 transition-all duration-300">
                   <span className="text-[10px] font-bold text-primary uppercase tracking-wide">
                     {format(eventDate, 'MMM')}
                   </span>
