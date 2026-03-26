@@ -471,6 +471,20 @@ export default function Profile() {
           <ChevronRight className="h-5 w-5 text-muted-foreground" />
         </button>
 
+        {/* Admin Panel Link - only visible for admins */}
+        {isAdmin && (
+          <button 
+            onClick={() => navigate('/admin')}
+            className="w-full flex items-center justify-between py-3 px-4 bg-primary/10 rounded-xl hover:bg-primary/20 transition-colors border border-primary/20"
+          >
+            <div className="flex items-center gap-3">
+              <Shield className="h-5 w-5 text-primary" />
+              <span className="font-medium text-primary">Admin Dashboard</span>
+            </div>
+            <ChevronRight className="h-5 w-5 text-primary/60" />
+          </button>
+        )}
+
         {/* Settings */}
         <Card className="card-rally">
           <CardHeader className="pb-2">
