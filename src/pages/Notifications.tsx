@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { } from 'react';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -18,13 +18,6 @@ export default function Notifications() {
   const { data: notifications, isLoading } = useNotifications();
   const { data: pendingInvites } = usePendingInvites();
   const markRead = useMarkNotificationRead();
-  const [lastSync, setLastSync] = useState(new Date());
-
-  // Update "last sync" timestamp periodically
-  useEffect(() => {
-    const interval = setInterval(() => setLastSync(new Date()), 30000);
-    return () => clearInterval(interval);
-  }, []);
 
   if (authLoading) {
     return (
@@ -64,7 +57,7 @@ export default function Notifications() {
   const totalUnread = unreadCount + pendingInviteCount;
   const hasNotifications = (notifications && notifications.length > 0) || pendingInviteCount > 0;
 
-  const syncAgo = formatDistanceToNow(lastSync, { addSuffix: false });
+  
 
   return (
     <div className="min-h-[100dvh] pb-24 bg-background relative overflow-hidden">
@@ -99,21 +92,6 @@ export default function Notifications() {
         </div>
       </header>
 
-      {/* System Status Bar */}
-      <div className="sticky top-[calc(env(safe-area-inset-top,1.5rem)+3.5rem)] z-30 backdrop-blur-xl border-b border-white/10" style={{ WebkitBackdropFilter: 'blur(20px)' }}>
-        <div className="flex items-center justify-between px-4 py-2 bg-card/60">
-          <div className="flex items-center gap-2">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-command-pulse absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500" />
-            </span>
-            <span className="text-xs font-semibold text-foreground/80 tracking-wide">R@lly System Active</span>
-          </div>
-          <span className="text-xs text-muted-foreground">
-            Last sync: {syncAgo === 'less than a minute' ? 'just now' : `${syncAgo} ago`}
-          </span>
-        </div>
-      </div>
 
       <main className="relative z-10 px-4 py-6 space-y-4">
         {/* Header with count */}
@@ -210,15 +188,7 @@ export default function Notifications() {
             {/* Smart Anticipation Card */}
             <Card className="w-full max-w-sm animate-card-float backdrop-blur-xl bg-card/60 border-primary/10 shadow-[0_8px_32px_hsl(27_91%_53%/0.06)] hover:shadow-[0_12px_40px_hsl(27_91%_53%/0.1)] hover:-translate-y-0.5 transition-all duration-500" style={{ WebkitBackdropFilter: 'blur(20px)' }}>
               <CardContent className="p-5 space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
-                    <Zap className="h-4.5 w-4.5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">Your squad hasn't made a move yet tonight</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">Be the one to get things started</p>
-                  </div>
-                </div>
+                <p className="text-base font-bold text-foreground text-center">Be the one to get things started</p>
                 <Link to="/events">
                   <Button className="w-full" size="sm">
                     <Zap className="h-4 w-4 mr-1.5" />
