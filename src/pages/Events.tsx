@@ -27,9 +27,9 @@ export default function Events() {
 
   if (authLoading) {
     return (
-      <div className="min-h-[100dvh] flex items-center justify-center bg-gradient-to-br from-primary via-primary to-orange-600">
+      <div className="min-h-[100dvh] flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-28 h-28 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center animate-pulse shadow-2xl ring-4 ring-white/30">
+          <div className="w-28 h-28 rounded-full bg-white/[0.06] backdrop-blur-xl flex items-center justify-center shadow-2xl ring-2 ring-white/[0.08] animate-glass-breathe">
             <img 
               src={rallyLogo} 
               alt="R@lly" 
@@ -60,20 +60,20 @@ export default function Events() {
   const filteredPast = filterEvents(pastEvents);
 
   return (
-    <div className="min-h-[100dvh] pb-28 bg-gradient-to-b from-secondary/30 via-background to-secondary/20 relative overflow-hidden">
-      {/* Animated background elements */}
+    <div className="min-h-[100dvh] pb-28 bg-transparent relative overflow-hidden">
+      {/* Living background orbs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 -right-20 w-60 h-60 bg-primary/5 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute top-1/2 -left-20 w-80 h-80 bg-orange-400/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-40 right-10 w-40 h-40 bg-yellow-400/5 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-20 -right-20 w-72 h-72 bg-primary/8 rounded-full blur-[80px] animate-orb-float" />
+        <div className="absolute top-1/2 -left-20 w-96 h-96 bg-orange-500/6 rounded-full blur-[100px] animate-orb-float-reverse" />
+        <div className="absolute bottom-40 right-10 w-48 h-48 bg-amber-500/5 rounded-full blur-[60px] animate-orb-float" style={{ animationDelay: '-3s' }} />
       </div>
 
-      {/* Modern gradient header */}
-      <header className="sticky top-0 z-40 bg-gradient-to-r from-primary via-primary to-orange-500 shadow-lg shadow-primary/20">
-        <div className="h-6" />
+      {/* Glass header */}
+      <header className="sticky top-0 z-40 bg-primary/80 backdrop-blur-xl border-b border-white/[0.08] shadow-[0_4px_30px_hsl(22,90%,52%/0.15)]" style={{ WebkitBackdropFilter: 'blur(20px)' }}>
+        <div style={{ height: 'env(safe-area-inset-top, 1.5rem)' }} />
         <div className="flex items-center justify-between px-4 py-3">
           <Link to="/" className="relative">
-            <div className="absolute inset-0 bg-white/30 rounded-full blur-sm" />
+            <div className="absolute inset-0 bg-white/15 rounded-full blur-md" />
             <img src={rallyLogo} alt="R@lly" className="h-11 w-11 object-contain relative filter drop-shadow-lg brightness-0 invert" />
           </Link>
           <h1 className="text-xl font-bold text-white font-montserrat drop-shadow-sm flex items-center gap-2">
@@ -81,10 +81,10 @@ export default function Events() {
             R@lly
           </h1>
           <Link to="/profile" className="relative group">
-            <div className="absolute inset-0 bg-white/30 rounded-full blur-sm scale-110" />
-            <Avatar className="h-11 w-11 ring-2 ring-white/50 hover:ring-white transition-all relative shadow-lg">
+            <div className="absolute inset-0 bg-white/15 rounded-full blur-sm scale-110" />
+            <Avatar className="h-11 w-11 ring-2 ring-white/30 hover:ring-white/60 transition-all relative shadow-lg">
               <AvatarImage src={profile?.avatar_url || undefined} />
-              <AvatarFallback className="bg-white text-primary text-sm font-bold">
+              <AvatarFallback className="bg-white/10 text-white text-sm font-bold backdrop-blur-sm">
                 {profile?.display_name?.charAt(0)?.toUpperCase() || '?'}
               </AvatarFallback>
             </Avatar>
@@ -99,18 +99,18 @@ export default function Events() {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input 
               placeholder="Search rally..." 
-              className="pl-11 rounded-full bg-white/80 backdrop-blur-sm border-primary/20 shadow-sm focus:shadow-md focus:border-primary/40 transition-all"
+              className="pl-11 rounded-xl bg-white/[0.06] backdrop-blur-sm border-white/[0.1] shadow-sm focus:shadow-md focus:border-primary/30 transition-all"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <Button variant="outline" size="icon" className="rounded-full shrink-0 bg-white/80 backdrop-blur-sm border-primary/20 hover:bg-primary hover:text-white hover:border-primary transition-all" asChild>
+          <Button variant="outline" size="icon" className="rounded-xl shrink-0 bg-white/[0.06] backdrop-blur-sm border-white/[0.1] hover:bg-primary/20 hover:text-primary hover:border-primary/30 transition-all" asChild>
             <Link to="/join">
               <Link2 className="h-4 w-4" />
             </Link>
           </Button>
           <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="w-[130px] rounded-full bg-white/80 backdrop-blur-sm border-primary/20 hover:border-primary/40 transition-all">
+            <SelectTrigger className="w-[130px] rounded-xl bg-white/[0.06] backdrop-blur-sm border-white/[0.1] hover:border-white/[0.15] transition-all">
               <Filter className="h-4 w-4 mr-2 text-muted-foreground" />
               <SelectValue placeholder="Filter" />
             </SelectTrigger>
@@ -126,38 +126,37 @@ export default function Events() {
         </div>
 
         {/* Quick R@lly Card - BOLD & VIBRANT */}
-        <Card className="bg-gradient-to-r from-yellow-400 via-orange-500 to-primary border-0 shadow-xl shadow-orange-500/30 overflow-hidden group hover:shadow-2xl hover:shadow-orange-500/40 transition-all duration-300 hover:scale-[1.01] animate-fade-in" style={{ animationDelay: '0.1s' }}>
+        <Card className="bg-gradient-to-r from-amber-500/80 via-orange-500/80 to-primary/80 border border-white/[0.1] shadow-xl shadow-primary/15 overflow-hidden group hover:shadow-2xl hover:shadow-primary/25 transition-all duration-300 hover:scale-[1.01] animate-fade-in backdrop-blur-sm" style={{ animationDelay: '0.1s' }}>
           <CardContent className="p-5 flex items-center justify-between relative">
-            {/* Decorative elements */}
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 group-hover:scale-110 transition-transform" />
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 group-hover:scale-110 transition-transform blur-sm" />
             <div className="absolute bottom-0 left-10 w-20 h-20 bg-white/5 rounded-full translate-y-1/2" />
             
             <div className="relative z-10">
               <h3 className="font-extrabold text-white text-xl font-montserrat flex items-center gap-2 drop-shadow-sm">
-                <div className="w-10 h-10 rounded-xl bg-white/25 backdrop-blur-sm flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center border border-white/20">
                   <Zap className="h-6 w-6 text-white" strokeWidth={2.5} fill="currentColor" />
                 </div>
                 Quick R@lly
               </h3>
-              <p className="text-white/90 text-sm font-montserrat mt-1 ml-12">Start rallying in seconds</p>
+              <p className="text-white/80 text-sm font-montserrat mt-1 ml-12">Start rallying in seconds</p>
             </div>
             <QuickRallyDialog preselectedSquad={preselectedSquad} />
           </CardContent>
         </Card>
 
         {/* Create Event Button */}
-        <Card className="bg-gradient-to-r from-primary/90 via-primary to-orange-600 border-0 shadow-lg shadow-primary/20 overflow-hidden group hover:shadow-xl transition-all duration-300 hover:scale-[1.01] animate-fade-in" style={{ animationDelay: '0.2s' }}>
+        <Card className="bg-gradient-to-r from-primary/70 via-primary/60 to-orange-600/70 border border-white/[0.1] shadow-lg shadow-primary/10 overflow-hidden group hover:shadow-xl transition-all duration-300 hover:scale-[1.01] animate-fade-in backdrop-blur-sm" style={{ animationDelay: '0.2s' }}>
           <CardContent className="p-5 flex items-center justify-between relative">
-            <div className="absolute top-0 right-20 w-24 h-24 bg-white/5 rounded-full -translate-y-1/2" />
+            <div className="absolute top-0 right-20 w-24 h-24 bg-white/5 rounded-full -translate-y-1/2 blur-sm" />
             
             <div className="relative z-10">
               <h3 className="font-bold text-white text-lg font-montserrat flex items-center gap-2">
-                <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center">
+                <div className="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center border border-white/20">
                   <Calendar className="h-5 w-5 text-white" strokeWidth={2} />
                 </div>
                 Plan a R@lly
               </h3>
-              <p className="text-white/80 text-sm font-montserrat ml-11">Schedule for later</p>
+              <p className="text-white/70 text-sm font-montserrat ml-11">Schedule for later</p>
             </div>
             <CreateEventDialog />
           </CardContent>
@@ -192,13 +191,15 @@ export default function Events() {
               <Sparkles className="h-5 w-5 text-primary" />
               Upcoming R@lly
             </h2>
-            <span className="text-sm text-muted-foreground bg-white/60 backdrop-blur-sm px-3 py-1 rounded-full">{filteredUpcoming.length} events</span>
+            <span className="text-sm text-muted-foreground bg-white/[0.06] backdrop-blur-sm px-3 py-1 rounded-full border border-white/[0.08]">{filteredUpcoming.length} events</span>
           </div>
 
           {isLoading ? (
             <div className="space-y-4">
               {[1, 2, 3].map((i) => (
-                <Card key={i} className="h-28 animate-pulse bg-gradient-to-r from-muted to-muted/50 border-0 rounded-2xl" />
+                <Card key={i} className="h-28 bg-white/[0.04] border-white/[0.06] rounded-2xl overflow-hidden relative">
+                  <div className="absolute inset-0 -translate-x-full animate-[shimmer-slide_2s_ease-in-out_infinite] bg-gradient-to-r from-transparent via-white/[0.04] to-transparent" />
+                </Card>
               ))}
             </div>
           ) : filteredUpcoming.length > 0 ? (
@@ -210,10 +211,10 @@ export default function Events() {
               ))}
             </div>
           ) : (
-            <Card className="bg-gradient-to-br from-white to-secondary/30 shadow-lg rounded-2xl border-0 overflow-hidden animate-fade-in" style={{ animationDelay: '0.3s' }}>
+            <Card className="glass-elevated rounded-2xl border-white/[0.08] overflow-hidden animate-fade-in" style={{ animationDelay: '0.3s' }}>
               <CardContent className="p-8 text-center relative">
-                <div className="absolute top-0 left-1/2 w-32 h-32 bg-primary/5 rounded-full -translate-x-1/2 -translate-y-1/2" />
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-orange-400/20 mx-auto mb-4 flex items-center justify-center relative">
+                <div className="absolute top-0 left-1/2 w-32 h-32 bg-primary/5 rounded-full -translate-x-1/2 -translate-y-1/2 blur-xl" />
+                <div className="w-16 h-16 rounded-2xl bg-primary/15 mx-auto mb-4 flex items-center justify-center relative border border-primary/20">
                   <Zap className="h-8 w-8 text-primary" strokeWidth={2} />
                 </div>
                 <h3 className="text-lg font-bold mb-2 text-foreground font-montserrat">No upcoming R@lly</h3>
@@ -231,7 +232,7 @@ export default function Events() {
               <History className="h-5 w-5 text-muted-foreground" />
               Past R@lly
             </h2>
-            <span className="text-sm text-muted-foreground bg-white/60 backdrop-blur-sm px-3 py-1 rounded-full">
+            <span className="text-sm text-muted-foreground bg-white/[0.06] backdrop-blur-sm px-3 py-1 rounded-full border border-white/[0.08]">
               {filteredPast.length} events
             </span>
           </div>
@@ -251,7 +252,7 @@ export default function Events() {
               ))}
             </div>
           ) : (
-            <Card className="bg-muted/30 border-dashed border-2 border-muted rounded-2xl animate-fade-in" style={{ animationDelay: '0.4s' }}>
+            <Card className="bg-white/[0.03] border-dashed border-2 border-white/[0.1] rounded-2xl animate-fade-in" style={{ animationDelay: '0.4s' }}>
               <CardContent className="p-6 text-center">
                 <History className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
                 <p className="text-muted-foreground font-montserrat text-sm">No past R@llys yet</p>

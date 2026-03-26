@@ -45,9 +45,9 @@ export default function Index() {
 
   if (loading) {
     return (
-      <div className="min-h-[100dvh] flex items-center justify-center bg-gradient-to-br from-primary via-primary to-orange-600">
+      <div className="min-h-[100dvh] flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-28 h-28 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center animate-pulse shadow-2xl ring-4 ring-white/30">
+          <div className="w-28 h-28 rounded-full bg-white/[0.06] backdrop-blur-xl flex items-center justify-center shadow-2xl ring-2 ring-white/[0.08] animate-glass-breathe">
             <img 
               src={rallyLogo} 
               alt="R@lly" 
@@ -71,50 +71,43 @@ export default function Index() {
   const userInitials = userName.slice(0, 2).toUpperCase();
 
   return (
-    <div className="min-h-[100dvh] pb-28 bg-gradient-to-b from-background via-background to-secondary/30 relative overflow-hidden">
-      {/* Animated background elements */}
+    <div className="min-h-[100dvh] pb-28 bg-transparent relative overflow-hidden">
+      {/* Living background orbs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-40 -right-20 w-60 h-60 bg-primary/5 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute top-1/3 -left-20 w-80 h-80 bg-orange-400/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-60 right-10 w-40 h-40 bg-yellow-400/5 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-40 -right-20 w-72 h-72 bg-primary/10 rounded-full blur-[80px] animate-orb-float" />
+        <div className="absolute top-1/3 -left-20 w-96 h-96 bg-orange-500/8 rounded-full blur-[100px] animate-orb-float-reverse" />
+        <div className="absolute bottom-60 right-10 w-48 h-48 bg-amber-500/6 rounded-full blur-[60px] animate-orb-float" style={{ animationDelay: '-3s' }} />
       </div>
       {/* PWA Install Prompt */}
       <PWAInstallPrompt />
       
       {/* Modern gradient header */}
-      <header className="sticky top-0 z-40 bg-gradient-to-r from-primary via-primary to-orange-500 shadow-lg shadow-primary/20">
-        {/* Status bar placeholder */}
-        <div className="h-6" />
-        
-        {/* Header content */}
+      <header className="sticky top-0 z-40 bg-primary/80 backdrop-blur-xl border-b border-white/[0.08] shadow-[0_4px_30px_hsl(22,90%,52%/0.15)]" style={{ WebkitBackdropFilter: 'blur(20px)' }}>
+        <div style={{ height: 'env(safe-area-inset-top, 1.5rem)' }} />
         <div className="flex items-center justify-between px-4 py-3">
-          {/* Logo with glow */}
           <div className="flex items-center">
             <div className="relative">
-              <div className="absolute inset-0 bg-white/30 rounded-full blur-md" />
+              <div className="absolute inset-0 bg-white/20 rounded-full blur-md" />
               <img src={rallyLogo} alt="R@lly" className="h-11 w-11 object-contain relative filter drop-shadow-lg brightness-0 invert" />
             </div>
           </div>
 
-          {/* Right side - notifications & avatar */}
           <div className="flex items-center gap-4">
-            {/* Notification bell */}
             <Link to="/notifications" className="relative group">
-              <div className="absolute inset-0 bg-white/20 rounded-full blur-sm group-hover:bg-white/30 transition-all" />
+              <div className="absolute inset-0 bg-white/10 rounded-full blur-sm group-hover:bg-white/20 transition-all" />
               <Bell className="h-6 w-6 text-white relative" strokeWidth={2} />
               {totalUnread > 0 && (
-                <span className="absolute -top-1 -right-1 w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center text-[10px] text-black font-bold shadow-lg animate-pulse">
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-amber-400 rounded-full flex items-center justify-center text-[10px] text-black font-bold shadow-lg animate-pulse">
                   {totalUnread > 9 ? '9+' : totalUnread}
                 </span>
               )}
             </Link>
             
-            {/* User avatar with ring */}
             <Link to="/profile" className="relative group">
-              <div className="absolute inset-0 bg-white/30 rounded-full blur-sm scale-110" />
-              <Avatar className="h-11 w-11 ring-2 ring-white/50 hover:ring-white transition-all relative shadow-lg">
+              <div className="absolute inset-0 bg-white/15 rounded-full blur-sm scale-110" />
+              <Avatar className="h-11 w-11 ring-2 ring-white/30 hover:ring-white/60 transition-all relative shadow-lg">
                 <AvatarImage src={profile?.avatar_url || undefined} />
-                <AvatarFallback className="text-sm font-bold bg-white text-primary">
+                <AvatarFallback className="text-sm font-bold bg-white/10 text-white backdrop-blur-sm">
                   {userInitials}
                 </AvatarFallback>
               </Avatar>
@@ -145,10 +138,10 @@ export default function Index() {
           <div className="grid grid-cols-2 gap-4">
             <CreateEventDialog
               trigger={
-                <Card className="group bg-gradient-to-br from-white to-secondary/50 shadow-lg hover:shadow-xl rounded-2xl border-0 overflow-hidden transition-all duration-300 hover:scale-[1.02] cursor-pointer">
+                <Card className="group glass-elevated rounded-2xl border-white/[0.08] overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:border-primary/20 cursor-pointer">
                   <CardContent className="p-6 flex flex-col items-center justify-center text-center gap-4 relative">
-                    <div className="absolute top-0 right-0 w-20 h-20 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform shadow-inner">
+                    <div className="absolute top-0 right-0 w-20 h-20 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-xl" />
+                    <div className="w-14 h-14 rounded-2xl bg-primary/15 flex items-center justify-center group-hover:scale-110 transition-transform shadow-inner border border-primary/20">
                       <Plus className="h-7 w-7 text-primary" strokeWidth={2.5} />
                     </div>
                     <span className="font-bold text-base text-foreground font-montserrat">Create Event</span>
@@ -159,11 +152,11 @@ export default function Index() {
             
             <QuickRallyDialog 
               trigger={
-                <Card className="group bg-gradient-to-br from-yellow-400 via-orange-400 to-primary shadow-lg hover:shadow-2xl hover:shadow-orange-500/30 rounded-2xl border-0 overflow-hidden cursor-pointer transition-all duration-300 hover:scale-[1.02]">
+                <Card className="group bg-gradient-to-br from-amber-500/90 via-orange-500/90 to-primary/90 shadow-xl shadow-primary/20 rounded-2xl border border-white/[0.1] overflow-hidden cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-primary/30 backdrop-blur-sm">
                   <CardContent className="p-6 flex flex-col items-center justify-center text-center gap-4 relative">
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-                    <div className="absolute bottom-0 left-0 w-16 h-16 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2" />
-                    <div className="w-14 h-14 rounded-2xl bg-white/25 backdrop-blur-sm flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg">
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-sm" />
+                    <div className="absolute bottom-0 left-0 w-16 h-16 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
+                    <div className="w-14 h-14 rounded-2xl bg-white/15 backdrop-blur-sm flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg border border-white/20">
                       <Zap className="h-8 w-8 text-white drop-shadow-lg" strokeWidth={2.5} fill="currentColor" />
                     </div>
                     <span className="font-extrabold text-base text-white font-montserrat drop-shadow-sm">Quick R@lly</span>
@@ -214,7 +207,9 @@ export default function Index() {
           {eventsLoading ? (
             <div className="space-y-3">
               {[1, 2].map((i) => (
-                <Card key={i} className="h-72 animate-pulse bg-gradient-to-r from-muted to-muted/50 border-0 rounded-2xl" />
+                <Card key={i} className="h-72 bg-white/[0.04] border-white/[0.06] rounded-2xl overflow-hidden relative">
+                  <div className="absolute inset-0 -translate-x-full animate-[shimmer-slide_2s_ease-in-out_infinite] bg-gradient-to-r from-transparent via-white/[0.04] to-transparent" />
+                </Card>
               ))}
             </div>
           ) : upcomingEvents.length > 0 ? (
@@ -224,10 +219,10 @@ export default function Index() {
               ))}
             </div>
           ) : (
-            <Card className="bg-gradient-to-br from-white to-secondary/30 shadow-lg rounded-2xl border-0 overflow-hidden">
+            <Card className="glass-elevated rounded-2xl border-white/[0.08] overflow-hidden">
               <CardContent className="p-8 text-center relative">
-                <div className="absolute top-0 left-1/2 w-32 h-32 bg-primary/5 rounded-full -translate-x-1/2 -translate-y-1/2" />
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10 mx-auto mb-4 flex items-center justify-center relative">
+                <div className="absolute top-0 left-1/2 w-32 h-32 bg-primary/5 rounded-full -translate-x-1/2 -translate-y-1/2 blur-xl" />
+                <div className="w-16 h-16 rounded-2xl bg-primary/15 mx-auto mb-4 flex items-center justify-center relative border border-primary/20">
                   <Zap className="h-8 w-8 text-primary" strokeWidth={2} />
                 </div>
                 <h4 className="font-bold text-lg mb-2 text-foreground font-montserrat">No upcoming events</h4>

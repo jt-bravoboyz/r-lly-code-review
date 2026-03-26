@@ -43,19 +43,19 @@ export const EventCard = forwardRef<HTMLAnchorElement, EventCardProps>(
     
     return (
       <Link ref={ref} to={`/events/${event.id}`}>
-        <Card className="relative bg-gradient-to-br from-white via-white to-orange-50/30 shadow-md rounded-2xl overflow-hidden group hover:shadow-xl hover:shadow-primary/15 transition-all duration-300 hover:-translate-y-1 border border-orange-100/50 ripple-container">
+        <Card className="relative bg-card/50 backdrop-blur-xl border border-white/[0.08] shadow-[0_8px_32px_hsl(0_0%_0%/0.3)] rounded-2xl overflow-hidden group hover:shadow-[0_12px_40px_hsl(0_0%_0%/0.4)] hover:border-white/[0.12] transition-all duration-300 hover:-translate-y-1 ripple-container" style={{ WebkitBackdropFilter: 'blur(20px)' }}>
           {/* Shimmer overlay on hover */}
           <div className="shimmer-overlay rounded-2xl" />
           
           <CardContent className="p-4 relative z-10">
             <div className="flex items-start gap-4">
-              {/* Left: Date badge with gradient */}
+              {/* Left: Date badge with glass effect */}
               <div className="shrink-0 text-center">
-                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary/10 via-orange-100 to-yellow-50 flex flex-col items-center justify-center shadow-sm border border-primary/10 group-hover:shadow-md group-hover:border-primary/20 transition-all duration-300">
+                <div className="w-14 h-14 rounded-xl bg-white/[0.06] backdrop-blur-sm flex flex-col items-center justify-center shadow-sm border border-white/[0.1] group-hover:border-primary/20 transition-all duration-300">
                   <span className="text-[10px] font-bold text-primary uppercase tracking-wide">
                     {format(eventDate, 'MMM')}
                   </span>
-                  <span className="text-xl font-extrabold bg-gradient-to-br from-primary to-orange-600 bg-clip-text text-transparent">
+                  <span className="text-xl font-extrabold text-gradient-rally">
                     {format(eventDate, 'd')}
                   </span>
                 </div>
@@ -70,19 +70,19 @@ export const EventCard = forwardRef<HTMLAnchorElement, EventCardProps>(
                     </h3>
                     <div className="flex items-center gap-2 mt-1 flex-wrap">
                       {event.event_type && event.event_type !== 'rally' && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-medium border border-primary/20">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-primary/15 text-primary text-[10px] font-medium border border-primary/20">
                           {getEventTypeLabel(event.event_type)}
                         </span>
                       )}
                       {event.is_barhop && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-100 to-orange-100 text-orange-600 text-[10px] font-bold border border-orange-200/50 shadow-sm">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 text-[10px] font-bold border border-amber-500/20 shadow-sm">
                           <Beer className="h-3 w-3 icon-bounce" />
                           Bar Hop
                         </span>
                       )}
                       {isLive && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 text-[10px] font-bold border border-green-200/50 shadow-sm">
-                          <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse shadow-sm shadow-green-500/50" />
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-500/15 text-green-400 text-[10px] font-bold border border-green-500/20 shadow-sm">
+                          <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse shadow-sm shadow-green-500/50" />
                           LIVE
                         </span>
                       )}
@@ -125,8 +125,8 @@ export const EventCard = forwardRef<HTMLAnchorElement, EventCardProps>(
 
               {/* Right: Arrow with enhanced animation */}
               <div className="shrink-0 self-center">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/5 to-orange-100/50 flex items-center justify-center group-hover:bg-gradient-to-br group-hover:from-primary group-hover:to-orange-500 transition-all duration-300">
-                  <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-white group-hover:translate-x-0.5 transition-all duration-300" />
+                <div className="w-8 h-8 rounded-full bg-white/[0.06] flex items-center justify-center group-hover:bg-primary/20 transition-all duration-300 border border-white/[0.08] group-hover:border-primary/30">
+                  <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all duration-300" />
                 </div>
               </div>
             </div>
