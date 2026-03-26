@@ -142,14 +142,14 @@ export default function JoinSquad() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-[100dvh] flex items-center justify-center bg-background">
         <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen pb-20 bg-gradient-to-b from-secondary/30 via-background to-secondary/20">
+    <div className="min-h-[100dvh] pb-20 bg-gradient-to-b from-secondary/30 via-background to-secondary/20">
       <Header title="Join Squad" />
       
       <main className="container py-6 max-w-md mx-auto">

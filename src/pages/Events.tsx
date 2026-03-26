@@ -27,7 +27,7 @@ export default function Events() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary via-primary to-orange-600">
+      <div className="min-h-[100dvh] flex items-center justify-center bg-gradient-to-br from-primary via-primary to-orange-600">
         <div className="flex flex-col items-center gap-4">
           <div className="w-28 h-28 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center animate-pulse shadow-2xl ring-4 ring-white/30">
             <img 
@@ -60,7 +60,7 @@ export default function Events() {
   const filteredPast = filterEvents(pastEvents);
 
   return (
-    <div className="min-h-screen pb-28 bg-gradient-to-b from-secondary/30 via-background to-secondary/20 relative overflow-hidden">
+    <div className="min-h-[100dvh] pb-28 bg-gradient-to-b from-secondary/30 via-background to-secondary/20 relative overflow-hidden">
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 -right-20 w-60 h-60 bg-primary/5 rounded-full blur-3xl animate-pulse" />

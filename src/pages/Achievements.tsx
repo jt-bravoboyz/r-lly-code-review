@@ -34,7 +34,7 @@ export default function Achievements() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-[100dvh] flex items-center justify-center bg-background">
         <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -42,7 +42,7 @@ export default function Achievements() {
 
   if (!user) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background p-6">
+      <div className="min-h-[100dvh] flex flex-col items-center justify-center bg-background p-6">
         <Trophy className="w-16 h-16 text-muted-foreground mb-4" />
         <h2 className="text-xl font-bold mb-2">Sign in to view your badges</h2>
         <p className="text-muted-foreground text-center mb-6">
@@ -58,7 +58,7 @@ export default function Achievements() {
   const earnedBadges = badges.filter(b => b.isEarned);
 
   return (
-    <div className="min-h-screen pb-24 bg-background">
+    <div className="min-h-[100dvh] pb-24 bg-background">
       <Header title="Badges & Ranks" />
       
       <main className="container py-6 space-y-6">
