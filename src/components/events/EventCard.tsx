@@ -75,7 +75,7 @@ export const EventCard = forwardRef<HTMLAnchorElement, EventCardProps>(
                         </span>
                       )}
                       {event.is_barhop && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-100 to-orange-100 text-orange-600 text-[10px] font-bold border border-orange-200/50 shadow-sm">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 text-[10px] font-bold border border-amber-500/20 shadow-sm">
                           <Beer className="h-3 w-3 icon-bounce" />
                           Bar Hop
                         </span>
