@@ -285,7 +285,7 @@ export function TurnByTurnNav({ target, onClose }: TurnByTurnNavProps) {
         <div style="
           width: 40px;
           height: 40px;
-          background: #E66210;
+          background: #F47A19;
           border-radius: 50%;
           border: 3px solid white;
           box-shadow: 0 2px 12px rgba(0,0,0,0.4);
