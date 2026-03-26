@@ -29,8 +29,8 @@ export const RALLY_ROUTE_COLORS = {
 
 /** Marker brand colors */
 export const RALLY_MARKER_COLORS = {
-  orange: '#F26C15',
-  orangeBright: '#F97316',
+  orange: '#E66210',
+  orangeBright: '#E66210',
   success: '#16A34A',
   completedBorder: '#BABABA',
 } as const;

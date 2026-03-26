@@ -182,7 +182,7 @@ export function BarHopStopsMap({ stops, eventLocation, currentStopIndex = 0 }: B
           source: 'stops-cluster',
           filter: ['has', 'point_count'],
           paint: {
-            'circle-color': '#f97316',
+            'circle-color': '#E66210',
             'circle-radius': ['step', ['get', 'point_count'], 18, 4, 24, 8, 30],
             'circle-opacity': 0.7,
           },
