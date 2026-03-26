@@ -110,7 +110,7 @@ export default function Events() {
             </Link>
           </Button>
           <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="w-[130px] rounded-xl bg-white/[0.06] backdrop-blur-sm border-white/[0.1] hover:border-white/[0.15] transition-all">
+            <SelectTrigger className="w-[130px] rounded-xl bg-background/60 dark:bg-white/[0.06] backdrop-blur-sm border-border/50 dark:border-white/[0.1] hover:border-border dark:hover:border-white/[0.15] transition-all">
               <Filter className="h-4 w-4 mr-2 text-muted-foreground" />
               <SelectValue placeholder="Filter" />
             </SelectTrigger>
