@@ -323,12 +323,15 @@ export type Database = {
         Row: {
           after_rally_location_name: string | null
           after_rally_opted_in: boolean | null
+          arrival_transport_mode: string | null
           arrived_at: string | null
           arrived_safely: boolean | null
           current_lat: number | null
           current_lng: number | null
           dd_dropoff_confirmed_at: string | null
           dd_dropoff_confirmed_by: string | null
+          departure_provider: string | null
+          departure_transport_mode: string | null
           destination_lat: number | null
           destination_lng: number | null
           destination_name: string | null
@@ -337,6 +340,7 @@ export type Database = {
           event_id: string
           going_home_at: string | null
           id: string
+          in_transit_rideshare_at: string | null
           is_dd: boolean | null
           joined_at: string | null
           last_location_update: string | null
@@ -357,12 +361,15 @@ export type Database = {
         Insert: {
           after_rally_location_name?: string | null
           after_rally_opted_in?: boolean | null
+          arrival_transport_mode?: string | null
           arrived_at?: string | null
           arrived_safely?: boolean | null
           current_lat?: number | null
           current_lng?: number | null
           dd_dropoff_confirmed_at?: string | null
           dd_dropoff_confirmed_by?: string | null
+          departure_provider?: string | null
+          departure_transport_mode?: string | null
           destination_lat?: number | null
           destination_lng?: number | null
           destination_name?: string | null
@@ -371,6 +378,7 @@ export type Database = {
           event_id: string
           going_home_at?: string | null
           id?: string
+          in_transit_rideshare_at?: string | null
           is_dd?: boolean | null
           joined_at?: string | null
           last_location_update?: string | null
@@ -391,12 +399,15 @@ export type Database = {
         Update: {
           after_rally_location_name?: string | null
           after_rally_opted_in?: boolean | null
+          arrival_transport_mode?: string | null
           arrived_at?: string | null
           arrived_safely?: boolean | null
           current_lat?: number | null
           current_lng?: number | null
           dd_dropoff_confirmed_at?: string | null
           dd_dropoff_confirmed_by?: string | null
+          departure_provider?: string | null
+          departure_transport_mode?: string | null
           destination_lat?: number | null
           destination_lng?: number | null
           destination_name?: string | null
@@ -405,6 +416,7 @@ export type Database = {
           event_id?: string
           going_home_at?: string | null
           id?: string
+          in_transit_rideshare_at?: string | null
           is_dd?: boolean | null
           joined_at?: string | null
           last_location_update?: string | null
