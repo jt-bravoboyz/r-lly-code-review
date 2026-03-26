@@ -16,21 +16,20 @@ export function Header({ title, icon, afterRallyMode }: HeaderProps) {
   const { profile } = useAuth();
 
   return (
-    <header className={`sticky top-0 z-40 shadow-lg ${
+    <header className={`sticky top-0 z-40 ${
       afterRallyMode 
-        ? 'bg-gradient-to-r from-[hsl(270,60%,25%)] via-[hsl(270,55%,30%)] to-[hsl(280,60%,28%)] shadow-purple-500/20' 
-        : 'bg-gradient-to-r from-primary via-primary to-orange-500 shadow-primary/20'
-    }`}>
+        ? 'bg-gradient-to-r from-[hsl(270,60%,15%/0.85)] via-[hsl(270,55%,18%/0.85)] to-[hsl(280,60%,16%/0.85)] shadow-[0_4px_30px_hsl(270,60%,30%/0.2)]' 
+        : 'bg-gradient-to-r from-primary/90 via-primary/85 to-orange-500/90 shadow-[0_4px_30px_hsl(22,90%,52%/0.2)]'
+    } backdrop-blur-xl border-b border-white/[0.08]`} style={{ WebkitBackdropFilter: 'blur(20px)' }}>
       <div style={{ height: 'env(safe-area-inset-top, 1.5rem)' }} />
       <div className="flex items-center justify-between px-4 py-3">
         <Link to="/" className="relative">
-          <div className={`absolute inset-0 rounded-full blur-sm ${afterRallyMode ? 'bg-purple-300/30' : 'bg-white/30'}`} />
+          <div className={`absolute inset-0 rounded-full blur-md ${afterRallyMode ? 'bg-purple-400/20' : 'bg-white/20'}`} />
           <img src={rallyLogo} alt="R@lly" className="h-11 w-11 object-contain relative filter drop-shadow-lg brightness-0 invert" />
         </Link>
         
-        {/* After R@lly Badge - shows in center when in After R@lly mode */}
         {afterRallyMode ? (
-          <Badge className="bg-purple-600/80 text-white border-purple-400/50 px-3 py-1.5 text-sm font-semibold shadow-lg">
+          <Badge className="bg-purple-500/30 text-purple-100 border-purple-400/30 px-3 py-1.5 text-sm font-semibold shadow-lg backdrop-blur-sm">
             <Moon className="h-4 w-4 mr-1.5" />
             After R@lly
           </Badge>
@@ -42,13 +41,13 @@ export function Header({ title, icon, afterRallyMode }: HeaderProps) {
         ) : null}
         
         <Link to="/profile" className="relative group">
-          <div className={`absolute inset-0 rounded-full blur-sm scale-110 ${afterRallyMode ? 'bg-purple-300/30' : 'bg-white/30'}`} />
+          <div className={`absolute inset-0 rounded-full blur-md scale-110 ${afterRallyMode ? 'bg-purple-400/20' : 'bg-white/20'}`} />
           <Avatar className={`h-11 w-11 ring-2 hover:ring-white transition-all relative shadow-lg ${
-            afterRallyMode ? 'ring-purple-300/50' : 'ring-white/50'
+            afterRallyMode ? 'ring-purple-300/40' : 'ring-white/40'
           }`}>
             <AvatarImage src={profile?.avatar_url || undefined} />
             <AvatarFallback className={`text-sm font-bold ${
-              afterRallyMode ? 'bg-purple-200 text-purple-800' : 'bg-white text-primary'
+              afterRallyMode ? 'bg-purple-900/80 text-purple-200' : 'bg-white/10 text-white backdrop-blur-sm'
             }`}>
               {profile?.display_name?.charAt(0)?.toUpperCase() || '?'}
             </AvatarFallback>

@@ -22,9 +22,8 @@ export function BottomNav() {
   const totalUnread = unreadNotifications + pendingInviteCount;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-background via-background to-background/95 backdrop-blur-lg border-t border-border shadow-[0_-4px_20px_rgba(0,0,0,0.08)]" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
-      {/* Extra padding for Android navigation buttons and iPhone home bar */}
-      <div className="container flex h-20 pb-4 items-center justify-around">
+    <nav className="fixed bottom-4 left-4 right-4 z-50 rounded-2xl bg-card/60 backdrop-blur-xl border border-white/[0.08] shadow-[0_8px_32px_hsl(0_0%_0%/0.4),inset_0_1px_0_hsl(0_0%_100%/0.06)]" style={{ paddingBottom: 'env(safe-area-inset-bottom)', WebkitBackdropFilter: 'blur(20px)' }}>
+      <div className="flex h-16 items-center justify-around px-2">
         {navItems.map(({ path, icon: Icon, label, tutorialId }) => {
           const isActive = location.pathname === path || 
             (path !== '/' && location.pathname.startsWith(path));
@@ -46,7 +45,7 @@ export function BottomNav() {
                   "p-3 rounded-2xl transition-all duration-300 relative",
                   isActive
                     ? "bg-gradient-to-br from-primary to-orange-500 shadow-lg shadow-primary/30"
-                    : "bg-transparent hover:bg-muted"
+                    : "bg-transparent hover:bg-white/[0.06]"
                 )}
               >
                 <Icon
@@ -61,7 +60,6 @@ export function BottomNav() {
                   <span
                     className={cn(
                       "absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full flex items-center justify-center text-[10px] font-bold shadow-lg",
-                      // Use semantic tokens (no custom colors)
                       "bg-destructive text-destructive-foreground"
                     )}
                     aria-label={`${totalUnread} unread notifications`}
