@@ -1738,3 +1738,50 @@
 .animate-card-float {
   animation: card-float 4s ease-in-out infinite;
 }
+
+/* Badge System — Futuristic Animations */
+@keyframes badge-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+
+@keyframes badge-ring-idle {
+  0%, 100% { opacity: 0.15; transform: scale(1); }
+  50% { opacity: 0.3; transform: scale(1.05); }
+}
+
+@keyframes badge-ring-active {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.55; transform: scale(1.08); }
+}
+
+@keyframes badge-shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes badge-active-ring {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.06); }
+}
+
+.animate-badge-breathe {
+  animation: badge-breathe 3s ease-in-out infinite;
+}
+
+.animate-badge-ring-idle {
+  animation: badge-ring-idle 3.5s ease-in-out infinite;
+}
+
+.animate-badge-ring-active {
+  animation: badge-ring-active 2s ease-in-out infinite;
+}
+
+.animate-badge-shimmer {
+  background-size: 200% 100%;
+  animation: badge-shimmer 5s linear infinite;
+}
+
+.animate-badge-active-ring {
+  animation: badge-active-ring 2.5s ease-in-out infinite;
+}

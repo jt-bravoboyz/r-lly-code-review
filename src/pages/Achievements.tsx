@@ -71,6 +71,7 @@ export default function Achievements() {
                 tier={currentTier} 
                 size="xl" 
                 showGlow 
+                isCurrent
               />
 
               {/* Tier Name */}
