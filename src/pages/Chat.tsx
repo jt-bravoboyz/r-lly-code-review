@@ -24,7 +24,7 @@ export default function Chat() {
   } | null>(null);
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    return <div className="min-h-[100dvh] flex items-center justify-center">Loading...</div>;
   }
 
   if (!user) {
@@ -35,7 +35,7 @@ export default function Chat() {
   const hasEventChats = eventChats && eventChats.length > 0;
 
   return (
-    <div className="min-h-screen pb-20">
+    <div className="min-h-[100dvh] pb-20">
       <Header title="Chat" />
       
       <main className="container py-6 space-y-6">

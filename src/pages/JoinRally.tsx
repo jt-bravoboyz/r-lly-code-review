@@ -189,7 +189,7 @@ export default function JoinRally() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-[100dvh] flex items-center justify-center bg-background">
         <div className="w-24 h-24 rounded-full bg-rally-light flex items-center justify-center animate-pulse">
           <img src={rallyLogo} alt="R@lly" className="w-14 h-14 object-contain" />
         </div>
@@ -198,7 +198,7 @@ export default function JoinRally() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-[100dvh] bg-background">
       {/* Header */}
       <header className="sticky top-0 z-40 bg-white shadow-sm">
         <div className="h-6" />

@@ -19,7 +19,7 @@ export default function Legal() {
   const [openDialog, setOpenDialog] = useState<LegalDocumentType | null>(null);
 
   return (
-    <div className="min-h-screen pb-28 bg-gradient-to-b from-secondary/30 via-background to-secondary/20 relative overflow-hidden">
+    <div className="min-h-[100dvh] pb-28 bg-gradient-to-b from-secondary/30 via-background to-secondary/20 relative overflow-hidden">
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 -right-20 w-60 h-60 bg-primary/5 rounded-full blur-3xl animate-pulse" />

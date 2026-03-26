@@ -49,7 +49,7 @@ export default function SquadDetail() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-background to-muted flex items-center justify-center">
+      <div className="min-h-[100dvh] bg-gradient-to-b from-background to-muted flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     );
@@ -57,7 +57,7 @@ export default function SquadDetail() {
 
   if (!squad) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-background to-muted flex flex-col items-center justify-center p-4">
+      <div className="min-h-[100dvh] bg-gradient-to-b from-background to-muted flex flex-col items-center justify-center p-4">
         <Users className="h-12 w-12 text-muted-foreground mb-4" />
         <h1 className="text-xl font-bold mb-2">Squad not found</h1>
         <Button onClick={() => navigate('/squads')}>Back to Squads</Button>
@@ -156,7 +156,7 @@ export default function SquadDetail() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted pb-24">
+    <div className="min-h-[100dvh] bg-gradient-to-b from-background to-muted pb-24">
       {/* Header */}
       <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-md border-b">
         <div className="flex items-center gap-3 p-4">

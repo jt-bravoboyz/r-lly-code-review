@@ -19,7 +19,7 @@ export default function Notifications() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-primary">
+      <div className="min-h-[100dvh] flex items-center justify-center bg-primary">
         <div className="flex flex-col items-center gap-4">
           <div className="w-24 h-24 rounded-full bg-rally-cream flex items-center justify-center">
             <img src={rallyLogo} alt="R@lly" className="w-14 h-14 object-contain" />
@@ -55,7 +55,7 @@ export default function Notifications() {
   const totalUnread = unreadCount + pendingInviteCount;
 
   return (
-    <div className="min-h-screen pb-24 bg-background">
+    <div className="min-h-[100dvh] pb-24 bg-background">
       {/* Custom Header */}
       <header className="sticky top-0 z-40 bg-white shadow-sm">
         <div className="h-6" />
