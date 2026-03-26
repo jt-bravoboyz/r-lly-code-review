@@ -209,6 +209,7 @@ export default function Index() {
               {[1, 2].map((i) => (
                 <Card key={i} className="h-72 bg-white/[0.04] border-white/[0.06] rounded-2xl overflow-hidden relative">
                   <div className="absolute inset-0 -translate-x-full animate-[shimmer-slide_2s_ease-in-out_infinite] bg-gradient-to-r from-transparent via-white/[0.04] to-transparent" />
+                </Card>
               ))}
             </div>
           ) : upcomingEvents.length > 0 ? (
