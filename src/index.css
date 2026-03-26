@@ -153,7 +153,7 @@
   .timeline-slider-track {
     background: linear-gradient(
       to right,
-      hsl(27 100% 55%) 0%,      /* R@lly Orange */
+      hsl(22 90% 52%) 0%,       /* R@lly Orange */
       hsl(270 60% 45%) 100%     /* Purple */
     );
   }
