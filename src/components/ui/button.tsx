@@ -5,16 +5,16 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-semibold ring-offset-background transition-all duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 active:scale-[0.97]",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-semibold ring-offset-background transition-[transform,box-shadow,border-color,filter,background] duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 relative overflow-hidden hover:-translate-y-[1px] active:scale-[0.96]",
   {
     variants: {
       variant: {
-        default: "btn-gradient-primary text-white shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/35 hover:brightness-110 border border-primary/30",
-        destructive: "bg-gradient-to-b from-destructive to-destructive/80 text-destructive-foreground shadow-lg shadow-destructive/20 hover:shadow-xl hover:brightness-110 border border-destructive/30",
-        outline: "border border-white/[0.12] bg-white/[0.04] backdrop-blur-xl hover:bg-white/[0.08] hover:border-primary/30 text-foreground shadow-sm hover:shadow-md",
-        secondary: "bg-white/[0.06] backdrop-blur-xl border border-white/[0.1] text-foreground shadow-sm hover:bg-white/[0.10] hover:shadow-md",
+        default: "btn-gradient-primary text-white shadow-[0_4px_20px_hsl(22_90%_52%/0.3),inset_0_1px_0_rgba(255,255,255,0.2)] hover:shadow-[0_8px_30px_hsl(22_90%_52%/0.4),inset_0_1px_0_rgba(255,255,255,0.25)] hover:brightness-110 border border-white/20",
+        destructive: "bg-gradient-to-b from-destructive/90 to-destructive/75 backdrop-blur-sm text-destructive-foreground shadow-[0_4px_20px_hsl(0_84%_50%/0.3),inset_0_1px_0_rgba(255,255,255,0.15)] hover:shadow-[0_8px_28px_hsl(0_84%_50%/0.4),inset_0_1px_0_rgba(255,255,255,0.2)] hover:brightness-110 border border-white/15",
+        outline: "btn-glass text-foreground hover:border-primary/30",
+        secondary: "bg-white/[0.06] backdrop-blur-xl border border-white/[0.1] text-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] hover:bg-white/[0.10] hover:shadow-[0_4px_16px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.08)]",
         ghost: "hover:bg-white/[0.06] hover:text-foreground text-foreground/80",
-        link: "text-primary underline-offset-4 hover:underline",
+        link: "text-primary underline-offset-4 hover:underline hover:translate-y-0",
       },
       size: {
         default: "h-10 px-5 py-2",
