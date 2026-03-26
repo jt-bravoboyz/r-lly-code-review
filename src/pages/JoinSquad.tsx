@@ -47,42 +47,33 @@ export default function JoinSquad() {
 
       try {
         const { data, error: fetchError } = await supabase
-          .from('squad_invites')
-          .select(`
-            id,
-            squad_id,
-            invite_code,
-            status,
-            expires_at,
-            squad:squads(
-              id,
-              name,
-              owner:safe_profiles!squads_owner_id_fkey(id, display_name, avatar_url)
-            )
-          `)
-          .eq('invite_code', code.toUpperCase())
-          .maybeSingle();
+          .rpc('get_squad_invite_preview', { p_invite_code: code });
 
         if (fetchError) throw fetchError;
 
-        if (!data) {
+        if (!data || data.length === 0) {
           setError('Invite not found or expired');
           setIsLoading(false);
           return;
         }
 
-        // Check if expired
-        if (new Date(data.expires_at) < new Date()) {
-          setError('This invite has expired');
-          setIsLoading(false);
-          return;
-        }
-
-        // Transform the data to match our interface
-        const inviteData = {
-          ...data,
-          squad: Array.isArray(data.squad) ? data.squad[0] : data.squad,
-        } as SquadInvite;
+        const row = data[0];
+        const inviteData: SquadInvite = {
+          id: row.id,
+          squad_id: row.squad_id,
+          invite_code: row.invite_code,
+          status: row.status,
+          expires_at: row.expires_at,
+          squad: {
+            id: row.squad_id,
+            name: row.squad_name,
+            owner: {
+              id: '',
+              display_name: row.owner_display_name,
+              avatar_url: row.owner_avatar_url,
+            },
+          },
+        };
 
         setInvite(inviteData);
       } catch (err) {
