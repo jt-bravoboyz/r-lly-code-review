@@ -135,20 +135,14 @@
   .border-rally-gray { @apply border-border; }
 
   /* Living background - slow ambient gradient drift */
-  .dark body,
-  body.dark,
-  .dark {
-    background: linear-gradient(135deg, hsl(220 20% 6%) 0%, hsl(225 22% 8%) 50%, hsl(220 18% 5%) 100%) !important;
+  body {
+    background: linear-gradient(135deg, hsl(25 30% 96%) 0%, hsl(28 25% 95%) 50%, hsl(25 28% 97%) 100%) !important;
     background-size: 400% 400% !important;
     animation: ambient-drift 20s ease-in-out infinite;
   }
-
-  /* Light mode background - warm off-white with subtle warmth */
-  .light body,
-  body.light,
-  .light,
-  :root:not(.dark) body {
-    background: linear-gradient(135deg, hsl(25 30% 96%) 0%, hsl(28 25% 95%) 50%, hsl(25 28% 97%) 100%) !important;
+  .dark body,
+  .dark {
+    background: linear-gradient(135deg, hsl(220 20% 6%) 0%, hsl(225 22% 8%) 50%, hsl(220 18% 5%) 100%) !important;
     background-size: 400% 400% !important;
     animation: ambient-drift 20s ease-in-out infinite;
   }
