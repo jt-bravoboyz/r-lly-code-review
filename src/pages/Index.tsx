@@ -129,7 +129,7 @@ export default function Index() {
         <section className="space-y-5">
           <div className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-primary" />
-            <h2 className="text-2xl font-bold text-foreground font-montserrat tracking-tight">
+            <h2 className="text-2xl font-bold font-montserrat tracking-tight animate-text-shimmer bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">
               Ready to R@lly?
             </h2>
           </div>
@@ -194,7 +194,7 @@ export default function Index() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Calendar className="h-5 w-5 text-primary" />
-              <h3 className="text-xl font-bold text-foreground font-montserrat">Upcoming</h3>
+              <h3 className="text-xl font-bold font-montserrat animate-text-shimmer bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">Upcoming</h3>
             </div>
             <Button variant="ghost" size="sm" asChild className="text-primary hover:text-primary/80 font-bold font-montserrat hover:bg-primary/10">
               <Link to="/events" className="flex items-center gap-1">
@@ -239,7 +239,7 @@ export default function Index() {
             <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <History className="h-5 w-5 text-muted-foreground" />
-              <h3 className="text-xl font-bold text-foreground font-montserrat">Past R@llies</h3>
+              <h3 className="text-xl font-bold font-montserrat animate-text-shimmer bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">Past R@llies</h3>
             </div>
             </div>
 
