@@ -45,7 +45,7 @@ export default function AdminDashboard() {
 
           {/* Partner / Technical toggle */}
           <div className="ml-auto flex items-center gap-1 bg-muted rounded-full p-0.5">
-            {(['partner', 'technical'] as const).map(mode => (
+            {(['partner', 'technical', 'commercial'] as const).map(mode => (
               <button
                 key={mode}
                 onClick={() => setViewMode(mode)}
