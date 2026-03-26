@@ -107,7 +107,7 @@ export default function Squads() {
                 ))}
               </div>
             ) : (
-              <Card className="bg-gradient-to-br from-white to-secondary/30 shadow-lg rounded-2xl border-0 overflow-hidden">
+              <Card className="bg-gradient-to-br from-card to-card/80 dark:from-card/90 dark:to-card/60 shadow-lg dark:shadow-[0_8px_32px_hsl(var(--primary)/0.06)] rounded-2xl border-0 dark:border dark:border-white/[0.06] overflow-hidden backdrop-blur-xl">
                 <CardContent className="p-8 text-center relative">
                   <div className="absolute top-0 left-1/2 w-32 h-32 bg-primary/5 rounded-full -translate-x-1/2 -translate-y-1/2" />
                   <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/15 mx-auto mb-4 flex items-center justify-center relative">
