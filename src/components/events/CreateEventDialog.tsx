@@ -370,6 +370,34 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
 
                 {/* Bar Hop Mode removed from creation — now available only in After R@lly */}
 
+                {/* Cover Charge */}
+                <FormField
+                  control={form.control}
+                  name="cover_charge"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-1">
+                        <DollarSign className="h-3.5 w-3.5" />
+                        Cover Charge ($)
+                      </FormLabel>
+                      <FormControl>
+                        <Input type="number" step="0.01" min="0" placeholder="0.00" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Split Check */}
+                <div className="flex items-center justify-between py-2">
+                  <Label htmlFor="split-check" className="text-sm">Split Check</Label>
+                  <Switch
+                    id="split-check"
+                    checked={form.watch('split_check')}
+                    onCheckedChange={(v) => form.setValue('split_check', v)}
+                  />
+                </div>
+
                 {/* Staged media picker — files held locally until submit */}
                 <StagedMediaPicker stagedFiles={stagedMedia} onChange={setStagedMedia} />
               </CollapsibleContent>
