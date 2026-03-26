@@ -92,7 +92,7 @@ export function AttendeeMap({ eventId, attendees, eventLocation }: AttendeeMapPr
 
     sharingAttendees.forEach((attendee) => {
       if (attendee.current_lat && attendee.current_lng) {
-        markers.push(`pin-s+F26C15(${attendee.current_lng},${attendee.current_lat})`);
+        markers.push(`pin-s+E66210(${attendee.current_lng},${attendee.current_lat})`);
       }
     });
 
