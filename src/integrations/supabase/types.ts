@@ -3021,6 +3021,20 @@ export type Database = {
           status: string
         }[]
       }
+      get_squad_invites_safe: {
+        Args: { p_squad_id: string }
+        Returns: {
+          contact_value: string
+          created_at: string
+          expires_at: string
+          id: string
+          invite_code: string
+          invite_type: string
+          invited_by: string
+          squad_id: string
+          status: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
