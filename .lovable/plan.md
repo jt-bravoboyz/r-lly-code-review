@@ -1,166 +1,117 @@
 
 
-# Security Fixes — 5 Findings
+# Final System Hardening & Dual-Mode Admin Portal
 
-## Finding 1: squad_invites contact_value exposed to all authenticated users
+## Section 1: Dual-Mode Admin Portal
 
-The current `"Authenticated users can view pending invites"` policy lets every authenticated user read all pending invites platform-wide, including phone numbers in `contact_value`.
+### 1A. Partner/Technical Toggle (AdminDashboard.tsx)
+- Add `useState<'partner' | 'technical'>` toggle to the admin header
+- Render a segmented toggle button (e.g., two pills) next to the "Phase 6" badge
+- Conditionally render Partner sections or Technical sections based on state
 
-**Fix:** Restrict SELECT to users who are the inviter, a squad member/owner, or whose own contact matches.
+### 1B. Partner View
+- Show: Growth Metrics, Safety Rate, K-Factor (invite copies / events created), Founder Panel
+- Filter out test data: Pass admin emails list (`jt@bravoboyz.com`, `eric@bravoboyz.com`, `nick@bravoboyz.com`) to `useAdminAnalytics` and add a `filterAdminData` param
+- In the hook, exclude `analytics_events` and `event_attendees` where `user_id` matches admin profile IDs
+- Compute K-Factor = `inviteCopied / totalEventsCreated` and display as a new stat card
 
-```sql
-DROP POLICY "Authenticated users can view pending invites" ON public.squad_invites;
+### 1C. Technical View
+- Show: Funnel Chart (full 9-step), Live Activity Feed, Feature Flags
+- Add new **Error Log Feed** component: query `analytics_events` where `event_name = 'error'` (or create a new table — but simpler to filter existing events and add a `trackEvent('client_error', ...)` call to the global error boundary)
+- Add **Onboarding Drop-off** section: show funnel steps `signup → profile_created → first_event_created → first_event_joined` using existing analytics data
 
-CREATE POLICY "Relevant users can view pending invites"
-ON public.squad_invites
-FOR SELECT
-TO authenticated
-USING (
-  status = 'pending'
-  AND expires_at > now()
-  AND (
-    -- Inviter can see their own invites
-    invited_by IN (SELECT id FROM profiles WHERE user_id = auth.uid())
-    -- Squad members/owners can see invites for their squad
-    OR public.is_squad_member_or_owner(squad_id)
-    -- Anyone with the exact invite code can view (for join flow — matched by code in WHERE clause)
-    OR true  -- see note below
-  )
-);
-```
-
-**Important nuance:** The `JoinSquad` page queries by `invite_code` — it needs to read exactly one row. We can't filter by user contact since invite codes are shareable links. The safest approach: keep the policy permissive for code-based lookups but **drop `contact_value` from the query** in the JoinSquad page (it doesn't use it). Alternatively, restrict to squad members + inviter + a broad authenticated filter (since invite codes are the access control, not the policy).
-
-**Revised approach:** Restrict to inviter or squad member/owner only. The JoinSquad page query joins through `squads` via `safe_profiles` — it needs the squad name, not `contact_value`. The query already filters by `invite_code`, so we need the row to be readable. We'll keep a broad authenticated SELECT but create a **database view** that excludes `contact_value`, or simply restrict the policy to squad members and inviters, and update the JoinSquad page to use an RPC function instead.
-
-**Simplest safe fix:**
-```sql
-DROP POLICY "Authenticated users can view pending invites" ON public.squad_invites;
-
--- Squad owners, members, and the inviter can see full invite details
-CREATE POLICY "Squad members can view invites"
-ON public.squad_invites
-FOR SELECT
-TO authenticated
-USING (
-  invited_by IN (SELECT id FROM profiles WHERE user_id = auth.uid())
-  OR public.is_squad_member_or_owner(squad_id)
-);
-```
-
-Then create a **security definer function** for the JoinSquad page to look up an invite by code (returns only safe fields, no `contact_value`):
-
-```sql
-CREATE OR REPLACE FUNCTION public.get_squad_invite_preview(p_invite_code text)
-RETURNS TABLE(
-  id uuid, squad_id uuid, invite_code text, status text, expires_at timestamptz,
-  squad_name text, owner_display_name text, owner_avatar_url text
-)
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = public
-AS $$
-BEGIN
-  RETURN QUERY
-  SELECT si.id, si.squad_id, si.invite_code, si.status, si.expires_at,
-         s.name, sp.display_name, sp.avatar_url
-  FROM squad_invites si
-  JOIN squads s ON s.id = si.squad_id
-  LEFT JOIN safe_profiles sp ON sp.id = s.owner_id
-  WHERE UPPER(si.invite_code) = UPPER(p_invite_code)
-    AND si.status = 'pending'
-    AND si.expires_at > now();
-END;
-$$;
-```
-
-Update `JoinSquad.tsx` to call this RPC instead of querying `squad_invites` directly.
-
-## Finding 2: Any authenticated user can join any squad with a pending invite
-
-The `squad_members` INSERT policy uses `is_valid_squad_invite(squad_id)` which only checks if **any** pending invite exists — not that the user has the code.
-
-**Fix:** Replace `is_valid_squad_invite` usage in the INSERT policy. Instead, create a **security definer function** `join_squad_by_invite_code` that:
-1. Validates the invite code exists and is pending/not expired
-2. Inserts the caller into `squad_members`
-3. Returns success/failure
-
-```sql
-CREATE OR REPLACE FUNCTION public.join_squad_by_invite_code(p_invite_code text)
-RETURNS jsonb
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = public
-AS $$
-DECLARE
-  v_profile_id uuid;
-  v_squad_id uuid;
-  v_invite_id uuid;
-BEGIN
-  SELECT id INTO v_profile_id FROM profiles WHERE user_id = auth.uid();
-  IF v_profile_id IS NULL THEN
-    RETURN jsonb_build_object('error', 'Profile not found');
-  END IF;
-
-  SELECT id, squad_id INTO v_invite_id, v_squad_id
-  FROM squad_invites
-  WHERE UPPER(invite_code) = UPPER(p_invite_code)
-    AND status = 'pending' AND expires_at > now()
-  LIMIT 1;
-
-  IF v_squad_id IS NULL THEN
-    RETURN jsonb_build_object('error', 'Invalid or expired invite');
-  END IF;
-
-  -- Check not already a member
-  IF EXISTS (SELECT 1 FROM squad_members WHERE squad_id = v_squad_id AND profile_id = v_profile_id) THEN
-    RETURN jsonb_build_object('error', 'Already a member');
-  END IF;
-
-  INSERT INTO squad_members (squad_id, profile_id)
-  VALUES (v_squad_id, v_profile_id);
-
-  RETURN jsonb_build_object('success', true, 'squad_id', v_squad_id);
-END;
-$$;
-```
-
-Then drop the vulnerable INSERT policy and replace with one that only allows the RPC path (or remove the direct INSERT policy entirely since the RPC uses SECURITY DEFINER):
-
-```sql
-DROP POLICY IF EXISTS "Users can join via valid invite" ON public.squad_members;
-```
-
-Update `JoinSquad.tsx` to call `supabase.rpc('join_squad_by_invite_code', { p_invite_code: code })` instead of direct insert.
-
-## Finding 3: Barhop stops publicly readable
-
-```sql
-DROP POLICY "Anyone can view barhop stops" ON public.barhop_stops;
-
-CREATE POLICY "Event members can view barhop stops"
-ON public.barhop_stops
-FOR SELECT
-TO authenticated
-USING (public.is_event_member(event_id));
-```
-
-## Finding 4: Capacitor CLI — already at ^8.0.1
-
-Scanner is using cached data. Already resolved.
-
-## Finding 5: Leaked Password Protection
-
-This is a backend auth setting, not a code change. User can enable it via backend settings.
+### 1D. Empty States
+- For every metric card/section that shows `0` or empty arrays, render a styled placeholder:
+  - Light illustration icon (e.g., `BarChart3` from lucide) with muted text "Waiting for data..."
+  - Use `Skeleton` components for loading states
+- Apply to: StatCards, TopHosts list, Feedback list, Activity Feed, Funnel bars
 
 ---
 
-## Summary
+## Section 2: Stability Fixes
 
-| File/Target | Change |
-|---|---|
-| Migration: `squad_invites` SELECT policy | Restrict to inviter + squad members |
-| Migration: new `get_squad_invite_preview` RPC | Safe invite lookup without contact_value |
-| Migration: new `join_squad_by_invite_code` RPC | Validates invite code before join |
-| Migration: drop `Users can join via valid invite` on `squad_members` | Remove vulnerable INSERT policy |
-| Migration: `barhop_stops` SELECT policy | Restrict to authenticated event members |
-| `src/pages/JoinSquad.tsx` | Use RPCs instead of direct queries/inserts |
+### 2A. Analytics Double-Fire Guard
+- The `trackEvent` calls already use `useRef` guards in `EventDetail.tsx` (`hasTrackedViewRef`) and `HostSafetyDashboard.tsx` (`hasTrackedOpenRef`)
+- No `useAnalytics.ts` hook exists — the user likely means the existing ref pattern. Verify all `trackEvent` call sites use refs where needed (mutations like `event_created` fire in `onSuccess` callbacks which are naturally single-fire)
+- No changes needed beyond confirming existing guards are sufficient
 
-Three migrations + one frontend file update. No other code changes needed.
+### 2B. Join Button Fix (JoinSquad.tsx)
+- Already uses `isJoining` state with `disabled={isJoining}` and shows `<Loader2>` spinner
+- This is already implemented correctly — no change needed
+
+---
+
+## Section 3: Audit Fixes (7 Items)
+
+### 3.1 Analytics Bypass (`src/lib/analytics.ts`)
+Replace the production-only guard:
+```typescript
+// Before:
+if (!import.meta.env.PROD) return;
+
+// After:
+const host = window.location.hostname;
+const isAllowed = import.meta.env.PROD
+  || host.endsWith('.lovable.app')
+  || host.endsWith('.lovableproject.com');
+if (!isAllowed) return;
+```
+
+### 3.2 Full Funnel (`src/hooks/useAdminData.tsx`)
+Add `'invite_link_copied'` and `'rally_home_opened'` to the `funnelSteps` array (line 36-39).
+
+### 3.3 PWA Icons (`public/manifest.json`)
+Fix the 512px icon entry — currently reuses `rally-icon-192.png` with `"sizes": "512x512"`. Check if a 512px icon exists; if not, reference the 1024px icon scaled down or keep the 192px but with correct size declaration. Best fix: reference `rally-icon-1024.png` for the 512px entry.
+
+### 3.4 Capacitor Config (`capacitor.config.ts`)
+Wrap the `server` block in a development-only guard:
+```typescript
+const config: CapacitorConfig = {
+  appId: 'app.lovable.30a08aa7cdeb4250a60c0605f836113c',
+  appName: 'R@lly',
+  webDir: 'dist',
+  ...(process.env.NODE_ENV !== 'production' ? {
+    server: {
+      androidScheme: 'https',
+      url: 'https://30a08aa7-cdeb-4250-a60c-0605f836113c.lovableproject.com?forceHideBadge=true',
+      cleartext: true,
+    }
+  } : {}),
+};
+```
+
+### 3.5 BottomNav Cleanup (`src/components/layout/BottomNav.tsx`)
+Remove line 82: `<div className="h-safe-area-inset-bottom bg-card" />` — the nav already has `style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}` on the parent.
+
+### 3.6 Safety View RLS
+Run a migration to enable RLS and add a SELECT policy on `event_safety_summary`:
+```sql
+ALTER VIEW public.event_safety_summary SET (security_invoker = on);
+CREATE POLICY "Event members can view safety summary"
+ON public.event_safety_summary FOR SELECT TO authenticated
+USING (public.is_event_member(event_id));
+```
+Note: If `event_safety_summary` is a view (not a table), Postgres doesn't support RLS on views directly. Will check if it's a materialized view or regular view and adjust accordingly — likely need to convert to a function or ensure `security_invoker = true` is already set.
+
+### 3.7 Row Limits (`src/hooks/useAdminData.tsx`)
+Replace unbounded `.select()` calls with `.range(0, 4999)` or paginated fetches for `analytics_events`, `events`, `event_attendees`. For the admin dashboard, use `.range(0, 9999)` to handle up to 10k rows, which is sufficient for Founder 25 scale.
+
+---
+
+## Files Changed
+
+| File | Change |
+|------|--------|
+| `src/pages/AdminDashboard.tsx` | Add Partner/Technical toggle, conditional rendering, empty states |
+| `src/hooks/useAdminData.tsx` | Add funnel steps, admin email filtering, row limit fix, K-Factor |
+| `src/components/admin/AdminEmptyState.tsx` | **New** — reusable empty state component |
+| `src/components/admin/ErrorLogFeed.tsx` | **New** — error log panel for Technical view |
+| `src/components/admin/OnboardingDropoff.tsx` | **New** — onboarding funnel for Technical view |
+| `src/lib/analytics.ts` | Allow preview/staging URLs |
+| `src/components/layout/BottomNav.tsx` | Remove redundant safe-area div |
+| `public/manifest.json` | Fix 512px icon reference |
+| `capacitor.config.ts` | Add production guard for server block |
+| `supabase/migrations/` | RLS for event_safety_summary (if applicable) |
+
+13 changes across ~10 files. No user-facing UI flow changes. Admin-only enhancements + stability/audit fixes.
 
