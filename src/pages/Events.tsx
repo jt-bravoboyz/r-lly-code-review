@@ -99,7 +99,7 @@ export default function Events() {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input 
               placeholder="Search rally..." 
-              className="pl-11 rounded-xl bg-white/[0.06] backdrop-blur-sm border-white/[0.1] shadow-sm focus:shadow-md focus:border-primary/30 transition-all"
+              className="pl-11 rounded-xl bg-background/60 dark:bg-white/[0.06] backdrop-blur-sm border-border/50 dark:border-white/[0.1] shadow-sm focus:shadow-md focus:border-primary/30 transition-all"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
