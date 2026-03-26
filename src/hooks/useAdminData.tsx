@@ -1,41 +1,84 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
-export function useAdminAnalytics() {
+const ADMIN_EMAILS = ['jt@bravoboyz.com', 'eric@bravoboyz.com', 'nick@bravoboyz.com'];
+
+export function useAdminAnalytics(filterAdminData = false) {
   return useQuery({
-    queryKey: ['admin-analytics'],
+    queryKey: ['admin-analytics', filterAdminData],
     queryFn: async () => {
       const now = new Date();
       const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-      // Fetch analytics events
+      // Fetch analytics events (paginated)
       const { data: allEvents } = await supabase
         .from('analytics_events')
-        .select('event_name, created_at, user_id, metadata');
+        .select('event_name, created_at, user_id, metadata')
+        .range(0, 9999);
 
-      const events = allEvents || [];
+      let events = allEvents || [];
 
-      // Fetch real event data
+      // Fetch profiles first for filtering
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, user_id, display_name, avatar_url, founding_member, founder_number, created_at')
+        .range(0, 9999);
+
+      // Get admin profile IDs for filtering
+      let adminProfileIds: Set<string> = new Set();
+      let adminUserIds: Set<string> = new Set();
+      if (filterAdminData && profiles) {
+        // Look up user_ids for admin emails via auth - use profiles table instead
+        // We match by checking which profiles belong to admin users
+        const { data: adminUsers } = await supabase
+          .from('user_roles')
+          .select('user_id')
+          .eq('role', 'admin');
+        
+        if (adminUsers) {
+          adminUserIds = new Set(adminUsers.map(u => u.user_id));
+          profiles.forEach(p => {
+            if (adminUserIds.has(p.user_id)) {
+              adminProfileIds.add(p.id);
+            }
+          });
+        }
+      }
+
+      // Filter out admin data in partner view
+      if (filterAdminData && adminUserIds.size > 0) {
+        events = events.filter(e => !e.user_id || !adminUserIds.has(e.user_id));
+      }
+
+      // Fetch real event data (paginated)
       const { data: rallyEvents } = await supabase
         .from('events')
-        .select('id, created_at, status, creator_id');
+        .select('id, created_at, status, creator_id')
+        .range(0, 9999);
 
-      const { data: attendees } = await supabase
+      const { data: rawAttendees } = await supabase
         .from('event_attendees')
-        .select('id, event_id, profile_id, arrived_safely, is_dd, going_home_at, not_participating_rally_home_confirmed, status');
+        .select('id, event_id, profile_id, arrived_safely, is_dd, going_home_at, not_participating_rally_home_confirmed, status')
+        .range(0, 9999);
 
       const { data: feedback } = await supabase
         .from('event_feedback')
-        .select('*');
+        .select('*')
+        .range(0, 4999);
 
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id, user_id, display_name, avatar_url, founding_member, founder_number, created_at');
+      // Filter admin data in partner view
+      let filteredRallyEvents = rallyEvents || [];
+      let attendees = rawAttendees || [];
+      if (filterAdminData && adminProfileIds.size > 0) {
+        filteredRallyEvents = filteredRallyEvents.filter(e => !adminProfileIds.has(e.creator_id));
+        attendees = attendees.filter(a => !adminProfileIds.has(a.profile_id));
+      }
 
-      // Funnel counts
+      // Full 9-step funnel
       const funnelSteps = [
         'event_viewed', 'event_created', 'event_joined',
-        'rally_started', 'rally_ended', 'rally_completed', 'safety_confirmed'
+        'rally_started', 'rally_ended', 'rally_completed',
+        'safety_confirmed', 'invite_link_copied', 'rally_home_opened'
       ];
       
       const funnel = funnelSteps.map(step => {
@@ -45,32 +88,35 @@ export function useAdminAnalytics() {
       });
 
       // Summary cards
-      const totalEventsCreated = rallyEvents?.length || 0;
-      const recentEvents = rallyEvents?.filter(e => new Date(e.created_at!) >= sevenDaysAgo).length || 0;
+      const totalEventsCreated = filteredRallyEvents.length;
+      const recentEvents = filteredRallyEvents.filter(e => new Date(e.created_at!) >= sevenDaysAgo).length;
       
-      const totalJoined = attendees?.length || 0;
+      const totalJoined = attendees.length;
       const viewedCount = events.filter(e => e.event_name === 'event_viewed').length;
       const joinedCount = events.filter(e => e.event_name === 'event_joined').length;
       const conversionRate = viewedCount > 0 ? (joinedCount / viewedCount * 100) : 0;
 
-      const completedEvents = rallyEvents?.filter(e => e.status === 'completed').length || 0;
+      const completedEvents = filteredRallyEvents.filter(e => e.status === 'completed').length;
       const completionRate = totalEventsCreated > 0 ? (completedEvents / totalEventsCreated * 100) : 0;
 
-      const safetyConfirmed = attendees?.filter(a => a.arrived_safely === true).length || 0;
-      const goingHome = attendees?.filter(a => a.going_home_at !== null).length || 0;
+      const safetyConfirmed = attendees.filter(a => a.arrived_safely === true).length;
+      const goingHome = attendees.filter(a => a.going_home_at !== null).length;
       const safetyRate = goingHome > 0 ? (safetyConfirmed / goingHome * 100) : 0;
 
       const inviteCopied = events.filter(e => e.event_name === 'invite_link_copied').length;
 
+      // K-Factor
+      const kFactor = totalEventsCreated > 0 ? (inviteCopied / totalEventsCreated) : 0;
+
       // Safety metrics
-      const afterRallyEvents = rallyEvents?.filter(e => e.status === 'completed' || e.status === 'after_rally').length || 0;
+      const afterRallyEvents = filteredRallyEvents.filter(e => e.status === 'completed' || e.status === 'after_rally').length;
       const afterRallyRate = totalEventsCreated > 0 ? (afterRallyEvents / totalEventsCreated * 100) : 0;
-      const ddCount = attendees?.filter(a => a.is_dd).length || 0;
+      const ddCount = attendees.filter(a => a.is_dd).length;
       const avgDD = totalEventsCreated > 0 ? ddCount / totalEventsCreated : 0;
 
       // Growth metrics  
       const userEventCounts: Record<string, number> = {};
-      attendees?.forEach(a => {
+      attendees.forEach(a => {
         userEventCounts[a.profile_id] = (userEventCounts[a.profile_id] || 0) + 1;
       });
       const repeatUsers = Object.values(userEventCounts).filter(c => c >= 2).length;
@@ -79,12 +125,12 @@ export function useAdminAnalytics() {
 
       // Host power ranking
       const hostCounts: Record<string, { created: number; attendeeSum: number; profileId: string }> = {};
-      rallyEvents?.forEach(e => {
+      filteredRallyEvents.forEach(e => {
         if (!hostCounts[e.creator_id]) {
           hostCounts[e.creator_id] = { created: 0, attendeeSum: 0, profileId: e.creator_id };
         }
         hostCounts[e.creator_id].created++;
-        const eventAttendees = attendees?.filter(a => a.event_id === e.id).length || 0;
+        const eventAttendees = attendees.filter(a => a.event_id === e.id).length;
         hostCounts[e.creator_id].attendeeSum += eventAttendees;
       });
 
@@ -117,8 +163,8 @@ export function useAdminAnalytics() {
         const dayStr = day.toISOString().split('T')[0];
         return {
           day: dayStr,
-          created: rallyEvents?.filter(e => e.created_at?.startsWith(dayStr)).length || 0,
-          joined: events.filter(e => e.event_name === 'event_joined' && e.created_at?.startsWith(dayStr)).length || 0,
+          created: filteredRallyEvents.filter(e => e.created_at?.startsWith(dayStr)).length,
+          joined: events.filter(e => e.event_name === 'event_joined' && e.created_at?.startsWith(dayStr)).length,
         };
       });
 
@@ -136,6 +182,7 @@ export function useAdminAnalytics() {
           safetyConfirmed,
           goingHome,
           inviteCopied,
+          kFactor,
         },
         funnel,
         safety: {
@@ -156,8 +203,8 @@ export function useAdminAnalytics() {
         founders,
         feedback: feedback || [],
         profiles: profiles || [],
-        attendees: attendees || [],
-        rallyEvents: rallyEvents || [],
+        attendees,
+        rallyEvents: filteredRallyEvents,
       };
     },
     refetchInterval: 30000,

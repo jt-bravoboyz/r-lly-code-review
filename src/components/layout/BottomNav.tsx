@@ -78,8 +78,6 @@ export function BottomNav() {
           );
         })}
       </div>
-      {/* Safe area padding for devices with gesture navigation */}
-      <div className="h-safe-area-inset-bottom bg-card" />
     </nav>
   );
 }
