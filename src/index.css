@@ -8,7 +8,7 @@
 @tailwind utilities;
 
 /* R@lly App Design System - Matching Figma exactly */
-/* Primary: #E66210 | Cream: #FFF3E9 | Light accent: #FFD0C2 */
+/* Primary: #F47A19 | Cream: #FFF3E9 | Light accent: #FFD0C2 */
 
 @layer base {
   body {
@@ -27,8 +27,8 @@
     --popover: 0 0% 100%;
     --popover-foreground: 220 20% 12%;
 
-    /* R@lly Orange - #E66210 = hsl(23, 87%, 48%) — extracted from logo */
-    --primary: 23 87% 48%;
+    /* R@lly Orange - #F47A19 = hsl(23, 87%, 48%) — extracted from logo */
+    --primary: 27 91% 53%;
     --primary-foreground: 0 0% 100%;
 
     /* Light secondary surfaces */
@@ -38,7 +38,7 @@
     --muted: 25 12% 90%;
     --muted-foreground: 220 10% 42%;
 
-    --accent: 23 87% 48%;
+    --accent: 27 91% 53%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 55%;
@@ -47,7 +47,7 @@
     /* Border - subtle warm edges */
     --border: 25 15% 85%;
     --input: 25 12% 88%;
-    --ring: 23 87% 48%;
+    --ring: 27 91% 53%;
 
     --radius: 0.75rem;
 
@@ -66,12 +66,12 @@
 
     --sidebar-background: 25 20% 95%;
     --sidebar-foreground: 220 20% 15%;
-    --sidebar-primary: 23 87% 48%;
+    --sidebar-primary: 27 91% 53%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 22 100% 95%;
-    --sidebar-accent-foreground: 23 87% 40%;
+    --sidebar-accent-foreground: 27 91% 45%;
     --sidebar-border: 25 15% 85%;
-    --sidebar-ring: 23 87% 48%;
+    --sidebar-ring: 27 91% 53%;
   }
 
   /* Dark mode is now the default - keep .dark identical */
@@ -82,19 +82,19 @@
     --card-foreground: 0 0% 95%;
     --popover: 220 20% 10%;
     --popover-foreground: 0 0% 95%;
-    --primary: 23 87% 48%;
+    --primary: 27 91% 53%;
     --primary-foreground: 0 0% 100%;
     --secondary: 220 18% 14%;
     --secondary-foreground: 0 0% 90%;
     --muted: 220 15% 16%;
     --muted-foreground: 220 10% 55%;
-    --accent: 23 87% 48%;
+    --accent: 27 91% 53%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
     --border: 220 15% 20%;
     --input: 220 15% 18%;
-    --ring: 23 87% 48%;
+    --ring: 27 91% 53%;
     --success: 152 76% 50%;
     --success-foreground: 0 0% 100%;
     --warning: 45 93% 52%;
@@ -106,12 +106,12 @@
     --glass-shadow: 0 8px 32px hsl(0 0% 0% / 0.4);
     --sidebar-background: 220 20% 8%;
     --sidebar-foreground: 0 0% 90%;
-    --sidebar-primary: 23 87% 48%;
+    --sidebar-primary: 27 91% 53%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 23 100% 12%;
-    --sidebar-accent-foreground: 23 100% 70%;
+    --sidebar-accent: 27 100% 12%;
+    --sidebar-accent-foreground: 27 100% 70%;
     --sidebar-border: 220 15% 20%;
-    --sidebar-ring: 23 87% 48%;
+    --sidebar-ring: 27 91% 53%;
   }
 }
 
@@ -153,7 +153,7 @@
   .timeline-slider-track {
     background: linear-gradient(
       to right,
-      hsl(23 87% 48%) 0%,       /* R@lly Orange */
+      hsl(27 91% 53%) 0%,       /* R@lly Orange */
       hsl(270 60% 45%) 100%     /* Purple */
     );
   }
@@ -161,18 +161,18 @@
   .dark .timeline-slider-track {
     background: linear-gradient(
       to right,
-      hsl(23 87% 46%) 0%,       /* R@lly Orange */
+      hsl(27 91% 51%) 0%,       /* R@lly Orange */
       hsl(270 55% 40%) 100%     /* Purple */
     );
   }
 
   /* Primary button gradient - Glass-over-orange surface */
   .btn-gradient-primary {
-    background: linear-gradient(180deg, hsl(23 87% 48%) 0%, hsl(25 87% 38% / 0.95) 100%);
+    background: linear-gradient(180deg, hsl(27 91% 53%) 0%, hsl(29 91% 43% / 0.95) 100%);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     box-shadow:
-      0 4px 20px hsl(23 87% 48% / 0.3),
+      0 4px 20px hsl(27 91% 53% / 0.3),
       inset 0 1px 0 rgba(255,255,255,0.2);
     color: #FFFFFF !important;
     position: relative;
@@ -198,23 +198,23 @@
   }
   .btn-gradient-primary:hover {
     box-shadow:
-      0 8px 30px hsl(23 87% 48% / 0.4),
+      0 8px 30px hsl(27 91% 53% / 0.4),
       inset 0 1px 0 rgba(255,255,255,0.25);
     filter: brightness(1.1);
   }
   .btn-gradient-primary:active {
     box-shadow:
-      0 2px 10px hsl(23 87% 48% / 0.25),
+      0 2px 10px hsl(27 91% 53% / 0.25),
       inset 0 1px 0 rgba(255,255,255,0.15);
   }
 
   /* CTA gradient class used on primary action buttons */
   .gradient-primary {
-    background: linear-gradient(180deg, hsl(23 87% 48% / 0.9) 0%, hsl(25 87% 38% / 0.95) 100%) !important;
+    background: linear-gradient(180deg, hsl(27 91% 53% / 0.9) 0%, hsl(29 91% 43% / 0.95) 100%) !important;
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     box-shadow:
-      0 4px 20px hsl(23 87% 48% / 0.3),
+      0 4px 20px hsl(27 91% 53% / 0.3),
       inset 0 1px 0 rgba(255,255,255,0.2);
     color: #FFFFFF !important;
     position: relative;
@@ -242,13 +242,13 @@
   .gradient-primary:hover {
     filter: brightness(1.1);
     box-shadow:
-      0 8px 30px hsl(23 87% 48% / 0.45),
+      0 8px 30px hsl(27 91% 53% / 0.45),
       inset 0 1px 0 rgba(255,255,255,0.25);
     transform: translateY(-1px);
   }
   .gradient-primary:active {
     box-shadow:
-      0 2px 10px hsl(23 87% 48% / 0.2),
+      0 2px 10px hsl(27 91% 53% / 0.2),
       inset 0 1px 0 rgba(255,255,255,0.15);
     transform: scale(0.97);
   }
@@ -295,8 +295,8 @@
   }
 
   @keyframes btn-breathe {
-    0%, 100% { box-shadow: 0 4px 20px hsl(23 87% 48% / 0.3), inset 0 1px 0 rgba(255,255,255,0.2); }
-    50% { box-shadow: 0 6px 28px hsl(23 87% 48% / 0.4), inset 0 1px 0 rgba(255,255,255,0.22); }
+    0%, 100% { box-shadow: 0 4px 20px hsl(27 91% 53% / 0.3), inset 0 1px 0 rgba(255,255,255,0.2); }
+    50% { box-shadow: 0 6px 28px hsl(27 91% 53% / 0.4), inset 0 1px 0 rgba(255,255,255,0.22); }
   }
 
   /* After Rally purple button gradient */
@@ -314,11 +314,11 @@
 
   /* Gradients */
   .gradient-rally {
-    background: linear-gradient(135deg, hsl(23 87% 48%) 0%, hsl(24 87% 44%) 100%);
+    background: linear-gradient(135deg, hsl(27 91% 53%) 0%, hsl(28 91% 49%) 100%);
   }
 
   .gradient-rally-intense {
-    background: linear-gradient(135deg, hsl(24 87% 42%) 0%, hsl(23 87% 48%) 50%, hsl(24 87% 52%) 100%);
+    background: linear-gradient(135deg, hsl(28 91% 47%) 0%, hsl(27 91% 53%) 50%, hsl(28 91% 57%) 100%);
   }
 
   .gradient-dark {
@@ -326,7 +326,7 @@
   }
 
   .gradient-radial {
-    background: radial-gradient(ellipse at center, hsl(23 87% 48% / 0.15) 0%, transparent 70%);
+    background: radial-gradient(ellipse at center, hsl(27 91% 53% / 0.15) 0%, transparent 70%);
   }
 
   /* After R@lly Purple Night Theme - Complete Override */
@@ -682,17 +682,17 @@
   /* Glow Effects */
   .glow-primary {
     box-shadow: 
-      0 0 20px hsl(23 87% 48% / 0.5), 
-      0 0 40px hsl(23 87% 48% / 0.3),
-      0 0 60px hsl(23 87% 48% / 0.15);
+      0 0 20px hsl(27 91% 53% / 0.5), 
+      0 0 40px hsl(27 91% 53% / 0.3),
+      0 0 60px hsl(27 91% 53% / 0.15);
   }
 
   .glow-primary-sm {
-    box-shadow: 0 0 15px hsl(23 87% 48% / 0.4);
+    box-shadow: 0 0 15px hsl(27 91% 53% / 0.4);
   }
 
   .glow-text {
-    text-shadow: 0 0 30px hsl(23 87% 48% / 0.6);
+    text-shadow: 0 0 30px hsl(27 91% 53% / 0.6);
   }
 
   /* Glass Effects - 2026 Liquid UI */
@@ -749,32 +749,32 @@
   /* Light mode glass glow adjustments */
   .light .glass-glow-primary,
   :root:not(.dark) .glass-glow-primary {
-    box-shadow: 0 0 20px hsl(23 87% 48% / 0.1), 0 4px 16px hsl(0 0% 0% / 0.06), inset 0 1px 0 hsl(0 0% 100% / 0.8);
+    box-shadow: 0 0 20px hsl(27 91% 53% / 0.1), 0 4px 16px hsl(0 0% 0% / 0.06), inset 0 1px 0 hsl(0 0% 100% / 0.8);
   }
 
   .glass-glow-primary {
-    box-shadow: 0 0 20px hsl(23 87% 48% / 0.15), 0 8px 32px hsl(0 0% 0% / 0.3), inset 0 1px 0 hsl(0 0% 100% / 0.06);
+    box-shadow: 0 0 20px hsl(27 91% 53% / 0.15), 0 8px 32px hsl(0 0% 0% / 0.3), inset 0 1px 0 hsl(0 0% 100% / 0.06);
   }
 
   /* Glow Effects */
   .glow-primary {
     box-shadow: 
-      0 0 20px hsl(23 87% 48% / 0.4), 
-      0 0 40px hsl(23 87% 48% / 0.2),
-      0 0 60px hsl(23 87% 48% / 0.1);
+      0 0 20px hsl(27 91% 53% / 0.4), 
+      0 0 40px hsl(27 91% 53% / 0.2),
+      0 0 60px hsl(27 91% 53% / 0.1);
   }
 
   .glow-primary-sm {
-    box-shadow: 0 0 15px hsl(23 87% 48% / 0.3);
+    box-shadow: 0 0 15px hsl(27 91% 53% / 0.3);
   }
 
   .glow-text {
-    text-shadow: 0 0 30px hsl(23 87% 48% / 0.5);
+    text-shadow: 0 0 30px hsl(27 91% 53% / 0.5);
   }
 
   /* Text Gradients */
   .text-gradient-rally {
-    background: linear-gradient(135deg, hsl(23 87% 48%) 0%, hsl(24 87% 52%) 100%);
+    background: linear-gradient(135deg, hsl(27 91% 53%) 0%, hsl(28 91% 57%) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -791,8 +791,8 @@
   }
 
   .card-rally:hover {
-    border-color: hsl(23 87% 48% / 0.3);
-    box-shadow: 0 12px 40px hsl(0 0% 0% / 0.5), 0 0 20px hsl(23 87% 48% / 0.1), inset 0 1px 0 hsl(0 0% 100% / 0.08);
+    border-color: hsl(27 91% 53% / 0.3);
+    box-shadow: 0 12px 40px hsl(0 0% 0% / 0.5), 0 0 20px hsl(27 91% 53% / 0.1), inset 0 1px 0 hsl(0 0% 100% / 0.08);
     transform: translateY(-2px);
   }
 
@@ -800,11 +800,11 @@
   .btn-rally {
     @apply bg-primary text-primary-foreground font-bold tracking-tight rounded-xl;
     @apply hover:brightness-110 active:scale-[0.98] transition-all duration-200;
-    box-shadow: 0 4px 20px hsl(23 87% 48% / 0.35);
+    box-shadow: 0 4px 20px hsl(27 91% 53% / 0.35);
   }
 
   .btn-rally:hover {
-    box-shadow: 0 6px 30px hsl(23 87% 48% / 0.5);
+    box-shadow: 0 6px 30px hsl(27 91% 53% / 0.5);
   }
 
   /* Navigation */
@@ -874,10 +874,10 @@
 
 @keyframes pulse-glow {
   0%, 100% { 
-    box-shadow: 0 0 20px hsl(23 87% 48% / 0.4), 0 0 40px hsl(23 87% 48% / 0.2);
+    box-shadow: 0 0 20px hsl(27 91% 53% / 0.4), 0 0 40px hsl(27 91% 53% / 0.2);
   }
   50% { 
-    box-shadow: 0 0 40px hsl(23 87% 48% / 0.6), 0 0 80px hsl(23 87% 48% / 0.3);
+    box-shadow: 0 0 40px hsl(27 91% 53% / 0.6), 0 0 80px hsl(27 91% 53% / 0.3);
   }
 }
 
@@ -1667,11 +1667,11 @@
 /* Subtle breathing pulse for active elements */
 @keyframes glass-breathe {
   0%, 100% { 
-    box-shadow: 0 0 15px hsl(23 87% 48% / 0.15);
+    box-shadow: 0 0 15px hsl(27 91% 53% / 0.15);
     border-color: hsl(0 0% 100% / 0.08);
   }
   50% { 
-    box-shadow: 0 0 25px hsl(23 87% 48% / 0.25);
+    box-shadow: 0 0 25px hsl(27 91% 53% / 0.25);
     border-color: hsl(0 0% 100% / 0.12);
   }
 }
