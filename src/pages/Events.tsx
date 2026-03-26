@@ -145,7 +145,7 @@ export default function Events() {
         </Card>
 
         {/* Create Event Button */}
-        <Card className="bg-gradient-to-r from-primary/70 via-primary/60 to-orange-600/70 border border-white/[0.1] shadow-lg shadow-primary/10 overflow-hidden group hover:shadow-xl transition-all duration-300 hover:scale-[1.01] animate-fade-in backdrop-blur-sm" style={{ animationDelay: '0.2s' }}>
+        <Card className="bg-gradient-to-r from-primary/75 via-primary/65 to-primary/70 border border-white/[0.1] shadow-lg shadow-primary/10 overflow-hidden group hover:shadow-xl transition-all duration-300 hover:scale-[1.01] animate-fade-in backdrop-blur-sm" style={{ animationDelay: '0.2s' }}>
           <CardContent className="p-5 flex items-center justify-between relative">
             <div className="absolute top-0 right-20 w-24 h-24 bg-white/5 rounded-full -translate-y-1/2 blur-sm" />
             
