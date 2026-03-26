@@ -30,7 +30,7 @@ const EVENT_LABELS: Record<string, string> = {
   recap_shared: 'Shared recap',
 };
 
-export function LiveActivityFeed() {
+export const LiveActivityFeed = React.forwardRef<HTMLDivElement>((_, ref) => {
   const [items, setItems] = useState<ActivityItem[]>([]);
 
   useEffect(() => {
