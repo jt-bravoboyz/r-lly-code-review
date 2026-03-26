@@ -682,17 +682,17 @@
   /* Glow Effects */
   .glow-primary {
     box-shadow: 
-      0 0 20px hsl(27 100% 55% / 0.5), 
-      0 0 40px hsl(27 100% 55% / 0.3),
-      0 0 60px hsl(27 100% 55% / 0.15);
+      0 0 20px hsl(22 90% 52% / 0.5), 
+      0 0 40px hsl(22 90% 52% / 0.3),
+      0 0 60px hsl(22 90% 52% / 0.15);
   }
 
   .glow-primary-sm {
-    box-shadow: 0 0 15px hsl(27 100% 55% / 0.4);
+    box-shadow: 0 0 15px hsl(22 90% 52% / 0.4);
   }
 
   .glow-text {
-    text-shadow: 0 0 30px hsl(27 100% 55% / 0.6);
+    text-shadow: 0 0 30px hsl(22 90% 52% / 0.6);
   }
 
   /* Glass Effects - 2026 Liquid UI */
