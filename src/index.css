@@ -568,35 +568,79 @@
     text-shadow: 0 0 30px hsl(27 100% 55% / 0.6);
   }
 
-  /* Glass Effects */
+  /* Glass Effects - 2026 Liquid UI */
+  .glass {
+    background: hsl(var(--glass-bg));
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid hsl(var(--glass-border));
+    box-shadow: var(--glass-shadow), inset 0 1px 0 hsl(var(--glass-highlight));
+  }
+
+  .glass-elevated {
+    background: hsl(220 20% 14% / 0.7);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid hsl(0 0% 100% / 0.1);
+    box-shadow: 0 12px 40px hsl(0 0% 0% / 0.5), inset 0 1px 0 hsl(0 0% 100% / 0.06);
+  }
+
   .glass-dark {
-    background: hsl(0 0% 7% / 0.9);
+    background: hsl(220 20% 8% / 0.85);
     backdrop-filter: blur(20px);
-    border: 1px solid hsl(0 0% 14%);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid hsl(0 0% 100% / 0.06);
   }
 
   .glass-light {
-    background: hsl(0 0% 100% / 0.85);
+    background: hsl(0 0% 100% / 0.06);
     backdrop-filter: blur(20px);
-    border: 1px solid hsl(0 0% 92%);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid hsl(0 0% 100% / 0.1);
+  }
+
+  .glass-glow-primary {
+    box-shadow: 0 0 20px hsl(22 90% 52% / 0.15), 0 8px 32px hsl(0 0% 0% / 0.3), inset 0 1px 0 hsl(0 0% 100% / 0.06);
+  }
+
+  /* Glow Effects */
+  .glow-primary {
+    box-shadow: 
+      0 0 20px hsl(22 90% 52% / 0.4), 
+      0 0 40px hsl(22 90% 52% / 0.2),
+      0 0 60px hsl(22 90% 52% / 0.1);
+  }
+
+  .glow-primary-sm {
+    box-shadow: 0 0 15px hsl(22 90% 52% / 0.3);
+  }
+
+  .glow-text {
+    text-shadow: 0 0 30px hsl(22 90% 52% / 0.5);
   }
 
   /* Text Gradients */
   .text-gradient-rally {
-    background: linear-gradient(135deg, hsl(27 100% 55%) 0%, hsl(40 100% 60%) 100%);
+    background: linear-gradient(135deg, hsl(22 90% 55%) 0%, hsl(35 100% 60%) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
-  /* Cards */
+  /* Cards - Glass treatment */
   .card-rally {
-    @apply bg-card border border-border rounded-xl transition-all duration-300;
+    background: hsl(var(--glass-bg));
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid hsl(var(--glass-border));
+    box-shadow: var(--glass-shadow), inset 0 1px 0 hsl(var(--glass-highlight));
+    @apply rounded-xl transition-all duration-300;
   }
 
   .card-rally:hover {
-    @apply border-primary/40;
-    box-shadow: 0 8px 30px hsl(27 100% 55% / 0.12);
+    border-color: hsl(22 90% 52% / 0.3);
+    box-shadow: 0 12px 40px hsl(0 0% 0% / 0.5), 0 0 20px hsl(22 90% 52% / 0.1), inset 0 1px 0 hsl(0 0% 100% / 0.08);
+    transform: translateY(-2px);
   }
 
   /* Buttons */
