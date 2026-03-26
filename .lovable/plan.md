@@ -1,39 +1,91 @@
 
 
-# Quick R@lly vs Plan a R@lly — Subtle Hierarchy
+# Notifications → R@lly Command Center Redesign
 
-## Current State
-Both cards already have slight differentiation (Quick R@lly at full opacity, Plan a R@lly at `/95`/`/90`), but it's too subtle to read as intentional hierarchy.
+## Approach
+Single file change: `src/pages/Notifications.tsx`. Add keyframes to `src/index.css` for new animations. No logic, navigation, or data flow changes.
 
-## Changes — `src/pages/Events.tsx` only
+---
 
-### Quick R@lly Card (line 129)
-Enhance as the "hero" action:
-- Gradient: `from-primary via-primary to-primary` (full saturation, no fade)
-- Shadow: `shadow-xl shadow-primary/25` → stronger ambient glow
-- Hover shadow: `shadow-2xl shadow-primary/35` → more energy on interaction
-- Add `animate-glass-breathe` class for subtle living pulse
+## New CSS Keyframes (`src/index.css`)
 
-### Plan a R@lly Card (line 148)
-Step down in visual weight:
-- Gradient: `from-primary/85 via-primary/80 to-primary/85` — noticeably softer but still unmistakably orange
-- Shadow: `shadow-md shadow-primary/8` — less glow presence
-- Hover shadow: `shadow-lg shadow-primary/12` — more restrained hover energy
-- Decorative orb: reduce from `bg-white/5` to `bg-white/3` — less visual activity
-- Subtitle text: keep `text-white/70` (already slightly dimmer than Quick R@lly's `text-white/80`)
+Add 3 keyframes:
+- **`command-pulse`** — slow green dot pulse (opacity 0.6→1 over 2s)
+- **`icon-glow-breathe`** — radial orange glow breathing behind bell icon (3.5s cycle)
+- **`text-shimmer`** — diagonal shimmer sweep across headline text (~7s cycle)
+- **`card-float`** — subtle vertical drift for anticipation card (4s, ±3px)
 
-## What Does NOT Change
-- Layout, size, position, component structure, functionality
-- Both cards remain R@lly orange — no new hues
-- Glass system preserved
+---
 
-## Summary
-| Element | Quick R@lly | Plan a R@lly |
-|---------|------------|--------------|
-| Gradient opacity | 100% | ~80-85% |
-| Shadow glow | Strong (`/25`) | Subtle (`/8`) |
-| Hover glow | Intense (`/35`) | Restrained (`/12`) |
-| Breathing pulse | Yes | No |
+## Notifications Page Rewrite (`src/pages/Notifications.tsx`)
 
-1 file, ~2 line edits. Pure class changes.
+### Structure (preserving all existing logic & hooks)
+
+```text
+┌─────────────────────────────────┐
+│  Existing Header (unchanged)    │
+├─────────────────────────────────┤
+│  SYSTEM STATUS BAR              │
+│  🟢 R@lly System Active        │
+│  Last sync: just now            │
+├─────────────────────────────────┤
+│  [if notifications exist]       │
+│    Activity header + badges     │
+│    PendingInvites               │
+│    Notification cards (glass)   │
+│  [if empty]                     │
+│    Bell icon + orange glow      │
+│    "You're locked in"           │
+│    shimmer subtext              │
+│    Anticipation card (glass)    │
+│      "Squad hasn't moved yet"   │
+│      CTA: Start a R@lly        │
+├─────────────────────────────────┤
+│  Ambient bg orbs (absolute)     │
+│  BottomNav (unchanged)          │
+└─────────────────────────────────┘
+```
+
+### 1. System Status Bar
+- Thin glass strip below header: `backdrop-blur-xl bg-card/60 border-b border-white/10`
+- Green pulsing dot (animate-command-pulse) + "R@lly System Active" + "Last sync: just now"
+- Uses `useState` with `useEffect` interval to update relative timestamp (no new hooks — just `useState`/`useEffect`)
+
+### 2. Enhanced Empty State
+- Bell icon: 48px, surrounded by radial orange glow div (`animate-icon-glow-breathe`)
+- Headline: "You're locked in" with shimmer text effect via `bg-clip-text` gradient animation
+- Subtext: "We'll keep you posted when your crew makes a move"
+
+### 3. Smart Anticipation Card
+- Glassmorphism card: `backdrop-blur-xl bg-card/60 border border-primary/10`
+- Floating animation (`animate-card-float`)
+- Content: "Your squad hasn't made a move yet tonight"
+- CTA `<Link to="/events">` styled as glass button: "Start a R@lly"
+- Hover: glow intensifies, slight lift
+
+### 4. Ambient Background
+- 2 decorative orbs (existing `animate-orb-float` classes) positioned absolute behind content
+- Soft radial gradient overlay for vignette effect
+
+### 5. Notification Cards (when populated)
+- Upgrade existing cards to glass treatment: `backdrop-blur-xl bg-card/60 border-white/10`
+- Unread cards: `border-primary/15` with subtle glow
+
+### What does NOT change
+- All hooks, data fetching, markRead logic
+- Header component and navigation
+- BottomNav
+- Notification type icons and click handlers
+- PendingInvites component
+
+---
+
+## Files Changed
+
+| File | Change |
+|------|--------|
+| `src/index.css` | Add 4 keyframes + 4 utility classes |
+| `src/pages/Notifications.tsx` | Full visual upgrade — glass surfaces, system bar, enhanced empty state, anticipation card, ambient bg |
+
+2 files. Pure visual/motion enhancement. Zero logic changes.
 
