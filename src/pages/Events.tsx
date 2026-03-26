@@ -64,12 +64,12 @@ export default function Events() {
       {/* Living background orbs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 -right-20 w-72 h-72 bg-primary/8 rounded-full blur-[80px] animate-orb-float" />
-        <div className="absolute top-1/2 -left-20 w-96 h-96 bg-orange-500/6 rounded-full blur-[100px] animate-orb-float-reverse" />
-        <div className="absolute bottom-40 right-10 w-48 h-48 bg-amber-500/5 rounded-full blur-[60px] animate-orb-float" style={{ animationDelay: '-3s' }} />
+        <div className="absolute top-1/2 -left-20 w-96 h-96 bg-primary/6 rounded-full blur-[100px] animate-orb-float-reverse" />
+        <div className="absolute bottom-40 right-10 w-48 h-48 bg-primary/5 rounded-full blur-[60px] animate-orb-float" style={{ animationDelay: '-3s' }} />
       </div>
 
       {/* Glass header */}
-      <header className="sticky top-0 z-40 bg-primary/80 backdrop-blur-xl border-b border-white/[0.08] shadow-[0_4px_30px_hsl(22,90%,52%/0.15)]" style={{ WebkitBackdropFilter: 'blur(20px)' }}>
+      <header className="sticky top-0 z-40 bg-primary backdrop-blur-xl border-b border-white/[0.08] shadow-[0_4px_30px_hsl(22,90%,52%/0.15)]" style={{ WebkitBackdropFilter: 'blur(20px)' }}>
         <div style={{ height: 'env(safe-area-inset-top, 1.5rem)' }} />
         <div className="flex items-center justify-between px-4 py-3">
           <Link to="/" className="relative">
@@ -126,7 +126,7 @@ export default function Events() {
         </div>
 
         {/* Quick R@lly Card - BOLD & VIBRANT */}
-        <Card className="bg-gradient-to-r from-primary/85 via-primary/80 to-primary/75 border border-white/[0.1] shadow-xl shadow-primary/15 overflow-hidden group hover:shadow-2xl hover:shadow-primary/25 transition-all duration-300 hover:scale-[1.01] animate-fade-in backdrop-blur-sm" style={{ animationDelay: '0.1s' }}>
+        <Card className="bg-gradient-to-r from-primary via-primary to-primary/95 border border-white/[0.1] shadow-xl shadow-primary/15 overflow-hidden group hover:shadow-2xl hover:shadow-primary/25 transition-all duration-300 hover:scale-[1.01] animate-fade-in backdrop-blur-sm" style={{ animationDelay: '0.1s' }}>
           <CardContent className="p-5 flex items-center justify-between relative">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 group-hover:scale-110 transition-transform blur-sm" />
             <div className="absolute bottom-0 left-10 w-20 h-20 bg-white/5 rounded-full translate-y-1/2" />
@@ -145,7 +145,7 @@ export default function Events() {
         </Card>
 
         {/* Create Event Button */}
-        <Card className="bg-gradient-to-r from-primary/75 via-primary/65 to-primary/70 border border-white/[0.1] shadow-lg shadow-primary/10 overflow-hidden group hover:shadow-xl transition-all duration-300 hover:scale-[1.01] animate-fade-in backdrop-blur-sm" style={{ animationDelay: '0.2s' }}>
+        <Card className="bg-gradient-to-r from-primary/95 via-primary/90 to-primary/95 border border-white/[0.1] shadow-lg shadow-primary/10 overflow-hidden group hover:shadow-xl transition-all duration-300 hover:scale-[1.01] animate-fade-in backdrop-blur-sm" style={{ animationDelay: '0.2s' }}>
           <CardContent className="p-5 flex items-center justify-between relative">
             <div className="absolute top-0 right-20 w-24 h-24 bg-white/5 rounded-full -translate-y-1/2 blur-sm" />
             

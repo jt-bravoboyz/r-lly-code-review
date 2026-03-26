@@ -37,12 +37,12 @@ export default function Squads() {
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 -right-20 w-60 h-60 bg-primary/5 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute top-1/2 -left-20 w-80 h-80 bg-orange-400/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-40 right-10 w-40 h-40 bg-yellow-400/5 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-1/2 -left-20 w-80 h-80 bg-primary/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-40 right-10 w-40 h-40 bg-primary/5 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '1s' }} />
       </div>
 
       {/* Modern gradient header */}
-      <header className="sticky top-0 z-40 bg-gradient-to-r from-primary via-primary to-primary/90 shadow-lg shadow-primary/20">
+      <header className="sticky top-0 z-40 bg-primary shadow-lg shadow-primary/20">
         <div className="h-6" />
         <div className="flex items-center justify-between px-4 py-3">
           <Link to="/" className="relative">
