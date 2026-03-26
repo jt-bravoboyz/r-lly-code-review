@@ -87,6 +87,13 @@ export default function AdminDashboard() {
               <FeedbackPanel feedback={data.feedback} profiles={data.profiles} />
             </div>
           </>
+        ) : viewMode === 'commercial' ? (
+          <CommercialDashboard
+            totalGMV={data.commercial?.totalGMV ?? 0}
+            paidEventsCount={data.commercial?.paidEventsCount ?? 0}
+            providerSplit={data.transit?.providerSplit ?? {}}
+            eventsByCity={data.commercial?.eventsByCity ?? []}
+          />
         ) : (
           <>
             {/* Technical View: System health */}

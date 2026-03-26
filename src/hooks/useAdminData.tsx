@@ -171,6 +171,36 @@ export function useAdminAnalytics(filterAdminData = false) {
       // Founders
       const founders = profiles?.filter(p => p.founding_member) || [];
 
+      // Commercial metrics
+      const paidEvents = filteredRallyEvents.filter(e => (e as any).cover_charge > 0);
+      const totalGMV = paidEvents.reduce((sum, e) => sum + (Number((e as any).cover_charge) || 0), 0);
+      const paidEventsCount = paidEvents.length;
+
+      // Event density by city (group by location_name)
+      const cityMap: Record<string, number> = {};
+      filteredRallyEvents.forEach(e => {
+        const loc = (e as any).location_name;
+        if (loc) {
+          cityMap[loc] = (cityMap[loc] || 0) + 1;
+        }
+      });
+      const eventsByCity = Object.entries(cityMap)
+        .map(([city, count]) => ({ city, count }))
+        .sort((a, b) => b.count - a.count);
+
+      // Transit metrics
+      const arrivalModeCounts: Record<string, number> = {};
+      const departureModeCounts: Record<string, number> = {};
+      const providerSplit: Record<string, number> = {};
+      attendees.forEach(a => {
+        const arrival = (a as any).arrival_transport_mode;
+        const departure = (a as any).departure_transport_mode;
+        const provider = (a as any).departure_provider;
+        if (arrival) arrivalModeCounts[arrival] = (arrivalModeCounts[arrival] || 0) + 1;
+        if (departure) departureModeCounts[departure] = (departureModeCounts[departure] || 0) + 1;
+        if (provider) providerSplit[provider] = (providerSplit[provider] || 0) + 1;
+      });
+
       return {
         summary: {
           totalEventsCreated,
@@ -205,6 +235,16 @@ export function useAdminAnalytics(filterAdminData = false) {
         profiles: profiles || [],
         attendees,
         rallyEvents: filteredRallyEvents,
+        commercial: {
+          totalGMV,
+          paidEventsCount,
+          eventsByCity,
+        },
+        transit: {
+          arrivalModeCounts,
+          departureModeCounts,
+          providerSplit,
+        },
       };
     },
     refetchInterval: 30000,
