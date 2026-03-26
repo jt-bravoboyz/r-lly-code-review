@@ -19,6 +19,7 @@ export default function Notifications() {
   const { data: notifications, isLoading } = useNotifications();
   const { data: pendingInvites } = usePendingInvites();
   const markRead = useMarkNotificationRead();
+  const deleteNotification = useDeleteNotification();
 
   if (authLoading) {
     return (
