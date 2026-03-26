@@ -12,6 +12,7 @@ import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Settings, LogOut, MapPin, Award, Camera, Users, Home, Shield, Pencil, Save, X, FileText, ChevronRight, Navigation, Phone } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useLocation } from '@/hooks/useLocation';
 import { supabase } from '@/integrations/supabase/client';
 import { Navigate, useNavigate } from 'react-router-dom';
@@ -69,6 +70,7 @@ export default function Profile() {
   const { user, profile, loading, signOut, refreshProfile } = useAuth();
   const { toggleLocationSharing } = useLocation();
   const navigate = useNavigate();
+  const { isAdmin } = useAdminAuth();
   
   // Badge system hooks
   const { state: badgeState, currentTier, nextTier, progress } = useBadgeState();
@@ -468,6 +470,20 @@ export default function Profile() {
           </div>
           <ChevronRight className="h-5 w-5 text-muted-foreground" />
         </button>
+
+        {/* Admin Panel Link - only visible for admins */}
+        {isAdmin && (
+          <button 
+            onClick={() => navigate('/admin')}
+            className="w-full flex items-center justify-between py-3 px-4 bg-primary/10 rounded-xl hover:bg-primary/20 transition-colors border border-primary/20"
+          >
+            <div className="flex items-center gap-3">
+              <Shield className="h-5 w-5 text-primary" />
+              <span className="font-medium text-primary">Admin Dashboard</span>
+            </div>
+            <ChevronRight className="h-5 w-5 text-primary/60" />
+          </button>
+        )}
 
         {/* Settings */}
         <Card className="card-rally">
