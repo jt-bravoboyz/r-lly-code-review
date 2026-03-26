@@ -1,93 +1,108 @@
 
 
-# Launch Readiness & Universal Compatibility
+# Glass Button System — Full Implementation Plan
 
-## Already Complete (from previous remediation)
-Items 4a-4d are already applied in the codebase:
-- `useAdminData.tsx` SELECT already includes `cover_charge`, `location_name`, and all transport columns
-- `Profile.tsx` already saves `home_lat` and `home_lng`
-- `RideshareDrawer.tsx` already imports and calls `trackEvent`
+## Problem
+Buttons are currently flat solid-color blocks. They need glass surfaces, light reflections, depth, interaction physics, and subtle breathing motion to match the 2026 Glass/Liquid UI system.
 
----
-
-## 1. Policy Scroll-to-Accept (`PolicyAcceptanceDialog.tsx`)
-
-**Problem**: Accept button only requires checkbox ticks, not scrolling through content.
-
-**Fix**:
-- Add `onScroll` handler to the ScrollArea content
-- Track whether user has scrolled to the bottom of the policy content
-- Disable the Accept button until `hasScrolledToBottom === true` AND both checkboxes are checked
-- Use `scrollHeight - scrollTop <= clientHeight + 20` threshold for "reached bottom"
-- Add subtle hint text: "Scroll to review all policies" when not yet scrolled
-
-**Keyboard overlap fix**:
-- Add `pb-[env(keyboard-inset-height,0px)]` or use `visualViewport` resize listener
-- Wrap the bottom section in a sticky footer with `position: sticky; bottom: 0` so it stays visible above the keyboard
+## Approach
+Two files need changes. No layout, logic, or component hierarchy modifications.
 
 ---
 
-## 2. Admin Navigation (`AdminDashboard.tsx`)
+## File 1: `src/index.css` — Glass Button Foundation
 
-**Fix**: Add a "Return to App" button with Home icon to the admin header, between the title and the view mode toggle.
+### Update `.btn-gradient-primary` (line 163)
+Replace the flat gradient with a glass-over-orange surface:
+- Semi-translucent orange gradient with `backdrop-filter: blur(12px)`
+- Top-edge white highlight via `inset 0 1px 0 rgba(255,255,255,0.2)`
+- Soft orange outer glow shadow
+- Add `position: relative; overflow: hidden` for the shimmer pseudo-element
 
+### Add `.btn-gradient-primary::before` shimmer layer
+- A diagonal white gradient stripe that slowly translates across the button every ~4s
+- Creates the "light passing through glass" effect
+- `pointer-events: none`, low opacity (~0.08)
+
+### Update `.gradient-primary` (line 170)
+- Same glass treatment: translucent gradient, inner highlight, outer glow
+- Hover: `translateY(-1px)`, increased glow, brighter highlight
+- Active: `scale(0.97)`, shadow tightens, glow compresses
+
+### Add `.btn-glass` utility class (new)
+For secondary/outline buttons that need the glass surface without orange:
+- `background: rgba(255,255,255,0.06)`
+- `backdrop-filter: blur(16px)`
+- `border: 1px solid rgba(255,255,255,0.1)`
+- Inner top highlight
+- Hover: border brightens, subtle lift, glow appears
+- Active: compress + shadow tighten
+
+### Add `@keyframes btn-shimmer` (new)
+- Slow diagonal light sweep (6s infinite)
+- Used by primary CTA buttons only
+
+### Add `@keyframes btn-breathe` (new)
+- Very subtle box-shadow pulse (3s infinite)
+- Applied to primary CTAs like Quick R@lly
+
+### Add interaction state classes
+- `.btn-glass-hover`: `translateY(-1px)`, border highlight, glow increase
+- `.btn-glass-active`: `scale(0.96)`, shadow tighten, glow compress then release
+
+---
+
+## File 2: `src/components/ui/button.tsx` — Variant Updates
+
+### Base class (line 8)
+Add to the base CVA string:
+- `relative overflow-hidden` (for shimmer pseudo-element)
+- `hover:-translate-y-[1px]` (subtle lift on hover)
+- Update `active:scale-[0.97]` to `active:scale-[0.96]`
+- Add `transition-[transform,box-shadow,border-color,filter]`
+
+### `default` variant (line 12)
+Replace flat gradient with glass-primary system:
 ```
-<Link to="/" className="...">
-  <Home className="h-4 w-4" />
-  <span>Return to App</span>
-</Link>
-```
-
-Place it after the "R@lly Admin" title, before the `ml-auto` toggle group.
-
----
-
-## 3. Universal Responsiveness
-
-### 3a. `dvh` for full-screen containers
-- Update `min-h-screen` to `min-h-[100dvh]` in key page wrappers: `Index.tsx`, `EventDetail.tsx`, `Auth.tsx`, `Onboarding.tsx`, `AdminDashboard.tsx`, `Profile.tsx`
-- Add CSS fallback: `min-height: 100vh; min-height: 100dvh;`
-
-### 3b. BottomNav safe-area
-- Already uses `paddingBottom: env(safe-area-inset-bottom)` — verified correct
-- Header already has `h-6` spacer but should use `env(safe-area-inset-top)` instead of fixed height
-- Update Header: replace `<div className="h-6" />` with `<div style={{ height: 'env(safe-area-inset-top, 1.5rem)' }} />`
-
-### 3c. 44px touch targets
-- Audit all interactive elements. The BottomNav icons use `p-2.5` on a 20px icon = ~40px — bump to `p-3` for 44px
-- Policy section buttons already use `p-3` + `p-4` — compliant
-- Admin toggle pills use `px-3 py-1` — add `min-h-[44px]` for mobile
-
----
-
-## 4. forwardRef Fix (`LiveActivityFeed.tsx`, `FeatureFlags.tsx`)
-
-Wrap both components in `React.forwardRef` so they accept (and ignore) forwarded refs without console warnings.
-
-```tsx
-export const LiveActivityFeed = React.forwardRef<HTMLDivElement>((_, ref) => {
-  // existing component body
-  return <Card ref={ref}>...</Card>;
-});
-LiveActivityFeed.displayName = 'LiveActivityFeed';
+btn-gradient-primary text-white shadow-[0_4px_20px_hsl(22_90%_52%/0.3),inset_0_1px_0_rgba(255,255,255,0.2)] 
+hover:shadow-[0_8px_30px_hsl(22_90%_52%/0.4),inset_0_1px_0_rgba(255,255,255,0.25)] 
+hover:brightness-110 border border-white/20
 ```
 
-Same pattern for `FeatureFlags`.
+### `destructive` variant (line 13)
+Add glass treatment: `backdrop-blur-sm`, inner highlight via shadow, translucent gradient
+
+### `outline` variant (line 14)
+Already has glass basics — enhance with:
+- `hover:-translate-y-[1px]`
+- `hover:shadow-[0_8px_24px_hsl(0_0%_0%/0.3),inset_0_1px_0_rgba(255,255,255,0.08)]`
+
+### `secondary` variant (line 15)
+Add inner highlight and hover glow:
+- `shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]`
+- `hover:shadow-[0_4px_16px_hsl(0_0%_0%/0.3),inset_0_1px_0_rgba(255,255,255,0.08)]`
+
+### `ghost` variant (line 16)
+Add subtle `active:scale-[0.96]` feedback (inherits from base)
 
 ---
 
-## Files Changed
+## What This Does NOT Change
+- No layout changes
+- No component hierarchy changes  
+- No new hooks or state
+- No business logic modifications
+- No new components
+- Button sizes remain identical
+
+---
+
+## Summary
 
 | File | Change |
 |------|--------|
-| `src/components/legal/PolicyAcceptanceDialog.tsx` | Scroll-to-bottom gate, keyboard fix |
-| `src/pages/AdminDashboard.tsx` | "Return to App" button with Home icon |
-| `src/components/layout/Header.tsx` | Use `env(safe-area-inset-top)` instead of fixed `h-6` |
-| `src/components/layout/BottomNav.tsx` | Bump touch target to 44px (`p-3`) |
-| `src/index.css` | Add `dvh` utility class |
-| `src/components/admin/LiveActivityFeed.tsx` | Wrap in `forwardRef` |
-| `src/components/admin/FeatureFlags.tsx` | Wrap in `forwardRef` |
-| Key page files (Index, Auth, EventDetail, Profile, Onboarding, AdminDashboard) | Replace `min-h-screen` with `min-h-[100dvh]` |
+| `src/index.css` | Upgrade `.btn-gradient-primary` and `.gradient-primary` to glass surfaces; add shimmer keyframe, breathe keyframe, and `.btn-glass` utility |
+| `src/components/ui/button.tsx` | Update CVA base + all variants with glass shadows, inner highlights, hover lift, and active compression |
 
-~10 files, all surgical edits. No user-facing flow changes.
+2 files. Pure CSS/class changes. Every button in the app inherits the upgrade automatically.
 
