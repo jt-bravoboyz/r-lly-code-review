@@ -62,7 +62,8 @@ function SafetyStateBadge({
 export function HostSafetyDashboard({
   eventId,
   isAfterRally,
-  onCompleteRally
+  onCompleteRally,
+  onRequestRide,
 }: HostSafetyDashboardProps) {
   const {
     data: attendees,
