@@ -717,6 +717,12 @@
     border: 1px solid hsl(0 0% 100% / 0.1);
     box-shadow: 0 12px 40px hsl(0 0% 0% / 0.5), inset 0 1px 0 hsl(0 0% 100% / 0.06);
   }
+  .light .glass-elevated,
+  :root:not(.dark) .glass-elevated {
+    background: hsl(0 0% 100% / 0.75);
+    border: 1px solid hsl(220 15% 30% / 0.1);
+    box-shadow: 0 8px 32px hsl(220 15% 20% / 0.08), inset 0 1px 0 hsl(0 0% 100% / 0.8);
+  }
 
   .glass-dark {
     background: hsl(220 20% 8% / 0.85);
@@ -730,6 +736,24 @@
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid hsl(0 0% 100% / 0.1);
+  }
+  .light .glass-light,
+  :root:not(.dark) .glass-light {
+    background: hsl(0 0% 100% / 0.7);
+    border: 1px solid hsl(220 15% 30% / 0.08);
+  }
+
+  /* ====== LIGHT MODE GLOBAL OVERRIDES ====== */
+  /* Override white/[0.0x] backgrounds that are designed for dark glass layering */
+  .light [class*="bg-white\\/\\[0\\.0"],
+  :root:not(.dark) [class*="bg-white\\/\\[0\\.0"] {
+    --tw-bg-opacity: 1;
+  }
+
+  /* Skeleton shimmer in light mode */
+  .light .animate-\\[shimmer-slide_2s_ease-in-out_infinite\\],
+  :root:not(.dark) .animate-\\[shimmer-slide_2s_ease-in-out_infinite\\] {
+    background-image: linear-gradient(to right, transparent, hsl(0 0% 0% / 0.03), transparent) !important;
   }
 
   .glass-glow-primary {
