@@ -232,7 +232,7 @@ export default function Events() {
               <History className="h-5 w-5 text-muted-foreground" />
               Past R@lly
             </h2>
-            <span className="text-sm text-muted-foreground bg-white/60 backdrop-blur-sm px-3 py-1 rounded-full">
+            <span className="text-sm text-muted-foreground bg-white/[0.06] backdrop-blur-sm px-3 py-1 rounded-full border border-white/[0.08]">
               {filteredPast.length} events
             </span>
           </div>
