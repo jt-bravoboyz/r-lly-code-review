@@ -69,7 +69,7 @@ export default function Events() {
       </div>
 
       {/* Glass header */}
-      <header className="sticky top-0 z-40 bg-primary/80 backdrop-blur-xl border-b border-white/[0.08] shadow-[0_4px_30px_hsl(22,90%,52%/0.15)]" style={{ WebkitBackdropFilter: 'blur(20px)' }}>
+      <header className="sticky top-0 z-40 bg-primary backdrop-blur-xl border-b border-white/[0.08] shadow-[0_4px_30px_hsl(22,90%,52%/0.15)]" style={{ WebkitBackdropFilter: 'blur(20px)' }}>
         <div style={{ height: 'env(safe-area-inset-top, 1.5rem)' }} />
         <div className="flex items-center justify-between px-4 py-3">
           <Link to="/" className="relative">
