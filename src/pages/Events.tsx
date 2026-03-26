@@ -252,7 +252,7 @@ export default function Events() {
               ))}
             </div>
           ) : (
-            <Card className="bg-white/[0.03] border-dashed border-2 border-white/[0.1] rounded-2xl animate-fade-in" style={{ animationDelay: '0.4s' }}>
+            <Card className="bg-muted/30 dark:bg-white/[0.03] border-dashed border-2 border-border/40 dark:border-white/[0.1] rounded-2xl animate-fade-in" style={{ animationDelay: '0.4s' }}>
               <CardContent className="p-6 text-center">
                 <History className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
                 <p className="text-muted-foreground font-montserrat text-sm">No past R@llys yet</p>
