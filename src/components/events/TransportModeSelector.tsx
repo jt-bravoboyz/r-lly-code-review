@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 const TRANSPORT_MODES = [
   { value: 'dd', label: 'Designated Driver', icon: Car, color: 'text-primary' },
   { value: 'rideshare', label: 'Rideshare', icon: Navigation, color: 'text-blue-500' },
-  { value: 'driving', label: 'Driving', icon: Car, color: 'text-orange-500' },
+  { value: 'driving', label: 'Driving', icon: CircleDot, color: 'text-orange-500' },
   { value: 'walking', label: 'Walking', icon: Footprints, color: 'text-green-500' },
   { value: 'public_transit', label: 'Public Transit', icon: Train, color: 'text-purple-500' },
 ] as const;
