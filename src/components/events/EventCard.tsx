@@ -70,7 +70,7 @@ export const EventCard = forwardRef<HTMLAnchorElement, EventCardProps>(
                     </h3>
                     <div className="flex items-center gap-2 mt-1 flex-wrap">
                       {event.event_type && event.event_type !== 'rally' && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-medium border border-primary/20">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-primary/15 text-primary text-[10px] font-medium border border-primary/20">
                           {getEventTypeLabel(event.event_type)}
                         </span>
                       )}
