@@ -110,7 +110,7 @@ export const EventCard = forwardRef<HTMLAnchorElement, EventCardProps>(
                     {[1, 2, 3].slice(0, Math.min(Math.max(attendeeCount, 1), 3)).map((_, i) => (
                       <div 
                         key={i} 
-                        className="w-6 h-6 rounded-full bg-gradient-to-br from-primary/30 to-orange-400/50 border-2 border-card dark:border-white flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform duration-300"
+                        className="w-6 h-6 rounded-full bg-gradient-to-br from-primary/30 to-primary/50 border-2 border-card dark:border-white flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform duration-300"
                         style={{ transitionDelay: `${i * 50}ms` }}
                       >
                         <Users className="h-3 w-3 text-primary" />

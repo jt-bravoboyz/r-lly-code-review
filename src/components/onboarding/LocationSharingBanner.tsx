@@ -134,7 +134,7 @@ export function LocationSharingBanner() {
           <Button
             onClick={handleShareLocation}
             disabled={isEnabling}
-            className="w-full h-14 text-lg font-bold rounded-xl bg-gradient-to-r from-primary via-primary to-orange-500 hover:opacity-90 text-white shadow-lg shadow-primary/30"
+            className="w-full h-14 text-lg font-bold rounded-xl bg-gradient-to-r from-primary via-primary to-primary/85 hover:opacity-90 text-white shadow-lg shadow-primary/30"
           >
             <MapPin className="h-5 w-5 mr-2" />
             {isEnabling ? 'Enabling...' : 'Share My Location'}

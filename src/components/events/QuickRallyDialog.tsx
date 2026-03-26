@@ -272,7 +272,7 @@ export const QuickRallyDialog = forwardRef<HTMLButtonElement, QuickRallyDialogPr
           {trigger || (
             <Button 
               ref={ref}
-              className="bg-gradient-to-r from-yellow-400 via-orange-400 to-primary text-white hover:opacity-90 rounded-full shadow-lg shadow-orange-500/30 font-montserrat font-extrabold px-6 transition-all hover:scale-105"
+              className="bg-gradient-to-r from-primary/90 via-primary to-primary/90 text-white hover:opacity-90 rounded-full shadow-lg shadow-primary/30 font-montserrat font-extrabold px-6 transition-all hover:scale-105"
             >
               <Zap className="h-5 w-5 mr-2" strokeWidth={2.5} fill="currentColor" />
               Quick R@lly
