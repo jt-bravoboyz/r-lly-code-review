@@ -96,99 +96,164 @@ const TIER_EMBLEMS: Record<string, (colors: { glow: string; ring: string; core: 
     <defs>
       <linearGradient id="bg-ruby" x1="0" y1="0" x2="64" y2="64">
         <stop offset="0%" stop-color="#F73F36"/>
-        <stop offset="40%" stop-color="#F00300"/>
+        <stop offset="35%" stop-color="#F00300"/>
+        <stop offset="70%" stop-color="#B80000"/>
         <stop offset="100%" stop-color="#FFECA1"/>
       </linearGradient>
+      <radialGradient id="ruby-pulse" cx="50%" cy="50%" r="40%">
+        <stop offset="0%" stop-color="#FF6644" stop-opacity="0.6"/>
+        <stop offset="100%" stop-color="#F00300" stop-opacity="0"/>
+      </radialGradient>
     </defs>
     <path d="M32 3L14 14L6 32L14 50L32 61L50 50L58 32L50 14L32 3Z" fill="url(#bg-ruby)"/>
-    <path d="M32 9L18 17L11 32L18 47L32 55L46 47L53 32L46 17L32 9Z" stroke="white" stroke-width="0.5" opacity="0.35"/>
-    <path d="M26 14L32 9L38 14" stroke="white" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
-    <path d="M32 18L24 24L20 32L24 40L32 46L40 40L44 32L40 24L32 18Z" fill="white" opacity="0.12"/>
-    <path d="M32 24L28 28L26 32L28 36L32 40L36 36L38 32L36 28L32 24Z" fill="white" opacity="0.85"/>
+    <path d="M32 9L18 17L11 32L18 47L32 55L46 47L53 32L46 17L32 9Z" stroke="#FFECA1" stroke-width="0.6" opacity="0.25"/>
+    <path d="M32 16L22 22L17 32L22 42L32 48L42 42L47 32L42 22L32 16Z" fill="url(#ruby-pulse)"/>
+    <path d="M32 20L25 25L22 32L25 39L32 44L39 39L42 32L39 25L32 20Z" stroke="white" stroke-width="0.4" opacity="0.2"/>
+    <path d="M32 24L28 28L26 32L28 36L32 40L36 36L38 32L36 28L32 24Z" fill="white" opacity="0.12"/>
+    <path d="M32 28L30 30L29 32L30 34L32 36L34 34L35 32L34 30L32 28Z" fill="white" opacity="0.9"/>
+    <path d="M26 14L32 9L38 14" stroke="#FFECA1" stroke-width="1.2" stroke-linecap="round" opacity="0.5"/>
+    <path d="M20 18L32 12L44 18" stroke="white" stroke-width="0.5" opacity="0.15"/>
   </svg>`,
 
   amethyst: (c) => `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
     <defs>
       <linearGradient id="bg-amethyst" x1="0" y1="0" x2="64" y2="64">
         <stop offset="0%" stop-color="#6941BF"/>
-        <stop offset="50%" stop-color="#A35CCA"/>
+        <stop offset="40%" stop-color="#A35CCA"/>
+        <stop offset="80%" stop-color="#7B3FA0"/>
         <stop offset="100%" stop-color="#E5CFFF"/>
+      </linearGradient>
+      <linearGradient id="amethyst-swirl" x1="20" y1="20" x2="44" y2="44" gradientTransform="rotate(45 32 32)">
+        <stop offset="0%" stop-color="#E5CFFF" stop-opacity="0.3"/>
+        <stop offset="50%" stop-color="#6941BF" stop-opacity="0"/>
+        <stop offset="100%" stop-color="#E5CFFF" stop-opacity="0.2"/>
       </linearGradient>
     </defs>
     <path d="M32 2L20 8L14 18L10 32L14 46L20 56L32 62L44 56L50 46L54 32L50 18L44 8L32 2Z" fill="url(#bg-amethyst)"/>
-    <path d="M32 8L22 13L17 22L14 32L17 42L22 51L32 56L42 51L47 42L50 32L47 22L42 13L32 8Z" stroke="white" stroke-width="0.5" opacity="0.3"/>
-    <path d="M26 12L32 8L38 12M22 18L32 12L42 18" stroke="white" stroke-width="0.75" opacity="0.4"/>
-    <path d="M32 20L26 26L23 32L26 38L32 44L38 38L41 32L38 26L32 20Z" fill="white" opacity="0.12"/>
-    <path d="M32 26L29 29L28 32L29 35L32 38L35 35L36 32L35 29L32 26Z" fill="white" opacity="0.85"/>
+    <path d="M32 7L22 12L17 20L14 32L17 44L22 52L32 57L42 52L47 44L50 32L47 20L42 12L32 7Z" stroke="#E5CFFF" stroke-width="0.5" opacity="0.2"/>
+    <path d="M32 14L24 20L20 32L24 44L32 50L40 44L44 32L40 20L32 14Z" fill="url(#amethyst-swirl)"/>
+    <path d="M32 20L27 24L24 32L27 40L32 44L37 40L40 32L37 24L32 20Z" stroke="white" stroke-width="0.4" opacity="0.15"/>
+    <path d="M32 24L29 27L27 32L29 37L32 40L35 37L37 32L35 27L32 24Z" fill="white" opacity="0.1"/>
+    <path d="M32 28L30 30L29 32L30 34L32 36L34 34L35 32L34 30L32 28Z" fill="white" opacity="0.85"/>
+    <circle cx="32" cy="32" r="2" fill="#E5CFFF" opacity="0.5"/>
+    <path d="M26 10L32 6L38 10" stroke="#E5CFFF" stroke-width="0.8" opacity="0.4"/>
+    <path d="M20 16L32 9L44 16" stroke="#E5CFFF" stroke-width="0.5" opacity="0.2"/>
   </svg>`,
 
   diamond: (c) => `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
     <defs>
-      <linearGradient id="bg-diamond" x1="0" y1="0" x2="64" y2="64">
-        <stop offset="0%" stop-color="#57ADDD"/>
-        <stop offset="50%" stop-color="#70BBEF"/>
-        <stop offset="100%" stop-color="#9CD7F2"/>
+      <linearGradient id="bg-diamond" x1="10" y1="4" x2="54" y2="60">
+        <stop offset="0%" stop-color="#9CD7F2"/>
+        <stop offset="30%" stop-color="#57ADDD"/>
+        <stop offset="60%" stop-color="#70BBEF"/>
+        <stop offset="100%" stop-color="#E8F6FF"/>
+      </linearGradient>
+      <linearGradient id="diamond-facet" x1="20" y1="4" x2="44" y2="48">
+        <stop offset="0%" stop-color="white" stop-opacity="0.5"/>
+        <stop offset="100%" stop-color="white" stop-opacity="0"/>
       </linearGradient>
     </defs>
     <path d="M32 4L10 20L32 60L54 20L32 4Z" fill="url(#bg-diamond)"/>
-    <path d="M10 20H54" stroke="white" stroke-width="1" opacity="0.5"/>
-    <path d="M32 4L18 20L32 48L46 20L32 4Z" stroke="white" stroke-width="0.5" opacity="0.3"/>
-    <path d="M32 4L22 20L32 48L42 20L32 4Z" fill="white" opacity="0.2"/>
-    <path d="M32 4V20M22 20L32 48M42 20L32 48" stroke="white" stroke-width="0.5" opacity="0.4"/>
+    <path d="M10 20H54" stroke="white" stroke-width="1" opacity="0.6"/>
+    <path d="M32 4L16 20L32 50L48 20L32 4Z" fill="url(#diamond-facet)" opacity="0.3"/>
+    <path d="M32 4L22 20L32 48L42 20L32 4Z" fill="white" opacity="0.15"/>
+    <path d="M32 4V20" stroke="white" stroke-width="0.8" opacity="0.5"/>
+    <path d="M22 20L32 48" stroke="white" stroke-width="0.5" opacity="0.3"/>
+    <path d="M42 20L32 48" stroke="white" stroke-width="0.5" opacity="0.3"/>
+    <path d="M16 20L32 4L48 20" stroke="white" stroke-width="0.5" opacity="0.25"/>
+    <circle cx="28" cy="16" r="1.5" fill="white" opacity="0.7"/>
+    <circle cx="38" cy="24" r="1" fill="white" opacity="0.5"/>
+    <circle cx="32" cy="14" r="0.8" fill="white" opacity="0.6"/>
   </svg>`,
 
   pink_diamond: (c) => `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
     <defs>
-      <linearGradient id="bg-pinkd" x1="0" y1="0" x2="64" y2="64">
-        <stop offset="0%" stop-color="#EA4E7F"/>
-        <stop offset="50%" stop-color="#DD2F61"/>
-        <stop offset="100%" stop-color="#FF94B3"/>
+      <linearGradient id="bg-pinkd" x1="10" y1="4" x2="54" y2="60">
+        <stop offset="0%" stop-color="#FF94B3"/>
+        <stop offset="40%" stop-color="#EA4E7F"/>
+        <stop offset="70%" stop-color="#DD2F61"/>
+        <stop offset="100%" stop-color="#FFD4E5"/>
       </linearGradient>
+      <radialGradient id="pinkd-radiance" cx="50%" cy="40%" r="50%">
+        <stop offset="0%" stop-color="#FFD4E5" stop-opacity="0.4"/>
+        <stop offset="100%" stop-color="#DD2F61" stop-opacity="0"/>
+      </radialGradient>
     </defs>
     <path d="M32 4L10 20L32 60L54 20L32 4Z" fill="url(#bg-pinkd)"/>
-    <path d="M10 20H54" stroke="white" stroke-width="1.2" opacity="0.6"/>
-    <path d="M32 4L18 20L32 46L46 20L32 4Z" fill="white" opacity="0.15"/>
-    <path d="M26 10L32 6L38 10" stroke="white" stroke-width="1.2" stroke-linecap="round" opacity="0.7"/>
-    <circle cx="32" cy="26" r="3.5" fill="white" opacity="0.85"/>
-    <path d="M32 4V20M20 20L32 46M44 20L32 46" stroke="white" stroke-width="0.6" opacity="0.4"/>
+    <path d="M10 20H54" stroke="white" stroke-width="1.2" opacity="0.5"/>
+    <path d="M32 4L18 20L32 50L46 20L32 4Z" fill="url(#pinkd-radiance)"/>
+    <path d="M32 4L24 20L32 44L40 20L32 4Z" fill="white" opacity="0.15"/>
+    <path d="M32 4V20M24 20L32 44M40 20L32 44" stroke="white" stroke-width="0.5" opacity="0.3"/>
+    <path d="M26 10L32 6L38 10" stroke="white" stroke-width="1" stroke-linecap="round" opacity="0.6"/>
+    <circle cx="32" cy="24" r="4" fill="white" opacity="0.2"/>
+    <circle cx="32" cy="24" r="2" fill="white" opacity="0.85"/>
+    <circle cx="26" cy="18" r="1" fill="white" opacity="0.5"/>
+    <circle cx="38" cy="18" r="0.8" fill="white" opacity="0.4"/>
   </svg>`,
 
   galaxy_opal: (c) => `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
     <defs>
-      <linearGradient id="bg-opal" x1="0" y1="0" x2="64" y2="64">
-        <stop offset="0%" stop-color="#836CD9"/>
-        <stop offset="50%" stop-color="#86D8FC"/>
-        <stop offset="100%" stop-color="#B5B0F7"/>
-      </linearGradient>
+      <radialGradient id="bg-opal" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#86D8FC"/>
+        <stop offset="35%" stop-color="#836CD9"/>
+        <stop offset="70%" stop-color="#B5B0F7"/>
+        <stop offset="100%" stop-color="#2B1F5C"/>
+      </radialGradient>
+      <radialGradient id="opal-nebula" cx="40%" cy="45%" r="35%">
+        <stop offset="0%" stop-color="#F47A19" stop-opacity="0.25"/>
+        <stop offset="50%" stop-color="#836CD9" stop-opacity="0.1"/>
+        <stop offset="100%" stop-color="transparent"/>
+      </radialGradient>
     </defs>
-    <ellipse cx="32" cy="32" rx="28" ry="22" fill="url(#bg-opal)"/>
-    <ellipse cx="32" cy="32" rx="20" ry="14" stroke="white" stroke-width="0.6" opacity="0.3"/>
-    <ellipse cx="32" cy="32" rx="10" ry="7" fill="white" opacity="0.15"/>
-    <circle cx="26" cy="28" r="3" fill="white" opacity="0.75"/>
-    <circle cx="38" cy="30" r="2" fill="white" opacity="0.55"/>
-    <circle cx="30" cy="36" r="1.5" fill="white" opacity="0.65"/>
-    <path d="M14 22C20 16 26 13 32 13C38 13 44 16 50 22" stroke="white" stroke-width="0.6" opacity="0.4"/>
+    <circle cx="32" cy="32" r="28" fill="url(#bg-opal)"/>
+    <circle cx="32" cy="32" r="28" fill="url(#opal-nebula)"/>
+    <ellipse cx="32" cy="32" rx="22" ry="16" stroke="#86D8FC" stroke-width="0.5" opacity="0.2" transform="rotate(-15 32 32)"/>
+    <ellipse cx="32" cy="32" rx="15" ry="10" stroke="#B5B0F7" stroke-width="0.4" opacity="0.15" transform="rotate(20 32 32)"/>
+    <circle cx="24" cy="26" r="3" fill="#86D8FC" opacity="0.5"/>
+    <circle cx="40" cy="30" r="2.5" fill="#B5B0F7" opacity="0.4"/>
+    <circle cx="28" cy="38" r="2" fill="#F47A19" opacity="0.3"/>
+    <circle cx="36" cy="36" r="1.5" fill="white" opacity="0.5"/>
+    <circle cx="32" cy="28" r="1" fill="white" opacity="0.7"/>
+    <circle cx="22" cy="34" r="0.8" fill="#86D8FC" opacity="0.6"/>
+    <circle cx="42" cy="26" r="0.6" fill="white" opacity="0.4"/>
+    <path d="M14 24C20 16 26 13 32 14C38 15 44 20 50 28" stroke="white" stroke-width="0.4" opacity="0.2"/>
+    <path d="M18 40C22 46 28 50 34 49C40 48 46 42 50 36" stroke="#B5B0F7" stroke-width="0.3" opacity="0.15"/>
   </svg>`,
 
   dark_matter: (c) => `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
     <defs>
-      <linearGradient id="bg-dm" x1="8" y1="8" x2="56" y2="56">
-        <stop offset="0%" stop-color="#19305C"/>
-        <stop offset="30%" stop-color="#2B3894"/>
-        <stop offset="60%" stop-color="#865CB2"/>
+      <radialGradient id="bg-dm" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#0a0a1a"/>
+        <stop offset="40%" stop-color="#19305C"/>
+        <stop offset="70%" stop-color="#2B3894"/>
+        <stop offset="100%" stop-color="#19305C"/>
+      </radialGradient>
+      <radialGradient id="dm-void" cx="50%" cy="50%" r="25%">
+        <stop offset="0%" stop-color="#000000"/>
+        <stop offset="100%" stop-color="#0a0a1a"/>
+      </radialGradient>
+      <radialGradient id="dm-core" cx="50%" cy="50%" r="20%">
+        <stop offset="0%" stop-color="#FF50B5" stop-opacity="0.8"/>
+        <stop offset="60%" stop-color="#865CB2" stop-opacity="0.3"/>
+        <stop offset="100%" stop-color="transparent"/>
+      </radialGradient>
+      <linearGradient id="dm-edge" x1="4" y1="4" x2="60" y2="60">
+        <stop offset="0%" stop-color="#FF50B5"/>
+        <stop offset="50%" stop-color="#865CB2"/>
         <stop offset="100%" stop-color="#FF50B5"/>
       </linearGradient>
-      <radialGradient id="core-dm" cx="50%" cy="50%">
-        <stop offset="0%" stop-color="#FF50B5"/>
-        <stop offset="100%" stop-color="#865CB2"/>
-      </radialGradient>
     </defs>
     <circle cx="32" cy="32" r="28" fill="url(#bg-dm)"/>
-    <circle cx="32" cy="32" r="20" stroke="url(#core-dm)" stroke-width="1.5" opacity="0.6"/>
-    <circle cx="32" cy="32" r="11" fill="#0a0a1a"/>
-    <circle cx="32" cy="32" r="6" fill="url(#core-dm)"/>
-    <path d="M12 32C12 20 20 12 32 12" stroke="#FF50B5" stroke-width="1.2" opacity="0.7"/>
-    <path d="M52 32C52 44 44 52 32 52" stroke="#865CB2" stroke-width="1.2" opacity="0.7"/>
+    <circle cx="32" cy="32" r="27" stroke="url(#dm-edge)" stroke-width="1" opacity="0.4"/>
+    <circle cx="32" cy="32" r="22" stroke="#865CB2" stroke-width="0.5" opacity="0.15"/>
+    <circle cx="32" cy="32" r="14" fill="url(#dm-void)"/>
+    <circle cx="32" cy="32" r="8" fill="url(#dm-core)"/>
+    <circle cx="32" cy="32" r="3" fill="#0a0a1a"/>
+    <circle cx="32" cy="32" r="1.5" fill="#FF50B5" opacity="0.7"/>
+    <path d="M10 32C10 18 18 10 32 10" stroke="#FF50B5" stroke-width="0.8" opacity="0.35"/>
+    <path d="M54 32C54 46 46 54 32 54" stroke="#865CB2" stroke-width="0.8" opacity="0.35"/>
+    <path d="M18 14C22 10 27 8 32 8" stroke="#FF50B5" stroke-width="0.4" opacity="0.2"/>
+    <path d="M46 50C42 54 37 56 32 56" stroke="#865CB2" stroke-width="0.4" opacity="0.2"/>
   </svg>`,
 };
 
@@ -202,6 +267,13 @@ interface TierBadgeIconProps {
 }
 
 const sizePx = { sm: 36, md: 52, lg: 68, xl: 100 };
+
+// Tier-specific idle animation overrides
+const TIER_ANIMATION: Record<string, string> = {
+  ruby: 'animate-badge-heartbeat',
+  galaxy_opal: 'animate-badge-cosmic',
+  dark_matter: 'animate-badge-void',
+};
 const sizeClasses = { sm: 'w-9 h-9', md: 'w-13 h-13', lg: 'w-[68px] h-[68px]', xl: 'w-[100px] h-[100px]' };
 
 export function TierBadgeIcon({
@@ -248,13 +320,14 @@ export function TierBadgeIcon({
     );
   }
 
+  const tierAnim = TIER_ANIMATION[tierKey] || 'animate-badge-breathe';
+
   return (
     <div
       className={cn(
         sizeClasses[size],
         'relative flex items-center justify-center group',
-        /* Idle glow pulse */
-        'animate-badge-breathe',
+        tierAnim,
         /* Hover/focus lift */
         'transition-transform duration-300 hover:scale-105',
         className
