@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useConfetti } from '@/hooks/useConfetti';
 import { PartyPopper, Users, Car, ShieldCheck, Share2, UserPlus, UsersRound } from 'lucide-react';
+import { RallyFeedbackModal } from '@/components/events/RallyFeedbackModal';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { InviteToEventDialog } from '@/components/events/InviteToEventDialog';
@@ -33,6 +34,7 @@ export function RallyCompleteOverlay({
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const doneCalledRef = useRef(false);
   const navigate = useNavigate();
+  const [showFeedback, setShowFeedback] = useState(false);
 
   const callDone = () => {
     if (doneCalledRef.current) return;
@@ -61,10 +63,14 @@ export function RallyCompleteOverlay({
     confettiRef.current();
     setTimeout(() => confettiRef.current(), 600);
 
-    // Auto-navigate after 5 seconds
+    // Show feedback modal after 3 seconds, then auto-dismiss after 8 total
     timerRef.current = setTimeout(() => {
+      if (eventId) setShowFeedback(true);
+    }, 3000);
+
+    const autoClose = setTimeout(() => {
       callDone();
-    }, 5000);
+    }, 8000);
 
     return () => {
       if (timerRef.current) {
@@ -190,6 +196,18 @@ export function RallyCompleteOverlay({
           </div>
         )}
       </div>
+
+      {/* Feedback modal */}
+      {eventId && (
+        <RallyFeedbackModal
+          open={showFeedback}
+          onClose={() => {
+            setShowFeedback(false);
+            callDone();
+          }}
+          eventId={eventId}
+        />
+      )}
     </div>
   );
 }

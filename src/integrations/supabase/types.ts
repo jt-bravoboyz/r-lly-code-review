@@ -670,6 +670,41 @@ export type Database = {
           },
         ]
       }
+      event_feedback: {
+        Row: {
+          created_at: string
+          event_id: string
+          feedback_text: string | null
+          id: string
+          rating: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          feedback_text?: string | null
+          id?: string
+          rating: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          feedback_text?: string | null
+          id?: string
+          rating?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_feedback_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_invites: {
         Row: {
           event_id: string
@@ -864,6 +899,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      feature_flags: {
+        Row: {
+          description: string | null
+          enabled: boolean
+          key: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          description?: string | null
+          enabled?: boolean
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          description?: string | null
+          enabled?: boolean
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
       }
       invite_history: {
         Row: {
@@ -1358,6 +1417,8 @@ export type Database = {
           current_lat: number | null
           current_lng: number | null
           display_name: string | null
+          founder_number: number | null
+          founding_member: boolean | null
           home_address: string | null
           home_lat: number | null
           home_lng: number | null
@@ -1380,6 +1441,8 @@ export type Database = {
           current_lat?: number | null
           current_lng?: number | null
           display_name?: string | null
+          founder_number?: number | null
+          founding_member?: boolean | null
           home_address?: string | null
           home_lat?: number | null
           home_lng?: number | null
@@ -1402,6 +1465,8 @@ export type Database = {
           current_lat?: number | null
           current_lng?: number | null
           display_name?: string | null
+          founder_number?: number | null
+          founding_member?: boolean | null
           home_address?: string | null
           home_lat?: number | null
           home_lng?: number | null
@@ -2333,6 +2398,24 @@ export type Database = {
           },
         ]
       }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       venue_beacons: {
         Row: {
           beacon_uuid: string
@@ -2920,6 +3003,13 @@ export type Database = {
           status: string
         }[]
       }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       is_attendee_rally_home_undecided: {
         Args: { p_event_id: string; p_profile_id: string }
         Returns: boolean
@@ -3068,6 +3158,7 @@ export type Database = {
       }
     }
     Enums: {
+      app_role: "admin" | "moderator" | "user"
       connection_type: "event" | "squad" | "self" | "none"
     }
     CompositeTypes: {
@@ -3196,6 +3287,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["admin", "moderator", "user"],
       connection_type: ["event", "squad", "self", "none"],
     },
   },
