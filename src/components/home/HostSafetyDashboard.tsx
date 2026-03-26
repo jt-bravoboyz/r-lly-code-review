@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Shield, CheckCircle2, Navigation, HelpCircle, XCircle, Car, PartyPopper, Clock } from 'lucide-react';
+import { Shield, CheckCircle2, Navigation, HelpCircle, XCircle, Car, PartyPopper, Clock, Train, Footprints } from 'lucide-react';
 import { useEventSafetyStatus, useIsEventSafetyComplete, getSafetyState, getSafetyStateLabel, type SafetyState } from '@/hooks/useSafetyStatus';
 import { useSafetyNotifications } from '@/hooks/useSafetyNotifications';
 import { useRides } from '@/hooks/useRides';
