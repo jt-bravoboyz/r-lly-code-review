@@ -126,7 +126,7 @@ export default function Events() {
         </div>
 
         {/* Quick R@lly Card - BOLD & VIBRANT */}
-        <Card className="bg-gradient-to-r from-primary via-primary to-primary/95 border border-white/[0.1] shadow-xl shadow-primary/15 overflow-hidden group hover:shadow-2xl hover:shadow-primary/25 transition-all duration-300 hover:scale-[1.01] animate-fade-in backdrop-blur-sm" style={{ animationDelay: '0.1s' }}>
+        <Card className="bg-gradient-to-r from-primary via-primary to-primary border border-white/[0.1] shadow-xl shadow-primary/25 overflow-hidden group hover:shadow-2xl hover:shadow-primary/35 transition-all duration-300 hover:scale-[1.01] animate-fade-in animate-glass-breathe backdrop-blur-sm" style={{ animationDelay: '0.1s' }}>
           <CardContent className="p-5 flex items-center justify-between relative">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 group-hover:scale-110 transition-transform blur-sm" />
             <div className="absolute bottom-0 left-10 w-20 h-20 bg-white/5 rounded-full translate-y-1/2" />
@@ -145,9 +145,9 @@ export default function Events() {
         </Card>
 
         {/* Create Event Button */}
-        <Card className="bg-gradient-to-r from-primary/95 via-primary/90 to-primary/95 border border-white/[0.1] shadow-lg shadow-primary/10 overflow-hidden group hover:shadow-xl transition-all duration-300 hover:scale-[1.01] animate-fade-in backdrop-blur-sm" style={{ animationDelay: '0.2s' }}>
+        <Card className="bg-gradient-to-r from-primary/85 via-primary/80 to-primary/85 border border-white/[0.1] shadow-md shadow-primary/8 overflow-hidden group hover:shadow-lg hover:shadow-primary/12 transition-all duration-300 hover:scale-[1.01] animate-fade-in backdrop-blur-sm" style={{ animationDelay: '0.2s' }}>
           <CardContent className="p-5 flex items-center justify-between relative">
-            <div className="absolute top-0 right-20 w-24 h-24 bg-white/5 rounded-full -translate-y-1/2 blur-sm" />
+            <div className="absolute top-0 right-20 w-24 h-24 bg-white/3 rounded-full -translate-y-1/2 blur-sm" />
             
             <div className="relative z-10">
               <h3 className="font-bold text-white text-lg font-montserrat flex items-center gap-2">
