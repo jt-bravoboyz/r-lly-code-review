@@ -233,6 +233,14 @@ export function HostSafetyDashboard({
       </CardContent>
     </Card>
 
+    {/* Request a Ride - for after_rally state */}
+    {isAfterRally && onRequestRide && (
+      <Button variant="outline" className="w-full" onClick={onRequestRide}>
+        <Car className="h-4 w-4 mr-2" />
+        Request a Ride
+      </Button>
+    )}
+
     <Card className="rounded-xl border-0 shadow-[0_4px_12px_rgba(0,0,0,0.04)] bg-card">
       <CardContent className="space-y-4 pt-4">
         {/* DD + All Attendees grouped together */}
