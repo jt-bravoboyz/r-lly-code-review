@@ -87,7 +87,7 @@ export function LocationSharingBanner() {
 
         {/* Header with icon */}
         <div className="px-6 pt-4 pb-2 text-center">
-          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary/20 to-orange-400/20 flex items-center justify-center mx-auto mb-4 relative">
+          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary/20 to-primary/15 flex items-center justify-center mx-auto mb-4 relative">
             <MapPin className="h-10 w-10 text-primary" />
             <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-green-500 flex items-center justify-center border-4 border-card">
               <Shield className="h-4 w-4 text-white" />
