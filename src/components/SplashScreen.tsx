@@ -7,11 +7,12 @@ interface SplashScreenProps {
 
 const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
 const easeInCubic = (t: number) => t * t * t;
+const easeOutQuart = (t: number) => 1 - Math.pow(1 - t, 4);
 const clamp = (v: number, min = 0, max = 1) => Math.min(max, Math.max(min, v));
 const ph = (elapsed: number, start: number, end: number) =>
   clamp((elapsed - start) / (end - start));
 
-export function SplashScreen({ onComplete, duration = 5500 }: SplashScreenProps) {
+export function SplashScreen({ onComplete, duration = 5000 }: SplashScreenProps) {
   const [elapsed, setElapsed] = useState(0);
   const startRef = useRef(performance.now());
   const frameRef = useRef<number>();
@@ -30,72 +31,69 @@ export function SplashScreen({ onComplete, duration = 5500 }: SplashScreenProps)
     return () => clearTimeout(timer);
   }, [onComplete, duration]);
 
-  // ─── PHASE 1: "@" Activation (0.0–1.2s) ───
-  const atFadeIn = easeOutCubic(ph(elapsed, 0.0, 0.4));
+  // ─── PHASE 1: Ambient (0 – 1.0s) ───
+  const ambientOpacity = easeOutCubic(ph(elapsed, 0, 0.8)) * 0.14;
 
-  // Pulsing glow: very slow sine wave, gradually ramping intensity
-  const pulseSpeed = 2.0; // radians/sec (~3.1s period) — much slower
-  const pulseRamp = clamp(elapsed / 5.0); // ramps 0→1 very gradually
-  const pulseBase = 0.15 + pulseRamp * 0.85; // starts dimmer, builds slowly
-  const pulseWave = Math.sin(elapsed * pulseSpeed) * 0.5 + 0.5; // 0→1 sine
-  const glowIntensity = atFadeIn * (pulseBase * 0.7 + pulseWave * pulseBase * 0.3);
+  const sweepProgress = ph(elapsed, 0.2, 0.9);
+  const sweepX = easeOutQuart(sweepProgress) * 120 - 10;
+  const sweepOpacity = Math.sin(sweepProgress * Math.PI) * 0.2;
 
-  // Ambient glow synced to pulse
-  const ambientOpacity = glowIntensity * 0.18;
+  // ─── PHASE 2: Typography (staggered, each word stays) ───
+  // "Ready." fades in 1.0–1.3, stays
+  const readyOpacity = easeOutCubic(ph(elapsed, 1.0, 1.3));
 
-  // ─── PHASE 2: "Ready." (1.2–2.2s) ───
-  const readyOpacity = easeOutCubic(ph(elapsed, 1.2, 1.5));
+  // "Set." fades in 2.0–2.3, stays
+  const setOpacity = easeOutCubic(ph(elapsed, 2.0, 2.3));
 
-  // ─── PHASE 3: "Set." (2.2–3.2s) ───
-  const setOpacity = easeOutCubic(ph(elapsed, 2.2, 2.5));
+  // "@" swoops in 3.0–3.5
+  const atProgress = easeOutCubic(ph(elapsed, 3.0, 3.5));
+  const atX = 80 * (1 - atProgress);
+  const atY = -50 * (1 - atProgress);
+  const atOpacity = easeOutCubic(ph(elapsed, 3.0, 3.2));
+  const atScale = 0.7 + 0.3 * atProgress;
+  // Glow peaks right after landing
+  const atGlow = ph(elapsed, 3.4, 3.8);
+  const atGlowIntensity = elapsed >= 3.0
+    ? (atGlow > 0 ? 0.6 + Math.sin(atGlow * Math.PI) * 0.3 : easeOutCubic(ph(elapsed, 3.0, 3.5)) * 0.6)
+    : 0;
 
-  // ─── PHASE 4: R@lly Formation (3.2–4.6s) ───
-  const rProgress = easeOutCubic(ph(elapsed, 3.2, 3.5));
-  const llyProgress = easeOutCubic(ph(elapsed, 3.3, 3.6));
-  const rX = -3 * (1 - rProgress);
-  const llyX = 3 * (1 - llyProgress);
+  // "R" and "lly." fade in as "@" arrives
+  const rllyOpacity = easeOutCubic(ph(elapsed, 3.3, 3.6));
 
-  // Light sweep across R@lly word
-  const sweepProgress = ph(elapsed, 3.5, 4.2);
-  const sweepX = sweepProgress * 130 - 15;
-  const sweepOpacity = Math.sin(clamp(sweepProgress) * Math.PI) * 0.25;
-
-  // ─── PHASE 6: Exit (5.2–5.5s) ───
-  const exitProgress = ph(elapsed, 5.2, 5.5);
+  // ─── EXIT (4.4 – 5.0s) ───
+  const exitProgress = ph(elapsed, 4.4, 4.9);
   const exitOpacity = 1 - easeInCubic(exitProgress);
-  const exitDrift = -10 * easeInCubic(exitProgress);
+  const exitDrift = -8 * easeInCubic(exitProgress);
 
-  // "@" glow text-shadow
-  const glowRadius1 = 12 + glowIntensity * 35;
-  const glowRadius2 = 25 + glowIntensity * 50;
-  const glowAlpha1 = glowIntensity * 0.7;
-  const glowAlpha2 = glowIntensity * 0.35;
+  const finalAmbient = exitProgress > 0
+    ? ambientOpacity * (0.5 + 0.5 * (1 - exitProgress))
+    : ambientOpacity;
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden"
       style={{ backgroundColor: "#0A0A0A" }}
     >
-      {/* Ambient glow synced to @ pulse */}
+      {/* Ambient glow */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
-          background: `radial-gradient(ellipse 50% 40% at 50% 50%, rgba(244, 122, 25, ${ambientOpacity}) 0%, transparent 70%)`,
+          background: `radial-gradient(ellipse 60% 50% at 50% 50%, rgba(244, 122, 25, ${finalAmbient}) 0%, transparent 70%)`,
         }}
       />
 
-      {/* Light sweep during R@lly formation */}
+      {/* Light sweep */}
       {sweepOpacity > 0.01 && (
         <div
           className="absolute pointer-events-none"
           style={{
-            top: "52%",
+            top: "48%",
             left: `${sweepX}%`,
-            width: "80px",
+            width: "100px",
             height: "2px",
             background: `linear-gradient(90deg, transparent, rgba(255,255,255,${sweepOpacity}), transparent)`,
-            filter: "blur(40px)",
-            transform: "scaleX(5)",
+            filter: "blur(50px)",
+            transform: "scaleX(4)",
           }}
         />
       )}
@@ -108,7 +106,7 @@ export function SplashScreen({ onComplete, duration = 5500 }: SplashScreenProps)
           transform: exitProgress > 0 ? `translateY(${exitDrift}px)` : undefined,
         }}
       >
-        {/* "Ready." */}
+        {/* "Ready." — fixed position, fade in only */}
         <h1
           className="font-montserrat font-extrabold text-5xl sm:text-6xl tracking-[0.16em]"
           style={{
@@ -120,7 +118,7 @@ export function SplashScreen({ onComplete, duration = 5500 }: SplashScreenProps)
           Ready.
         </h1>
 
-        {/* "Set." */}
+        {/* "Set." — fixed position, fade in only */}
         <h1
           className="font-montserrat font-extrabold text-5xl sm:text-6xl tracking-[0.16em]"
           style={{
@@ -132,20 +130,15 @@ export function SplashScreen({ onComplete, duration = 5500 }: SplashScreenProps)
           Set.
         </h1>
 
-        {/* "R@lly." — "@" is the core, R and lly resolve around it */}
+        {/* "R@lly." — "@" swoops in, rest fades */}
         <h1
           className="font-montserrat font-extrabold text-6xl sm:text-7xl tracking-tight"
-          style={{ minHeight: "1.2em", lineHeight: 1 }}
+          style={{ minHeight: "1.2em" }}
         >
           <span
             style={{
-              display: "inline-block",
               color: "rgba(255, 255, 255, 0.95)",
-              opacity: rProgress,
-              transform: rProgress < 1 ? `translateX(${rX}px)` : "none",
-              width: rProgress > 0 ? undefined : 0,
-              overflow: "hidden",
-              transition: "width 0.3s ease-out",
+              opacity: rllyOpacity,
             }}
           >
             R
@@ -154,9 +147,12 @@ export function SplashScreen({ onComplete, duration = 5500 }: SplashScreenProps)
             style={{
               display: "inline-block",
               color: "#F47A19",
-              opacity: atFadeIn,
-              textShadow: glowIntensity > 0
-                ? `0 0 ${glowRadius1}px rgba(244, 122, 25, ${glowAlpha1}), 0 0 ${glowRadius2}px rgba(244, 122, 25, ${glowAlpha2})`
+              opacity: atOpacity,
+              transform: atProgress < 1
+                ? `translate(${atX}px, ${atY}px) scale(${atScale})`
+                : "none",
+              textShadow: atGlowIntensity > 0
+                ? `0 0 ${12 + atGlowIntensity * 30}px rgba(244, 122, 25, ${atGlowIntensity * 0.65}), 0 0 ${25 + atGlowIntensity * 45}px rgba(244, 122, 25, ${atGlowIntensity * 0.3})`
                 : "none",
             }}
           >
@@ -164,13 +160,8 @@ export function SplashScreen({ onComplete, duration = 5500 }: SplashScreenProps)
           </span>
           <span
             style={{
-              display: "inline-block",
               color: "rgba(255, 255, 255, 0.95)",
-              opacity: llyProgress,
-              transform: llyProgress < 1 ? `translateX(${llyX}px)` : "none",
-              width: llyProgress > 0 ? undefined : 0,
-              overflow: "hidden",
-              transition: "width 0.3s ease-out",
+              opacity: rllyOpacity,
             }}
           >
             lly.

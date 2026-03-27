@@ -20,7 +20,7 @@ export function AppEntry() {
   };
 
   if (phase === 'splash') {
-    return <SplashScreen onComplete={handleSplashComplete} duration={5500} />;
+    return <SplashScreen onComplete={handleSplashComplete} duration={5000} />;
   }
 
   if (phase === 'onboarding') {
