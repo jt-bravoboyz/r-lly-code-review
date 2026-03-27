@@ -143,6 +143,9 @@ export function SplashScreen({ onComplete, duration = 5500 }: SplashScreenProps)
               color: "rgba(255, 255, 255, 0.95)",
               opacity: rProgress,
               transform: rProgress < 1 ? `translateX(${rX}px)` : "none",
+              width: rProgress > 0 ? undefined : 0,
+              overflow: "hidden",
+              transition: "width 0.3s ease-out",
             }}
           >
             R
@@ -165,6 +168,9 @@ export function SplashScreen({ onComplete, duration = 5500 }: SplashScreenProps)
               color: "rgba(255, 255, 255, 0.95)",
               opacity: llyProgress,
               transform: llyProgress < 1 ? `translateX(${llyX}px)` : "none",
+              width: llyProgress > 0 ? undefined : 0,
+              overflow: "hidden",
+              transition: "width 0.3s ease-out",
             }}
           >
             lly.
