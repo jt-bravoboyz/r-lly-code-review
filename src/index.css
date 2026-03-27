@@ -11,6 +11,10 @@
 /* Primary: #F47A19 | Cream: #FFF3E9 | Light accent: #FFD0C2 */
 
 @layer base {
+  html {
+    background-color: #121212;
+  }
+
   body {
     padding-top: env(safe-area-inset-top);
   }
