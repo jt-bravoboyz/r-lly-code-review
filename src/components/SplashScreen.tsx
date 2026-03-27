@@ -135,7 +135,7 @@ export function SplashScreen({ onComplete, duration = 5500 }: SplashScreenProps)
         {/* "R@lly." — "@" is the core, R and lly resolve around it */}
         <h1
           className="font-montserrat font-extrabold text-6xl sm:text-7xl tracking-tight"
-          style={{ minHeight: "1.2em" }}
+          style={{ minHeight: "1.2em", lineHeight: 1 }}
         >
           <span
             style={{
