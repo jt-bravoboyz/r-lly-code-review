@@ -4,11 +4,11 @@ import { useAllMySquads, Squad } from '@/hooks/useSquads';
 import { SquadCard } from '@/components/squads/SquadCard';
 import { CreateSquadDialog } from '@/components/squads/CreateSquadDialog';
 import { ContactsTab } from '@/components/squads/ContactsTab';
+import { Header } from '@/components/layout/Header';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Users, Sparkles, Contact } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useNavigate } from 'react-router-dom';
 import rallyLogo from '@/assets/rally-logo.png';
 
 export default function Squads() {
