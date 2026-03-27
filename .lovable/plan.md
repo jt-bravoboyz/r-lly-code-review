@@ -1,80 +1,64 @@
 
 
-# Opening Animation — Premium Cinematic Redesign
+# Opening Animation — Pulsing "@" Core Redesign
 
-## Overview
-Complete rewrite of `SplashScreen.tsx` (590 lines → ~350 lines) to create a cinematic, Apple-quality launch sequence. The current comet/spark/arc system is replaced with a layered, phase-driven animation using CSS transforms, opacity, and canvas-free DOM elements.
+## Concept
+Invert the animation order: the orange "@" appears first as a living, pulsing energy core at screen center. "Ready." and "Set." build around it. At peak energy, the remaining letters R, L, L, Y resolve outward from the "@", forming the full word.
 
-## Architecture
-The new splash screen uses `requestAnimationFrame` with elapsed-time phases. All animation is driven by a single timestamp, no complex particle systems.
+## Phases & Timing (Total: ~5.5s)
 
-## Animation Phases (Total: ~3.0s)
+### Phase 1 — "@" Activation (0.0–1.2s)
+- Screen opens near-black (`#0A0A0A`)
+- Orange "@" fades in at center (0.0–0.4s)
+- Begins a slow, smooth pulsing glow cycle (~1.5s period)
+- Each pulse slightly stronger than the last (intensity ramps from 0.3 → 0.6)
+- No movement — only opacity + textShadow radius changes
+- Ambient radial gradient synced to pulse intensity
 
-### Phase 1 — Activation (0.0s – 0.45s)
-- Screen opens on near-black (`#0A0A0A`) with a radial gradient center
-- A faint orange ambient glow fades in at center (radial gradient, opacity 0→0.15)
-- A horizontal light sweep passes across the screen (thin white line, left→right, blur 40px)
-- Feeling: system powering on
+### Phase 2 — "Ready." (1.2–2.2s)
+- "Ready." fades in above the "@" / R@lly line (separate row)
+- "@" continues pulsing underneath
+- Text locks in place immediately — no movement after fade
 
-### Phase 2 — Tension Build (0.45s – 1.1s)
-- Ambient glow pulses gently (opacity oscillates 0.15→0.25)
-- A second diagonal light sweep (subtle, top-left to bottom-right)
-- Faint glass-like refractive layer shifts with parallax (translucent div, slight translateY)
-- Controlled orange glow builds to peak at ~1.0s then recedes
-- Feeling: calibrating for the night
+### Phase 3 — "Set." (2.2–3.2s)
+- "Set." fades in between "Ready." and the R@lly row
+- "@" pulse intensity increases slightly (0.6 → 0.75)
+- Both words remain stable
 
-### Phase 3 — Typography Reveal (1.1s – 1.9s)
-- **"Ready."** — fades in + translateY(12px→0), slight scale 0.97→1.0, holds, then fades
-- **"Set."** — same motion, tighter timing, slightly more confident scale
-- **"R@lly."** — lands with more weight: scale 0.95→1.02→1.0 (slight overshoot), the "@" rendered in R@lly orange (`#F47A19`), subtle text-shadow glow on the "@"
-- Each word appears sequentially in the same centered position (replaces previous)
-- Typography: Montserrat extrabold, large, tracked, white
-- A soft horizontal shimmer passes over "R@lly." as it resolves
+### Phase 4 — R@lly Formation / Hero Moment (3.2–4.6s)
+- "@" reaches peak glow (intensity → 1.0) at ~3.4s
+- At peak: "R" fades in to the left, "lly." fades in to the right
+- Letters resolve outward from center with very subtle horizontal spread (2-3px transform, not dramatic)
+- A single horizontal light pass sweeps across the full "R@lly." word
+- "@" glow settles to a warm steady state after peak
 
-### Phase 4 — Logo Lock (1.9s – 2.35s)
-- "R@lly." text subtly scales up and the "@" glow intensifies briefly
-- A controlled orange edge-light bloom pulses once around the text
-- The tagline "R@lly your troops." fades in below with delay
-- Feeling: the brand has arrived
+### Phase 5 — Full Phrase Hold (4.6–5.2s)
+- All three lines visible: "Ready." / "Set." / "R@lly."
+- Everything stable, no motion — pure reading time
 
-### Phase 5 — Seamless Transition to Auth (2.35s – 3.0s)
-- The logo/tagline fades out with slight upward drift
-- Background glow persists and settles
-- `onComplete()` fires at ~3.0s
-- The auth screen inherits the same dark background, creating visual continuity
+### Phase 6 — Exit Transition (5.2–5.5s)
+- Content fades with slight upward drift
+- Background glow softens
+- `onComplete()` fires at 5500ms
 
 ## Technical Approach
 
 ### `src/components/SplashScreen.tsx` — Full rewrite
-- Single `useEffect` with `requestAnimationFrame` loop updating elapsed time
-- All visuals are DOM divs with inline styles computed from elapsed time
-- No SVG, no canvas, no particle arrays
-- Easing: custom cubic-bezier curves (ease-out for entrances, ease-in for exits)
-- Light sweeps: absolutely positioned divs with CSS `background: linear-gradient(...)`, translated via `transform`
-- Glow: radial gradient div with animated opacity
-- Typography: `<span>` elements with computed opacity/transform
+- Same `requestAnimationFrame` + elapsed-time architecture
+- "@" pulse: `textShadow` radius oscillates using `Math.sin(elapsed * pulseSpeed)` with ramping amplitude
+- Ambient glow div synced to pulse via shared intensity variable
+- "R" and "lly." use subtle `translateX` (±3px → 0) during their 0.3s fade-in, then lock
+- No extra text, no tagline — only "Ready. Set. R@lly."
 
 ### `src/components/AppEntry.tsx` — Duration update
-- Change `duration={5250}` → `duration={3000}` to match the new shorter sequence
-
-### No other files change
-- Auth pages, routing, colors, design system — all untouched
-- The dark background (`#0A0A0A` / `#121212`) is consistent with existing app aesthetic
-
-## Key Constraints Honored
-- No sound (web limitation)
-- No party/military imagery
-- Orange used sparingly (glow accents + "@" only)
-- Montserrat font (already loaded)
-- All CSS-driven, no external dependencies
-- Seamless transition into existing auth flow
+- Change `duration={5000}` → `duration={5500}`
 
 ## Files
 
 | File | Change |
 |------|--------|
-| `src/components/SplashScreen.tsx` | Full rewrite — cinematic phased animation |
-| `src/components/AppEntry.tsx` | Update duration from 5250 to 3000 |
+| `src/components/SplashScreen.tsx` | Full rewrite — "@" starts first as pulsing core, letters form around it |
+| `src/components/AppEntry.tsx` | Update duration to 5500 |
 
 2 files changed.
 
