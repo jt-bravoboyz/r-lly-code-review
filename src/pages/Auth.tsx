@@ -830,23 +830,19 @@ export default function Auth() {
       {/* Bottom links */}
       {!isForgotPassword && (
         <div className="py-8 text-center relative z-10 space-y-3">
-          {/* For new users in signup mode, don't show the toggle to signin */}
-          {/* For users with accounts or those who switched modes, show the toggle */}
-          {!(!hasAccount && isSignUp) && (
-            <p 
-              className="text-base font-montserrat"
-              style={{ color: "rgba(255, 255, 255, 0.5)" }}
+          <p 
+            className="text-base font-montserrat"
+            style={{ color: "rgba(255, 255, 255, 0.5)" }}
+          >
+            {isSignUp ? "Already have an account? " : "Don't have an account? "}
+            <button 
+              onClick={() => setAuthMode(isSignUp ? 'signin' : 'signup')}
+              className="font-semibold hover:underline"
+              style={{ color: "#FF6A00" }}
             >
-              {isSignUp ? "Already have an account? " : "Don't have an account? "}
-              <button 
-                onClick={() => setAuthMode(isSignUp ? 'signin' : 'signup')}
-                className="font-semibold hover:underline"
-                style={{ color: "#FF6A00" }}
-              >
-                {isSignUp ? 'Sign in' : 'Sign up'}
-              </button>
-            </p>
-          )}
+              {isSignUp ? 'Log in' : 'Sign up'}
+            </button>
+          </p>
           
           {/* For new users who somehow got to signin, let them go back to signup */}
           {!hasAccount && !isSignUp && (
