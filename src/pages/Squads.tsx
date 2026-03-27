@@ -4,11 +4,11 @@ import { useAllMySquads, Squad } from '@/hooks/useSquads';
 import { SquadCard } from '@/components/squads/SquadCard';
 import { CreateSquadDialog } from '@/components/squads/CreateSquadDialog';
 import { ContactsTab } from '@/components/squads/ContactsTab';
+import { Header } from '@/components/layout/Header';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Users, Sparkles, Contact } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useNavigate } from 'react-router-dom';
 import rallyLogo from '@/assets/rally-logo.png';
 
 export default function Squads() {
@@ -41,29 +41,7 @@ export default function Squads() {
         <div className="absolute bottom-40 right-10 w-40 h-40 bg-primary/5 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '1s' }} />
       </div>
 
-      {/* Modern gradient header */}
-      <header className="sticky top-0 z-40 bg-primary shadow-lg shadow-primary/20">
-        <div className="h-6" />
-        <div className="flex items-center justify-between px-4 py-3">
-          <Link to="/" className="relative">
-            <div className="absolute inset-0 bg-white/30 rounded-full blur-sm" />
-            <img src={rallyLogo} alt="R@lly" className="h-11 w-11 object-contain relative filter drop-shadow-lg brightness-0 invert" />
-          </Link>
-          <h1 className="text-xl font-bold text-white font-montserrat drop-shadow-sm flex items-center gap-2">
-            <Users className="h-5 w-5" strokeWidth={2.5} />
-            Squads
-          </h1>
-          <Link to="/profile" className="relative group">
-            <div className="absolute inset-0 bg-white/30 rounded-full blur-sm scale-110" />
-            <Avatar className="h-11 w-11 ring-2 ring-white/50 hover:ring-white transition-all relative shadow-lg">
-              <AvatarImage src={profile?.avatar_url || undefined} />
-              <AvatarFallback className="bg-white text-primary text-sm font-bold">
-                {profile?.display_name?.charAt(0)?.toUpperCase() || '?'}
-              </AvatarFallback>
-            </Avatar>
-          </Link>
-        </div>
-      </header>
+      <Header title="Squads" icon={<Users className="h-5 w-5" strokeWidth={2.5} />} />
 
       <main className="px-4 py-6 relative z-10">
         <Tabs defaultValue="squads" className="w-full">
