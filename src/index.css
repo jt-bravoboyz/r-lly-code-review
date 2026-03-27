@@ -15,9 +15,8 @@
     background-color: #121212;
   }
 
-  body, #root {
-    min-height: 100%;
-    background-color: #121212;
+  body {
+    padding-top: env(safe-area-inset-top);
   }
 
   :root,
