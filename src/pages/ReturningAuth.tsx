@@ -291,23 +291,22 @@ export default function ReturningAuth() {
         />
       </div>
 
-      {/* Header with Logo */}
-      <div className="pt-16 pb-8 px-8 text-center relative z-10">
-        <h1
-          className={`font-montserrat font-extrabold text-5xl tracking-tight transition-all duration-500 ${
-            showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-          }`}
-          style={{ 
-            color: "rgba(255, 255, 255, 0.95)",
-            textShadow: "0 0 40px rgba(255, 106, 0, 0.3)",
-          }}
-        >
-          R@LLY
-        </h1>
-      </div>
-
-      {/* Form section */}
-      <div className="flex-1 flex flex-col items-center justify-center px-6 relative z-10">
+      {/* Centered content container */}
+      <div className="flex-1 flex flex-col items-center justify-center px-6 relative z-10 pb-16">
+        {/* Logo */}
+        <div className="mb-10 text-center">
+          <h1
+            className={`font-montserrat font-extrabold text-5xl tracking-tight transition-all duration-500 ${
+              showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+            }`}
+            style={{ 
+              color: "rgba(255, 255, 255, 0.95)",
+              textShadow: "0 0 40px rgba(255, 106, 0, 0.3)",
+            }}
+          >
+            R@LLY
+          </h1>
+        </div>
         <div 
           className={`w-full max-w-sm transition-all duration-500 delay-100 ${
             showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
