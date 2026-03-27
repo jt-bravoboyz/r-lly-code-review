@@ -1,75 +1,53 @@
 
+# Fix White Top Safe-Area Strip on iPhone
 
-# Join R@lly Screen — Full Visual Redesign
+## Root cause
+The global CSS is still adding `padding-top: env(safe-area-inset-top)` to `body` in `src/index.css`. That pushes the entire app down and leaves the safe-area region painted by the browser/root instead of the page itself. On iPhone, that shows up as the white strip above the app until the page repaints during interaction.
 
-## Current Problems
-- Line 203: `bg-white shadow-sm` header — solid white bar, no safe-area handling
-- Line 204: `h-6` hardcoded spacer instead of `env(safe-area-inset-top)`
-- Line 201: `bg-background` — no ambient glow or gradient
-- Card and input use default styling, not the premium glass system
+## Implementation plan
 
-## Changes
+### 1. Fix the global safe-area strategy in `src/index.css`
+- Remove the global `body { padding-top: env(safe-area-inset-top); }`
+- Make the root layout fill the screen from first paint:
+  - `html, body, #root { min-height: 100%; }`
+  - `html, body, #root { background: #121212; }` as the base fallback
+- Keep page-level safe-area handling inside headers/screens that already use `env(safe-area-inset-top)`
 
-### `src/pages/JoinRally.tsx`
+This ensures the app background reaches behind the Dynamic Island immediately instead of creating a blank strip.
 
-**1. Remove solid white header (lines 202-215)**
-Replace with a transparent floating back button:
-```tsx
-<div className="fixed top-0 left-0 right-0 z-40" style={{ paddingTop: 'env(safe-area-inset-top, 1.5rem)' }}>
-  <div className="flex items-center justify-between px-4 py-3">
-    <Button variant="ghost" size="sm" asChild>
-      <Link to="/events"><ArrowLeft className="h-4 w-4 mr-2" /> Back</Link>
-    </Button>
-    <img src={rallyLogo} alt="R@lly" className="h-10 w-10 object-contain" />
-    <div className="w-16" />
-  </div>
-</div>
-```
+### 2. Preserve existing page-level safe-area spacing
+Do not change page design or header structure on screens that already handle the notch correctly:
+- `src/components/layout/Header.tsx`
+- `src/pages/Events.tsx`
+- `src/pages/Index.tsx`
+- `src/pages/JoinRally.tsx`
+- `src/pages/Notifications.tsx`
 
-**2. Full-bleed immersive background (line 200-201)**
-Replace outer div with full-screen centered layout + ambient glow:
-```tsx
-<div className="min-h-[100dvh] bg-black relative overflow-hidden flex flex-col">
-  {/* Ambient radial glow */}
-  <div className="absolute inset-0 pointer-events-none">
-    <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-[#F47A19]/15 blur-[120px]" />
-    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[400px] h-[300px] rounded-full bg-[#F47A19]/8 blur-[100px]" />
-  </div>
-```
+These already use internal top inset spacers/padding, which is the correct pattern once the global body padding is removed.
 
-**3. Center the main content (line 217)**
-Replace `<main>` with a vertically centered flex container:
-```tsx
-<main className="flex-1 flex items-center justify-center relative z-10 px-4" 
-      style={{ paddingTop: 'env(safe-area-inset-top, 1.5rem)' }}>
-```
+### 3. Harden first-paint background behavior
+In `src/index.css`, ensure the base background color is applied before theme gradients:
+- keep dark base fallback at document level
+- avoid relying only on animated body gradients for first paint
+- ensure the top inset area always matches the page beneath it on load
 
-**4. Upgrade manual code entry card (lines 220-243)**
-Glass card with glow border:
-```tsx
-<div className="w-full max-w-sm backdrop-blur-xl bg-white/[0.06] border border-white/[0.1] rounded-2xl p-8 shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
-```
-- Title: `text-2xl font-bold text-white font-montserrat`
-- Subtitle: `text-sm text-white/50`
-- Input: add `bg-white/[0.06] border-white/[0.1] text-white` glass styling
-- Button: keep existing `gradient-primary` class
+### 4. Verify no secondary offset remains
+Quick code pass to confirm there is no duplicate top offset from:
+- global body padding
+- extra hardcoded top spacers outside page headers
+- root/container background mismatch
 
-**5. Apply same glass treatment to event preview card and not-found card**
+## Expected result
+- No white strip at the top on iPhone
+- Safe area matches the screen background immediately on load
+- No visual jump or repaint needed after dragging
+- Existing layouts and styling remain unchanged
 
-**6. Update loading state container** to match dark/centered layout
+## Files to update
+- `src/index.css` — remove global safe-area body padding and make document/root backgrounds fill the screen correctly
 
-**7. Also update the auth-loading return** (lines 190-198) to use `bg-black` instead of `bg-background`
-
-## What does NOT change
-- All functionality, navigation logic, input behavior, form submission
-- Safety modals, rides selection flow
-- Button actions and state management
-
-## Files
-
-| File | Change |
-|------|--------|
-| `src/pages/JoinRally.tsx` | Full visual overhaul — transparent header, full-bleed dark background with ambient glow, glass cards, centered layout |
-
-1 file. Visual-only changes.
-
+## Technical note
+The correct pattern is:
+- global document/root provides full-bleed background
+- individual screens/headers add their own safe-area spacing
+- never apply notch padding to the entire `body`, because that exposes the browser/root background above the app
