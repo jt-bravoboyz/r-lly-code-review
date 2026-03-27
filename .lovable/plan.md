@@ -1,29 +1,22 @@
 
 
-# Replace App Icon with Provided Image
+# Squads Tab — Fix Header Shift
 
-## What gets done
+## Root Cause
 
-Copy the uploaded PNG to replace the existing icon assets, ensuring the app icon matches the provided image exactly across all contexts.
+The Squads page builds its own inline header with a hardcoded `<div className="h-6" />` top spacer, while every other page uses the shared `<Header>` component which has `<div style={{ height: 'env(safe-area-inset-top, 1.5rem)' }} />`. This mismatch causes the header to sit at a different vertical position, creating the visible "jump" when navigating to Squads.
 
-## Changes
+Additionally, the Squads header lacks `backdrop-blur-xl`, `border-b border-white/[0.12]`, and the consistent `shadow` styling that the shared Header uses.
 
-### 1. Copy uploaded image to public assets
-- Copy `user-uploads://ChatGPT_Image_Mar_27_2026_04_03_07_PM.png` to `public/rally-icon-1024.png` (replaces existing)
-- Copy same file to `public/rally-icon-192.png` (replaces existing)
+## Fix
 
-### 2. Update `public/logo.svg` reference
-Since the new source of truth is a PNG, update `index.html` favicon to point to the PNG instead of SVG, or keep SVG as a secondary reference. The `apple-touch-icon` already points to `rally-icon-192.png` which will be updated.
-
-### 3. No manifest changes needed
-`manifest.json` already references `rally-icon-192.png` and `rally-icon-1024.png` — replacing the files in-place means all references stay valid.
+Replace the Squads page's custom inline header (lines 44-65) with the shared `<Header>` component, passing `title="Squads"` and `icon={<Users>}`. This ensures identical structure, spacing, and safe-area handling across all tabs.
 
 ## Files
 
 | File | Change |
 |------|--------|
-| `public/rally-icon-1024.png` | Replace with uploaded image |
-| `public/rally-icon-192.png` | Replace with uploaded image |
+| `src/pages/Squads.tsx` | Remove inline header block (lines 44-65), replace with `<Header title="Squads" icon={<Users className="h-5 w-5" strokeWidth={2.5} />} />`. Remove unused `Link`, `Avatar`, `AvatarImage`, `AvatarFallback`, `rallyLogo` imports if no longer needed elsewhere in the file. |
 
-2 file replacements. Direct asset swap, no code changes.
+1 file, ~20 lines replaced with 1 component call.
 
