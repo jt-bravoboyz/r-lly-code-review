@@ -95,8 +95,8 @@ export default function Events() {
       <main className="px-4 py-6 space-y-6 relative z-10">
         {/* Search and Filter */}
         <div className="flex gap-3 animate-fade-in">
-          <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <div className="group relative flex-1">
+            <Search className="pointer-events-none absolute left-4 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-foreground/45 transition-colors group-focus-within:text-foreground/65" />
             <Input 
               placeholder="Search rally..." 
               className="pl-11 rounded-xl bg-background/60 dark:bg-white/[0.06] backdrop-blur-sm border-border/50 dark:border-white/[0.1] shadow-sm focus:shadow-md focus:border-primary/30 transition-all"
