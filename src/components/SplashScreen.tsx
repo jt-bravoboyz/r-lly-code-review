@@ -33,12 +33,12 @@ export function SplashScreen({ onComplete, duration = 5500 }: SplashScreenProps)
   // ─── PHASE 1: "@" Activation (0.0–1.2s) ───
   const atFadeIn = easeOutCubic(ph(elapsed, 0.0, 0.4));
 
-  // Pulsing glow: slow sine wave, ramping intensity over time
-  const pulseSpeed = 4.2; // radians/sec (~1.5s period)
-  const pulseRamp = clamp(elapsed / 4.6); // ramps 0→1 over full sequence
-  const pulseBase = 0.3 + pulseRamp * 0.7; // 0.3 → 1.0
+  // Pulsing glow: very slow sine wave, gradually ramping intensity
+  const pulseSpeed = 2.0; // radians/sec (~3.1s period) — much slower
+  const pulseRamp = clamp(elapsed / 5.0); // ramps 0→1 very gradually
+  const pulseBase = 0.15 + pulseRamp * 0.85; // starts dimmer, builds slowly
   const pulseWave = Math.sin(elapsed * pulseSpeed) * 0.5 + 0.5; // 0→1 sine
-  const glowIntensity = atFadeIn * (pulseBase * 0.6 + pulseWave * pulseBase * 0.4);
+  const glowIntensity = atFadeIn * (pulseBase * 0.7 + pulseWave * pulseBase * 0.3);
 
   // Ambient glow synced to pulse
   const ambientOpacity = glowIntensity * 0.18;
