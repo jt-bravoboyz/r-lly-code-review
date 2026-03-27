@@ -199,15 +199,14 @@ export default function JoinRally() {
 
       {/* Transparent floating header */}
       <div className="fixed top-0 left-0 right-0 z-40" style={{ paddingTop: 'env(safe-area-inset-top, 1.5rem)' }}>
-        <div className="flex items-center justify-between px-4 py-3">
-          <Button variant="ghost" size="sm" className="text-white/70 hover:text-white" asChild>
+        <div className="relative flex items-center justify-center px-4 py-3">
+          <Button variant="ghost" size="sm" className="absolute left-4 text-white/70 hover:text-white" asChild>
             <Link to="/events">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back
             </Link>
           </Button>
           <img src={rallyLogo} alt="R@lly" className="h-10 w-10 object-contain" />
-          <div className="w-16" />
         </div>
       </div>
 
