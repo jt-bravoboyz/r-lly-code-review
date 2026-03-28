@@ -7,9 +7,12 @@ import { ContactsTab } from '@/components/squads/ContactsTab';
 import { Header } from '@/components/layout/Header';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, Sparkles, Contact } from 'lucide-react';
+import { Users, Sparkles, Contact, Send } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import rallyLogo from '@/assets/rally-logo.png';
+import { useState } from 'react';
+import { ContactInviteDialog } from '@/components/contacts/ContactInviteDialog';
+import { Button } from '@/components/ui/button';
 
 export default function Squads() {
   const { profile, loading: authLoading } = useAuth();
