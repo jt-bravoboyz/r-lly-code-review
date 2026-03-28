@@ -725,6 +725,50 @@ export default function Settings() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Share Contacts */}
+            <Card className="card-rally">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Contact className="h-4 w-4 text-primary" />
+                  Share Contacts
+                </CardTitle>
+                <CardDescription>
+                  Sync contacts to invite friends to R@lly
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Contact className="h-5 w-5 text-muted-foreground" />
+                    <div>
+                      <Label className="font-medium">Contacts</Label>
+                      {phoneContacts.length > 0 ? (
+                        <p className="text-xs text-green-600 flex items-center gap-1">
+                          <CheckCircle2 className="h-3 w-3" />
+                          {phoneContacts.length} contacts synced
+                        </p>
+                      ) : (
+                        <p className="text-xs text-muted-foreground">
+                          Tap to sync your contacts
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <ContactSyncButton />
+                </div>
+                {phoneContacts.length > 0 && (
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => setContactInviteOpen(true)}
+                  >
+                    <Send className="h-4 w-4 mr-2" />
+                    Invite from Contacts
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* Notifications Settings */}
