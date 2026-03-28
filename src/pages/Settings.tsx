@@ -102,6 +102,8 @@ export default function Settings() {
   const [activeTab, setActiveTab] = useState('privacy');
   const [isTogglingLocation, setIsTogglingLocation] = useState(false);
   const [activeEventCount, setActiveEventCount] = useState(0);
+  const { data: phoneContacts = [] } = usePhoneContacts();
+  const [contactInviteOpen, setContactInviteOpen] = useState(false);
 
   // Check how many active events user is sharing location in
   useEffect(() => {
