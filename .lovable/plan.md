@@ -1,62 +1,52 @@
 
 
-# Founder 25 Go-Live Implementation
+# Partnership BI Build — Implementation Plan
 
-## 4 Workstreams
+## 8 Files (5 New, 3 Modified)
 
-### 1. Data Reset — DELETE from 16 tables
-Execute via the database insert tool in dependency order:
-1. `ride_passengers`, `ride_offers`, `rides`
-2. `barhop_stops`
-3. `event_dd_requests`, `dd_disclaimer_acceptances`
-4. `event_feedback`
-5. `event_invites`, `phone_invites` (if exists)
-6. `messages`, `chat_participants`, `chats`
-7. `event_attendees`, `events`
-8. `analytics_events`
-9. `venue_presence`
+### 1. `src/hooks/useAdminData.tsx` — Add dateRange + 6 new metrics
 
-All profiles, user_roles, squads, badges, feature_flags preserved.
+**Accept `dateRange` param** (`'today' | '7d' | '30d' | 'all'`). Filter `events`, `attendees`, `analytics_events` by `created_at >= cutoff` before all calculations.
 
-### 2. Caroline Kay — Founder Badge
-Execute via insert tool:
-```sql
-UPDATE profiles SET founding_member = true WHERE id = 'a5bdc43f-7fa7-4893-8343-da76cfc4a77f';
-```
+**New metrics added to return object:**
+- `kFactor` — already computed, just needs surfacing (done)
+- `avgSquadSize` — `attendees.length / filteredRallyEvents.length`
+- `peakActivity` — group `rally_started` analytics events by `dayOfWeek + hour`, find max bucket, format as "Prime Brand Engagement Window: Saturdays, 8:00–9:00 PM"
+- `safetyROI` — count attendees with `departure_transport_mode` not null
+- `transitLatency` — avg minutes between `rally_ended` and `rally_home_opened` analytics events per event
+- `avgDwellTime` — fetch `venue_presence`, compute `avg(last_seen_at - entered_at)` in minutes
 
-### 3. Growth & Retention Dashboard
+**Admin filtering**: Already queries `user_roles` — enhanced to also exclude `rally@bravoboyz.com` explicitly and filter on ALL roles (not just `admin`).
 
-**New file: `src/components/admin/RetentionMetrics.tsx`**
-- Card grid: Total Users, DAU (24h), WAU (7d), MAU (30d), 3-Month, 6-Month, Yearly
-- Each card: count + percentage (with `totalUsers === 0` guard → shows "0%")
-- Uses `data.retention` passed as prop
+### 2. `src/components/admin/KFactorCard.tsx` — NEW
+Single card showing K-Factor value (e.g. "1.3x"), subtitle "invites per rally created". Same Card/CardHeader/CardContent pattern.
 
-**Edit: `src/hooks/useAdminData.tsx`**
-- After existing profile fetch, count `profiles.length` as `totalUsers`
-- Derive active user counts from `analytics_events` by counting distinct `user_id` where `created_at` falls within each window (1d, 7d, 30d, 90d, 180d, 365d)
-- Add `retention` to return object
+### 3. `src/components/admin/SquadInsights.tsx` — NEW
+Two side-by-side cards:
+- **Average Squad Size**: attendees/events count
+- **Prime Brand Engagement Window**: "Saturdays, 8:00–9:00 PM" — the 60-min window before peak rally starts
 
-**Edit: `src/pages/AdminDashboard.tsx`**
-- Import `RetentionMetrics`
-- Render between `AnalyticsCards` and `GrowthMetrics` in Partner view
+### 4. `src/components/admin/SafetyROI.tsx` — NEW
+Card showing estimated safe departures (transport mode set) and transit latency (avg minutes).
 
-### 4. Profile Email/Phone Sync
+### 5. `src/components/admin/AdminDateFilter.tsx` — NEW
+Row of pill buttons: Today, 7D, 30D, All. State managed in AdminDashboard, passed to `useAdminAnalytics`.
 
-**Edit: `src/pages/Profile.tsx`**
-- Add `editEmail` state, initialize from `user.email` in `handleStartEdit`
-- Add email input field below name in edit mode (with `Mail` icon)
-- In `handleSaveProfile`:
-  - If email changed: call `supabase.auth.updateUser({ email: newEmail })`, show toast: "Check your new email for a verification link to finalize the change."
-  - If phone changed: call `supabase.auth.updateUser({ phone: normalizedPhone })` alongside the profile table update
-- Validation: basic email format regex, phone 10+ digits (already handled)
+### 6. `src/components/admin/AdminCSVExport.tsx` — NEW
+Button that generates a **detailed row-by-row CSV**:
+- Columns: `Event Name (Masked)`, `City`, `Total Attendees`, `% Safety Confirmed`, `Transit Provider Used`
+- Event names masked as "R@lly #1", "R@lly #2", etc.
+- Downloads via `URL.createObjectURL`
 
-## Files
+### 7. `src/components/admin/CommercialDashboard.tsx` — Add dwell time card
+- Accept `avgDwellTime` prop
+- New "Avg Dwell Time" card using identical Card styling as GMV card (same padding, shadows, borders)
+- Enhanced city density bars with proportional widths
 
-| File | Change |
-|------|--------|
-| `src/components/admin/RetentionMetrics.tsx` | **New** — retention cards |
-| `src/hooks/useAdminData.tsx` | Add retention metrics calculation |
-| `src/pages/AdminDashboard.tsx` | Add RetentionMetrics import + render |
-| `src/pages/Profile.tsx` | Add email editing + auth.updateUser sync |
-| Database (insert tool) | DELETE 16 tables + UPDATE Caroline Kay |
+### 8. `src/pages/AdminDashboard.tsx` — Reorder + wire up
+- Import all 5 new components
+- Add `dateRange` state, pass to `useAdminAnalytics`
+- Render `AdminDateFilter` below header
+- **Partner tab order**: KFactorCard → AnalyticsCards → RetentionMetrics → SquadInsights + SafetyROI → Growth + Safety → Founder + Feedback → CSV Export
+- **Commercial tab**: pass `avgDwellTime`, add CSV Export
 
