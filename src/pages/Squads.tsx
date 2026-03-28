@@ -7,14 +7,18 @@ import { ContactsTab } from '@/components/squads/ContactsTab';
 import { Header } from '@/components/layout/Header';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, Sparkles, Contact } from 'lucide-react';
+import { Users, Sparkles, Contact, Send } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import rallyLogo from '@/assets/rally-logo.png';
+import { useState } from 'react';
+import { ContactInviteDialog } from '@/components/contacts/ContactInviteDialog';
+import { Button } from '@/components/ui/button';
 
 export default function Squads() {
   const { profile, loading: authLoading } = useAuth();
   const { data: squads, isLoading } = useAllMySquads();
   const navigate = useNavigate();
+  const [contactInviteOpen, setContactInviteOpen] = useState(false);
 
   if (authLoading) {
     return (
@@ -57,6 +61,15 @@ export default function Squads() {
           </TabsList>
 
           <TabsContent value="squads" className="space-y-6 animate-fade-in">
+            {/* Invite from Contacts CTA */}
+            <Button
+              onClick={() => setContactInviteOpen(true)}
+              className="w-full btn-rally rounded-xl h-12 font-bold text-base gap-2"
+            >
+              <Send className="h-5 w-5" />
+              Invite from Contacts
+            </Button>
+
             {/* Header with create button */}
             <div className="flex items-center justify-between">
               <div>
@@ -107,6 +120,7 @@ export default function Squads() {
         </Tabs>
       </main>
 
+      <ContactInviteDialog open={contactInviteOpen} onOpenChange={setContactInviteOpen} />
       <BottomNav />
     </div>
   );

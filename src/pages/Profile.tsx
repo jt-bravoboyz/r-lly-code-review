@@ -10,7 +10,10 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Settings, LogOut, MapPin, Award, Camera, Users, Home, Shield, Pencil, Save, X, FileText, ChevronRight, Navigation, Phone, Mail, CreditCard } from 'lucide-react';
+import { Settings, LogOut, MapPin, Award, Camera, Users, Home, Shield, Pencil, Save, X, FileText, ChevronRight, Navigation, Phone, Mail, CreditCard, Contact, CheckCircle2, Send } from 'lucide-react';
+import { usePhoneContacts } from '@/hooks/usePhoneContacts';
+import { ContactSyncButton } from '@/components/contacts/ContactSyncButton';
+import { ContactInviteDialog } from '@/components/contacts/ContactInviteDialog';
 import { useAuth } from '@/hooks/useAuth';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useLocation } from '@/hooks/useLocation';
@@ -72,6 +75,8 @@ export default function Profile() {
   const { toggleLocationSharing } = useLocation();
   const navigate = useNavigate();
   const { isAdmin } = useAdminAuth();
+  const { data: phoneContacts = [] } = usePhoneContacts();
+  const [contactInviteOpen, setContactInviteOpen] = useState(false);
   
   // Badge system hooks
   const { state: badgeState, currentTier, nextTier, progress } = useBadgeState();
@@ -611,6 +616,40 @@ export default function Profile() {
               </Dialog>
             </div>
 
+            {/* Share Contacts */}
+            <div className="pt-3 border-t border-border">
+              <div className="flex items-center justify-between py-2 px-1">
+                <div className="flex items-center gap-3">
+                  <Contact className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <span className="font-medium">Share Contacts</span>
+                    {phoneContacts.length > 0 ? (
+                      <p className="text-xs text-green-600 flex items-center gap-1">
+                        <CheckCircle2 className="h-3 w-3" />
+                        {phoneContacts.length} contacts synced
+                      </p>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">
+                        Sync to invite friends instantly
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <ContactSyncButton />
+              </div>
+              {phoneContacts.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full mt-1 text-primary"
+                  onClick={() => setContactInviteOpen(true)}
+                >
+                  <Send className="h-4 w-4 mr-2" />
+                  Invite from Contacts
+                </Button>
+              )}
+            </div>
+
             <div className="pt-3 border-t border-border">
               <button
                 onClick={() => navigate('/settings')}
@@ -669,6 +708,9 @@ export default function Profile() {
         onCameraClick={() => cameraInputRef.current?.click()}
         onGalleryClick={() => fileInputRef.current?.click()}
       />
+
+      {/* Contact Invite Dialog */}
+      <ContactInviteDialog open={contactInviteOpen} onOpenChange={setContactInviteOpen} />
 
       {/* Avatar Cropper Dialog */}
       {selectedImageSrc && (
