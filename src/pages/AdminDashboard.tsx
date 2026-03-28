@@ -14,6 +14,11 @@ import { FeatureFlags } from '@/components/admin/FeatureFlags';
 import { ErrorLogFeed } from '@/components/admin/ErrorLogFeed';
 import { OnboardingDropoff } from '@/components/admin/OnboardingDropoff';
 import { CommercialDashboard } from '@/components/admin/CommercialDashboard';
+import { KFactorCard } from '@/components/admin/KFactorCard';
+import { SquadInsights } from '@/components/admin/SquadInsights';
+import { SafetyROI } from '@/components/admin/SafetyROI';
+import { AdminDateFilter, type DatePreset } from '@/components/admin/AdminDateFilter';
+import { AdminCSVExport } from '@/components/admin/AdminCSVExport';
 import { Shield, Loader2, Home } from 'lucide-react';
 import { Navigate, Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -23,7 +28,8 @@ type ViewMode = 'partner' | 'technical' | 'commercial';
 export default function AdminDashboard() {
   const { isAdmin, loading: authLoading } = useAdminAuth();
   const [viewMode, setViewMode] = useState<ViewMode>('partner');
-  const { data, isLoading } = useAdminAnalytics(viewMode === 'partner');
+  const [datePreset, setDatePreset] = useState<DatePreset>('all');
+  const { data, isLoading } = useAdminAnalytics(viewMode === 'partner' || viewMode === 'commercial', datePreset);
 
   if (authLoading) {
     return (
@@ -49,7 +55,7 @@ export default function AdminDashboard() {
             <span className="hidden sm:inline">Return to App</span>
           </Link>
 
-          {/* Partner / Technical toggle */}
+          {/* View mode toggle */}
           <div className="ml-auto flex items-center gap-1 bg-muted rounded-full p-0.5">
             {(['partner', 'technical', 'commercial'] as const).map(mode => (
               <button
@@ -67,6 +73,10 @@ export default function AdminDashboard() {
             ))}
           </div>
         </div>
+        {/* Date filter */}
+        <div className="container pb-3 flex items-center gap-3">
+          <AdminDateFilter value={datePreset} onChange={setDatePreset} />
+        </div>
       </header>
 
       <main className="container py-6 space-y-6 pb-12">
@@ -76,15 +86,36 @@ export default function AdminDashboard() {
           </div>
         ) : viewMode === 'partner' ? (
           <>
-            {/* Partner View: Clean success metrics */}
+            {/* 1. K-Factor — first thing visible */}
+            <KFactorCard
+              kFactor={data.summary.kFactor}
+              inviteCopied={data.summary.inviteCopied}
+              totalEvents={data.summary.totalEventsCreated}
+            />
+
+            {/* 2. Analytics Cards */}
             <AnalyticsCards summary={data.summary} sparkline={data.sparkline} />
+
+            {/* 3. Retention */}
             <RetentionMetrics retention={data.retention as any} />
 
+            {/* 4. Squad Insights + Safety ROI */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-2 gap-4">
+                <SquadInsights avgSquadSize={data.avgSquadSize} peakActivity={data.peakActivity} />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <SafetyROI safeDepartures={data.safeDepartures} transitLatencyMinutes={data.transitLatency} />
+              </div>
+            </div>
+
+            {/* 5. Growth + Safety */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <GrowthMetrics growth={data.growth} />
               <SafetyMetrics safety={data.safety} attendees={data.attendees} />
             </div>
 
+            {/* 6. Founder + Feedback */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <FounderPanel
                 founders={data.founders}
@@ -93,18 +124,36 @@ export default function AdminDashboard() {
               />
               <FeedbackPanel feedback={data.feedback} profiles={data.profiles} />
             </div>
+
+            {/* 7. CSV Export */}
+            <div className="flex justify-end">
+              <AdminCSVExport
+                events={data.rallyEvents}
+                attendees={data.attendees}
+                label="Export Partner Report"
+              />
+            </div>
           </>
         ) : viewMode === 'commercial' ? (
-          <CommercialDashboard
-            totalGMV={data.commercial?.totalGMV ?? 0}
-            paidEventsCount={data.commercial?.paidEventsCount ?? 0}
-            providerSplit={data.transit?.providerSplit ?? {}}
-            eventsByCity={data.commercial?.eventsByCity ?? []}
-          />
+          <>
+            <CommercialDashboard
+              totalGMV={data.commercial?.totalGMV ?? 0}
+              paidEventsCount={data.commercial?.paidEventsCount ?? 0}
+              providerSplit={data.transit?.providerSplit ?? {}}
+              eventsByCity={data.commercial?.eventsByCity ?? []}
+              avgDwellTime={data.avgDwellTime}
+            />
+            <div className="flex justify-end">
+              <AdminCSVExport
+                events={data.rallyEvents}
+                attendees={data.attendees}
+                label="Export Commercial Report"
+              />
+            </div>
+          </>
         ) : (
           <>
-            {/* Technical View: System health */}
-
+            {/* Technical View */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <FunnelChart funnel={data.funnel} modeSplit={data.modeSplit} />
               <OnboardingDropoff />
