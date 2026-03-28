@@ -123,9 +123,13 @@ export default function AdminDashboard() {
                 founders={data.founders}
                 attendees={data.attendees}
                 rallyEvents={data.rallyEvents}
+                referralCounts={data.referralCounts}
               />
               <FeedbackPanel feedback={data.feedback} profiles={data.profiles} />
             </div>
+
+            {/* Top Connectors */}
+            <TopConnectors topConnectors={data.topConnectors} />
 
             {/* 7. System Feedback */}
             <SystemFeedbackCard />
