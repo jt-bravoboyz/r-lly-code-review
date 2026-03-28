@@ -61,14 +61,6 @@ export default function Squads() {
           </TabsList>
 
           <TabsContent value="squads" className="space-y-6 animate-fade-in">
-            {/* Invite from Contacts CTA */}
-            <Button
-              onClick={() => setContactInviteOpen(true)}
-              className="w-full btn-rally rounded-xl h-12 font-bold text-base gap-2"
-            >
-              <Send className="h-5 w-5" />
-              Invite from Contacts
-            </Button>
 
             {/* Header with create button */}
             <div className="flex items-center justify-between">
