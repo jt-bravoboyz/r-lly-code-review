@@ -20,9 +20,10 @@ interface TransportModeSelectorProps {
   eventId: string;
   profileId: string;
   onComplete?: () => void;
+  onSkip?: () => void;
 }
 
-export function TransportModeSelector({ open, onOpenChange, eventId, profileId, onComplete }: TransportModeSelectorProps) {
+export function TransportModeSelector({ open, onOpenChange, eventId, profileId, onComplete, onSkip }: TransportModeSelectorProps) {
   const [saving, setSaving] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
 

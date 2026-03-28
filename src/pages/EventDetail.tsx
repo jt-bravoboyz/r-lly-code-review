@@ -115,6 +115,8 @@ export default function EventDetail() {
   const [showTransportSelector, setShowTransportSelector] = useState(false);
   const [showPaymentGate, setShowPaymentGate] = useState(false);
   const [showRideshareDrawer, setShowRideshareDrawer] = useState(false);
+  const [joinFlowDismissedForSession, setJoinFlowDismissedForSession] = useState(false);
+  const [locationPromptDismissedForSession, setLocationPromptDismissedForSession] = useState(false);
 
   const handleRallyCompleteDone = useCallback(() => {
     setShowRallyComplete(false);

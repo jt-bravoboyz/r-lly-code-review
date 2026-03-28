@@ -14,6 +14,7 @@ export interface AttendeeWithSafetyStatus {
   is_dd: boolean;
   after_rally_opted_in: boolean | null;
   after_rally_location_name?: string | null;
+  arrival_transport_mode?: string | null;
   destination_name?: string | null;
   needs_ride?: boolean | null;
   ride_pickup_location?: string | null;
