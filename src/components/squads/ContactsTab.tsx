@@ -38,11 +38,13 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
   const [friendsExpanded, setFriendsExpanded] = useState(true);
   const [squadMembersExpanded, setSquadMembersExpanded] = useState(true);
   const [phoneContactsExpanded, setPhoneContactsExpanded] = useState(true);
+  const [cloudContactsExpanded, setCloudContactsExpanded] = useState(true);
   const [expandedSquads, setExpandedSquads] = useState<Set<string>>(new Set());
 
   const { data: rallyFriends = [], isLoading: loadingFriends } = useRallyFriends();
   const { data: allSquads = [], isLoading: loadingSquads } = useAllMySquads();
   const { data: phoneContacts = [], isLoading: loadingContacts } = usePhoneContacts();
+  const { data: cloudContacts = [], isLoading: loadingCloud } = useUserContacts();
 
   // Filter friends by search
   const filteredFriends = rallyFriends.filter(
