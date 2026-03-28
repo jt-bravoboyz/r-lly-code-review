@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { UserPlus, Smartphone, ClipboardPaste, Upload, X } from 'lucide-react';
+import { UserPlus, Smartphone, ClipboardPaste, Upload, FileUp, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SmartPasteContacts } from './SmartPasteContacts';
 import { CSVContactImport } from './CSVContactImport';
+import { VCFContactImport } from './VCFContactImport';
+import { ContactSmartSearch } from './ContactSmartSearch';
 import { useUpsertUserContacts } from '@/hooks/useUserContacts';
 import { Capacitor } from '@capacitor/core';
 import { Contacts } from '@capacitor-community/contacts';
@@ -20,6 +22,7 @@ export function AddPeopleSheet() {
     try {
       const isNative = Capacitor.isNativePlatform();
 
+      // Tier 1: Capacitor native shell → real contact picker
       if (isNative) {
         const perm = await Contacts.requestPermissions();
         if (perm.contacts !== 'granted') {
@@ -80,8 +83,11 @@ export function AddPeopleSheet() {
         return;
       }
 
-      // Fallback: device picker not available
-      toast.info('Device contact picker not available on this browser. Use Quick Paste or CSV instead!');
+      // Fallback for iOS Safari / unsupported browsers
+      toast.info(
+        'Apple restricts direct contact access in browsers. Use Contact Card import, Quick Paste, or CSV below!',
+        { duration: 5000 }
+      );
     } catch (err: any) {
       if (err.message?.includes('cancelled')) {
         // User cancelled — no error
@@ -101,12 +107,31 @@ export function AddPeopleSheet() {
           Add People
         </Button>
       </SheetTrigger>
-      <SheetContent side="bottom" className="rounded-t-3xl h-[75vh]">
+      <SheetContent side="bottom" className="rounded-t-3xl h-[85vh]">
         <SheetHeader className="pb-2">
           <SheetTitle className="font-montserrat text-lg">Add People</SheetTitle>
         </SheetHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-4 overflow-y-auto max-h-[calc(85vh-80px)] pb-6">
+          {/* Smart Search — autofill from existing contacts */}
+          <ContactSmartSearch
+            onSelect={(c) => {
+              toast.success(`Selected ${c.name || c.phone || c.email}`);
+            }}
+            onInvite={(c) => {
+              const contact = c.phone || c.email || '';
+              if (c.phone) {
+                const message = encodeURIComponent(`Join me on R@lly! 🎉 Download at ${window.location.origin}`);
+                window.open(`sms:${c.phone}?body=${message}`, '_blank');
+              } else if (c.email) {
+                const subject = encodeURIComponent('Join me on R@lly!');
+                const body = encodeURIComponent(`Hey!\n\nJoin me on R@lly — the app for planning nights out with friends.\n\n${window.location.origin}\n\nSee you there! 🎉`);
+                window.open(`mailto:${c.email}?subject=${subject}&body=${body}`, '_blank');
+              }
+              toast.success(`Invite opened for ${c.name || contact}!`);
+            }}
+          />
+
           {/* Quick action: device contacts */}
           <Button
             variant="outline"
@@ -125,18 +150,28 @@ export function AddPeopleSheet() {
             </div>
           </Button>
 
-          {/* Tabs for paste and CSV */}
-          <Tabs defaultValue="paste" className="w-full">
-            <TabsList className="w-full grid grid-cols-2">
-              <TabsTrigger value="paste" className="gap-1.5 text-xs">
+          {/* Tabs for VCF, paste, and CSV */}
+          <Tabs defaultValue="vcf" className="w-full">
+            <TabsList className="w-full grid grid-cols-3">
+              <TabsTrigger value="vcf" className="gap-1 text-xs">
+                <FileUp className="h-3.5 w-3.5" />
+                Contact Card
+              </TabsTrigger>
+              <TabsTrigger value="paste" className="gap-1 text-xs">
                 <ClipboardPaste className="h-3.5 w-3.5" />
                 Quick Paste
               </TabsTrigger>
-              <TabsTrigger value="csv" className="gap-1.5 text-xs">
+              <TabsTrigger value="csv" className="gap-1 text-xs">
                 <Upload className="h-3.5 w-3.5" />
-                CSV Upload
+                CSV
               </TabsTrigger>
             </TabsList>
+            <TabsContent value="vcf" className="mt-3">
+              <VCFContactImport onComplete={() => setOpen(false)} />
+              <p className="text-xs text-muted-foreground mt-3 leading-relaxed">
+                <strong>iPhone tip:</strong> Open Contacts → tap a contact → Share → save as .vcf → upload here.
+              </p>
+            </TabsContent>
             <TabsContent value="paste" className="mt-3">
               <SmartPasteContacts onComplete={() => setOpen(false)} />
             </TabsContent>
