@@ -18,11 +18,14 @@ import {
   Users,
   Phone,
   MessageSquare,
+  Cloud,
 } from 'lucide-react';
 import { useRallyFriends } from '@/hooks/useRallyFriends';
 import { useAllMySquads, Squad } from '@/hooks/useSquads';
 import { usePhoneContacts } from '@/hooks/usePhoneContacts';
+import { useUserContacts } from '@/hooks/useUserContacts';
 import { SquadSymbolBadge, getSquadIcon } from './SquadSymbolPicker';
+import { AddPeopleSheet } from '@/components/contacts/AddPeopleSheet';
 import { cn } from '@/lib/utils';
 
 interface ContactsTabProps {
