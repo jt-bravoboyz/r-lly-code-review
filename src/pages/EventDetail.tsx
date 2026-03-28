@@ -147,6 +147,12 @@ export default function EventDetail() {
     }
   }, [id]);
 
+  useEffect(() => {
+    if (!id) return;
+    setJoinFlowDismissedForSession(sessionStorage.getItem(`event-join-flow-dismissed-${id}`) === 'true');
+    setLocationPromptDismissedForSession(sessionStorage.getItem(`event-location-prompt-dismissed-${id}`) === 'true');
+  }, [id]);
+
   // POL-2: Debug logging wrapped in dev check + production analytics
   useEffect(() => {
     if (!event?.id) return;
