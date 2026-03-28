@@ -175,9 +175,11 @@ export function PolicyAcceptanceDialog({ open, onOpenChange, onAccept }: PolicyA
           </div>
         </div>
 
-        {!hasScrolledToBottom && (
+        {!scrollGatePassed && (
           <p className="text-xs text-center animate-pulse" style={{ color: "rgba(255, 106, 0, 0.7)" }}>
-            ↓ Scroll to review all policies
+            {acceptedPolicies && acknowledgedLiability
+              ? "↓ Please scroll to the bottom of the policies to enable the button"
+              : "↓ Scroll to review all policies"}
           </p>
         )}
 
