@@ -48,6 +48,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { NotificationSettings } from '@/components/settings/NotificationSettings';
 import { supabase } from '@/integrations/supabase/client';
+import { FeedbackDialog } from '@/components/settings/FeedbackDialog';
 
 const themeOptions = [
   { value: 'light', label: 'Light', icon: Sun, description: 'Always light' },
@@ -725,8 +726,10 @@ export default function Settings() {
           </TabsContent>
         </Tabs>
 
-        {/* Tutorial & Reset Buttons */}
+        {/* Feedback & Utility Buttons */}
         <div className="mt-6 space-y-3">
+          <FeedbackDialog />
+
           <Button 
             variant="outline" 
             className="w-full border-primary/30 text-primary hover:bg-primary hover:text-primary-foreground"

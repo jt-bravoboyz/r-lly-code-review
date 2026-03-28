@@ -168,16 +168,16 @@ export default function Index() {
         </section>
 
         {/* Current/Live Events Section */}
-        {currentEvents.length > 0 && (
-          <section className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                <h3 className="text-xl font-bold text-foreground font-montserrat">Live Now</h3>
-              </div>
-              <Clock className="h-5 w-5 text-green-500" />
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+              <h3 className="text-xl font-bold text-foreground font-montserrat">Live Now</h3>
             </div>
+            <Clock className="h-5 w-5 text-green-500" />
+          </div>
 
+          {currentEvents.length > 0 ? (
             <div className="space-y-4">
               {currentEvents.map((event) => (
                 <div key={event.id} className="relative">
@@ -186,8 +186,12 @@ export default function Index() {
                 </div>
               ))}
             </div>
-          </section>
-        )}
+          ) : (
+            <p className="text-sm text-muted-foreground italic text-center py-4 font-montserrat">
+              The night is young—no live R@llys yet. Start the movement.
+            </p>
+          )}
+        </section>
 
         {/* Upcoming Events Section */}
         <section className="space-y-4">
