@@ -137,7 +137,7 @@ export function PolicyAcceptanceDialog({ open, onOpenChange, onAccept }: PolicyA
                 <Collapsible
                   key={section.id}
                   open={isExpanded}
-                  onOpenChange={(open) => setExpandedSection(open ? section.id : null)}
+                  onOpenChange={(open) => handleToggleSection(section.id, open)}
                 >
                   <CollapsibleTrigger asChild>
                     <button 
