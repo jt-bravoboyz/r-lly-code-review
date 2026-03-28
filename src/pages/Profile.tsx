@@ -54,6 +54,7 @@ export default function Profile() {
   const [editBio, setEditBio] = useState('');
   const [editName, setEditName] = useState('');
   const [editPhone, setEditPhone] = useState('');
+  const [editEmail, setEditEmail] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [isHomeDialogOpen, setIsHomeDialogOpen] = useState(false);
   const [isSavingHome, setIsSavingHome] = useState(false);
