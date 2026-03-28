@@ -35,6 +35,7 @@ const policySections: PolicySection[] = [
 
 export function PolicyAcceptanceDialog({ open, onOpenChange, onAccept }: PolicyAcceptanceDialogProps) {
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
   const [acceptedPolicies, setAcceptedPolicies] = useState(false);
   const [acknowledgedLiability, setAcknowledgedLiability] = useState(false);
   const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
@@ -43,17 +44,50 @@ export function PolicyAcceptanceDialog({ open, onOpenChange, onAccept }: PolicyA
   const handleScroll = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
-    if (el.scrollHeight - el.scrollTop <= el.clientHeight + 20) {
+    // Relaxed threshold: 100px from bottom counts as "read"
+    if (el.scrollHeight - el.scrollTop <= el.clientHeight + 100) {
       setHasScrolledToBottom(true);
     }
   }, []);
 
-  const canAccept = acceptedPolicies && acknowledgedLiability && hasScrolledToBottom;
+  const handleToggleSection = (sectionId: string, isOpen: boolean) => {
+    setExpandedSection(isOpen ? sectionId : null);
+    if (isOpen) {
+      setExpandedSections(prev => new Set(prev).add(sectionId));
+    }
+  };
 
-  const handleAccept = () => {
+  // All sections viewed = force-enable scroll gate
+  const allSectionsViewed = policySections.every(s => expandedSections.has(s.id));
+
+  // Also auto-unlock on very short scroll areas (content fits without scrolling)
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (el && el.scrollHeight <= el.clientHeight + 100) {
+      setHasScrolledToBottom(true);
+    }
+  }, [expandedSection]);
+
+  const scrollGatePassed = hasScrolledToBottom || allSectionsViewed;
+  const canAccept = acceptedPolicies && acknowledgedLiability && scrollGatePassed;
+
+  const handleAccept = async () => {
     if (canAccept) {
       localStorage.setItem('rally-policies-accepted', 'true');
       localStorage.setItem('rally-policies-accepted-date', new Date().toISOString());
+
+      // Also persist to database so it sticks across devices
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          await supabase.from('profiles').update({
+            policies_accepted_at: new Date().toISOString(),
+          }).eq('user_id', user.id);
+        }
+      } catch (e) {
+        console.error('Failed to persist policy acceptance:', e);
+      }
+
       onAccept();
       onOpenChange(false);
     }
