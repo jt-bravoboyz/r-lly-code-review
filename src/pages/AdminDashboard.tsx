@@ -78,7 +78,7 @@ export default function AdminDashboard() {
           <>
             {/* Partner View: Clean success metrics */}
             <AnalyticsCards summary={data.summary} sparkline={data.sparkline} />
-            <RetentionMetrics retention={data.retention} />
+            <RetentionMetrics retention={data.retention as any} />
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <GrowthMetrics growth={data.growth} />
