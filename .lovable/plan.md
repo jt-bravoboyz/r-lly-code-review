@@ -1,80 +1,62 @@
 
 
-# Opening Animation — Premium Cinematic Redesign
+# Founder 25 Go-Live Implementation
 
-## Overview
-Complete rewrite of `SplashScreen.tsx` (590 lines → ~350 lines) to create a cinematic, Apple-quality launch sequence. The current comet/spark/arc system is replaced with a layered, phase-driven animation using CSS transforms, opacity, and canvas-free DOM elements.
+## 4 Workstreams
 
-## Architecture
-The new splash screen uses `requestAnimationFrame` with elapsed-time phases. All animation is driven by a single timestamp, no complex particle systems.
+### 1. Data Reset — DELETE from 16 tables
+Execute via the database insert tool in dependency order:
+1. `ride_passengers`, `ride_offers`, `rides`
+2. `barhop_stops`
+3. `event_dd_requests`, `dd_disclaimer_acceptances`
+4. `event_feedback`
+5. `event_invites`, `phone_invites` (if exists)
+6. `messages`, `chat_participants`, `chats`
+7. `event_attendees`, `events`
+8. `analytics_events`
+9. `venue_presence`
 
-## Animation Phases (Total: ~3.0s)
+All profiles, user_roles, squads, badges, feature_flags preserved.
 
-### Phase 1 — Activation (0.0s – 0.45s)
-- Screen opens on near-black (`#0A0A0A`) with a radial gradient center
-- A faint orange ambient glow fades in at center (radial gradient, opacity 0→0.15)
-- A horizontal light sweep passes across the screen (thin white line, left→right, blur 40px)
-- Feeling: system powering on
+### 2. Caroline Kay — Founder Badge
+Execute via insert tool:
+```sql
+UPDATE profiles SET founding_member = true WHERE id = 'a5bdc43f-7fa7-4893-8343-da76cfc4a77f';
+```
 
-### Phase 2 — Tension Build (0.45s – 1.1s)
-- Ambient glow pulses gently (opacity oscillates 0.15→0.25)
-- A second diagonal light sweep (subtle, top-left to bottom-right)
-- Faint glass-like refractive layer shifts with parallax (translucent div, slight translateY)
-- Controlled orange glow builds to peak at ~1.0s then recedes
-- Feeling: calibrating for the night
+### 3. Growth & Retention Dashboard
 
-### Phase 3 — Typography Reveal (1.1s – 1.9s)
-- **"Ready."** — fades in + translateY(12px→0), slight scale 0.97→1.0, holds, then fades
-- **"Set."** — same motion, tighter timing, slightly more confident scale
-- **"R@lly."** — lands with more weight: scale 0.95→1.02→1.0 (slight overshoot), the "@" rendered in R@lly orange (`#F47A19`), subtle text-shadow glow on the "@"
-- Each word appears sequentially in the same centered position (replaces previous)
-- Typography: Montserrat extrabold, large, tracked, white
-- A soft horizontal shimmer passes over "R@lly." as it resolves
+**New file: `src/components/admin/RetentionMetrics.tsx`**
+- Card grid: Total Users, DAU (24h), WAU (7d), MAU (30d), 3-Month, 6-Month, Yearly
+- Each card: count + percentage (with `totalUsers === 0` guard → shows "0%")
+- Uses `data.retention` passed as prop
 
-### Phase 4 — Logo Lock (1.9s – 2.35s)
-- "R@lly." text subtly scales up and the "@" glow intensifies briefly
-- A controlled orange edge-light bloom pulses once around the text
-- The tagline "R@lly your troops." fades in below with delay
-- Feeling: the brand has arrived
+**Edit: `src/hooks/useAdminData.tsx`**
+- After existing profile fetch, count `profiles.length` as `totalUsers`
+- Derive active user counts from `analytics_events` by counting distinct `user_id` where `created_at` falls within each window (1d, 7d, 30d, 90d, 180d, 365d)
+- Add `retention` to return object
 
-### Phase 5 — Seamless Transition to Auth (2.35s – 3.0s)
-- The logo/tagline fades out with slight upward drift
-- Background glow persists and settles
-- `onComplete()` fires at ~3.0s
-- The auth screen inherits the same dark background, creating visual continuity
+**Edit: `src/pages/AdminDashboard.tsx`**
+- Import `RetentionMetrics`
+- Render between `AnalyticsCards` and `GrowthMetrics` in Partner view
 
-## Technical Approach
+### 4. Profile Email/Phone Sync
 
-### `src/components/SplashScreen.tsx` — Full rewrite
-- Single `useEffect` with `requestAnimationFrame` loop updating elapsed time
-- All visuals are DOM divs with inline styles computed from elapsed time
-- No SVG, no canvas, no particle arrays
-- Easing: custom cubic-bezier curves (ease-out for entrances, ease-in for exits)
-- Light sweeps: absolutely positioned divs with CSS `background: linear-gradient(...)`, translated via `transform`
-- Glow: radial gradient div with animated opacity
-- Typography: `<span>` elements with computed opacity/transform
-
-### `src/components/AppEntry.tsx` — Duration update
-- Change `duration={5250}` → `duration={3000}` to match the new shorter sequence
-
-### No other files change
-- Auth pages, routing, colors, design system — all untouched
-- The dark background (`#0A0A0A` / `#121212`) is consistent with existing app aesthetic
-
-## Key Constraints Honored
-- No sound (web limitation)
-- No party/military imagery
-- Orange used sparingly (glow accents + "@" only)
-- Montserrat font (already loaded)
-- All CSS-driven, no external dependencies
-- Seamless transition into existing auth flow
+**Edit: `src/pages/Profile.tsx`**
+- Add `editEmail` state, initialize from `user.email` in `handleStartEdit`
+- Add email input field below name in edit mode (with `Mail` icon)
+- In `handleSaveProfile`:
+  - If email changed: call `supabase.auth.updateUser({ email: newEmail })`, show toast: "Check your new email for a verification link to finalize the change."
+  - If phone changed: call `supabase.auth.updateUser({ phone: normalizedPhone })` alongside the profile table update
+- Validation: basic email format regex, phone 10+ digits (already handled)
 
 ## Files
 
 | File | Change |
 |------|--------|
-| `src/components/SplashScreen.tsx` | Full rewrite — cinematic phased animation |
-| `src/components/AppEntry.tsx` | Update duration from 5250 to 3000 |
-
-2 files changed.
+| `src/components/admin/RetentionMetrics.tsx` | **New** — retention cards |
+| `src/hooks/useAdminData.tsx` | Add retention metrics calculation |
+| `src/pages/AdminDashboard.tsx` | Add RetentionMetrics import + render |
+| `src/pages/Profile.tsx` | Add email editing + auth.updateUser sync |
+| Database (insert tool) | DELETE 16 tables + UPDATE Caroline Kay |
 
