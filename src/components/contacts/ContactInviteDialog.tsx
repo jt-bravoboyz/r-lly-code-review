@@ -4,9 +4,12 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Search, Check, Send, Users, ShieldCheck } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Search, Check, Send, Users, ShieldCheck, Smartphone, Cloud } from 'lucide-react';
 import { usePhoneContacts, PhoneContact } from '@/hooks/usePhoneContacts';
+import { useUserContacts, UserContact } from '@/hooks/useUserContacts';
 import { ContactSyncButton } from './ContactSyncButton';
+import { CSVContactImport } from './CSVContactImport';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -15,25 +18,68 @@ interface ContactInviteDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
+interface UnifiedContact {
+  id: string;
+  name: string;
+  phone?: string;
+  email?: string;
+  source: 'device' | 'google' | 'csv';
+}
+
 export function ContactInviteDialog({ open, onOpenChange }: ContactInviteDialogProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isSending, setIsSending] = useState(false);
-  const { data: contacts = [], isLoading } = usePhoneContacts();
+  const { data: deviceContacts = [], isLoading: deviceLoading } = usePhoneContacts();
+  const { data: cloudContacts = [], isLoading: cloudLoading } = useUserContacts();
   const { profile } = useAuth();
 
+  const isLoading = deviceLoading || cloudLoading;
+
+  // Merge device + cloud contacts, dedup by phone
+  const allContacts = useMemo(() => {
+    const map = new Map<string, UnifiedContact>();
+
+    // Device contacts first
+    deviceContacts.forEach((c: PhoneContact) => {
+      const key = c.phone_number;
+      map.set(key, {
+        id: `device-${c.id}`,
+        name: c.display_name || c.phone_number,
+        phone: c.phone_number,
+        source: 'device',
+      });
+    });
+
+    // Cloud contacts — don't overwrite device entries
+    cloudContacts.forEach((c: UserContact) => {
+      const key = c.phone || c.email || c.id;
+      if (!map.has(key)) {
+        map.set(key, {
+          id: `cloud-${c.id}`,
+          name: c.name || c.phone || c.email || 'Unknown',
+          phone: c.phone || undefined,
+          email: c.email || undefined,
+          source: c.source === 'google' ? 'google' : 'csv',
+        });
+      }
+    });
+
+    return Array.from(map.values());
+  }, [deviceContacts, cloudContacts]);
+
   const filteredContacts = useMemo(() => {
-    if (!searchQuery) return contacts;
+    if (!searchQuery) return allContacts;
     const q = searchQuery.toLowerCase();
-    return contacts.filter(
-      (c) =>
-        c.display_name?.toLowerCase().includes(q) ||
-        c.phone_number?.includes(searchQuery)
+    return allContacts.filter(
+      c => c.name.toLowerCase().includes(q) ||
+           c.phone?.includes(searchQuery) ||
+           c.email?.toLowerCase().includes(q)
     );
-  }, [contacts, searchQuery]);
+  }, [allContacts, searchQuery]);
 
   const toggleContact = (id: string) => {
-    setSelectedIds((prev) => {
+    setSelectedIds(prev => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
@@ -42,28 +88,20 @@ export function ContactInviteDialog({ open, onOpenChange }: ContactInviteDialogP
   };
 
   const handleSendInvites = async () => {
-    const selected = contacts.filter((c) => selectedIds.has(c.id));
+    const selected = allContacts.filter(c => selectedIds.has(c.id));
     if (selected.length === 0) return;
 
     setIsSending(true);
-
-    // Build the referral link
     const referralParam = profile?.id ? `?r=${profile.id}` : '';
     const inviteLink = `https://rallyboyz.lovable.app${referralParam}`;
     const message = `Hey! Join me on R@lly — the app for coordinating epic nights out with your squad. No more messy group chats. 🟠\n\n${inviteLink}`;
 
-    // Try native share for multi-contact, fallback to SMS
-    const phones = selected.map((c) => c.phone_number).join(',');
+    const phones = selected.map(c => c.phone).filter(Boolean).join(',');
 
     if (navigator.share) {
       try {
-        await navigator.share({
-          title: 'Join R@lly',
-          text: message,
-        });
-      } catch {
-        // User cancelled share — that's fine
-      }
+        await navigator.share({ title: 'Join R@lly', text: message });
+      } catch { /* cancelled */ }
     } else {
       const encoded = encodeURIComponent(message);
       window.open(`sms:${phones}?body=${encoded}`, '_blank');
@@ -74,55 +112,69 @@ export function ContactInviteDialog({ open, onOpenChange }: ContactInviteDialogP
     onOpenChange(false);
   };
 
+  const sourceIcon = (source: UnifiedContact['source']) => {
+    switch (source) {
+      case 'device': return <Smartphone className="h-3 w-3" />;
+      case 'google': return <Cloud className="h-3 w-3" />;
+      case 'csv': return <Cloud className="h-3 w-3" />;
+    }
+  };
+
+  const sourceLabel = (source: UnifiedContact['source']) => {
+    switch (source) {
+      case 'device': return 'Phone';
+      case 'google': return 'Google';
+      case 'csv': return 'CSV';
+    }
+  };
+
   const selectedCount = selectedIds.size;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md h-[85vh] flex flex-col p-0 gap-0 rounded-2xl overflow-hidden">
-        {/* Header */}
         <DialogHeader className="px-5 pt-5 pb-3">
           <DialogTitle className="flex items-center gap-2 text-lg font-bold font-montserrat">
             <Users className="h-5 w-5 text-primary" />
             Invite to R@lly
           </DialogTitle>
           <p className="text-xs text-muted-foreground mt-1">
-            Select contacts to invite — no spam, ever.
+            Select contacts to invite — phone + cloud contacts merged.
           </p>
         </DialogHeader>
 
-        {/* Search */}
         <div className="px-5 pb-3">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search contacts..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={e => setSearchQuery(e.target.value)}
               className="pl-10 bg-muted/50 border-0 rounded-xl"
             />
           </div>
         </div>
 
-        {/* Contact List */}
         <ScrollArea className="flex-1 px-5">
           {isLoading ? (
             <div className="space-y-3 py-2">
-              {[1, 2, 3, 4, 5].map((i) => (
+              {[1, 2, 3, 4, 5].map(i => (
                 <div key={i} className="h-14 bg-muted/50 rounded-xl animate-pulse" />
               ))}
             </div>
-          ) : contacts.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
+          ) : allContacts.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
               <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
                 <Users className="h-8 w-8 text-primary" />
               </div>
-              <h3 className="font-bold text-foreground mb-2 font-montserrat">
-                No contacts synced yet
-              </h3>
-              <p className="text-sm text-muted-foreground mb-6 max-w-[240px]">
-                Sync your contacts to invite friends to R@lly in seconds.
+              <h3 className="font-bold text-foreground mb-2 font-montserrat">No contacts yet</h3>
+              <p className="text-sm text-muted-foreground mb-4 max-w-[240px]">
+                Sync device contacts or import from CSV to get started.
               </p>
-              <ContactSyncButton />
+              <div className="space-y-2 w-full max-w-[200px]">
+                <ContactSyncButton />
+                <CSVContactImport />
+              </div>
             </div>
           ) : filteredContacts.length === 0 ? (
             <div className="py-12 text-center">
@@ -130,7 +182,7 @@ export function ContactInviteDialog({ open, onOpenChange }: ContactInviteDialogP
             </div>
           ) : (
             <div className="space-y-1 py-1">
-              {filteredContacts.map((contact) => {
+              {filteredContacts.map(contact => {
                 const isSelected = selectedIds.has(contact.id);
                 return (
                   <button
@@ -156,19 +208,21 @@ export function ContactInviteDialog({ open, onOpenChange }: ContactInviteDialogP
                           {isSelected ? (
                             <Check className="h-4 w-4" />
                           ) : (
-                            contact.display_name?.charAt(0)?.toUpperCase() || '#'
+                            contact.name?.charAt(0)?.toUpperCase() || '#'
                           )}
                         </AvatarFallback>
                       </Avatar>
                     </div>
                     <div className="flex-1 text-left min-w-0">
-                      <p className="font-medium text-sm truncate">
-                        {contact.display_name || 'Unknown'}
-                      </p>
+                      <p className="font-medium text-sm truncate">{contact.name}</p>
                       <p className="text-xs text-muted-foreground truncate">
-                        {contact.phone_number}
+                        {contact.phone || contact.email}
                       </p>
                     </div>
+                    <Badge variant="outline" className="text-[10px] gap-1 flex-shrink-0">
+                      {sourceIcon(contact.source)}
+                      {sourceLabel(contact.source)}
+                    </Badge>
                     {isSelected && (
                       <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
                         <Check className="h-3 w-3 text-primary-foreground" />
@@ -181,11 +235,10 @@ export function ContactInviteDialog({ open, onOpenChange }: ContactInviteDialogP
           )}
         </ScrollArea>
 
-        {/* Privacy Notice + Send */}
         <div className="px-5 py-4 border-t border-border bg-background/80 backdrop-blur-sm">
           <div className="flex items-center gap-2 text-[11px] text-muted-foreground mb-3">
             <ShieldCheck className="h-3.5 w-3.5 flex-shrink-0" />
-            <span>We only use contacts to help you invite friends. No auto-invites.</span>
+            <span>Contacts are only used to help you invite friends. No auto-invites.</span>
           </div>
           <Button
             className="w-full btn-rally rounded-xl h-12 text-base font-bold"
