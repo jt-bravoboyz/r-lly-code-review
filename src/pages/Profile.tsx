@@ -335,7 +335,20 @@ export default function Profile() {
                 ) : (
                   <h2 className="text-xl font-bold">{profile?.display_name || 'Anonymous'}</h2>
                 )}
-                <p className="text-sm text-muted-foreground">{user.email}</p>
+                {isEditing ? (
+                  <div className="mt-1 flex items-center gap-2">
+                    <Mail className="h-4 w-4 text-muted-foreground" />
+                    <Input
+                      value={editEmail}
+                      onChange={(e) => setEditEmail(e.target.value)}
+                      className="h-8 text-sm"
+                      placeholder="email@example.com"
+                      type="email"
+                    />
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">{user.email}</p>
+                )}
                 
                 {isEditing ? (
                   <div className="mt-2 flex items-center gap-2">
