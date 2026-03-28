@@ -806,6 +806,7 @@ export default function Settings() {
         </div>
       </main>
 
+      <ContactInviteDialog open={contactInviteOpen} onOpenChange={setContactInviteOpen} />
       <BottomNav />
     </div>
   );
