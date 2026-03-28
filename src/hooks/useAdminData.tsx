@@ -335,6 +335,26 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
         }
       }
 
+      // Referral counts per profile
+      const referralCounts: Record<string, number> = {};
+      (profiles || []).forEach(p => {
+        const ref = (p as any).referred_by;
+        if (ref) {
+          referralCounts[ref] = (referralCounts[ref] || 0) + 1;
+        }
+      });
+
+      // Top Connectors leaderboard
+      const topConnectors = Object.entries(referralCounts)
+        .map(([profileId, count]) => ({
+          profileId,
+          referralCount: count,
+          displayName: profiles?.find(p => p.id === profileId)?.display_name || 'Unknown',
+          avatarUrl: profiles?.find(p => p.id === profileId)?.avatar_url,
+        }))
+        .sort((a, b) => b.referralCount - a.referralCount)
+        .slice(0, 10);
+
       return {
         summary: {
           totalEventsCreated,
