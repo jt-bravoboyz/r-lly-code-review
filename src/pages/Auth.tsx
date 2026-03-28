@@ -60,7 +60,7 @@ export default function Auth() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const [showPolicyDialog, setShowPolicyDialog] = useState(false);
-  const [pendingAuthAction, setPendingAuthAction] = useState<'signup' | 'google' | null>(null);
+  const [pendingAuthAction, setPendingAuthAction] = useState<'signup' | 'google' | 'apple' | null>(null);
   const [rememberMe, setRememberMe] = useState(() => {
     return localStorage.getItem('rally-remember-me') === 'true';
   });
