@@ -616,6 +616,40 @@ export default function Profile() {
               </Dialog>
             </div>
 
+            {/* Share Contacts */}
+            <div className="pt-3 border-t border-border">
+              <div className="flex items-center justify-between py-2 px-1">
+                <div className="flex items-center gap-3">
+                  <Contact className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <span className="font-medium">Share Contacts</span>
+                    {phoneContacts.length > 0 ? (
+                      <p className="text-xs text-green-600 flex items-center gap-1">
+                        <CheckCircle2 className="h-3 w-3" />
+                        {phoneContacts.length} contacts synced
+                      </p>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">
+                        Sync to invite friends instantly
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <ContactSyncButton />
+              </div>
+              {phoneContacts.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full mt-1 text-primary"
+                  onClick={() => setContactInviteOpen(true)}
+                >
+                  <Send className="h-4 w-4 mr-2" />
+                  Invite from Contacts
+                </Button>
+              )}
+            </div>
+
             <div className="pt-3 border-t border-border">
               <button
                 onClick={() => navigate('/settings')}
