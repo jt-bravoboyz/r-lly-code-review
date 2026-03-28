@@ -81,6 +81,7 @@ const VIBE_STYLES: Record<string, string> = {
 
 export default function EventDetail() {
   const { id } = useParams<{ id: string }>();
+  useRenderLoopDetector('EventDetail');
   const { user, profile, loading: authLoading } = useAuth();
   const { data: event, isLoading } = useEvent(id);
   const { data: rides } = useRides(id);
