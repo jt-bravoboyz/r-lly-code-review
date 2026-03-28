@@ -75,6 +75,8 @@ export default function Profile() {
   const { toggleLocationSharing } = useLocation();
   const navigate = useNavigate();
   const { isAdmin } = useAdminAuth();
+  const { data: phoneContacts = [] } = usePhoneContacts();
+  const [contactInviteOpen, setContactInviteOpen] = useState(false);
   
   // Badge system hooks
   const { state: badgeState, currentTier, nextTier, progress } = useBadgeState();
