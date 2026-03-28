@@ -347,12 +347,10 @@ export default function Auth() {
   };
 
   const handleGoogleSignInClick = () => {
-    // Check if policies already accepted
     const policiesAccepted = localStorage.getItem('rally-policies-accepted') === 'true';
     if (policiesAccepted) {
       executeGoogleSignIn();
     } else {
-      // Show policy dialog first
       setPendingAuthAction('google');
       setShowPolicyDialog(true);
     }
@@ -368,6 +366,31 @@ export default function Auth() {
         },
       });
       if (error) throw error;
+    } catch (error: any) {
+      const errorMessage = getAuthErrorMessage(error);
+      toast.error(errorMessage);
+      setIsLoading(false);
+    }
+  };
+
+  const handleAppleSignInClick = () => {
+    const policiesAccepted = localStorage.getItem('rally-policies-accepted') === 'true';
+    if (policiesAccepted) {
+      executeAppleSignIn();
+    } else {
+      setPendingAuthAction('apple');
+      setShowPolicyDialog(true);
+    }
+  };
+
+  const executeAppleSignIn = async () => {
+    setIsLoading(true);
+    try {
+      const { error } = await lovable.auth.signInWithOAuth('apple', {
+        redirect_uri: window.location.origin,
+      });
+      if (error) throw error;
+      localStorage.setItem('rally-has-account', 'true');
     } catch (error: any) {
       const errorMessage = getAuthErrorMessage(error);
       toast.error(errorMessage);
