@@ -237,6 +237,30 @@ export default function Profile() {
         .eq('id', profile.id);
 
       if (error) throw error;
+
+      // Sync email with auth if changed
+      const trimmedEmail = editEmail.trim().toLowerCase();
+      if (trimmedEmail && trimmedEmail !== user?.email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(trimmedEmail)) {
+          toast.error('Please enter a valid email address');
+          setIsSaving(false);
+          return;
+        }
+        const { error: emailError } = await supabase.auth.updateUser({ email: trimmedEmail });
+        if (emailError) {
+          toast.error(emailError.message);
+          setIsSaving(false);
+          return;
+        }
+        toast.info('Check your new email for a verification link to finalize the change.');
+      }
+
+      // Sync phone with auth if changed
+      if (normalizedPhone && normalizedPhone !== user?.phone) {
+        await supabase.auth.updateUser({ phone: normalizedPhone });
+      }
+
       await refreshProfile();
       setIsEditing(false);
       toast.success('Profile updated!');
