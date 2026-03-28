@@ -28,13 +28,14 @@ interface FounderPanelProps {
 }
 
 export const FounderPanel = React.forwardRef<HTMLDivElement, FounderPanelProps>(
-  function FounderPanel({ founders, attendees, rallyEvents }, ref) {
+  function FounderPanel({ founders, attendees, rallyEvents, referralCounts = {} }, ref) {
     const founderStats = founders.map(f => {
       const hosted = rallyEvents.filter(e => e.creator_id === f.id).length;
       const joined = attendees.filter(a => a.profile_id === f.id && a.status === 'attending').length;
       const safetyConfirmed = attendees.filter(a => a.profile_id === f.id && a.arrived_safely).length;
+      const referrals = referralCounts[f.id] || 0;
 
-      return { ...f, hosted, joined, safetyConfirmed };
+      return { ...f, hosted, joined, safetyConfirmed, referrals };
     });
 
     const hostedAtLeast1 = founderStats.filter(f => f.hosted >= 1).length;
