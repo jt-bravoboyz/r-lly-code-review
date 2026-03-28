@@ -126,6 +126,9 @@ export default function AdminDashboard() {
               <FeedbackPanel feedback={data.feedback} profiles={data.profiles} />
             </div>
 
+            {/* 7. System Feedback */}
+            <SystemFeedbackCard />
+
             {/* 7. CSV Export */}
             <div className="flex justify-end">
               <AdminCSVExport

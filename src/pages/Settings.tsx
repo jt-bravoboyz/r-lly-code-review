@@ -48,6 +48,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { NotificationSettings } from '@/components/settings/NotificationSettings';
 import { supabase } from '@/integrations/supabase/client';
+import { FeedbackDialog } from '@/components/settings/FeedbackDialog';
 
 const themeOptions = [
   { value: 'light', label: 'Light', icon: Sun, description: 'Always light' },
