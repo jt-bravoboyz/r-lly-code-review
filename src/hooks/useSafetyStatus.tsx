@@ -199,6 +199,7 @@ export function useMyAttendeeStatus(eventId: string | undefined) {
           is_dd,
           after_rally_opted_in,
           after_rally_location_name,
+          arrival_transport_mode,
           not_participating_rally_home_confirmed,
           dd_dropoff_confirmed_at,
           dd_dropoff_confirmed_by,
