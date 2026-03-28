@@ -17,10 +17,10 @@ const corsHeaders = {
 }
 
 const EMAIL_SUBJECTS: Record<string, string> = {
-  signup: 'Confirm your email',
+  signup: 'Welcome to the Movement 🟠',
   invite: "You've been invited",
   magiclink: 'Your login link',
-  recovery: 'Reset your password',
+  recovery: "Forgot the plan? Let's get you back in 🟠",
   email_change: 'Confirm your new email',
   reauthentication: 'Your verification code',
 }

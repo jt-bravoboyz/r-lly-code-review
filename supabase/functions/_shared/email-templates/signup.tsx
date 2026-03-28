@@ -10,7 +10,6 @@ import {
   Heading,
   Html,
   Img,
-  Link,
   Preview,
   Text,
 } from 'npm:@react-email/components@0.0.22'
@@ -32,23 +31,25 @@ export const SignupEmail = ({
 }: SignupEmailProps) => (
   <Html lang="en" dir="ltr">
     <Head />
-    <Preview>Let's go! Confirm your R@lly account 🎉</Preview>
+    <Preview>Welcome to the Movement 🟠 Let's make it legendary.</Preview>
     <Body style={main}>
       <Container style={container}>
         <Img src={LOGO_URL} alt="R@lly" width="120" height="40" style={logoStyle} />
-        <Heading style={h1}>Welcome to the movement 🤙</Heading>
+        <Heading style={h1}>The night is young. Let's make it legendary. 🤙</Heading>
         <Text style={text}>
-          You're one tap away from joining{' '}
-          <Link href={siteUrl} style={link}>
-            <strong>{siteName}</strong>
-          </Link>
-          . Confirm your email and let's get this R@lly started.
+          You're officially part of the R@lly community. Whether you're coordinating
+          the ultimate pre-game, leading the squad to the next spot, or ensuring
+          everyone gets home safe—you're in control now.
+        </Text>
+        <Text style={text}>
+          R@lly is built for the moments that matter. No more messy group chats. No
+          more "did you get home?" texts. Just pure momentum.
         </Text>
         <Button style={button} href={confirmationUrl}>
-          Verify & Get Started
+          Confirm My Account & R@lly Up
         </Button>
         <Text style={footer}>
-          If you didn't sign up for R@lly, you can safely ignore this email.
+          See you at the next spot. — The R@lly Team
         </Text>
       </Container>
     </Body>
@@ -59,7 +60,7 @@ export default SignupEmail
 
 const main = { backgroundColor: '#ffffff', fontFamily: "'Montserrat', Arial, sans-serif" }
 const container = { padding: '32px 28px' }
-const logoStyle = { margin: '0 0 24px' }
+const logoStyle = { margin: '0 auto 24px', display: 'block' as const }
 const h1 = {
   fontSize: '24px',
   fontWeight: 'bold' as const,
@@ -70,9 +71,8 @@ const text = {
   fontSize: '15px',
   color: '#616874',
   lineHeight: '1.6',
-  margin: '0 0 28px',
+  margin: '0 0 16px',
 }
-const link = { color: '#F47A19', textDecoration: 'underline' }
 const button = {
   backgroundColor: '#F47A19',
   color: '#ffffff',
@@ -81,5 +81,7 @@ const button = {
   borderRadius: '8px',
   padding: '14px 28px',
   textDecoration: 'none',
+  display: 'inline-block' as const,
+  margin: '12px 0 0',
 }
 const footer = { fontSize: '12px', color: '#999999', margin: '32px 0 0' }
