@@ -83,7 +83,7 @@ export function PolicyAcceptanceDialog({ open, onOpenChange, onAccept }: PolicyA
         if (user) {
           await supabase.from('profiles').update({
             policies_accepted_at: new Date().toISOString(),
-          }).eq('user_id', user.id);
+          } as any).eq('user_id', user.id);
         }
       } catch (e) {
         console.error('Failed to persist policy acceptance:', e);
