@@ -43,6 +43,18 @@ const signUpSchema = z.object({
 type AuthMode = 'signin' | 'signup' | 'forgot-password';
 
 export default function Auth() {
+  // Capture referral param from URL
+  const referrerId = useMemo(() => {
+    const params = new URLSearchParams(window.location.search);
+    const r = params.get('r');
+    if (r) {
+      // Persist in sessionStorage so it survives the OAuth redirect
+      sessionStorage.setItem('rally-referrer-id', r);
+      return r;
+    }
+    return sessionStorage.getItem('rally-referrer-id') || null;
+  }, []);
+
   // Check if user has an account (set after first successful signup/signin)
   // This is SEPARATE from onboarding completion - a user can complete onboarding
   // but not have an account yet (they need to sign up first)
