@@ -7,6 +7,7 @@ interface CommercialDashboardProps {
   paidEventsCount: number;
   providerSplit: Record<string, number>;
   eventsByCity: { city: string; count: number }[];
+  avgDwellTime: number | null;
 }
 
 export function CommercialDashboard({ totalGMV, paidEventsCount, providerSplit, eventsByCity }: CommercialDashboardProps) {
