@@ -18,11 +18,14 @@ import {
   Users,
   Phone,
   MessageSquare,
+  Cloud,
 } from 'lucide-react';
 import { useRallyFriends } from '@/hooks/useRallyFriends';
 import { useAllMySquads, Squad } from '@/hooks/useSquads';
 import { usePhoneContacts } from '@/hooks/usePhoneContacts';
+import { useUserContacts } from '@/hooks/useUserContacts';
 import { SquadSymbolBadge, getSquadIcon } from './SquadSymbolPicker';
+import { AddPeopleSheet } from '@/components/contacts/AddPeopleSheet';
 import { cn } from '@/lib/utils';
 
 interface ContactsTabProps {
@@ -35,11 +38,13 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
   const [friendsExpanded, setFriendsExpanded] = useState(true);
   const [squadMembersExpanded, setSquadMembersExpanded] = useState(true);
   const [phoneContactsExpanded, setPhoneContactsExpanded] = useState(true);
+  const [cloudContactsExpanded, setCloudContactsExpanded] = useState(true);
   const [expandedSquads, setExpandedSquads] = useState<Set<string>>(new Set());
 
   const { data: rallyFriends = [], isLoading: loadingFriends } = useRallyFriends();
   const { data: allSquads = [], isLoading: loadingSquads } = useAllMySquads();
   const { data: phoneContacts = [], isLoading: loadingContacts } = usePhoneContacts();
+  const { data: cloudContacts = [], isLoading: loadingCloud } = useUserContacts();
 
   // Filter friends by search
   const filteredFriends = rallyFriends.filter(
@@ -66,6 +71,15 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
       c.phone_number?.includes(searchQuery)
   );
 
+  // Filter cloud contacts by search
+  const filteredCloudContacts = cloudContacts.filter(
+    (c) =>
+      !searchQuery ||
+      c.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.phone?.includes(searchQuery) ||
+      c.email?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   const toggleSquadExpanded = (squadId: string) => {
     setExpandedSquads((prev) => {
       const next = new Set(prev);
@@ -87,15 +101,18 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
 
   return (
     <div className="space-y-4">
-      {/* Search bar */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Search contacts..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10 bg-white/80 backdrop-blur-sm border-0 shadow-sm rounded-xl"
-        />
+      {/* Search bar + Add People */}
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search contacts..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 bg-white/80 backdrop-blur-sm border-0 shadow-sm rounded-xl"
+          />
+        </div>
+        <AddPeopleSheet />
       </div>
 
       <ScrollArea className="h-[calc(100vh-320px)]">
@@ -362,6 +379,81 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
               </CollapsibleContent>
             </Card>
           </Collapsible>
+
+          {/* Cloud Contacts Section (Google, CSV, Paste imports) */}
+          {filteredCloudContacts.length > 0 && (
+            <Collapsible
+              open={cloudContactsExpanded}
+              onOpenChange={setCloudContactsExpanded}
+            >
+              <Card className="bg-white/90 backdrop-blur-sm shadow-sm rounded-2xl border-0 overflow-hidden">
+                <CollapsibleTrigger className="w-full">
+                  <div className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center">
+                        <Cloud className="h-5 w-5 text-blue-500" />
+                      </div>
+                      <div className="text-left">
+                        <h3 className="font-bold text-foreground font-montserrat">
+                          Imported Contacts
+                        </h3>
+                        <p className="text-xs text-muted-foreground">
+                          {filteredCloudContacts.length} saved
+                        </p>
+                      </div>
+                    </div>
+                    {cloudContactsExpanded ? (
+                      <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                    ) : (
+                      <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                    )}
+                  </div>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <CardContent className="pt-0 pb-4 px-4">
+                    <div className="space-y-2">
+                      {filteredCloudContacts.map((contact) => (
+                        <div
+                          key={contact.id}
+                          className="flex items-center justify-between p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors"
+                        >
+                          <div className="flex items-center gap-3">
+                            <Avatar className="h-10 w-10">
+                              <AvatarFallback className="bg-blue-500/20 text-blue-600 font-bold">
+                                {contact.name?.charAt(0)?.toUpperCase() || '#'}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <p className="font-medium text-sm">
+                                {contact.name || 'Unknown'}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {contact.phone || contact.email || ''}
+                              </p>
+                            </div>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="rounded-full text-xs"
+                            onClick={() => {
+                              if (contact.phone) handleInviteToApp(contact.phone);
+                              else if (contact.email) {
+                                window.open(`mailto:${contact.email}?subject=${encodeURIComponent("Join me on R@lly!")}&body=${encodeURIComponent("Hey! Join me on R@lly - the app for coordinating nights out with friends. Download it here: https://rallyboyz.lovable.app")}`, '_blank');
+                              }
+                            }}
+                          >
+                            <MessageSquare className="h-3 w-3 mr-1" />
+                            Invite
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </CollapsibleContent>
+              </Card>
+            </Collapsible>
+          )}
         </div>
       </ScrollArea>
     </div>
