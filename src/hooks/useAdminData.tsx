@@ -201,6 +201,23 @@ export function useAdminAnalytics(filterAdminData = false) {
         if (provider) providerSplit[provider] = (providerSplit[provider] || 0) + 1;
       });
 
+      // Retention metrics from analytics_events
+      const totalUsersCount = profiles?.length || 0;
+      const timeWindows = [
+        { key: 'dau', ms: 1 * 24 * 60 * 60 * 1000 },
+        { key: 'wau', ms: 7 * 24 * 60 * 60 * 1000 },
+        { key: 'mau', ms: 30 * 24 * 60 * 60 * 1000 },
+        { key: 'threeMonth', ms: 90 * 24 * 60 * 60 * 1000 },
+        { key: 'sixMonth', ms: 180 * 24 * 60 * 60 * 1000 },
+        { key: 'yearly', ms: 365 * 24 * 60 * 60 * 1000 },
+      ];
+      const retention: Record<string, number> = { totalUsers: totalUsersCount };
+      timeWindows.forEach(({ key, ms }) => {
+        const cutoff = new Date(now.getTime() - ms);
+        const unique = new Set(events.filter(e => e.created_at && new Date(e.created_at) >= cutoff).map(e => e.user_id).filter(Boolean));
+        retention[key] = unique.size;
+      });
+
       return {
         summary: {
           totalEventsCreated,
