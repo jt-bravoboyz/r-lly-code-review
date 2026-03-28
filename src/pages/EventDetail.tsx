@@ -68,6 +68,7 @@ import { PaymentGateDialog } from '@/components/events/PaymentGateDialog';
 import { RideshareDrawer } from '@/components/rides/RideshareDrawer';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useRenderLoopDetector } from '@/hooks/useRenderLoopDetector';
 
 const VIBE_STYLES: Record<string, string> = {
   orange: "bg-orange-500/10 text-orange-600 border-orange-500/30",
@@ -80,6 +81,7 @@ const VIBE_STYLES: Record<string, string> = {
 
 export default function EventDetail() {
   const { id } = useParams<{ id: string }>();
+  useRenderLoopDetector('EventDetail');
   const { user, profile, loading: authLoading } = useAuth();
   const { data: event, isLoading } = useEvent(id);
   const { data: rides } = useRides(id);
