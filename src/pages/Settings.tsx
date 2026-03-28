@@ -52,8 +52,11 @@ import { NotificationSettings } from '@/components/settings/NotificationSettings
 import { supabase } from '@/integrations/supabase/client';
 import { FeedbackDialog } from '@/components/settings/FeedbackDialog';
 import { usePhoneContacts } from '@/hooks/usePhoneContacts';
+import { useUserContacts, useDeleteAllUserContacts } from '@/hooks/useUserContacts';
 import { ContactSyncButton } from '@/components/contacts/ContactSyncButton';
 import { ContactInviteDialog } from '@/components/contacts/ContactInviteDialog';
+import { CSVContactImport } from '@/components/contacts/CSVContactImport';
+import { GoogleContactsImport } from '@/components/contacts/GoogleContactsImport';
 
 const themeOptions = [
   { value: 'light', label: 'Light', icon: Sun, description: 'Always light' },
