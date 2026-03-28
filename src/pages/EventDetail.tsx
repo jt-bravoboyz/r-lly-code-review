@@ -60,6 +60,7 @@ import { RidesSelectionModal } from '@/components/events/RidesSelectionModal';
 import { AfterRallyCard } from '@/components/events/AfterRallyCard';
 import { RallyHeroMediaCarousel } from '@/components/events/RallyHeroMediaCarousel';
 import { RallyCompleteOverlay } from '@/components/events/RallyCompleteOverlay';
+import { EventPhotoFeed } from '@/components/events/EventPhotoFeed';
 import { useMyRallyHomePrompt } from '@/hooks/useRallyHomePrompt';
 import { PendingJoinRequests } from '@/components/events/PendingJoinRequests';
 import { TransportModeSelector } from '@/components/events/TransportModeSelector';
