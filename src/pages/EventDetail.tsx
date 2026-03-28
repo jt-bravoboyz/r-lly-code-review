@@ -338,12 +338,16 @@ export default function EventDetail() {
       
       if (error) throw error;
       
+      sessionStorage.setItem(`event-join-flow-dismissed-${event.id}`, 'true');
+      setJoinFlowDismissedForSession(true);
       toast.success('Got it! Have a great time 🎉');
       trackEvent('safety_confirmed', { event_id: event.id, choice: 'self_transport' });
       queryClient.invalidateQueries({ queryKey: ['event', event.id] });
+      queryClient.invalidateQueries({ queryKey: ['my-attendee-status', event.id, profile.id] });
       setShowSafetyChoice(false);
-      // Show location sharing prompt after safety choice
-      setShowLocationSharingModal(true);
+      if (!locationPromptDismissedForSession) {
+        setShowLocationSharingModal(true);
+      }
     } catch (error: any) {
       toast.error(error.message || 'Failed to save preference');
     } finally {
