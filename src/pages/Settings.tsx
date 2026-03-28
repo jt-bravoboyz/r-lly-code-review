@@ -106,6 +106,8 @@ export default function Settings() {
   const [isTogglingLocation, setIsTogglingLocation] = useState(false);
   const [activeEventCount, setActiveEventCount] = useState(0);
   const { data: phoneContacts = [] } = usePhoneContacts();
+  const { data: cloudContacts = [] } = useUserContacts();
+  const deleteAllCloudContacts = useDeleteAllUserContacts();
   const [contactInviteOpen, setContactInviteOpen] = useState(false);
 
   // Check how many active events user is sharing location in
