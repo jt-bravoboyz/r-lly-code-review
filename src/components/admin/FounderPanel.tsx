@@ -24,6 +24,7 @@ interface FounderPanelProps {
     id: string;
     creator_id: string;
   }>;
+  referralCounts?: Record<string, number>;
 }
 
 export const FounderPanel = React.forwardRef<HTMLDivElement, FounderPanelProps>(
