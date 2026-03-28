@@ -52,8 +52,11 @@ import { NotificationSettings } from '@/components/settings/NotificationSettings
 import { supabase } from '@/integrations/supabase/client';
 import { FeedbackDialog } from '@/components/settings/FeedbackDialog';
 import { usePhoneContacts } from '@/hooks/usePhoneContacts';
+import { useUserContacts, useDeleteAllUserContacts } from '@/hooks/useUserContacts';
 import { ContactSyncButton } from '@/components/contacts/ContactSyncButton';
 import { ContactInviteDialog } from '@/components/contacts/ContactInviteDialog';
+import { CSVContactImport } from '@/components/contacts/CSVContactImport';
+import { GoogleContactsImport } from '@/components/contacts/GoogleContactsImport';
 
 const themeOptions = [
   { value: 'light', label: 'Light', icon: Sun, description: 'Always light' },
@@ -103,6 +106,8 @@ export default function Settings() {
   const [isTogglingLocation, setIsTogglingLocation] = useState(false);
   const [activeEventCount, setActiveEventCount] = useState(0);
   const { data: phoneContacts = [] } = usePhoneContacts();
+  const { data: cloudContacts = [] } = useUserContacts();
+  const deleteAllCloudContacts = useDeleteAllUserContacts();
   const [contactInviteOpen, setContactInviteOpen] = useState(false);
 
   // Check how many active events user is sharing location in
@@ -731,33 +736,55 @@ export default function Settings() {
               <CardHeader className="pb-2">
                 <CardTitle className="text-base flex items-center gap-2">
                   <Contact className="h-4 w-4 text-primary" />
-                  Share Contacts
+                  Contacts
                 </CardTitle>
                 <CardDescription>
-                  Sync contacts to invite friends to R@lly
+                  Sync from your device, import from Google, or upload a CSV
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
+                {/* Device sync */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <Contact className="h-5 w-5 text-muted-foreground" />
                     <div>
-                      <Label className="font-medium">Contacts</Label>
+                      <Label className="font-medium">Device Contacts</Label>
                       {phoneContacts.length > 0 ? (
                         <p className="text-xs text-green-600 flex items-center gap-1">
                           <CheckCircle2 className="h-3 w-3" />
-                          {phoneContacts.length} contacts synced
+                          {phoneContacts.length} synced
                         </p>
                       ) : (
-                        <p className="text-xs text-muted-foreground">
-                          Tap to sync your contacts
-                        </p>
+                        <p className="text-xs text-muted-foreground">Sync from phone</p>
                       )}
                     </div>
                   </div>
                   <ContactSyncButton />
                 </div>
-                {phoneContacts.length > 0 && (
+
+                {/* Cloud contacts status */}
+                {cloudContacts.length > 0 && (
+                  <div className="flex items-center justify-between py-1">
+                    <div className="flex items-center gap-3">
+                      <Contact className="h-5 w-5 text-muted-foreground" />
+                      <div>
+                        <Label className="font-medium">Cloud Contacts</Label>
+                        <p className="text-xs text-green-600 flex items-center gap-1">
+                          <CheckCircle2 className="h-3 w-3" />
+                          {cloudContacts.length} imported
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="border-t border-border pt-3 space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Import Contacts</p>
+                  <GoogleContactsImport />
+                  <CSVContactImport />
+                </div>
+
+                {(phoneContacts.length > 0 || cloudContacts.length > 0) && (
                   <Button
                     variant="outline"
                     className="w-full"
@@ -765,6 +792,25 @@ export default function Settings() {
                   >
                     <Send className="h-4 w-4 mr-2" />
                     Invite from Contacts
+                  </Button>
+                )}
+
+                {/* Disconnect & clear */}
+                {cloudContacts.length > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full text-destructive hover:text-destructive hover:bg-destructive/10"
+                    onClick={async () => {
+                      try {
+                        await deleteAllCloudContacts.mutateAsync();
+                        toast.success('Cloud contacts cleared');
+                      } catch {
+                        toast.error('Failed to clear contacts');
+                      }
+                    }}
+                  >
+                    Disconnect & Clear Cloud Contacts
                   </Button>
                 )}
               </CardContent>
