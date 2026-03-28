@@ -2881,9 +2881,10 @@ export type Database = {
           avatar_url: string | null
           badges: string[] | null
           bio: string | null
-          connection_type: Database["public"]["Enums"]["connection_type"] | null
           created_at: string | null
           display_name: string | null
+          founder_number: number | null
+          founding_member: boolean | null
           id: string | null
           reward_points: number | null
           user_id: string | null
@@ -2892,9 +2893,10 @@ export type Database = {
           avatar_url?: string | null
           badges?: string[] | null
           bio?: string | null
-          connection_type?: never
           created_at?: string | null
           display_name?: string | null
+          founder_number?: number | null
+          founding_member?: boolean | null
           id?: string | null
           reward_points?: number | null
           user_id?: string | null
@@ -2903,9 +2905,10 @@ export type Database = {
           avatar_url?: string | null
           badges?: string[] | null
           bio?: string | null
-          connection_type?: never
           created_at?: string | null
           display_name?: string | null
+          founder_number?: number | null
+          founding_member?: boolean | null
           id?: string | null
           reward_points?: number | null
           user_id?: string | null
