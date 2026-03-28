@@ -379,6 +379,81 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
               </CollapsibleContent>
             </Card>
           </Collapsible>
+
+          {/* Cloud Contacts Section (Google, CSV, Paste imports) */}
+          {filteredCloudContacts.length > 0 && (
+            <Collapsible
+              open={cloudContactsExpanded}
+              onOpenChange={setCloudContactsExpanded}
+            >
+              <Card className="bg-white/90 backdrop-blur-sm shadow-sm rounded-2xl border-0 overflow-hidden">
+                <CollapsibleTrigger className="w-full">
+                  <div className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center">
+                        <Cloud className="h-5 w-5 text-blue-500" />
+                      </div>
+                      <div className="text-left">
+                        <h3 className="font-bold text-foreground font-montserrat">
+                          Imported Contacts
+                        </h3>
+                        <p className="text-xs text-muted-foreground">
+                          {filteredCloudContacts.length} saved
+                        </p>
+                      </div>
+                    </div>
+                    {cloudContactsExpanded ? (
+                      <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                    ) : (
+                      <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                    )}
+                  </div>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <CardContent className="pt-0 pb-4 px-4">
+                    <div className="space-y-2">
+                      {filteredCloudContacts.map((contact) => (
+                        <div
+                          key={contact.id}
+                          className="flex items-center justify-between p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors"
+                        >
+                          <div className="flex items-center gap-3">
+                            <Avatar className="h-10 w-10">
+                              <AvatarFallback className="bg-blue-500/20 text-blue-600 font-bold">
+                                {contact.name?.charAt(0)?.toUpperCase() || '#'}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <p className="font-medium text-sm">
+                                {contact.name || 'Unknown'}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {contact.phone || contact.email || ''}
+                              </p>
+                            </div>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="rounded-full text-xs"
+                            onClick={() => {
+                              if (contact.phone) handleInviteToApp(contact.phone);
+                              else if (contact.email) {
+                                window.open(`mailto:${contact.email}?subject=${encodeURIComponent("Join me on R@lly!")}&body=${encodeURIComponent("Hey! Join me on R@lly - the app for coordinating nights out with friends. Download it here: https://rallyboyz.lovable.app")}`, '_blank');
+                              }
+                            }}
+                          >
+                            <MessageSquare className="h-3 w-3 mr-1" />
+                            Invite
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </CollapsibleContent>
+              </Card>
+            </Collapsible>
+          )}
         </div>
       </ScrollArea>
     </div>
