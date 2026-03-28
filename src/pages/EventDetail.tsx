@@ -851,6 +851,10 @@ export default function EventDetail() {
             )}
           </TabsContent>
 
+          <TabsContent value="photos" className="mt-4">
+            <EventPhotoFeed eventId={event.id} isHost={canManage} />
+          </TabsContent>
+
           <TabsContent value="chat" className="mt-4">
             <Card className="h-[400px] overflow-hidden">
               <EventChat eventId={event.id} eventTitle={event.title} eventStatus={event.status || undefined} />
