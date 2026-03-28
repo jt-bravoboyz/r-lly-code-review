@@ -18,6 +18,7 @@ interface LocationSharingModalProps {
   onOpenChange: (open: boolean) => void;
   eventId: string;
   onComplete: () => void;
+  onSkip?: () => void;
 }
 
 export function LocationSharingModal({
@@ -25,6 +26,7 @@ export function LocationSharingModal({
   onOpenChange,
   eventId,
   onComplete,
+  onSkip,
 }: LocationSharingModalProps) {
   const { profile } = useAuth();
   const { startTracking } = useLocationContext();
@@ -102,6 +104,7 @@ export function LocationSharingModal({
     setIsLoading(true);
     try {
       await markPromptShown(false);
+      onSkip?.();
       onComplete();
     } finally {
       setIsLoading(false);

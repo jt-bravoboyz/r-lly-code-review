@@ -115,6 +115,8 @@ export default function EventDetail() {
   const [showTransportSelector, setShowTransportSelector] = useState(false);
   const [showPaymentGate, setShowPaymentGate] = useState(false);
   const [showRideshareDrawer, setShowRideshareDrawer] = useState(false);
+  const [joinFlowDismissedForSession, setJoinFlowDismissedForSession] = useState(false);
+  const [locationPromptDismissedForSession, setLocationPromptDismissedForSession] = useState(false);
 
   const handleRallyCompleteDone = useCallback(() => {
     setShowRallyComplete(false);
@@ -143,6 +145,12 @@ export default function EventDetail() {
       }, 500);
       return () => clearTimeout(timer);
     }
+  }, [id]);
+
+  useEffect(() => {
+    if (!id) return;
+    setJoinFlowDismissedForSession(sessionStorage.getItem(`event-join-flow-dismissed-${id}`) === 'true');
+    setLocationPromptDismissedForSession(sessionStorage.getItem(`event-location-prompt-dismissed-${id}`) === 'true');
   }, [id]);
 
   // POL-2: Debug logging wrapped in dev check + production analytics
@@ -181,30 +189,27 @@ export default function EventDetail() {
   const isLive = event?.status === 'live';
   const isAfterRally = event?.status === 'after_rally';
   
-  // ARCH-2: Use DB flags instead of sessionStorage for safety choice gating
-  const needsSafetyChoice = isAttending && 
-    myAttendee?.going_home_at === null && 
-    myAttendee?.not_participating_rally_home_confirmed === null &&
-    !myAttendee?.is_dd &&
-    !myAttendee?.needs_ride &&
-    !myAttendee?.location_prompt_shown &&
-    event?.status !== 'completed';
+  const hasTransportModeForEvent = Boolean(myAttendee?.arrival_transport_mode);
+  const hasCompletedJoinFlow = hasTransportModeForEvent && Boolean(myAttendee?.location_prompt_shown);
+  const shouldAutoStartJoinFlow = isAttending &&
+    !hasCompletedJoinFlow &&
+    !hasTransportModeForEvent &&
+    event?.status !== 'completed' &&
+    !joinFlowDismissedForSession;
 
   const isSimpleMode = !event?.is_barhop &&
     (eventDDs?.length ?? 0) === 0 &&
     !isLive &&
     !isAfterRally;
   
-  // Show safety choice modal on page load for existing attendees who haven't chosen yet
   useEffect(() => {
-    if (needsSafetyChoice && !showSafetyChoice && !showRidesSelection && !showLocationSharingModal) {
-      // ARCH-2: No sessionStorage gating - DB flags handle deduplication
+    if (shouldAutoStartJoinFlow && !showTransportSelector && !showSafetyChoice && !showRidesSelection && !showLocationSharingModal) {
       const timer = setTimeout(() => {
-        setShowSafetyChoice(true);
+        setShowTransportSelector(true);
       }, 500);
       return () => clearTimeout(timer);
     }
-  }, [needsSafetyChoice, showSafetyChoice, showRidesSelection, showLocationSharingModal]);
+  }, [shouldAutoStartJoinFlow, showTransportSelector, showSafetyChoice, showRidesSelection, showLocationSharingModal]);
   
   // R@lly Home prompt status for current user
   const myPromptStatus = useMyRallyHomePrompt(id);
@@ -333,12 +338,16 @@ export default function EventDetail() {
       
       if (error) throw error;
       
+      sessionStorage.setItem(`event-join-flow-dismissed-${event.id}`, 'true');
+      setJoinFlowDismissedForSession(true);
       toast.success('Got it! Have a great time 🎉');
       trackEvent('safety_confirmed', { event_id: event.id, choice: 'self_transport' });
       queryClient.invalidateQueries({ queryKey: ['event', event.id] });
+      queryClient.invalidateQueries({ queryKey: ['my-attendee-status', event.id, profile.id] });
       setShowSafetyChoice(false);
-      // Show location sharing prompt after safety choice
-      setShowLocationSharingModal(true);
+      if (!locationPromptDismissedForSession) {
+        setShowLocationSharingModal(true);
+      }
     } catch (error: any) {
       toast.error(error.message || 'Failed to save preference');
     } finally {
@@ -1058,6 +1067,8 @@ export default function EventDetail() {
         onOpenChange={setShowSafetyChoice}
         isLoading={savingSafetyChoice}
         onRallyGotMe={() => {
+          sessionStorage.setItem(`event-join-flow-dismissed-${event.id}`, 'true');
+          setJoinFlowDismissedForSession(true);
           setShowSafetyChoice(false);
           setShowRidesSelection(true);
         }}
@@ -1073,6 +1084,8 @@ export default function EventDetail() {
           setShowSafetyChoice(true);
         }}
         onComplete={() => {
+          sessionStorage.setItem(`event-join-flow-dismissed-${event.id}`, 'true');
+          setJoinFlowDismissedForSession(true);
           setShowRidesSelection(false);
           queryClient.invalidateQueries({ queryKey: ['event', event.id] });
           queryClient.invalidateQueries({ queryKey: ['unassigned-riders', event.id] });
@@ -1092,7 +1105,15 @@ export default function EventDetail() {
         open={showLocationSharingModal}
         onOpenChange={setShowLocationSharingModal}
         eventId={event.id}
-        onComplete={() => setShowLocationSharingModal(false)}
+        onSkip={() => {
+          sessionStorage.setItem(`event-location-prompt-dismissed-${event.id}`, 'true');
+          setLocationPromptDismissedForSession(true);
+        }}
+        onComplete={() => {
+          sessionStorage.setItem(`event-location-prompt-dismissed-${event.id}`, 'true');
+          setLocationPromptDismissedForSession(true);
+          setShowLocationSharingModal(false);
+        }}
       />
 
       {/* Transport Mode Selector - shown after joining */}
@@ -1102,7 +1123,13 @@ export default function EventDetail() {
           onOpenChange={setShowTransportSelector}
           eventId={event.id}
           profileId={profile.id}
+          onSkip={() => {
+            sessionStorage.setItem(`event-join-flow-dismissed-${event.id}`, 'true');
+            setJoinFlowDismissedForSession(true);
+          }}
           onComplete={() => {
+            sessionStorage.setItem(`event-join-flow-dismissed-${event.id}`, 'true');
+            setJoinFlowDismissedForSession(true);
             setShowTransportSelector(false);
             setShowSafetyChoice(true);
           }}

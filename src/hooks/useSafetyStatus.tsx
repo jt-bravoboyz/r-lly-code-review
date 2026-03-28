@@ -14,6 +14,7 @@ export interface AttendeeWithSafetyStatus {
   is_dd: boolean;
   after_rally_opted_in: boolean | null;
   after_rally_location_name?: string | null;
+  arrival_transport_mode?: string | null;
   destination_name?: string | null;
   needs_ride?: boolean | null;
   ride_pickup_location?: string | null;
@@ -198,6 +199,7 @@ export function useMyAttendeeStatus(eventId: string | undefined) {
           is_dd,
           after_rally_opted_in,
           after_rally_location_name,
+          arrival_transport_mode,
           not_participating_rally_home_confirmed,
           dd_dropoff_confirmed_at,
           dd_dropoff_confirmed_by,
@@ -226,6 +228,7 @@ export function useMyAttendeeStatus(eventId: string | undefined) {
         is_dd: data.is_dd ?? false,
         after_rally_opted_in: data.after_rally_opted_in ?? null,
         after_rally_location_name: (data as any).after_rally_location_name ?? null,
+        arrival_transport_mode: (data as any).arrival_transport_mode ?? null,
         destination_name: data.destination_name ?? null,
         needs_ride: data.needs_ride ?? false,
         ride_pickup_location: (data as any).ride_pickup_location ?? null,
