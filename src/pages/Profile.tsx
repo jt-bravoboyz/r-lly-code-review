@@ -709,6 +709,9 @@ export default function Profile() {
         onGalleryClick={() => fileInputRef.current?.click()}
       />
 
+      {/* Contact Invite Dialog */}
+      <ContactInviteDialog open={contactInviteOpen} onOpenChange={setContactInviteOpen} />
+
       {/* Avatar Cropper Dialog */}
       {selectedImageSrc && (
         <AvatarCropperDialog

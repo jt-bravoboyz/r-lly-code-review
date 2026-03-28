@@ -120,6 +120,7 @@ export default function Squads() {
         </Tabs>
       </main>
 
+      <ContactInviteDialog open={contactInviteOpen} onOpenChange={setContactInviteOpen} />
       <BottomNav />
     </div>
   );
