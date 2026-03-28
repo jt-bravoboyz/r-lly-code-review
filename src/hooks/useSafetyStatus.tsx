@@ -228,6 +228,7 @@ export function useMyAttendeeStatus(eventId: string | undefined) {
         is_dd: data.is_dd ?? false,
         after_rally_opted_in: data.after_rally_opted_in ?? null,
         after_rally_location_name: (data as any).after_rally_location_name ?? null,
+        arrival_transport_mode: (data as any).arrival_transport_mode ?? null,
         destination_name: data.destination_name ?? null,
         needs_ride: data.needs_ride ?? false,
         ride_pickup_location: (data as any).ride_pickup_location ?? null,

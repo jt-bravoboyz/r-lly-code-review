@@ -104,6 +104,7 @@ export function LocationSharingModal({
     setIsLoading(true);
     try {
       await markPromptShown(false);
+      onSkip?.();
       onComplete();
     } finally {
       setIsLoading(false);

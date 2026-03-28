@@ -1067,6 +1067,8 @@ export default function EventDetail() {
         onOpenChange={setShowSafetyChoice}
         isLoading={savingSafetyChoice}
         onRallyGotMe={() => {
+          sessionStorage.setItem(`event-join-flow-dismissed-${event.id}`, 'true');
+          setJoinFlowDismissedForSession(true);
           setShowSafetyChoice(false);
           setShowRidesSelection(true);
         }}
@@ -1082,6 +1084,8 @@ export default function EventDetail() {
           setShowSafetyChoice(true);
         }}
         onComplete={() => {
+          sessionStorage.setItem(`event-join-flow-dismissed-${event.id}`, 'true');
+          setJoinFlowDismissedForSession(true);
           setShowRidesSelection(false);
           queryClient.invalidateQueries({ queryKey: ['event', event.id] });
           queryClient.invalidateQueries({ queryKey: ['unassigned-riders', event.id] });
@@ -1101,7 +1105,15 @@ export default function EventDetail() {
         open={showLocationSharingModal}
         onOpenChange={setShowLocationSharingModal}
         eventId={event.id}
-        onComplete={() => setShowLocationSharingModal(false)}
+        onSkip={() => {
+          sessionStorage.setItem(`event-location-prompt-dismissed-${event.id}`, 'true');
+          setLocationPromptDismissedForSession(true);
+        }}
+        onComplete={() => {
+          sessionStorage.setItem(`event-location-prompt-dismissed-${event.id}`, 'true');
+          setLocationPromptDismissedForSession(true);
+          setShowLocationSharingModal(false);
+        }}
       />
 
       {/* Transport Mode Selector - shown after joining */}
@@ -1111,7 +1123,13 @@ export default function EventDetail() {
           onOpenChange={setShowTransportSelector}
           eventId={event.id}
           profileId={profile.id}
+          onSkip={() => {
+            sessionStorage.setItem(`event-join-flow-dismissed-${event.id}`, 'true');
+            setJoinFlowDismissedForSession(true);
+          }}
           onComplete={() => {
+            sessionStorage.setItem(`event-join-flow-dismissed-${event.id}`, 'true');
+            setJoinFlowDismissedForSession(true);
             setShowTransportSelector(false);
             setShowSafetyChoice(true);
           }}

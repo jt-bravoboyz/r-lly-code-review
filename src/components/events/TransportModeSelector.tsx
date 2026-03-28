@@ -77,7 +77,15 @@ export function TransportModeSelector({ open, onOpenChange, eventId, profileId, 
             );
           })}
         </div>
-        <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={() => onOpenChange(false)}>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-muted-foreground"
+          onClick={() => {
+            onSkip?.();
+            onOpenChange(false);
+          }}
+        >
           Skip for now
         </Button>
       </DialogContent>
