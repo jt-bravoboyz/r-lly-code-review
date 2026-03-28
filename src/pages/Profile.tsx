@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Settings, LogOut, MapPin, Award, Camera, Users, Home, Shield, Pencil, Save, X, FileText, ChevronRight, Navigation, Phone, Mail, CreditCard, Contact, CheckCircle2 } from 'lucide-react';
+import { Settings, LogOut, MapPin, Award, Camera, Users, Home, Shield, Pencil, Save, X, FileText, ChevronRight, Navigation, Phone, Mail, CreditCard, Contact, CheckCircle2, Send } from 'lucide-react';
 import { usePhoneContacts } from '@/hooks/usePhoneContacts';
 import { ContactSyncButton } from '@/components/contacts/ContactSyncButton';
 import { ContactInviteDialog } from '@/components/contacts/ContactInviteDialog';
