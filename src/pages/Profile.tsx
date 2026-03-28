@@ -199,6 +199,7 @@ export default function Profile() {
     setEditName(profile?.display_name || '');
     setEditBio((profile as any)?.bio || '');
     setEditPhone(profile?.phone ? formatPhoneForDisplay(profile.phone) : '');
+    setEditEmail(user?.email || '');
     setIsEditing(true);
   };
 
