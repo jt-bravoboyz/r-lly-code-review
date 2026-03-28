@@ -71,6 +71,15 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
       c.phone_number?.includes(searchQuery)
   );
 
+  // Filter cloud contacts by search
+  const filteredCloudContacts = cloudContacts.filter(
+    (c) =>
+      !searchQuery ||
+      c.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.phone?.includes(searchQuery) ||
+      c.email?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   const toggleSquadExpanded = (squadId: string) => {
     setExpandedSquads((prev) => {
       const next = new Set(prev);
