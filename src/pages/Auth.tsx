@@ -13,6 +13,7 @@ import { Mail, Lock, User, ChevronRight, ArrowLeft, Phone, Fingerprint } from 'l
 import { z } from 'zod';
 import { PolicyAcceptanceDialog } from '@/components/legal/PolicyAcceptanceDialog';
 import { useTutorial } from '@/hooks/useTutorial';
+import { lovable } from '@/integrations/lovable/index';
 // Validation schemas
 const emailSchema = z.string().trim().email('Please enter a valid email address').max(255, 'Email is too long');
 const passwordSchema = z.string().min(6, 'Password must be at least 6 characters').max(128, 'Password is too long');
