@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useAdminAnalytics } from '@/hooks/useAdminData';
 import { AnalyticsCards } from '@/components/admin/AnalyticsCards';
+import { RetentionMetrics } from '@/components/admin/RetentionMetrics';
 import { FunnelChart } from '@/components/admin/FunnelChart';
 import { SafetyMetrics } from '@/components/admin/SafetyMetrics';
 import { GrowthMetrics } from '@/components/admin/GrowthMetrics';
@@ -77,6 +78,7 @@ export default function AdminDashboard() {
           <>
             {/* Partner View: Clean success metrics */}
             <AnalyticsCards summary={data.summary} sparkline={data.sparkline} />
+            <RetentionMetrics retention={data.retention as any} />
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <GrowthMetrics growth={data.growth} />

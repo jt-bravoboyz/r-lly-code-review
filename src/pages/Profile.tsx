@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Settings, LogOut, MapPin, Award, Camera, Users, Home, Shield, Pencil, Save, X, FileText, ChevronRight, Navigation, Phone, CreditCard } from 'lucide-react';
+import { Settings, LogOut, MapPin, Award, Camera, Users, Home, Shield, Pencil, Save, X, FileText, ChevronRight, Navigation, Phone, Mail, CreditCard } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { useLocation } from '@/hooks/useLocation';
@@ -54,6 +54,7 @@ export default function Profile() {
   const [editBio, setEditBio] = useState('');
   const [editName, setEditName] = useState('');
   const [editPhone, setEditPhone] = useState('');
+  const [editEmail, setEditEmail] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [isHomeDialogOpen, setIsHomeDialogOpen] = useState(false);
   const [isSavingHome, setIsSavingHome] = useState(false);
@@ -198,6 +199,7 @@ export default function Profile() {
     setEditName(profile?.display_name || '');
     setEditBio((profile as any)?.bio || '');
     setEditPhone(profile?.phone ? formatPhoneForDisplay(profile.phone) : '');
+    setEditEmail(user?.email || '');
     setIsEditing(true);
   };
 
@@ -235,6 +237,30 @@ export default function Profile() {
         .eq('id', profile.id);
 
       if (error) throw error;
+
+      // Sync email with auth if changed
+      const trimmedEmail = editEmail.trim().toLowerCase();
+      if (trimmedEmail && trimmedEmail !== user?.email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(trimmedEmail)) {
+          toast.error('Please enter a valid email address');
+          setIsSaving(false);
+          return;
+        }
+        const { error: emailError } = await supabase.auth.updateUser({ email: trimmedEmail });
+        if (emailError) {
+          toast.error(emailError.message);
+          setIsSaving(false);
+          return;
+        }
+        toast.info('Check your new email for a verification link to finalize the change.');
+      }
+
+      // Sync phone with auth if changed
+      if (normalizedPhone && normalizedPhone !== user?.phone) {
+        await supabase.auth.updateUser({ phone: normalizedPhone });
+      }
+
       await refreshProfile();
       setIsEditing(false);
       toast.success('Profile updated!');
@@ -309,7 +335,20 @@ export default function Profile() {
                 ) : (
                   <h2 className="text-xl font-bold">{profile?.display_name || 'Anonymous'}</h2>
                 )}
-                <p className="text-sm text-muted-foreground">{user.email}</p>
+                {isEditing ? (
+                  <div className="mt-1 flex items-center gap-2">
+                    <Mail className="h-4 w-4 text-muted-foreground" />
+                    <Input
+                      value={editEmail}
+                      onChange={(e) => setEditEmail(e.target.value)}
+                      className="h-8 text-sm"
+                      placeholder="email@example.com"
+                      type="email"
+                    />
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">{user.email}</p>
+                )}
                 
                 {isEditing ? (
                   <div className="mt-2 flex items-center gap-2">
