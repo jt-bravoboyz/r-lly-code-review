@@ -1447,6 +1447,7 @@ export type Database = {
           last_rally_home_lng: number | null
           location_sharing_enabled: boolean | null
           phone: string | null
+          policies_accepted_at: string | null
           referred_by: string | null
           reward_points: number | null
           updated_at: string | null
@@ -1472,6 +1473,7 @@ export type Database = {
           last_rally_home_lng?: number | null
           location_sharing_enabled?: boolean | null
           phone?: string | null
+          policies_accepted_at?: string | null
           referred_by?: string | null
           reward_points?: number | null
           updated_at?: string | null
@@ -1497,6 +1499,7 @@ export type Database = {
           last_rally_home_lng?: number | null
           location_sharing_enabled?: boolean | null
           phone?: string | null
+          policies_accepted_at?: string | null
           referred_by?: string | null
           reward_points?: number | null
           updated_at?: string | null
