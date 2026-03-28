@@ -3,7 +3,7 @@ import { useParams, Navigate, Link, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { getEventTypeLabel, getEventTypeEmoji, getEventTypeVibe } from '@/lib/eventTypes';
 import { trackEvent } from '@/lib/analytics';
-import { ArrowLeft, Calendar, MapPin, Users, Beer, Check, X, MessageCircle, Navigation, Home, Plus, Zap, Crown, UserPlus, Car, Play, Moon, PartyPopper, Link2, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Users, Beer, Check, X, MessageCircle, Navigation, Home, Plus, Zap, Crown, UserPlus, Car, Play, Moon, PartyPopper, Link2, CheckCircle2, Camera } from 'lucide-react';
 import { format } from 'date-fns';
 import { Header } from '@/components/layout/Header';
 import { BottomNav } from '@/components/layout/BottomNav';
@@ -60,6 +60,7 @@ import { RidesSelectionModal } from '@/components/events/RidesSelectionModal';
 import { AfterRallyCard } from '@/components/events/AfterRallyCard';
 import { RallyHeroMediaCarousel } from '@/components/events/RallyHeroMediaCarousel';
 import { RallyCompleteOverlay } from '@/components/events/RallyCompleteOverlay';
+import { EventPhotoFeed } from '@/components/events/EventPhotoFeed';
 import { useMyRallyHomePrompt } from '@/hooks/useRallyHomePrompt';
 import { PendingJoinRequests } from '@/components/events/PendingJoinRequests';
 import { TransportModeSelector } from '@/components/events/TransportModeSelector';
@@ -724,8 +725,12 @@ export default function EventDetail() {
 
         {/* Tabs for Details, Chat, Tracking, Rides */}
         <Tabs defaultValue="details" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="details">Details</TabsTrigger>
+            <TabsTrigger value="photos" className="flex items-center gap-1">
+              <Camera className="h-3.5 w-3.5" />
+              Photos
+            </TabsTrigger>
             <TabsTrigger value="chat" className="flex items-center gap-1">
               <MessageCircle className="h-3.5 w-3.5" />
               Chat
@@ -844,6 +849,10 @@ export default function EventDetail() {
                 }}
               />
             )}
+          </TabsContent>
+
+          <TabsContent value="photos" className="mt-4">
+            <EventPhotoFeed eventId={event.id} isHost={canManage} />
           </TabsContent>
 
           <TabsContent value="chat" className="mt-4">
