@@ -400,11 +400,12 @@ export default function Auth() {
 
   const handlePolicyAccepted = () => {
     setShowPolicyDialog(false);
-    // Execute the pending auth action
     if (pendingAuthAction === 'signup') {
       executeSignUp();
     } else if (pendingAuthAction === 'google') {
       executeGoogleSignIn();
+    } else if (pendingAuthAction === 'apple') {
+      executeAppleSignIn();
     }
     setPendingAuthAction(null);
   };
