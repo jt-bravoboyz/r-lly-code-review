@@ -725,8 +725,12 @@ export default function EventDetail() {
 
         {/* Tabs for Details, Chat, Tracking, Rides */}
         <Tabs defaultValue="details" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="details">Details</TabsTrigger>
+            <TabsTrigger value="photos" className="flex items-center gap-1">
+              <Camera className="h-3.5 w-3.5" />
+              Photos
+            </TabsTrigger>
             <TabsTrigger value="chat" className="flex items-center gap-1">
               <MessageCircle className="h-3.5 w-3.5" />
               Chat
