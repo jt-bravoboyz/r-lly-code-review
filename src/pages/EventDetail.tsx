@@ -189,30 +189,27 @@ export default function EventDetail() {
   const isLive = event?.status === 'live';
   const isAfterRally = event?.status === 'after_rally';
   
-  // ARCH-2: Use DB flags instead of sessionStorage for safety choice gating
-  const needsSafetyChoice = isAttending && 
-    myAttendee?.going_home_at === null && 
-    myAttendee?.not_participating_rally_home_confirmed === null &&
-    !myAttendee?.is_dd &&
-    !myAttendee?.needs_ride &&
-    !myAttendee?.location_prompt_shown &&
-    event?.status !== 'completed';
+  const hasTransportModeForEvent = Boolean(myAttendee?.arrival_transport_mode);
+  const hasCompletedJoinFlow = hasTransportModeForEvent && Boolean(myAttendee?.location_prompt_shown);
+  const shouldAutoStartJoinFlow = isAttending &&
+    !hasCompletedJoinFlow &&
+    !hasTransportModeForEvent &&
+    event?.status !== 'completed' &&
+    !joinFlowDismissedForSession;
 
   const isSimpleMode = !event?.is_barhop &&
     (eventDDs?.length ?? 0) === 0 &&
     !isLive &&
     !isAfterRally;
   
-  // Show safety choice modal on page load for existing attendees who haven't chosen yet
   useEffect(() => {
-    if (needsSafetyChoice && !showSafetyChoice && !showRidesSelection && !showLocationSharingModal) {
-      // ARCH-2: No sessionStorage gating - DB flags handle deduplication
+    if (shouldAutoStartJoinFlow && !showTransportSelector && !showSafetyChoice && !showRidesSelection && !showLocationSharingModal) {
       const timer = setTimeout(() => {
-        setShowSafetyChoice(true);
+        setShowTransportSelector(true);
       }, 500);
       return () => clearTimeout(timer);
     }
-  }, [needsSafetyChoice, showSafetyChoice, showRidesSelection, showLocationSharingModal]);
+  }, [shouldAutoStartJoinFlow, showTransportSelector, showSafetyChoice, showRidesSelection, showLocationSharingModal]);
   
   // R@lly Home prompt status for current user
   const myPromptStatus = useMyRallyHomePrompt(id);
