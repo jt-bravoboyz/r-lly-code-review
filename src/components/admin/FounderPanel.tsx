@@ -88,7 +88,7 @@ export const FounderPanel = React.forwardRef<HTMLDivElement, FounderPanelProps>(
                     )}
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    {f.hosted} hosted · {f.joined} joined · {f.safetyConfirmed} safe
+                    {f.hosted} hosted · {f.joined} joined · {f.safetyConfirmed} safe · {f.referrals} referrals
                   </div>
                 </div>
               </div>

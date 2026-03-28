@@ -400,12 +400,13 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
           providerSplit,
         },
         retention,
-        // New metrics
         avgSquadSize,
         peakActivity,
         safeDepartures,
         transitLatency,
         avgDwellTime,
+        referralCounts,
+        topConnectors,
       };
     },
     refetchInterval: 30000,
