@@ -10,7 +10,7 @@ interface CommercialDashboardProps {
   avgDwellTime: number | null;
 }
 
-export function CommercialDashboard({ totalGMV, paidEventsCount, providerSplit, eventsByCity }: CommercialDashboardProps) {
+export function CommercialDashboard({ totalGMV, paidEventsCount, providerSplit, eventsByCity, avgDwellTime }: CommercialDashboardProps) {
   const hasProviderData = Object.values(providerSplit).some(v => v > 0);
   const totalProviderCount = Object.values(providerSplit).reduce((s, v) => s + v, 0);
 
