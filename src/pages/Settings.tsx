@@ -35,7 +35,9 @@ import {
   MapPinOff,
   AlertTriangle,
   CheckCircle2,
-  EyeOff
+  EyeOff,
+  Contact,
+  Send
 } from 'lucide-react';
 import { useAppSettings } from '@/hooks/useAppSettings';
 import { useHaptics } from '@/hooks/useHaptics';
@@ -49,6 +51,9 @@ import { cn } from '@/lib/utils';
 import { NotificationSettings } from '@/components/settings/NotificationSettings';
 import { supabase } from '@/integrations/supabase/client';
 import { FeedbackDialog } from '@/components/settings/FeedbackDialog';
+import { usePhoneContacts } from '@/hooks/usePhoneContacts';
+import { ContactSyncButton } from '@/components/contacts/ContactSyncButton';
+import { ContactInviteDialog } from '@/components/contacts/ContactInviteDialog';
 
 const themeOptions = [
   { value: 'light', label: 'Light', icon: Sun, description: 'Always light' },
