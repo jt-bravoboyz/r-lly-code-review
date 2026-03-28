@@ -104,7 +104,6 @@ export default function AdminDashboard() {
         ) : (
           <>
             {/* Technical View: System health */}
-            <AnalyticsCards summary={data.summary} sparkline={data.sparkline} />
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <FunnelChart funnel={data.funnel} modeSplit={data.modeSplit} />
