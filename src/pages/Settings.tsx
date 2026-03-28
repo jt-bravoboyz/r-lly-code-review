@@ -725,8 +725,10 @@ export default function Settings() {
           </TabsContent>
         </Tabs>
 
-        {/* Tutorial & Reset Buttons */}
+        {/* Feedback & Utility Buttons */}
         <div className="mt-6 space-y-3">
+          <FeedbackDialog />
+
           <Button 
             variant="outline" 
             className="w-full border-primary/30 text-primary hover:bg-primary hover:text-primary-foreground"
