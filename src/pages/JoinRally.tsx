@@ -125,6 +125,12 @@ export default function JoinRally() {
   const handleJoin = async () => {
     if (!user) {
       sessionStorage.setItem('pendingRallyCode', event?.invite_code || manualCode);
+      // Forward referral param if present
+      const urlParams = new URLSearchParams(window.location.search);
+      const ref = urlParams.get('r');
+      if (ref) {
+        sessionStorage.setItem('rally-referrer-id', ref);
+      }
       navigate('/auth');
       return;
     }

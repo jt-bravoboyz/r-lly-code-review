@@ -28,10 +28,10 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
 
       let events = allEvents || [];
 
-      // Fetch profiles
+      // Fetch profiles (include referred_by for referral tracking)
       const { data: profiles } = await supabase
         .from('profiles')
-        .select('id, user_id, display_name, avatar_url, founding_member, founder_number, created_at')
+        .select('id, user_id, display_name, avatar_url, founding_member, founder_number, created_at, referred_by')
         .range(0, 9999);
 
       // Get ALL admin user IDs from user_roles (any role = admin user)
@@ -335,6 +335,26 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
         }
       }
 
+      // Referral counts per profile
+      const referralCounts: Record<string, number> = {};
+      (profiles || []).forEach(p => {
+        const ref = (p as any).referred_by;
+        if (ref) {
+          referralCounts[ref] = (referralCounts[ref] || 0) + 1;
+        }
+      });
+
+      // Top Connectors leaderboard
+      const topConnectors = Object.entries(referralCounts)
+        .map(([profileId, count]) => ({
+          profileId,
+          referralCount: count,
+          displayName: profiles?.find(p => p.id === profileId)?.display_name || 'Unknown',
+          avatarUrl: profiles?.find(p => p.id === profileId)?.avatar_url,
+        }))
+        .sort((a, b) => b.referralCount - a.referralCount)
+        .slice(0, 10);
+
       return {
         summary: {
           totalEventsCreated,
@@ -380,12 +400,13 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
           providerSplit,
         },
         retention,
-        // New metrics
         avgSquadSize,
         peakActivity,
         safeDepartures,
         transitLatency,
         avgDwellTime,
+        referralCounts,
+        topConnectors,
       };
     },
     refetchInterval: 30000,

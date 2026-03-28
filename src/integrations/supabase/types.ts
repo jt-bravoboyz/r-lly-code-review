@@ -1447,6 +1447,7 @@ export type Database = {
           last_rally_home_lng: number | null
           location_sharing_enabled: boolean | null
           phone: string | null
+          referred_by: string | null
           reward_points: number | null
           updated_at: string | null
           user_id: string
@@ -1471,6 +1472,7 @@ export type Database = {
           last_rally_home_lng?: number | null
           location_sharing_enabled?: boolean | null
           phone?: string | null
+          referred_by?: string | null
           reward_points?: number | null
           updated_at?: string | null
           user_id: string
@@ -1495,11 +1497,41 @@ export type Database = {
           last_rally_home_lng?: number | null
           location_sharing_enabled?: boolean | null
           phone?: string | null
+          referred_by?: string | null
           reward_points?: number | null
           updated_at?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_referred_by_fkey"
+            columns: ["referred_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_referred_by_fkey"
+            columns: ["referred_by"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_referred_by_fkey"
+            columns: ["referred_by"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_referred_by_fkey"
+            columns: ["referred_by"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles_with_connection"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       push_subscriptions: {
         Row: {

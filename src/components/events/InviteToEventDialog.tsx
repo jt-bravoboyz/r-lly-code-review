@@ -60,7 +60,10 @@ export function InviteToEventDialog({
     phoneInvites?.map(pi => pi.phone_number) || []
   );
 
-  const shareLink = `${window.location.origin}/join/${inviteCode}`;
+  // Build share link with referral param
+  const shareLink = profile?.id
+    ? `${window.location.origin}/join/${inviteCode}?r=${profile.id}`
+    : `${window.location.origin}/join/${inviteCode}`;
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(shareLink);

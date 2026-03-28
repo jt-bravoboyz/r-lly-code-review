@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -43,6 +43,18 @@ const signUpSchema = z.object({
 type AuthMode = 'signin' | 'signup' | 'forgot-password';
 
 export default function Auth() {
+  // Capture referral param from URL
+  const referrerId = useMemo(() => {
+    const params = new URLSearchParams(window.location.search);
+    const r = params.get('r');
+    if (r) {
+      // Persist in sessionStorage so it survives the OAuth redirect
+      sessionStorage.setItem('rally-referrer-id', r);
+      return r;
+    }
+    return sessionStorage.getItem('rally-referrer-id') || null;
+  }, []);
+
   // Check if user has an account (set after first successful signup/signin)
   // This is SEPARATE from onboarding completion - a user can complete onboarding
   // but not have an account yet (they need to sign up first)
@@ -300,8 +312,10 @@ export default function Auth() {
     try {
       // Normalize phone number before sending
       const normalizedPhone = phone ? normalizePhoneNumber(phone) : undefined;
-      const { error } = await signUp(email.trim(), password, displayName.trim(), normalizedPhone);
+      const { error } = await signUp(email.trim(), password, displayName.trim(), normalizedPhone, referrerId || undefined);
       if (error) throw error;
+      // Clear referral from session storage once used
+      sessionStorage.removeItem('rally-referrer-id');
       // Mark that user has an account for future visits
       localStorage.setItem('rally-has-account', 'true');
       toast.success('Account created! Welcome to R@lly.');
