@@ -67,6 +67,26 @@ export function CommercialDashboard({ totalGMV, paidEventsCount, providerSplit, 
         </Card>
       </div>
 
+      {/* Avg Dwell Time */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm text-muted-foreground flex items-center gap-2">
+            <MapPin className="h-4 w-4" />
+            Average Dwell Time
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {avgDwellTime !== null ? (
+            <>
+              <p className="text-3xl font-bold font-montserrat">{avgDwellTime.toFixed(0)} min</p>
+              <p className="text-xs text-muted-foreground mt-1">avg time users stay at a venue</p>
+            </>
+          ) : (
+            <AdminEmptyState message="No venue presence data yet" />
+          )}
+        </CardContent>
+      </Card>
+
       {/* Event Density by City */}
       <Card>
         <CardHeader className="pb-2">
@@ -78,12 +98,18 @@ export function CommercialDashboard({ totalGMV, paidEventsCount, providerSplit, 
         <CardContent>
           {eventsByCity.length > 0 ? (
             <div className="space-y-2">
-              {eventsByCity.slice(0, 10).map((item) => (
-                <div key={item.city} className="flex items-center justify-between">
-                  <span className="text-sm truncate flex-1">{item.city}</span>
-                  <span className="text-sm font-bold ml-2">{item.count}</span>
-                </div>
-              ))}
+              {(() => {
+                const maxCount = Math.max(...eventsByCity.slice(0, 10).map(i => i.count), 1);
+                return eventsByCity.slice(0, 10).map((item) => (
+                  <div key={item.city} className="flex items-center gap-3">
+                    <span className="text-sm truncate flex-1">{item.city}</span>
+                    <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
+                      <div className="h-full bg-primary rounded-full" style={{ width: `${(item.count / maxCount) * 100}%` }} />
+                    </div>
+                    <span className="text-sm font-bold w-6 text-right">{item.count}</span>
+                  </div>
+                ));
+              })()}
             </div>
           ) : (
             <AdminEmptyState message="No location data yet" />
