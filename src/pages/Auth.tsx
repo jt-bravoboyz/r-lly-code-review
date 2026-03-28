@@ -13,6 +13,7 @@ import { Mail, Lock, User, ChevronRight, ArrowLeft, Phone, Fingerprint } from 'l
 import { z } from 'zod';
 import { PolicyAcceptanceDialog } from '@/components/legal/PolicyAcceptanceDialog';
 import { useTutorial } from '@/hooks/useTutorial';
+import { lovable } from '@/integrations/lovable/index';
 // Validation schemas
 const emailSchema = z.string().trim().email('Please enter a valid email address').max(255, 'Email is too long');
 const passwordSchema = z.string().min(6, 'Password must be at least 6 characters').max(128, 'Password is too long');
@@ -59,7 +60,7 @@ export default function Auth() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const [showPolicyDialog, setShowPolicyDialog] = useState(false);
-  const [pendingAuthAction, setPendingAuthAction] = useState<'signup' | 'google' | null>(null);
+  const [pendingAuthAction, setPendingAuthAction] = useState<'signup' | 'google' | 'apple' | null>(null);
   const [rememberMe, setRememberMe] = useState(() => {
     return localStorage.getItem('rally-remember-me') === 'true';
   });
@@ -346,12 +347,10 @@ export default function Auth() {
   };
 
   const handleGoogleSignInClick = () => {
-    // Check if policies already accepted
     const policiesAccepted = localStorage.getItem('rally-policies-accepted') === 'true';
     if (policiesAccepted) {
       executeGoogleSignIn();
     } else {
-      // Show policy dialog first
       setPendingAuthAction('google');
       setShowPolicyDialog(true);
     }
@@ -374,13 +373,39 @@ export default function Auth() {
     }
   };
 
+  const handleAppleSignInClick = () => {
+    const policiesAccepted = localStorage.getItem('rally-policies-accepted') === 'true';
+    if (policiesAccepted) {
+      executeAppleSignIn();
+    } else {
+      setPendingAuthAction('apple');
+      setShowPolicyDialog(true);
+    }
+  };
+
+  const executeAppleSignIn = async () => {
+    setIsLoading(true);
+    try {
+      const { error } = await lovable.auth.signInWithOAuth('apple', {
+        redirect_uri: window.location.origin,
+      });
+      if (error) throw error;
+      localStorage.setItem('rally-has-account', 'true');
+    } catch (error: any) {
+      const errorMessage = getAuthErrorMessage(error);
+      toast.error(errorMessage);
+      setIsLoading(false);
+    }
+  };
+
   const handlePolicyAccepted = () => {
     setShowPolicyDialog(false);
-    // Execute the pending auth action
     if (pendingAuthAction === 'signup') {
       executeSignUp();
     } else if (pendingAuthAction === 'google') {
       executeGoogleSignIn();
+    } else if (pendingAuthAction === 'apple') {
+      executeAppleSignIn();
     }
     setPendingAuthAction(null);
   };
@@ -804,7 +829,26 @@ export default function Auth() {
                 Continue with Google
               </Button>
 
-              {/* Biometric Login - only for returning users on signin */}
+              {/* Apple Sign In */}
+              <Button 
+                type="button"
+                variant="outline"
+                className="w-full h-14 rounded-xl font-medium text-base font-montserrat flex items-center justify-center gap-3 transition-all duration-300 hover:scale-[1.02] mt-3"
+                style={{
+                  backgroundColor: "rgba(255, 255, 255, 0.05)",
+                  borderColor: "rgba(255, 255, 255, 0.15)",
+                  color: "rgba(255, 255, 255, 0.90)",
+                }}
+                onClick={handleAppleSignInClick}
+                disabled={isLoading}
+              >
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
+                </svg>
+                Continue with Apple
+              </Button>
+
+
               {!isSignUp && biometricSupported && biometricRegistered && (
                 <Button 
                   type="button"
