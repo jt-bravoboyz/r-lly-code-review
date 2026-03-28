@@ -100,9 +100,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: error as Error | null };
   };
 
-  const signUp = async (email: string, password: string, displayName: string, phone?: string) => {
+  const signUp = async (email: string, password: string, displayName: string, phone?: string, referredBy?: string) => {
     const redirectUrl = `${window.location.origin}/`;
-    const { error } = await supabase.auth.signUp({
+    const { error, data: signUpData } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -117,6 +117,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Mark that this is a new signup - tutorial should show after login
     if (!error) {
       localStorage.setItem('rally-is-new-signup', 'true');
+
+      // Save referral attribution if present
+      if (referredBy && signUpData?.user) {
+        // Update the profile with referred_by after a brief delay to ensure profile is created by trigger
+        setTimeout(async () => {
+          try {
+            await supabase
+              .from('profiles')
+              .update({ referred_by: referredBy } as any)
+              .eq('user_id', signUpData.user!.id);
+          } catch (e) {
+            console.error('Failed to save referral:', e);
+          }
+        }, 2000);
+      }
     }
     
     return { error: error as Error | null };

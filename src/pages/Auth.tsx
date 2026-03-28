@@ -312,8 +312,10 @@ export default function Auth() {
     try {
       // Normalize phone number before sending
       const normalizedPhone = phone ? normalizePhoneNumber(phone) : undefined;
-      const { error } = await signUp(email.trim(), password, displayName.trim(), normalizedPhone);
+      const { error } = await signUp(email.trim(), password, displayName.trim(), normalizedPhone, referrerId || undefined);
       if (error) throw error;
+      // Clear referral from session storage once used
+      sessionStorage.removeItem('rally-referrer-id');
       // Mark that user has an account for future visits
       localStorage.setItem('rally-has-account', 'true');
       toast.success('Account created! Welcome to R@lly.');
