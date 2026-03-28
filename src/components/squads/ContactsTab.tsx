@@ -101,15 +101,18 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
 
   return (
     <div className="space-y-4">
-      {/* Search bar */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Search contacts..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10 bg-white/80 backdrop-blur-sm border-0 shadow-sm rounded-xl"
-        />
+      {/* Search bar + Add People */}
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search contacts..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 bg-white/80 backdrop-blur-sm border-0 shadow-sm rounded-xl"
+          />
+        </div>
+        <AddPeopleSheet />
       </div>
 
       <ScrollArea className="h-[calc(100vh-320px)]">
