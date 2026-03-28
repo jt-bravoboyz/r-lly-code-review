@@ -262,6 +262,7 @@ export function useAdminAnalytics(filterAdminData = false) {
           departureModeCounts,
           providerSplit,
         },
+        retention,
       };
     },
     refetchInterval: 30000,
