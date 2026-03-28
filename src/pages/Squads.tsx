@@ -18,6 +18,7 @@ export default function Squads() {
   const { profile, loading: authLoading } = useAuth();
   const { data: squads, isLoading } = useAllMySquads();
   const navigate = useNavigate();
+  const [contactInviteOpen, setContactInviteOpen] = useState(false);
 
   if (authLoading) {
     return (
