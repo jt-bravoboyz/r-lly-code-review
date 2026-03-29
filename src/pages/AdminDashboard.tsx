@@ -182,6 +182,9 @@ export default function AdminDashboard() {
               <LiveActivityFeed />
               <FeatureFlags />
             </div>
+
+            {/* Squad Audit */}
+            <SquadAudit />
           </>
         )}
       </main>
