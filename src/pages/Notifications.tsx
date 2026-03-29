@@ -2,26 +2,27 @@ import { useMemo } from 'react';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Bell, Car, MapPin, Users, CheckCircle, Clock, Zap } from 'lucide-react';
+import { Bell, Car, MapPin, Users, CheckCircle, Clock, Zap, MessageCircle } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useNotifications, useMarkNotificationRead, useDeleteNotification } from '@/hooks/useNotifications';
 import { SwipeDismissCard } from '@/components/notifications/SwipeDismissCard';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { formatDistanceToNow } from 'date-fns';
 import { InviteAlertCard } from '@/components/notifications/InviteAlertCard';
 import { Button } from '@/components/ui/button';
 import rallyLogo from '@/assets/rally-logo.png';
 
+const INVITE_TYPES = ['squad_invite', 'rally_invite', 'event_invite'];
+const ACTIONABLE_TYPES = [...INVITE_TYPES, 'rally_started', 'squad_chat_unread', 'rally_chat_unread', 'chat_unread'];
+
 export default function Notifications() {
   const { profile, loading: authLoading } = useAuth();
   const { data: notifications, isLoading } = useNotifications();
   const markRead = useMarkNotificationRead();
   const deleteNotification = useDeleteNotification();
+  const navigate = useNavigate();
 
-  const INVITE_TYPES = ['squad_invite', 'rally_invite', 'event_invite'];
-  
-  // Split notifications into invite vs regular, with invites sorted first
   const { inviteNotifications, regularNotifications } = useMemo(() => {
     if (!notifications) return { inviteNotifications: [], regularNotifications: [] };
     const invites = notifications.filter(n => INVITE_TYPES.includes(n.type) && !n.read);
@@ -30,19 +31,26 @@ export default function Notifications() {
   }, [notifications]);
 
   const unreadCount = notifications?.filter(n => !n.read).length || 0;
-  const totalUnread = unreadCount;
   const hasNotifications = notifications && notifications.length > 0;
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case 'squad_invite':
         return <Users className="h-5 w-5 text-primary" />;
+      case 'rally_invite':
+      case 'event_invite':
+        return <Zap className="h-5 w-5 text-primary" />;
+      case 'rally_started':
+        return <Zap className="h-5 w-5 text-green-500" />;
+      case 'squad_chat_unread':
+        return <MessageCircle className="h-5 w-5 text-primary" />;
+      case 'rally_chat_unread':
+      case 'chat_unread':
+        return <MessageCircle className="h-5 w-5 text-blue-500" />;
       case 'ride_request':
         return <Car className="h-5 w-5 text-blue-500" />;
       case 'ride_accepted':
         return <CheckCircle className="h-5 w-5 text-green-500" />;
-      case 'event_invite':
-        return <Users className="h-5 w-5 text-primary" />;
       case 'location_arrived':
         return <MapPin className="h-5 w-5 text-green-500" />;
       default:
@@ -50,9 +58,16 @@ export default function Notifications() {
     }
   };
 
-  const handleNotificationClick = (notificationId: string, read: boolean | null) => {
-    if (!read) {
-      markRead.mutate(notificationId);
+  const handleNotificationClick = (notification: typeof notifications extends (infer T)[] | undefined ? T : never) => {
+    if (!notification.read) {
+      markRead.mutate(notification.id);
+    }
+    const data = notification.data as Record<string, any> | null;
+
+    if (notification.type === 'rally_started' && data?.event_id) {
+      navigate(`/events/${data.event_id}`);
+    } else if ((notification.type === 'squad_chat_unread' || notification.type === 'rally_chat_unread' || notification.type === 'chat_unread') && data?.chat_id) {
+      navigate(`/chat?id=${data.chat_id}`);
     }
   };
 
@@ -101,24 +116,20 @@ export default function Notifications() {
         </div>
       </header>
 
-
       <main className="relative z-10 px-4 py-6 space-y-4">
-        {/* Header with count */}
         {hasNotifications && (
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-lg font-bold text-foreground font-montserrat">Activity</h2>
               <p className="text-sm text-muted-foreground">Stay updated on your squad</p>
             </div>
-            {totalUnread > 0 && (
+            {unreadCount > 0 && (
               <Badge className="bg-primary text-white shadow-[0_0_12px_hsl(27_91%_53%/0.3)]">
-                {totalUnread} new
+                {unreadCount} new
               </Badge>
             )}
           </div>
         )}
-
-        {/* Invite notifications are now rendered from the notifications table below */}
 
         {isLoading ? (
           <div className="space-y-3">
@@ -126,7 +137,7 @@ export default function Notifications() {
               <Card key={i} className="h-20 animate-pulse bg-card/40 border-white/5 rounded-xl backdrop-blur-xl" />
             ))}
           </div>
-        ) : (notifications && notifications.length > 0) ? (
+        ) : hasNotifications ? (
           <div className="space-y-3">
             {/* Actionable invite notifications at the top */}
             {inviteNotifications.map((notification) => (
@@ -145,7 +156,7 @@ export default function Notifications() {
                       ? 'bg-card/60 border-white/10'
                       : 'bg-card/70 border-primary/15 shadow-[0_0_20px_hsl(27_91%_53%/0.06)]'
                   }`}
-                  onClick={() => handleNotificationClick(notification.id, notification.read)}
+                  onClick={() => handleNotificationClick(notification)}
                   style={{ WebkitBackdropFilter: 'blur(20px)' }}
                 >
                   <CardContent className="p-4">
@@ -183,17 +194,13 @@ export default function Notifications() {
             ))}
           </div>
         ) : (
-          /* Enhanced Empty State */
           <div className="flex flex-col items-center justify-center pt-12 pb-6 space-y-8">
-            {/* Bell icon with breathing glow */}
             <div className="relative flex items-center justify-center">
               <div className="absolute w-28 h-28 rounded-full animate-icon-glow-breathe" />
               <div className="relative w-20 h-20 rounded-full bg-card/60 backdrop-blur-xl border border-white/10 flex items-center justify-center shadow-lg" style={{ WebkitBackdropFilter: 'blur(20px)' }}>
                 <Bell className="h-10 w-10 text-primary drop-shadow-sm" />
               </div>
             </div>
-
-            {/* Headline with shimmer */}
             <div className="text-center space-y-2">
               <h3 className="text-2xl font-bold font-montserrat animate-text-shimmer bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">
                 You're locked in
@@ -202,8 +209,6 @@ export default function Notifications() {
                 We'll keep you posted when your crew makes a move
               </p>
             </div>
-
-            {/* Smart Anticipation Card */}
             <Card className="w-full max-w-sm animate-card-float backdrop-blur-xl bg-card/60 border-primary/10 shadow-[0_8px_32px_hsl(27_91%_53%/0.06)] hover:shadow-[0_12px_40px_hsl(27_91%_53%/0.1)] hover:-translate-y-0.5 transition-all duration-500" style={{ WebkitBackdropFilter: 'blur(20px)' }}>
               <CardContent className="px-5 pt-6 pb-7 space-y-6">
                 <p className="text-base font-bold text-foreground text-center -mt-2">Be the one to get things started</p>
