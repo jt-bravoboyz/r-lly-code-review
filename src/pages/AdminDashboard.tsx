@@ -16,6 +16,7 @@ import { OnboardingDropoff } from '@/components/admin/OnboardingDropoff';
 import { CommercialDashboard } from '@/components/admin/CommercialDashboard';
 import { KFactorCard } from '@/components/admin/KFactorCard';
 import { SquadInsights } from '@/components/admin/SquadInsights';
+import { SquadAudit } from '@/components/admin/SquadAudit';
 import { SafetyROI } from '@/components/admin/SafetyROI';
 import { AdminDateFilter, type DatePreset } from '@/components/admin/AdminDateFilter';
 import { AdminCSVExport } from '@/components/admin/AdminCSVExport';
