@@ -1,111 +1,59 @@
 
-## Fix plan: make invite alerts reliable and visible
 
-### What’s actually broken
-- `notifications` is currently empty, so the Alerts tab has nothing persistent to render.
-- `send-event-notification` shows no recent executions, so invite alerts are not being created reliably through the backend function path.
-- Squad creation currently inserts selected users directly into `squad_members`, which bypasses any invite/accept flow entirely.
-- The Alerts badge already exists in `BottomNav`, but it is red and partially depends on `pendingInvites` instead of a single reliable unread-alert source.
-- `useNotifications()` only subscribes to `INSERT`, so unread/read state is not fully real-time.
+# Fix Squad Invite End-to-End: Alerts + Squads Tab
 
-### Implementation approach
-I’ll make the notifications table the single source of truth for invite alerts, then wire the badge and Alerts page to it.
+## Root Cause Analysis
 
-### 1) Create notifications automatically in the database
-Add backend-side database functions + triggers so alerts are created immediately when invites are inserted.
+I traced the full data flow and found the actual failures:
 
-#### For R@lly invites
-- Add an `AFTER INSERT` trigger on `event_invites`
-- Insert a `notifications` row for `NEW.invited_profile_id`
-- Store:
-  - `type = 'event_invite'` (or normalize to one invite type consistently)
-  - inviter name
-  - rally title
-  - `event_id`
-  - `invite_id`
-  - unread state
+### Why no alert appears
+The database trigger `notify_on_squad_invite` **does exist and works**, but it can only create a notification if it can match the invited contact to an existing profile. Here's what's happening:
 
-#### For squad invites
-Because `squad_invites` only stores `contact_value`, the trigger function will:
-- detect whether invite is email or SMS
-- normalize phone numbers to digits / last 10 digits
-- resolve matching profile(s) from `profiles` or matching user email
-- insert a `notifications` row when the invited contact maps to an existing account
-- safely do nothing if no app user matches yet
+- SMS invites use a raw phone number (e.g. `4042427500`)
+- The trigger normalizes it and searches `profiles.phone`
+- **The invited user's profile phone doesn't match** (e.g. they have `+18438555641` stored, not `4042427500`)
+- Result: trigger runs, finds no match, silently does nothing → **zero notification rows of type `squad_invite` exist**
 
-This removes dependence on the edge function for the core alert record.
+Additionally, the `SquadInviteDialog` (used from Squad Detail) only supports email and SMS — it has **no way to invite existing app users directly**. So even though someone is on the app, you can only invite them via their external contact info.
 
-### 2) Stop bypassing invites when creating squads
-Update squad creation so selected members are not silently inserted into `squad_members`.
+### Why squad doesn't appear in Squads tab
+The squad only appears in a user's Squads tab after they are in `squad_members`. That insertion only happens via `join_squad_by_invite_code` (the Accept action). Since no notification is ever created, the user can never accept, so the squad never appears.
 
-Instead:
-- create the squad
-- create `squad_invites` for selected app users/contacts
-- let the database trigger create Alerts-tab notifications
-- only add to `squad_members` after the user accepts
+### The Create Squad "in-app" path
+The `useCreateSquad` hook does create `in_app` invites with `profile:ID` format, which the trigger can resolve. **But there are zero such records in the database**, meaning either nobody has selected members during squad creation, or there's an untested edge case. The code logic appears correct.
 
-This fixes the “I was added but never alerted” gap.
+## Plan
 
-### 3) Make Alerts tab render invite alerts from notifications only
-Refactor `Notifications.tsx` so squad/rally invite cards come from `notifications` consistently.
+### 1. Add "App Users" invite option to SquadInviteDialog
+This is the critical missing piece. Right now you can only invite via email/SMS, which breaks the notification pipeline when phone numbers don't match.
 
-Changes:
-- use `InviteAlertCard` for both squad and rally invite notifications
-- remove the separate `PendingInvites` dependency from the Alerts page to avoid split logic / duplicate paths
-- keep existing visual layout, just make the data source reliable
+**File: `src/components/squads/SquadInviteDialog.tsx`**
+- Add a third tab: "In-App" alongside Email and SMS
+- Show a searchable list of existing app users (reuse `useAllProfiles` from `useSquads.tsx`)
+- When selected, insert a `squad_invite` with `invite_type: 'in_app'` and `contact_value: 'profile:<id>'`
+- The existing trigger will handle this case and create the notification
 
-### 4) Make Accept / Decline work correctly
-Tighten `InviteAlertCard.tsx` so actions use the notification payload directly.
+### 2. Harden the trigger's phone/email matching
+Make the trigger more resilient for SMS/email invites too.
 
-#### Squad invites
-- accept via `join_squad_by_invite_code`
-- decline by updating the matching `squad_invites` row to `declined`
-- mark/delete the notification afterward
+**Migration: update `notify_on_squad_invite` function**
+- For SMS: also check `auth.users.phone` (not just `profiles.phone`)
+- For email: also try case-insensitive match against `profiles` table directly (some users might not have auth.users accessible)
+- Add a fallback: if `contact_value` contains digits and no phone match, try matching the last 10 digits against auth.users.phone too
 
-#### R@lly invites
-- use `invite_id` from notification payload instead of querying “first pending invite by event”
-- respond to the exact invite
-- mark/delete the notification afterward
+### 3. Verify notifications RLS allows trigger inserts
+The trigger is `SECURITY DEFINER`, so it bypasses RLS. The existing notifications are being created for other types (e.g. `arrived_safe`), confirming the pipeline works. No RLS change needed.
 
-This prevents wrong-invite lookups and keeps alerts in sync.
+### 4. No changes needed for Squads tab visibility
+`useMemberSquads` already queries squads where the user is in `squad_members`. Once a user accepts an invite via `InviteAlertCard` → `join_squad_by_invite_code`, the squad will appear. The rendering and query logic is correct.
 
-### 5) Add a true unread orange badge on the Alerts tab
-Update `BottomNav.tsx` so the Alerts icon badge:
-- is orange
-- uses unread `notifications` count as the primary source
-- updates immediately when a notification is inserted/read/removed
-- works for squad and rally invites automatically
+## Files to modify
+- `src/components/squads/SquadInviteDialog.tsx` — add in-app user picker tab
+- Database migration — update `notify_on_squad_invite` function to improve phone/email matching
 
-### 6) Make real-time updates complete
-Update `useNotifications()` realtime subscription to listen to:
-- `INSERT`
-- `UPDATE`
-- `DELETE`
-
-So:
-- new invite appears instantly
-- unread badge appears instantly
-- badge clears immediately after accept/decline/read
-- no refresh needed
-
-### Files likely involved
-- `src/hooks/useNotifications.tsx`
-- `src/pages/Notifications.tsx`
-- `src/components/notifications/InviteAlertCard.tsx`
-- `src/components/layout/BottomNav.tsx`
-- `src/hooks/useSquads.tsx`
-- possibly `src/components/squads/CreateSquadDialog.tsx` for submit copy/behavior
-- new migration for trigger functions + triggers on `event_invites` / `squad_invites`
-
-### Result after this fix
-- Squad invites create a real Alerts item for existing app users
-- R@lly invites create a real Alerts item immediately
-- Alerts cards show inviter, squad/rally name, timestamp, unread state, and Accept/Decline
-- The Alerts tab icon shows a small orange unread badge in real time
-- Users no longer need to search manually for invites
-
-### Technical notes
-- I will use database triggers for reliability because the current function-based path is not executing consistently.
-- I will keep RLS strict and create notification rows server-side in trigger functions.
-- I will preserve the current UI structure and only change the invite data flow + badge behavior.
+## Expected result
+- Inviting an existing app user from Squad Detail creates an immediate alert in their Alerts tab
+- The user can accept → squad appears in their Squads tab
+- SMS/email invites have better matching against stored user data
+- No UI redesign — just an additional tab in the existing invite dialog
 
