@@ -74,7 +74,9 @@ export function SquadInviteDialog({ squadId, squadName, trigger }: SquadInviteDi
         const message = encodeURIComponent(
           `Join my squad "${squadName}" on R@lly! 🎉\n\n${inviteLink}\n\nCode: ${data.invite_code}`
         );
-        window.open(`sms:${contactValue}?body=${message}`, '_blank');
+        // iOS uses &body= while Android uses ?body= — using ?& works on both
+        const separator = /iPhone|iPad|iPod/i.test(navigator.userAgent) ? '&' : '?';
+        window.open(`sms:${encodeURIComponent(contactValue)}${separator}body=${message}`, '_blank');
         toast.success('SMS opened! Send it to invite your friend.');
       }
 
