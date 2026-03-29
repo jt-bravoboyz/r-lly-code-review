@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,16 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface SquadCardProps {
   squad: Squad;
@@ -29,6 +39,7 @@ export function SquadCard({ squad, onQuickRally }: SquadCardProps) {
   const members = squad.members || [];
   const [symbolPopoverOpen, setSymbolPopoverOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const isMobile = useIsMobile();
   
   const Icon = getSquadIcon(squad.symbol || 'shield');
@@ -38,13 +49,19 @@ export function SquadCard({ squad, onQuickRally }: SquadCardProps) {
     navigate(`/squads/${squad.id}`);
   };
 
-  const handleDelete = async (e: React.MouseEvent) => {
+  const handleDeleteClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
     try {
       await deleteSquad.mutateAsync(squad.id);
       toast.success('Squad deleted');
     } catch (error) {
       toast.error('Failed to delete squad');
+    } finally {
+      setDeleteConfirmOpen(false);
     }
   };
 
@@ -128,7 +145,7 @@ export function SquadCard({ squad, onQuickRally }: SquadCardProps) {
                   variant="ghost"
                   size="icon"
                   className="text-destructive hover:bg-destructive/10 h-8 w-8"
-                  onClick={handleDelete}
+                  onClick={handleDeleteClick}
                   disabled={deleteSquad.isPending}
                 >
                   <Trash2 className="h-4 w-4" />
@@ -230,17 +247,43 @@ export function SquadCard({ squad, onQuickRally }: SquadCardProps) {
     </Card>
   );
 
+  const deleteConfirmDialog = (
+    <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete Squad?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Are you sure you want to delete "{squad.name}"? This action cannot be undone.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={handleConfirmDelete}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            disabled={deleteSquad.isPending}
+          >
+            {deleteSquad.isPending ? 'Deleting...' : 'Delete Squad'}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+
   // Wrap with swipeable on mobile only
   if (isMobile) {
     return (
-      <SwipeableCard
-        onSwipeLeft={handleSwipeRally}
-        onSwipeRight={handleSwipeChat}
-      >
-        {cardContent}
-      </SwipeableCard>
+      <>
+        <SwipeableCard
+          onSwipeLeft={handleSwipeRally}
+          onSwipeRight={handleSwipeChat}
+        >
+          {cardContent}
+        </SwipeableCard>
+        {deleteConfirmDialog}
+      </>
     );
   }
 
-  return cardContent;
+  return <>{cardContent}{deleteConfirmDialog}</>;
 }
