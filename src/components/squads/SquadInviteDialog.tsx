@@ -106,11 +106,11 @@ export function SquadInviteDialog({ squadId, squadName, trigger }: SquadInviteDi
       setEmail('');
       setPhone('');
 
-      // Try to find existing user and send in-app notification
+      // Send notification via edge function (server-side matching + insert)
       try {
-        await createInAppNotification(contactValue.trim(), type, data.invite_code);
+        await sendSquadInviteNotification(contactValue.trim(), type, data.invite_code);
       } catch (notifErr) {
-        console.error('Failed to create in-app notification:', notifErr);
+        console.error('Failed to send squad invite notification:', notifErr);
       }
     } catch (error: any) {
       console.error('Error creating invite:', error);
