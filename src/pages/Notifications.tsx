@@ -36,6 +36,8 @@ export default function Notifications() {
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
+      case 'squad_invite':
+        return <Users className="h-5 w-5 text-primary" />;
       case 'ride_request':
         return <Car className="h-5 w-5 text-blue-500" />;
       case 'ride_accepted':
