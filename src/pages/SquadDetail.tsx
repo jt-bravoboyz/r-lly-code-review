@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Camera, MessageCircle, UserPlus, Zap, Trash2, Crown, Calendar, MapPin, Users } from 'lucide-react';
+import { ArrowLeft, Camera, MessageCircle, UserPlus, Zap, Trash2, Crown, Calendar, MapPin, Users, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -34,6 +35,7 @@ export default function SquadDetail() {
   const { squadId } = useParams<{ squadId: string }>();
   const navigate = useNavigate();
   const { profile } = useAuth();
+  const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const { data: squad, isLoading } = useSquadDetail(squadId);
@@ -41,6 +43,7 @@ export default function SquadDetail() {
   const updatePhoto = useUpdateSquadPhoto();
   const deleteSquad = useDeleteSquad();
   const removeMember = useRemoveSquadMember();
+  const [refreshing, setRefreshing] = useState(false);
   
   const [chatOpen, setChatOpen] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
@@ -154,6 +157,14 @@ export default function SquadDetail() {
       } 
     });
   };
+  const handleRefreshSquad = async () => {
+    setRefreshing(true);
+    await queryClient.invalidateQueries({ queryKey: ['squad-detail', squadId] });
+    await queryClient.invalidateQueries({ queryKey: ['squad-event-history', squadId] });
+    await queryClient.invalidateQueries({ queryKey: ['rally-media'] });
+    toast.success('Squad refreshed');
+    setRefreshing(false);
+  };
 
   return (
     <div className="min-h-[100dvh] bg-gradient-to-b from-background to-muted pb-24">
@@ -174,6 +185,9 @@ export default function SquadDetail() {
               </p>
             </div>
           </div>
+          <Button variant="ghost" size="icon" onClick={handleRefreshSquad} disabled={refreshing}>
+            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+          </Button>
         </div>
       </div>
 
