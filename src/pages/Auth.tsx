@@ -363,13 +363,9 @@ export default function Auth() {
   };
 
   const handleGoogleSignInClick = () => {
-    const policiesAccepted = localStorage.getItem('rally-policies-accepted') === 'true';
-    if (policiesAccepted) {
-      executeGoogleSignIn();
-    } else {
-      setPendingAuthAction('google');
-      setShowPolicyDialog(true);
-    }
+    localStorage.setItem('rally-policies-accepted', 'true');
+    localStorage.setItem('rally-policies-accepted-date', new Date().toISOString());
+    executeGoogleSignIn();
   };
 
   const executeGoogleSignIn = async () => {
