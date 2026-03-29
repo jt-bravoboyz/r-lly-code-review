@@ -47,8 +47,9 @@ function validatePayload(payload: PushPayload): { valid: boolean; error?: string
     if (!payload.squadName || typeof payload.squadName !== 'string') {
       return { valid: false, error: 'squadName is required for squad_invite type' };
     }
-    if (!payload.profileIds || !Array.isArray(payload.profileIds) || payload.profileIds.length === 0) {
-      return { valid: false, error: 'profileIds is required for squad_invite type' };
+    // squad_invite can use either profileIds OR contactValue for server-side lookup
+    if ((!payload.profileIds || !Array.isArray(payload.profileIds) || payload.profileIds.length === 0) && !payload.contactValue) {
+      return { valid: false, error: 'profileIds or contactValue is required for squad_invite type' };
     }
   } else {
     // Validate title
