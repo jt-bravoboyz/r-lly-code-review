@@ -386,13 +386,9 @@ export default function Auth() {
   };
 
   const handleAppleSignInClick = () => {
-    const policiesAccepted = localStorage.getItem('rally-policies-accepted') === 'true';
-    if (policiesAccepted) {
-      executeAppleSignIn();
-    } else {
-      setPendingAuthAction('apple');
-      setShowPolicyDialog(true);
-    }
+    localStorage.setItem('rally-policies-accepted', 'true');
+    localStorage.setItem('rally-policies-accepted-date', new Date().toISOString());
+    executeAppleSignIn();
   };
 
   const executeAppleSignIn = async () => {
