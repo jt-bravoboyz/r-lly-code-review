@@ -6,11 +6,9 @@ import { Bell, Car, MapPin, Users, CheckCircle, Clock, Zap } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth';
 import { useNotifications, useMarkNotificationRead, useDeleteNotification } from '@/hooks/useNotifications';
 import { SwipeDismissCard } from '@/components/notifications/SwipeDismissCard';
-import { usePendingInvites } from '@/hooks/useEventInvites';
 import { Link } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { formatDistanceToNow } from 'date-fns';
-import { PendingInvites } from '@/components/events/PendingInvites';
 import { InviteAlertCard } from '@/components/notifications/InviteAlertCard';
 import { Button } from '@/components/ui/button';
 import rallyLogo from '@/assets/rally-logo.png';
@@ -18,7 +16,6 @@ import rallyLogo from '@/assets/rally-logo.png';
 export default function Notifications() {
   const { profile, loading: authLoading } = useAuth();
   const { data: notifications, isLoading } = useNotifications();
-  const { data: pendingInvites } = usePendingInvites();
   const markRead = useMarkNotificationRead();
   const deleteNotification = useDeleteNotification();
 
@@ -33,9 +30,8 @@ export default function Notifications() {
   }, [notifications]);
 
   const unreadCount = notifications?.filter(n => !n.read).length || 0;
-  const pendingInviteCount = pendingInvites?.length || 0;
-  const totalUnread = unreadCount + pendingInviteCount;
-  const hasNotifications = (notifications && notifications.length > 0) || pendingInviteCount > 0;
+  const totalUnread = unreadCount;
+  const hasNotifications = notifications && notifications.length > 0;
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -122,8 +118,7 @@ export default function Notifications() {
           </div>
         )}
 
-        {/* Pending Rally Invites */}
-        <PendingInvites />
+        {/* Invite notifications are now rendered from the notifications table below */}
 
         {isLoading ? (
           <div className="space-y-3">

@@ -3,7 +3,7 @@ import { Users, Calendar, Check, X, Loader2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
-import { useMarkNotificationRead } from '@/hooks/useNotifications';
+import { useMarkNotificationRead, useDeleteNotification } from '@/hooks/useNotifications';
 import { useRespondToInvite } from '@/hooks/useEventInvites';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
@@ -21,6 +21,7 @@ export function InviteAlertCard({ notification }: InviteAlertCardProps) {
   const [isDeclining, setIsDeclining] = useState(false);
   const [responded, setResponded] = useState(false);
   const markRead = useMarkNotificationRead();
+  const deleteNotification = useDeleteNotification();
   const respondToInvite = useRespondToInvite();
   const queryClient = useQueryClient();
 
@@ -40,13 +41,23 @@ export function InviteAlertCard({ notification }: InviteAlertCardProps) {
         const res = result as { success?: boolean; error?: string };
         if (res?.error) {
           toast.error(res.error);
+          setIsAccepting(false);
           return;
         }
 
         toast.success('You joined the squad! 🎉');
         queryClient.invalidateQueries({ queryKey: ['squads'] });
+        queryClient.invalidateQueries({ queryKey: ['owned-squads'] });
+        queryClient.invalidateQueries({ queryKey: ['member-squads'] });
+      } else if (isRallyInvite && data?.invite_id) {
+        await respondToInvite.mutateAsync({
+          inviteId: data.invite_id,
+          eventId: data.event_id,
+          response: 'accepted',
+        });
+        toast.success("You're in! 🎉");
       } else if (isRallyInvite && data?.event_id) {
-        // Find the invite record
+        // Fallback: find invite by event
         const { data: invites } = await supabase
           .from('event_invites')
           .select('id')
@@ -64,7 +75,7 @@ export function InviteAlertCard({ notification }: InviteAlertCardProps) {
         }
       }
 
-      markRead.mutate(notification.id);
+      deleteNotification.mutate(notification.id);
       setResponded(true);
     } catch (err: any) {
       console.error('Accept failed:', err);
@@ -77,7 +88,13 @@ export function InviteAlertCard({ notification }: InviteAlertCardProps) {
   const handleDecline = async () => {
     setIsDeclining(true);
     try {
-      if (isRallyInvite && data?.event_id) {
+      if (isRallyInvite && data?.invite_id) {
+        await respondToInvite.mutateAsync({
+          inviteId: data.invite_id,
+          eventId: data.event_id,
+          response: 'declined',
+        });
+      } else if (isRallyInvite && data?.event_id) {
         const { data: invites } = await supabase
           .from('event_invites')
           .select('id')
@@ -94,7 +111,8 @@ export function InviteAlertCard({ notification }: InviteAlertCardProps) {
         }
       }
 
-      markRead.mutate(notification.id);
+      // For squad invites, just mark as declined by removing notification
+      deleteNotification.mutate(notification.id);
       setResponded(true);
       toast('Invite declined');
     } catch (err: any) {
