@@ -135,7 +135,7 @@ export function SquadCard({ squad, onQuickRally }: SquadCardProps) {
                   variant="ghost"
                   size="icon"
                   className="text-destructive hover:bg-destructive/10 h-8 w-8"
-                  onClick={handleDelete}
+                  onClick={handleDeleteClick}
                   disabled={deleteSquad.isPending}
                 >
                   <Trash2 className="h-4 w-4" />
