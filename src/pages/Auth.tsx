@@ -406,17 +406,7 @@ export default function Auth() {
     }
   };
 
-  const handlePolicyAccepted = () => {
-    setShowPolicyDialog(false);
-    if (pendingAuthAction === 'signup') {
-      executeSignUp();
-    } else if (pendingAuthAction === 'google') {
-      executeGoogleSignIn();
-    } else if (pendingAuthAction === 'apple') {
-      executeAppleSignIn();
-    }
-    setPendingAuthAction(null);
-  };
+
 
   if (user) {
     return null;
