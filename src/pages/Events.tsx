@@ -6,7 +6,8 @@ import { useMyEvents } from '@/hooks/useMyEvents';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Zap, Filter, Search, Link2, Sparkles, Calendar, History, Clock } from 'lucide-react';
+import { Zap, Filter, Search, Link2, Sparkles, Calendar, History, Clock, ChevronDown } from 'lucide-react';
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import { Input } from '@/components/ui/input';
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
@@ -20,6 +21,8 @@ export default function Events() {
   const { data: categorizedEvents, isLoading } = useMyEvents();
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [pastOpen, setPastOpen] = useState(false);
+  const [showAllPast, setShowAllPast] = useState(false);
   const location = useLocation();
   
   // Get preselected squad from navigation state (from Squads page Quick Rally)
@@ -225,41 +228,53 @@ export default function Events() {
           )}
         </section>
 
-        {/* Past R@lly Section */}
-        <section className="space-y-4 animate-fade-in mt-8" style={{ animationDelay: '0.4s' }}>
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold text-foreground font-montserrat flex items-center gap-2">
-              <History className="h-5 w-5 text-muted-foreground" />
-              Past R@lly
-            </h2>
-            <span className="text-sm text-muted-foreground bg-muted/50 dark:bg-white/[0.06] backdrop-blur-sm px-3 py-1 rounded-full border border-border/40 dark:border-white/[0.08]">
-              {filteredPast.length} events
-            </span>
-          </div>
+        {/* Past R@lly Section — Collapsed by default */}
+        <Collapsible open={pastOpen} onOpenChange={setPastOpen}>
+          <section className="space-y-4 animate-fade-in mt-8" style={{ animationDelay: '0.4s' }}>
+            <CollapsibleTrigger asChild>
+              <button className="flex items-center justify-between w-full group">
+                <h2 className="text-lg font-bold text-muted-foreground font-montserrat flex items-center gap-2 group-hover:text-foreground transition-colors">
+                  <History className="h-5 w-5" />
+                  Past R@lly
+                  <span className="text-sm font-normal bg-muted/50 dark:bg-white/[0.06] backdrop-blur-sm px-2.5 py-0.5 rounded-full border border-border/40 dark:border-white/[0.08]">
+                    {filteredPast.length}
+                  </span>
+                </h2>
+                <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform duration-200 ${pastOpen ? 'rotate-180' : ''}`} />
+              </button>
+            </CollapsibleTrigger>
 
-          {isLoading ? (
-            <div className="space-y-4">
-              {[1, 2].map((i) => (
-                <Card key={i} className="h-28 animate-pulse bg-gradient-to-r from-muted to-muted/50 border-0 rounded-2xl" />
-              ))}
-            </div>
-          ) : filteredPast.length > 0 ? (
-            <div className="space-y-4">
-              {filteredPast.map((event, index) => (
-                <div key={event.id} className="animate-fade-in opacity-75 hover:opacity-100 transition-opacity" style={{ animationDelay: `${0.4 + index * 0.1}s` }}>
-                  <EventCard event={event} />
+            <CollapsibleContent className="space-y-4">
+              {isLoading ? (
+                <div className="space-y-4">
+                  {[1, 2].map((i) => (
+                    <Card key={i} className="h-28 animate-pulse bg-gradient-to-r from-muted to-muted/50 border-0 rounded-2xl" />
+                  ))}
                 </div>
-              ))}
-            </div>
-          ) : (
-            <Card className="bg-muted/30 dark:bg-white/[0.03] border-dashed border-2 border-border/40 dark:border-white/[0.1] rounded-2xl animate-fade-in" style={{ animationDelay: '0.4s' }}>
-              <CardContent className="p-6 text-center">
-                <History className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                <p className="text-muted-foreground font-montserrat text-sm">No past R@llys yet</p>
-              </CardContent>
-            </Card>
-          )}
-        </section>
+              ) : filteredPast.length > 0 ? (
+                <div className="space-y-4">
+                  {(showAllPast ? filteredPast : filteredPast.slice(0, 3)).map((event, index) => (
+                    <div key={event.id} className="animate-fade-in opacity-75 hover:opacity-100 transition-opacity" style={{ animationDelay: `${index * 0.05}s` }}>
+                      <EventCard event={event} />
+                    </div>
+                  ))}
+                  {filteredPast.length > 3 && !showAllPast && (
+                    <Button variant="ghost" className="w-full text-muted-foreground hover:text-foreground" onClick={() => setShowAllPast(true)}>
+                      Show all {filteredPast.length} past R@llys
+                    </Button>
+                  )}
+                </div>
+              ) : (
+                <Card className="bg-muted/30 dark:bg-white/[0.03] border-dashed border-2 border-border/40 dark:border-white/[0.1] rounded-2xl">
+                  <CardContent className="p-6 text-center">
+                    <History className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                    <p className="text-muted-foreground font-montserrat text-sm">No past R@llys yet</p>
+                  </CardContent>
+                </Card>
+              )}
+            </CollapsibleContent>
+          </section>
+        </Collapsible>
       </main>
 
       <BottomNav />
