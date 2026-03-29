@@ -18,6 +18,9 @@ interface PushPayload {
   profileIds?: string[];
   excludeProfileId?: string;
   invitedBy?: string;
+  contactValue?: string;
+  contactType?: 'email' | 'sms';
+  inviteCode?: string;
 }
 
 // Input validation constants
