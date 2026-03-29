@@ -11,6 +11,7 @@ import { Link } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { formatDistanceToNow } from 'date-fns';
 import { PendingInvites } from '@/components/events/PendingInvites';
+import { InviteAlertCard } from '@/components/notifications/InviteAlertCard';
 import { Button } from '@/components/ui/button';
 import rallyLogo from '@/assets/rally-logo.png';
 
