@@ -1,8 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { Home, Zap, Users, User, Bell } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useNotifications } from '@/hooks/useNotifications';
-import { usePendingInvites } from '@/hooks/useEventInvites';
+import { useUnreadCount } from '@/hooks/useNotifications';
 
 const navItems = [
   { path: '/', icon: Home, label: 'Home', tutorialId: 'nav-home' },
