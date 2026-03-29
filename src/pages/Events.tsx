@@ -21,6 +21,8 @@ export default function Events() {
   const { data: categorizedEvents, isLoading } = useMyEvents();
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [pastOpen, setPastOpen] = useState(false);
+  const [showAllPast, setShowAllPast] = useState(false);
   const location = useLocation();
   
   // Get preselected squad from navigation state (from Squads page Quick Rally)
