@@ -744,11 +744,11 @@ export default function Auth() {
                       style={{ color: "#FF6A00" }}
                     />
                     <Input
-                      type="password"
+                      type={showConfirmPassword ? "text" : "password"}
                       placeholder="Confirm Password"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="pl-12 h-14 rounded-xl font-montserrat text-base"
+                      className="pl-12 pr-12 h-14 rounded-xl font-montserrat text-base"
                       style={{
                         backgroundColor: "#1E1E1E",
                         borderColor: "rgba(255, 106, 0, 0.2)",
@@ -757,6 +757,15 @@ export default function Auth() {
                       minLength={6}
                       required
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 transition-opacity duration-150 active:scale-95"
+                      style={{ color: "rgba(255, 255, 255, 0.5)" }}
+                      tabIndex={-1}
+                    >
+                      {showConfirmPassword ? <EyeOff className="h-5 w-5" strokeWidth={1.5} /> : <Eye className="h-5 w-5" strokeWidth={1.5} />}
+                    </button>
                   </div>
                 )}
 
