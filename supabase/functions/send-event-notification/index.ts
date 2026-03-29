@@ -6,9 +6,11 @@ const corsHeaders = {
 };
 
 interface PushPayload {
-  type: 'bar_hop_transition' | 'ride_offer' | 'ride_request' | 'ride_response' | 'going_home' | 'arrived_safe' | 'event_update' | 'rally_invite' | 'safety_complete';
+  type: 'bar_hop_transition' | 'ride_offer' | 'ride_request' | 'ride_response' | 'going_home' | 'arrived_safe' | 'event_update' | 'rally_invite' | 'squad_invite' | 'safety_complete';
   eventId?: string;
   eventTitle?: string;
+  squadId?: string;
+  squadName?: string;
   title?: string;
   body?: string;
   data?: Record<string, unknown>;
@@ -22,7 +24,7 @@ interface PushPayload {
 const MAX_TITLE_LENGTH = 200;
 const MAX_BODY_LENGTH = 500;
 const MAX_TARGET_PROFILE_IDS = 100;
-const VALID_NOTIFICATION_TYPES = ['bar_hop_transition', 'ride_offer', 'ride_request', 'ride_response', 'going_home', 'arrived_safe', 'event_update', 'rally_invite', 'safety_complete'];
+const VALID_NOTIFICATION_TYPES = ['bar_hop_transition', 'ride_offer', 'ride_request', 'ride_response', 'going_home', 'arrived_safe', 'event_update', 'rally_invite', 'squad_invite', 'safety_complete'];
 
 function validatePayload(payload: PushPayload): { valid: boolean; error?: string } {
   // Validate notification type
@@ -30,13 +32,20 @@ function validatePayload(payload: PushPayload): { valid: boolean; error?: string
     return { valid: false, error: `Invalid notification type. Must be one of: ${VALID_NOTIFICATION_TYPES.join(', ')}` };
   }
 
-  // For rally_invite, title and body are auto-generated
+  // For rally_invite and squad_invite, title and body are auto-generated
   if (payload.type === 'rally_invite') {
     if (!payload.eventTitle || typeof payload.eventTitle !== 'string') {
       return { valid: false, error: 'eventTitle is required for rally_invite type' };
     }
     if (!payload.profileIds || !Array.isArray(payload.profileIds) || payload.profileIds.length === 0) {
       return { valid: false, error: 'profileIds is required for rally_invite type' };
+    }
+  } else if (payload.type === 'squad_invite') {
+    if (!payload.squadName || typeof payload.squadName !== 'string') {
+      return { valid: false, error: 'squadName is required for squad_invite type' };
+    }
+    if (!payload.profileIds || !Array.isArray(payload.profileIds) || payload.profileIds.length === 0) {
+      return { valid: false, error: 'profileIds is required for squad_invite type' };
     }
   } else {
     // Validate title
@@ -152,20 +161,47 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { type, eventId, eventTitle, title, body, data, targetProfileIds, profileIds: payloadProfileIds, excludeProfileId, invitedBy } = payload;
+    const { type, eventId, eventTitle, title, body, data, targetProfileIds, profileIds: payloadProfileIds, excludeProfileId, invitedBy, squadId, squadName } = payload;
 
-    // Handle rally_invite type with auto-generated title/body
+    // Handle rally_invite and squad_invite types with auto-generated title/body
     let notifTitle = title;
     let notifBody = body;
     
     if (type === 'rally_invite') {
       notifTitle = `You're invited to ${eventTitle || 'a R@lly'}! 🎉`;
       notifBody = `${invitedBy || 'Someone'} invited you to join. Tap to RSVP.`;
+    } else if (type === 'squad_invite') {
+      notifTitle = `You've been invited to join "${squadName}"`;
+      notifBody = `${invitedBy || 'Someone'} wants you in their squad. Tap to respond.`;
     }
 
     // ========== AUTHORIZATION ==========
     // Verify caller has permission to send notifications
-    if (eventId) {
+    if (type === 'squad_invite' && squadId) {
+      // For squad invites, verify caller is a squad member or owner
+      const { data: squad } = await supabase
+        .from('squads')
+        .select('owner_id')
+        .eq('id', squadId)
+        .single();
+
+      const isOwner = squad?.owner_id === callerProfileId;
+
+      const { data: squadMember } = await supabase
+        .from('squad_members')
+        .select('id')
+        .eq('squad_id', squadId)
+        .eq('profile_id', callerProfileId)
+        .single();
+
+      if (!isOwner && !squadMember) {
+        return new Response(
+          JSON.stringify({ error: 'You must be a squad member to send invites' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      console.log(`Authorized: user ${callerProfileId} is squad member/owner for ${squadId}`);
+    } else if (eventId) {
       // Check if caller is the event creator or a cohost
       const { data: event } = await supabase
         .from('events')
@@ -297,6 +333,7 @@ Deno.serve(async (req) => {
       'arrived_safe': 'arrival_confirmations',
       'event_update': 'event_updates',
       'rally_invite': 'squad_invites',
+      'squad_invite': 'squad_invites',
       'safety_complete': 'event_updates',
     };
 
@@ -343,6 +380,7 @@ Deno.serve(async (req) => {
       data: {
         ...data,
         event_id: eventId,
+        squad_id: squadId,
       },
       read: false,
     }));
@@ -382,7 +420,7 @@ Deno.serve(async (req) => {
             ...data,
             type,
             eventId,
-            url: type === 'rally_invite' ? '/notifications' : (eventId ? `/events/${eventId}` : '/'),
+            url: type === 'squad_invite' ? '/notifications' : type === 'rally_invite' ? '/notifications' : (eventId ? `/events/${eventId}` : '/'),
           },
         });
 

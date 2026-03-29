@@ -1,4 +1,4 @@
-import { } from 'react';
+import { useMemo } from 'react';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,6 +11,7 @@ import { Link } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { formatDistanceToNow } from 'date-fns';
 import { PendingInvites } from '@/components/events/PendingInvites';
+import { InviteAlertCard } from '@/components/notifications/InviteAlertCard';
 import { Button } from '@/components/ui/button';
 import rallyLogo from '@/assets/rally-logo.png';
 
@@ -35,6 +36,8 @@ export default function Notifications() {
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
+      case 'squad_invite':
+        return <Users className="h-5 w-5 text-primary" />;
       case 'ride_request':
         return <Car className="h-5 w-5 text-blue-500" />;
       case 'ride_accepted':
@@ -53,6 +56,16 @@ export default function Notifications() {
       markRead.mutate(notificationId);
     }
   };
+
+  const INVITE_TYPES = ['squad_invite', 'rally_invite', 'event_invite'];
+  
+  // Split notifications into invite vs regular, with invites sorted first
+  const { inviteNotifications, regularNotifications } = useMemo(() => {
+    if (!notifications) return { inviteNotifications: [], regularNotifications: [] };
+    const invites = notifications.filter(n => INVITE_TYPES.includes(n.type) && !n.read);
+    const regular = notifications.filter(n => !INVITE_TYPES.includes(n.type) || n.read);
+    return { inviteNotifications: invites, regularNotifications: regular };
+  }, [notifications]);
 
   const unreadCount = notifications?.filter(n => !n.read).length || 0;
   const pendingInviteCount = pendingInvites?.length || 0;
@@ -120,9 +133,15 @@ export default function Notifications() {
               <Card key={i} className="h-20 animate-pulse bg-card/40 border-white/5 rounded-xl backdrop-blur-xl" />
             ))}
           </div>
-        ) : notifications && notifications.length > 0 ? (
+        ) : (notifications && notifications.length > 0) ? (
           <div className="space-y-3">
-            {notifications.map((notification) => (
+            {/* Actionable invite notifications at the top */}
+            {inviteNotifications.map((notification) => (
+              <InviteAlertCard key={notification.id} notification={notification} />
+            ))}
+
+            {/* Regular notifications */}
+            {regularNotifications.map((notification) => (
               <SwipeDismissCard
                 key={notification.id}
                 onDismiss={() => deleteNotification.mutate(notification.id)}
