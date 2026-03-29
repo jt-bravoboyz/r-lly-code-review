@@ -757,16 +757,42 @@ export default function Auth() {
                   </div>
                 )}
 
+                {/* Terms checkbox - only for signup */}
+                {isSignUp && (
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      id="agree-terms"
+                      checked={agreedToTerms}
+                      onCheckedChange={(checked) => setAgreedToTerms(checked === true)}
+                      className="mt-0.5 border-[rgba(255,106,0,0.4)] data-[state=checked]:bg-[#FF6A00] data-[state=checked]:border-[#FF6A00]"
+                    />
+                    <label
+                      htmlFor="agree-terms"
+                      className="text-sm font-montserrat cursor-pointer leading-snug"
+                      style={{ color: "rgba(255, 255, 255, 0.7)" }}
+                    >
+                      I agree to the{' '}
+                      <a href="/legal" target="_blank" className="underline" style={{ color: "#FF6A00" }}>
+                        Terms &amp; Privacy Policy
+                      </a>
+                    </label>
+                  </div>
+                )}
+
                 {/* Submit button */}
                 <Button 
                   type="submit" 
                   className="w-full h-14 rounded-xl font-bold text-lg font-montserrat mt-2 group transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
                   style={{
-                    background: "linear-gradient(135deg, #FF6A00 0%, #FF8C42 100%)",
-                    color: "#FFFFFF",
-                    boxShadow: "0 8px 32px rgba(255, 106, 0, 0.35)",
+                    background: (!isSignUp || agreedToTerms)
+                      ? "linear-gradient(135deg, #FF6A00 0%, #FF8C42 100%)"
+                      : "rgba(255, 255, 255, 0.1)",
+                    color: (!isSignUp || agreedToTerms) ? "#FFFFFF" : "rgba(255, 255, 255, 0.4)",
+                    boxShadow: (!isSignUp || agreedToTerms)
+                      ? "0 8px 32px rgba(255, 106, 0, 0.35)"
+                      : "none",
                   }}
-                  disabled={isLoading}
+                  disabled={isLoading || (isSignUp && !agreedToTerms)}
                 >
                   {isLoading 
                     ? (isSignUp ? 'Creating account...' : 'Signing in...') 
