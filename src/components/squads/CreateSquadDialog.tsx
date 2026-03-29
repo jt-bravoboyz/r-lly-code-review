@@ -95,12 +95,12 @@ export function CreateSquadDialog() {
           <div>
             <Label className="font-montserrat">Add Members</Label>
             <div className="relative mt-1 mb-2">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground/45" />
+              <Search className="pointer-events-none absolute left-4 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-foreground/45" />
               <Input
                 placeholder="Search people..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
+                className="pl-12"
               />
             </div>
 
