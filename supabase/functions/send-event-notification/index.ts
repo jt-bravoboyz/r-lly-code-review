@@ -177,7 +177,31 @@ Deno.serve(async (req) => {
 
     // ========== AUTHORIZATION ==========
     // Verify caller has permission to send notifications
-    if (eventId) {
+    if (type === 'squad_invite' && squadId) {
+      // For squad invites, verify caller is a squad member or owner
+      const { data: squad } = await supabase
+        .from('squads')
+        .select('owner_id')
+        .eq('id', squadId)
+        .single();
+
+      const isOwner = squad?.owner_id === callerProfileId;
+
+      const { data: squadMember } = await supabase
+        .from('squad_members')
+        .select('id')
+        .eq('squad_id', squadId)
+        .eq('profile_id', callerProfileId)
+        .single();
+
+      if (!isOwner && !squadMember) {
+        return new Response(
+          JSON.stringify({ error: 'You must be a squad member to send invites' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      console.log(`Authorized: user ${callerProfileId} is squad member/owner for ${squadId}`);
+    } else if (eventId) {
       // Check if caller is the event creator or a cohost
       const { data: event } = await supabase
         .from('events')
