@@ -22,17 +22,20 @@ export default function Notifications() {
   const markRead = useMarkNotificationRead();
   const deleteNotification = useDeleteNotification();
 
-  if (authLoading) {
-    return (
-      <div className="min-h-[100dvh] flex items-center justify-center bg-primary">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-24 h-24 rounded-full bg-rally-cream flex items-center justify-center">
-            <img src={rallyLogo} alt="R@lly" className="w-14 h-14 object-contain" />
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const INVITE_TYPES = ['squad_invite', 'rally_invite', 'event_invite'];
+  
+  // Split notifications into invite vs regular, with invites sorted first
+  const { inviteNotifications, regularNotifications } = useMemo(() => {
+    if (!notifications) return { inviteNotifications: [], regularNotifications: [] };
+    const invites = notifications.filter(n => INVITE_TYPES.includes(n.type) && !n.read);
+    const regular = notifications.filter(n => !INVITE_TYPES.includes(n.type) || n.read);
+    return { inviteNotifications: invites, regularNotifications: regular };
+  }, [notifications]);
+
+  const unreadCount = notifications?.filter(n => !n.read).length || 0;
+  const pendingInviteCount = pendingInvites?.length || 0;
+  const totalUnread = unreadCount + pendingInviteCount;
+  const hasNotifications = (notifications && notifications.length > 0) || pendingInviteCount > 0;
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
@@ -57,22 +60,17 @@ export default function Notifications() {
     }
   };
 
-  const INVITE_TYPES = ['squad_invite', 'rally_invite', 'event_invite'];
-  
-  // Split notifications into invite vs regular, with invites sorted first
-  const { inviteNotifications, regularNotifications } = useMemo(() => {
-    if (!notifications) return { inviteNotifications: [], regularNotifications: [] };
-    const invites = notifications.filter(n => INVITE_TYPES.includes(n.type) && !n.read);
-    const regular = notifications.filter(n => !INVITE_TYPES.includes(n.type) || n.read);
-    return { inviteNotifications: invites, regularNotifications: regular };
-  }, [notifications]);
-
-  const unreadCount = notifications?.filter(n => !n.read).length || 0;
-  const pendingInviteCount = pendingInvites?.length || 0;
-  const totalUnread = unreadCount + pendingInviteCount;
-  const hasNotifications = (notifications && notifications.length > 0) || pendingInviteCount > 0;
-
-  
+  if (authLoading) {
+    return (
+      <div className="min-h-[100dvh] flex items-center justify-center bg-primary">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-24 h-24 rounded-full bg-rally-cream flex items-center justify-center">
+            <img src={rallyLogo} alt="R@lly" className="w-14 h-14 object-contain" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[100dvh] pb-24 bg-background relative overflow-hidden">
