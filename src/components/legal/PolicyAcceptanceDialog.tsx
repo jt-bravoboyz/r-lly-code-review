@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
   PrivacyPolicy,
   TermsAndConditions,
@@ -35,168 +34,189 @@ const policySections: PolicySection[] = [
 ];
 
 export function PolicyAcceptanceDialog({ open, onOpenChange, onAccept }: PolicyAcceptanceDialogProps) {
-  const [expandedSection, setExpandedSection] = useState<string | null>(null);
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
+  const [selectedPolicyId, setSelectedPolicyId] = useState<string>(policySections[0].id);
   const [acceptedPolicies, setAcceptedPolicies] = useState(false);
   const [acknowledgedLiability, setAcknowledgedLiability] = useState(false);
   const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const selectedPolicy = policySections.find(p => p.id === selectedPolicyId)!;
+  const ContentComponent = selectedPolicy.content;
+
+  // Reset scroll gate when switching policies
+  useEffect(() => {
+    setHasScrolledToBottom(false);
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = 0;
+    }
+  }, [selectedPolicyId]);
+
+  // Check if content fits without scrolling
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (el && el.scrollHeight <= el.clientHeight + 50) {
+      setHasScrolledToBottom(true);
+    }
+  }, [selectedPolicyId]);
 
   const handleScroll = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
-    // Relaxed threshold: 100px from bottom counts as "read"
     if (el.scrollHeight - el.scrollTop <= el.clientHeight + 100) {
       setHasScrolledToBottom(true);
     }
   }, []);
 
-  const handleToggleSection = (sectionId: string, isOpen: boolean) => {
-    setExpandedSection(isOpen ? sectionId : null);
-    if (isOpen) {
-      setExpandedSections(prev => new Set(prev).add(sectionId));
-    }
-  };
-
-  // All sections viewed = force-enable scroll gate
-  const allSectionsViewed = policySections.every(s => expandedSections.has(s.id));
-
-  // Also auto-unlock on very short scroll areas (content fits without scrolling)
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (el && el.scrollHeight <= el.clientHeight + 100) {
-      setHasScrolledToBottom(true);
-    }
-  }, [expandedSection]);
-
-  const scrollGatePassed = hasScrolledToBottom || allSectionsViewed;
-  const canAccept = acceptedPolicies && acknowledgedLiability && scrollGatePassed;
+  const canAccept = acceptedPolicies && acknowledgedLiability && hasScrolledToBottom;
 
   const handleAccept = async () => {
-    if (canAccept) {
-      localStorage.setItem('rally-policies-accepted', 'true');
-      localStorage.setItem('rally-policies-accepted-date', new Date().toISOString());
+    if (!canAccept) return;
+    localStorage.setItem('rally-policies-accepted', 'true');
+    localStorage.setItem('rally-policies-accepted-date', new Date().toISOString());
 
-      // Also persist to database so it sticks across devices
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          await supabase.from('profiles').update({
-            policies_accepted_at: new Date().toISOString(),
-          } as any).eq('user_id', user.id);
-        }
-      } catch (e) {
-        console.error('Failed to persist policy acceptance:', e);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from('profiles').update({
+          policies_accepted_at: new Date().toISOString(),
+        } as any).eq('user_id', user.id);
       }
-
-      onAccept();
-      onOpenChange(false);
+    } catch (e) {
+      console.error('Failed to persist policy acceptance:', e);
     }
+
+    onAccept();
+    onOpenChange(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={() => {}}>
-      <DialogContent 
-        className="max-w-md max-h-[90vh] flex flex-col"
-        style={{ backgroundColor: "#1E1E1E", borderColor: "rgba(255, 106, 0, 0.2)", paddingBottom: 'env(keyboard-inset-height, 1rem)' }}
+      <DialogContent
+        className="max-w-md flex flex-col p-0 gap-0"
+        style={{
+          backgroundColor: "#1E1E1E",
+          borderColor: "rgba(255, 106, 0, 0.2)",
+          height: 'min(92dvh, 700px)',
+          maxHeight: '92dvh',
+        }}
         hideCloseButton
       >
-        <DialogHeader>
-          <div className="flex items-center gap-3 mb-2">
-            <div 
-              className="w-12 h-12 rounded-full flex items-center justify-center"
-              style={{ backgroundColor: "rgba(255, 106, 0, 0.15)" }}
-            >
-              <Shield className="h-6 w-6" style={{ color: "#FF6A00" }} />
-            </div>
-            <div>
-              <DialogTitle 
-                className="text-xl font-bold font-montserrat"
-                style={{ color: "rgba(255, 255, 255, 0.95)" }}
+        {/* ── Fixed Header ── */}
+        <div className="shrink-0 px-5 pt-5 pb-3">
+          <DialogHeader className="mb-3">
+            <div className="flex items-center gap-3">
+              <div
+                className="w-12 h-12 rounded-full flex items-center justify-center shrink-0"
+                style={{ backgroundColor: "rgba(255, 106, 0, 0.15)" }}
               >
-                R@lly Policies
-              </DialogTitle>
-              <DialogDescription style={{ color: "rgba(255, 255, 255, 0.6)" }}>
-                Review and accept to continue
-              </DialogDescription>
-            </div>
-          </div>
-        </DialogHeader>
-
-        <div
-          ref={scrollRef}
-          onScroll={handleScroll}
-          className="flex-1 pr-2 max-h-[45vh] overflow-y-auto"
-        >
-          <div className="space-y-2">
-            {policySections.map((section) => {
-              const ContentComponent = section.content;
-              const isExpanded = expandedSection === section.id;
-              
-              return (
-                <Collapsible
-                  key={section.id}
-                  open={isExpanded}
-                  onOpenChange={(open) => handleToggleSection(section.id, open)}
+                <Shield className="h-6 w-6" style={{ color: "#FF6A00" }} />
+              </div>
+              <div>
+                <DialogTitle
+                  className="text-xl font-bold font-montserrat"
+                  style={{ color: "rgba(255, 255, 255, 0.95)" }}
                 >
-                  <CollapsibleTrigger asChild>
-                    <button 
-                      className="w-full flex items-center justify-between p-3 rounded-lg transition-colors text-left min-h-[44px]"
-                      style={{ 
-                        backgroundColor: isExpanded ? "rgba(255, 106, 0, 0.1)" : "rgba(255, 255, 255, 0.05)",
-                        borderWidth: "1px",
-                        borderColor: isExpanded ? "rgba(255, 106, 0, 0.3)" : "rgba(255, 255, 255, 0.1)",
-                      }}
-                    >
-                      <span 
-                        className="font-medium text-sm"
-                        style={{ color: "rgba(255, 255, 255, 0.9)" }}
-                      >
-                        {section.title}
-                      </span>
-                      {isExpanded ? (
-                        <ChevronUp className="h-4 w-4" style={{ color: "#FF6A00" }} />
-                      ) : (
-                        <ChevronDown className="h-4 w-4" style={{ color: "rgba(255, 255, 255, 0.5)" }} />
-                      )}
-                    </button>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <div 
-                      className="p-4 mt-1 rounded-lg text-sm"
-                      style={{ backgroundColor: "rgba(255, 255, 255, 0.03)" }}
-                    >
-                      <ContentComponent />
-                    </div>
-                  </CollapsibleContent>
-                </Collapsible>
-              );
-            })}
+                  R@lly Policies
+                </DialogTitle>
+                <DialogDescription style={{ color: "rgba(255, 255, 255, 0.6)" }}>
+                  Review and accept to continue
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+
+          {/* Policy Selector Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setDropdownOpen(prev => !prev)}
+              className="w-full flex items-center justify-between p-3 rounded-lg text-left min-h-[44px]"
+              style={{
+                backgroundColor: "rgba(255, 255, 255, 0.05)",
+                borderWidth: "1px",
+                borderColor: "rgba(255, 255, 255, 0.1)",
+              }}
+            >
+              <span className="font-medium text-sm" style={{ color: "rgba(255, 255, 255, 0.9)" }}>
+                {selectedPolicy.title}
+              </span>
+              <ChevronDown
+                className={`h-4 w-4 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`}
+                style={{ color: "rgba(255, 255, 255, 0.5)" }}
+              />
+            </button>
+
+            {dropdownOpen && (
+              <div
+                className="absolute z-50 w-full mt-1 rounded-lg overflow-hidden"
+                style={{
+                  backgroundColor: "#2A2A2A",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                }}
+              >
+                {policySections.map((section) => (
+                  <button
+                    key={section.id}
+                    onClick={() => {
+                      setSelectedPolicyId(section.id);
+                      setDropdownOpen(false);
+                    }}
+                    className="w-full text-left p-3 text-sm transition-colors min-h-[44px]"
+                    style={{
+                      color: section.id === selectedPolicyId ? "#FF6A00" : "rgba(255, 255, 255, 0.8)",
+                      backgroundColor: section.id === selectedPolicyId ? "rgba(255, 106, 0, 0.1)" : "transparent",
+                    }}
+                  >
+                    {section.title}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
-        {!scrollGatePassed && (
-          <p className="text-xs text-center animate-pulse" style={{ color: "rgba(255, 106, 0, 0.7)" }}>
-            {acceptedPolicies && acknowledgedLiability
-              ? "↓ Please scroll to the bottom of the policies to enable the button"
-              : "↓ Scroll to review all policies"}
-          </p>
+        {/* ── Scrollable Policy Text ── */}
+        <div
+          ref={scrollRef}
+          onScroll={handleScroll}
+          className="flex-1 min-h-0 overflow-y-auto px-5 py-3"
+          style={{ WebkitOverflowScrolling: 'touch' }}
+        >
+          <div
+            className="rounded-lg p-4 text-sm leading-relaxed"
+            style={{
+              backgroundColor: "rgba(255, 255, 255, 0.03)",
+              color: "rgba(255, 255, 255, 0.75)",
+            }}
+          >
+            <ContentComponent />
+          </div>
+        </div>
+
+        {/* Scroll hint */}
+        {!hasScrolledToBottom && (
+          <div className="shrink-0 px-5 py-1">
+            <p className="text-xs text-center animate-pulse" style={{ color: "rgba(255, 106, 0, 0.7)" }}>
+              ↓ Scroll to the bottom to continue
+            </p>
+          </div>
         )}
 
-        <div 
-          className="space-y-4 pt-4 border-t mt-2 sticky bottom-0"
+        {/* ── Fixed Footer ── */}
+        <div
+          className="shrink-0 px-5 pb-5 pt-3 space-y-3 border-t"
           style={{ borderColor: "rgba(255, 255, 255, 0.1)", backgroundColor: "#1E1E1E" }}
         >
           <div className="flex items-start gap-3">
-            <Checkbox 
-              id="accept-policies" 
-              checked={acceptedPolicies} 
+            <Checkbox
+              id="accept-policies"
+              checked={acceptedPolicies}
               onCheckedChange={(checked) => setAcceptedPolicies(checked === true)}
-              className="border-white/30 data-[state=checked]:bg-[#FF6A00] data-[state=checked]:border-[#FF6A00]"
+              className="border-white/30 data-[state=checked]:bg-[#FF6A00] data-[state=checked]:border-[#FF6A00] mt-0.5"
             />
-            <Label 
-              htmlFor="accept-policies" 
-              className="text-sm leading-snug cursor-pointer"
+            <Label
+              htmlFor="accept-policies"
+              className="text-xs leading-snug cursor-pointer"
               style={{ color: "rgba(255, 255, 255, 0.8)" }}
             >
               I have read and agree to all R@lly policies including Privacy Policy, Terms and Conditions, Community Guidelines, Alcohol Liability Release, and Ride Coordination Waiver.
@@ -204,31 +224,29 @@ export function PolicyAcceptanceDialog({ open, onOpenChange, onAccept }: PolicyA
           </div>
 
           <div className="flex items-start gap-3">
-            <Checkbox 
-              id="acknowledge-liability" 
-              checked={acknowledgedLiability} 
+            <Checkbox
+              id="acknowledge-liability"
+              checked={acknowledgedLiability}
               onCheckedChange={(checked) => setAcknowledgedLiability(checked === true)}
-              className="border-white/30 data-[state=checked]:bg-[#FF6A00] data-[state=checked]:border-[#FF6A00]"
+              className="border-white/30 data-[state=checked]:bg-[#FF6A00] data-[state=checked]:border-[#FF6A00] mt-0.5"
             />
-            <Label 
-              htmlFor="acknowledge-liability" 
-              className="text-sm leading-snug cursor-pointer"
+            <Label
+              htmlFor="acknowledge-liability"
+              className="text-xs leading-snug cursor-pointer"
               style={{ color: "rgba(255, 255, 255, 0.8)" }}
             >
               I understand that R@lly and Bravo Boyz LLC are not liable for any incidents, injuries, or issues that may arise during my use of the app.
             </Label>
           </div>
 
-          <Button 
+          <Button
             className="w-full h-12 rounded-full font-bold shadow-lg transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
             style={{
-              background: canAccept 
-                ? "linear-gradient(135deg, #FF6A00 0%, #FF8C42 100%)" 
+              background: canAccept
+                ? "linear-gradient(135deg, #FF6A00 0%, #FF8C42 100%)"
                 : "rgba(255, 255, 255, 0.1)",
               color: canAccept ? "#FFFFFF" : "rgba(255, 255, 255, 0.4)",
-              boxShadow: canAccept 
-                ? "0 8px 32px rgba(255, 106, 0, 0.4)" 
-                : "none",
+              boxShadow: canAccept ? "0 8px 32px rgba(255, 106, 0, 0.4)" : "none",
             }}
             disabled={!canAccept}
             onClick={handleAccept}
