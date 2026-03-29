@@ -133,13 +133,31 @@ export function useCreateSquad() {
 
       if (squadError) throw squadError;
 
-      // Add members
+      // Create squad_invites for selected members (triggers will create notifications)
       if (memberIds.length > 0) {
-        const { error: membersError } = await supabase
-          .from('squad_members')
-          .insert(memberIds.map(id => ({ squad_id: squad.id, profile_id: id })));
+        // Look up emails for each profile to use as contact_value
+        const { data: memberProfiles } = await supabase
+          .from('safe_profiles')
+          .select('id, display_name')
+          .in('id', memberIds);
 
-        if (membersError) throw membersError;
+        const inviteRows = memberIds.map(id => {
+          const mp = memberProfiles?.find(p => p.id === id);
+          return {
+            squad_id: squad.id,
+            invited_by: profile.id,
+            invite_type: 'in_app' as string,
+            contact_value: `profile:${id}`,
+          };
+        });
+
+        const { error: inviteError } = await supabase
+          .from('squad_invites')
+          .insert(inviteRows);
+
+        if (inviteError) {
+          console.error('Failed to create squad invites:', inviteError);
+        }
       }
 
       // Create squad chat automatically
