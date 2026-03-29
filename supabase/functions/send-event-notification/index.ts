@@ -380,6 +380,7 @@ Deno.serve(async (req) => {
       data: {
         ...data,
         event_id: eventId,
+        squad_id: squadId,
       },
       read: false,
     }));
