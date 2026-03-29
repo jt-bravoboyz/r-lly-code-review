@@ -1,12 +1,15 @@
-import { useState } from 'react';
-import { Mail, MessageSquare, Copy, Check, Send, UserPlus } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Mail, MessageSquare, Copy, Check, Send, UserPlus, Search, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useAllProfiles } from '@/hooks/useSquads';
 import { toast } from 'sonner';
 
 interface SquadInviteDialogProps {
@@ -22,29 +25,44 @@ export function SquadInviteDialog({ squadId, squadName, trigger }: SquadInviteDi
   const [isLoading, setIsLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
+  const [userSearch, setUserSearch] = useState('');
+  const [invitedUserIds, setInvitedUserIds] = useState<Set<string>>(new Set());
   const { profile } = useAuth();
+  const { data: allProfiles } = useAllProfiles();
 
   const baseUrl = window.location.origin;
 
-  // Send in-app notification via edge function (server-side, bypasses RLS)
-  const sendSquadInviteNotification = async (contactValue: string, contactType: 'email' | 'sms', inviteCode: string) => {
-    if (!profile?.id) return;
+  const filteredProfiles = useMemo(() => {
+    if (!allProfiles || !profile?.id) return [];
+    return allProfiles.filter(p => {
+      if (p.id === profile.id) return false;
+      if (!userSearch.trim()) return true;
+      return (p.display_name || '').toLowerCase().includes(userSearch.toLowerCase());
+    });
+  }, [allProfiles, profile?.id, userSearch]);
 
+  const handleInviteUser = async (targetProfileId: string) => {
+    if (!profile?.id) return;
+    setIsLoading(true);
     try {
-      await supabase.functions.invoke('send-event-notification', {
-        body: {
-          type: 'squad_invite',
-          squadId,
-          squadName,
-          invitedBy: profile.display_name || 'Someone',
-          contactValue: contactValue.trim(),
-          contactType,
-          inviteCode,
-          data: { squad_id: squadId, invite_code: inviteCode },
-        },
-      });
-    } catch (err) {
-      console.error('Squad invite notification failed (non-blocking):', err);
+      const { error } = await supabase
+        .from('squad_invites')
+        .insert({
+          squad_id: squadId,
+          invited_by: profile.id,
+          invite_type: 'in_app',
+          contact_value: `profile:${targetProfileId}`,
+        });
+
+      if (error) throw error;
+
+      setInvitedUserIds(prev => new Set(prev).add(targetProfileId));
+      toast.success('Invite sent!');
+    } catch (error: any) {
+      console.error('Error inviting user:', error);
+      toast.error(error.message || 'Failed to send invite');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -63,7 +81,6 @@ export function SquadInviteDialog({ squadId, squadName, trigger }: SquadInviteDi
 
     setIsLoading(true);
     try {
-      // Create invite record
       const { data, error } = await supabase
         .from('squad_invites')
         .insert({
@@ -81,7 +98,6 @@ export function SquadInviteDialog({ squadId, squadName, trigger }: SquadInviteDi
       setGeneratedCode(data.invite_code);
 
       if (type === 'email') {
-        // Open email client with pre-filled message
         const subject = encodeURIComponent(`Join my squad "${squadName}" on R@lly!`);
         const body = encodeURIComponent(
           `Hey!\n\nI want you to join my squad "${squadName}" on R@lly - the app for planning nights out with friends.\n\n` +
@@ -92,26 +108,19 @@ export function SquadInviteDialog({ squadId, squadName, trigger }: SquadInviteDi
         window.open(`mailto:${contactValue}?subject=${subject}&body=${body}`, '_blank');
         toast.success('Email opened! Send it to invite your friend.');
       } else {
-        // Open SMS with pre-filled message
         const message = encodeURIComponent(
           `Join my squad "${squadName}" on R@lly! 🎉\n\n${inviteLink}\n\nCode: ${data.invite_code}`
         );
-        // iOS uses &body= while Android uses ?body= — using ?& works on both
-        const separator = /iPhone|iPad|iPod/i.test(navigator.userAgent) ? '&' : '?';
-        window.open(`sms:${encodeURIComponent(contactValue)}${separator}body=${message}`, '_blank');
+        const cleanPhone = contactValue.replace(/[^\d+]/g, '');
+        const smsUrl = /iPhone|iPad|iPod/i.test(navigator.userAgent)
+          ? `sms:${cleanPhone}&body=${message}`
+          : `sms:${cleanPhone}?body=${message}`;
+        window.open(smsUrl, '_blank');
         toast.success('SMS opened! Send it to invite your friend.');
       }
 
-      // Clear inputs
       setEmail('');
       setPhone('');
-
-      // Send notification via edge function (server-side matching + insert)
-      try {
-        await sendSquadInviteNotification(contactValue.trim(), type, data.invite_code);
-      } catch (notifErr) {
-        console.error('Failed to send squad invite notification:', notifErr);
-      }
     } catch (error: any) {
       console.error('Error creating invite:', error);
       toast.error(error.message || 'Failed to create invite');
@@ -127,7 +136,6 @@ export function SquadInviteDialog({ squadId, squadName, trigger }: SquadInviteDi
     }
 
     try {
-      // Generate a new invite code if we don't have one
       let code = generatedCode;
       if (!code) {
         const { data, error } = await supabase
@@ -197,7 +205,7 @@ export function SquadInviteDialog({ squadId, squadName, trigger }: SquadInviteDi
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setInvitedUserIds(new Set()); setUserSearch(''); } }}>
       <DialogTrigger asChild>
         {trigger || (
           <Button variant="outline" size="sm" className="gap-2">
@@ -214,17 +222,67 @@ export function SquadInviteDialog({ squadId, squadName, trigger }: SquadInviteDi
           </DialogTitle>
         </DialogHeader>
 
-        <Tabs defaultValue="email" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="email" className="gap-2">
-              <Mail className="h-4 w-4" />
+        <Tabs defaultValue="app" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="app" className="gap-1.5 text-xs">
+              <Users className="h-3.5 w-3.5" />
+              In-App
+            </TabsTrigger>
+            <TabsTrigger value="email" className="gap-1.5 text-xs">
+              <Mail className="h-3.5 w-3.5" />
               Email
             </TabsTrigger>
-            <TabsTrigger value="sms" className="gap-2">
-              <MessageSquare className="h-4 w-4" />
+            <TabsTrigger value="sms" className="gap-1.5 text-xs">
+              <MessageSquare className="h-3.5 w-3.5" />
               SMS
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="app" className="space-y-3 mt-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground/45" />
+              <Input
+                placeholder="Search users..."
+                value={userSearch}
+                onChange={(e) => setUserSearch(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <ScrollArea className="h-48">
+              <div className="space-y-1 pr-3">
+                {filteredProfiles.length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-6">No users found</p>
+                )}
+                {filteredProfiles.map((p) => {
+                  const alreadyInvited = invitedUserIds.has(p.id);
+                  return (
+                    <div key={p.id} className="flex items-center justify-between py-2 px-2 rounded-lg hover:bg-muted/50">
+                      <div className="flex items-center gap-2.5">
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src={p.avatar_url || undefined} />
+                          <AvatarFallback className="text-xs">{(p.display_name || '?')[0]}</AvatarFallback>
+                        </Avatar>
+                        <span className="text-sm font-medium">{p.display_name || 'Unknown'}</span>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant={alreadyInvited ? 'ghost' : 'default'}
+                        disabled={isLoading || alreadyInvited}
+                        onClick={() => handleInviteUser(p.id)}
+                        className="h-7 text-xs gap-1"
+                      >
+                        {alreadyInvited ? (
+                          <><Check className="h-3 w-3" /> Sent</>
+                        ) : (
+                          <><Send className="h-3 w-3" /> Invite</>
+                        )}
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
+            </ScrollArea>
+          </TabsContent>
 
           <TabsContent value="email" className="space-y-4 mt-4">
             <div className="space-y-2">
