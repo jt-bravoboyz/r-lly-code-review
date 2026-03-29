@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { PUBLIC_APP_URL } from '@/lib/appUrl';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -93,7 +94,7 @@ export function ContactInviteDialog({ open, onOpenChange }: ContactInviteDialogP
 
     setIsSending(true);
     const referralParam = profile?.id ? `?r=${profile.id}` : '';
-    const inviteLink = `https://rallyboyz.lovable.app${referralParam}`;
+    const inviteLink = `${PUBLIC_APP_URL}${referralParam}`;
     const message = `Hey! Join me on R@lly — the app for coordinating epic nights out with your squad. No more messy group chats. 🟠\n\n${inviteLink}`;
 
     const phones = selected.map(c => c.phone).filter(Boolean).join(',');

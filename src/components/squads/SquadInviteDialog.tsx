@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { PUBLIC_APP_URL } from '@/lib/appUrl';
 import { Mail, MessageSquare, Copy, Check, Send, UserPlus, Search, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,7 +31,7 @@ export function SquadInviteDialog({ squadId, squadName, trigger }: SquadInviteDi
   const { profile } = useAuth();
   const { data: allProfiles } = useAllProfiles();
 
-  const baseUrl = window.location.origin;
+  const baseUrl = PUBLIC_APP_URL;
 
   const filteredProfiles = useMemo(() => {
     if (!allProfiles || !profile?.id) return [];

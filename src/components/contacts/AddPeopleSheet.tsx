@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { PUBLIC_APP_URL } from '@/lib/appUrl';
 import { UserPlus, Smartphone, ClipboardPaste, Upload, FileUp, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
@@ -121,11 +122,11 @@ export function AddPeopleSheet() {
             onInvite={(c) => {
               const contact = c.phone || c.email || '';
               if (c.phone) {
-                const message = encodeURIComponent(`Join me on R@lly! 🎉 Download at ${window.location.origin}`);
+                const message = encodeURIComponent(`Join me on R@lly! 🎉 Download at ${PUBLIC_APP_URL}`);
                 window.open(`sms:${c.phone}?body=${message}`, '_blank');
               } else if (c.email) {
                 const subject = encodeURIComponent('Join me on R@lly!');
-                const body = encodeURIComponent(`Hey!\n\nJoin me on R@lly — the app for planning nights out with friends.\n\n${window.location.origin}\n\nSee you there! 🎉`);
+                const body = encodeURIComponent(`Hey!\n\nJoin me on R@lly — the app for planning nights out with friends.\n\n${PUBLIC_APP_URL}\n\nSee you there! 🎉`);
                 window.open(`mailto:${c.email}?subject=${subject}&body=${body}`, '_blank');
               }
               toast.success(`Invite opened for ${c.name || contact}!`);

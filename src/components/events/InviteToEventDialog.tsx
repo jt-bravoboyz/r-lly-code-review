@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { PUBLIC_APP_URL } from '@/lib/appUrl';
 import { UserPlus, Users, Copy, Share2, Check, Link2, MessageSquare, Send, Phone, History, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -62,8 +63,8 @@ export function InviteToEventDialog({
 
   // Build share link with referral param
   const shareLink = profile?.id
-    ? `${window.location.origin}/join/${inviteCode}?r=${profile.id}`
-    : `${window.location.origin}/join/${inviteCode}`;
+    ? `${PUBLIC_APP_URL}/join/${inviteCode}?r=${profile.id}`
+    : `${PUBLIC_APP_URL}/join/${inviteCode}`;
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(shareLink);

@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { normalizePhoneNumber } from './usePhoneContacts';
+import { PUBLIC_APP_URL } from '@/lib/appUrl';
 
 export interface PhoneInvite {
   id: string;
@@ -116,7 +117,7 @@ export function openSMSInvite(
 ) {
   const appStoreLink = 'https://apps.apple.com/app/rally'; // Placeholder
   const playStoreLink = 'https://play.google.com/store/apps/details?id=com.bravoboyz.rally'; // Placeholder
-  const webLink = `${window.location.origin}/join/${inviteCode}`;
+  const webLink = `${PUBLIC_APP_URL}/join/${inviteCode}`;
   
   const message = encodeURIComponent(
     `You're invited to "${eventTitle}" on R@lly! 🎉\n\n` +
