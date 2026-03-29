@@ -6,9 +6,11 @@ const corsHeaders = {
 };
 
 interface PushPayload {
-  type: 'bar_hop_transition' | 'ride_offer' | 'ride_request' | 'ride_response' | 'going_home' | 'arrived_safe' | 'event_update' | 'rally_invite' | 'safety_complete';
+  type: 'bar_hop_transition' | 'ride_offer' | 'ride_request' | 'ride_response' | 'going_home' | 'arrived_safe' | 'event_update' | 'rally_invite' | 'squad_invite' | 'safety_complete';
   eventId?: string;
   eventTitle?: string;
+  squadId?: string;
+  squadName?: string;
   title?: string;
   body?: string;
   data?: Record<string, unknown>;
