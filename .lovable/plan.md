@@ -1,52 +1,19 @@
 
 
-# Partnership BI Build — Implementation Plan
+# Fix: Collapse Past R@llys on the R@lly Page
 
-## 8 Files (5 New, 3 Modified)
+## Problem
+On the R@lly page (`Events.tsx`), the "Past R@lly" section is always fully expanded, pushing content down and competing with the primary "Create R@lly" / "Quick R@lly" actions. On screens with many past events, it dominates the page.
 
-### 1. `src/hooks/useAdminData.tsx` — Add dateRange + 6 new metrics
+## Solution
+Wrap the Past R@lly section in a `Collapsible` component (already exists in the project) that starts **collapsed by default**. When expanded, show only the first 3 items with a "Show all" button.
 
-**Accept `dateRange` param** (`'today' | '7d' | '30d' | 'all'`). Filter `events`, `attendees`, `analytics_events` by `created_at >= cutoff` before all calculations.
+## Changes — Single file: `src/pages/Events.tsx`
 
-**New metrics added to return object:**
-- `kFactor` — already computed, just needs surfacing (done)
-- `avgSquadSize` — `attendees.length / filteredRallyEvents.length`
-- `peakActivity` — group `rally_started` analytics events by `dayOfWeek + hour`, find max bucket, format as "Prime Brand Engagement Window: Saturdays, 8:00–9:00 PM"
-- `safetyROI` — count attendees with `departure_transport_mode` not null
-- `transitLatency` — avg minutes between `rally_ended` and `rally_home_opened` analytics events per event
-- `avgDwellTime` — fetch `venue_presence`, compute `avg(last_seen_at - entered_at)` in minutes
-
-**Admin filtering**: Already queries `user_roles` — enhanced to also exclude `rally@bravoboyz.com` explicitly and filter on ALL roles (not just `admin`).
-
-### 2. `src/components/admin/KFactorCard.tsx` — NEW
-Single card showing K-Factor value (e.g. "1.3x"), subtitle "invites per rally created". Same Card/CardHeader/CardContent pattern.
-
-### 3. `src/components/admin/SquadInsights.tsx` — NEW
-Two side-by-side cards:
-- **Average Squad Size**: attendees/events count
-- **Prime Brand Engagement Window**: "Saturdays, 8:00–9:00 PM" — the 60-min window before peak rally starts
-
-### 4. `src/components/admin/SafetyROI.tsx` — NEW
-Card showing estimated safe departures (transport mode set) and transit latency (avg minutes).
-
-### 5. `src/components/admin/AdminDateFilter.tsx` — NEW
-Row of pill buttons: Today, 7D, 30D, All. State managed in AdminDashboard, passed to `useAdminAnalytics`.
-
-### 6. `src/components/admin/AdminCSVExport.tsx` — NEW
-Button that generates a **detailed row-by-row CSV**:
-- Columns: `Event Name (Masked)`, `City`, `Total Attendees`, `% Safety Confirmed`, `Transit Provider Used`
-- Event names masked as "R@lly #1", "R@lly #2", etc.
-- Downloads via `URL.createObjectURL`
-
-### 7. `src/components/admin/CommercialDashboard.tsx` — Add dwell time card
-- Accept `avgDwellTime` prop
-- New "Avg Dwell Time" card using identical Card styling as GMV card (same padding, shadows, borders)
-- Enhanced city density bars with proportional widths
-
-### 8. `src/pages/AdminDashboard.tsx` — Reorder + wire up
-- Import all 5 new components
-- Add `dateRange` state, pass to `useAdminAnalytics`
-- Render `AdminDateFilter` below header
-- **Partner tab order**: KFactorCard → AnalyticsCards → RetentionMetrics → SquadInsights + SafetyROI → Growth + Safety → Founder + Feedback → CSV Export
-- **Commercial tab**: pass `avgDwellTime`, add CSV Export
+1. **Import** `Collapsible`, `CollapsibleTrigger`, `CollapsibleContent` from `@/components/ui/collapsible` and `ChevronDown` from `lucide-react`.
+2. **Add state**: `pastOpen` (default `false`) and `showAllPast` (default `false`).
+3. **Wrap** the Past R@lly section in `<Collapsible open={pastOpen} onOpenChange={setPastOpen}>`.
+4. **Make the header a trigger**: The "Past R@lly" heading becomes a `CollapsibleTrigger` with a rotating chevron icon.
+5. **Limit visible items**: Inside `CollapsibleContent`, show `filteredPast.slice(0, showAllPast ? undefined : 3)`. If more than 3 exist, render a "Show all X past R@llys" button.
+6. **No other changes** — create actions, Live Now, and Upcoming sections remain untouched.
 
