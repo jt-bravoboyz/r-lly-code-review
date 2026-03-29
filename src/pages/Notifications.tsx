@@ -1,4 +1,4 @@
-import { } from 'react';
+import { useMemo } from 'react';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
