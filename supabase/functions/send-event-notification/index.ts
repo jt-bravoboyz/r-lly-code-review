@@ -301,8 +301,58 @@ Deno.serve(async (req) => {
     // ========== DETERMINE RECIPIENTS ==========
     let recipientProfileIds: string[] = [];
 
-    if (payloadProfileIds && payloadProfileIds.length > 0) {
-      // For rally_invite, use the profileIds from payload
+    if (type === 'squad_invite' && contactValue && (!payloadProfileIds || payloadProfileIds.length === 0)) {
+      // Server-side contact resolution for squad invites
+      let matchedProfileId: string | null = null;
+
+      if (contactType === 'sms' || (!contactType && /^\+?\d/.test(contactValue))) {
+        // Normalize phone: strip non-digits, match by last 10 digits
+        const digits = contactValue.replace(/\D/g, '');
+        const last10 = digits.slice(-10);
+        
+        if (last10.length === 10) {
+          const { data: phoneMatches } = await supabase
+            .from('profiles')
+            .select('id, phone')
+            .not('phone', 'is', null);
+          
+          if (phoneMatches) {
+            for (const p of phoneMatches) {
+              const pDigits = (p.phone || '').replace(/\D/g, '');
+              if (pDigits.slice(-10) === last10) {
+                matchedProfileId = p.id;
+                break;
+              }
+            }
+          }
+        }
+        console.log(`Phone lookup for ${last10}: ${matchedProfileId ? 'found ' + matchedProfileId : 'no match'}`);
+      } else if (contactType === 'email') {
+        // Look up by email via auth.users (service role can access)
+        const { data: usersData } = await supabase.auth.admin.listUsers();
+        if (usersData?.users) {
+          const matchedUser = usersData.users.find(
+            (u: { email?: string }) => u.email?.toLowerCase() === contactValue.toLowerCase()
+          );
+          if (matchedUser) {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('id')
+              .eq('user_id', matchedUser.id)
+              .single();
+            matchedProfileId = profile?.id || null;
+          }
+        }
+        console.log(`Email lookup for ${contactValue}: ${matchedProfileId ? 'found ' + matchedProfileId : 'no match'}`);
+      }
+
+      if (matchedProfileId) {
+        // Don't notify the inviter themselves
+        if (matchedProfileId !== callerProfileId) {
+          recipientProfileIds = [matchedProfileId];
+        }
+      }
+    } else if (payloadProfileIds && payloadProfileIds.length > 0) {
       recipientProfileIds = payloadProfileIds;
     } else if (targetProfileIds && targetProfileIds.length > 0) {
       recipientProfileIds = targetProfileIds;
@@ -322,7 +372,7 @@ Deno.serve(async (req) => {
 
     if (recipientProfileIds.length === 0) {
       return new Response(
-        JSON.stringify({ success: true, message: 'No recipients' }),
+        JSON.stringify({ success: true, message: 'No recipients found' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -361,21 +411,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // ========== GET PUSH SUBSCRIPTIONS ==========
-    const { data: subscriptions } = await supabase
-      .from('push_subscriptions')
-      .select('*')
-      .in('profile_id', eligibleProfileIds);
-
-    if (!subscriptions || subscriptions.length === 0) {
-      return new Response(
-        JSON.stringify({ success: true, message: 'No push subscriptions' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // ========== STORE NOTIFICATIONS IN DATABASE ==========
-    // Insert notifications into the database for each eligible recipient
+    // ========== STORE NOTIFICATIONS IN DATABASE (before push) ==========
     const notificationRecords = eligibleProfileIds.map((profileId: string) => ({
       profile_id: profileId,
       type,
@@ -385,6 +421,7 @@ Deno.serve(async (req) => {
         ...data,
         event_id: eventId,
         squad_id: squadId,
+        invite_code: inviteCode,
       },
       read: false,
     }));
@@ -397,6 +434,20 @@ Deno.serve(async (req) => {
       console.error('Failed to insert notifications:', insertError);
     } else {
       console.log(`Stored ${notificationRecords.length} notifications in database`);
+    }
+
+    // ========== GET PUSH SUBSCRIPTIONS ==========
+    const { data: subscriptions } = await supabase
+      .from('push_subscriptions')
+      .select('*')
+      .in('profile_id', eligibleProfileIds);
+
+    if (!subscriptions || subscriptions.length === 0) {
+      // No push subs, but DB notifications were already stored above
+      return new Response(
+        JSON.stringify({ success: true, message: 'Notifications stored, no push subscriptions', stored: notificationRecords.length }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // ========== SEND PUSH NOTIFICATIONS ==========
