@@ -913,11 +913,6 @@ export default function Auth() {
         </div>
       )}
 
-      <PolicyAcceptanceDialog
-        open={showPolicyDialog}
-        onOpenChange={setShowPolicyDialog}
-        onAccept={handlePolicyAccepted}
-      />
     </div>
   );
 }
