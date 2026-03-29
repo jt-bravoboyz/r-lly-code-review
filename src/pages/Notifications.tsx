@@ -19,7 +19,6 @@ import rallyLogo from '@/assets/rally-logo.png';
 export default function Notifications() {
   const { profile, loading: authLoading } = useAuth();
   const { data: notifications, isLoading } = useNotifications();
-  const { data: pendingInvites } = usePendingInvites();
   const markRead = useMarkNotificationRead();
   const deleteNotification = useDeleteNotification();
 
