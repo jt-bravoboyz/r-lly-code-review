@@ -1,13 +1,9 @@
-import { useState } from 'react';
-import { Users, Calendar, Check, X, Loader2 } from 'lucide-react';
+import { Users, Calendar, ExternalLink } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { supabase } from '@/integrations/supabase/client';
-import { useMarkNotificationRead, useDeleteNotification } from '@/hooks/useNotifications';
-import { useRespondToInvite } from '@/hooks/useEventInvites';
+import { useMarkNotificationRead } from '@/hooks/useNotifications';
 import { formatDistanceToNow } from 'date-fns';
-import { toast } from 'sonner';
-import { useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import type { Tables } from '@/integrations/supabase/types';
 
 type Notification = Tables<'notifications'>;
@@ -17,115 +13,24 @@ interface InviteAlertCardProps {
 }
 
 export function InviteAlertCard({ notification }: InviteAlertCardProps) {
-  const [isAccepting, setIsAccepting] = useState(false);
-  const [isDeclining, setIsDeclining] = useState(false);
-  const [responded, setResponded] = useState(false);
   const markRead = useMarkNotificationRead();
-  const deleteNotification = useDeleteNotification();
-  const respondToInvite = useRespondToInvite();
-  const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const data = notification.data as Record<string, any> | null;
   const isSquadInvite = notification.type === 'squad_invite';
   const isRallyInvite = notification.type === 'rally_invite' || notification.type === 'event_invite';
 
-  const handleAccept = async () => {
-    setIsAccepting(true);
-    try {
-      if (isSquadInvite && data?.invite_code) {
-        const { data: result, error } = await supabase.rpc('join_squad_by_invite_code', {
-          p_invite_code: data.invite_code,
-        });
+  const handleViewInvite = () => {
+    if (!notification.read) {
+      markRead.mutate(notification.id);
+    }
 
-        if (error) throw error;
-        const res = result as { success?: boolean; error?: string };
-        if (res?.error) {
-          toast.error(res.error);
-          setIsAccepting(false);
-          return;
-        }
-
-        toast.success('You joined the squad! 🎉');
-        queryClient.invalidateQueries({ queryKey: ['squads'] });
-        queryClient.invalidateQueries({ queryKey: ['owned-squads'] });
-        queryClient.invalidateQueries({ queryKey: ['member-squads'] });
-      } else if (isRallyInvite && data?.invite_id) {
-        await respondToInvite.mutateAsync({
-          inviteId: data.invite_id,
-          eventId: data.event_id,
-          response: 'accepted',
-        });
-        toast.success("You're in! 🎉");
-      } else if (isRallyInvite && data?.event_id) {
-        // Fallback: find invite by event
-        const { data: invites } = await supabase
-          .from('event_invites')
-          .select('id')
-          .eq('event_id', data.event_id)
-          .eq('status', 'pending')
-          .limit(1);
-
-        if (invites?.[0]) {
-          await respondToInvite.mutateAsync({
-            inviteId: invites[0].id,
-            eventId: data.event_id,
-            response: 'accepted',
-          });
-          toast.success("You're in! 🎉");
-        }
-      }
-
-      deleteNotification.mutate(notification.id);
-      setResponded(true);
-    } catch (err: any) {
-      console.error('Accept failed:', err);
-      toast.error(err.message || 'Failed to accept invite');
-    } finally {
-      setIsAccepting(false);
+    if (isSquadInvite && data?.invite_code) {
+      navigate(`/join-squad?code=${data.invite_code}`);
+    } else if (isRallyInvite && data?.event_id) {
+      navigate(`/events/${data.event_id}`);
     }
   };
-
-  const handleDecline = async () => {
-    setIsDeclining(true);
-    try {
-      if (isRallyInvite && data?.invite_id) {
-        await respondToInvite.mutateAsync({
-          inviteId: data.invite_id,
-          eventId: data.event_id,
-          response: 'declined',
-        });
-      } else if (isRallyInvite && data?.event_id) {
-        const { data: invites } = await supabase
-          .from('event_invites')
-          .select('id')
-          .eq('event_id', data.event_id)
-          .eq('status', 'pending')
-          .limit(1);
-
-        if (invites?.[0]) {
-          await respondToInvite.mutateAsync({
-            inviteId: invites[0].id,
-            eventId: data.event_id,
-            response: 'declined',
-          });
-        }
-      }
-
-      // For squad invites, just mark as declined by removing notification
-      deleteNotification.mutate(notification.id);
-      setResponded(true);
-      toast('Invite declined');
-    } catch (err: any) {
-      console.error('Decline failed:', err);
-      toast.error('Failed to decline');
-    } finally {
-      setIsDeclining(false);
-    }
-  };
-
-  if (responded) {
-    return null;
-  }
 
   const Icon = isSquadInvite ? Users : Calendar;
 
@@ -163,26 +68,14 @@ export function InviteAlertCard({ notification }: InviteAlertCardProps) {
                 : 'Just now'}
             </div>
 
-            {/* Action buttons */}
-            <div className="flex gap-2 mt-3">
+            <div className="mt-3">
               <Button
                 size="sm"
-                onClick={handleAccept}
-                disabled={isAccepting || isDeclining}
-                className="gap-1.5 flex-1"
+                onClick={handleViewInvite}
+                className="gap-1.5"
               >
-                {isAccepting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
-                Accept
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={handleDecline}
-                disabled={isAccepting || isDeclining}
-                className="gap-1.5 flex-1"
-              >
-                {isDeclining ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <X className="h-3.5 w-3.5" />}
-                Decline
+                <ExternalLink className="h-3.5 w-3.5" />
+                View Invite
               </Button>
             </div>
           </div>
