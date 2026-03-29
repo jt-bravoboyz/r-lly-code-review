@@ -116,7 +116,7 @@ export function openSMSInvite(
 ) {
   const appStoreLink = 'https://apps.apple.com/app/rally'; // Placeholder
   const playStoreLink = 'https://play.google.com/store/apps/details?id=com.bravoboyz.rally'; // Placeholder
-  const webLink = `${window.location.origin}/join/${inviteCode}`;
+  const webLink = `${PUBLIC_APP_URL}/join/${inviteCode}`;
   
   const message = encodeURIComponent(
     `You're invited to "${eventTitle}" on R@lly! 🎉\n\n` +

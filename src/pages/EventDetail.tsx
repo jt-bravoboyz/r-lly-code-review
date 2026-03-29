@@ -460,7 +460,7 @@ export default function EventDetail() {
                 size="sm"
                 className="text-xs text-muted-foreground gap-1 px-0 h-auto py-0.5 mt-1"
                 onClick={() => {
-                   navigator.clipboard.writeText(`${window.location.origin}/join/${event.invite_code}?r=${profile?.id || ''}`);
+                   navigator.clipboard.writeText(`${PUBLIC_APP_URL}/join/${event.invite_code}?r=${profile?.id || ''}`);
                    trackEvent('invite_link_copied', { event_id: event.id });
                    toast.success('Link copied!');
                 }}

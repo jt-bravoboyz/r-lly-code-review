@@ -30,7 +30,7 @@ export function SquadInviteDialog({ squadId, squadName, trigger }: SquadInviteDi
   const { profile } = useAuth();
   const { data: allProfiles } = useAllProfiles();
 
-  const baseUrl = window.location.origin;
+  const baseUrl = PUBLIC_APP_URL;
 
   const filteredProfiles = useMemo(() => {
     if (!allProfiles || !profile?.id) return [];

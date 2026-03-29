@@ -62,8 +62,8 @@ export function InviteToEventDialog({
 
   // Build share link with referral param
   const shareLink = profile?.id
-    ? `${window.location.origin}/join/${inviteCode}?r=${profile.id}`
-    : `${window.location.origin}/join/${inviteCode}`;
+    ? `${PUBLIC_APP_URL}/join/${inviteCode}?r=${profile.id}`
+    : `${PUBLIC_APP_URL}/join/${inviteCode}`;
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(shareLink);
