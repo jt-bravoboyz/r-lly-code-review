@@ -11,7 +11,7 @@ import { normalizePhoneNumber } from '@/hooks/usePhoneContacts';
 import { toast } from 'sonner';
 import { Mail, Lock, User, ChevronRight, ArrowLeft, Phone, Fingerprint } from 'lucide-react';
 import { z } from 'zod';
-import { PolicyAcceptanceDialog } from '@/components/legal/PolicyAcceptanceDialog';
+
 import { useTutorial } from '@/hooks/useTutorial';
 import { lovable } from '@/integrations/lovable/index';
 // Validation schemas
