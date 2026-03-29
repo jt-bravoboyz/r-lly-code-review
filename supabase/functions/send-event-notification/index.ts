@@ -24,7 +24,7 @@ interface PushPayload {
 const MAX_TITLE_LENGTH = 200;
 const MAX_BODY_LENGTH = 500;
 const MAX_TARGET_PROFILE_IDS = 100;
-const VALID_NOTIFICATION_TYPES = ['bar_hop_transition', 'ride_offer', 'ride_request', 'ride_response', 'going_home', 'arrived_safe', 'event_update', 'rally_invite', 'safety_complete'];
+const VALID_NOTIFICATION_TYPES = ['bar_hop_transition', 'ride_offer', 'ride_request', 'ride_response', 'going_home', 'arrived_safe', 'event_update', 'rally_invite', 'squad_invite', 'safety_complete'];
 
 function validatePayload(payload: PushPayload): { valid: boolean; error?: string } {
   // Validate notification type
