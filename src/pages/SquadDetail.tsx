@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Camera, MessageCircle, UserPlus, Zap, Trash2, Crown, Calendar, MapPin, Users, RefreshCw } from 'lucide-react';
@@ -49,6 +49,63 @@ export default function SquadDetail() {
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [cropperOpen, setCropperOpen] = useState(false);
   const [selectedImageSrc, setSelectedImageSrc] = useState<string | null>(null);
+  const [signedGroupPhotoUrl, setSignedGroupPhotoUrl] = useState<string | null>(null);
+  const [photoVersion, setPhotoVersion] = useState(() => Date.now());
+  const [photoLoadFailed, setPhotoLoadFailed] = useState(false);
+
+  const squadImagePath = useMemo(() => {
+    if (!squad?.group_photo_url) return null;
+
+    try {
+      const url = new URL(squad.group_photo_url);
+      const marker = '/object/public/squad-images/';
+      const index = url.pathname.indexOf(marker);
+      if (index === -1) return null;
+      return decodeURIComponent(url.pathname.slice(index + marker.length));
+    } catch {
+      return null;
+    }
+  }, [squad?.group_photo_url]);
+
+  useEffect(() => {
+    let active = true;
+
+    const loadSignedGroupPhoto = async () => {
+      if (!squad?.group_photo_url) {
+        setSignedGroupPhotoUrl(null);
+        return;
+      }
+
+      if (!squadImagePath) {
+        setSignedGroupPhotoUrl(squad.group_photo_url);
+        return;
+      }
+
+      const { data, error } = await supabase.storage
+        .from('squad-images')
+        .createSignedUrl(squadImagePath, 3600);
+
+      if (!active) return;
+
+      if (error || !data?.signedUrl) {
+        console.error('Failed to create signed squad photo URL:', error);
+        setSignedGroupPhotoUrl(squad.group_photo_url);
+        return;
+      }
+
+      setSignedGroupPhotoUrl(data.signedUrl);
+    };
+
+    void loadSignedGroupPhoto();
+
+    return () => {
+      active = false;
+    };
+  }, [squad?.group_photo_url, squadImagePath, photoVersion]);
+
+  const displayGroupPhotoUrl = signedGroupPhotoUrl
+    ? `${signedGroupPhotoUrl}${signedGroupPhotoUrl.includes('?') ? '&' : '?'}v=${photoVersion}`
+    : null;
 
   if (isLoading) {
     return (
@@ -71,9 +128,7 @@ export default function SquadDetail() {
   const isOwner = squad.owner_id === profile?.id;
   const Icon = getSquadIcon((squad.symbol || 'shield') as SquadSymbol);
   const allMembers = [
-    // Owner first
     { profile_id: squad.owner_id, profile: squad.owner_profile, isOwner: true, added_at: squad.created_at },
-    // Then other members
     ...(squad.members || []).map(m => ({ ...m, isOwner: false }))
   ];
 
@@ -86,17 +141,17 @@ export default function SquadDetail() {
       return;
     }
 
-    // Create object URL and open cropper
     const objectUrl = URL.createObjectURL(file);
     setSelectedImageSrc(objectUrl);
     setCropperOpen(true);
-    
-    // Clear the input so the same file can be selected again
     e.target.value = '';
   };
 
   const handleCroppedImage = async (croppedBlob: Blob) => {
-    if (!squadId) return;
+    if (!squadId) {
+      toast.error('Missing squad ID. Cannot upload photo.');
+      return;
+    }
     
     setUploadingPhoto(true);
     try {
@@ -111,18 +166,23 @@ export default function SquadDetail() {
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
+      const { data } = await supabase.storage
         .from('squad-images')
-        .getPublicUrl(fileName);
+        .createSignedUrl(fileName, 3600);
 
-      await updatePhoto.mutateAsync({ squadId, photoUrl: publicUrl });
+      if (!data?.signedUrl) {
+        throw new Error('Could not create signed URL for uploaded squad photo');
+      }
+
+      await updatePhoto.mutateAsync({ squadId, photoUrl: data.signedUrl });
+      setPhotoVersion(Date.now());
+      setPhotoLoadFailed(false);
       toast.success('Group photo updated!');
     } catch (error) {
       console.error('Photo upload error:', error);
       toast.error('Failed to upload photo');
     } finally {
       setUploadingPhoto(false);
-      // Clean up object URL
       if (selectedImageSrc) {
         URL.revokeObjectURL(selectedImageSrc);
         setSelectedImageSrc(null);
@@ -196,17 +256,26 @@ export default function SquadDetail() {
           {/* Group Photo Section — Premium Photo Card */}
           <div className="flex justify-center">
             <div className="w-full max-w-md">
-              {squad.group_photo_url ? (
+              {displayGroupPhotoUrl ? (
                 <div 
                   className="relative aspect-video rounded-2xl overflow-hidden shadow-[0_8px_32px_hsl(var(--primary)/0.15)] ring-1 ring-white/[0.08] group transition-all duration-300 hover:shadow-[0_12px_40px_hsl(var(--primary)/0.25)] hover:-translate-y-0.5"
                 >
                   <img 
-                    src={squad.group_photo_url} 
+                    src={displayGroupPhotoUrl}
                     alt="Squad group photo"
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+                    onLoad={() => setPhotoLoadFailed(false)}
+                    onError={() => setPhotoLoadFailed(true)}
                   />
-                  {/* Cinematic gradient overlay */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/10 pointer-events-none" />
+                  {photoLoadFailed && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-background/70 backdrop-blur-sm">
+                      <Button variant="secondary" className="gap-2" onClick={handleRefreshSquad}>
+                        <RefreshCw className="h-4 w-4" />
+                        Reload Photos
+                      </Button>
+                    </div>
+                  )}
                   {isOwner && (
                     <button
                       className="absolute bottom-3 right-3 flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/50 backdrop-blur-md text-white/90 text-xs font-medium ring-1 ring-white/10 transition-all duration-200 hover:bg-black/70 hover:ring-white/20 active:scale-95"
