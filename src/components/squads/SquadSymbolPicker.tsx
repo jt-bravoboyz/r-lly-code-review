@@ -80,7 +80,7 @@ export function SquadSymbolPicker({ value, onChange, size = 'md' }: SquadSymbolP
             buttonSize,
             'p-0 transition-all',
             value === id
-              ? 'bg-primary text-primary-foreground border-primary ring-2 ring-primary/30'
+              ? 'bg-primary/15 text-primary border-primary ring-2 ring-primary/30'
               : 'hover:bg-primary/10 hover:border-primary/50'
           )}
           onClick={() => onChange(id)}
