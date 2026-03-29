@@ -12,9 +12,6 @@ import { formatDistanceToNow } from 'date-fns';
 import { InviteAlertCard } from '@/components/notifications/InviteAlertCard';
 import { Button } from '@/components/ui/button';
 import rallyLogo from '@/assets/rally-logo.png';
-import { InviteAlertCard } from '@/components/notifications/InviteAlertCard';
-import { Button } from '@/components/ui/button';
-import rallyLogo from '@/assets/rally-logo.png';
 
 export default function Notifications() {
   const { profile, loading: authLoading } = useAuth();
