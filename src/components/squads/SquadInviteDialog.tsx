@@ -26,53 +26,25 @@ export function SquadInviteDialog({ squadId, squadName, trigger }: SquadInviteDi
 
   const baseUrl = window.location.origin;
 
-  // Helper to find existing user by contact and send in-app notification
-  const createInAppNotification = async (contactValue: string, contactType: 'email' | 'sms', inviteCode: string) => {
+  // Send in-app notification via edge function (server-side, bypasses RLS)
+  const sendSquadInviteNotification = async (contactValue: string, contactType: 'email' | 'sms', inviteCode: string) => {
     if (!profile?.id) return;
 
-    // Look up profile by phone or email
-    let matchedProfileId: string | null = null;
-
-    if (contactType === 'sms') {
-      // Normalize phone - try matching
-      const { data: matchedProfiles } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('phone', contactValue)
-        .limit(1);
-      matchedProfileId = matchedProfiles?.[0]?.id || null;
-    }
-
-    // If no match by phone, or it's email type - we can't match emails directly since 
-    // profiles table doesn't store email. Skip in-app notification for unmatched users.
-    if (!matchedProfileId) return;
-
-    // Don't notify yourself
-    if (matchedProfileId === profile.id) return;
-
-    // Insert notification directly
-    await supabase.from('notifications').insert({
-      profile_id: matchedProfileId,
-      type: 'squad_invite',
-      title: `${profile.display_name || 'Someone'} invited you to join "${squadName}"`,
-      body: 'Tap to view and respond',
-      data: { squad_id: squadId, invite_code: inviteCode } as any,
-    });
-
-    // Also try push notification via edge function
     try {
       await supabase.functions.invoke('send-event-notification', {
         body: {
           type: 'squad_invite',
           squadId,
           squadName,
-          profileIds: [matchedProfileId],
           invitedBy: profile.display_name || 'Someone',
+          contactValue: contactValue.trim(),
+          contactType,
+          inviteCode,
           data: { squad_id: squadId, invite_code: inviteCode },
         },
       });
-    } catch (pushErr) {
-      console.error('Push notification failed (non-blocking):', pushErr);
+    } catch (err) {
+      console.error('Squad invite notification failed (non-blocking):', err);
     }
   };
 
@@ -134,11 +106,11 @@ export function SquadInviteDialog({ squadId, squadName, trigger }: SquadInviteDi
       setEmail('');
       setPhone('');
 
-      // Try to find existing user and send in-app notification
+      // Send notification via edge function (server-side matching + insert)
       try {
-        await createInAppNotification(contactValue.trim(), type, data.invite_code);
+        await sendSquadInviteNotification(contactValue.trim(), type, data.invite_code);
       } catch (notifErr) {
-        console.error('Failed to create in-app notification:', notifErr);
+        console.error('Failed to send squad invite notification:', notifErr);
       }
     } catch (error: any) {
       console.error('Error creating invite:', error);
