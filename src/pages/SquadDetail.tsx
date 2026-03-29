@@ -157,6 +157,14 @@ export default function SquadDetail() {
       } 
     });
   };
+  const handleRefreshSquad = async () => {
+    setRefreshing(true);
+    await queryClient.invalidateQueries({ queryKey: ['squad-detail', squadId] });
+    await queryClient.invalidateQueries({ queryKey: ['squad-event-history', squadId] });
+    await queryClient.invalidateQueries({ queryKey: ['rally-media'] });
+    toast.success('Squad refreshed');
+    setRefreshing(false);
+  };
 
   return (
     <div className="min-h-[100dvh] bg-gradient-to-b from-background to-muted pb-24">
@@ -177,6 +185,9 @@ export default function SquadDetail() {
               </p>
             </div>
           </div>
+          <Button variant="ghost" size="icon" onClick={handleRefreshSquad} disabled={refreshing}>
+            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+          </Button>
         </div>
       </div>
 
