@@ -70,6 +70,8 @@ export default function Auth() {
   const [authMode, setAuthMode] = useState<AuthMode>(hasAccount ? 'signin' : 'signup');
   const [showContent, setShowContent] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const [showPolicyDialog, setShowPolicyDialog] = useState(false);
   const [pendingAuthAction, setPendingAuthAction] = useState<'signup' | 'google' | 'apple' | null>(null);
