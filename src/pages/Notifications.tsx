@@ -133,9 +133,15 @@ export default function Notifications() {
               <Card key={i} className="h-20 animate-pulse bg-card/40 border-white/5 rounded-xl backdrop-blur-xl" />
             ))}
           </div>
-        ) : notifications && notifications.length > 0 ? (
+        ) : (notifications && notifications.length > 0) ? (
           <div className="space-y-3">
-            {notifications.map((notification) => (
+            {/* Actionable invite notifications at the top */}
+            {inviteNotifications.map((notification) => (
+              <InviteAlertCard key={notification.id} notification={notification} />
+            ))}
+
+            {/* Regular notifications */}
+            {regularNotifications.map((notification) => (
               <SwipeDismissCard
                 key={notification.id}
                 onDismiss={() => deleteNotification.mutate(notification.id)}
