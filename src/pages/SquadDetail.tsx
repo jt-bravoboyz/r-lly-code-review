@@ -53,6 +53,60 @@ export default function SquadDetail() {
   const [photoVersion, setPhotoVersion] = useState(() => Date.now());
   const [photoLoadFailed, setPhotoLoadFailed] = useState(false);
 
+  const squadImagePath = useMemo(() => {
+    if (!squad?.group_photo_url) return null;
+
+    try {
+      const url = new URL(squad.group_photo_url);
+      const marker = '/object/public/squad-images/';
+      const index = url.pathname.indexOf(marker);
+      if (index === -1) return null;
+      return decodeURIComponent(url.pathname.slice(index + marker.length));
+    } catch {
+      return null;
+    }
+  }, [squad?.group_photo_url]);
+
+  useEffect(() => {
+    let active = true;
+
+    const loadSignedGroupPhoto = async () => {
+      if (!squad?.group_photo_url) {
+        setSignedGroupPhotoUrl(null);
+        return;
+      }
+
+      if (!squadImagePath) {
+        setSignedGroupPhotoUrl(squad.group_photo_url);
+        return;
+      }
+
+      const { data, error } = await supabase.storage
+        .from('squad-images')
+        .createSignedUrl(squadImagePath, 3600);
+
+      if (!active) return;
+
+      if (error || !data?.signedUrl) {
+        console.error('Failed to create signed squad photo URL:', error);
+        setSignedGroupPhotoUrl(squad.group_photo_url);
+        return;
+      }
+
+      setSignedGroupPhotoUrl(data.signedUrl);
+    };
+
+    void loadSignedGroupPhoto();
+
+    return () => {
+      active = false;
+    };
+  }, [squad?.group_photo_url, squadImagePath, photoVersion]);
+
+  const displayGroupPhotoUrl = signedGroupPhotoUrl
+    ? `${signedGroupPhotoUrl}${signedGroupPhotoUrl.includes('?') ? '&' : '?'}v=${photoVersion}`
+    : null;
+
   if (isLoading) {
     return (
       <div className="min-h-[100dvh] bg-gradient-to-b from-background to-muted flex items-center justify-center">
@@ -74,59 +128,11 @@ export default function SquadDetail() {
   const isOwner = squad.owner_id === profile?.id;
   const Icon = getSquadIcon((squad.symbol || 'shield') as SquadSymbol);
   const allMembers = [
-    // Owner first
     { profile_id: squad.owner_id, profile: squad.owner_profile, isOwner: true, added_at: squad.created_at },
-    // Then other members
     ...(squad.members || []).map(m => ({ ...m, isOwner: false }))
   ];
 
-  const squadImagePath = useMemo(() => {
-    if (!squad.group_photo_url) return null;
-
-    try {
-      const url = new URL(squad.group_photo_url);
-      const marker = '/object/public/squad-images/';
-      const index = url.pathname.indexOf(marker);
-      if (index === -1) return null;
-      return decodeURIComponent(url.pathname.slice(index + marker.length));
-    } catch {
-      return null;
-    }
-  }, [squad.group_photo_url]);
-
-  useEffect(() => {
-    let active = true;
-
-    const loadSignedGroupPhoto = async () => {
-      if (!squadImagePath) {
-        setSignedGroupPhotoUrl(squad.group_photo_url ?? null);
-        return;
-      }
-
-      const { data, error } = await supabase.storage
-        .from('squad-images')
-        .createSignedUrl(squadImagePath, 3600);
-
-      if (!active) return;
-
-      if (error || !data?.signedUrl) {
-        console.error('Failed to create signed squad photo URL:', error);
-        setSignedGroupPhotoUrl(squad.group_photo_url ?? null);
-        return;
-      }
-
-      setSignedGroupPhotoUrl(data.signedUrl);
-    };
-
-    void loadSignedGroupPhoto();
-
-    return () => {
-      active = false;
-    };
-  }, [squad.group_photo_url, squadImagePath, photoVersion]);
-
-  const displayGroupPhotoUrl = signedGroupPhotoUrl ? `${signedGroupPhotoUrl}${signedGroupPhotoUrl.includes('?') ? '&' : '?'}v=${photoVersion}` : null;
-
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !squadId) return;
 
@@ -135,12 +141,9 @@ export default function SquadDetail() {
       return;
     }
 
-    // Create object URL and open cropper
     const objectUrl = URL.createObjectURL(file);
     setSelectedImageSrc(objectUrl);
     setCropperOpen(true);
-    
-    // Clear the input so the same file can be selected again
     e.target.value = '';
   };
 
