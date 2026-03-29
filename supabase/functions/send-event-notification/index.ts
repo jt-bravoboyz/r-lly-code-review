@@ -420,7 +420,7 @@ Deno.serve(async (req) => {
             ...data,
             type,
             eventId,
-            url: type === 'rally_invite' ? '/notifications' : (eventId ? `/events/${eventId}` : '/'),
+            url: type === 'squad_invite' ? '/notifications' : type === 'rally_invite' ? '/notifications' : (eventId ? `/events/${eventId}` : '/'),
           },
         });
 
