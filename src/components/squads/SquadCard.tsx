@@ -39,13 +39,19 @@ export function SquadCard({ squad, onQuickRally }: SquadCardProps) {
     navigate(`/squads/${squad.id}`);
   };
 
-  const handleDelete = async (e: React.MouseEvent) => {
+  const handleDeleteClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
     try {
       await deleteSquad.mutateAsync(squad.id);
       toast.success('Squad deleted');
     } catch (error) {
       toast.error('Failed to delete squad');
+    } finally {
+      setDeleteConfirmOpen(false);
     }
   };
 
