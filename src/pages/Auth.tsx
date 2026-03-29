@@ -9,7 +9,7 @@ import { useJoinEvent } from '@/hooks/useEvents';
 import { supabase } from '@/integrations/supabase/client';
 import { normalizePhoneNumber } from '@/hooks/usePhoneContacts';
 import { toast } from 'sonner';
-import { Mail, Lock, User, ChevronRight, ArrowLeft, Phone, Fingerprint } from 'lucide-react';
+import { Mail, Lock, User, ChevronRight, ArrowLeft, Phone, Fingerprint, Eye, EyeOff } from 'lucide-react';
 import { z } from 'zod';
 import { PolicyAcceptanceDialog } from '@/components/legal/PolicyAcceptanceDialog';
 import { useTutorial } from '@/hooks/useTutorial';
