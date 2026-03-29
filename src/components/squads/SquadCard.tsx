@@ -29,6 +29,7 @@ export function SquadCard({ squad, onQuickRally }: SquadCardProps) {
   const members = squad.members || [];
   const [symbolPopoverOpen, setSymbolPopoverOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const isMobile = useIsMobile();
   
   const Icon = getSquadIcon(squad.symbol || 'shield');
