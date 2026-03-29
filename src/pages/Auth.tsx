@@ -324,8 +324,10 @@ export default function Auth() {
         startTutorial();
       }, 500);
     } catch (error: any) {
+      const rawMsg = error?.message || 'Unknown error';
       const errorMessage = getAuthErrorMessage(error);
-      toast.error(errorMessage);
+      console.error('Sign up error (raw):', rawMsg, error);
+      toast.error(`Database Error: ${rawMsg}`);
       setErrors({ form: errorMessage });
     } finally {
       setIsLoading(false);
