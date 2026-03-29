@@ -179,56 +179,69 @@ export default function SquadDetail() {
 
       <ScrollArea className="h-[calc(100vh-140px)]">
         <div className="p-4 space-y-6">
-          {/* Group Photo Section */}
-          <Card>
-            <CardContent className="p-4">
-              <div className="relative">
-                {squad.group_photo_url ? (
-                  <div className="relative aspect-video rounded-lg overflow-hidden bg-muted">
-                    <img 
-                      src={squad.group_photo_url} 
-                      alt="Squad group photo"
-                      className="w-full h-full object-cover"
-                    />
-                    {isOwner && (
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        className="absolute bottom-2 right-2 gap-2"
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={uploadingPhoto}
-                      >
-                        <Camera className="h-4 w-4" />
-                        {uploadingPhoto ? 'Uploading...' : 'Change'}
-                      </Button>
-                    )}
+          {/* Group Photo Section — Premium Photo Card */}
+          <div className="flex justify-center">
+            <div className="w-full max-w-md">
+              {squad.group_photo_url ? (
+                <div 
+                  className="relative aspect-video rounded-2xl overflow-hidden shadow-[0_8px_32px_hsl(var(--primary)/0.15)] ring-1 ring-white/[0.08] group transition-all duration-300 hover:shadow-[0_12px_40px_hsl(var(--primary)/0.25)] hover:-translate-y-0.5"
+                >
+                  <img 
+                    src={squad.group_photo_url} 
+                    alt="Squad group photo"
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+                  />
+                  {/* Cinematic gradient overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/10 pointer-events-none" />
+                  {isOwner && (
+                    <button
+                      className="absolute bottom-3 right-3 flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/50 backdrop-blur-md text-white/90 text-xs font-medium ring-1 ring-white/10 transition-all duration-200 hover:bg-black/70 hover:ring-white/20 active:scale-95"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploadingPhoto}
+                    >
+                      <Camera className="h-3.5 w-3.5" />
+                      {uploadingPhoto ? 'Uploading…' : 'Change Photo'}
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  className={`w-full aspect-video rounded-2xl flex flex-col items-center justify-center gap-3 transition-all duration-300 ${
+                    isOwner
+                      ? 'cursor-pointer active:scale-[0.97] hover:-translate-y-0.5'
+                      : 'cursor-default'
+                  } bg-card/60 backdrop-blur-xl ring-1 ring-white/[0.06] shadow-[0_8px_32px_hsl(0_0%_0%/0.12)] dark:shadow-[0_8px_32px_hsl(0_0%_0%/0.3)] hover:ring-primary/20 hover:shadow-[0_12px_40px_hsl(var(--primary)/0.12)]`}
+                  style={{ WebkitBackdropFilter: 'blur(20px)' }}
+                  onClick={() => isOwner && fileInputRef.current?.click()}
+                  disabled={!isOwner}
+                >
+                  <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center ring-1 ring-primary/20 transition-all duration-300 group-hover:ring-primary/40">
+                    <Camera className="h-6 w-6 text-primary/70" strokeWidth={1.5} />
                   </div>
-                ) : (
-                  <div 
-                    className={`aspect-video rounded-lg bg-muted/50 border-2 border-dashed flex flex-col items-center justify-center gap-2 ${isOwner ? 'cursor-pointer hover:bg-muted/70 transition-colors' : ''}`}
-                    onClick={() => isOwner && fileInputRef.current?.click()}
-                  >
-                    <Camera className="h-8 w-8 text-muted-foreground" />
-                    {isOwner ? (
-                      <>
-                        <p className="text-sm text-muted-foreground">Add a group photo</p>
-                        <p className="text-xs text-muted-foreground">Click to upload</p>
-                      </>
-                    ) : (
-                      <p className="text-sm text-muted-foreground">No group photo yet</p>
-                    )}
-                  </div>
-                )}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleFileSelect}
-                />
-              </div>
-            </CardContent>
-          </Card>
+                  {isOwner ? (
+                    <>
+                      <span className="text-sm font-medium text-foreground/80 font-montserrat">
+                        Add Squad Photo
+                      </span>
+                      <span className="text-xs text-muted-foreground/60">
+                        Tap to upload
+                      </span>
+                    </>
+                  ) : (
+                    <span className="text-sm text-muted-foreground/60">No group photo yet</span>
+                  )}
+                </button>
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleFileSelect}
+              />
+            </div>
+          </div>
 
           {/* Group Photo Cropper Dialog */}
           {selectedImageSrc && (
