@@ -83,6 +83,13 @@ export function SquadInviteDialog({ squadId, squadName, trigger }: SquadInviteDi
       // Clear inputs
       setEmail('');
       setPhone('');
+
+      // Try to find existing user and send in-app notification
+      try {
+        await createInAppNotification(contactValue.trim(), type, data.invite_code);
+      } catch (notifErr) {
+        console.error('Failed to create in-app notification:', notifErr);
+      }
     } catch (error: any) {
       console.error('Error creating invite:', error);
       toast.error(error.message || 'Failed to create invite');
