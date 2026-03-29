@@ -439,7 +439,7 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
                             onClick={() => {
                               if (contact.phone) handleInviteToApp(contact.phone);
                               else if (contact.email) {
-                                window.open(`mailto:${contact.email}?subject=${encodeURIComponent("Join me on R@lly!")}&body=${encodeURIComponent("Hey! Join me on R@lly - the app for coordinating nights out with friends. Download it here: https://rallyboyz.lovable.app")}`, '_blank');
+                                window.open(`mailto:${contact.email}?subject=${encodeURIComponent("Join me on R@lly!")}&body=${encodeURIComponent("Hey! Join me on R@lly - the app for coordinating nights out with friends. Download it here: " + PUBLIC_APP_URL)}`, '_blank');
                               }
                             }}
                           >

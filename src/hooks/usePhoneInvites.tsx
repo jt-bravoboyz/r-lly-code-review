@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { normalizePhoneNumber } from './usePhoneContacts';
+import { PUBLIC_APP_URL } from '@/lib/appUrl';
 
 export interface PhoneInvite {
   id: string;

@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { PUBLIC_APP_URL } from '@/lib/appUrl';
 import { Mail, MessageSquare, Copy, Check, Send, UserPlus, Search, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
