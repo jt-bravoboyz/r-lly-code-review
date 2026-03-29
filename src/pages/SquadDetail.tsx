@@ -256,17 +256,26 @@ export default function SquadDetail() {
           {/* Group Photo Section — Premium Photo Card */}
           <div className="flex justify-center">
             <div className="w-full max-w-md">
-              {squad.group_photo_url ? (
+              {displayGroupPhotoUrl ? (
                 <div 
                   className="relative aspect-video rounded-2xl overflow-hidden shadow-[0_8px_32px_hsl(var(--primary)/0.15)] ring-1 ring-white/[0.08] group transition-all duration-300 hover:shadow-[0_12px_40px_hsl(var(--primary)/0.25)] hover:-translate-y-0.5"
                 >
                   <img 
-                    src={squad.group_photo_url} 
+                    src={displayGroupPhotoUrl}
                     alt="Squad group photo"
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+                    onLoad={() => setPhotoLoadFailed(false)}
+                    onError={() => setPhotoLoadFailed(true)}
                   />
-                  {/* Cinematic gradient overlay */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/10 pointer-events-none" />
+                  {photoLoadFailed && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-background/70 backdrop-blur-sm">
+                      <Button variant="secondary" className="gap-2" onClick={handleRefreshSquad}>
+                        <RefreshCw className="h-4 w-4" />
+                        Reload Photos
+                      </Button>
+                    </div>
+                  )}
                   {isOwner && (
                     <button
                       className="absolute bottom-3 right-3 flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/50 backdrop-blur-md text-white/90 text-xs font-medium ring-1 ring-white/10 transition-all duration-200 hover:bg-black/70 hover:ring-white/20 active:scale-95"
