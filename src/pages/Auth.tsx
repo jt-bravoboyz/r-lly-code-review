@@ -11,7 +11,7 @@ import { normalizePhoneNumber } from '@/hooks/usePhoneContacts';
 import { toast } from 'sonner';
 import { Mail, Lock, User, ChevronRight, ArrowLeft, Phone, Fingerprint } from 'lucide-react';
 import { z } from 'zod';
-import { PolicyAcceptanceDialog } from '@/components/legal/PolicyAcceptanceDialog';
+
 import { useTutorial } from '@/hooks/useTutorial';
 import { lovable } from '@/integrations/lovable/index';
 // Validation schemas
@@ -71,8 +71,7 @@ export default function Auth() {
   const [showContent, setShowContent] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [resetEmailSent, setResetEmailSent] = useState(false);
-  const [showPolicyDialog, setShowPolicyDialog] = useState(false);
-  const [pendingAuthAction, setPendingAuthAction] = useState<'signup' | 'google' | 'apple' | null>(null);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [rememberMe, setRememberMe] = useState(() => {
     return localStorage.getItem('rally-remember-me') === 'true';
   });
@@ -296,15 +295,8 @@ export default function Auth() {
       return;
     }
 
-    // Check if policies already accepted
-    const policiesAccepted = localStorage.getItem('rally-policies-accepted') === 'true';
-    if (policiesAccepted) {
-      executeSignUp();
-    } else {
-      // Show policy dialog first
-      setPendingAuthAction('signup');
-      setShowPolicyDialog(true);
-    }
+    // Checkbox on the form handles agreement — just execute
+    executeSignUp();
   };
 
   const executeSignUp = async () => {
@@ -316,6 +308,9 @@ export default function Auth() {
       if (error) throw error;
       // Clear referral from session storage once used
       sessionStorage.removeItem('rally-referrer-id');
+      // Mark policies accepted
+      localStorage.setItem('rally-policies-accepted', 'true');
+      localStorage.setItem('rally-policies-accepted-date', new Date().toISOString());
       // Mark that user has an account for future visits
       localStorage.setItem('rally-has-account', 'true');
       toast.success('Account created! Welcome to R@lly.');
@@ -324,8 +319,10 @@ export default function Auth() {
         startTutorial();
       }, 500);
     } catch (error: any) {
+      const rawMsg = error?.message || 'Unknown error';
       const errorMessage = getAuthErrorMessage(error);
-      toast.error(errorMessage);
+      console.error('Sign up error (raw):', rawMsg, error);
+      toast.error(`Database Error: ${rawMsg}`);
       setErrors({ form: errorMessage });
     } finally {
       setIsLoading(false);
@@ -361,13 +358,9 @@ export default function Auth() {
   };
 
   const handleGoogleSignInClick = () => {
-    const policiesAccepted = localStorage.getItem('rally-policies-accepted') === 'true';
-    if (policiesAccepted) {
-      executeGoogleSignIn();
-    } else {
-      setPendingAuthAction('google');
-      setShowPolicyDialog(true);
-    }
+    localStorage.setItem('rally-policies-accepted', 'true');
+    localStorage.setItem('rally-policies-accepted-date', new Date().toISOString());
+    executeGoogleSignIn();
   };
 
   const executeGoogleSignIn = async () => {
@@ -388,13 +381,9 @@ export default function Auth() {
   };
 
   const handleAppleSignInClick = () => {
-    const policiesAccepted = localStorage.getItem('rally-policies-accepted') === 'true';
-    if (policiesAccepted) {
-      executeAppleSignIn();
-    } else {
-      setPendingAuthAction('apple');
-      setShowPolicyDialog(true);
-    }
+    localStorage.setItem('rally-policies-accepted', 'true');
+    localStorage.setItem('rally-policies-accepted-date', new Date().toISOString());
+    executeAppleSignIn();
   };
 
   const executeAppleSignIn = async () => {
@@ -412,17 +401,7 @@ export default function Auth() {
     }
   };
 
-  const handlePolicyAccepted = () => {
-    setShowPolicyDialog(false);
-    if (pendingAuthAction === 'signup') {
-      executeSignUp();
-    } else if (pendingAuthAction === 'google') {
-      executeGoogleSignIn();
-    } else if (pendingAuthAction === 'apple') {
-      executeAppleSignIn();
-    }
-    setPendingAuthAction(null);
-  };
+
 
   if (user) {
     return null;
@@ -778,16 +757,42 @@ export default function Auth() {
                   </div>
                 )}
 
+                {/* Terms checkbox - only for signup */}
+                {isSignUp && (
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      id="agree-terms"
+                      checked={agreedToTerms}
+                      onCheckedChange={(checked) => setAgreedToTerms(checked === true)}
+                      className="mt-0.5 border-[rgba(255,106,0,0.4)] data-[state=checked]:bg-[#FF6A00] data-[state=checked]:border-[#FF6A00]"
+                    />
+                    <label
+                      htmlFor="agree-terms"
+                      className="text-sm font-montserrat cursor-pointer leading-snug"
+                      style={{ color: "rgba(255, 255, 255, 0.7)" }}
+                    >
+                      I agree to the{' '}
+                      <a href="/legal" target="_blank" className="underline" style={{ color: "#FF6A00" }}>
+                        Terms &amp; Privacy Policy
+                      </a>
+                    </label>
+                  </div>
+                )}
+
                 {/* Submit button */}
                 <Button 
                   type="submit" 
                   className="w-full h-14 rounded-xl font-bold text-lg font-montserrat mt-2 group transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
                   style={{
-                    background: "linear-gradient(135deg, #FF6A00 0%, #FF8C42 100%)",
-                    color: "#FFFFFF",
-                    boxShadow: "0 8px 32px rgba(255, 106, 0, 0.35)",
+                    background: (!isSignUp || agreedToTerms)
+                      ? "linear-gradient(135deg, #FF6A00 0%, #FF8C42 100%)"
+                      : "rgba(255, 255, 255, 0.1)",
+                    color: (!isSignUp || agreedToTerms) ? "#FFFFFF" : "rgba(255, 255, 255, 0.4)",
+                    boxShadow: (!isSignUp || agreedToTerms)
+                      ? "0 8px 32px rgba(255, 106, 0, 0.35)"
+                      : "none",
                   }}
-                  disabled={isLoading}
+                  disabled={isLoading || (isSignUp && !agreedToTerms)}
                 >
                   {isLoading 
                     ? (isSignUp ? 'Creating account...' : 'Signing in...') 
@@ -929,11 +934,6 @@ export default function Auth() {
         </div>
       )}
 
-      <PolicyAcceptanceDialog
-        open={showPolicyDialog}
-        onOpenChange={setShowPolicyDialog}
-        onAccept={handlePolicyAccepted}
-      />
     </div>
   );
 }

@@ -193,26 +193,16 @@ export default function EventDetail() {
   
   const hasTransportModeForEvent = Boolean(myAttendee?.arrival_transport_mode);
   const hasCompletedJoinFlow = hasTransportModeForEvent && Boolean(myAttendee?.location_prompt_shown);
-  const shouldAutoStartJoinFlow = isAttending &&
-    !hasCompletedJoinFlow &&
-    !hasTransportModeForEvent &&
-    event?.status !== 'completed' &&
-    !joinFlowDismissedForSession;
+  // EMERGENCY SAFE MODE: Disable all post-join modal stacking
+  const shouldAutoStartJoinFlow = false;
 
   const isSimpleMode = !event?.is_barhop &&
     (eventDDs?.length ?? 0) === 0 &&
     !isLive &&
     !isAfterRally;
   
-  useEffect(() => {
-    if (shouldAutoStartJoinFlow && !showTransportSelector && !showSafetyChoice && !showRidesSelection && !showLocationSharingModal) {
-      const timer = setTimeout(() => {
-        setShowTransportSelector(true);
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-  }, [shouldAutoStartJoinFlow, showTransportSelector, showSafetyChoice, showRidesSelection, showLocationSharingModal]);
-  
+  // SAFE MODE: Post-join modals disabled — users go straight to event
+
   // R@lly Home prompt status for current user
   const myPromptStatus = useMyRallyHomePrompt(id);
   
