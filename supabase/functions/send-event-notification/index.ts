@@ -333,6 +333,7 @@ Deno.serve(async (req) => {
       'arrived_safe': 'arrival_confirmations',
       'event_update': 'event_updates',
       'rally_invite': 'squad_invites',
+      'squad_invite': 'squad_invites',
       'safety_complete': 'event_updates',
     };
 
