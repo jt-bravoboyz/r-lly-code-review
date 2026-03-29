@@ -32,13 +32,20 @@ function validatePayload(payload: PushPayload): { valid: boolean; error?: string
     return { valid: false, error: `Invalid notification type. Must be one of: ${VALID_NOTIFICATION_TYPES.join(', ')}` };
   }
 
-  // For rally_invite, title and body are auto-generated
+  // For rally_invite and squad_invite, title and body are auto-generated
   if (payload.type === 'rally_invite') {
     if (!payload.eventTitle || typeof payload.eventTitle !== 'string') {
       return { valid: false, error: 'eventTitle is required for rally_invite type' };
     }
     if (!payload.profileIds || !Array.isArray(payload.profileIds) || payload.profileIds.length === 0) {
       return { valid: false, error: 'profileIds is required for rally_invite type' };
+    }
+  } else if (payload.type === 'squad_invite') {
+    if (!payload.squadName || typeof payload.squadName !== 'string') {
+      return { valid: false, error: 'squadName is required for squad_invite type' };
+    }
+    if (!payload.profileIds || !Array.isArray(payload.profileIds) || payload.profileIds.length === 0) {
+      return { valid: false, error: 'profileIds is required for squad_invite type' };
     }
   } else {
     // Validate title
