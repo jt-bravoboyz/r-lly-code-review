@@ -6,11 +6,12 @@ import { Bell, Car, MapPin, Users, CheckCircle, Clock, Zap } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth';
 import { useNotifications, useMarkNotificationRead, useDeleteNotification } from '@/hooks/useNotifications';
 import { SwipeDismissCard } from '@/components/notifications/SwipeDismissCard';
-import { usePendingInvites } from '@/hooks/useEventInvites';
 import { Link } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { formatDistanceToNow } from 'date-fns';
-import { PendingInvites } from '@/components/events/PendingInvites';
+import { InviteAlertCard } from '@/components/notifications/InviteAlertCard';
+import { Button } from '@/components/ui/button';
+import rallyLogo from '@/assets/rally-logo.png';
 import { InviteAlertCard } from '@/components/notifications/InviteAlertCard';
 import { Button } from '@/components/ui/button';
 import rallyLogo from '@/assets/rally-logo.png';
