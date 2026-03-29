@@ -165,7 +165,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { type, eventId, eventTitle, title, body, data, targetProfileIds, profileIds: payloadProfileIds, excludeProfileId, invitedBy, squadId, squadName } = payload;
+    const { type, eventId, eventTitle, title, body, data, targetProfileIds, profileIds: payloadProfileIds, excludeProfileId, invitedBy, squadId, squadName, contactValue, contactType, inviteCode } = payload;
 
     // Handle rally_invite and squad_invite types with auto-generated title/body
     let notifTitle = title;
@@ -175,8 +175,8 @@ Deno.serve(async (req) => {
       notifTitle = `You're invited to ${eventTitle || 'a R@lly'}! 🎉`;
       notifBody = `${invitedBy || 'Someone'} invited you to join. Tap to RSVP.`;
     } else if (type === 'squad_invite') {
-      notifTitle = `You've been invited to join "${squadName}"`;
-      notifBody = `${invitedBy || 'Someone'} wants you in their squad. Tap to respond.`;
+      notifTitle = `${invitedBy || 'Someone'} invited you to join "${squadName}"`;
+      notifBody = 'Tap to view and respond';
     }
 
     // ========== AUTHORIZATION ==========
