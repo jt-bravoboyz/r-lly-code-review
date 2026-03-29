@@ -148,7 +148,10 @@ export default function SquadDetail() {
   };
 
   const handleCroppedImage = async (croppedBlob: Blob) => {
-    if (!squadId) return;
+    if (!squadId) {
+      toast.error('Missing squad ID. Cannot upload photo.');
+      return;
+    }
     
     setUploadingPhoto(true);
     try {
@@ -163,18 +166,23 @@ export default function SquadDetail() {
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
+      const { data } = await supabase.storage
         .from('squad-images')
-        .getPublicUrl(fileName);
+        .createSignedUrl(fileName, 3600);
 
-      await updatePhoto.mutateAsync({ squadId, photoUrl: publicUrl });
+      if (!data?.signedUrl) {
+        throw new Error('Could not create signed URL for uploaded squad photo');
+      }
+
+      await updatePhoto.mutateAsync({ squadId, photoUrl: data.signedUrl });
+      setPhotoVersion(Date.now());
+      setPhotoLoadFailed(false);
       toast.success('Group photo updated!');
     } catch (error) {
       console.error('Photo upload error:', error);
       toast.error('Failed to upload photo');
     } finally {
       setUploadingPhoto(false);
-      // Clean up object URL
       if (selectedImageSrc) {
         URL.revokeObjectURL(selectedImageSrc);
         setSelectedImageSrc(null);
