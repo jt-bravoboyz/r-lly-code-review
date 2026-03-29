@@ -247,17 +247,43 @@ export function SquadCard({ squad, onQuickRally }: SquadCardProps) {
     </Card>
   );
 
+  const deleteConfirmDialog = (
+    <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete Squad?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Are you sure you want to delete "{squad.name}"? This action cannot be undone.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={handleConfirmDelete}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            disabled={deleteSquad.isPending}
+          >
+            {deleteSquad.isPending ? 'Deleting...' : 'Delete Squad'}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+
   // Wrap with swipeable on mobile only
   if (isMobile) {
     return (
-      <SwipeableCard
-        onSwipeLeft={handleSwipeRally}
-        onSwipeRight={handleSwipeChat}
-      >
-        {cardContent}
-      </SwipeableCard>
+      <>
+        <SwipeableCard
+          onSwipeLeft={handleSwipeRally}
+          onSwipeRight={handleSwipeChat}
+        >
+          {cardContent}
+        </SwipeableCard>
+        {deleteConfirmDialog}
+      </>
     );
   }
 
-  return cardContent;
+  return <>{cardContent}{deleteConfirmDialog}</>;
 }
