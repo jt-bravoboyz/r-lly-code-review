@@ -35,6 +35,7 @@ export default function SquadDetail() {
   const { squadId } = useParams<{ squadId: string }>();
   const navigate = useNavigate();
   const { profile } = useAuth();
+  const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const { data: squad, isLoading } = useSquadDetail(squadId);
@@ -42,6 +43,7 @@ export default function SquadDetail() {
   const updatePhoto = useUpdateSquadPhoto();
   const deleteSquad = useDeleteSquad();
   const removeMember = useRemoveSquadMember();
+  const [refreshing, setRefreshing] = useState(false);
   
   const [chatOpen, setChatOpen] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
