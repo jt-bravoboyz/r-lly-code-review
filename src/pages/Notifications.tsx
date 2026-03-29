@@ -118,8 +118,7 @@ export default function Notifications() {
           </div>
         )}
 
-        {/* Pending Rally Invites */}
-        <PendingInvites />
+        {/* Invite notifications are now rendered from the notifications table below */}
 
         {isLoading ? (
           <div className="space-y-3">
