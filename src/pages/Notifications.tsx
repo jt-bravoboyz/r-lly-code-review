@@ -33,9 +33,8 @@ export default function Notifications() {
   }, [notifications]);
 
   const unreadCount = notifications?.filter(n => !n.read).length || 0;
-  const pendingInviteCount = pendingInvites?.length || 0;
-  const totalUnread = unreadCount + pendingInviteCount;
-  const hasNotifications = (notifications && notifications.length > 0) || pendingInviteCount > 0;
+  const totalUnread = unreadCount;
+  const hasNotifications = notifications && notifications.length > 0;
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
