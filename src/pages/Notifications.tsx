@@ -57,6 +57,16 @@ export default function Notifications() {
     }
   };
 
+  const INVITE_TYPES = ['squad_invite', 'rally_invite', 'event_invite'];
+  
+  // Split notifications into invite vs regular, with invites sorted first
+  const { inviteNotifications, regularNotifications } = useMemo(() => {
+    if (!notifications) return { inviteNotifications: [], regularNotifications: [] };
+    const invites = notifications.filter(n => INVITE_TYPES.includes(n.type) && !n.read);
+    const regular = notifications.filter(n => !INVITE_TYPES.includes(n.type) || n.read);
+    return { inviteNotifications: invites, regularNotifications: regular };
+  }, [notifications]);
+
   const unreadCount = notifications?.filter(n => !n.read).length || 0;
   const pendingInviteCount = pendingInvites?.length || 0;
   const totalUnread = unreadCount + pendingInviteCount;
