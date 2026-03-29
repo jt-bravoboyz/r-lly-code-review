@@ -37,6 +37,29 @@ export default function Notifications() {
   const totalUnread = unreadCount + pendingInviteCount;
   const hasNotifications = (notifications && notifications.length > 0) || pendingInviteCount > 0;
 
+  const getNotificationIcon = (type: string) => {
+    switch (type) {
+      case 'squad_invite':
+        return <Users className="h-5 w-5 text-primary" />;
+      case 'ride_request':
+        return <Car className="h-5 w-5 text-blue-500" />;
+      case 'ride_accepted':
+        return <CheckCircle className="h-5 w-5 text-green-500" />;
+      case 'event_invite':
+        return <Users className="h-5 w-5 text-primary" />;
+      case 'location_arrived':
+        return <MapPin className="h-5 w-5 text-green-500" />;
+      default:
+        return <Bell className="h-5 w-5 text-primary" />;
+    }
+  };
+
+  const handleNotificationClick = (notificationId: string, read: boolean | null) => {
+    if (!read) {
+      markRead.mutate(notificationId);
+    }
+  };
+
   if (authLoading) {
     return (
       <div className="min-h-[100dvh] flex items-center justify-center bg-primary">
