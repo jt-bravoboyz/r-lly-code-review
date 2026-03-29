@@ -295,15 +295,8 @@ export default function Auth() {
       return;
     }
 
-    // Check if policies already accepted
-    const policiesAccepted = localStorage.getItem('rally-policies-accepted') === 'true';
-    if (policiesAccepted) {
-      executeSignUp();
-    } else {
-      // Show policy dialog first
-      setPendingAuthAction('signup');
-      setShowPolicyDialog(true);
-    }
+    // Checkbox on the form handles agreement — just execute
+    executeSignUp();
   };
 
   const executeSignUp = async () => {
@@ -315,6 +308,9 @@ export default function Auth() {
       if (error) throw error;
       // Clear referral from session storage once used
       sessionStorage.removeItem('rally-referrer-id');
+      // Mark policies accepted
+      localStorage.setItem('rally-policies-accepted', 'true');
+      localStorage.setItem('rally-policies-accepted-date', new Date().toISOString());
       // Mark that user has an account for future visits
       localStorage.setItem('rally-has-account', 'true');
       toast.success('Account created! Welcome to R@lly.');
