@@ -10,6 +10,7 @@ import {
   Heading,
   Html,
   Img,
+  Link,
   Preview,
   Text,
 } from 'npm:@react-email/components@0.0.22'
@@ -30,7 +31,7 @@ export const RecoveryEmail = ({
     <Preview>Forgot the plan? Let's get you back in the game 🟠</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Img src={LOGO_URL} alt="R@lly" width="120" height="40" style={logoStyle} />
+        <Img src={LOGO_URL} alt="R@lly" width="60" height="60" style={logoStyle} />
         <Heading style={h1}>Forgot the plan? No worries.</Heading>
         <Text style={text}>
           Let's get you back in the game. Tap below to reset your password and
@@ -43,6 +44,9 @@ export const RecoveryEmail = ({
           If you didn't request this, your account is safe—just ignore this email.
           — The R@lly Team
         </Text>
+        <Text style={socialFooter}>
+          <Link href="https://instagram.com/asap.rally" style={socialLink}>Follow us @asap.rally</Link>
+        </Text>
       </Container>
     </Body>
   </Html>
@@ -52,7 +56,7 @@ export default RecoveryEmail
 
 const main = { backgroundColor: '#ffffff', fontFamily: "'Montserrat', Arial, sans-serif" }
 const container = { padding: '32px 28px' }
-const logoStyle = { margin: '0 auto 24px', display: 'block' as const }
+const logoStyle = { margin: '0 auto 24px', display: 'block' as const, borderRadius: '50%' }
 const h1 = {
   fontSize: '24px',
   fontWeight: 'bold' as const,
@@ -76,3 +80,5 @@ const button = {
   display: 'inline-block' as const,
 }
 const footer = { fontSize: '12px', color: '#999999', margin: '32px 0 0' }
+const socialFooter = { fontSize: '12px', color: '#999999', margin: '8px 0 0', textAlign: 'center' as const }
+const socialLink = { color: '#F47A19', textDecoration: 'none' }

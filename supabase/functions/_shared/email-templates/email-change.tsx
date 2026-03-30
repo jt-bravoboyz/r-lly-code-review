@@ -35,7 +35,7 @@ export const EmailChangeEmail = ({
     <Preview>Confirm your new email for R@lly</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Img src={LOGO_URL} alt="R@lly" width="120" height="40" style={logoStyle} />
+        <Img src={LOGO_URL} alt="R@lly" width="60" height="60" style={logoStyle} />
         <Heading style={h1}>Confirm your email change</Heading>
         <Text style={text}>
           You requested to update your {siteName} email from{' '}
@@ -48,6 +48,9 @@ export const EmailChangeEmail = ({
         <Text style={footer}>
           Didn't request this? Please secure your account immediately.
         </Text>
+        <Text style={socialFooter}>
+          <Link href="https://instagram.com/asap.rally" style={socialLink}>Follow us @asap.rally</Link>
+        </Text>
       </Container>
     </Body>
   </Html>
@@ -57,7 +60,7 @@ export default EmailChangeEmail
 
 const main = { backgroundColor: '#ffffff', fontFamily: "'Montserrat', Arial, sans-serif" }
 const container = { padding: '32px 28px' }
-const logoStyle = { margin: '0 0 24px' }
+const logoStyle = { margin: '0 0 24px', borderRadius: '50%' }
 const h1 = {
   fontSize: '24px',
   fontWeight: 'bold' as const,
@@ -81,3 +84,5 @@ const button = {
   textDecoration: 'none',
 }
 const footer = { fontSize: '12px', color: '#999999', margin: '32px 0 0' }
+const socialFooter = { fontSize: '12px', color: '#999999', margin: '8px 0 0' }
+const socialLink = { color: '#F47A19', textDecoration: 'none' }

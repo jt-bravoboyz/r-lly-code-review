@@ -9,6 +9,7 @@ import {
   Heading,
   Html,
   Img,
+  Link,
   Preview,
   Text,
 } from 'npm:@react-email/components@0.0.22'
@@ -25,12 +26,15 @@ export const ReauthenticationEmail = ({ token }: ReauthenticationEmailProps) => 
     <Preview>Your R@lly verification code</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Img src={LOGO_URL} alt="R@lly" width="120" height="40" style={logoStyle} />
+        <Img src={LOGO_URL} alt="R@lly" width="60" height="60" style={logoStyle} />
         <Heading style={h1}>Verify your identity</Heading>
         <Text style={text}>Use this code to confirm it's you:</Text>
         <Text style={codeStyle}>{token}</Text>
         <Text style={footer}>
           This code expires shortly. If you didn't request it, ignore this email.
+        </Text>
+        <Text style={socialFooter}>
+          <Link href="https://instagram.com/asap.rally" style={socialLink}>Follow us @asap.rally</Link>
         </Text>
       </Container>
     </Body>
@@ -41,7 +45,7 @@ export default ReauthenticationEmail
 
 const main = { backgroundColor: '#ffffff', fontFamily: "'Montserrat', Arial, sans-serif" }
 const container = { padding: '32px 28px' }
-const logoStyle = { margin: '0 0 24px' }
+const logoStyle = { margin: '0 0 24px', borderRadius: '50%' }
 const h1 = {
   fontSize: '24px',
   fontWeight: 'bold' as const,
@@ -63,3 +67,5 @@ const codeStyle = {
   letterSpacing: '4px',
 }
 const footer = { fontSize: '12px', color: '#999999', margin: '32px 0 0' }
+const socialFooter = { fontSize: '12px', color: '#999999', margin: '8px 0 0' }
+const socialLink = { color: '#F47A19', textDecoration: 'none' }

@@ -30,7 +30,7 @@ export const MagicLinkEmail = ({
     <Preview>Your R@lly login link is here 🔑</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Img src={LOGO_URL} alt="R@lly" width="120" height="40" style={logoStyle} />
+        <Img src={LOGO_URL} alt="R@lly" width="60" height="60" style={logoStyle} />
         <Heading style={h1}>Your login link</Heading>
         <Text style={text}>
           Tap below to jump right into {siteName}. This link expires shortly, so
@@ -42,6 +42,9 @@ export const MagicLinkEmail = ({
         <Text style={footer}>
           Didn't request this? No action needed—just ignore this email.
         </Text>
+        <Text style={socialFooter}>
+          <Link href="https://instagram.com/asap.rally" style={socialLink}>Follow us @asap.rally</Link>
+        </Text>
       </Container>
     </Body>
   </Html>
@@ -51,7 +54,7 @@ export default MagicLinkEmail
 
 const main = { backgroundColor: '#ffffff', fontFamily: "'Montserrat', Arial, sans-serif" }
 const container = { padding: '32px 28px' }
-const logoStyle = { margin: '0 0 24px' }
+const logoStyle = { margin: '0 0 24px', borderRadius: '50%' }
 const h1 = {
   fontSize: '24px',
   fontWeight: 'bold' as const,
@@ -74,3 +77,5 @@ const button = {
   textDecoration: 'none',
 }
 const footer = { fontSize: '12px', color: '#999999', margin: '32px 0 0' }
+const socialFooter = { fontSize: '12px', color: '#999999', margin: '8px 0 0' }
+const socialLink = { color: '#F47A19', textDecoration: 'none' }

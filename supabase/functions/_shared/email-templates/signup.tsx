@@ -10,6 +10,7 @@ import {
   Heading,
   Html,
   Img,
+  Link,
   Preview,
   Text,
 } from 'npm:@react-email/components@0.0.22'
@@ -34,7 +35,7 @@ export const SignupEmail = ({
     <Preview>You're in. Your account is live. 🟠</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Img src={LOGO_URL} alt="R@lly" width="120" height="40" style={logoStyle} />
+        <Img src={LOGO_URL} alt="R@lly" width="60" height="60" style={logoStyle} />
         <Heading style={h1}>You're in.</Heading>
         <Text style={subheading}>Your account is live.</Text>
         <Text style={text}>
@@ -52,6 +53,9 @@ export const SignupEmail = ({
         <Text style={footer}>
           Let's R@lly. — The R@lly Team
         </Text>
+        <Text style={socialFooter}>
+          <Link href="https://instagram.com/asap.rally" style={socialLink}>Follow us @asap.rally</Link>
+        </Text>
       </Container>
     </Body>
   </Html>
@@ -61,7 +65,7 @@ export default SignupEmail
 
 const main = { backgroundColor: '#ffffff', fontFamily: "'Montserrat', Arial, sans-serif" }
 const container = { padding: '32px 28px' }
-const logoStyle = { margin: '0 auto 24px', display: 'block' as const }
+const logoStyle = { margin: '0 auto 24px', display: 'block' as const, borderRadius: '50%' }
 const h1 = {
   fontSize: '24px',
   fontWeight: 'bold' as const,
@@ -92,3 +96,5 @@ const button = {
   margin: '12px 0 0',
 }
 const footer = { fontSize: '12px', color: '#999999', margin: '32px 0 0' }
+const socialFooter = { fontSize: '12px', color: '#999999', margin: '8px 0 0', textAlign: 'center' as const }
+const socialLink = { color: '#F47A19', textDecoration: 'none' }
