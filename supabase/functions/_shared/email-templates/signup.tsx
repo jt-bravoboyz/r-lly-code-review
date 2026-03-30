@@ -31,25 +31,26 @@ export const SignupEmail = ({
 }: SignupEmailProps) => (
   <Html lang="en" dir="ltr">
     <Head />
-    <Preview>Welcome to the Movement 🟠 Let's make it legendary.</Preview>
+    <Preview>You're in. Your account is live. 🟠</Preview>
     <Body style={main}>
       <Container style={container}>
         <Img src={LOGO_URL} alt="R@lly" width="120" height="40" style={logoStyle} />
-        <Heading style={h1}>The night is young. Let's make it legendary. 🤙</Heading>
+        <Heading style={h1}>You're in.</Heading>
+        <Text style={subheading}>Your account is live.</Text>
         <Text style={text}>
-          You're officially part of the R@lly community. Whether you're coordinating
-          the ultimate pre-game, leading the squad to the next spot, or ensuring
-          everyone gets home safe—you're in control now.
+          You're now part of a system built for people who don't wait for plans—they set them in motion.
         </Text>
         <Text style={text}>
-          R@lly is built for the moments that matter. No more messy group chats. No
-          more "did you get home?" texts. Just pure momentum.
+          This is where the night organizes itself.
+        </Text>
+        <Text style={text}>
+          Stay ready.
         </Text>
         <Button style={button} href={confirmationUrl}>
           Confirm My Account & R@lly Up
         </Button>
         <Text style={footer}>
-          See you at the next spot. — The R@lly Team
+          Let's R@lly. — The R@lly Team
         </Text>
       </Container>
     </Body>
@@ -64,6 +65,12 @@ const logoStyle = { margin: '0 auto 24px', display: 'block' as const }
 const h1 = {
   fontSize: '24px',
   fontWeight: 'bold' as const,
+  color: '#1a1f2b',
+  margin: '0 0 4px',
+}
+const subheading = {
+  fontSize: '20px',
+  fontWeight: '600' as const,
   color: '#1a1f2b',
   margin: '0 0 16px',
 }
