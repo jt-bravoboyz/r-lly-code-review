@@ -367,6 +367,20 @@
   }
 
 
+  /* Dark dropdown for location search inside After R@lly card */
+  .after-rally-glow-border .absolute.z-50 {
+    background: hsl(270 30% 12%) !important;
+    border-color: hsl(270 40% 30%) !important;
+  }
+  .after-rally-glow-border .absolute.z-50 button:hover {
+    background: hsl(270 30% 18%) !important;
+  }
+  .after-rally-glow-border .absolute.z-50 p.font-medium {
+    color: hsl(0 0% 95%);
+  }
+  .after-rally-glow-border .absolute.z-50 .text-muted-foreground {
+    color: hsl(270 20% 65%);
+  }
 
   /* Cool purple glow effect */
   .after-rally-glow {
