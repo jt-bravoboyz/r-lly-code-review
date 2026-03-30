@@ -367,19 +367,31 @@
   }
 
 
-  /* Dark dropdown for location search inside After R@lly card */
+  /* Dark opaque dropdown for location search inside After R@lly card */
   .after-rally-glow-border .absolute.z-50 {
-    background: hsl(270 30% 12%) !important;
-    border-color: hsl(270 40% 30%) !important;
+    background: hsl(270 25% 10%) !important;
+    border: 1px solid hsl(270 40% 30%) !important;
+    box-shadow: 0 8px 32px hsl(0 0% 0% / 0.7), 0 0 0 1px hsl(270 40% 25% / 0.5) !important;
+    backdrop-filter: blur(20px) !important;
+  }
+  .after-rally-glow-border .absolute.z-50 button {
+    border-bottom: 1px solid hsl(270 20% 18%);
+  }
+  .after-rally-glow-border .absolute.z-50 button:last-child {
+    border-bottom: none;
   }
   .after-rally-glow-border .absolute.z-50 button:hover {
     background: hsl(270 30% 18%) !important;
   }
+  .after-rally-glow-border .absolute.z-50 .font-medium,
   .after-rally-glow-border .absolute.z-50 p.font-medium {
-    color: hsl(0 0% 95%);
+    color: hsl(0 0% 95%) !important;
   }
   .after-rally-glow-border .absolute.z-50 .text-muted-foreground {
-    color: hsl(270 20% 65%);
+    color: hsl(270 20% 70%) !important;
+  }
+  .after-rally-glow-border .absolute.z-50 .text-sm.text-muted-foreground {
+    color: hsl(270 15% 60%) !important;
   }
 
   /* Cool purple glow effect */
