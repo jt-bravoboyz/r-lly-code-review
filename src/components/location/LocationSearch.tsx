@@ -435,7 +435,7 @@ export function LocationSearch({
 
           {/* Search input */}
           <div className="relative">
-            <MapPin className="absolute left-3 top-3 h-4 w-4 text-primary" />
+            <MapPin className="pointer-events-none absolute left-3 top-3 z-10 h-4 w-4 text-primary" />
             <Input
               className="pl-9 pr-9"
               placeholder={placeholder}
