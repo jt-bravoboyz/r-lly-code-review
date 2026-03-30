@@ -159,6 +159,14 @@
     100% { background-position: 0% 50%; }
   }
 
+  .scrollbar-hide {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
   .rally-create-glow-wrapper {
     position: relative;
     border-radius: 1rem;

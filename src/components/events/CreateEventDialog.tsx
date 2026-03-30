@@ -189,7 +189,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-h-[90vh] overflow-y-auto p-0 border-0 bg-transparent shadow-none [&>button]:hidden">
+      <DialogContent className="max-h-[90vh] overflow-y-auto scrollbar-hide p-0 border-0 bg-transparent shadow-none [&>button]:hidden">
         <div className="rally-create-glow-wrapper">
           <div className="rally-create-inner p-6 space-y-5">
             {/* Header */}
