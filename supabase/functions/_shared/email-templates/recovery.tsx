@@ -30,7 +30,7 @@ export const RecoveryEmail = ({
     <Preview>Forgot the plan? Let's get you back in the game 🟠</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Img src={LOGO_URL} alt="R@lly" width="120" height="40" style={logoStyle} />
+        <Img src={LOGO_URL} alt="R@lly" width="60" height="60" style={logoStyle} />
         <Heading style={h1}>Forgot the plan? No worries.</Heading>
         <Text style={text}>
           Let's get you back in the game. Tap below to reset your password and
