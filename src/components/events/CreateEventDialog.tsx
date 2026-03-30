@@ -519,6 +519,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
                 <RotateCcw className="h-4 w-4 mr-2" /> Retry {failedUploads.length} failed upload{failedUploads.length > 1 ? 's' : ''}
               </Button>
             )}
+            </div>
           </form>
         </Form>
           </div>
