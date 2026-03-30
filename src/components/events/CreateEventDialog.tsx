@@ -73,11 +73,35 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
   const [uploadStatus, setUploadStatus] = useState('');
   const [uploadPercent, setUploadPercent] = useState(0);
   const [failedUploads, setFailedUploads] = useState<{ file: File; type: 'photo' | 'video'; orderIndex: number }[]>([]);
+  const [activeSection, setActiveSection] = useState<'essentials' | 'details' | 'review'>('essentials');
+  const essentialsRef = useRef<HTMLDivElement>(null);
+  const detailsRef = useRef<HTMLDivElement>(null);
+  const reviewRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const { profile } = useAuth();
   const createEvent = useCreateEvent();
   const joinEvent = useJoinEvent();
   const uploadMedia = useUploadRallyMedia();
   const navigate = useNavigate();
+
+  const handleScroll = useCallback(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    const scrollTop = container.scrollTop;
+    const reviewTop = reviewRef.current?.offsetTop ?? Infinity;
+    const detailsTop = detailsRef.current?.offsetTop ?? Infinity;
+    const offset = 120;
+    if (scrollTop + offset >= reviewTop) setActiveSection('review');
+    else if (scrollTop + offset >= detailsTop) setActiveSection('details');
+    else setActiveSection('essentials');
+  }, []);
+
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container || !open) return;
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [open, handleScroll]);
 
   const form = useForm<EventFormData>({
     resolver: zodResolver(eventSchema),
