@@ -368,7 +368,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
                     <FormItem>
                       <FormLabel>Max Attendees</FormLabel>
                       <FormControl>
-                        <Input type="number" placeholder="Optional" {...field} />
+                        <Input type="number" placeholder="Optional" className="rally-create-input" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
