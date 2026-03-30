@@ -457,6 +457,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
                 <StagedMediaPicker stagedFiles={stagedMedia} onChange={setStagedMedia} />
               </CollapsibleContent>
             </Collapsible>
+            </div>
 
             {isUploading && (
               <div className="space-y-2">
