@@ -465,6 +465,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
               </div>
             )}
 
+            <div className="pt-6">
             <Button 
               type="submit" 
               className="w-full gradient-primary"
