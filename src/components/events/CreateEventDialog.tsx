@@ -202,13 +202,28 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
               </p>
             </div>
 
-            <div className="flex items-center justify-center gap-2 text-[10px] text-muted-foreground/50 font-montserrat uppercase tracking-[0.2em]">
-              <span>Details</span>
-              <span className="text-primary/30">·</span>
-              <span>Time & Place</span>
-              <span className="text-primary/30">·</span>
-              <span>Review</span>
-            </div>
+            <nav className="flex items-center justify-center gap-3 text-[10px] font-montserrat uppercase tracking-[0.2em] sticky top-0 z-10 py-2 bg-[hsl(0_0%_8%/0.95)] backdrop-blur-md -mx-6 px-6">
+              {(['essentials', 'details', 'review'] as const).map((section, i) => (
+                <span key={section} className="flex items-center gap-3">
+                  {i > 0 && <span className="text-primary/20">·</span>}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const ref = section === 'essentials' ? essentialsRef : section === 'details' ? detailsRef : reviewRef;
+                      ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }}
+                    className={cn(
+                      "transition-all duration-300 cursor-pointer hover:text-primary/80",
+                      activeSection === section
+                        ? "text-primary font-semibold drop-shadow-[0_0_6px_hsl(27_91%_53%/0.4)]"
+                        : "text-muted-foreground/50"
+                    )}
+                  >
+                    {section === 'essentials' ? 'Essentials' : section === 'details' ? 'Details' : 'Review'}
+                  </button>
+                </span>
+              ))}
+            </nav>
         
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
