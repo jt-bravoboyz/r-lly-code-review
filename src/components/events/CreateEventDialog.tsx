@@ -341,6 +341,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
               )}
             />
 
+            <div className="pt-4">
             {/* Time Picker - Timeline Slider */}
             <FormField
               control={form.control}
