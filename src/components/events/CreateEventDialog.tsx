@@ -220,7 +220,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
                 <FormItem>
                   <FormLabel>Event Title</FormLabel>
                   <FormControl>
-                    <Input placeholder="Saturday Night Rally" {...field} />
+                    <Input placeholder="Saturday Night Rally" className="rally-create-input" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
