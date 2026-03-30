@@ -175,15 +175,15 @@ export default function SquadDetail() {
 
       if (uploadError) throw uploadError;
 
-      const { data } = await supabase.storage
+      const { data: publicUrlData } = supabase.storage
         .from('squad-images')
-        .createSignedUrl(fileName, 3600);
+        .getPublicUrl(fileName);
 
-      if (!data?.signedUrl) {
-        throw new Error('Could not create signed URL for uploaded squad photo');
+      if (!publicUrlData?.publicUrl) {
+        throw new Error('Could not get public URL for uploaded squad photo');
       }
 
-      await updatePhoto.mutateAsync({ squadId, photoUrl: data.signedUrl });
+      await updatePhoto.mutateAsync({ squadId, photoUrl: publicUrlData.publicUrl });
       setPhotoVersion(Date.now());
       setPhotoLoadFailed(false);
       toast.success('Group photo updated!');
