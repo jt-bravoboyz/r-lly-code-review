@@ -432,7 +432,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
             </Button>
 
             {form.formState.isValid && (
-              <p className="text-xs text-green-600 font-medium text-center mt-1">
+              <p className="text-xs text-success font-medium text-center mt-1">
                 Ready to rally.
               </p>
             )}
