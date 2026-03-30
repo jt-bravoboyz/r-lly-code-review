@@ -227,7 +227,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
               </p>
             </div>
 
-            <nav className="flex items-center justify-center gap-3 text-[10px] font-montserrat uppercase tracking-[0.2em] sticky top-0 z-10 py-2 bg-[hsl(0_0%_8%/0.95)] backdrop-blur-md -mx-6 px-6">
+            <nav className="flex items-center justify-center gap-3 text-[10px] font-montserrat uppercase tracking-[0.2em] sticky top-0 z-10 py-2 bg-background/95 backdrop-blur-md -mx-6 px-6">
               {(['essentials', 'details', 'review'] as const).map((section, i) => (
                 <span key={section} className="flex items-center gap-3">
                   {i > 0 && <span className="text-primary/20">·</span>}
