@@ -388,7 +388,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
                         Cover Charge ($)
                       </FormLabel>
                       <FormControl>
-                        <Input type="number" step="0.01" min="0" placeholder="0.00" {...field} />
+                        <Input type="number" step="0.01" min="0" placeholder="0.00" className="rally-create-input" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
