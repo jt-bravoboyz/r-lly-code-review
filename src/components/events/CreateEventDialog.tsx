@@ -212,7 +212,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
         
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-montserrat">Essentials</p>
+            <p className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground/60 font-montserrat">Essentials</p>
             <FormField
               control={form.control}
               name="title"
