@@ -34,7 +34,7 @@ export const ReauthenticationEmail = ({ token }: ReauthenticationEmailProps) => 
           This code expires shortly. If you didn't request it, ignore this email.
         </Text>
         <Text style={socialFooter}>
-          <Link href="https://instagram.com/asap.rally" style={socialLink}>Follow us @asap.rally</Link>
+          If you're into baller shit. <Link href="https://instagram.com/asap.rally" style={socialLink}>Follow us @asap.rally</Link>
         </Text>
       </Container>
     </Body>
