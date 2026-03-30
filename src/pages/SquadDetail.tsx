@@ -54,58 +54,8 @@ export default function SquadDetail() {
   const [photoVersion, setPhotoVersion] = useState(() => Date.now());
   const [photoLoadFailed, setPhotoLoadFailed] = useState(false);
 
-  const squadImagePath = useMemo(() => {
-    if (!squad?.group_photo_url) return null;
-
-    try {
-      const url = new URL(squad.group_photo_url);
-      const marker = '/object/public/squad-images/';
-      const index = url.pathname.indexOf(marker);
-      if (index === -1) return null;
-      return decodeURIComponent(url.pathname.slice(index + marker.length));
-    } catch {
-      return null;
-    }
-  }, [squad?.group_photo_url]);
-
-  useEffect(() => {
-    let active = true;
-
-    const loadSignedGroupPhoto = async () => {
-      if (!squad?.group_photo_url) {
-        setSignedGroupPhotoUrl(null);
-        return;
-      }
-
-      if (!squadImagePath) {
-        setSignedGroupPhotoUrl(squad.group_photo_url);
-        return;
-      }
-
-      const { data, error } = await supabase.storage
-        .from('squad-images')
-        .createSignedUrl(squadImagePath, 3600);
-
-      if (!active) return;
-
-      if (error || !data?.signedUrl) {
-        console.error('Failed to create signed squad photo URL:', error);
-        setSignedGroupPhotoUrl(squad.group_photo_url);
-        return;
-      }
-
-      setSignedGroupPhotoUrl(data.signedUrl);
-    };
-
-    void loadSignedGroupPhoto();
-
-    return () => {
-      active = false;
-    };
-  }, [squad?.group_photo_url, squadImagePath, photoVersion]);
-
-  const displayGroupPhotoUrl = signedGroupPhotoUrl
-    ? `${signedGroupPhotoUrl}${signedGroupPhotoUrl.includes('?') ? '&' : '?'}v=${photoVersion}`
+  const displayGroupPhotoUrl = squad?.group_photo_url
+    ? `${squad.group_photo_url}?v=${photoVersion}`
     : null;
 
   useEffect(() => {
