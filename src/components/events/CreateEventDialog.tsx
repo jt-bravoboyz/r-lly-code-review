@@ -359,6 +359,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
                 </FormItem>
               )}
             />
+            </div>
 
             <FormField
               control={form.control}
