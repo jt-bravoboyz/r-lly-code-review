@@ -44,6 +44,9 @@ export const RecoveryEmail = ({
           If you didn't request this, your account is safe—just ignore this email.
           — The R@lly Team
         </Text>
+        <Text style={socialFooter}>
+          <Link href="https://instagram.com/asap.rally" style={socialLink}>Follow us @asap.rally</Link>
+        </Text>
       </Container>
     </Body>
   </Html>
