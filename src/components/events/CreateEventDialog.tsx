@@ -457,6 +457,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
                 <StagedMediaPicker stagedFiles={stagedMedia} onChange={setStagedMedia} />
               </CollapsibleContent>
             </Collapsible>
+            </div>
 
             {isUploading && (
               <div className="space-y-2">
@@ -465,6 +466,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
               </div>
             )}
 
+            <div className="pt-6">
             <Button 
               type="submit" 
               className="w-full gradient-primary"
