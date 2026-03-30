@@ -66,6 +66,12 @@ const h1 = {
   fontSize: '24px',
   fontWeight: 'bold' as const,
   color: '#1a1f2b',
+  margin: '0 0 4px',
+}
+const subheading = {
+  fontSize: '20px',
+  fontWeight: '600' as const,
+  color: '#1a1f2b',
   margin: '0 0 16px',
 }
 const text = {
