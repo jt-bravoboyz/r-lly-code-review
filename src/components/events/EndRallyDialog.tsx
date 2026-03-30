@@ -115,8 +115,8 @@ export function EndRallyDialog({ eventId, open, onOpenChange, onCompleted }: End
                 <Moon className="h-4 w-4 text-[hsl(270,60%,50%)]" />
               </div>
               <div className="min-w-0 flex-1">
-                <div className="font-semibold font-montserrat text-sm">Start After R@lly</div>
-                <p className="text-xs text-muted-foreground">
+                <div className="font-semibold font-montserrat text-sm text-white">Start After R@lly</div>
+                <p className="text-xs text-gray-300">
                   Continue the night at a new spot!
                 </p>
               </div>
