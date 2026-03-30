@@ -376,6 +376,44 @@
       0 0 100px hsl(280 70% 40% / 0.1);
   }
 
+  /* Rotating glow border for After R@lly card */
+  .after-rally-glow-border {
+    border: 2px solid hsl(270 60% 50% / 0.4);
+  }
+  .after-rally-glow-border::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: inherit;
+    padding: 2px;
+    background: conic-gradient(
+      from var(--glow-angle, 0deg),
+      hsl(270 80% 70% / 0) 0%,
+      hsl(270 80% 70% / 0.8) 10%,
+      hsl(280 90% 75% / 1) 15%,
+      hsl(270 80% 70% / 0.8) 20%,
+      hsl(270 80% 70% / 0) 30%
+    );
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    -webkit-mask-composite: xor;
+    animation: glow-rotate 3s linear infinite;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  @keyframes glow-rotate {
+    from { --glow-angle: 0deg; }
+    to { --glow-angle: 360deg; }
+  }
+
+  @property --glow-angle {
+    syntax: '<angle>';
+    initial-value: 0deg;
+    inherits: false;
+  }
+
   /* Dusk to Midnight transition overlay - smooth top-to-bottom gradient */
   .after-rally-mode::after {
     content: '';
