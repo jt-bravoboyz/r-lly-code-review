@@ -108,6 +108,21 @@ export default function SquadDetail() {
     ? `${signedGroupPhotoUrl}${signedGroupPhotoUrl.includes('?') ? '&' : '?'}v=${photoVersion}`
     : null;
 
+  useEffect(() => {
+    if (searchParams.get('chat')) {
+      setChatOpen(true);
+    }
+  }, [searchParams]);
+
+  const isOwner = squad?.owner_id === profile?.id;
+  const Icon = getSquadIcon((squad?.symbol || 'shield') as SquadSymbol);
+  const allMembers = squad
+    ? [
+        { profile_id: squad.owner_id, profile: squad.owner_profile, isOwner: true, added_at: squad.created_at },
+        ...(squad.members || []).map(m => ({ ...m, isOwner: false }))
+      ]
+    : [];
+
   if (isLoading) {
     return (
       <div className="min-h-[100dvh] bg-gradient-to-b from-background to-muted flex items-center justify-center">
@@ -125,13 +140,6 @@ export default function SquadDetail() {
       </div>
     );
   }
-
-  const isOwner = squad.owner_id === profile?.id;
-  const Icon = getSquadIcon((squad.symbol || 'shield') as SquadSymbol);
-  const allMembers = [
-    { profile_id: squad.owner_id, profile: squad.owner_profile, isOwner: true, added_at: squad.created_at },
-    ...(squad.members || []).map(m => ({ ...m, isOwner: false }))
-  ];
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -226,12 +234,6 @@ export default function SquadDetail() {
     toast.success('Squad refreshed');
     setRefreshing(false);
   };
-
-  useEffect(() => {
-    if (searchParams.get('chat')) {
-      setChatOpen(true);
-    }
-  }, [searchParams]);
 
   const handleChatOpenChange = (open: boolean) => {
     setChatOpen(open);
