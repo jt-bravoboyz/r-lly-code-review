@@ -170,6 +170,20 @@
   .rally-create-glow-wrapper {
     position: relative;
     border-radius: 1rem;
+    padding: 2px;
+    background: linear-gradient(
+      270deg,
+      hsl(27 91% 53% / 0.7),
+      hsl(27 91% 53% / 0.15),
+      hsl(27 91% 53% / 0.7),
+      hsl(27 91% 53% / 0.15)
+    );
+    background-size: 300% 300%;
+    animation: rally-border-glow 6s ease-in-out infinite;
+    box-shadow: 0 0 20px hsl(27 91% 53% / 0.15), 0 0 40px hsl(27 91% 53% / 0.08);
+  }
+
+  .dark .rally-create-glow-wrapper {
     padding: 1.5px;
     background: linear-gradient(
       270deg,
@@ -179,7 +193,7 @@
       hsl(27 91% 53% / 0.08)
     );
     background-size: 300% 300%;
-    animation: rally-border-glow 6s ease-in-out infinite;
+    box-shadow: 0 0 30px hsl(27 91% 53% / 0.06);
   }
 
   .rally-create-inner {
