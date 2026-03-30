@@ -476,6 +476,8 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
             )}
           </form>
         </Form>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );
