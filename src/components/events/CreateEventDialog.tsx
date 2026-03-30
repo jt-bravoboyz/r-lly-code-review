@@ -386,7 +386,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
 
             <div ref={reviewRef}>
             {/* Advanced options - collapsed by default */}
-            <Collapsible>
+            <Collapsible open={optionalOpen} onOpenChange={setOptionalOpen}>
               <CollapsibleTrigger asChild>
                 <Button variant="ghost" size="sm" type="button" className="w-full justify-between text-muted-foreground text-xs">
                   Optional details
