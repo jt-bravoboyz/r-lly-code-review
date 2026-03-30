@@ -50,7 +50,7 @@ export default function SquadDetail() {
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [cropperOpen, setCropperOpen] = useState(false);
   const [selectedImageSrc, setSelectedImageSrc] = useState<string | null>(null);
-  const [signedGroupPhotoUrl, setSignedGroupPhotoUrl] = useState<string | null>(null);
+  
   const [photoVersion, setPhotoVersion] = useState(() => Date.now());
   const [photoLoadFailed, setPhotoLoadFailed] = useState(false);
 
