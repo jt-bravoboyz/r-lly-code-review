@@ -53,6 +53,9 @@ export const SignupEmail = ({
         <Text style={footer}>
           Let's R@lly. — The R@lly Team
         </Text>
+        <Text style={socialFooter}>
+          <Link href="https://instagram.com/asap.rally" style={socialLink}>Follow us @asap.rally</Link>
+        </Text>
       </Container>
     </Body>
   </Html>
