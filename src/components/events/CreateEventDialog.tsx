@@ -74,6 +74,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
   const [uploadPercent, setUploadPercent] = useState(0);
   const [failedUploads, setFailedUploads] = useState<{ file: File; type: 'photo' | 'video'; orderIndex: number }[]>([]);
   const [activeSection, setActiveSection] = useState<'essentials' | 'details' | 'review'>('essentials');
+  const [optionalOpen, setOptionalOpen] = useState(false);
   const essentialsRef = useRef<HTMLDivElement>(null);
   const detailsRef = useRef<HTMLDivElement>(null);
   const reviewRef = useRef<HTMLDivElement>(null);
@@ -233,6 +234,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
                   <button
                     type="button"
                     onClick={() => {
+                      if (section === 'details') setOptionalOpen(true);
                       const ref = section === 'essentials' ? essentialsRef : section === 'details' ? detailsRef : reviewRef;
                       ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     }}
@@ -384,7 +386,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
 
             <div ref={reviewRef}>
             {/* Advanced options - collapsed by default */}
-            <Collapsible>
+            <Collapsible open={optionalOpen} onOpenChange={setOptionalOpen}>
               <CollapsibleTrigger asChild>
                 <Button variant="ghost" size="sm" type="button" className="w-full justify-between text-muted-foreground text-xs">
                   Optional details
