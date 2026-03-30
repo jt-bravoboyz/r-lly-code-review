@@ -159,7 +159,7 @@ export function EndRallyDialog({ eventId, open, onOpenChange, onCompleted }: End
             </div>
 
             <Button
-              className="w-full bg-[hsl(270,60%,50%)] hover:bg-[hsl(270,60%,40%)] text-white text-sm"
+              className="w-full bg-[hsl(270,60%,50%)] hover:bg-[hsl(270,60%,40%)] text-white text-sm relative z-10"
               onClick={handleAfterRally}
               disabled={isLoading || !selectedLocation}
             >
