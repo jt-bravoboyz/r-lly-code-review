@@ -1,19 +1,14 @@
 
 
-# Fix: Squad invite `in_app` type rejected by database constraint
+# Replace X close button with back arrow on Squad Chat Sheet
 
-## Problem
-The `squad_invites` table has a check constraint that only allows `invite_type` values of `'email'` or `'sms'`. The in-app invite code sends `'in_app'`, which the database rejects.
+## Change
+In `SquadChatSheet.tsx`, add a back arrow (`ArrowLeft` from lucide-react) to the left side of the header that calls `onOpenChange(false)`. Hide the default Sheet X button by adding `[&>button]:hidden` to `SheetContent`.
 
-## Solution
-Update the check constraint to also allow `'in_app'` as a valid invite type.
+### File: `src/components/chat/SquadChatSheet.tsx`
+- Import `ArrowLeft` from lucide-react
+- Add `[&>button]:hidden` class to `SheetContent` to hide the default X
+- Add an `ArrowLeft` button at the start of the header row, before the squad icon, that calls `onOpenChange(false)`
 
-### Database migration
-```sql
-ALTER TABLE public.squad_invites DROP CONSTRAINT squad_invites_invite_type_check;
-ALTER TABLE public.squad_invites ADD CONSTRAINT squad_invites_invite_type_check 
-  CHECK (invite_type = ANY (ARRAY['email', 'sms', 'in_app']));
-```
-
-No code changes needed — the frontend already sends the correct `'in_app'` value. The trigger `notify_on_squad_invite` already handles the `'in_app'` type with `profile:` prefix matching.
+One file changed, no backend changes.
 
