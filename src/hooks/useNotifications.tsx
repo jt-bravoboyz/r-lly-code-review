@@ -108,6 +108,27 @@ export function useMarkNotificationRead() {
   });
 }
 
+export function useClearChatNotification() {
+  const queryClient = useQueryClient();
+  const { profile } = useAuth();
+
+  return useMutation({
+    mutationFn: async (chatId: string) => {
+      const { error } = await supabase
+        .from('notifications')
+        .update({ read: true })
+        .eq('profile_id', profile?.id ?? '')
+        .in('type', ['squad_chat_unread', 'rally_chat_unread', 'chat_unread'])
+        .filter('data->>chat_id', 'eq', chatId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications', profile?.id] });
+    },
+  });
+}
+
 export function useDeleteNotification() {
   const queryClient = useQueryClient();
   const { profile } = useAuth();
