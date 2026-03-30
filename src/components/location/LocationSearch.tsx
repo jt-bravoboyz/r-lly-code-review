@@ -467,7 +467,7 @@ export function LocationSearch({
 
           {/* Saved Locations Dropdown */}
           {showSavedLocations && savedLocations.length > 0 && !showResults && (
-            <div className="absolute z-50 w-full mt-1 bg-popover border rounded-lg shadow-lg overflow-hidden">
+            <div className="location-search-overlay absolute z-50 w-full mt-1 bg-popover border rounded-lg shadow-lg overflow-hidden">
               <div className="p-2 border-b bg-muted/50">
                 <p className="text-xs font-medium text-muted-foreground">Saved Locations</p>
               </div>
@@ -497,7 +497,7 @@ export function LocationSearch({
 
           {/* Results dropdown */}
           {showResults && results.length > 0 && (
-            <div className="absolute z-50 w-full mt-1 bg-popover border rounded-lg shadow-lg overflow-hidden">
+            <div className="location-search-overlay absolute z-50 w-full mt-1 bg-popover border rounded-lg shadow-lg overflow-hidden">
               <ScrollArea className="max-h-72">
                 {results.map((result) => (
                   <button
@@ -546,7 +546,7 @@ export function LocationSearch({
 
           {/* No results message */}
           {showResults && query.length >= 2 && results.length === 0 && !isSearching && (
-            <div className="absolute z-50 w-full mt-1 bg-popover border rounded-lg shadow-lg p-4 text-center">
+            <div className="location-search-overlay absolute z-50 w-full mt-1 bg-popover border rounded-lg shadow-lg p-4 text-center">
               <p className="text-sm text-muted-foreground">No locations found</p>
               <p className="text-xs text-muted-foreground mt-1">Try a different search term</p>
             </div>
