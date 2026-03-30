@@ -2,6 +2,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { ChatView } from './ChatView';
 import { useSquadChat } from '@/hooks/useSquadChat';
 import { getSquadIcon, type SquadSymbol } from '@/components/squads/SquadSymbolPicker';
+import { ArrowLeft } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface SquadChatSheetProps {
   squadId: string;
