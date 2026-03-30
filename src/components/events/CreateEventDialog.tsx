@@ -380,6 +380,9 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
               )}
             />
 
+            </div>
+
+            <div ref={reviewRef}>
             {/* Advanced options - collapsed by default */}
             <Collapsible>
               <CollapsibleTrigger asChild>
