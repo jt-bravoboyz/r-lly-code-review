@@ -9,6 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { useClearChatNotification } from '@/hooks/useNotifications';
 
 interface EventChatProps {
   eventId: string;
@@ -29,6 +30,7 @@ export function EventChat({ eventId, eventTitle, eventStatus }: EventChatProps) 
   const { profile } = useAuth();
   const { chat, messages, isLoading } = useEventChat(eventId);
   const sendMessage = useSendMessage();
+  const clearChatNotification = useClearChatNotification();
 
   const activeProfile = profile;
 
@@ -38,6 +40,11 @@ export function EventChat({ eventId, eventTitle, eventStatus }: EventChatProps) 
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
+
+  useEffect(() => {
+    if (!chat?.id) return;
+    clearChatNotification.mutate(chat.id);
+  }, [chat?.id]);
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

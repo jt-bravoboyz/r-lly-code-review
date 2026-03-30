@@ -9,6 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { useClearChatNotification } from '@/hooks/useNotifications';
 
 interface ChatViewProps {
   chatId: string;
@@ -38,6 +39,12 @@ export function ChatView({ chatId, messages, isLoading, storagePath = 'general' 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { profile } = useAuth();
   const sendMessage = useSendMessage();
+  const clearChatNotification = useClearChatNotification();
+
+  useEffect(() => {
+    if (!chatId) return;
+    clearChatNotification.mutate(chatId);
+  }, [chatId]);
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {

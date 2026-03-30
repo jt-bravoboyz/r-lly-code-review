@@ -67,7 +67,13 @@ export default function Notifications() {
     if (notification.type === 'rally_started' && data?.event_id) {
       navigate(`/events/${data.event_id}`);
     } else if ((notification.type === 'squad_chat_unread' || notification.type === 'rally_chat_unread' || notification.type === 'chat_unread') && data?.chat_id) {
-      navigate(`/chat?id=${data.chat_id}`);
+      if (data?.event_id) {
+        navigate(`/events/${data.event_id}?tab=chat&chat=${data.chat_id}`);
+      } else if (data?.squad_id) {
+        navigate(`/squads/${data.squad_id}?chat=${data.chat_id}`);
+      } else {
+        navigate(`/chat?id=${data.chat_id}`);
+      }
     }
   };
 

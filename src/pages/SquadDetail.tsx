@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Camera, MessageCircle, UserPlus, Zap, Trash2, Crown, Calendar, MapPin, Users, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -34,6 +34,7 @@ import {
 export default function SquadDetail() {
   const { squadId } = useParams<{ squadId: string }>();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { profile } = useAuth();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -107,6 +108,21 @@ export default function SquadDetail() {
     ? `${signedGroupPhotoUrl}${signedGroupPhotoUrl.includes('?') ? '&' : '?'}v=${photoVersion}`
     : null;
 
+  useEffect(() => {
+    if (searchParams.get('chat')) {
+      setChatOpen(true);
+    }
+  }, [searchParams]);
+
+  const isOwner = squad?.owner_id === profile?.id;
+  const Icon = getSquadIcon((squad?.symbol || 'shield') as SquadSymbol);
+  const allMembers = squad
+    ? [
+        { profile_id: squad.owner_id, profile: squad.owner_profile, isOwner: true, added_at: squad.created_at },
+        ...(squad.members || []).map(m => ({ ...m, isOwner: false }))
+      ]
+    : [];
+
   if (isLoading) {
     return (
       <div className="min-h-[100dvh] bg-gradient-to-b from-background to-muted flex items-center justify-center">
@@ -124,13 +140,6 @@ export default function SquadDetail() {
       </div>
     );
   }
-
-  const isOwner = squad.owner_id === profile?.id;
-  const Icon = getSquadIcon((squad.symbol || 'shield') as SquadSymbol);
-  const allMembers = [
-    { profile_id: squad.owner_id, profile: squad.owner_profile, isOwner: true, added_at: squad.created_at },
-    ...(squad.members || []).map(m => ({ ...m, isOwner: false }))
-  ];
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -224,6 +233,16 @@ export default function SquadDetail() {
     await queryClient.invalidateQueries({ queryKey: ['rally-media'] });
     toast.success('Squad refreshed');
     setRefreshing(false);
+  };
+
+  const handleChatOpenChange = (open: boolean) => {
+    setChatOpen(open);
+
+    if (!open && searchParams.get('chat')) {
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete('chat');
+      setSearchParams(nextParams, { replace: true });
+    }
   };
 
   return (
@@ -527,7 +546,7 @@ export default function SquadDetail() {
         squadName={squad.name}
         squadSymbol={squad.symbol}
         open={chatOpen}
-        onOpenChange={setChatOpen}
+        onOpenChange={handleChatOpenChange}
       />
 
       <BottomNav />
