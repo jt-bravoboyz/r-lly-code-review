@@ -234,6 +234,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
                   <button
                     type="button"
                     onClick={() => {
+                      if (section === 'details') setOptionalOpen(true);
                       const ref = section === 'essentials' ? essentialsRef : section === 'details' ? detailsRef : reviewRef;
                       ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     }}
