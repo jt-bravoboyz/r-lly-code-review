@@ -109,8 +109,8 @@ export function EndRallyDialog({ eventId, open, onOpenChange, onCompleted }: End
 
         <div className="space-y-4 py-4 w-full min-w-0 overflow-hidden">
           {/* After R@lly Option */}
-          <div className="relative p-3 rounded-lg bg-[hsl(270,60%,20%)] space-y-3 w-full min-w-0 box-border overflow-hidden after-rally-glow-border">
-            <div className="flex items-start gap-2">
+          <div className="relative p-3 rounded-lg bg-[hsl(270,60%,20%)] space-y-3 w-full min-w-0 box-border overflow-clip after-rally-glow-border">
+            <div className="flex items-start gap-2 relative z-10">
               <div className="w-8 h-8 rounded-full bg-[hsl(270,60%,50%)]/20 flex items-center justify-center shrink-0">
                 <Moon className="h-4 w-4 text-[hsl(270,60%,50%)]" />
               </div>
@@ -123,7 +123,7 @@ export function EndRallyDialog({ eventId, open, onOpenChange, onCompleted }: End
             </div>
             
             {/* Single Location Field */}
-            <div className="space-y-2 w-full overflow-visible relative">
+            <div className="space-y-2 w-full overflow-visible relative z-10">
               <Label className="flex items-center gap-2 text-xs text-gray-200">
                 <MapPin className="h-3 w-3 shrink-0" />
                 <span>After R@lly Spot</span>
@@ -159,7 +159,7 @@ export function EndRallyDialog({ eventId, open, onOpenChange, onCompleted }: End
             </div>
 
             <Button
-              className="w-full bg-[hsl(270,60%,50%)] hover:bg-[hsl(270,60%,40%)] text-white text-sm"
+              className="w-full bg-[hsl(270,60%,50%)] hover:bg-[hsl(270,60%,40%)] text-white text-sm relative z-10"
               onClick={handleAfterRally}
               disabled={isLoading || !selectedLocation}
             >

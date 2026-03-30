@@ -378,40 +378,42 @@
 
   /* Rotating glow border for After R@lly card */
   .after-rally-glow-border {
-    border: 2px solid hsl(270 60% 50% / 0.4);
+    border: 2px solid hsl(270 60% 50% / 0.3);
+    isolation: isolate;
   }
   .after-rally-glow-border::before {
     content: '';
     position: absolute;
-    inset: -2px;
-    border-radius: inherit;
-    padding: 2px;
+    top: 50%;
+    left: 50%;
+    width: 200%;
+    height: 200%;
     background: conic-gradient(
-      from var(--glow-angle, 0deg),
       hsl(270 80% 70% / 0) 0%,
-      hsl(270 80% 70% / 0.8) 10%,
-      hsl(280 90% 75% / 1) 15%,
-      hsl(270 80% 70% / 0.8) 20%,
-      hsl(270 80% 70% / 0) 30%
+      hsl(270 80% 70% / 0) 40%,
+      hsl(280 90% 80% / 0.9) 48%,
+      hsl(270 100% 75% / 1) 50%,
+      hsl(280 90% 80% / 0.9) 52%,
+      hsl(270 80% 70% / 0) 60%,
+      hsl(270 80% 70% / 0) 100%
     );
-    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    mask-composite: exclude;
-    -webkit-mask-composite: xor;
-    animation: glow-rotate 3s linear infinite;
+    animation: glow-spin 3s linear infinite;
     pointer-events: none;
-    z-index: 1;
+    z-index: -1;
+    border-radius: inherit;
+  }
+  .after-rally-glow-border::after {
+    content: '';
+    position: absolute;
+    inset: 2px;
+    background: hsl(270 60% 20%);
+    border-radius: calc(0.5rem - 2px);
+    z-index: -1;
   }
 
-  @keyframes glow-rotate {
-    from { --glow-angle: 0deg; }
-    to { --glow-angle: 360deg; }
-  }
-
-  @property --glow-angle {
-    syntax: '<angle>';
-    initial-value: 0deg;
-    inherits: false;
+  @keyframes glow-spin {
+    from { transform: translate(-50%, -50%) rotate(0deg); }
+    to { transform: translate(-50%, -50%) rotate(360deg); }
   }
 
   /* Dusk to Midnight transition overlay - smooth top-to-bottom gradient */
