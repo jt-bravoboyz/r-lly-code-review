@@ -124,7 +124,7 @@ export function EndRallyDialog({ eventId, open, onOpenChange, onCompleted }: End
             
             {/* Single Location Field */}
             <div className="space-y-2 w-full overflow-visible relative">
-              <Label className="flex items-center gap-2 text-xs">
+              <Label className="flex items-center gap-2 text-xs text-gray-200">
                 <MapPin className="h-3 w-3 shrink-0" />
                 <span>After R@lly Spot</span>
                 <span className="text-destructive shrink-0">*</span>
