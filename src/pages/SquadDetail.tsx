@@ -282,7 +282,7 @@ export default function SquadDetail() {
                   <img 
                     src={displayGroupPhotoUrl}
                     alt="Squad group photo"
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+                    className="w-full h-full object-contain bg-black"
                     onLoad={() => setPhotoLoadFailed(false)}
                     onError={() => setPhotoLoadFailed(true)}
                   />
