@@ -48,6 +48,9 @@ export const EmailChangeEmail = ({
         <Text style={footer}>
           Didn't request this? Please secure your account immediately.
         </Text>
+        <Text style={socialFooter}>
+          <Link href="https://instagram.com/asap.rally" style={socialLink}>Follow us @asap.rally</Link>
+        </Text>
       </Container>
     </Body>
   </Html>
