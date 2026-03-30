@@ -96,3 +96,5 @@ const button = {
   margin: '12px 0 0',
 }
 const footer = { fontSize: '12px', color: '#999999', margin: '32px 0 0' }
+const socialFooter = { fontSize: '12px', color: '#999999', margin: '8px 0 0', textAlign: 'center' as const }
+const socialLink = { color: '#F47A19', textDecoration: 'none' }
