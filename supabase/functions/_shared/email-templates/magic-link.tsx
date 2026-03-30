@@ -30,7 +30,7 @@ export const MagicLinkEmail = ({
     <Preview>Your R@lly login link is here 🔑</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Img src={LOGO_URL} alt="R@lly" width="120" height="40" style={logoStyle} />
+        <Img src={LOGO_URL} alt="R@lly" width="60" height="60" style={logoStyle} />
         <Heading style={h1}>Your login link</Heading>
         <Text style={text}>
           Tap below to jump right into {siteName}. This link expires shortly, so
