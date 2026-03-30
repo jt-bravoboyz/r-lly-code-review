@@ -291,7 +291,9 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
                 </FormItem>
               )}
             />
+            </div>
 
+            <div ref={detailsRef}>
             {/* Date Picker */}
             <FormField
               control={form.control}
