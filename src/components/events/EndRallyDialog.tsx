@@ -109,7 +109,7 @@ export function EndRallyDialog({ eventId, open, onOpenChange, onCompleted }: End
 
         <div className="space-y-4 py-4 w-full min-w-0 overflow-hidden">
           {/* After R@lly Option */}
-          <div className="p-3 rounded-lg border-2 border-[hsl(270,60%,70%)] bg-[hsl(270,60%,20%)] space-y-3 w-full min-w-0 box-border">
+          <div className="relative p-3 rounded-lg bg-[hsl(270,60%,20%)] space-y-3 w-full min-w-0 box-border overflow-hidden after-rally-glow-border">
             <div className="flex items-start gap-2">
               <div className="w-8 h-8 rounded-full bg-[hsl(270,60%,50%)]/20 flex items-center justify-center shrink-0">
                 <Moon className="h-4 w-4 text-[hsl(270,60%,50%)]" />
