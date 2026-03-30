@@ -109,14 +109,14 @@ export function EndRallyDialog({ eventId, open, onOpenChange, onCompleted }: End
 
         <div className="space-y-4 py-4 w-full min-w-0 overflow-hidden">
           {/* After R@lly Option */}
-          <div className="p-3 rounded-lg border-2 border-[hsl(270,60%,70%)] bg-[hsl(270,60%,95%)] space-y-3 w-full min-w-0 box-border">
+          <div className="p-3 rounded-lg border-2 border-[hsl(270,60%,70%)] bg-[hsl(270,60%,20%)] space-y-3 w-full min-w-0 box-border">
             <div className="flex items-start gap-2">
               <div className="w-8 h-8 rounded-full bg-[hsl(270,60%,50%)]/20 flex items-center justify-center shrink-0">
                 <Moon className="h-4 w-4 text-[hsl(270,60%,50%)]" />
               </div>
               <div className="min-w-0 flex-1">
-                <div className="font-semibold font-montserrat text-sm">Start After R@lly</div>
-                <p className="text-xs text-muted-foreground">
+                <div className="font-semibold font-montserrat text-sm text-white">Start After R@lly</div>
+                <p className="text-xs text-gray-300">
                   Continue the night at a new spot!
                 </p>
               </div>
@@ -124,7 +124,7 @@ export function EndRallyDialog({ eventId, open, onOpenChange, onCompleted }: End
             
             {/* Single Location Field */}
             <div className="space-y-2 w-full overflow-visible relative">
-              <Label className="flex items-center gap-2 text-xs">
+              <Label className="flex items-center gap-2 text-xs text-gray-200">
                 <MapPin className="h-3 w-3 shrink-0" />
                 <span>After R@lly Spot</span>
                 <span className="text-destructive shrink-0">*</span>
