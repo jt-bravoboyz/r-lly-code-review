@@ -35,7 +35,7 @@ export const SignupEmail = ({
     <Preview>You're in. Your account is live. 🟠</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Img src={LOGO_URL} alt="R@lly" width="120" height="40" style={logoStyle} />
+        <Img src={LOGO_URL} alt="R@lly" width="60" height="60" style={logoStyle} />
         <Heading style={h1}>You're in.</Heading>
         <Text style={subheading}>Your account is live.</Text>
         <Text style={text}>
