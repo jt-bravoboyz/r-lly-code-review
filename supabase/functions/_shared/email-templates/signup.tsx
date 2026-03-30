@@ -65,7 +65,7 @@ export default SignupEmail
 
 const main = { backgroundColor: '#ffffff', fontFamily: "'Montserrat', Arial, sans-serif" }
 const container = { padding: '32px 28px' }
-const logoStyle = { margin: '0 auto 24px', display: 'block' as const }
+const logoStyle = { margin: '0 auto 24px', display: 'block' as const, borderRadius: '50%' }
 const h1 = {
   fontSize: '24px',
   fontWeight: 'bold' as const,
