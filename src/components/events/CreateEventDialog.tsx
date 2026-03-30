@@ -189,19 +189,26 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Create a R@lly</DialogTitle>
-          <p className="text-sm text-muted-foreground">Set up your R@lly in under 30 seconds.</p>
-        </DialogHeader>
+      <DialogContent className="max-h-[90vh] overflow-y-auto p-0 border-0 bg-transparent shadow-none [&>button]:hidden">
+        <div className="rally-create-glow-wrapper">
+          <div className="rally-create-inner p-6 space-y-5">
+            {/* Header */}
+            <div className="text-center space-y-1.5 pt-1">
+              <h2 className="text-xl font-bold tracking-tight text-foreground font-montserrat">
+                Create a R@lly
+              </h2>
+              <p className="text-xs text-muted-foreground/70 font-montserrat tracking-wide">
+                Set up your R@lly in under 30 seconds.
+              </p>
+            </div>
 
-        <div className="flex items-center justify-center gap-2 text-[10px] text-muted-foreground font-montserrat uppercase tracking-wider pb-1">
-          <span>Details</span>
-          <span className="text-border">·</span>
-          <span>Time & Place</span>
-          <span className="text-border">·</span>
-          <span>Review</span>
-        </div>
+            <div className="flex items-center justify-center gap-2 text-[10px] text-muted-foreground/50 font-montserrat uppercase tracking-[0.2em]">
+              <span>Details</span>
+              <span className="text-primary/30">·</span>
+              <span>Time & Place</span>
+              <span className="text-primary/30">·</span>
+              <span>Review</span>
+            </div>
         
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
