@@ -26,13 +26,16 @@ export function SquadChatSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-md p-0 flex flex-col">
+      <SheetContent side="right" className="w-full sm:max-w-md p-0 flex flex-col [&>button]:hidden">
         <SheetHeader className="p-4 border-b">
           <SheetTitle className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => onOpenChange(false)}>
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
               <Icon className="h-4 w-4 text-primary" />
             </div>
-            <span>{squadName}</span>
+            <span className="truncate">{squadName}</span>
             {chat?.linked_event_id && (
               <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full">
                 Live Rally
