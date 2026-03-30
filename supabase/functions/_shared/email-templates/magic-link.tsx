@@ -42,6 +42,9 @@ export const MagicLinkEmail = ({
         <Text style={footer}>
           Didn't request this? No action needed—just ignore this email.
         </Text>
+        <Text style={socialFooter}>
+          <Link href="https://instagram.com/asap.rally" style={socialLink}>Follow us @asap.rally</Link>
+        </Text>
       </Container>
     </Body>
   </Html>
