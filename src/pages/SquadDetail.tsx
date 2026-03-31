@@ -78,6 +78,22 @@ export default function SquadDetail() {
       ]
     : [];
 
+  const handleMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !squadId) return;
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file');
+      return;
+    }
+    try {
+      await addSquadMedia.mutateAsync({ squadId, file });
+      toast.success('Photo added to squad gallery!');
+    } catch {
+      toast.error('Failed to upload photo');
+    }
+    e.target.value = '';
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-[100dvh] bg-gradient-to-b from-background to-muted flex items-center justify-center">
