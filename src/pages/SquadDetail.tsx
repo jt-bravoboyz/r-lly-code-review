@@ -394,7 +394,7 @@ export default function SquadDetail() {
                           {member.isOwner && (
                             <Badge variant="secondary" className="gap-1 text-xs">
                               <Crown className="h-3 w-3" />
-                              Owner
+                              Captain
                             </Badge>
                           )}
                         </p>
