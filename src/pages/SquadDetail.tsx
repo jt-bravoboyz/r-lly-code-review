@@ -43,9 +43,12 @@ export default function SquadDetail() {
   
   const { data: squad, isLoading } = useSquadDetail(squadId);
   const { data: eventHistory } = useSquadEventHistory(squadId);
+  const { data: squadMedia } = useSquadMedia(squadId);
   const updatePhoto = useUpdateSquadPhoto();
+  const addSquadMedia = useAddSquadMedia();
   const deleteSquad = useDeleteSquad();
   const removeMember = useRemoveSquadMember();
+  const mediaInputRef = useRef<HTMLInputElement>(null);
   const [refreshing, setRefreshing] = useState(false);
   
   const [chatOpen, setChatOpen] = useState(false);
