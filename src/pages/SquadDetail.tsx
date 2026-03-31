@@ -33,6 +33,38 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
+const SQUAD_IMAGE_PUBLIC_PREFIX = '/storage/v1/object/public/squad-images/';
+const SQUAD_IMAGE_SIGNED_PREFIX = '/storage/v1/object/sign/squad-images/';
+
+const withCacheBuster = (url: string, version: number) => {
+  try {
+    const parsed = new URL(url);
+    parsed.searchParams.set('v', String(version));
+    return parsed.toString();
+  } catch {
+    const joiner = url.includes('?') ? '&' : '?';
+    return `${url}${joiner}v=${version}`;
+  }
+};
+
+const getSquadImagePathFromUrl = (url: string) => {
+  try {
+    const parsed = new URL(url);
+
+    if (parsed.pathname.startsWith(SQUAD_IMAGE_PUBLIC_PREFIX)) {
+      return decodeURIComponent(parsed.pathname.slice(SQUAD_IMAGE_PUBLIC_PREFIX.length));
+    }
+
+    if (parsed.pathname.startsWith(SQUAD_IMAGE_SIGNED_PREFIX)) {
+      return decodeURIComponent(parsed.pathname.slice(SQUAD_IMAGE_SIGNED_PREFIX.length));
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+};
+
 export default function SquadDetail() {
   const { squadId } = useParams<{ squadId: string }>();
   const navigate = useNavigate();
@@ -58,16 +90,33 @@ export default function SquadDetail() {
   
   const [photoVersion, setPhotoVersion] = useState(() => Date.now());
   const [photoLoadFailed, setPhotoLoadFailed] = useState(false);
+  const [resolvedGroupPhotoUrl, setResolvedGroupPhotoUrl] = useState<string | null>(null);
+  const [photoFallbackStage, setPhotoFallbackStage] = useState<0 | 1 | 2>(0);
+  const [loadingSignedPhoto, setLoadingSignedPhoto] = useState(false);
 
-  const displayGroupPhotoUrl = squad?.group_photo_url
-    ? `${squad.group_photo_url}?v=${photoVersion}`
-    : null;
+  const baseGroupPhotoUrl = squad?.group_photo_url ?? null;
+  const displayGroupPhotoUrl = resolvedGroupPhotoUrl;
 
   useEffect(() => {
     if (searchParams.get('chat')) {
       setChatOpen(true);
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    if (!baseGroupPhotoUrl) {
+      setResolvedGroupPhotoUrl(null);
+      setPhotoFallbackStage(0);
+      setLoadingSignedPhoto(false);
+      setPhotoLoadFailed(false);
+      return;
+    }
+
+    setResolvedGroupPhotoUrl(withCacheBuster(baseGroupPhotoUrl, photoVersion));
+    setPhotoFallbackStage(0);
+    setLoadingSignedPhoto(false);
+    setPhotoLoadFailed(false);
+  }, [baseGroupPhotoUrl, photoVersion]);
 
   const isOwner = squad?.owner_id === profile?.id;
   const Icon = getSquadIcon((squad?.symbol || 'shield') as SquadSymbol);
@@ -199,11 +248,58 @@ export default function SquadDetail() {
   };
   const handleRefreshSquad = async () => {
     setRefreshing(true);
+    setPhotoVersion(Date.now());
+    setPhotoLoadFailed(false);
     await queryClient.invalidateQueries({ queryKey: ['squad-detail', squadId] });
     await queryClient.invalidateQueries({ queryKey: ['squad-event-history', squadId] });
     await queryClient.invalidateQueries({ queryKey: ['rally-media'] });
     toast.success('Squad refreshed');
     setRefreshing(false);
+  };
+
+  const resolveGroupPhotoFallback = async () => {
+    if (!baseGroupPhotoUrl) {
+      setPhotoLoadFailed(true);
+      return;
+    }
+
+    if (photoFallbackStage === 0) {
+      setResolvedGroupPhotoUrl(baseGroupPhotoUrl);
+      setPhotoFallbackStage(1);
+      return;
+    }
+
+    if (photoFallbackStage === 1 && !loadingSignedPhoto) {
+      const storagePath = getSquadImagePathFromUrl(baseGroupPhotoUrl);
+
+      if (!storagePath) {
+        setPhotoLoadFailed(true);
+        return;
+      }
+
+      setLoadingSignedPhoto(true);
+
+      const { data, error } = await supabase.storage
+        .from('squad-images')
+        .createSignedUrl(storagePath, 3600);
+
+      setLoadingSignedPhoto(false);
+
+      if (error || !data?.signedUrl) {
+        setPhotoLoadFailed(true);
+        return;
+      }
+
+      setResolvedGroupPhotoUrl(withCacheBuster(data.signedUrl, Date.now()));
+      setPhotoFallbackStage(2);
+      return;
+    }
+
+    setPhotoLoadFailed(true);
+  };
+
+  const handleGroupPhotoError = () => {
+    void resolveGroupPhotoFallback();
   };
 
   const handleChatOpenChange = (open: boolean) => {
@@ -262,11 +358,11 @@ export default function SquadDetail() {
                   <img 
                     src={displayGroupPhotoUrl}
                     alt="Squad group photo"
-                    className="w-full h-full object-contain bg-black"
+                    className="w-full h-full object-contain bg-muted"
                     onLoad={() => setPhotoLoadFailed(false)}
-                    onError={() => setPhotoLoadFailed(true)}
+                    onError={handleGroupPhotoError}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/10 pointer-events-none" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-background/20 via-transparent to-background/5 pointer-events-none" />
                   {photoLoadFailed && (
                     <div className="absolute inset-0 flex items-center justify-center bg-background/70 backdrop-blur-sm">
                       <Button variant="secondary" className="gap-2" onClick={handleRefreshSquad}>
