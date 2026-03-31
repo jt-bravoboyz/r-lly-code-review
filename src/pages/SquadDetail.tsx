@@ -235,6 +235,15 @@ export default function SquadDetail() {
               </p>
             </div>
           </div>
+          {isOwner && (
+            <SquadSettingsDialog
+              squadId={squad.id}
+              squadName={squad.name}
+              groupPhotoUrl={squad.group_photo_url || null}
+              members={allMembers}
+              onPhotoChange={() => fileInputRef.current?.click()}
+            />
+          )}
           <Button variant="ghost" size="icon" onClick={handleRefreshSquad} disabled={refreshing}>
             <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
           </Button>
