@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Camera, MessageCircle, UserPlus, Zap, Trash2, Crown, Calendar, MapPin, Users, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Camera, MessageCircle, UserPlus, Zap, Trash2, Crown, Calendar, MapPin, Users, RefreshCw, Plus, Image } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -11,10 +11,12 @@ import { Badge } from '@/components/ui/badge';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { SquadChatSheet } from '@/components/chat/SquadChatSheet';
 import { SquadInviteDialog } from '@/components/squads/SquadInviteDialog';
+import { SquadSettingsDialog } from '@/components/squads/SquadSettingsDialog';
 import { GroupPhotoCropperDialog } from '@/components/squads/GroupPhotoCropperDialog';
 import { getSquadIcon, type SquadSymbol } from '@/components/squads/SquadSymbolPicker';
 import { useSquadDetail, useUpdateSquadPhoto, useSquadEventHistory } from '@/hooks/useSquadDetail';
 import { useDeleteSquad, useRemoveSquadMember } from '@/hooks/useSquads';
+import { useSquadMedia, useAddSquadMedia } from '@/hooks/useSquadMedia';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -41,9 +43,12 @@ export default function SquadDetail() {
   
   const { data: squad, isLoading } = useSquadDetail(squadId);
   const { data: eventHistory } = useSquadEventHistory(squadId);
+  const { data: squadMedia } = useSquadMedia(squadId);
   const updatePhoto = useUpdateSquadPhoto();
+  const addSquadMedia = useAddSquadMedia();
   const deleteSquad = useDeleteSquad();
   const removeMember = useRemoveSquadMember();
+  const mediaInputRef = useRef<HTMLInputElement>(null);
   const [refreshing, setRefreshing] = useState(false);
   
   const [chatOpen, setChatOpen] = useState(false);
@@ -72,6 +77,22 @@ export default function SquadDetail() {
         ...(squad.members || []).map(m => ({ ...m, isOwner: false }))
       ]
     : [];
+
+  const handleMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !squadId) return;
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file');
+      return;
+    }
+    try {
+      await addSquadMedia.mutateAsync({ squadId, file });
+      toast.success('Photo added to squad gallery!');
+    } catch {
+      toast.error('Failed to upload photo');
+    }
+    e.target.value = '';
+  };
 
   if (isLoading) {
     return (
@@ -214,6 +235,15 @@ export default function SquadDetail() {
               </p>
             </div>
           </div>
+          {isOwner && (
+            <SquadSettingsDialog
+              squadId={squad.id}
+              squadName={squad.name}
+              groupPhotoUrl={squad.group_photo_url || null}
+              members={allMembers}
+              onPhotoChange={() => fileInputRef.current?.click()}
+            />
+          )}
           <Button variant="ghost" size="icon" onClick={handleRefreshSquad} disabled={refreshing}>
             <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
           </Button>
@@ -364,7 +394,7 @@ export default function SquadDetail() {
                           {member.isOwner && (
                             <Badge variant="secondary" className="gap-1 text-xs">
                               <Crown className="h-3 w-3" />
-                              Owner
+                              Captain
                             </Badge>
                           )}
                         </p>
@@ -404,6 +434,49 @@ export default function SquadDetail() {
                 </Card>
               ))}
             </div>
+          </div>
+
+          <Separator />
+
+          {/* Squad Gallery */}
+          <div>
+            <h2 className="font-semibold mb-3 flex items-center gap-2">
+              <Image className="h-4 w-4" />
+              Gallery
+              {(squadMedia && squadMedia.length > 0) && (
+                <Badge variant="outline" className="text-xs ml-auto">{squadMedia.length}</Badge>
+              )}
+            </h2>
+            <div className="grid grid-cols-3 gap-2">
+              {squadMedia?.map((media) => (
+                <div key={media.id} className="aspect-square rounded-lg overflow-hidden bg-muted">
+                  <img
+                    src={media.url}
+                    alt="Squad photo"
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                </div>
+              ))}
+              {/* Add photo button for members */}
+              <button
+                onClick={() => mediaInputRef.current?.click()}
+                className="aspect-square rounded-lg bg-muted/50 border-2 border-dashed border-muted-foreground/20 flex flex-col items-center justify-center gap-1 hover:bg-muted transition-colors"
+              >
+                <Plus className="h-5 w-5 text-muted-foreground/50" />
+                <span className="text-[10px] text-muted-foreground/50">Add</span>
+              </button>
+            </div>
+            <input
+              ref={mediaInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleMediaUpload}
+            />
+            {(!squadMedia || squadMedia.length === 0) && (
+              <p className="text-xs text-muted-foreground text-center mt-2">No gallery photos yet</p>
+            )}
           </div>
 
           <Separator />
