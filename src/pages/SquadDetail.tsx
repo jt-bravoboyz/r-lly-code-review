@@ -35,6 +35,9 @@ import {
 
 const SQUAD_IMAGE_PUBLIC_PREFIX = '/storage/v1/object/public/squad-images/';
 const SQUAD_IMAGE_SIGNED_PREFIX = '/storage/v1/object/sign/squad-images/';
+const SQUAD_IMAGE_RENDER_PREFIX = '/storage/v1/render/image/public/squad-images/';
+
+const encodeStoragePath = (path: string) => path.split('/').map(encodeURIComponent).join('/');
 
 const withCacheBuster = (url: string, version: number) => {
   try {
@@ -58,11 +61,39 @@ const getSquadImagePathFromUrl = (url: string) => {
     if (parsed.pathname.startsWith(SQUAD_IMAGE_SIGNED_PREFIX)) {
       return decodeURIComponent(parsed.pathname.slice(SQUAD_IMAGE_SIGNED_PREFIX.length));
     }
+
+    if (parsed.pathname.startsWith(SQUAD_IMAGE_RENDER_PREFIX)) {
+      return decodeURIComponent(parsed.pathname.slice(SQUAD_IMAGE_RENDER_PREFIX.length));
+    }
   } catch {
     return null;
   }
 
   return null;
+};
+
+const buildRenderedSquadImageUrl = (baseUrl: string, storagePath: string, version: number) => {
+  try {
+    const parsed = new URL(baseUrl);
+    parsed.pathname = `${SQUAD_IMAGE_RENDER_PREFIX}${encodeStoragePath(storagePath)}`;
+    parsed.search = '';
+    parsed.searchParams.set('width', '1600');
+    parsed.searchParams.set('quality', '85');
+    parsed.searchParams.set('v', String(version));
+    return parsed.toString();
+  } catch {
+    return withCacheBuster(baseUrl, version);
+  }
+};
+
+const getPreferredGroupPhotoUrl = (baseUrl: string, version: number) => {
+  const storagePath = getSquadImagePathFromUrl(baseUrl);
+
+  if (!storagePath) {
+    return withCacheBuster(baseUrl, version);
+  }
+
+  return buildRenderedSquadImageUrl(baseUrl, storagePath, version);
 };
 
 export default function SquadDetail() {
@@ -112,7 +143,7 @@ export default function SquadDetail() {
       return;
     }
 
-    setResolvedGroupPhotoUrl(withCacheBuster(baseGroupPhotoUrl, photoVersion));
+    setResolvedGroupPhotoUrl(getPreferredGroupPhotoUrl(baseGroupPhotoUrl, photoVersion));
     setPhotoFallbackStage(0);
     setLoadingSignedPhoto(false);
     setPhotoLoadFailed(false);
@@ -335,7 +366,7 @@ export default function SquadDetail() {
             <SquadSettingsDialog
               squadId={squad.id}
               squadName={squad.name}
-              groupPhotoUrl={squad.group_photo_url || null}
+              groupPhotoUrl={displayGroupPhotoUrl || squad.group_photo_url || null}
               members={allMembers}
               onPhotoChange={() => fileInputRef.current?.click()}
             />
