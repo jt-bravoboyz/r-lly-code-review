@@ -438,6 +438,49 @@ export default function SquadDetail() {
 
           <Separator />
 
+          {/* Squad Gallery */}
+          <div>
+            <h2 className="font-semibold mb-3 flex items-center gap-2">
+              <Image className="h-4 w-4" />
+              Gallery
+              {(squadMedia && squadMedia.length > 0) && (
+                <Badge variant="outline" className="text-xs ml-auto">{squadMedia.length}</Badge>
+              )}
+            </h2>
+            <div className="grid grid-cols-3 gap-2">
+              {squadMedia?.map((media) => (
+                <div key={media.id} className="aspect-square rounded-lg overflow-hidden bg-muted">
+                  <img
+                    src={media.url}
+                    alt="Squad photo"
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                </div>
+              ))}
+              {/* Add photo button for members */}
+              <button
+                onClick={() => mediaInputRef.current?.click()}
+                className="aspect-square rounded-lg bg-muted/50 border-2 border-dashed border-muted-foreground/20 flex flex-col items-center justify-center gap-1 hover:bg-muted transition-colors"
+              >
+                <Plus className="h-5 w-5 text-muted-foreground/50" />
+                <span className="text-[10px] text-muted-foreground/50">Add</span>
+              </button>
+            </div>
+            <input
+              ref={mediaInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleMediaUpload}
+            />
+            {(!squadMedia || squadMedia.length === 0) && (
+              <p className="text-xs text-muted-foreground text-center mt-2">No gallery photos yet</p>
+            )}
+          </div>
+
+          <Separator />
+
           {/* Previous Events Section */}
           <div>
             <h2 className="font-semibold mb-3 flex items-center gap-2">
