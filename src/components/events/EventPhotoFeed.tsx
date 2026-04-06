@@ -63,7 +63,7 @@ export function EventPhotoFeed({ eventId, isHost }: EventPhotoFeedProps) {
         table: 'rally_media',
         filter: `event_id=eq.${eventId}`,
       }, () => {
-        queryClient.invalidateQueries({ queryKey: ['rally-media', eventId] });
+        queryClient.invalidateQueries({ queryKey: ['rally-media-gallery', eventId] });
       })
       .subscribe();
 
