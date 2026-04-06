@@ -454,10 +454,12 @@ export default function Profile() {
                       badge={badge}
                       progress={{ 
                         current: badge.progress_count, 
-                        required: badge.requirement_count, 
+                        required: badge.nextTierThreshold, 
                         isEarned: true 
                       }}
+                      tierLevel={badge.current_tier_level}
                       size="sm"
+                      showProgress={false}
                     />
                   ))}
                 </div>
