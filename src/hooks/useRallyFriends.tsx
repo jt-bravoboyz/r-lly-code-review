@@ -7,6 +7,7 @@ export interface RallyFriend {
   display_name: string | null;
   avatar_url: string | null;
   isSquadMate: boolean;
+  isReferral: boolean;
   squadSymbols: { squadId: string; squadName: string; symbol: string }[];
 }
 
