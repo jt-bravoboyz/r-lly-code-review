@@ -132,7 +132,7 @@ export default function EventDetail() {
   
   // ARCH-4: Use consolidated hook instead of inline query
   // ARCH-2: DB flags for gating instead of sessionStorage
-  const { data: myAttendee, refetch: refetchMyAttendee } = useMyAttendeeStatus(id);
+  const { data: myAttendee, refetch: refetchMyAttendee, isLoading: isLoadingMyAttendee } = useMyAttendeeStatus(id);
   const { data: safetyComplete } = useIsEventSafetyComplete(id);
   
   // Auto-arrival detection for R@lly Home - only active after event ends
