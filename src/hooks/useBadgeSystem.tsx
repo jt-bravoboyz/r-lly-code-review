@@ -41,6 +41,7 @@ export interface UserActivityBadge {
   badge_key: string;
   progress_count: number;
   earned_at: string | null;
+  current_tier_level: number;
   updated_at: string;
 }
 
@@ -69,6 +70,25 @@ export interface PointRule {
   daily_cap: number | null;
 }
 
+// Activity badge tier constants
+export const ACTIVITY_BADGE_TIERS = [
+  { level: 0, name: 'Locked', multiplier: 0, bonus: 0, color: '#6B7280' },
+  { level: 1, name: 'Bronze', multiplier: 1, bonus: 25, color: '#CD7F32' },
+  { level: 2, name: 'Silver', multiplier: 5, bonus: 50, color: '#C0C0C0' },
+  { level: 3, name: 'Gold', multiplier: 15, bonus: 75, color: '#FFD700' },
+  { level: 4, name: 'Diamond', multiplier: 50, bonus: 100, color: '#57ADDD' },
+  { level: 5, name: 'Dark Matter', multiplier: 100, bonus: 150, color: '#FF50B5' },
+] as const;
+
+export function getActivityTierInfo(tierLevel: number) {
+  return ACTIVITY_BADGE_TIERS[tierLevel] || ACTIVITY_BADGE_TIERS[0];
+}
+
+export function getNextActivityTierInfo(tierLevel: number) {
+  if (tierLevel >= 5) return null;
+  return ACTIVITY_BADGE_TIERS[tierLevel + 1];
+}
+
 // Fetch all tier definitions
 export function useAllTiers() {
   return useQuery({
@@ -82,7 +102,7 @@ export function useAllTiers() {
       if (error) throw error;
       return data as BadgeTier[];
     },
-    staleTime: 1000 * 60 * 60, // Cache for 1 hour
+    staleTime: 1000 * 60 * 60,
   });
 }
 
@@ -125,19 +145,16 @@ export function useBadgeState() {
     enabled: !!user?.id,
   });
 
-  // Get current tier data
   const currentTier = useMemo(() => {
     if (!allTiers || !state?.current_tier_key) return null;
     return allTiers.find(t => t.tier_key === state.current_tier_key) || null;
   }, [allTiers, state]);
 
-  // Compute next tier client-side using sort_order
   const nextTier = useMemo(() => {
     if (!allTiers || !currentTier) return null;
     return allTiers.find(t => t.sort_order === currentTier.sort_order + 1) || null;
   }, [allTiers, currentTier]);
 
-  // Calculate progress percentage
   const progress = useMemo(() => {
     const totalPoints = state?.total_points || 0;
     
@@ -212,17 +229,31 @@ export function useActivityBadges() {
     enabled: !!user?.id,
   });
 
-  // Combine definitions with user progress
+  // Combine definitions with user progress, including tier info
   const badges = useMemo(() => {
     if (!definitions) return [];
 
     return definitions.map(badge => {
       const progress = userProgress?.find(p => p.badge_key === badge.badge_key);
+      const currentTierLevel = progress?.current_tier_level || 0;
+      const currentTierInfo = getActivityTierInfo(currentTierLevel);
+      const nextTierInfo = getNextActivityTierInfo(currentTierLevel);
+      
+      const nextTierThreshold = nextTierInfo 
+        ? badge.requirement_count * nextTierInfo.multiplier 
+        : badge.requirement_count * ACTIVITY_BADGE_TIERS[5].multiplier;
+
       return {
         ...badge,
         progress_count: progress?.progress_count || 0,
         earned_at: progress?.earned_at || null,
-        isEarned: !!progress?.earned_at,
+        isEarned: currentTierLevel >= 1,
+        current_tier_level: currentTierLevel,
+        currentTierName: currentTierInfo.name,
+        currentTierColor: currentTierInfo.color,
+        nextTierThreshold,
+        nextTierName: nextTierInfo?.name || null,
+        nextTierColor: nextTierInfo?.color || null,
       };
     });
   }, [definitions, userProgress]);
@@ -271,7 +302,6 @@ export function useTierUpListener(onTierUp: (data: TierUpData) => void) {
       }, async (payload) => {
         const historyId = payload.new.id as number;
         
-        // Check if already seen
         const { data: state } = await supabase
           .from('rly_user_badge_state')
           .select('last_seen_tier_history_id')
@@ -279,10 +309,9 @@ export function useTierUpListener(onTierUp: (data: TierUpData) => void) {
           .single();
 
         if (state?.last_seen_tier_history_id && state.last_seen_tier_history_id >= historyId) {
-          return; // Already seen this tier-up
+          return;
         }
 
-        // Fetch tier data
         const { data: tier } = await supabase
           .from('rly_badge_tiers')
           .select('*')
@@ -298,7 +327,6 @@ export function useTierUpListener(onTierUp: (data: TierUpData) => void) {
           });
         }
 
-        // Invalidate badge state to refresh
         queryClient.invalidateQueries({ queryKey: ['badge-state'] });
       })
       .subscribe();
@@ -309,7 +337,7 @@ export function useTierUpListener(onTierUp: (data: TierUpData) => void) {
   }, [user?.id, onTierUp, queryClient]);
 }
 
-// Mark tier-up as seen (call when modal closes)
+// Mark tier-up as seen
 export function useMarkTierSeen() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -331,7 +359,7 @@ export function useMarkTierSeen() {
   });
 }
 
-// Award points by user_id (for direct use when user.id is available)
+// Award points by user_id
 export function useAwardPoints() {
   const queryClient = useQueryClient();
 
@@ -364,7 +392,7 @@ export function useAwardPoints() {
   });
 }
 
-// Award points by profile_id (for hooks that only have profile_id)
+// Award points by profile_id
 export function useAwardPointsByProfile() {
   const queryClient = useQueryClient();
 

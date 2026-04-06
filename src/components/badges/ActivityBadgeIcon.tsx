@@ -1,6 +1,7 @@
 import { cn } from '@/lib/utils';
 import { Award, Check, Crown, Car, Shield, Megaphone, Star, Tag } from 'lucide-react';
 import DOMPurify from 'dompurify';
+import { getActivityTierInfo } from '@/hooks/useBadgeSystem';
 
 interface ActivityBadgeIconProps {
   badge: {
@@ -14,6 +15,7 @@ interface ActivityBadgeIconProps {
     required: number;
     isEarned: boolean;
   };
+  tierLevel?: number;
   size?: 'sm' | 'md' | 'lg';
   className?: string;
   showProgress?: boolean;
@@ -31,7 +33,6 @@ const iconSizeClasses = {
   lg: 'w-10 h-10',
 };
 
-// Fallback Lucide icons by badge_key
 const FALLBACK_ICONS: Record<string, React.ElementType> = {
   rally_commander: Crown,
   convoy_captain: Car,
@@ -44,17 +45,19 @@ const FALLBACK_ICONS: Record<string, React.ElementType> = {
 export function ActivityBadgeIcon({ 
   badge, 
   progress,
+  tierLevel = 0,
   size = 'md', 
   className,
   showProgress = true
 }: ActivityBadgeIconProps) {
   const isEarned = progress?.isEarned ?? false;
+  const tierInfo = getActivityTierInfo(tierLevel);
+  const tierColor = tierInfo.color;
   const progressPercent = progress 
     ? Math.min(100, (progress.current / progress.required) * 100) 
     : 0;
 
   const renderIcon = () => {
-    // Try to use SVG from database
     if (badge.icon_svg) {
       const sanitizedSvg = DOMPurify.sanitize(badge.icon_svg, {
         USE_PROFILES: { svg: true, svgFilters: true },
@@ -63,38 +66,39 @@ export function ActivityBadgeIcon({
       return (
         <div 
           className={cn(iconSizeClasses[size], 'flex items-center justify-center')}
-          style={{ color: isEarned ? 'hsl(var(--primary))' : 'currentColor' }}
+          style={{ color: isEarned ? tierColor : 'currentColor' }}
           dangerouslySetInnerHTML={{ __html: sanitizedSvg }}
         />
       );
     }
 
-    // Fallback to Lucide icon
     const FallbackIcon = FALLBACK_ICONS[badge.badge_key] || Award;
     return (
       <FallbackIcon 
-        className={cn(
-          iconSizeClasses[size],
-          isEarned ? 'text-primary' : 'text-muted-foreground'
-        )} 
+        className={cn(iconSizeClasses[size])}
+        style={{ color: isEarned ? tierColor : undefined }}
       />
     );
   };
 
-  // Calculate stroke-dasharray for progress ring
   const radius = size === 'sm' ? 18 : size === 'md' ? 26 : 38;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (progressPercent / 100) * circumference;
 
+  // Glow styles for Silver+ tiers
+  const glowStyle: React.CSSProperties = {};
+  if (tierLevel >= 2 && tierLevel < 5) {
+    glowStyle.boxShadow = `0 0 8px 2px ${tierColor}66`;
+  }
+
   return (
     <div className={cn('relative', sizeClasses[size], className)}>
-      {/* Progress ring (only when not earned and showProgress is true) */}
+      {/* Progress ring */}
       {showProgress && !isEarned && progress && (
         <svg 
           className="absolute inset-0 w-full h-full -rotate-90"
           viewBox={`0 0 ${(radius + 4) * 2} ${(radius + 4) * 2}`}
         >
-          {/* Background circle */}
           <circle
             cx={radius + 4}
             cy={radius + 4}
@@ -104,7 +108,6 @@ export function ActivityBadgeIcon({
             strokeWidth="3"
             className="text-muted"
           />
-          {/* Progress circle */}
           <circle
             cx={radius + 4}
             cy={radius + 4}
@@ -120,23 +123,76 @@ export function ActivityBadgeIcon({
         </svg>
       )}
 
+      {/* Progress ring for earned badges progressing to next tier */}
+      {showProgress && isEarned && progress && progressPercent < 100 && (
+        <svg 
+          className="absolute inset-0 w-full h-full -rotate-90"
+          viewBox={`0 0 ${(radius + 4) * 2} ${(radius + 4) * 2}`}
+        >
+          <circle
+            cx={radius + 4}
+            cy={radius + 4}
+            r={radius}
+            fill="none"
+            strokeWidth="3"
+            style={{ stroke: `${tierColor}33` }}
+          />
+          <circle
+            cx={radius + 4}
+            cy={radius + 4}
+            r={radius}
+            fill="none"
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            strokeDashoffset={strokeDashoffset}
+            style={{ stroke: tierColor }}
+            className="transition-all duration-500"
+          />
+        </svg>
+      )}
+
       {/* Badge background */}
       <div 
         className={cn(
           'absolute inset-1 rounded-full flex items-center justify-center',
-          isEarned 
-            ? 'bg-primary/15 border-2 border-primary/30' 
-            : 'bg-muted border-2 border-border'
+          !isEarned && 'bg-muted border-2 border-border',
+          tierLevel === 5 && 'dark-matter-glow'
         )}
+        style={{
+          ...(isEarned ? {
+            backgroundColor: `${tierColor}22`,
+            border: `2px solid ${tierColor}4D`,
+            ...glowStyle,
+          } : {}),
+        }}
       >
         {renderIcon()}
       </div>
 
-      {/* Earned checkmark */}
+      {/* Earned checkmark with tier color */}
       {isEarned && (
-        <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-primary flex items-center justify-center shadow-sm">
-          <Check className="w-3 h-3 text-primary-foreground" />
+        <div 
+          className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full flex items-center justify-center shadow-sm"
+          style={{ backgroundColor: tierColor }}
+        >
+          <Check className="w-3 h-3 text-white" />
         </div>
+      )}
+
+      {/* Dark Matter keyframes */}
+      {tierLevel === 5 && (
+        <style>{`
+          @keyframes darkMatterGlow {
+            0%, 100% { box-shadow: 0 0 10px 3px #F47A1966; }
+            25% { box-shadow: 0 0 10px 3px #FFD70066; }
+            50% { box-shadow: 0 0 10px 3px #57ADDD66; }
+            75% { box-shadow: 0 0 10px 3px #FF50B566; }
+          }
+          .dark-matter-glow {
+            animation: darkMatterGlow 4s ease-in-out infinite;
+          }
+        `}</style>
       )}
     </div>
   );
