@@ -132,7 +132,8 @@ export default function JoinSquad() {
       }
 
       toast.success(`Welcome to ${invite.squad.name}! 🎉`);
-      navigate(invite?.squad_id ? `/squads/${invite.squad_id}` : '/squads');
+      const squadId = (result?.squad_id as string) || invite?.squad_id;
+      navigate(squadId ? `/squads/${squadId}` : '/squads');
     } catch (err: any) {
       console.error('Error joining squad:', err);
       toast.error(err.message || 'Failed to join squad');

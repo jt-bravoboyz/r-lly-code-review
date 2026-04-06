@@ -242,7 +242,7 @@ export default function Auth() {
       }
     };
     
-    autoJoinRally();
+    autoJoinRallyOrSquad();
   }, [user, profile, navigate, joinEvent]);
 
   const clearErrors = () => setErrors({});
