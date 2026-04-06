@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { Play, X, Pencil, Trash2, GripVertical, ArrowUp, ArrowDown } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { useRallyMedia, useDeleteRallyMedia } from '@/hooks/useRallyMedia';
+import { useFeaturedMedia, useRallyMedia, useDeleteRallyMedia } from '@/hooks/useRallyMedia';
 import { RallyMediaUpload } from './RallyMediaUpload';
 import { Carousel, CarouselContent, CarouselItem, CarouselApi } from '@/components/ui/carousel';
 import { supabase } from '@/integrations/supabase/client';
