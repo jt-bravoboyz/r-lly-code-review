@@ -48,11 +48,11 @@ export default function Auth() {
     const params = new URLSearchParams(window.location.search);
     const r = params.get('r') || params.get('referrer') || params.get('invite');
     if (r) {
-      // Persist in sessionStorage so it survives the OAuth redirect
-      sessionStorage.setItem('rally-referrer-id', r);
+      // Persist in localStorage so it survives browser close + OAuth redirect
+      localStorage.setItem('rally-referrer-id', r);
       return r;
     }
-    return sessionStorage.getItem('rally-referrer-id') || null;
+    return localStorage.getItem('rally-referrer-id') || null;
   }, []);
 
   // Check if user has an account (set after first successful signup/signin)
