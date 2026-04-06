@@ -394,7 +394,7 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
                     </div>
                   ) : (
                     <p className="text-sm text-muted-foreground text-center py-4">
-                      No phone contacts synced yet.
+                      Nobody to r@lly? Try syncing your contacts.
                     </p>
                   )}
                 </CardContent>
