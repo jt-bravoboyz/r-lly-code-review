@@ -145,6 +145,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                   p_event_type: 'referral_signup',
                   p_source_id: profile.id,
                 });
+
+                // Notify the referrer in real-time
+                try {
+                  await supabase.from('notifications').insert({
+                    profile_id: referredBy,
+                    type: 'referral_reward',
+                    title: `${displayName} has joined R@lly! 10 points have been added to your account.`,
+                    body: 'Keep sharing to earn more rewards!',
+                    data: { referee_id: profile.id },
+                  });
+                } catch (ne) {
+                  console.error('Failed to send referral notification:', ne);
+                }
               } catch (pe) {
                 console.error('Failed to award referral points:', pe);
               }
