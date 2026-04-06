@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, createContext, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from './useAuth';
 
 export interface TutorialStep {
