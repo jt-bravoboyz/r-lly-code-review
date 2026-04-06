@@ -4,7 +4,7 @@ import { useParams, Navigate, Link, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { getEventTypeLabel, getEventTypeEmoji, getEventTypeVibe } from '@/lib/eventTypes';
 import { trackEvent } from '@/lib/analytics';
-import { ArrowLeft, Calendar, MapPin, Users, Beer, Check, X, MessageCircle, Navigation, Home, Plus, Zap, Crown, UserPlus, Car, Play, Moon, PartyPopper, Link2, CheckCircle2, Camera } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Users, Beer, Check, X, MessageCircle, Navigation, Home, Plus, Zap, Crown, UserPlus, Car, Play, Moon, PartyPopper, Link2, CheckCircle2, Camera, Settings2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { Header } from '@/components/layout/Header';
 import { BottomNav } from '@/components/layout/BottomNav';
@@ -94,7 +94,7 @@ export default function EventDetail() {
   const { data: eventDDs } = useEventDDs(id);
   const { data: cohosts } = useCohosts(id);
   useBarHopStopsRealtime(id); // Real-time updates for bar hop stops
-  const { latestAlert, dismissAlert, goRogue, submitReaction, reactions } = useRogueAlerts(id);
+  const { latestAlert, dismissAlert, goRogue, submitReaction, reactions, hasGoneRogue } = useRogueAlerts(id);
   const joinEvent = useJoinEvent();
   const leaveEvent = useLeaveEvent();
   const updateEvent = useUpdateEvent();
@@ -702,11 +702,30 @@ export default function EventDetail() {
           </section>
         )}
 
+        {/* Edit My Plan - visible during scheduled phase for attendees who completed join flow */}
+        {isScheduled && isAttending && hasCompletedJoinFlow && (
+          <Button
+            variant="outline"
+            className="w-full font-montserrat font-bold"
+            onClick={() => setShowTransportSelector(true)}
+          >
+            <Settings2 className="h-5 w-5 mr-2" />
+            Edit My Plan
+          </Button>
+        )}
+
         {/* Going Rogue Button - visible during live/after rally for attendees */}
         {(isLive || isAfterRally) && isAttending && (
           <GoingRogueButton
-            onGoRogue={(finalWords) => goRogue.mutateAsync(finalWords)}
+            onGoRogue={async (finalWords) => {
+              const result = await goRogue.mutateAsync(finalWords);
+              // Reset one-shot guard so safety modal re-triggers
+              joinFlowFiredRef.current = false;
+              queryClient.invalidateQueries({ queryKey: ['my-attendee-status', id] });
+              return result;
+            }}
             isPending={goRogue.isPending}
+            hasGoneRogue={hasGoneRogue}
           />
         )}
 

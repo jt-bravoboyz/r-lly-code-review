@@ -14,9 +14,10 @@ import { toast } from 'sonner';
 interface GoingRogueButtonProps {
   onGoRogue: (finalWords?: string) => Promise<any>;
   isPending: boolean;
+  hasGoneRogue: boolean;
 }
 
-export function GoingRogueButton({ onGoRogue, isPending }: GoingRogueButtonProps) {
+export function GoingRogueButton({ onGoRogue, isPending, hasGoneRogue }: GoingRogueButtonProps) {
   const [open, setOpen] = useState(false);
   const [finalWords, setFinalWords] = useState('');
 
@@ -31,11 +32,24 @@ export function GoingRogueButton({ onGoRogue, isPending }: GoingRogueButtonProps
     }
   };
 
+  if (hasGoneRogue) {
+    return (
+      <Button
+        variant="outline"
+        disabled
+        className="w-full border-red-500/30 text-red-400/60 bg-red-500/5 font-montserrat font-bold cursor-default shadow-[inset_0_0_12px_rgba(239,68,68,0.08)]"
+      >
+        <Flame className="h-5 w-5 mr-2 opacity-60" />
+        Gone Rogue 🔥
+      </Button>
+    );
+  }
+
   return (
     <>
       <Button
         variant="outline"
-        className="w-full border-primary text-primary hover:bg-primary/10 font-montserrat font-bold transition-transform active:scale-[0.97]"
+        className="w-full border-red-500 text-red-500 hover:bg-red-500/10 font-montserrat font-bold transition-transform active:scale-[0.97]"
         onClick={() => setOpen(true)}
       >
         <Flame className="h-5 w-5 mr-2" />
@@ -45,8 +59,8 @@ export function GoingRogueButton({ onGoRogue, isPending }: GoingRogueButtonProps
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader className="text-center">
-            <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-2">
-              <Flame className="h-8 w-8 text-primary" />
+            <div className="mx-auto w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mb-2">
+              <Flame className="h-8 w-8 text-red-500" />
             </div>
             <DialogTitle className="text-xl font-bold font-montserrat">
               Going Rogue? 🔥
@@ -67,7 +81,7 @@ export function GoingRogueButton({ onGoRogue, isPending }: GoingRogueButtonProps
 
           <div className="space-y-2 pt-2">
             <Button
-              className="w-full gradient-primary font-montserrat font-bold transition-transform active:scale-[0.97]"
+              className="w-full bg-red-500 hover:bg-red-600 text-white font-montserrat font-bold transition-transform active:scale-[0.97]"
               onClick={handleConfirm}
               disabled={isPending}
             >

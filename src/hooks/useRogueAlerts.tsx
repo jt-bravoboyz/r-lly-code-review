@@ -102,6 +102,9 @@ export function useRogueAlerts(eventId: string | undefined) {
     return () => { supabase.removeChannel(channel); };
   }, [eventId, profile?.id, queryClient]);
 
+  // Computed: has the current user already gone rogue for this event?
+  const hasGoneRogue = alerts.some(a => a.profile_id === profile?.id);
+
   // Go rogue mutation
   const goRogue = useMutation({
     mutationFn: async (finalWords?: string) => {
@@ -112,6 +115,18 @@ export function useRogueAlerts(eventId: string | undefined) {
         .select('*')
         .single();
       if (error) throw error;
+
+      // Reset safety plan so the user is re-prompted
+      await supabase
+        .from('event_attendees')
+        .update({
+          arrival_transport_mode: null,
+          not_participating_rally_home_confirmed: false,
+          needs_ride: false,
+          location_prompt_shown: false,
+        })
+        .eq('event_id', eventId)
+        .eq('profile_id', profile.id);
 
       // Send push notification to event attendees
       try {
@@ -162,5 +177,6 @@ export function useRogueAlerts(eventId: string | undefined) {
     dismissAlert,
     goRogue,
     submitReaction,
+    hasGoneRogue,
   };
 }
