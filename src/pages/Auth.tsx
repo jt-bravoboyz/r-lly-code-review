@@ -46,7 +46,7 @@ export default function Auth() {
   // Capture referral param from URL
   const referrerId = useMemo(() => {
     const params = new URLSearchParams(window.location.search);
-    const r = params.get('r');
+    const r = params.get('r') || params.get('referrer') || params.get('invite');
     if (r) {
       // Persist in sessionStorage so it survives the OAuth redirect
       sessionStorage.setItem('rally-referrer-id', r);

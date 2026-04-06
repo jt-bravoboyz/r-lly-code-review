@@ -131,7 +131,7 @@ export default function JoinSquad() {
       }
 
       toast.success(`Welcome to ${invite.squad.name}! 🎉`);
-      navigate('/squads');
+      navigate(invite?.squad_id ? `/squads/${invite.squad_id}` : '/squads');
     } catch (err: any) {
       console.error('Error joining squad:', err);
       toast.error(err.message || 'Failed to join squad');

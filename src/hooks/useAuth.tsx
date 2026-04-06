@@ -118,19 +118,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!error) {
       localStorage.setItem('rally-is-new-signup', 'true');
 
-      // Save referral attribution if present
+    // Save referral attribution if present — retry loop to handle profile trigger delay
       if (referredBy && signUpData?.user) {
-        // Update the profile with referred_by after a brief delay to ensure profile is created by trigger
-        setTimeout(async () => {
-          try {
-            await supabase
-              .from('profiles')
-              .update({ referred_by: referredBy } as any)
-              .eq('user_id', signUpData.user!.id);
-          } catch (e) {
-            console.error('Failed to save referral:', e);
+        const userId = signUpData.user.id;
+        (async () => {
+          for (let attempt = 0; attempt < 3; attempt++) {
+            await new Promise(r => setTimeout(r, 2000));
+            try {
+              const { data: profile } = await supabase
+                .from('profiles')
+                .select('id')
+                .eq('user_id', userId)
+                .maybeSingle();
+              if (!profile) continue;
+
+              const { error } = await supabase
+                .from('profiles')
+                .update({ referred_by: referredBy } as any)
+                .eq('user_id', userId);
+              if (error) { console.error('Referral update failed:', error); continue; }
+
+              // Award referrer points
+              try {
+                await supabase.rpc('rly_award_points', {
+                  p_user_id: referredBy,
+                  p_event_type: 'referral_signup',
+                  p_source_id: profile.id,
+                });
+              } catch (pe) {
+                console.error('Failed to award referral points:', pe);
+              }
+              break; // success
+            } catch (e) {
+              console.error('Referral save attempt failed:', e);
+            }
           }
-        }, 2000);
+        })();
       }
     }
     
