@@ -133,6 +133,9 @@ export default function AdminDashboard() {
             {/* Top Connectors */}
             <TopConnectors topConnectors={data.topConnectors} />
 
+            {/* Referral Audit */}
+            <ReferralAudit referralDetails={data.referralDetails} />
+
             {/* 7. System Feedback */}
             <SystemFeedbackCard />
 
