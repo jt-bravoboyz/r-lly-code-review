@@ -7,6 +7,7 @@ export interface RallyFriend {
   display_name: string | null;
   avatar_url: string | null;
   isSquadMate: boolean;
+  isReferral: boolean;
   squadSymbols: { squadId: string; squadName: string; symbol: string }[];
 }
 
@@ -97,6 +98,33 @@ export function useRallyFriends() {
         }
       });
 
+      // Fetch referral connections (people you referred + who referred you)
+      const referralIds = new Set<string>();
+      
+      const { data: referredByMe } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('referred_by', profile.id);
+      
+      referredByMe?.forEach(r => {
+        referralIds.add(r.id);
+        connectedProfileIds.add(r.id);
+      });
+
+      // Also add who referred me
+      if (profile.id) {
+        const { data: myProfile } = await supabase
+          .from('profiles')
+          .select('referred_by')
+          .eq('id', profile.id)
+          .single();
+        
+        if (myProfile?.referred_by) {
+          referralIds.add(myProfile.referred_by);
+          connectedProfileIds.add(myProfile.referred_by);
+        }
+      }
+
       // Fetch profiles for all connected users
       if (connectedProfileIds.size === 0) return [];
 
@@ -113,11 +141,15 @@ export function useRallyFriends() {
         display_name: p.display_name,
         avatar_url: p.avatar_url,
         isSquadMate: squadMateMap.has(p.id!),
+        isReferral: referralIds.has(p.id!),
         squadSymbols: squadMateMap.get(p.id!) || [],
       }));
 
-      // Sort: squad mates first, then alphabetically
+      // Sort: referrals first, then squad mates, then alphabetically
       friends.sort((a, b) => {
+        if (a.isReferral !== b.isReferral) {
+          return a.isReferral ? -1 : 1;
+        }
         if (a.isSquadMate !== b.isSquadMate) {
           return a.isSquadMate ? -1 : 1;
         }

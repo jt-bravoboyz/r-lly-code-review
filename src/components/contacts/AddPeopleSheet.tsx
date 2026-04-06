@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { PUBLIC_APP_URL } from '@/lib/appUrl';
-import { UserPlus, Smartphone, ClipboardPaste, Upload, FileUp, MessageCircle, ChevronDown, Search } from 'lucide-react';
+import { UserPlus, Smartphone, ClipboardPaste, Upload, FileUp, MessageCircle, ChevronDown, Search, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
@@ -12,6 +12,7 @@ import { VCFContactImport } from './VCFContactImport';
 import { ContactSmartSearch } from './ContactSmartSearch';
 import { useUserContacts } from '@/hooks/useUserContacts';
 import { useAuth } from '@/hooks/useAuth';
+import { useRallyFriends } from '@/hooks/useRallyFriends';
 import { Capacitor } from '@capacitor/core';
 import { Contacts } from '@capacitor-community/contacts';
 import { toast } from 'sonner';
@@ -25,6 +26,7 @@ export function AddPeopleSheet() {
   const upsertContacts = useUpsertUserContacts();
   const { profile } = useAuth();
   const { data: cloudContacts = [] } = useUserContacts();
+  const { data: rallyFriends = [] } = useRallyFriends();
 
   const referralParam = profile?.id ? `?r=${profile.id}` : '';
   const inviteLink = `${PUBLIC_APP_URL}${referralParam}`;
@@ -38,10 +40,21 @@ export function AddPeopleSheet() {
   const hasMatches = useMemo(() => {
     if (!trimmed) return true;
     const q = trimmed.toLowerCase();
-    return cloudContacts.some(
+    const contactMatch = cloudContacts.some(
       c => c.name?.toLowerCase().includes(q) || c.phone?.includes(trimmed) || c.email?.toLowerCase().includes(q)
     );
-  }, [cloudContacts, trimmed]);
+    const friendMatch = rallyFriends.some(
+      f => f.display_name?.toLowerCase().includes(q)
+    );
+    return contactMatch || friendMatch;
+  }, [cloudContacts, rallyFriends, trimmed]);
+
+  // Filter R@lly Friends by search query
+  const filteredFriends = useMemo(() => {
+    if (!trimmed) return rallyFriends;
+    const q = trimmed.toLowerCase();
+    return rallyFriends.filter(f => f.display_name?.toLowerCase().includes(q));
+  }, [rallyFriends, trimmed]);
 
   const showQuickAdd = trimmed.length > 0 && !hasMatches;
 
@@ -173,6 +186,46 @@ export function AddPeopleSheet() {
               className="pl-9"
             />
           </div>
+
+          {/* R@lly Friends section */}
+          {filteredFriends.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-xs font-montserrat font-semibold text-muted-foreground uppercase tracking-wider px-1">
+                R@lly Friends
+              </p>
+              {filteredFriends.map(friend => (
+                <button
+                  key={friend.id}
+                  onClick={() => {
+                    toast.success(`Selected ${friend.display_name}`);
+                  }}
+                  className="w-full flex items-center gap-3 p-3 rounded-xl bg-accent/50 hover:bg-accent transition-colors cursor-pointer"
+                >
+                  <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden">
+                    {friend.avatar_url ? (
+                      <img src={friend.avatar_url} alt="" className="w-full h-full object-cover rounded-full" />
+                    ) : (
+                      <Users className="h-4 w-4 text-primary" />
+                    )}
+                  </div>
+                  <div className="text-left flex-1 min-w-0">
+                    <p className="font-medium font-montserrat text-sm text-foreground truncate">
+                      {friend.display_name || 'R@lly User'}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {friend.isSquadMate && friend.isReferral
+                        ? 'Squad Mate · Referred'
+                        : friend.isSquadMate
+                        ? `Squad Mate${friend.squadSymbols.length > 0 ? ' · ' + friend.squadSymbols[0].squadName : ''}`
+                        : friend.isReferral
+                        ? 'Referred Friend'
+                        : 'R@lly Friend'}
+                    </p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Quick Add row */}
           {showQuickAdd && (
