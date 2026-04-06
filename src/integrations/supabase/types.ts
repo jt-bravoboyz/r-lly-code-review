@@ -2222,6 +2222,126 @@ export type Database = {
           },
         ]
       }
+      rogue_alerts: {
+        Row: {
+          created_at: string
+          event_id: string
+          final_words: string | null
+          id: string
+          profile_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          final_words?: string | null
+          id?: string
+          profile_id: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          final_words?: string | null
+          id?: string
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rogue_alerts_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rogue_alerts_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rogue_alerts_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rogue_alerts_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rogue_alerts_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles_with_connection"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rogue_reactions: {
+        Row: {
+          created_at: string
+          emoji: string
+          id: string
+          profile_id: string
+          rogue_alert_id: string
+        }
+        Insert: {
+          created_at?: string
+          emoji: string
+          id?: string
+          profile_id: string
+          rogue_alert_id: string
+        }
+        Update: {
+          created_at?: string
+          emoji?: string
+          id?: string
+          profile_id?: string
+          rogue_alert_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rogue_reactions_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rogue_reactions_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rogue_reactions_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rogue_reactions_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles_with_connection"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rogue_reactions_rogue_alert_id_fkey"
+            columns: ["rogue_alert_id"]
+            isOneToOne: false
+            referencedRelation: "rogue_alerts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       saved_locations: {
         Row: {
           address: string

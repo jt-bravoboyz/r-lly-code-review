@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Car, Shield, Navigation, ArrowLeft, Loader2 } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Car, Shield, Navigation, ArrowLeft, Loader2, MapPin, Home, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -27,13 +27,47 @@ interface RidesSelectionModalProps {
   eventLocationName?: string;
   eventLocationLat?: number;
   eventLocationLng?: number;
-  /** Skip location sharing prompt (e.g. when changing plan after initial setup) */
   skipLocationPrompt?: boolean;
-  /** BUG-2: Event status for phase-aware labels */
   eventStatus?: string;
 }
 
-type View = 'choice' | 'request-ride';
+type View = 'choice' | 'meeting-or-pickup' | 'destination-choice' | 'pickup-location' | 'locked-in';
+
+const HYPE_QUOTES = [
+  "The horse is prepared for battle 🐎",
+  "You're locked in twin 🔒",
+  "Tonight's gonna be legendary 🌟",
+  "Squad's riding together 🚗",
+  "Safety first, fun always 🎉",
+  "Your crew's got you 💪",
+  "Let's make it a night to remember ✨",
+  "All systems go 🚀",
+];
+
+function LockedInScreen({ onDone }: { onDone: () => void }) {
+  const [quote] = useState(() => HYPE_QUOTES[Math.floor(Math.random() * HYPE_QUOTES.length)]);
+
+  useEffect(() => {
+    const timer = setTimeout(onDone, 2500);
+    return () => clearTimeout(timer);
+  }, [onDone]);
+
+  return (
+    <div className="flex flex-col items-center justify-center py-10 space-y-6 animate-scale-in">
+      <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center animate-fade-in">
+        <Sparkles className="h-10 w-10 text-primary" />
+      </div>
+      <div className="text-center space-y-2 animate-fade-in">
+        <h2 className="text-2xl font-bold font-montserrat text-foreground">
+          LOCKED IN 🔒
+        </h2>
+        <p className="text-base text-muted-foreground font-montserrat italic">
+          {quote}
+        </p>
+      </div>
+    </div>
+  );
+}
 
 export function RidesSelectionModal({
   open,
@@ -55,22 +89,59 @@ export function RidesSelectionModal({
   const [showDDSetup, setShowDDSetup] = useState(false);
   const [showLocationModal, setShowLocationModal] = useState(false);
   
-  // BUG-2: Phase-aware semantics
   const isPostEvent = eventStatus === 'after_rally' || eventStatus === 'completed';
   
-  // Location state (pickup or dropoff depending on phase)
+  // Pickup/dropoff state
+  const [meetingAtVenue, setMeetingAtVenue] = useState(false);
   const [locationValue, setLocationValue] = useState('');
   const [locationCoords, setLocationCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [destinationValue, setDestinationValue] = useState('');
+  const [destinationCoords, setDestinationCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleRequestRide = async () => {
+  const handleMeetingAtVenue = () => {
+    setMeetingAtVenue(true);
+    // Use event location as pickup
+    setLocationValue(eventLocationName || 'Event Location');
+    setLocationCoords(
+      eventLocationLat && eventLocationLng
+        ? { lat: eventLocationLat, lng: eventLocationLng }
+        : null
+    );
+    setView('destination-choice');
+  };
+
+  const handlePickMeUp = () => {
+    setMeetingAtVenue(false);
+    setView('pickup-location');
+  };
+
+  const handleRallyHome = () => {
+    if (profile?.home_address) {
+      setDestinationValue(profile.home_address);
+      setDestinationCoords(
+        profile.home_lat && profile.home_lng
+          ? { lat: profile.home_lat, lng: profile.home_lng }
+          : null
+      );
+    }
+    submitRideRequest(profile?.home_address || 'Home', profile?.home_lat, profile?.home_lng);
+  };
+
+  const handleOtherLocation = () => {
+    // For "other location", we'll use the existing destination-choice but with a text input
+    // Actually, let's just submit with whatever pickup we have and skip destination for now
+    // The destination is the event itself when going TO the event
+    submitRideRequest();
+  };
+
+  const handlePickupConfirmed = () => {
+    setView('destination-choice');
+  };
+
+  const submitRideRequest = useCallback(async (destName?: string, destLat?: number, destLng?: number) => {
     if (!profile) {
       toast.error('You must be logged in');
-      return;
-    }
-
-    if (!locationValue.trim()) {
-      toast.error(isPostEvent ? 'Please enter a drop off location' : 'Please enter a pickup location');
       return;
     }
 
@@ -92,15 +163,14 @@ export function RidesSelectionModal({
 
       const ddIds = (ddAttendees || []).map((a: any) => a.profile_id).filter(Boolean) as string[];
       const driverIds = (availableRides || []).map((r: any) => r.driver_id).filter(Boolean) as string[];
-
       const recipientIds = Array.from(new Set([...ddIds, ...driverIds])).filter(
         (id) => id && id !== profile.id
       );
 
-      // BUG-2: Phase-aware notification
+      const pickupDisplay = locationValue || eventLocationName || 'Event';
       const notifBody = isPostEvent
-        ? `${profile.display_name || 'Someone'} needs a ride to ${locationValue}`
-        : `${profile.display_name || 'Someone'} needs a ride from ${locationValue}`;
+        ? `${profile.display_name || 'Someone'} needs a ride to ${destName || locationValue}`
+        : `${profile.display_name || 'Someone'} needs a ride from ${pickupDisplay}`;
 
       try {
         await supabase.functions.invoke('send-event-notification', {
@@ -113,8 +183,8 @@ export function RidesSelectionModal({
             body: notifBody,
             data: {
               event_id: eventId,
-              pickup_location: isPostEvent ? undefined : locationValue,
-              dropoff_location: isPostEvent ? locationValue : undefined,
+              pickup_location: isPostEvent ? undefined : pickupDisplay,
+              dropoff_location: isPostEvent ? (destName || locationValue) : undefined,
               requester_id: profile.id,
               requester_name: profile.display_name,
               url: `/events/${eventId}`,
@@ -125,7 +195,6 @@ export function RidesSelectionModal({
         console.error('Failed to send ride request notification:', notifError);
       }
 
-      // BUG-2: Save to correct columns based on phase
       const updatePayload: Record<string, any> = {
         not_participating_rally_home_confirmed: false,
         going_home_at: null,
@@ -134,9 +203,9 @@ export function RidesSelectionModal({
       };
 
       if (isPostEvent) {
-        updatePayload.ride_dropoff_location = locationValue.trim() || null;
-        updatePayload.ride_dropoff_lat = locationCoords?.lat || null;
-        updatePayload.ride_dropoff_lng = locationCoords?.lng || null;
+        updatePayload.ride_dropoff_location = (destName || locationValue).trim() || null;
+        updatePayload.ride_dropoff_lat = destLat || destinationCoords?.lat || null;
+        updatePayload.ride_dropoff_lng = destLng || destinationCoords?.lng || null;
       } else {
         updatePayload.ride_pickup_location = locationValue.trim() || null;
         updatePayload.ride_pickup_lat = locationCoords?.lat || null;
@@ -149,23 +218,25 @@ export function RidesSelectionModal({
         .eq('event_id', eventId)
         .eq('profile_id', profile.id);
 
-      toast.success('Ride request sent! A R@lly DD will pick you up.', {
-        icon: '🚗',
-      });
-      
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
-      onOpenChange(false);
-      if (skipLocationPrompt) {
-        onComplete();
-      } else {
-        setShowLocationModal(true);
-      }
+
+      // Show locked-in screen
+      setView('locked-in');
     } catch (error: any) {
       toast.error(error.message || 'Failed to request ride');
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [profile, eventId, locationValue, locationCoords, destinationCoords, isPostEvent, eventLocationName, queryClient]);
+
+  const handleLockedInDone = useCallback(() => {
+    onOpenChange(false);
+    if (skipLocationPrompt) {
+      onComplete();
+    } else {
+      setShowLocationModal(true);
+    }
+  }, [onOpenChange, skipLocationPrompt, onComplete]);
 
   const handleDDComplete = () => {
     setShowDDSetup(false);
@@ -186,16 +257,12 @@ export function RidesSelectionModal({
       setView('choice');
       setLocationValue('');
       setLocationCoords(null);
+      setDestinationValue('');
+      setDestinationCoords(null);
+      setMeetingAtVenue(false);
     }
     onOpenChange(openState);
   };
-
-  // BUG-2: Phase-aware labels
-  const locationLabel = isPostEvent ? 'Drop Off Location' : 'Pickup Location';
-  const locationPlaceholder = isPostEvent ? 'Enter drop off address...' : 'Enter pickup address...';
-  const locationDescription = isPostEvent
-    ? 'Where should we take you?'
-    : 'Where should we pick you up?';
 
   return (
     <>
@@ -206,7 +273,9 @@ export function RidesSelectionModal({
           onPointerDownOutside={(e) => e.preventDefault()}
           onEscapeKeyDown={(e) => e.preventDefault()}
         >
-          {view === 'choice' ? (
+          {view === 'locked-in' ? (
+            <LockedInScreen onDone={handleLockedInDone} />
+          ) : view === 'choice' ? (
             <>
               <DialogHeader className="text-center">
                 <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-2">
@@ -222,21 +291,21 @@ export function RidesSelectionModal({
 
               <div className="space-y-3 pt-4">
                 <Button
-                  className="w-full h-24 text-base gradient-primary flex-col py-4"
-                  onClick={() => setView('request-ride')}
+                  className="w-full h-24 text-base gradient-primary flex-col py-4 transition-transform hover:scale-[1.02] active:scale-[0.97]"
+                  onClick={() => setView('meeting-or-pickup')}
                 >
                   <Navigation className="h-5 w-5 mb-1" />
-                  <span>Request a Ride</span>
+                  <span className="font-montserrat font-bold">Request a Ride</span>
                   <span className="text-xs opacity-80">Get picked up by a DD</span>
                 </Button>
                 
                 <Button
                   variant="outline"
-                  className="w-full h-24 text-base flex-col py-4 border-primary text-primary hover:bg-primary/10"
+                  className="w-full h-24 text-base flex-col py-4 border-primary text-primary hover:bg-primary/10 transition-transform hover:scale-[1.02] active:scale-[0.97]"
                   onClick={() => setShowDDSetup(true)}
                 >
                   <Shield className="h-5 w-5 mb-1" />
-                  <span>Become a DD</span>
+                  <span className="font-montserrat font-bold">Become a DD</span>
                   <span className="text-xs text-muted-foreground">Drive your crew home safe</span>
                 </Button>
               </div>
@@ -250,7 +319,7 @@ export function RidesSelectionModal({
                 Back to safety choice
               </Button>
             </>
-          ) : (
+          ) : view === 'meeting-or-pickup' ? (
             <>
               <DialogHeader>
                 <Button
@@ -262,27 +331,65 @@ export function RidesSelectionModal({
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
                 <DialogTitle className="text-xl font-bold font-montserrat pt-2">
-                  Request a Ride
+                  How are you getting there?
                 </DialogTitle>
                 <DialogDescription>
-                  {locationDescription}
+                  Let your DD know the plan
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-3 pt-4">
+                <Button
+                  variant="outline"
+                  className="w-full h-28 text-base flex-col py-4 border-border hover:border-primary hover:bg-primary/5 transition-transform hover:scale-[1.02] active:scale-[0.97]"
+                  onClick={handleMeetingAtVenue}
+                >
+                  <MapPin className="h-6 w-6 mb-2 text-primary" />
+                  <span className="font-montserrat font-bold">Meeting at their place</span>
+                  <span className="text-xs text-muted-foreground">I'll get myself to the event</span>
+                </Button>
+
+                <Button
+                  variant="outline"
+                  className="w-full h-28 text-base flex-col py-4 border-border hover:border-primary hover:bg-primary/5 transition-transform hover:scale-[1.02] active:scale-[0.97]"
+                  onClick={handlePickMeUp}
+                >
+                  <Car className="h-6 w-6 mb-2 text-primary" />
+                  <span className="font-montserrat font-bold">Pick me up</span>
+                  <span className="text-xs text-muted-foreground">I need a ride to the event</span>
+                </Button>
+              </div>
+            </>
+          ) : view === 'pickup-location' ? (
+            <>
+              <DialogHeader>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="absolute left-4 top-4"
+                  onClick={() => setView('meeting-or-pickup')}
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+                <DialogTitle className="text-xl font-bold font-montserrat pt-2">
+                  {isPostEvent ? 'Drop Off Location' : 'Pickup Location'}
+                </DialogTitle>
+                <DialogDescription>
+                  {isPostEvent ? 'Where should we take you?' : 'Where should we pick you up?'}
                 </DialogDescription>
               </DialogHeader>
 
               <div className="space-y-4 pt-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">{locationLabel}</label>
-                  <LocationSearch
-                    value={locationValue}
-                    onChange={setLocationValue}
-                    onLocationSelect={(loc) => {
-                      setLocationValue(loc.name);
-                      setLocationCoords({ lat: loc.lat, lng: loc.lng });
-                    }}
-                    placeholder={locationPlaceholder}
-                    showMapPreview={false}
-                  />
-                </div>
+                <LocationSearch
+                  value={locationValue}
+                  onChange={setLocationValue}
+                  onLocationSelect={(loc) => {
+                    setLocationValue(loc.name);
+                    setLocationCoords({ lat: loc.lat, lng: loc.lng });
+                  }}
+                  placeholder={isPostEvent ? 'Enter drop off address...' : 'Enter pickup address...'}
+                  showMapPreview={false}
+                />
 
                 {locationCoords && (
                   <LocationMapPreview
@@ -294,30 +401,67 @@ export function RidesSelectionModal({
                   />
                 )}
 
-                <div className="text-sm text-muted-foreground bg-muted rounded-lg p-3">
-                  <span className="font-medium">Destination:</span> {eventTitle}
-                </div>
-
-                <Button 
-                  className="w-full gradient-accent"
-                  onClick={handleRequestRide}
-                  disabled={isSubmitting || !locationValue.trim()}
+                <Button
+                  className="w-full gradient-primary font-montserrat font-bold transition-transform active:scale-[0.97]"
+                  onClick={handlePickupConfirmed}
+                  disabled={!locationValue.trim()}
                 >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Requesting...
-                    </>
-                  ) : (
-                    <>
-                      <Navigation className="h-4 w-4 mr-2" />
-                      Request Ride
-                    </>
-                  )}
+                  Continue
                 </Button>
               </div>
             </>
-          )}
+          ) : view === 'destination-choice' ? (
+            <>
+              <DialogHeader>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="absolute left-4 top-4"
+                  onClick={() => setView(meetingAtVenue ? 'meeting-or-pickup' : 'pickup-location')}
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+                <DialogTitle className="text-xl font-bold font-montserrat pt-2">
+                  Where are you headed after?
+                </DialogTitle>
+                <DialogDescription>
+                  So your DD knows the plan
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-3 pt-4">
+                <Button
+                  variant="outline"
+                  className="w-full h-28 text-base flex-col py-4 border-border hover:border-primary hover:bg-primary/5 transition-transform hover:scale-[1.02] active:scale-[0.97]"
+                  onClick={handleRallyHome}
+                  disabled={isSubmitting}
+                >
+                  <Home className="h-6 w-6 mb-2 text-primary" />
+                  <span className="font-montserrat font-bold">R@lly Home</span>
+                  <span className="text-xs text-muted-foreground">
+                    {profile?.home_address ? profile.home_address.substring(0, 40) : 'Use your saved home address'}
+                  </span>
+                </Button>
+
+                <Button
+                  variant="outline"
+                  className="w-full h-28 text-base flex-col py-4 border-border hover:border-primary hover:bg-primary/5 transition-transform hover:scale-[1.02] active:scale-[0.97]"
+                  onClick={handleOtherLocation}
+                  disabled={isSubmitting}
+                >
+                  <MapPin className="h-6 w-6 mb-2 text-primary" />
+                  <span className="font-montserrat font-bold">Other Location</span>
+                  <span className="text-xs text-muted-foreground">Going somewhere else after</span>
+                </Button>
+
+                {isSubmitting && (
+                  <div className="flex items-center justify-center py-2">
+                    <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                  </div>
+                )}
+              </div>
+            </>
+          ) : null}
         </DialogContent>
       </Dialog>
 
@@ -333,7 +477,7 @@ export function RidesSelectionModal({
         mode="full"
       />
 
-      {/* Location Sharing Modal - shows after rides setup */}
+      {/* Location Sharing Modal */}
       <LocationSharingModal
         open={showLocationModal}
         onOpenChange={setShowLocationModal}

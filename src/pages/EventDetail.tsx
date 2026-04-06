@@ -62,6 +62,9 @@ import { AfterRallyCard } from '@/components/events/AfterRallyCard';
 import { RallyHeroMediaCarousel } from '@/components/events/RallyHeroMediaCarousel';
 import { RallyCompleteOverlay } from '@/components/events/RallyCompleteOverlay';
 import { EventPhotoFeed } from '@/components/events/EventPhotoFeed';
+import { GoingRogueButton } from '@/components/events/GoingRogueButton';
+import { RogueAlertOverlay } from '@/components/events/RogueAlertOverlay';
+import { useRogueAlerts } from '@/hooks/useRogueAlerts';
 import { useMyRallyHomePrompt } from '@/hooks/useRallyHomePrompt';
 import { PendingJoinRequests } from '@/components/events/PendingJoinRequests';
 import { TransportModeSelector } from '@/components/events/TransportModeSelector';
@@ -91,6 +94,7 @@ export default function EventDetail() {
   const { data: eventDDs } = useEventDDs(id);
   const { data: cohosts } = useCohosts(id);
   useBarHopStopsRealtime(id); // Real-time updates for bar hop stops
+  const { latestAlert, dismissAlert, goRogue, submitReaction, reactions } = useRogueAlerts(id);
   const joinEvent = useJoinEvent();
   const leaveEvent = useLeaveEvent();
   const updateEvent = useUpdateEvent();
@@ -684,6 +688,14 @@ export default function EventDetail() {
           </section>
         )}
 
+        {/* Going Rogue Button - visible during live/after rally for attendees */}
+        {(isLive || isAfterRally) && isAttending && (
+          <GoingRogueButton
+            onGoRogue={(finalWords) => goRogue.mutateAsync(finalWords)}
+            isPending={goRogue.isPending}
+          />
+        )}
+
         {/* After R@lly Card - Only show when event is in after_rally status */}
         {isAfterRally && isAttending && (
           <AfterRallyCard
@@ -1171,6 +1183,23 @@ export default function EventDetail() {
         eventTitle={event.title}
         inviteCode={event.invite_code}
       />
+
+      {/* Rogue Alert Overlay - Realtime */}
+      {latestAlert && (
+        <RogueAlertOverlay
+          alert={latestAlert}
+          reactionCounts={
+            reactions
+              .filter(r => r.rogue_alert_id === latestAlert.id)
+              .reduce((acc, r) => {
+                acc[r.emoji] = (acc[r.emoji] || 0) + 1;
+                return acc;
+              }, {} as Record<string, number>)
+          }
+          onReact={(emoji) => submitReaction.mutate({ alertId: latestAlert.id, emoji })}
+          onDismiss={dismissAlert}
+        />
+      )}
     </div>
   );
 }
