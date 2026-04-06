@@ -232,7 +232,12 @@ export default function JoinSquad() {
               {!user ? (
                   <Button 
                     className="w-full gradient-primary"
-                    onClick={() => navigate('/auth')}
+                    onClick={() => {
+                      if (code) {
+                        localStorage.setItem('rally-pending-squad-code', code);
+                      }
+                      navigate('/auth');
+                    }}
                   >
                     Sign In to Join
                   </Button>
