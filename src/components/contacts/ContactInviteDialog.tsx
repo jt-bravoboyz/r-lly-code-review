@@ -135,12 +135,12 @@ export function ContactInviteDialog({ open, onOpenChange }: ContactInviteDialogP
     const encoded = encodeURIComponent(smsBody);
 
     if (isPhone) {
-      window.open(`sms:${target}${sep}body=${encoded}`, '_blank');
+      window.location.href = `sms:${target}${sep}body=${encoded}`;
     } else {
       if (navigator.share) {
         navigator.share({ title: 'Join R@lly', text: smsBody }).catch(() => {});
       } else {
-        window.open(`sms:${sep}body=${encoded}`, '_blank');
+        window.location.href = `sms:${sep}body=${encoded}`;
       }
     }
     toast(`Invite sent for ${trimmed}!`);
