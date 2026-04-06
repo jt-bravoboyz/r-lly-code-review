@@ -199,6 +199,7 @@ export default function EventDetail() {
   const hasTransportModeForEvent = Boolean(myAttendee?.arrival_transport_mode);
   const hasCompletedJoinFlow = hasTransportModeForEvent && Boolean(myAttendee?.location_prompt_shown);
   const shouldAutoStartJoinFlow = isAttending &&
+    !isLoadingMyAttendee &&
     !hasCompletedJoinFlow &&
     !hasTransportModeForEvent &&
     event?.status !== 'completed' &&
