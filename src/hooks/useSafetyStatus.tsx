@@ -126,7 +126,7 @@ export function useEventSafetyStatus(eventId: string | undefined) {
       if (profileIds.length === 0) return [];
 
       const { data: profiles } = await supabase
-        .from('profiles')
+        .from('safe_profiles')
         .select('id, display_name, avatar_url')
         .in('id', profileIds);
 

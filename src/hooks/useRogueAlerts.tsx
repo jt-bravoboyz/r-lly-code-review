@@ -74,7 +74,7 @@ export function useRogueAlerts(eventId: string | undefined) {
         // Fetch the profile info for the new alert
         const newAlert = payload.new as any;
         const { data: profileData } = await supabase
-          .from('profiles')
+          .from('safe_profiles')
           .select('display_name, avatar_url')
           .eq('id', newAlert.profile_id)
           .single();

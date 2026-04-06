@@ -78,7 +78,7 @@ export function useEventRealtime(eventId: string | undefined) {
         async (payload) => {
           // Fetch profile info for the new attendee
           const { data: profile } = await supabase
-            .from('profiles')
+            .from('safe_profiles')
             .select('display_name')
             .eq('id', payload.new.profile_id)
             .single();

@@ -121,7 +121,7 @@ export function useEvent(eventId: string | undefined) {
       
       if (profileIds.length > 0) {
         const { data: profilesData } = await supabase
-          .from('profiles')
+          .from('safe_profiles')
           .select('id, display_name, avatar_url')
           .in('id', profileIds);
         

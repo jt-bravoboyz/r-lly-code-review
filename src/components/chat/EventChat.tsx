@@ -78,11 +78,13 @@ export function EventChat({ eventId, eventTitle, eventStatus }: EventChatProps) 
 
       if (uploadError) throw uploadError;
 
-      const { data } = supabase.storage
+      // Use signed URL since bucket is private
+      const { data, error: urlError } = await supabase.storage
         .from('chat-images')
-        .getPublicUrl(filePath);
+        .createSignedUrl(filePath, 60 * 60 * 24 * 365); // 1 year expiry
 
-      return data.publicUrl;
+      if (urlError) throw urlError;
+      return data.signedUrl;
     } catch (error) {
       console.error('Upload error:', error);
       return null;

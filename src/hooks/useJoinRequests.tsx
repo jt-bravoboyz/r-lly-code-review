@@ -39,7 +39,7 @@ export function usePendingJoinRequests(eventId: string | undefined) {
       // Fetch profiles separately to avoid relationship ambiguity
       const profileIds = attendees.map(a => a.profile_id);
       const { data: profiles } = await supabase
-        .from('profiles')
+        .from('safe_profiles')
         .select('id, display_name, avatar_url')
         .in('id', profileIds);
 
