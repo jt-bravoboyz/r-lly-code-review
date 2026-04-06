@@ -513,6 +513,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
                         file: f.file,
                         type: f.type,
                         orderIndex: f.orderIndex,
+                        isFeatured: true,
                         onUploadProgress: (p) => setUploadPercent(Math.round((p.loaded / p.total) * 100)),
                       });
                     } catch { stillFailed.push(f); }
