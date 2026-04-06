@@ -1,93 +1,45 @@
 
 
-# Rider Setup Overhaul + "Going Rogue" Mechanic
+# Referral Loophole Fix & Reward Notifications
 
-## Summary
-Two features: (1) Replace the current ride request flow in `RidesSelectionModal` with a two-step tactile selection + "Locked In" celebration screen, and (2) Add a "Going Rogue" button to live events with a full-screen alert, persistent emoji reactions, "Final Words" input, and recap integration.
+## What's Already Working
+The standard signup flow (via `?r=`, `?referrer=`, `?invite=` URL params) **already captures referrals correctly**: Auth.tsx reads the param, persists it in sessionStorage, passes it to `signUp()`, which retries setting `profiles.referred_by` and calls `rly_award_points('referral_signup')`. No client code changes needed here.
 
----
-
-## Part 1: Rider Setup Overhaul
-
-### Changes to `src/components/events/RidesSelectionModal.tsx`
-- Replace the single `'choice' | 'request-ride'` view state with `'choice' | 'meeting-or-pickup' | 'destination-choice' | 'pickup-location' | 'locked-in'`
-- **Step 1 — "Meeting or Pickup"**: Two large tactile buttons (h-28, full-width):
-  - "Meeting at their place" — skips pickup location entry, marks `ride_pickup_location = event location`
-  - "Pick me up" — proceeds to pickup location entry
-- **Step 2 — "Destination Choice"** (after pickup selection): Two buttons:
-  - "R@lly Home" — auto-fills destination from `profile.home_address` / `profile.home_lat/lng`
-  - "Other Location" — shows the existing `LocationSearch` input
-- **Step 3 — "Locked In" screen**: Full-screen celebration with:
-  - Random hype quote from a curated list (e.g., "The horse is prepared for battle", "You're locked in twin", "Tonight's gonna be legendary")
-  - `animate-scale-in` + `animate-fade-in` combined animation
-  - Auto-dismiss after 2.5 seconds, then calls `onComplete`
-- Button styling: large tactile cards with `hover:scale-[1.02] active:scale-[0.97]` transitions
-
-### No database changes needed — uses existing `ride_pickup_location`, `ride_dropoff_location`, and `needs_ride` columns.
+## What's Missing
+1. Squad invite codes don't trigger referral attribution
+2. `rly_award_points` doesn't auto-create a notification — it's done client-side with inconsistent messaging
+3. Susan and Thermus need manual data repair
 
 ---
 
-## Part 2: "Going Rogue" Mechanic
+## Database Migration (single file, 3 changes)
 
-### Database Migration
-1. **New table: `rogue_alerts`**
-   - `id` UUID PK
-   - `event_id` UUID NOT NULL
-   - `profile_id` UUID NOT NULL (the rogue user)
-   - `final_words` TEXT (optional message)
-   - `created_at` TIMESTAMPTZ DEFAULT now()
-   - RLS: event members can SELECT; user can INSERT own; no UPDATE/DELETE
-   - Enable realtime: `ALTER PUBLICATION supabase_realtime ADD TABLE public.rogue_alerts;`
+### A. Update `join_squad_by_invite_code`
+After the existing `INSERT INTO squad_members` line, add:
+- Fetch joiner's `created_at`, `referred_by`, `display_name` from `profiles`
+- If `referred_by IS NULL` AND profile created within 24 hours:
+  - Get squad `owner_id` from `squads` table
+  - `UPDATE profiles SET referred_by = owner_id` for the joiner
+  - Get owner's `user_id`, call `rly_award_points(owner_user_id, 'referral_signup', joiner_profile_id)`
 
-2. **New table: `rogue_reactions`**
-   - `id` UUID PK
-   - `rogue_alert_id` UUID NOT NULL (references `rogue_alerts.id`)
-   - `profile_id` UUID NOT NULL (reactor)
-   - `emoji` TEXT NOT NULL (one of 🤮, 😍, 🍆)
-   - `created_at` TIMESTAMPTZ DEFAULT now()
-   - UNIQUE constraint on `(rogue_alert_id, profile_id)` — one reaction per person
-   - RLS: event members can SELECT via join to rogue_alerts; user can INSERT/UPDATE own
-   - Enable realtime
+### B. Update `rly_award_points`
+After the existing `rly_recalc_user_badge` call (line 162 equivalent), add:
+- If `p_event_type = 'referral_signup'` AND `v_row.id IS NOT NULL`:
+  - Insert into `notifications` for the referrer's profile: title "🎉 Someone joined R@lly because of you!", body "Check your achievements to see your new points."
 
-### New Component: `src/components/events/GoingRogueButton.tsx`
-- Orange-outlined button with a flame/skull icon: "I'm Going Rogue 🔥"
-- On click: opens a confirmation dialog with optional "Final Words" textarea
-- On confirm: inserts into `rogue_alerts`, triggers push notification via `send-event-notification`
+### C. Data Repair (via insert tool, not migration)
+- Look up Susan Haddad and Nick's profile IDs
+- Look up Thermus Butler and JT Butler's profile IDs
+- Update `referred_by` for both
+- Call `rly_award_points` for both referrers
+- Call `rly_recalc_user_badge` for both referrers
 
-### New Component: `src/components/events/RogueAlertOverlay.tsx`
-- Full-screen overlay that appears for all participants via Supabase Realtime subscription on `rogue_alerts`
-- Displays: rogue user's avatar, name, "Final Words" quote
-- Bold animated entrance (scale + fade, maybe a shake effect)
-- **Floating Reaction Bar**: Three emoji buttons (🤮, 😍, 🍆) pinned at bottom
-  - On tap: upserts into `rogue_reactions`
-  - Shows real-time reaction counts via Realtime subscription on `rogue_reactions`
-- Auto-dismisses after 10 seconds or on tap-away
-
-### New Hook: `src/hooks/useRogueAlerts.tsx`
-- Subscribes to `rogue_alerts` for a given `eventId` via Realtime
-- Queries existing rogue alerts and reactions
-- Exposes `latestAlert`, `reactions`, `submitReaction`, `goRogue` mutations
-
-### Integration in `src/pages/EventDetail.tsx`
-- Add `GoingRogueButton` to the live event view (visible when `isLive || isAfterRally` and `isAttending`)
-- Mount `RogueAlertOverlay` to listen for incoming rogue alerts
-- Position the button in the action area near the primary action bar
-
-### Recap Integration
-- In `RallyCompleteOverlay.tsx` or `RallyRecapCard.tsx`: query `rogue_alerts` + `rogue_reactions` for the event and display a "Rogue Moments" section showing who went rogue, their final words, and reaction tallies
-
----
-
-## Files Created
-- `src/components/events/GoingRogueButton.tsx`
-- `src/components/events/RogueAlertOverlay.tsx`
-- `src/hooks/useRogueAlerts.tsx`
-- Database migration (2 new tables + RLS + realtime)
+## No Client Code Changes
+The existing Auth.tsx + useAuth.tsx referral flow is complete. The new DB-level notification in `rly_award_points` will make the client-side notification insert redundant (but harmless — worst case the referrer gets two notifications, which is fine).
 
 ## Files Modified
-- `src/components/events/RidesSelectionModal.tsx` — multi-step flow + locked-in screen
-- `src/pages/EventDetail.tsx` — mount GoingRogueButton + RogueAlertOverlay
-- `src/components/events/RallyRecapCard.tsx` — add Rogue Moments section
+- **Database migration**: `join_squad_by_invite_code` (add referral attribution), `rly_award_points` (add notification insert)
+- **Data repair** (insert tool): `profiles` updates + point awards + badge recalcs for Nick/Susan and JT/Thermus
 
-No changes to auth, squad media, contacts, badges, or existing database tables.
+No changes to Auth.tsx, useAuth.tsx, or any other client files.
 
