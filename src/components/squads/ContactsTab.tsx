@@ -138,6 +138,43 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
         <AddPeopleSheet />
       </div>
 
+      {/* iOS web app note */}
+      <p className="text-xs text-muted-foreground px-1">
+        Apple limits contact syncing on web apps. Type any name or number above to send an invite link manually.
+      </p>
+
+      {/* Quick Add row — shown when search has no matches */}
+      {(() => {
+        const trimmed = searchQuery.trim();
+        const hasMatches =
+          filteredFriends.length > 0 ||
+          filteredSquads.length > 0 ||
+          filteredPhoneContacts.length > 0 ||
+          filteredCloudContacts.length > 0;
+        if (!trimmed || hasMatches) return null;
+
+        const digitsOnly = trimmed.replace(/\D/g, '');
+        const isPhone = digitsOnly.length >= 10;
+        const displayLabel = isPhone
+          ? `R@lly ${trimmed}`
+          : `Invite '${trimmed}' via Text`;
+
+        return (
+          <button
+            onClick={() => handleInviteToApp(isPhone ? digitsOnly : '', isPhone ? undefined : trimmed)}
+            className="w-full flex items-center gap-3 p-4 rounded-2xl border-l-4 border-[#F47A19] bg-[#F47A19]/10 animate-[pulse_2s_cubic-bezier(0.4,0,0.6,1)_infinite] hover:scale-[1.02] transition-transform duration-200 cursor-pointer"
+          >
+            <div className="w-10 h-10 rounded-full bg-[#F47A19] flex items-center justify-center shrink-0">
+              <MessageCircle className="h-5 w-5 text-white" />
+            </div>
+            <div className="text-left">
+              <p className="font-bold text-sm font-montserrat text-foreground">{displayLabel}</p>
+              <p className="text-xs text-muted-foreground">Tap to open SMS with your R@lly invite link</p>
+            </div>
+          </button>
+        );
+      })()}
+
       <ScrollArea className="h-[calc(100vh-320px)]">
         <div className="space-y-4 pr-4">
           {/* R@lly Friends Section */}
