@@ -65,6 +65,7 @@ export function RallyMediaUpload({ eventId }: RallyMediaUploadProps) {
             file: files[i],
             type: 'photo',
             orderIndex: photos.length + i,
+            isFeatured: true,
             onUploadProgress: (p) => setUploadPercent(Math.round((p.loaded / p.total) * 100)),
           });
         } catch { failed.push({ file: files[i], type: 'photo', orderIndex: photos.length + i }); }
