@@ -29,7 +29,7 @@ export function EventPhotoFeed({ eventId, isHost }: EventPhotoFeedProps) {
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
   const [profiles, setProfiles] = useState<Record<string, { display_name: string; avatar_url: string | null }>>({});
 
-  const photos = media?.filter(m => m.type === 'photo') || [];
+  const photos = galleryMedia || [];
 
   // Fetch uploader profiles
   useEffect(() => {

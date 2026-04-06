@@ -107,6 +107,7 @@ export function RallyMediaUpload({ eventId }: RallyMediaUploadProps) {
         file,
         type: 'video',
         orderIndex: 0,
+        isFeatured: true,
         onUploadProgress: (p) => setUploadPercent(Math.round((p.loaded / p.total) * 100)),
       });
       toast.success('Video uploaded');
