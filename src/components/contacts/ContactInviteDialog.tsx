@@ -179,7 +179,7 @@ export function ContactInviteDialog({ open, onOpenChange }: ContactInviteDialogP
             </div>
           ) : filteredContacts.length === 0 ? (
             <div className="py-12 text-center">
-              <p className="text-sm text-muted-foreground">No contacts match "{searchQuery}"</p>
+              <p className="text-sm text-muted-foreground">Nobody to r@lly matching "{searchQuery}"</p>
             </div>
           ) : (
             <div className="space-y-1 py-1">
