@@ -14,6 +14,7 @@ export interface ReferralDetail {
   refereeCreatedAt: string | null;
   referrerId: string;
   referrerName: string | null;
+  currentSquad: string | null;
 }
 
 interface ReferralAuditProps {
