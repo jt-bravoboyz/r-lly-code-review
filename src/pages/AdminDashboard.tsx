@@ -22,6 +22,7 @@ import { AdminDateFilter, type DatePreset } from '@/components/admin/AdminDateFi
 import { AdminCSVExport } from '@/components/admin/AdminCSVExport';
 import { SystemFeedbackCard } from '@/components/admin/SystemFeedbackCard';
 import { TopConnectors } from '@/components/admin/TopConnectors';
+import { ReferralAudit } from '@/components/admin/ReferralAudit';
 import { Shield, Loader2, Home } from 'lucide-react';
 import { Navigate, Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
