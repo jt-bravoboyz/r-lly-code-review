@@ -210,14 +210,27 @@ export default function EventDetail() {
     !isLive &&
     !isAfterRally;
   
+  const joinFlowFiredRef = useRef(false);
+
+  // Reset the one-shot guard when the event changes
   useEffect(() => {
+    joinFlowFiredRef.current = false;
+  }, [id]);
+
+  useEffect(() => {
+    if (joinFlowFiredRef.current) return;
+    if (hasCompletedJoinFlow) {
+      joinFlowFiredRef.current = true;
+      return;
+    }
     if (shouldAutoStartJoinFlow && !showTransportSelector && !showSafetyChoice && !showRidesSelection && !showLocationSharingModal) {
+      joinFlowFiredRef.current = true;
       const timer = setTimeout(() => {
         setShowTransportSelector(true);
       }, 500);
       return () => clearTimeout(timer);
     }
-  }, [shouldAutoStartJoinFlow, showTransportSelector, showSafetyChoice, showRidesSelection, showLocationSharingModal]);
+  }, [shouldAutoStartJoinFlow, hasCompletedJoinFlow, showTransportSelector, showSafetyChoice, showRidesSelection, showLocationSharingModal]);
   
   // R@lly Home prompt status for current user
   const myPromptStatus = useMyRallyHomePrompt(id);
