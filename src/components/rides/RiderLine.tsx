@@ -190,6 +190,19 @@ export function RiderLine({ eventId }: RiderLineProps) {
         }
       }
 
+      // Belt-and-suspenders: exclude anyone already accepted on ANY ride in this event
+      const allRideIds = (eventRides || []).map((r) => r.id);
+      if (allRideIds.length > 0) {
+        const { data: acceptedPassengers } = await supabase
+          .from('ride_passengers')
+          .select('passenger_id')
+          .in('ride_id', allRideIds)
+          .eq('status', 'accepted');
+
+        const acceptedSet = new Set((acceptedPassengers || []).map((a) => a.passenger_id));
+        return riders.filter((r) => !acceptedSet.has(r.passengerId));
+      }
+
       return riders;
     },
     refetchInterval: 10000,
