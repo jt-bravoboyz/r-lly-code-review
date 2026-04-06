@@ -432,42 +432,50 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
                   </div>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
-                  <CardContent className="pt-0 pb-4 px-4">
-                    <div className="space-y-2">
-                      {filteredCloudContacts.map((contact) => (
-                        <div
-                          key={contact.id}
-                          className="flex items-center justify-between p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors"
-                        >
-                          <div className="flex items-center gap-3">
-                            <Avatar className="h-10 w-10">
-                              <AvatarFallback className="bg-blue-500/20 text-blue-600 font-bold">
-                                {contact.name?.charAt(0)?.toUpperCase() || '#'}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <p className="font-medium text-sm">
-                                {contact.name || 'Unknown'}
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                {contact.phone || contact.email || ''}
-                              </p>
+                <CardContent className="pt-0 pb-4 px-4">
+                    <div className="space-y-1">
+                      {groupedCloudContacts.map(([letter, contacts]) => (
+                        <div key={letter}>
+                          <p className="text-xs font-bold font-montserrat text-muted-foreground uppercase px-1 pt-2 pb-1">
+                            {letter}
+                          </p>
+                          {contacts.map((contact) => (
+                            <div
+                              key={contact.id}
+                              className="flex items-center justify-between p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors"
+                            >
+                              <div className="flex items-center gap-3">
+                                <Avatar className="h-10 w-10">
+                                  <AvatarFallback className="bg-blue-500/20 text-blue-600 font-bold">
+                                    {contact.name?.charAt(0)?.toUpperCase() || '#'}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div>
+                                  <p className="font-medium text-sm">
+                                    {contact.name || 'Unknown'}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {contact.phone || contact.email || ''}
+                                  </p>
+                                </div>
+                              </div>
+                              <Button
+                                size="sm"
+                                className="rounded-full text-xs bg-[#F47A19] hover:bg-[#F47A19]/90 text-white border-0"
+                                onClick={() => {
+                                  if (contact.phone) handleInviteToApp(contact.phone, contact.name || undefined);
+                                  else if (contact.email) {
+                                    const referralParam = profile?.id ? `?r=${profile.id}` : '';
+                                    const inviteLink = `${PUBLIC_APP_URL}${referralParam}`;
+                                    window.open(`mailto:${contact.email}?subject=${encodeURIComponent("Join me on R@lly!")}&body=${encodeURIComponent(`Yo! I'm getting the squad together on R@lly. Use my link to join the inner circle: ${inviteLink}`)}`, '_blank');
+                                  }
+                                }}
+                              >
+                                <MessageCircle className="h-3 w-3 mr-1" />
+                                R@lly Them
+                              </Button>
                             </div>
-                          </div>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="rounded-full text-xs"
-                            onClick={() => {
-                              if (contact.phone) handleInviteToApp(contact.phone);
-                              else if (contact.email) {
-                                window.open(`mailto:${contact.email}?subject=${encodeURIComponent("Join me on R@lly!")}&body=${encodeURIComponent("Hey! Join me on R@lly - the app for coordinating nights out with friends. Download it here: " + PUBLIC_APP_URL)}`, '_blank');
-                              }
-                            }}
-                          >
-                            <MessageSquare className="h-3 w-3 mr-1" />
-                            Invite
-                          </Button>
+                          ))}
                         </div>
                       ))}
                     </div>

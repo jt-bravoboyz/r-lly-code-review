@@ -242,14 +242,14 @@ export function ContactInviteDialog({ open, onOpenChange }: ContactInviteDialogP
             <span>Contacts are only used to help you invite friends. No auto-invites.</span>
           </div>
           <Button
-            className="w-full btn-rally rounded-xl h-12 text-base font-bold"
+            className="w-full rounded-xl h-12 text-base font-bold bg-[#F47A19] hover:bg-[#F47A19]/90 text-white"
             disabled={selectedCount === 0 || isSending}
             onClick={handleSendInvites}
           >
-            <Send className="h-4 w-4 mr-2" />
+            <MessageCircle className="h-4 w-4 mr-2" />
             {selectedCount > 0
-              ? `Invite ${selectedCount} Contact${selectedCount > 1 ? 's' : ''}`
-              : 'Select Contacts to Invite'}
+              ? `R@lly ${selectedCount} Contact${selectedCount > 1 ? 's' : ''}`
+              : 'Select Contacts to R@lly'}
           </Button>
         </div>
       </DialogContent>
