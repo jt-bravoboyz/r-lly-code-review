@@ -167,6 +167,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
               file: photos[i].file,
               type: 'photo',
               orderIndex: i,
+              isFeatured: true,
               onUploadProgress: (p) => setUploadPercent(Math.round((p.loaded / p.total) * 100)),
             });
           } catch { failed.push({ file: photos[i].file, type: 'photo', orderIndex: i }); }
