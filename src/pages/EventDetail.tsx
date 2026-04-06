@@ -702,11 +702,30 @@ export default function EventDetail() {
           </section>
         )}
 
+        {/* Edit My Plan - visible during scheduled phase for attendees who completed join flow */}
+        {isScheduled && isAttending && hasCompletedJoinFlow && (
+          <Button
+            variant="outline"
+            className="w-full font-montserrat font-bold"
+            onClick={() => setShowTransportSelector(true)}
+          >
+            <Settings2 className="h-5 w-5 mr-2" />
+            Edit My Plan
+          </Button>
+        )}
+
         {/* Going Rogue Button - visible during live/after rally for attendees */}
         {(isLive || isAfterRally) && isAttending && (
           <GoingRogueButton
-            onGoRogue={(finalWords) => goRogue.mutateAsync(finalWords)}
+            onGoRogue={async (finalWords) => {
+              const result = await goRogue.mutateAsync(finalWords);
+              // Reset one-shot guard so safety modal re-triggers
+              joinFlowFiredRef.current = false;
+              queryClient.invalidateQueries({ queryKey: ['my-attendee-status', id] });
+              return result;
+            }}
             isPending={goRogue.isPending}
+            hasGoneRogue={hasGoneRogue}
           />
         )}
 

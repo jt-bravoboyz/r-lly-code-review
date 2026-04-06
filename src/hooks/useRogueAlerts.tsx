@@ -177,5 +177,6 @@ export function useRogueAlerts(eventId: string | undefined) {
     dismissAlert,
     goRogue,
     submitReaction,
+    hasGoneRogue,
   };
 }
