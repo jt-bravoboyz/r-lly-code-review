@@ -688,6 +688,14 @@ export default function EventDetail() {
           </section>
         )}
 
+        {/* Going Rogue Button - visible during live/after rally for attendees */}
+        {(isLive || isAfterRally) && isAttending && (
+          <GoingRogueButton
+            onGoRogue={(finalWords) => goRogue.mutateAsync(finalWords)}
+            isPending={goRogue.isPending}
+          />
+        )}
+
         {/* After R@lly Card - Only show when event is in after_rally status */}
         {isAfterRally && isAttending && (
           <AfterRallyCard
