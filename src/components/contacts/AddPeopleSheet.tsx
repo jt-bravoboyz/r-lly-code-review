@@ -56,6 +56,8 @@ export function AddPeopleSheet() {
     return rallyFriends.filter(f => f.display_name?.toLowerCase().includes(q));
   }, [rallyFriends, trimmed]);
 
+  const showQuickAdd = trimmed.length > 0 && !hasMatches;
+
   const handleQuickAdd = () => {
     const target = isPhoneQuery ? digitsOnly : '';
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
