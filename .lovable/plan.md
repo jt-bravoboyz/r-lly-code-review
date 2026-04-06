@@ -1,49 +1,41 @@
 
 
-# Admin Referral Audit: Historical Backfill + Squad Column
+# Fix Database Constraint Error in Contact Sync
 
-## 1. Database Migration — Backfill `referred_by` for Historical Users
+## Problem
+The `user_contacts` table is missing a UNIQUE constraint on `(owner_id, phone)`, which the upsert in `useUserContacts.tsx` references via `onConflict: 'owner_id,phone'`. Similarly, `phone_contacts` is missing a UNIQUE constraint on `(profile_id, phone_number)` referenced in `usePhoneContacts.tsx`.
 
-Execute the user's SQL to link referral chains:
-- Test → JT, Nick, Sko
-- Nick → Mini Dallison
-- Sko → Fake Eric, Jazmin
-- Caroline → Ansley, Gray
-- JT → Caroline, Aidan, Bobby Brown
+## Changes
 
-Uses `AND referred_by IS NULL` guard to avoid overwriting existing data.
+### 1. Database Migration — Add missing UNIQUE constraints
 
-## 2. `src/hooks/useAdminData.tsx` — Fetch Squads for "Current Squad" Column
+```sql
+-- user_contacts: needed by useUpsertUserContacts
+CREATE UNIQUE INDEX IF NOT EXISTS user_contacts_owner_id_phone_key
+  ON public.user_contacts (owner_id, phone)
+  WHERE phone IS NOT NULL;
 
-Add two new queries after the existing profiles fetch:
-- `supabase.from('squads').select('id, name, owner_id')`
-- `supabase.from('squad_members').select('squad_id, profile_id')`
+-- user_contacts: fallback for email-only contacts
+CREATE UNIQUE INDEX IF NOT EXISTS user_contacts_owner_id_email_key
+  ON public.user_contacts (owner_id, email)
+  WHERE email IS NOT NULL;
 
-Build a `profileSquadMap: Map<string, string>` combining ownership and membership. Update `referralDetails` to include `currentSquad`:
-
-```ts
-const referralDetails = (profiles || [])
-  .filter(p => p.referred_by)
-  .map(p => ({
-    refereeId: p.id,
-    refereeName: p.display_name,
-    refereeCreatedAt: p.created_at,
-    referrerId: p.referred_by!,
-    referrerName: profiles?.find(r => r.id === p.referred_by)?.display_name || 'Unknown',
-    currentSquad: profileSquadMap.get(p.id) || null,
-  }));
+-- phone_contacts: needed by useSyncContacts
+CREATE UNIQUE INDEX IF NOT EXISTS phone_contacts_profile_id_phone_number_key
+  ON public.phone_contacts (profile_id, phone_number);
 ```
 
-## 3. `src/components/admin/ReferralAudit.tsx` — Add "Current Squad" Column
+Partial indexes (WHERE ... IS NOT NULL) prevent conflicts when phone/email is null while still enabling the upsert.
 
-- Add `currentSquad: string | null` to the `ReferralDetail` interface
-- Add a "Current Squad" table column between "Signup Date" and "Action"
-- Display squad name or "—"
+### 2. Code Adjustment — `src/hooks/useUserContacts.tsx`
 
-## Files Modified
-- `src/hooks/useAdminData.tsx` — add squad queries + map
-- `src/components/admin/ReferralAudit.tsx` — add squad column
-- Database migration for historical `referred_by` backfill
+The current upsert only uses `onConflict: 'owner_id,phone'`, which fails for email-only contacts (where phone is null). Split the upsert into two batches:
+- Contacts with a phone → upsert on `owner_id,phone`
+- Contacts with only email (no phone) → upsert on `owner_id,email`
 
-No changes to CSS, squad_media, PolicyAcceptanceDialog, or auth logic.
+### Files Modified
+- Database migration (2 unique indexes on `user_contacts`, 1 on `phone_contacts`)
+- `src/hooks/useUserContacts.tsx` — split upsert by phone vs email-only
+
+No UI changes. No changes to squad, auth, or styling files.
 
