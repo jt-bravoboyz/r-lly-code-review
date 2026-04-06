@@ -115,7 +115,7 @@ export function ContactInviteDialog({ open, onOpenChange }: ContactInviteDialogP
       } catch { /* cancelled */ }
     } else {
       const encoded = encodeURIComponent(smsBody);
-      window.open(`sms:${phones}?body=${encoded}`, '_blank');
+      window.location.href = `sms:${phones}?body=${encoded}`;
     }
 
     setIsSending(false);
