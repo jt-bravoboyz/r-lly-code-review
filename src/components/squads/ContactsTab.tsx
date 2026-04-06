@@ -383,12 +383,11 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
                           </div>
                           <Button
                             size="sm"
-                            variant="outline"
-                            className="rounded-full text-xs"
-                            onClick={() => handleInviteToApp(contact.phone_number)}
+                            className="rounded-full text-xs bg-[#F47A19] hover:bg-[#F47A19]/90 text-white border-0"
+                            onClick={() => handleInviteToApp(contact.phone_number, contact.display_name || undefined)}
                           >
-                            <MessageSquare className="h-3 w-3 mr-1" />
-                            Invite
+                            <MessageCircle className="h-3 w-3 mr-1" />
+                            R@lly Them
                           </Button>
                         </div>
                       ))}
