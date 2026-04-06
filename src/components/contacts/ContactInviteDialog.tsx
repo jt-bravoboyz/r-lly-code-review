@@ -13,6 +13,7 @@ import { useUserContacts, UserContact } from '@/hooks/useUserContacts';
 import { ContactSyncButton } from './ContactSyncButton';
 import { CSVContactImport } from './CSVContactImport';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 
 interface ContactInviteDialogProps {

@@ -12,7 +12,7 @@ interface ContactSmartSearchProps {
   autoFocus?: boolean;
 }
 
-export function ContactSmartSearch({ onSelect, onInvite }: ContactSmartSearchProps) {
+export function ContactSmartSearch({ onSelect, onInvite, autoFocus }: ContactSmartSearchProps) {
   const [query, setQuery] = useState('');
   const { data: contacts = [] } = useUserContacts();
 
