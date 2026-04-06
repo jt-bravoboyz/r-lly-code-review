@@ -355,6 +355,23 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
         .sort((a, b) => b.referralCount - a.referralCount)
         .slice(0, 10);
 
+      // Fetch squads and members for "Current Squad" column
+      const { data: squads } = await supabase
+        .from('squads')
+        .select('id, name, owner_id');
+      const { data: squadMembers } = await supabase
+        .from('squad_members')
+        .select('squad_id, profile_id');
+
+      const profileSquadMap = new Map<string, string>();
+      squads?.forEach(s => profileSquadMap.set(s.owner_id, s.name));
+      squadMembers?.forEach(m => {
+        const squadName = squads?.find(s => s.id === m.squad_id)?.name;
+        if (squadName && !profileSquadMap.has(m.profile_id)) {
+          profileSquadMap.set(m.profile_id, squadName);
+        }
+      });
+
       const referralDetails = (profiles || [])
         .filter(p => p.referred_by)
         .map(p => ({
@@ -363,6 +380,7 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
           refereeCreatedAt: p.created_at,
           referrerId: p.referred_by!,
           referrerName: profiles?.find(r => r.id === p.referred_by)?.display_name || 'Unknown',
+          currentSquad: profileSquadMap.get(p.id) || null,
         }));
 
       return {

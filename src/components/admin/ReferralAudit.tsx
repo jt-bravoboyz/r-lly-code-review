@@ -70,6 +70,11 @@ export function ReferralAudit({ referralDetails }: ReferralAuditProps) {
                   <TableCell className="text-muted-foreground text-xs">
                     {r.refereeCreatedAt ? format(new Date(r.refereeCreatedAt), 'MMM d, yyyy') : '—'}
                   </TableCell>
+                  <TableCell className="text-xs">
+                    {r.currentSquad ? (
+                      <Badge variant="outline" className="font-normal">{r.currentSquad}</Badge>
+                    ) : '—'}
+                  </TableCell>
                   <TableCell className="text-right">
                     <Button
                       size="sm"
