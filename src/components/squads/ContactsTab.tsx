@@ -95,12 +95,32 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
     });
   };
 
-  const handleInviteToApp = (phone: string) => {
+  const { profile } = useAuth();
+  const upsertContacts = useUpsertUserContacts();
+
+  const handleInviteToApp = async (phone: string, name?: string) => {
+    // Smart Merge: persist contact before opening SMS
+    if (name || phone) {
+      upsertContacts.mutate([{ name, phone, source: 'invite' }]);
+    }
+    const referralParam = profile?.id ? `?r=${profile.id}` : '';
+    const inviteLink = `${PUBLIC_APP_URL}${referralParam}`;
     const message = encodeURIComponent(
-      "Hey! Join me on R@lly - the app for coordinating nights out with friends. Download it here: " + PUBLIC_APP_URL
+      `Yo! I'm getting the squad together on R@lly. Use my link to join the inner circle: ${inviteLink}`
     );
     window.open(`sms:${phone}?body=${message}`, '_blank');
   };
+
+  // Alphabetical grouping for cloud contacts
+  const groupedCloudContacts = useMemo(() => {
+    const groups: Record<string, typeof filteredCloudContacts> = {};
+    filteredCloudContacts.forEach((c) => {
+      const letter = (c.name?.charAt(0) || '#').toUpperCase();
+      if (!groups[letter]) groups[letter] = [];
+      groups[letter].push(c);
+    });
+    return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b));
+  }, [filteredCloudContacts]);
 
   return (
     <div className="space-y-4">
