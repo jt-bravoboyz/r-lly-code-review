@@ -2,7 +2,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { Camera, ImagePlus, X, Loader2, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useRallyMedia, useUploadRallyMedia, useDeleteRallyMedia, type RallyMedia } from '@/hooks/useRallyMedia';
+import { useGalleryPhotos, useUploadRallyMedia, useDeleteRallyMedia, type RallyMedia } from '@/hooks/useRallyMedia';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
