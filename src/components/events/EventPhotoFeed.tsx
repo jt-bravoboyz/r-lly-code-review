@@ -20,7 +20,7 @@ interface EventPhotoFeedProps {
 
 export function EventPhotoFeed({ eventId, isHost }: EventPhotoFeedProps) {
   const { profile } = useAuth();
-  const { data: media, isLoading } = useRallyMedia(eventId);
+  const { data: galleryMedia, isLoading } = useGalleryPhotos(eventId);
   const uploadMedia = useUploadRallyMedia();
   const deleteMedia = useDeleteRallyMedia();
   const queryClient = useQueryClient();
