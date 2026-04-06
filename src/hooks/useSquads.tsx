@@ -101,6 +101,41 @@ export function useMemberSquads() {
 export function useAllMySquads() {
   const { data: ownedSquads, isLoading: loadingOwned } = useOwnedSquads();
   const { data: memberSquads, isLoading: loadingMember } = useMemberSquads();
+  const { profile } = useAuth();
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+
+  // Process pending squad invite code for already-authenticated users
+  useEffect(() => {
+    const processPendingSquadCode = async () => {
+      if (!profile?.id) return;
+      const pendingCode = localStorage.getItem('rally-pending-squad-code');
+      if (!pendingCode) return;
+
+      localStorage.removeItem('rally-pending-squad-code');
+
+      try {
+        const { data, error } = await supabase
+          .rpc('join_squad_by_invite_code', { p_invite_code: pendingCode });
+
+        if (!error) {
+          const result = data as { success?: boolean; squad_id?: string; error?: string } | null;
+          
+          // Invalidate queries to refresh the squad list
+          queryClient.invalidateQueries({ queryKey: ['owned-squads'] });
+          queryClient.invalidateQueries({ queryKey: ['member-squads'] });
+
+          if (result?.squad_id) {
+            navigate(`/squads/${result.squad_id}`);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to process pending squad invite:', err);
+      }
+    };
+
+    processPendingSquadCode();
+  }, [profile?.id, queryClient, navigate]);
 
   const allSquads = [
     ...(ownedSquads || []),

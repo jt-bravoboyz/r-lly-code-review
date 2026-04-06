@@ -159,12 +159,21 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     setIsActive(true);
   }, []);
 
+  const navigate = useNavigate();
+
   const endTutorial = useCallback(() => {
     setIsActive(false);
     localStorage.setItem('rally-tutorial-complete', 'true');
     // Clear the new signup flag since tutorial is complete
     localStorage.removeItem('rally-is-new-signup');
-  }, []);
+    
+    // Check for pending squad redirect
+    const pendingSquadRedirect = localStorage.getItem('rally-pending-squad-redirect');
+    if (pendingSquadRedirect) {
+      localStorage.removeItem('rally-pending-squad-redirect');
+      navigate(`/squads/${pendingSquadRedirect}`);
+    }
+  }, [navigate]);
 
   const skipTutorial = useCallback(() => {
     setIsActive(false);
