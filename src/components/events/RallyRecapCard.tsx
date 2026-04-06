@@ -1,4 +1,4 @@
-import { Users, Car, ShieldCheck } from 'lucide-react';
+import { Users, Car, ShieldCheck, Flame } from 'lucide-react';
 import { getEventTypeEmoji, getEventTypeVibe } from '@/lib/eventTypes';
 
 const VIBE_GRADIENTS: Record<string, string> = {
@@ -10,14 +10,21 @@ const VIBE_GRADIENTS: Record<string, string> = {
   default: 'from-muted/30 to-muted/10',
 };
 
+interface RogueMoment {
+  displayName: string;
+  finalWords: string | null;
+  reactions: Record<string, number>;
+}
+
 interface RallyRecapCardProps {
   eventTitle: string;
   eventType: string;
   attendeeCount: number;
   ddCount: number;
+  rogueMoments?: RogueMoment[];
 }
 
-export function RallyRecapCard({ eventTitle, eventType, attendeeCount, ddCount }: RallyRecapCardProps) {
+export function RallyRecapCard({ eventTitle, eventType, attendeeCount, ddCount, rogueMoments }: RallyRecapCardProps) {
   const emoji = getEventTypeEmoji(eventType);
   const vibe = getEventTypeVibe(eventType);
   const gradient = VIBE_GRADIENTS[vibe] ?? VIBE_GRADIENTS.default;
@@ -47,6 +54,35 @@ export function RallyRecapCard({ eventTitle, eventType, attendeeCount, ddCount }
           <span>Everyone made it home safe ✅</span>
         </div>
       </div>
+
+      {/* Rogue Moments */}
+      {rogueMoments && rogueMoments.length > 0 && (
+        <div className="space-y-2 pt-1 border-t border-border/30">
+          <div className="flex items-center gap-1.5 text-sm font-bold text-primary font-montserrat">
+            <Flame className="h-4 w-4" />
+            <span>Rogue Moments</span>
+          </div>
+          {rogueMoments.map((moment, i) => (
+            <div key={i} className="bg-background/50 rounded-lg p-2.5 space-y-1">
+              <p className="text-sm font-medium text-foreground">
+                🔥 {moment.displayName} went rogue!
+              </p>
+              {moment.finalWords && (
+                <p className="text-xs italic text-muted-foreground">"{moment.finalWords}"</p>
+              )}
+              {Object.keys(moment.reactions).length > 0 && (
+                <div className="flex gap-2">
+                  {Object.entries(moment.reactions).map(([emoji, count]) => (
+                    <span key={emoji} className="text-xs text-muted-foreground">
+                      {emoji} {count}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Branding */}
       <p className="text-[10px] text-muted-foreground text-center pt-2 border-t border-border/30 font-montserrat">
