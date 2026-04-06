@@ -68,7 +68,7 @@ export function getSafetyState(attendee: AttendeeWithSafetyStatus): SafetyState 
     return 'opted_in';
   }
   
-  if (attendee.not_participating_rally_home_confirmed === true) {
+  if (attendee.not_participating_rally_home_confirmed === true && !attendee.is_dd) {
     return 'not_participating';
   }
   
