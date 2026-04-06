@@ -168,9 +168,9 @@ export function ContactInviteDialog({ open, onOpenChange }: ContactInviteDialogP
               <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
                 <Users className="h-8 w-8 text-primary" />
               </div>
-              <h3 className="font-bold text-foreground mb-2 font-montserrat">No contacts yet</h3>
+              <h3 className="font-bold text-foreground mb-2 font-montserrat">Nobody to r@lly?</h3>
               <p className="text-sm text-muted-foreground mb-4 max-w-[240px]">
-                Sync device contacts or import from CSV to get started.
+                Try syncing your contacts.
               </p>
               <div className="space-y-2 w-full max-w-[200px]">
                 <ContactSyncButton />
