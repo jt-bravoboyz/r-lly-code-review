@@ -483,21 +483,27 @@ export default function Profile() {
           <Card className="card-rally hover:ring-2 hover:ring-primary/30 transition-all">
             <CardContent className="p-4 text-center">
               <Users className="h-5 w-5 text-primary mx-auto mb-1" />
-              <div className="text-lg font-bold">0</div>
+              <div className="text-lg font-bold">
+                {activityBadges?.find(b => b.badge_key === 'active_duty')?.progress_count ?? 0}
+              </div>
               <div className="text-xs text-muted-foreground">Rally</div>
             </CardContent>
           </Card>
           <Card className="card-rally hover:ring-2 hover:ring-primary/30 transition-all">
             <CardContent className="p-4 text-center">
               <Shield className="h-5 w-5 text-primary mx-auto mb-1" />
-              <div className="text-lg font-bold">0</div>
+              <div className="text-lg font-bold">
+                {activityBadges?.find(b => b.badge_key === 'convoy_captain')?.progress_count ?? 0}
+              </div>
               <div className="text-xs text-muted-foreground">DD Trips</div>
             </CardContent>
           </Card>
           <Card className="card-rally hover:ring-2 hover:ring-primary/30 transition-all">
             <CardContent className="p-4 text-center">
               <Home className="h-5 w-5 text-primary mx-auto mb-1" />
-              <div className="text-lg font-bold">0</div>
+              <div className="text-lg font-bold">
+                {activityBadges?.find(b => b.badge_key === 'enlisted')?.progress_count ?? 0}
+              </div>
               <div className="text-xs text-muted-foreground">Safe Homes</div>
             </CardContent>
           </Card>
