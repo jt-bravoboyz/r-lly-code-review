@@ -26,6 +26,7 @@ export function AddPeopleSheet() {
   const upsertContacts = useUpsertUserContacts();
   const { profile } = useAuth();
   const { data: cloudContacts = [] } = useUserContacts();
+  const { data: rallyFriends = [] } = useRallyFriends();
 
   const referralParam = profile?.id ? `?r=${profile.id}` : '';
   const inviteLink = `${PUBLIC_APP_URL}${referralParam}`;
