@@ -1,67 +1,89 @@
 
 
-# Fix: Safety Setup Shown Twice & DD Can't Pick Riders
+# Fix: Rider Stays in Line After Acceptance + Safety Re-prompt
 
-## What's Wrong
+## Root Causes
 
-**Issue 1 — Safety setup modal fires twice:**
-In `EventDetail.tsx` line 135, `useMyAttendeeStatus` returns `data: myAttendee` but the loading state is not checked. On initial render, `myAttendee` is `undefined` while the query is still fetching — so `shouldAutoStartJoinFlow` (line 201) evaluates to `true` and the 500ms timer fires the transport selector modal before the DB record loads. Once the data arrives showing the flow was already completed, it's too late — the modal already opened.
+### Issue 1 — Rider stays in Rider Line after DD picks them
+The `RiderLine` query has two sources:
+- **Source 1**: `ride_passengers` with `status = 'pending'` — correctly excludes accepted riders
+- **Source 2**: `event_attendees` with `needs_ride = true` — does NOT check if the rider already has an `accepted` ride_passengers entry
 
-**Issue 2 — Thermus can't pick you (RLS block):**
-When a DD clicks "Pick" on a rider in `RiderLine.tsx` (lines 270-297), it inserts a `ride_passengers` row with the *rider's* `passenger_id`. But the only INSERT policy on `ride_passengers` requires `passenger_id` to match the current user's profile. So a DD inserting someone else as a passenger is blocked by RLS.
+When `handlePick` runs, it sets `needs_ride = false` and updates/inserts the ride_passengers row. But there's a race: the `needs_ride = false` UPDATE on `event_attendees` happens *after* the ride_passengers insert, and the query has a 10-second refetch interval. If either update is slow or the cache isn't invalidated in time, the rider persists.
 
-## What Will Change (and nothing else)
+Additionally, Source 2 has no fallback check — if `needs_ride` fails to clear (network issue, RLS, etc.), the rider stays in the line permanently.
 
-### 1. EventDetail.tsx — Add loading guard (1 line changed, 1 line added)
+**Fix**: Add a secondary exclusion filter to the query. After gathering riders from both sources, exclude any `profile_id` that already has an `accepted` ride_passengers entry on any ride in this event. This is a belt-and-suspenders approach that makes the Rider Line self-correcting regardless of `needs_ride` flag state.
 
-**Line 135**: Destructure `isLoading` alongside `data` and `refetch`:
-```ts
-const { data: myAttendee, refetch: refetchMyAttendee, isLoading: isLoadingMyAttendee } = useMyAttendeeStatus(id);
+### Issue 2 — Safety choices re-prompted
+The current guard at line 201 checks `!isLoadingMyAttendee`, which was just added. But there's another gap: `shouldAutoStartJoinFlow` also requires `!hasTransportModeForEvent` (line 204). The realtime subscription on `event_attendees` invalidates the `my-attendee-status` query whenever the row changes. When the DD picks the rider, `needs_ride` is updated on the rider's attendee row, which triggers a realtime event → query invalidation → brief refetch where `myAttendee` transiently returns the previous data. During this window, `hasTransportModeForEvent` evaluates correctly (it has the cached data). However, the `useEffect` at line 213-219 fires on *every* re-evaluation of `shouldAutoStartJoinFlow` going from false→true→false if there's a render cycle gap.
+
+**Fix**: Add a ref-based guard so the join flow useEffect only fires *once per mount* (or once per event ID). If the user has already completed the flow (DB flags are set) or dismissed it, the effect never re-triggers even if there's a transient data gap.
+
+---
+
+## Changes
+
+### 1. `src/components/rides/RiderLine.tsx` — Exclude accepted riders from both sources
+
+In the query function, after collecting riders from Source 1 and Source 2, fetch all `accepted` ride_passengers for this event and filter them out:
+
+```typescript
+// After gathering riders from both sources, exclude anyone already accepted
+const { data: acceptedPassengers } = await supabase
+  .from('ride_passengers')
+  .select('passenger_id')
+  .in('ride_id', rideIds)
+  .eq('status', 'accepted');
+
+const acceptedSet = new Set((acceptedPassengers || []).map(a => a.passenger_id));
+return riders.filter(r => !acceptedSet.has(r.passengerId));
 ```
 
-**Line 201**: Add `!isLoadingMyAttendee` to the condition:
-```ts
-const shouldAutoStartJoinFlow = isAttending &&
-  !isLoadingMyAttendee &&
-  !hasCompletedJoinFlow &&
-  ...
+This ensures that even if `needs_ride` wasn't cleared, or there's a pending row on another ride, an already-accepted rider never appears in the line.
+
+### 2. `src/pages/EventDetail.tsx` — One-shot join flow guard
+
+Add a ref (`joinFlowFiredRef`) that tracks whether the join flow has already been triggered for this event session. Once the effect fires and opens the modal, or once `hasCompletedJoinFlow` is true on first load, the ref is set and the effect never re-triggers:
+
+```typescript
+const joinFlowFiredRef = useRef(false);
+
+useEffect(() => {
+  // Reset on event change
+  joinFlowFiredRef.current = false;
+}, [id]);
+
+useEffect(() => {
+  if (joinFlowFiredRef.current) return;
+  if (hasCompletedJoinFlow) {
+    joinFlowFiredRef.current = true;
+    return;
+  }
+  if (shouldAutoStartJoinFlow && !showTransportSelector && !showSafetyChoice && !showRidesSelection && !showLocationSharingModal) {
+    joinFlowFiredRef.current = true;
+    const timer = setTimeout(() => {
+      setShowTransportSelector(true);
+    }, 500);
+    return () => clearTimeout(timer);
+  }
+}, [shouldAutoStartJoinFlow, hasCompletedJoinFlow, ...]);
 ```
 
-This is purely additive — no other logic, state, or component is affected. The modal simply won't evaluate until the DB query finishes.
+This guarantees the modal opens at most once per page visit, regardless of data refetches or transient states.
 
-### 2. Database Migration — New RLS INSERT policy on `ride_passengers`
-
-Add one new policy that allows drivers to insert passengers into their own rides:
-
-```sql
-CREATE POLICY "Drivers can add passengers to their rides"
-ON public.ride_passengers
-FOR INSERT
-TO authenticated
-WITH CHECK (
-  ride_id IN (
-    SELECT r.id FROM rides r
-    WHERE r.driver_id IN (
-      SELECT p.id FROM profiles p WHERE p.user_id = auth.uid()
-    )
-  )
-);
-```
-
-This does NOT modify or replace any existing policy. The existing "Users can request rides" policy continues to work for self-inserts. This new policy simply adds a second valid path for drivers.
+---
 
 ## Risk Assessment
 
 | Concern | Risk |
 |---|---|
-| Breaks other modals? | No — only `shouldAutoStartJoinFlow` is touched, and only by adding a guard |
-| Breaks existing ride requests? | No — existing INSERT policy is untouched; new policy is additive |
-| Security risk? | No — drivers can only add passengers to rides they own |
-| Performance? | No — `isLoading` is already computed by react-query, just not destructured |
+| Breaks existing Rider Line display? | No — only adds an exclusion filter after data is already gathered |
+| Breaks ride request flow? | No — pending riders still appear; only accepted ones are hidden |
+| Breaks safety/transport setup for new attendees? | No — the ref only prevents *re-triggering*; first-time users still get the flow |
+| Performance? | Negligible — one extra small query (accepted passengers) on a 10s interval |
 
 ## Files Modified
-- `src/pages/EventDetail.tsx` — 2 lines changed (destructure `isLoading`, add to condition)
-- **Database migration** — 1 new RLS INSERT policy on `ride_passengers`
-
-No other files are touched.
+- `src/components/rides/RiderLine.tsx` — add accepted-rider exclusion filter
+- `src/pages/EventDetail.tsx` — add ref guard for one-shot join flow trigger
 
