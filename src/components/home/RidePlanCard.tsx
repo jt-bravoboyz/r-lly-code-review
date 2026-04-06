@@ -75,7 +75,7 @@ export function RidePlanCard({ myStatus, eventId, onChangePlan, onSetDestination
 
           if (ride?.driver_id) {
             const { data: driverProfile } = await supabase
-              .from('profiles')
+              .from('safe_profiles')
               .select('display_name, avatar_url')
               .eq('id', ride.driver_id)
               .maybeSingle();

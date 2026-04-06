@@ -39,7 +39,7 @@ export function EventPhotoFeed({ eventId, isHost }: EventPhotoFeedProps) {
     if (!missing.length) return;
 
     supabase
-      .from('profiles')
+      .from('safe_profiles')
       .select('id, display_name, avatar_url')
       .in('id', missing)
       .then(({ data }) => {

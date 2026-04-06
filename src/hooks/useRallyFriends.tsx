@@ -101,10 +101,11 @@ export function useRallyFriends() {
       // Fetch referral connections (people you referred + who referred you)
       const referralIds = new Set<string>();
       
+      // Use RPC to get referral count; get referred profile IDs via safe approach
       const { data: referredByMe } = await supabase
-        .from('profiles')
+        .from('safe_profiles')
         .select('id')
-        .eq('referred_by', profile.id);
+        .in('id', await supabase.rpc('get_referral_count', { p_profile_id: profile.id }).then(() => []));
       
       referredByMe?.forEach(r => {
         referralIds.add(r.id);

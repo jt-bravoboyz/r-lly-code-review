@@ -72,18 +72,22 @@ export function useDriverETA(
         }
       }
 
-      // Fallback to profile location
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('current_lat, current_lng, last_location_update, location_sharing_enabled')
-        .eq('id', driverId)
+      // Fallback: try any event_attendees row for this driver with location
+      const { data: anyAttendee } = await supabase
+        .from('event_attendees')
+        .select('current_lat, current_lng, last_location_update, share_location')
+        .eq('profile_id', driverId)
+        .eq('share_location', true)
+        .not('current_lat', 'is', null)
+        .order('last_location_update', { ascending: false })
+        .limit(1)
         .maybeSingle();
 
-      if (profileData?.location_sharing_enabled && profileData.current_lat && profileData.current_lng) {
+      if (anyAttendee?.current_lat && anyAttendee?.current_lng) {
         setDriverLocation({
-          lat: profileData.current_lat,
-          lng: profileData.current_lng,
-          lastUpdate: profileData.last_location_update,
+          lat: anyAttendee.current_lat,
+          lng: anyAttendee.current_lng,
+          lastUpdate: anyAttendee.last_location_update,
         });
       } else {
         setDriverLocation(null);
