@@ -391,6 +391,8 @@ export function useAwardPointsByProfile() {
       queryClient.invalidateQueries({ queryKey: ['badge-state'] });
       queryClient.invalidateQueries({ queryKey: ['points-history'] });
       queryClient.invalidateQueries({ queryKey: ['user-activity-badges'] });
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      queryClient.invalidateQueries({ queryKey: ['user-stats'] });
     },
   });
 }
