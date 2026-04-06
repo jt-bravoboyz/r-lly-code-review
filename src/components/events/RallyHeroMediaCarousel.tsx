@@ -16,7 +16,8 @@ interface RallyHeroMediaCarouselProps {
 }
 
 export function RallyHeroMediaCarousel({ eventId, canManage = false }: RallyHeroMediaCarouselProps) {
-  const { data: media, isLoading } = useRallyMedia(eventId);
+  const { data: media, isLoading } = useFeaturedMedia(eventId);
+  const { data: allMedia } = useRallyMedia(eventId);
   const deleteMedia = useDeleteRallyMedia();
   const queryClient = useQueryClient();
   const [viewerUrl, setViewerUrl] = useState<string | null>(null);
