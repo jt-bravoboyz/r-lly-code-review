@@ -40,12 +40,21 @@ export function AddPeopleSheet() {
   const hasMatches = useMemo(() => {
     if (!trimmed) return true;
     const q = trimmed.toLowerCase();
-    return cloudContacts.some(
+    const contactMatch = cloudContacts.some(
       c => c.name?.toLowerCase().includes(q) || c.phone?.includes(trimmed) || c.email?.toLowerCase().includes(q)
     );
-  }, [cloudContacts, trimmed]);
+    const friendMatch = rallyFriends.some(
+      f => f.display_name?.toLowerCase().includes(q)
+    );
+    return contactMatch || friendMatch;
+  }, [cloudContacts, rallyFriends, trimmed]);
 
-  const showQuickAdd = trimmed.length > 0 && !hasMatches;
+  // Filter R@lly Friends by search query
+  const filteredFriends = useMemo(() => {
+    if (!trimmed) return rallyFriends;
+    const q = trimmed.toLowerCase();
+    return rallyFriends.filter(f => f.display_name?.toLowerCase().includes(q));
+  }, [rallyFriends, trimmed]);
 
   const handleQuickAdd = () => {
     const target = isPhoneQuery ? digitsOnly : '';
