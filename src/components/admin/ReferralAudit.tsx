@@ -58,6 +58,7 @@ export function ReferralAudit({ referralDetails }: ReferralAuditProps) {
                 <TableHead>Referrer</TableHead>
                 <TableHead>Referee</TableHead>
                 <TableHead>Signup Date</TableHead>
+                <TableHead>Current Squad</TableHead>
                 <TableHead className="text-right">Action</TableHead>
               </TableRow>
             </TableHeader>
