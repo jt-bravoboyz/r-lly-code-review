@@ -1939,6 +1939,30 @@ export type Database = {
           },
         ]
       }
+      rly_activity_badge_tiers: {
+        Row: {
+          bonus_points: number
+          color_hex: string
+          multiplier: number
+          tier_level: number
+          tier_name: string
+        }
+        Insert: {
+          bonus_points: number
+          color_hex: string
+          multiplier: number
+          tier_level: number
+          tier_name: string
+        }
+        Update: {
+          bonus_points?: number
+          color_hex?: string
+          multiplier?: number
+          tier_level?: number
+          tier_name?: string
+        }
+        Relationships: []
+      }
       rly_activity_badges: {
         Row: {
           badge_key: string
@@ -2124,6 +2148,7 @@ export type Database = {
       rly_user_activity_badges: {
         Row: {
           badge_key: string
+          current_tier_level: number | null
           earned_at: string | null
           progress_count: number
           updated_at: string
@@ -2131,6 +2156,7 @@ export type Database = {
         }
         Insert: {
           badge_key: string
+          current_tier_level?: number | null
           earned_at?: string | null
           progress_count?: number
           updated_at?: string
@@ -2138,6 +2164,7 @@ export type Database = {
         }
         Update: {
           badge_key?: string
+          current_tier_level?: number | null
           earned_at?: string | null
           progress_count?: number
           updated_at?: string
