@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Search, Check, Send, Users, ShieldCheck, Smartphone, Cloud } from 'lucide-react';
+import { Search, Check, MessageCircle, Users, ShieldCheck, Smartphone, Cloud } from 'lucide-react';
 import { usePhoneContacts, PhoneContact } from '@/hooks/usePhoneContacts';
 import { useUserContacts, UserContact } from '@/hooks/useUserContacts';
 import { ContactSyncButton } from './ContactSyncButton';
@@ -95,7 +95,7 @@ export function ContactInviteDialog({ open, onOpenChange }: ContactInviteDialogP
     setIsSending(true);
     const referralParam = profile?.id ? `?r=${profile.id}` : '';
     const inviteLink = `${PUBLIC_APP_URL}${referralParam}`;
-    const message = `Hey! Join me on R@lly — the app for coordinating epic nights out with your squad. No more messy group chats. 🟠\n\n${inviteLink}`;
+    const message = `Yo! I'm getting the squad together on R@lly. Use my link to join the inner circle: ${inviteLink}`;
 
     const phones = selected.map(c => c.phone).filter(Boolean).join(',');
 
@@ -168,9 +168,9 @@ export function ContactInviteDialog({ open, onOpenChange }: ContactInviteDialogP
               <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
                 <Users className="h-8 w-8 text-primary" />
               </div>
-              <h3 className="font-bold text-foreground mb-2 font-montserrat">No contacts yet</h3>
+              <h3 className="font-bold text-foreground mb-2 font-montserrat">Nobody to r@lly?</h3>
               <p className="text-sm text-muted-foreground mb-4 max-w-[240px]">
-                Sync device contacts or import from CSV to get started.
+                Try syncing your contacts.
               </p>
               <div className="space-y-2 w-full max-w-[200px]">
                 <ContactSyncButton />
@@ -179,7 +179,7 @@ export function ContactInviteDialog({ open, onOpenChange }: ContactInviteDialogP
             </div>
           ) : filteredContacts.length === 0 ? (
             <div className="py-12 text-center">
-              <p className="text-sm text-muted-foreground">No contacts match "{searchQuery}"</p>
+              <p className="text-sm text-muted-foreground">Nobody to r@lly matching "{searchQuery}"</p>
             </div>
           ) : (
             <div className="space-y-1 py-1">
@@ -242,14 +242,14 @@ export function ContactInviteDialog({ open, onOpenChange }: ContactInviteDialogP
             <span>Contacts are only used to help you invite friends. No auto-invites.</span>
           </div>
           <Button
-            className="w-full btn-rally rounded-xl h-12 text-base font-bold"
+            className="w-full rounded-xl h-12 text-base font-bold bg-[#F47A19] hover:bg-[#F47A19]/90 text-white"
             disabled={selectedCount === 0 || isSending}
             onClick={handleSendInvites}
           >
-            <Send className="h-4 w-4 mr-2" />
+            <MessageCircle className="h-4 w-4 mr-2" />
             {selectedCount > 0
-              ? `Invite ${selectedCount} Contact${selectedCount > 1 ? 's' : ''}`
-              : 'Select Contacts to Invite'}
+              ? `R@lly ${selectedCount} Contact${selectedCount > 1 ? 's' : ''}`
+              : 'Select Contacts to R@lly'}
           </Button>
         </div>
       </DialogContent>
