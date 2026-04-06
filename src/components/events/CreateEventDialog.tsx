@@ -182,6 +182,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
               file: v.file,
               type: 'video',
               orderIndex: 0,
+              isFeatured: true,
               onUploadProgress: (p) => setUploadPercent(Math.round((p.loaded / p.total) * 100)),
             });
           } catch { failed.push({ file: v.file, type: 'video', orderIndex: 0 }); }
