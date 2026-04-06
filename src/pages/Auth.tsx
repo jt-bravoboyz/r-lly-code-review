@@ -48,11 +48,11 @@ export default function Auth() {
     const params = new URLSearchParams(window.location.search);
     const r = params.get('r') || params.get('referrer') || params.get('invite');
     if (r) {
-      // Persist in sessionStorage so it survives the OAuth redirect
-      sessionStorage.setItem('rally-referrer-id', r);
+      // Persist in localStorage so it survives browser close + OAuth redirect
+      localStorage.setItem('rally-referrer-id', r);
       return r;
     }
-    return sessionStorage.getItem('rally-referrer-id') || null;
+    return localStorage.getItem('rally-referrer-id') || null;
   }, []);
 
   // Check if user has an account (set after first successful signup/signin)
@@ -316,8 +316,8 @@ export default function Auth() {
       const normalizedPhone = phone ? normalizePhoneNumber(phone) : undefined;
       const { error } = await signUp(email.trim(), password, displayName.trim(), normalizedPhone, referrerId || undefined);
       if (error) throw error;
-      // Clear referral from session storage once used
-      sessionStorage.removeItem('rally-referrer-id');
+      // Clear referral from localStorage once used
+      localStorage.removeItem('rally-referrer-id');
       // Mark that user has an account for future visits
       localStorage.setItem('rally-has-account', 'true');
       toast.success('Account created! Welcome to R@lly.');
