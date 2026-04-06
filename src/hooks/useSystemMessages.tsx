@@ -4,9 +4,9 @@ import { supabase } from '@/integrations/supabase/client';
 const SYSTEM_SENDER_ID = '00000000-0000-0000-0000-000000000000';
 
 export async function sendSystemMessage(chatId: string, content: string, eventData?: Record<string, unknown>) {
-  // First ensure the system profile exists
+  // First ensure the system profile exists (use safe_profiles to bypass owner-only RLS)
   const { data: existingProfile } = await supabase
-    .from('profiles')
+    .from('safe_profiles')
     .select('id')
     .eq('id', SYSTEM_SENDER_ID)
     .maybeSingle();
