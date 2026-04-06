@@ -3342,6 +3342,7 @@ export type Database = {
           unique_accessors: number
         }[]
       }
+      get_referral_count: { Args: { p_profile_id: string }; Returns: number }
       get_squad_invite_preview: {
         Args: { p_invite_code: string }
         Returns: {
