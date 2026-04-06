@@ -37,6 +37,7 @@ export function ContactSmartSearch({ onSelect, onInvite, autoFocus }: ContactSma
           value={query}
           onChange={e => setQuery(e.target.value)}
           className="pl-9"
+          autoFocus={autoFocus}
         />
       </div>
 
