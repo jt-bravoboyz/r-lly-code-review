@@ -109,15 +109,68 @@ export default function Auth() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Auto-join rally after auth when there's a pending invite code
+  // Auto-join rally or squad after auth when there's a pending invite code
   useEffect(() => {
-    const autoJoinRally = async () => {
+    const autoJoinRallyOrSquad = async () => {
       // Need both user and the matching profile to join
       if (!user || !profile || profile.user_id !== user.id) return;
       
       // Prevent duplicate join attempts
       if (autoJoinAttempted.current) return;
+
+      // --- Squad auto-join logic ---
+      const pendingSquadCode = localStorage.getItem('rally-pending-squad-code');
+      if (pendingSquadCode) {
+        autoJoinAttempted.current = true;
+        localStorage.removeItem('rally-pending-squad-code');
+        
+        try {
+          const { data, error: joinError } = await supabase
+            .rpc('join_squad_by_invite_code', { p_invite_code: pendingSquadCode });
+          
+          if (!joinError) {
+            const result = data as { success?: boolean; squad_id?: string; error?: string } | null;
+            const squadId = result?.squad_id;
+            
+            // Check onboarding/tutorial status
+            const onboardingComplete = localStorage.getItem('rally-onboarding-complete') === 'true';
+            const tutorialComplete = localStorage.getItem('rally-tutorial-complete') === 'true';
+            
+            if (!onboardingComplete || !tutorialComplete) {
+              // New user: join happened, but let them finish onboarding first
+              if (squadId) {
+                localStorage.setItem('rally-pending-squad-redirect', squadId);
+              }
+              // Don't navigate — let normal onboarding flow take over
+              if (result?.success) {
+                toast.success('Squad joined! Finish setup first.');
+              }
+              return;
+            }
+            
+            // Existing user: redirect immediately
+            if (result?.success) {
+              toast.success('Welcome to the squad! 🎉');
+            } else if (result?.error === 'Already a member') {
+              toast.info('You\'re already in this squad!');
+            }
+            
+            if (squadId) {
+              navigate(`/squads/${squadId}`);
+            } else {
+              navigate('/squads');
+            }
+            return;
+          }
+        } catch (err) {
+          console.error('Squad auto-join failed:', err);
+        }
+        
+        navigate('/squads');
+        return;
+      }
       
+      // --- Rally auto-join logic ---
       const pendingCode = sessionStorage.getItem('pendingRallyCode');
       if (!pendingCode) {
         navigate('/');
@@ -189,7 +242,7 @@ export default function Auth() {
       }
     };
     
-    autoJoinRally();
+    autoJoinRallyOrSquad();
   }, [user, profile, navigate, joinEvent]);
 
   const clearErrors = () => setErrors({});

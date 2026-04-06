@@ -108,7 +108,8 @@ export default function JoinSquad() {
 
       if (result?.error === 'Already a member') {
         toast.info('You are already a member of this squad!');
-        navigate('/squads');
+        const squadId = result?.squad_id as string;
+        navigate(squadId ? `/squads/${squadId}` : '/squads');
         return;
       }
 
@@ -131,7 +132,8 @@ export default function JoinSquad() {
       }
 
       toast.success(`Welcome to ${invite.squad.name}! 🎉`);
-      navigate(invite?.squad_id ? `/squads/${invite.squad_id}` : '/squads');
+      const squadId = (result?.squad_id as string) || invite?.squad_id;
+      navigate(squadId ? `/squads/${squadId}` : '/squads');
     } catch (err: any) {
       console.error('Error joining squad:', err);
       toast.error(err.message || 'Failed to join squad');
@@ -232,7 +234,12 @@ export default function JoinSquad() {
               {!user ? (
                   <Button 
                     className="w-full gradient-primary"
-                    onClick={() => navigate('/auth')}
+                    onClick={() => {
+                      if (code) {
+                        localStorage.setItem('rally-pending-squad-code', code);
+                      }
+                      navigate('/auth');
+                    }}
                   >
                     Sign In to Join
                   </Button>
