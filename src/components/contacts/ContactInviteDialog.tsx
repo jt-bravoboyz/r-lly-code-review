@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Search, Check, Send, Users, ShieldCheck, Smartphone, Cloud } from 'lucide-react';
+import { Search, Check, MessageCircle, Users, ShieldCheck, Smartphone, Cloud } from 'lucide-react';
 import { usePhoneContacts, PhoneContact } from '@/hooks/usePhoneContacts';
 import { useUserContacts, UserContact } from '@/hooks/useUserContacts';
 import { ContactSyncButton } from './ContactSyncButton';
