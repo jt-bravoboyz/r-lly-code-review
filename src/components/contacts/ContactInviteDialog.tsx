@@ -115,7 +115,7 @@ export function ContactInviteDialog({ open, onOpenChange }: ContactInviteDialogP
       } catch { /* cancelled */ }
     } else {
       const encoded = encodeURIComponent(smsBody);
-      window.open(`sms:${phones}?body=${encoded}`, '_blank');
+      window.location.href = `sms:${phones}?body=${encoded}`;
     }
 
     setIsSending(false);
@@ -135,12 +135,12 @@ export function ContactInviteDialog({ open, onOpenChange }: ContactInviteDialogP
     const encoded = encodeURIComponent(smsBody);
 
     if (isPhone) {
-      window.open(`sms:${target}${sep}body=${encoded}`, '_blank');
+      window.location.href = `sms:${target}${sep}body=${encoded}`;
     } else {
       if (navigator.share) {
         navigator.share({ title: 'Join R@lly', text: smsBody }).catch(() => {});
       } else {
-        window.open(`sms:${sep}body=${encoded}`, '_blank');
+        window.location.href = `sms:${sep}body=${encoded}`;
       }
     }
     toast(`Invite sent for ${trimmed}!`);
@@ -197,12 +197,12 @@ export function ContactInviteDialog({ open, onOpenChange }: ContactInviteDialogP
           </p>
         </div>
 
-        <ScrollArea className="flex-1 px-5">
-          {/* Quick Add row when no matches */}
-          {showQuickAdd && (
+        {/* Quick Add row pinned above scroll */}
+        {showQuickAdd && (
+          <div className="px-5 pb-2">
             <button
               onClick={handleQuickAdd}
-              className="w-full flex items-center gap-3 p-4 rounded-2xl border-l-4 border-[#F47A19] bg-[#F47A19]/10 animate-pulse hover:scale-[1.02] transition-transform duration-200 mb-3"
+              className="w-full flex items-center gap-3 p-4 rounded-2xl border-l-4 border-[#F47A19] bg-[#F47A19]/10 animate-in fade-in duration-500 hover:scale-[1.01] transition-all cursor-pointer"
             >
               <div className="w-10 h-10 rounded-full bg-[#F47A19] flex items-center justify-center shrink-0">
                 <MessageCircle className="h-5 w-5 text-white" />
@@ -214,15 +214,17 @@ export function ContactInviteDialog({ open, onOpenChange }: ContactInviteDialogP
                 <p className="text-xs text-muted-foreground">Tap to send an invite link</p>
               </div>
             </button>
-          )}
+          </div>
+        )}
 
+        <ScrollArea className="flex-1 px-5">
           {isLoading ? (
             <div className="space-y-3 py-2">
               {[1, 2, 3, 4, 5].map(i => (
                 <div key={i} className="h-14 bg-muted/50 rounded-xl animate-pulse" />
               ))}
             </div>
-          ) : allContacts.length === 0 && !showQuickAdd ? (
+          ) : allContacts.length === 0 && trimmed.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
                 <Users className="h-8 w-8 text-primary" />
