@@ -187,6 +187,46 @@ export function AddPeopleSheet() {
             />
           </div>
 
+          {/* R@lly Friends section */}
+          {filteredFriends.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-xs font-montserrat font-semibold text-muted-foreground uppercase tracking-wider px-1">
+                R@lly Friends
+              </p>
+              {filteredFriends.map(friend => (
+                <button
+                  key={friend.id}
+                  onClick={() => {
+                    toast.success(`Selected ${friend.display_name}`);
+                  }}
+                  className="w-full flex items-center gap-3 p-3 rounded-xl bg-accent/50 hover:bg-accent transition-colors cursor-pointer"
+                >
+                  <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden">
+                    {friend.avatar_url ? (
+                      <img src={friend.avatar_url} alt="" className="w-full h-full object-cover rounded-full" />
+                    ) : (
+                      <Users className="h-4 w-4 text-primary" />
+                    )}
+                  </div>
+                  <div className="text-left flex-1 min-w-0">
+                    <p className="font-medium font-montserrat text-sm text-foreground truncate">
+                      {friend.display_name || 'R@lly User'}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {friend.isSquadMate && friend.isReferral
+                        ? 'Squad Mate · Referred'
+                        : friend.isSquadMate
+                        ? `Squad Mate${friend.squadSymbols.length > 0 ? ' · ' + friend.squadSymbols[0].squadName : ''}`
+                        : friend.isReferral
+                        ? 'Referred Friend'
+                        : 'R@lly Friend'}
+                    </p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+
           {/* Quick Add row */}
           {showQuickAdd && (
             <button
