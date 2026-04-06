@@ -108,7 +108,8 @@ export default function JoinSquad() {
 
       if (result?.error === 'Already a member') {
         toast.info('You are already a member of this squad!');
-        navigate('/squads');
+        const squadId = result?.squad_id as string;
+        navigate(squadId ? `/squads/${squadId}` : '/squads');
         return;
       }
 
