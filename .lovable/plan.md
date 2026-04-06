@@ -1,45 +1,56 @@
 
 
-# Referral Loophole Fix & Reward Notifications
+# Automated Referral Attribution — Fail-Safe Trigger + Data Repair
 
-## What's Already Working
-The standard signup flow (via `?r=`, `?referrer=`, `?invite=` URL params) **already captures referrals correctly**: Auth.tsx reads the param, persists it in sessionStorage, passes it to `signUp()`, which retries setting `profiles.referred_by` and calls `rly_award_points('referral_signup')`. No client code changes needed here.
-
-## What's Missing
-1. Squad invite codes don't trigger referral attribution
-2. `rly_award_points` doesn't auto-create a notification — it's done client-side with inconsistent messaging
-3. Susan and Thermus need manual data repair
+## Summary
+Create a database trigger that fires whenever `profiles.referred_by` is set (on INSERT or UPDATE), automatically awarding points and sending notifications. Also upgrade Auth.tsx to use localStorage for referral persistence, and repair Steven Haddad's missing attribution.
 
 ---
 
-## Database Migration (single file, 3 changes)
+## 1. Database Migration: Auto-Referral Trigger
 
-### A. Update `join_squad_by_invite_code`
-After the existing `INSERT INTO squad_members` line, add:
-- Fetch joiner's `created_at`, `referred_by`, `display_name` from `profiles`
-- If `referred_by IS NULL` AND profile created within 24 hours:
-  - Get squad `owner_id` from `squads` table
-  - `UPDATE profiles SET referred_by = owner_id` for the joiner
-  - Get owner's `user_id`, call `rly_award_points(owner_user_id, 'referral_signup', joiner_profile_id)`
+Create a new function `rly_auto_referral_on_profile_change()` and trigger on `profiles`:
 
-### B. Update `rly_award_points`
-After the existing `rly_recalc_user_badge` call (line 162 equivalent), add:
-- If `p_event_type = 'referral_signup'` AND `v_row.id IS NOT NULL`:
-  - Insert into `notifications` for the referrer's profile: title "🎉 Someone joined R@lly because of you!", body "Check your achievements to see your new points."
+**Trigger fires**: `AFTER INSERT OR UPDATE OF referred_by ON profiles`
 
-### C. Data Repair (via insert tool, not migration)
-- Look up Susan Haddad and Nick's profile IDs
-- Look up Thermus Butler and JT Butler's profile IDs
-- Update `referred_by` for both
-- Call `rly_award_points` for both referrers
-- Call `rly_recalc_user_badge` for both referrers
+**Logic**:
+- If `NEW.referred_by IS NOT NULL` and (on INSERT, or on UPDATE where `OLD.referred_by IS NULL`)
+- Look up referrer's `user_id` from `profiles` where `id = NEW.referred_by`
+- Call `rly_award_points(referrer_user_id, 'referral_signup', NEW.id)` — this already handles duplicate prevention via the `ON CONFLICT` clause and auto-sends the notification
+- This makes the entire referral reward chain fire at the database level, regardless of whether the frontend succeeds
 
-## No Client Code Changes
-The existing Auth.tsx + useAuth.tsx referral flow is complete. The new DB-level notification in `rly_award_points` will make the client-side notification insert redundant (but harmless — worst case the referrer gets two notifications, which is fine).
+This is the "set and forget" safety net. Even if the client-side code in `useAuth.tsx` fails, the moment `referred_by` is written, the trigger handles everything.
+
+## 2. Client Code: LocalStorage Persistence (`Auth.tsx`)
+
+Change referral storage from `sessionStorage` to `localStorage`:
+- `sessionStorage.setItem('rally-referrer-id', r)` → `localStorage.setItem('rally-referrer-id', r)`
+- `sessionStorage.getItem('rally-referrer-id')` → `localStorage.getItem('rally-referrer-id')`
+- Clear it after successful signup to avoid stale data
+
+## 3. Client Code: Simplify `useAuth.tsx`
+
+Since the DB trigger now handles point awarding and notifications automatically when `referred_by` is set, simplify the signup flow in `useAuth.tsx`:
+- Keep the retry loop that sets `profiles.referred_by` (this is still needed)
+- Remove the manual `rly_award_points` RPC call and the manual notification insert — the trigger handles both
+- This eliminates the "double notification" edge case
+
+## 4. Data Repair (via insert tool, not migration)
+
+**Steven Haddad → Nick Haddad**:
+- Look up Steven Haddad's profile ID and Nick Haddad's profile/user ID
+- `UPDATE profiles SET referred_by = [Nick's profile ID] WHERE display_name = 'Steven Haddad'`
+- The new trigger will auto-fire, awarding Nick 10 pts and sending the notification
+- The `rly_friends` view (via `useRallyFriends.tsx`) will automatically pick up the relationship
+
+**Global 48-hour audit**:
+- Query all profiles created in last 48 hours with `referred_by IS NOT NULL`
+- Check if corresponding `referral_signup` entries exist in `rly_points_ledger`
+- Award missing points for any gaps
 
 ## Files Modified
-- **Database migration**: `join_squad_by_invite_code` (add referral attribution), `rly_award_points` (add notification insert)
-- **Data repair** (insert tool): `profiles` updates + point awards + badge recalcs for Nick/Susan and JT/Thermus
-
-No changes to Auth.tsx, useAuth.tsx, or any other client files.
+- **Database migration**: new trigger function `rly_auto_referral_on_profile_change` + trigger on `profiles`
+- **`src/pages/Auth.tsx`**: `sessionStorage` → `localStorage` for referral ID (3 lines)
+- **`src/hooks/useAuth.tsx`**: remove manual `rly_award_points` call and notification insert from signup flow (keep the `referred_by` UPDATE)
+- **Data repair** (insert tool): Steven Haddad linkage + 48-hour audit
 
