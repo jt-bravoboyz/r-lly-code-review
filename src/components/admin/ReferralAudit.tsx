@@ -14,6 +14,7 @@ export interface ReferralDetail {
   refereeCreatedAt: string | null;
   referrerId: string;
   referrerName: string | null;
+  currentSquad: string | null;
 }
 
 interface ReferralAuditProps {
@@ -57,6 +58,7 @@ export function ReferralAudit({ referralDetails }: ReferralAuditProps) {
                 <TableHead>Referrer</TableHead>
                 <TableHead>Referee</TableHead>
                 <TableHead>Signup Date</TableHead>
+                <TableHead>Current Squad</TableHead>
                 <TableHead className="text-right">Action</TableHead>
               </TableRow>
             </TableHeader>
@@ -67,6 +69,11 @@ export function ReferralAudit({ referralDetails }: ReferralAuditProps) {
                   <TableCell>{r.refereeName || 'Unknown'}</TableCell>
                   <TableCell className="text-muted-foreground text-xs">
                     {r.refereeCreatedAt ? format(new Date(r.refereeCreatedAt), 'MMM d, yyyy') : '—'}
+                  </TableCell>
+                  <TableCell className="text-xs">
+                    {r.currentSquad ? (
+                      <Badge variant="outline" className="font-normal">{r.currentSquad}</Badge>
+                    ) : '—'}
                   </TableCell>
                   <TableCell className="text-right">
                     <Button
