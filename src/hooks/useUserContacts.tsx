@@ -53,14 +53,31 @@ export function useUpsertUserContacts() {
 
       if (records.length === 0) return [];
 
-      // Batch upsert — use phone as conflict key when available, else email
-      const { data, error } = await supabase
-        .from('user_contacts')
-        .upsert(records, { onConflict: 'owner_id,phone', ignoreDuplicates: false })
-        .select();
+      // Split by phone vs email-only to match the correct unique index
+      const phoneRecords = records.filter(r => r.phone);
+      const emailOnlyRecords = records.filter(r => !r.phone && r.email);
 
-      if (error) throw error;
-      return data;
+      let allData: any[] = [];
+
+      if (phoneRecords.length > 0) {
+        const { data, error } = await supabase
+          .from('user_contacts')
+          .upsert(phoneRecords, { onConflict: 'owner_id,phone', ignoreDuplicates: false })
+          .select();
+        if (error) throw error;
+        if (data) allData = allData.concat(data);
+      }
+
+      if (emailOnlyRecords.length > 0) {
+        const { data, error } = await supabase
+          .from('user_contacts')
+          .upsert(emailOnlyRecords, { onConflict: 'owner_id,email', ignoreDuplicates: false })
+          .select();
+        if (error) throw error;
+        if (data) allData = allData.concat(data);
+      }
+
+      return allData;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-contacts'] });
