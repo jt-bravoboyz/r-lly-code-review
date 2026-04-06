@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { PUBLIC_APP_URL } from '@/lib/appUrl';
-import { UserPlus, Smartphone, ClipboardPaste, Upload, FileUp, MessageCircle, ChevronDown } from 'lucide-react';
+import { UserPlus, Smartphone, ClipboardPaste, Upload, FileUp, MessageCircle, ChevronDown, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -9,18 +10,64 @@ import { SmartPasteContacts } from './SmartPasteContacts';
 import { CSVContactImport } from './CSVContactImport';
 import { VCFContactImport } from './VCFContactImport';
 import { ContactSmartSearch } from './ContactSmartSearch';
-import { useUpsertUserContacts } from '@/hooks/useUserContacts';
+import { useUserContacts } from '@/hooks/useUserContacts';
 import { useAuth } from '@/hooks/useAuth';
 import { Capacitor } from '@capacitor/core';
 import { Contacts } from '@capacitor-community/contacts';
 import { toast } from 'sonner';
+import { useUpsertUserContacts } from '@/hooks/useUserContacts';
 
 export function AddPeopleSheet() {
   const [open, setOpen] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const upsertContacts = useUpsertUserContacts();
   const { profile } = useAuth();
+  const { data: cloudContacts = [] } = useUserContacts();
+
+  const referralParam = profile?.id ? `?r=${profile.id}` : '';
+  const inviteLink = `${PUBLIC_APP_URL}${referralParam}`;
+  const smsBody = `Yo! I'm getting the squad together on R@lly. Use my link to join the inner circle: ${inviteLink}`;
+
+  // Quick Add logic
+  const trimmed = searchQuery.trim();
+  const digitsOnly = trimmed.replace(/\D/g, '');
+  const isPhoneQuery = digitsOnly.length >= 10;
+
+  const hasMatches = useMemo(() => {
+    if (!trimmed) return true;
+    const q = trimmed.toLowerCase();
+    return cloudContacts.some(
+      c => c.name?.toLowerCase().includes(q) || c.phone?.includes(trimmed) || c.email?.toLowerCase().includes(q)
+    );
+  }, [cloudContacts, trimmed]);
+
+  const showQuickAdd = trimmed.length > 0 && !hasMatches;
+
+  const handleQuickAdd = () => {
+    const target = isPhoneQuery ? digitsOnly : '';
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const sep = isIOS ? '&' : '?';
+    const encoded = encodeURIComponent(smsBody);
+
+    // Smart merge: save contact before opening SMS
+    if (trimmed) {
+      const contactData = isPhoneQuery
+        ? { name: undefined, phone: digitsOnly, source: 'manual' }
+        : { name: trimmed, phone: undefined, source: 'manual' };
+      upsertContacts.mutate([contactData]);
+    }
+
+    if (isPhoneQuery) {
+      window.location.href = `sms:${target}${sep}body=${encoded}`;
+    } else if (navigator.share) {
+      navigator.share({ title: 'Join R@lly', text: smsBody }).catch(() => {});
+    } else {
+      window.location.href = `sms:${sep}body=${encoded}`;
+    }
+    toast(`Invite sent for ${trimmed}!`);
+  };
 
   const handleNativeContacts = async () => {
     setIsSyncing(true);
@@ -101,10 +148,6 @@ export function AddPeopleSheet() {
     }
   };
 
-  const referralParam = profile?.id ? `?r=${profile.id}` : '';
-  const inviteLink = `${PUBLIC_APP_URL}${referralParam}`;
-  const smsBody = `Yo! I'm getting the squad together on R@lly. Use my link to join the inner circle: ${inviteLink}`;
-
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
@@ -119,26 +162,35 @@ export function AddPeopleSheet() {
         </SheetHeader>
 
         <div className="space-y-4 overflow-y-auto max-h-[calc(85vh-80px)] pb-6">
-          {/* Smart Search — primary element */}
-          <ContactSmartSearch
-            autoFocus
-            onSelect={(c) => {
-              toast.success(`Selected ${c.name || c.phone || c.email}`);
-            }}
-            onInvite={(c) => {
-              if (c.phone) {
-                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-                const sep = isIOS ? '&' : '?';
-                const encoded = encodeURIComponent(smsBody);
-                window.open(`sms:${c.phone}${sep}body=${encoded}`, '_blank');
-              } else if (c.email) {
-                const subject = encodeURIComponent('Join me on R@lly!');
-                const body = encodeURIComponent(smsBody);
-                window.open(`mailto:${c.email}?subject=${subject}&body=${body}`, '_blank');
-              }
-              toast.success(`Invite opened for ${c.name || c.phone || c.email}!`);
-            }}
-          />
+          {/* Local search input — matches ContactSmartSearch styling */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10 pointer-events-none" />
+            <Input
+              autoFocus
+              placeholder="Search your contacts…"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+
+          {/* Quick Add row */}
+          {showQuickAdd && (
+            <button
+              onClick={handleQuickAdd}
+              className="w-full flex items-center gap-3 p-4 rounded-2xl border-l-4 border-[#F47A19] bg-[#F47A19]/10 animate-in fade-in duration-500 hover:scale-[1.01] transition-all cursor-pointer"
+            >
+              <div className="w-10 h-10 rounded-full bg-[#F47A19] flex items-center justify-center shrink-0">
+                <MessageCircle className="h-5 w-5 text-white" />
+              </div>
+              <div className="text-left">
+                <p className="font-bold font-montserrat text-sm text-foreground">
+                  {isPhoneQuery ? `R@lly ${trimmed}` : `Invite '${trimmed}' via Text`}
+                </p>
+                <p className="text-xs text-muted-foreground">Tap to send an invite link</p>
+              </div>
+            </button>
+          )}
 
           {/* iOS disclaimer */}
           <p className="text-xs text-muted-foreground text-center px-2">
@@ -154,6 +206,26 @@ export function AddPeopleSheet() {
               </Button>
             </CollapsibleTrigger>
             <CollapsibleContent className="space-y-3 pt-3">
+              {/* Cloud contact search */}
+              <ContactSmartSearch
+                onSelect={(c) => {
+                  toast.success(`Selected ${c.name || c.phone || c.email}`);
+                }}
+                onInvite={(c) => {
+                  if (c.phone) {
+                    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+                    const sep = isIOS ? '&' : '?';
+                    const encoded = encodeURIComponent(smsBody);
+                    window.location.href = `sms:${c.phone}${sep}body=${encoded}`;
+                  } else if (c.email) {
+                    const subject = encodeURIComponent('Join me on R@lly!');
+                    const body = encodeURIComponent(smsBody);
+                    window.location.href = `mailto:${c.email}?subject=${subject}&body=${body}`;
+                  }
+                  toast.success(`Invite opened for ${c.name || c.phone || c.email}!`);
+                }}
+              />
+
               {/* Device contacts */}
               <Button
                 variant="outline"
