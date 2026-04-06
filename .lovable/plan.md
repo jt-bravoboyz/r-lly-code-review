@@ -1,42 +1,49 @@
 
 
-# Final Referral Audit & Real-Time Alerts
+# Admin Referral Audit: Historical Backfill + Squad Column
 
-## Scope Confirmation
-Only these 2 files will be modified. No CSS, squad_media, PolicyAcceptanceDialog, or squad-joining logic will be touched.
+## 1. Database Migration — Backfill `referred_by` for Historical Users
 
-## Changes
+Execute the user's SQL to link referral chains:
+- Test → JT, Nick, Sko
+- Nick → Mini Dallison
+- Sko → Fake Eric, Jazmin
+- Caroline → Ansley, Gray
+- JT → Caroline, Aidan, Bobby Brown
 
-### 1. `src/hooks/useAdminData.tsx` — Backfill Historical Referrals
+Uses `AND referred_by IS NULL` guard to avoid overwriting existing data.
 
-The existing `referralDetails` logic (lines 358-366) already scans all profiles with `referred_by` and maps names. However, it depends on `referred_by` matching a profile `id` in the same array. This is already correct — the `.range(0, 9999)` fetch on line 35 pulls all profiles with `referred_by` included.
+## 2. `src/hooks/useAdminData.tsx` — Fetch Squads for "Current Squad" Column
 
-**No change needed here** — the current logic already shows every historical referral mapped by name. The data is complete.
+Add two new queries after the existing profiles fetch:
+- `supabase.from('squads').select('id, name, owner_id')`
+- `supabase.from('squad_members').select('squad_id, profile_id')`
 
-### 2. `src/hooks/useAuth.tsx` — Add Referral Notification + Toast
+Build a `profileSquadMap: Map<string, string>` combining ownership and membership. Update `referralDetails` to include `currentSquad`:
 
-After the successful `rly_award_points` call (line 147), add two things:
-
-**a) Insert a notification record for the referrer:**
 ```ts
-await supabase.from('notifications').insert({
-  profile_id: referredBy,  // referrer's profile ID
-  type: 'referral_reward',
-  title: `${displayName} has joined R@lly! 10 points have been added to your account.`,
-  body: 'Keep sharing to earn more rewards!',
-  data: { referee_id: profile.id },
-});
+const referralDetails = (profiles || [])
+  .filter(p => p.referred_by)
+  .map(p => ({
+    refereeId: p.id,
+    refereeName: p.display_name,
+    refereeCreatedAt: p.created_at,
+    referrerId: p.referred_by!,
+    referrerName: profiles?.find(r => r.id === p.referred_by)?.display_name || 'Unknown',
+    currentSquad: profileSquadMap.get(p.id) || null,
+  }));
 ```
 
-Note: `referredBy` here is already a profile ID (the `referred_by` column stores profile IDs), and `displayName` is the new user's display name passed to `signUp()`.
+## 3. `src/components/admin/ReferralAudit.tsx` — Add "Current Squad" Column
 
-**b) No client-side toast needed** — the referrer is a different user on a different session. The notification will appear via the existing real-time notification subscription (`useNotifications` hook with postgres_changes listener). When the referrer is online, they'll see the notification appear in real-time.
+- Add `currentSquad: string | null` to the `ReferralDetail` interface
+- Add a "Current Squad" table column between "Signup Date" and "Action"
+- Display squad name or "—"
 
-### Summary
-- **`useAdminData.tsx`**: No changes needed — already complete.
-- **`useAuth.tsx`**: Add ~8 lines after line 147 to insert a notification for the referrer after points are awarded.
-- **`ReferralAudit.tsx`**: No changes needed.
-- **`AdminDashboard.tsx`**: No changes needed.
+## Files Modified
+- `src/hooks/useAdminData.tsx` — add squad queries + map
+- `src/components/admin/ReferralAudit.tsx` — add squad column
+- Database migration for historical `referred_by` backfill
 
-Only 1 file modified. Fully isolated to the referral/notification system.
+No changes to CSS, squad_media, PolicyAcceptanceDialog, or auth logic.
 
