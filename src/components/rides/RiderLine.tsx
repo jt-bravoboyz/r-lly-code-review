@@ -191,7 +191,13 @@ export function RiderLine({ eventId }: RiderLineProps) {
       }
 
       // Belt-and-suspenders: exclude anyone already accepted on ANY ride in this event
-      const allRideIds = (eventRides || []).map((r) => r.id);
+      // Fetch ALL rides (any status) to catch accepted passengers even on ended rides
+      const { data: allEventRides } = await supabase
+        .from('rides')
+        .select('id')
+        .eq('event_id', eventId);
+
+      const allRideIds = (allEventRides || []).map((r) => r.id);
       if (allRideIds.length > 0) {
         const { data: acceptedPassengers } = await supabase
           .from('ride_passengers')
