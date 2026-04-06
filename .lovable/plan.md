@@ -1,89 +1,61 @@
 
 
-# Fix: Rider Stays in Line After Acceptance + Safety Re-prompt
+# Phase-Specific Plan Editing vs. Going Rogue (Updated)
 
-## Root Causes
-
-### Issue 1 — Rider stays in Rider Line after DD picks them
-The `RiderLine` query has two sources:
-- **Source 1**: `ride_passengers` with `status = 'pending'` — correctly excludes accepted riders
-- **Source 2**: `event_attendees` with `needs_ride = true` — does NOT check if the rider already has an `accepted` ride_passengers entry
-
-When `handlePick` runs, it sets `needs_ride = false` and updates/inserts the ride_passengers row. But there's a race: the `needs_ride = false` UPDATE on `event_attendees` happens *after* the ride_passengers insert, and the query has a 10-second refetch interval. If either update is slow or the cache isn't invalidated in time, the rider persists.
-
-Additionally, Source 2 has no fallback check — if `needs_ride` fails to clear (network issue, RLS, etc.), the rider stays in the line permanently.
-
-**Fix**: Add a secondary exclusion filter to the query. After gathering riders from both sources, exclude any `profile_id` that already has an `accepted` ride_passengers entry on any ride in this event. This is a belt-and-suspenders approach that makes the Rider Line self-correcting regardless of `needs_ride` flag state.
-
-### Issue 2 — Safety choices re-prompted
-The current guard at line 201 checks `!isLoadingMyAttendee`, which was just added. But there's another gap: `shouldAutoStartJoinFlow` also requires `!hasTransportModeForEvent` (line 204). The realtime subscription on `event_attendees` invalidates the `my-attendee-status` query whenever the row changes. When the DD picks the rider, `needs_ride` is updated on the rider's attendee row, which triggers a realtime event → query invalidation → brief refetch where `myAttendee` transiently returns the previous data. During this window, `hasTransportModeForEvent` evaluates correctly (it has the cached data). However, the `useEffect` at line 213-219 fires on *every* re-evaluation of `shouldAutoStartJoinFlow` going from false→true→false if there's a render cycle gap.
-
-**Fix**: Add a ref-based guard so the join flow useEffect only fires *once per mount* (or once per event ID). If the user has already completed the flow (DB flags are set) or dismissed it, the effect never re-triggers even if there's a transient data gap.
+## Summary
+Show "Edit My Plan" during planning phase, "Going Rogue" during live/after_rally, hide both when completed/cancelled. The "Gone Rogue" disabled state is styled as a premium "Badge of Honor."
 
 ---
 
 ## Changes
 
-### 1. `src/components/rides/RiderLine.tsx` — Exclude accepted riders from both sources
+### 1. `src/pages/EventDetail.tsx` — Phase-aware button rendering
 
-In the query function, after collecting riders from Source 1 and Source 2, fetch all `accepted` ride_passengers for this event and filter them out:
+Replace the current Going Rogue button block with:
 
-```typescript
-// After gathering riders from both sources, exclude anyone already accepted
-const { data: acceptedPassengers } = await supabase
-  .from('ride_passengers')
-  .select('passenger_id')
-  .in('ride_id', rideIds)
-  .eq('status', 'accepted');
+- **Scheduled/Upcoming**: Show "Edit My Plan" button (secondary/outline style, Settings2 icon). Clicking silently re-opens `setShowTransportSelector(true)` — no notifications, no alerts. Only visible after user has completed the join flow.
+- **Live / After R@lly**: Show `GoingRogueButton` with `hasGoneRogue` from the hook. Rogue success handler resets `joinFlowFiredRef` and invalidates attendee queries to re-trigger safety modal.
+- **Completed / Cancelled**: Neither button renders.
+- Import `Settings2` from lucide-react.
 
-const acceptedSet = new Set((acceptedPassengers || []).map(a => a.passenger_id));
-return riders.filter(r => !acceptedSet.has(r.passengerId));
+### 2. `src/components/events/GoingRogueButton.tsx` — Alert styling + Badge of Honor disabled state
+
+**Active state**: Red-tinted alert style — `border-red-500 text-red-500 hover:bg-red-500/10`, flame icon.
+
+**Disabled "Badge of Honor" state** (when `hasGoneRogue` is true):
+- Desaturated red with a subtle glow: `border-red-500/30 text-red-400/60 bg-red-500/5 cursor-default`
+- Label changes to "Gone Rogue 🔥" with a faint shimmer or inner highlight
+- Feels like an earned status badge, not a broken/greyed-out button
+- Add `hasGoneRogue` prop, `isPending` prop retained
+
+### 3. `src/hooks/useRogueAlerts.tsx` — Expose `hasGoneRogue` + safety reset
+
+- Compute `hasGoneRogue = alerts.some(a => a.profile_id === profile?.id)` and return it.
+- In `goRogue` mutation, after inserting the alert row, UPDATE `event_attendees` to clear: `arrival_transport_mode = null`, `not_participating_rally_home_confirmed = false`, `needs_ride = false`, `location_prompt_shown = false`.
+
+### 4. Database migration — Unique constraint
+
+```sql
+ALTER TABLE public.rogue_alerts
+  ADD CONSTRAINT rogue_alerts_event_profile_unique UNIQUE (event_id, profile_id);
 ```
 
-This ensures that even if `needs_ride` wasn't cleared, or there's a pending row on another ride, an already-accepted rider never appears in the line.
-
-### 2. `src/pages/EventDetail.tsx` — One-shot join flow guard
-
-Add a ref (`joinFlowFiredRef`) that tracks whether the join flow has already been triggered for this event session. Once the effect fires and opens the modal, or once `hasCompletedJoinFlow` is true on first load, the ref is set and the effect never re-triggers:
-
-```typescript
-const joinFlowFiredRef = useRef(false);
-
-useEffect(() => {
-  // Reset on event change
-  joinFlowFiredRef.current = false;
-}, [id]);
-
-useEffect(() => {
-  if (joinFlowFiredRef.current) return;
-  if (hasCompletedJoinFlow) {
-    joinFlowFiredRef.current = true;
-    return;
-  }
-  if (shouldAutoStartJoinFlow && !showTransportSelector && !showSafetyChoice && !showRidesSelection && !showLocationSharingModal) {
-    joinFlowFiredRef.current = true;
-    const timer = setTimeout(() => {
-      setShowTransportSelector(true);
-    }, 500);
-    return () => clearTimeout(timer);
-  }
-}, [shouldAutoStartJoinFlow, hasCompletedJoinFlow, ...]);
-```
-
-This guarantees the modal opens at most once per page visit, regardless of data refetches or transient states.
+Prevents duplicate rogue alerts per user per event.
 
 ---
 
-## Risk Assessment
+## Logic Flow Confirmation
 
-| Concern | Risk |
-|---|---|
-| Breaks existing Rider Line display? | No — only adds an exclusion filter after data is already gathered |
-| Breaks ride request flow? | No — pending riders still appear; only accepted ones are hidden |
-| Breaks safety/transport setup for new attendees? | No — the ref only prevents *re-triggering*; first-time users still get the flow |
-| Performance? | Negligible — one extra small query (accepted passengers) on a 10s interval |
+| Phase | Button | Action | Notifications |
+|---|---|---|---|
+| Upcoming (Tue 2pm) | Edit My Plan ⚙️ | Re-opens transport modal silently | None |
+| Live (Fri 11pm) | Going Rogue 🔥 | Alert + reactions + safety reset + re-prompt | Global push to squad |
+| Post-Rogue (same night) | Gone Rogue 🔥 (badge) | Disabled — premium desaturated red | N/A |
+| Completed (Sat 10am) | Hidden | Plan locked for Recap | N/A |
 
 ## Files Modified
-- `src/components/rides/RiderLine.tsx` — add accepted-rider exclusion filter
-- `src/pages/EventDetail.tsx` — add ref guard for one-shot join flow trigger
+- `src/pages/EventDetail.tsx` — phase-aware conditional rendering
+- `src/components/events/GoingRogueButton.tsx` — red alert style + Badge of Honor disabled state
+- `src/hooks/useRogueAlerts.tsx` — `hasGoneRogue` + safety flag reset
+- Database migration — unique constraint on `rogue_alerts(event_id, profile_id)`
 
