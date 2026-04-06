@@ -355,6 +355,16 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
         .sort((a, b) => b.referralCount - a.referralCount)
         .slice(0, 10);
 
+      const referralDetails = (profiles || [])
+        .filter(p => p.referred_by)
+        .map(p => ({
+          refereeId: p.id,
+          refereeName: p.display_name,
+          refereeCreatedAt: p.created_at,
+          referrerId: p.referred_by!,
+          referrerName: profiles?.find(r => r.id === p.referred_by)?.display_name || 'Unknown',
+        }));
+
       return {
         summary: {
           totalEventsCreated,
@@ -407,6 +417,7 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
         avgDwellTime,
         referralCounts,
         topConnectors,
+        referralDetails,
       };
     },
     refetchInterval: 30000,
