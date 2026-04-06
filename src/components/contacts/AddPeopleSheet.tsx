@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { PUBLIC_APP_URL } from '@/lib/appUrl';
-import { UserPlus, Smartphone, ClipboardPaste, Upload, FileUp, MessageCircle, ChevronDown, Search } from 'lucide-react';
+import { UserPlus, Smartphone, ClipboardPaste, Upload, FileUp, MessageCircle, ChevronDown, Search, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
@@ -12,6 +12,7 @@ import { VCFContactImport } from './VCFContactImport';
 import { ContactSmartSearch } from './ContactSmartSearch';
 import { useUserContacts } from '@/hooks/useUserContacts';
 import { useAuth } from '@/hooks/useAuth';
+import { useRallyFriends } from '@/hooks/useRallyFriends';
 import { Capacitor } from '@capacitor/core';
 import { Contacts } from '@capacitor-community/contacts';
 import { toast } from 'sonner';
