@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { PUBLIC_APP_URL } from '@/lib/appUrl';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -18,9 +18,11 @@ import {
   Zap,
   Users,
   Phone,
-  MessageSquare,
+  MessageCircle,
   Cloud,
 } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { useUpsertUserContacts } from '@/hooks/useUserContacts';
 import { useRallyFriends } from '@/hooks/useRallyFriends';
 import { useAllMySquads, Squad } from '@/hooks/useSquads';
 import { usePhoneContacts } from '@/hooks/usePhoneContacts';
