@@ -1183,6 +1183,23 @@ export default function EventDetail() {
         eventTitle={event.title}
         inviteCode={event.invite_code}
       />
+
+      {/* Rogue Alert Overlay - Realtime */}
+      {latestAlert && (
+        <RogueAlertOverlay
+          alert={latestAlert}
+          reactionCounts={
+            reactions
+              .filter(r => r.rogue_alert_id === latestAlert.id)
+              .reduce((acc, r) => {
+                acc[r.emoji] = (acc[r.emoji] || 0) + 1;
+                return acc;
+              }, {} as Record<string, number>)
+          }
+          onReact={(emoji) => submitReaction.mutate({ alertId: latestAlert.id, emoji })}
+          onDismiss={dismissAlert}
+        />
+      )}
     </div>
   );
 }
