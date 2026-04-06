@@ -95,7 +95,7 @@ export function ContactInviteDialog({ open, onOpenChange }: ContactInviteDialogP
     setIsSending(true);
     const referralParam = profile?.id ? `?r=${profile.id}` : '';
     const inviteLink = `${PUBLIC_APP_URL}${referralParam}`;
-    const message = `Hey! Join me on R@lly — the app for coordinating epic nights out with your squad. No more messy group chats. 🟠\n\n${inviteLink}`;
+    const message = `Yo! I'm getting the squad together on R@lly. Use my link to join the inner circle: ${inviteLink}`;
 
     const phones = selected.map(c => c.phone).filter(Boolean).join(',');
 
