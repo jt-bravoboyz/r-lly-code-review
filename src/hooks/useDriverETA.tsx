@@ -97,10 +97,8 @@ export function useDriverETA(
 
     fetchDriverLocation();
 
-    // Subscribe to real-time updates
-    const channelName = eventId 
-      ? `driver-location-event-${eventId}-${driverId}`
-      : `driver-location-${driverId}`;
+    // Subscribe to real-time updates via event_attendees
+    const channelName = `driver-location-${driverId}-${eventId || 'any'}`;
 
     const channel = supabase
       .channel(channelName)
@@ -109,22 +107,17 @@ export function useDriverETA(
         {
           event: 'UPDATE',
           schema: 'public',
-          table: eventId ? 'event_attendees' : 'profiles',
-          filter: eventId 
-            ? `profile_id=eq.${driverId}` 
-            : `id=eq.${driverId}`,
+          table: 'event_attendees',
+          filter: `profile_id=eq.${driverId}`,
         },
         (payload) => {
           const data = payload.new as any;
-          if (data.current_lat && data.current_lng) {
-            const isSharing = eventId ? data.share_location : data.location_sharing_enabled;
-            if (isSharing) {
-              setDriverLocation({
-                lat: data.current_lat,
-                lng: data.current_lng,
-                lastUpdate: data.last_location_update,
-              });
-            }
+          if (data.current_lat && data.current_lng && data.share_location) {
+            setDriverLocation({
+              lat: data.current_lat,
+              lng: data.current_lng,
+              lastUpdate: data.last_location_update,
+            });
           }
         }
       )
