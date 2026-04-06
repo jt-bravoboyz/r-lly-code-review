@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { Play, X, Pencil, Trash2, GripVertical, ArrowUp, ArrowDown } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { useRallyMedia, useDeleteRallyMedia } from '@/hooks/useRallyMedia';
+import { useFeaturedMedia, useRallyMedia, useDeleteRallyMedia } from '@/hooks/useRallyMedia';
 import { RallyMediaUpload } from './RallyMediaUpload';
 import { Carousel, CarouselContent, CarouselItem, CarouselApi } from '@/components/ui/carousel';
 import { supabase } from '@/integrations/supabase/client';
@@ -16,7 +16,8 @@ interface RallyHeroMediaCarouselProps {
 }
 
 export function RallyHeroMediaCarousel({ eventId, canManage = false }: RallyHeroMediaCarouselProps) {
-  const { data: media, isLoading } = useRallyMedia(eventId);
+  const { data: media, isLoading } = useFeaturedMedia(eventId);
+  const { data: allMedia } = useRallyMedia(eventId);
   const deleteMedia = useDeleteRallyMedia();
   const queryClient = useQueryClient();
   const [viewerUrl, setViewerUrl] = useState<string | null>(null);

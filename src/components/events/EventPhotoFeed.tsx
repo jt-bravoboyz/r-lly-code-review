@@ -2,7 +2,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { Camera, ImagePlus, X, Loader2, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useRallyMedia, useUploadRallyMedia, useDeleteRallyMedia, type RallyMedia } from '@/hooks/useRallyMedia';
+import { useGalleryPhotos, useUploadRallyMedia, useDeleteRallyMedia, type RallyMedia } from '@/hooks/useRallyMedia';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
@@ -20,7 +20,7 @@ interface EventPhotoFeedProps {
 
 export function EventPhotoFeed({ eventId, isHost }: EventPhotoFeedProps) {
   const { profile } = useAuth();
-  const { data: media, isLoading } = useRallyMedia(eventId);
+  const { data: galleryMedia, isLoading } = useGalleryPhotos(eventId);
   const uploadMedia = useUploadRallyMedia();
   const deleteMedia = useDeleteRallyMedia();
   const queryClient = useQueryClient();
@@ -29,7 +29,7 @@ export function EventPhotoFeed({ eventId, isHost }: EventPhotoFeedProps) {
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
   const [profiles, setProfiles] = useState<Record<string, { display_name: string; avatar_url: string | null }>>({});
 
-  const photos = media?.filter(m => m.type === 'photo') || [];
+  const photos = galleryMedia || [];
 
   // Fetch uploader profiles
   useEffect(() => {
@@ -63,7 +63,7 @@ export function EventPhotoFeed({ eventId, isHost }: EventPhotoFeedProps) {
         table: 'rally_media',
         filter: `event_id=eq.${eventId}`,
       }, () => {
-        queryClient.invalidateQueries({ queryKey: ['rally-media', eventId] });
+        queryClient.invalidateQueries({ queryKey: ['rally-media-gallery', eventId] });
       })
       .subscribe();
 
@@ -92,6 +92,7 @@ export function EventPhotoFeed({ eventId, isHost }: EventPhotoFeedProps) {
           file,
           type: 'photo',
           orderIndex: photos.length + successCount,
+          isFeatured: false,
         });
         successCount++;
       } catch {

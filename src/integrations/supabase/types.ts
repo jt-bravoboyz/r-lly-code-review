@@ -1601,6 +1601,7 @@ export type Database = {
           created_by: string
           event_id: string
           id: string
+          is_featured: boolean
           order_index: number
           thumbnail_url: string | null
           type: string
@@ -1611,6 +1612,7 @@ export type Database = {
           created_by: string
           event_id: string
           id?: string
+          is_featured?: boolean
           order_index?: number
           thumbnail_url?: string | null
           type: string
@@ -1621,6 +1623,7 @@ export type Database = {
           created_by?: string
           event_id?: string
           id?: string
+          is_featured?: boolean
           order_index?: number
           thumbnail_url?: string | null
           type?: string

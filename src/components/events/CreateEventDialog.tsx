@@ -167,6 +167,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
               file: photos[i].file,
               type: 'photo',
               orderIndex: i,
+              isFeatured: true,
               onUploadProgress: (p) => setUploadPercent(Math.round((p.loaded / p.total) * 100)),
             });
           } catch { failed.push({ file: photos[i].file, type: 'photo', orderIndex: i }); }
@@ -181,6 +182,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
               file: v.file,
               type: 'video',
               orderIndex: 0,
+              isFeatured: true,
               onUploadProgress: (p) => setUploadPercent(Math.round((p.loaded / p.total) * 100)),
             });
           } catch { failed.push({ file: v.file, type: 'video', orderIndex: 0 }); }
@@ -511,6 +513,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
                         file: f.file,
                         type: f.type,
                         orderIndex: f.orderIndex,
+                        isFeatured: true,
                         onUploadProgress: (p) => setUploadPercent(Math.round((p.loaded / p.total) * 100)),
                       });
                     } catch { stillFailed.push(f); }

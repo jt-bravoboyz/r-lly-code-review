@@ -10,8 +10,10 @@ export interface RallyMedia {
   order_index: number;
   created_by: string;
   created_at: string;
+  is_featured: boolean;
 }
 
+/** All media for an event */
 export function useRallyMedia(eventId: string | undefined) {
   return useQuery({
     queryKey: ['rally-media', eventId],
@@ -30,6 +32,46 @@ export function useRallyMedia(eventId: string | undefined) {
   });
 }
 
+/** Only featured (hero carousel) media */
+export function useFeaturedMedia(eventId: string | undefined) {
+  return useQuery({
+    queryKey: ['rally-media-featured', eventId],
+    queryFn: async () => {
+      if (!eventId) return [];
+      const { data, error } = await supabase
+        .from('rally_media' as any)
+        .select('*')
+        .eq('event_id', eventId)
+        .eq('is_featured', true)
+        .order('type', { ascending: true })
+        .order('order_index', { ascending: true });
+      if (error) throw error;
+      return (data || []) as unknown as RallyMedia[];
+    },
+    enabled: !!eventId,
+  });
+}
+
+/** Only gallery (non-featured) photos */
+export function useGalleryPhotos(eventId: string | undefined) {
+  return useQuery({
+    queryKey: ['rally-media-gallery', eventId],
+    queryFn: async () => {
+      if (!eventId) return [];
+      const { data, error } = await supabase
+        .from('rally_media' as any)
+        .select('*')
+        .eq('event_id', eventId)
+        .eq('is_featured', false)
+        .eq('type', 'photo')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return (data || []) as unknown as RallyMedia[];
+    },
+    enabled: !!eventId,
+  });
+}
+
 export function useUploadRallyMedia() {
   const queryClient = useQueryClient();
 
@@ -40,6 +82,7 @@ export function useUploadRallyMedia() {
       file,
       type,
       orderIndex,
+      isFeatured = false,
       onUploadProgress,
     }: {
       eventId: string;
@@ -47,6 +90,7 @@ export function useUploadRallyMedia() {
       file: File;
       type: 'photo' | 'video';
       orderIndex: number;
+      isFeatured?: boolean;
       onUploadProgress?: (progress: { loaded: number; total: number }) => void;
     }) => {
       const ext = file.name.split('.').pop() || (type === 'video' ? 'mp4' : 'jpg');
@@ -69,6 +113,7 @@ export function useUploadRallyMedia() {
           url: urlData.publicUrl,
           order_index: orderIndex,
           created_by: profileId,
+          is_featured: isFeatured,
         })
         .select()
         .single();
@@ -78,6 +123,8 @@ export function useUploadRallyMedia() {
     },
     onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: ['rally-media', vars.eventId] });
+      queryClient.invalidateQueries({ queryKey: ['rally-media-featured', vars.eventId] });
+      queryClient.invalidateQueries({ queryKey: ['rally-media-gallery', vars.eventId] });
     },
   });
 }
@@ -95,6 +142,8 @@ export function useDeleteRallyMedia() {
     },
     onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: ['rally-media', vars.eventId] });
+      queryClient.invalidateQueries({ queryKey: ['rally-media-featured', vars.eventId] });
+      queryClient.invalidateQueries({ queryKey: ['rally-media-gallery', vars.eventId] });
     },
   });
 }
