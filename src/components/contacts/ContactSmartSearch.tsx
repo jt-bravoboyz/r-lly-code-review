@@ -9,6 +9,7 @@ import { useUserContacts, UserContact } from '@/hooks/useUserContacts';
 interface ContactSmartSearchProps {
   onSelect?: (contact: UserContact) => void;
   onInvite?: (contact: UserContact) => void;
+  autoFocus?: boolean;
 }
 
 export function ContactSmartSearch({ onSelect, onInvite }: ContactSmartSearchProps) {

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { PUBLIC_APP_URL } from '@/lib/appUrl';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Search, Check, MessageCircle, Users, ShieldCheck, Smartphone, Cloud } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Search, Check, MessageCircle, Users, ShieldCheck, Smartphone, Cloud, ChevronDown } from 'lucide-react';
 import { usePhoneContacts, PhoneContact } from '@/hooks/usePhoneContacts';
 import { useUserContacts, UserContact } from '@/hooks/useUserContacts';
 import { ContactSyncButton } from './ContactSyncButton';
@@ -31,17 +32,25 @@ export function ContactInviteDialog({ open, onOpenChange }: ContactInviteDialogP
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isSending, setIsSending] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const { data: deviceContacts = [], isLoading: deviceLoading } = usePhoneContacts();
   const { data: cloudContacts = [], isLoading: cloudLoading } = useUserContacts();
   const { profile } = useAuth();
+  const searchRef = useRef<HTMLInputElement>(null);
 
   const isLoading = deviceLoading || cloudLoading;
+
+  // Auto-focus search input when dialog opens
+  useEffect(() => {
+    if (open) {
+      setTimeout(() => searchRef.current?.focus(), 100);
+    }
+  }, [open]);
 
   // Merge device + cloud contacts, dedup by phone
   const allContacts = useMemo(() => {
     const map = new Map<string, UnifiedContact>();
 
-    // Device contacts first
     deviceContacts.forEach((c: PhoneContact) => {
       const key = c.phone_number;
       map.set(key, {
@@ -52,7 +61,6 @@ export function ContactInviteDialog({ open, onOpenChange }: ContactInviteDialogP
       });
     });
 
-    // Cloud contacts — don't overwrite device entries
     cloudContacts.forEach((c: UserContact) => {
       const key = c.phone || c.email || c.id;
       if (!map.has(key)) {
@@ -88,29 +96,53 @@ export function ContactInviteDialog({ open, onOpenChange }: ContactInviteDialogP
     });
   };
 
+  const referralParam = profile?.id ? `?r=${profile.id}` : '';
+  const inviteLink = `${PUBLIC_APP_URL}${referralParam}`;
+  const smsBody = `Yo! I'm getting the squad together on R@lly. Use my link to join the inner circle: ${inviteLink}`;
+
   const handleSendInvites = async () => {
     const selected = allContacts.filter(c => selectedIds.has(c.id));
     if (selected.length === 0) return;
 
     setIsSending(true);
-    const referralParam = profile?.id ? `?r=${profile.id}` : '';
-    const inviteLink = `${PUBLIC_APP_URL}${referralParam}`;
-    const message = `Yo! I'm getting the squad together on R@lly. Use my link to join the inner circle: ${inviteLink}`;
 
     const phones = selected.map(c => c.phone).filter(Boolean).join(',');
 
     if (navigator.share) {
       try {
-        await navigator.share({ title: 'Join R@lly', text: message });
+        await navigator.share({ title: 'Join R@lly', text: smsBody });
       } catch { /* cancelled */ }
     } else {
-      const encoded = encodeURIComponent(message);
+      const encoded = encodeURIComponent(smsBody);
       window.open(`sms:${phones}?body=${encoded}`, '_blank');
     }
 
     setIsSending(false);
     setSelectedIds(new Set());
     onOpenChange(false);
+  };
+
+  // Quick Add for manual invite when no results match
+  const handleQuickAdd = () => {
+    const trimmed = searchQuery.trim();
+    const digitsOnly = trimmed.replace(/\D/g, '');
+    const isPhone = digitsOnly.length >= 10;
+    const target = isPhone ? digitsOnly : trimmed;
+
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const sep = isIOS ? '&' : '?';
+    const encoded = encodeURIComponent(smsBody);
+
+    if (isPhone) {
+      window.open(`sms:${target}${sep}body=${encoded}`, '_blank');
+    } else {
+      if (navigator.share) {
+        navigator.share({ title: 'Join R@lly', text: smsBody }).catch(() => {});
+      } else {
+        window.open(`sms:${sep}body=${encoded}`, '_blank');
+      }
+    }
+    toast(`Invite sent for ${trimmed}!`);
   };
 
   const sourceIcon = (source: UnifiedContact['source']) => {
@@ -130,6 +162,10 @@ export function ContactInviteDialog({ open, onOpenChange }: ContactInviteDialogP
   };
 
   const selectedCount = selectedIds.size;
+  const trimmed = searchQuery.trim();
+  const digitsOnly = trimmed.replace(/\D/g, '');
+  const isPhoneQuery = digitsOnly.length >= 10;
+  const showQuickAdd = trimmed.length > 0 && filteredContacts.length === 0 && !isLoading;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -140,7 +176,7 @@ export function ContactInviteDialog({ open, onOpenChange }: ContactInviteDialogP
             Invite to R@lly
           </DialogTitle>
           <p className="text-xs text-muted-foreground mt-1">
-            Select contacts to invite — phone + cloud contacts merged.
+            Search or type a name/number to invite anyone.
           </p>
         </DialogHeader>
 
@@ -148,36 +184,66 @@ export function ContactInviteDialog({ open, onOpenChange }: ContactInviteDialogP
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
+              ref={searchRef}
               placeholder="Search contacts..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               className="pl-10 bg-muted/50 border-0 rounded-xl"
             />
           </div>
+          <p className="text-[11px] text-muted-foreground text-center mt-2">
+            Apple limits contact syncing on web apps. Type any name or number above to send an invite link manually.
+          </p>
         </div>
 
         <ScrollArea className="flex-1 px-5">
+          {/* Quick Add row when no matches */}
+          {showQuickAdd && (
+            <button
+              onClick={handleQuickAdd}
+              className="w-full flex items-center gap-3 p-4 rounded-2xl border-l-4 border-[#F47A19] bg-[#F47A19]/10 animate-pulse hover:scale-[1.02] transition-transform duration-200 mb-3"
+            >
+              <div className="w-10 h-10 rounded-full bg-[#F47A19] flex items-center justify-center shrink-0">
+                <MessageCircle className="h-5 w-5 text-white" />
+              </div>
+              <div className="text-left">
+                <p className="font-bold font-montserrat text-sm text-foreground">
+                  {isPhoneQuery ? `R@lly ${trimmed}` : `Invite '${trimmed}' via Text`}
+                </p>
+                <p className="text-xs text-muted-foreground">Tap to send an invite link</p>
+              </div>
+            </button>
+          )}
+
           {isLoading ? (
             <div className="space-y-3 py-2">
               {[1, 2, 3, 4, 5].map(i => (
                 <div key={i} className="h-14 bg-muted/50 rounded-xl animate-pulse" />
               ))}
             </div>
-          ) : allContacts.length === 0 ? (
+          ) : allContacts.length === 0 && !showQuickAdd ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
                 <Users className="h-8 w-8 text-primary" />
               </div>
               <h3 className="font-bold text-foreground mb-2 font-montserrat">Nobody to r@lly?</h3>
               <p className="text-sm text-muted-foreground mb-4 max-w-[240px]">
-                Try syncing your contacts.
+                Type a name or number above, or import your contacts below.
               </p>
-              <div className="space-y-2 w-full max-w-[200px]">
-                <ContactSyncButton />
-                <CSVContactImport />
-              </div>
+              <Collapsible open={importOpen} onOpenChange={setImportOpen}>
+                <CollapsibleTrigger asChild>
+                  <Button variant="outline" className="gap-2 rounded-xl text-sm text-muted-foreground">
+                    Import Options
+                    <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${importOpen ? 'rotate-180' : ''}`} />
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-2 pt-3 w-full max-w-[200px] mx-auto">
+                  <ContactSyncButton />
+                  <CSVContactImport />
+                </CollapsibleContent>
+              </Collapsible>
             </div>
-          ) : filteredContacts.length === 0 ? (
+          ) : filteredContacts.length === 0 && !showQuickAdd ? (
             <div className="py-12 text-center">
               <p className="text-sm text-muted-foreground">Nobody to r@lly matching "{searchQuery}"</p>
             </div>
