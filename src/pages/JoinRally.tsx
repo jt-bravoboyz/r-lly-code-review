@@ -129,7 +129,7 @@ export default function JoinRally() {
       const urlParams = new URLSearchParams(window.location.search);
       const ref = urlParams.get('r');
       if (ref) {
-        sessionStorage.setItem('rally-referrer-id', ref);
+        localStorage.setItem('rally-referrer-id', ref);
       }
       navigate('/auth');
       return;
