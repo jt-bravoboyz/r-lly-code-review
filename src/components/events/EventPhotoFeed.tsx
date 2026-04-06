@@ -92,6 +92,7 @@ export function EventPhotoFeed({ eventId, isHost }: EventPhotoFeedProps) {
           file,
           type: 'photo',
           orderIndex: photos.length + successCount,
+          isFeatured: false,
         });
         successCount++;
       } catch {
