@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Car, Shield, Navigation, ArrowLeft, Loader2, MapPin, Home, Sparkles } from 'lucide-react';
+import { Car, Shield, Navigation, ArrowLeft, Loader2, MapPin, Home, Sparkles, LocateFixed } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -34,6 +34,16 @@ interface RidesSelectionModalProps {
 type View = 'choice' | 'meeting-or-pickup' | 'destination-choice' | 'pickup-location' | 'locked-in';
 
 const HYPE_QUOTES = [
+  "Motion detected. The takeover begins now 🚀",
+  "Secure the bag. Secure the ride. Secure the night 🔒",
+  "YKYK. And now we know 😏",
+  "Bet. The night is ours 🌙",
+  "Vibe: Validated ✅",
+  "Coordinate the chaos. Execute the plan 🎯",
+  "Safe and sound? No. Safe and legendary 🌟",
+  "Put the team on your back. It's light work 💪",
+  "The pity party is over. Now let's go 🔥",
+  "Main character energy activated 💫",
   "The horse is prepared for battle 🐎",
   "You're locked in twin 🔒",
   "Tonight's gonna be legendary 🌟",
@@ -66,6 +76,20 @@ function LockedInScreen({ onDone }: { onDone: () => void }) {
         </p>
       </div>
     </div>
+  );
+}
+
+function QuickPickupButton({ icon, label, sublabel, onClick }: { icon: React.ReactNode; label: string; sublabel: string; onClick: () => void }) {
+  return (
+    <Button
+      variant="outline"
+      className="w-full h-28 text-base flex-col py-4 border-border hover:border-primary hover:bg-primary/5 transition-transform hover:scale-[1.02] active:scale-[0.97]"
+      onClick={onClick}
+    >
+      {icon}
+      <span className="font-montserrat font-bold">{label}</span>
+      <span className="text-xs text-muted-foreground truncate max-w-full">{sublabel}</span>
+    </Button>
   );
 }
 
@@ -380,6 +404,73 @@ export function RidesSelectionModal({
               </DialogHeader>
 
               <div className="space-y-4 pt-4">
+                {/* Quick-select buttons */}
+                <div className="space-y-3">
+                  <QuickPickupButton
+                    icon={<LocateFixed className="h-6 w-6 mb-2 text-primary" />}
+                    label="Current Location"
+                    sublabel="Use your GPS position"
+                    onClick={async () => {
+                      if (!navigator.geolocation) {
+                        toast.error('Location not available on this device');
+                        return;
+                      }
+                      toast.loading('Getting your location...', { id: 'geo' });
+                      navigator.geolocation.getCurrentPosition(
+                        async (pos) => {
+                          const { latitude, lng } = { latitude: pos.coords.latitude, lng: pos.coords.longitude };
+                          setLocationCoords({ lat: latitude, lng });
+                          // Reverse geocode via Mapbox
+                          try {
+                            const envToken = import.meta.env.VITE_MAPBOX_PUBLIC_TOKEN;
+                            let token = envToken;
+                            if (!token) {
+                              const { data } = await supabase.functions.invoke('get-mapbox-token');
+                              token = data?.token;
+                            }
+                            if (token) {
+                              const res = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${latitude}.json?access_token=${token}&limit=1`);
+                              const geo = await res.json();
+                              const name = geo.features?.[0]?.place_name || `${latitude.toFixed(4)}, ${lng.toFixed(4)}`;
+                              setLocationValue(name);
+                            } else {
+                              setLocationValue(`${latitude.toFixed(4)}, ${lng.toFixed(4)}`);
+                            }
+                          } catch {
+                            setLocationValue(`${latitude.toFixed(4)}, ${lng.toFixed(4)}`);
+                          }
+                          toast.dismiss('geo');
+                          toast.success('Location set!');
+                        },
+                        () => {
+                          toast.dismiss('geo');
+                          toast.error('Could not get your location');
+                        },
+                        { enableHighAccuracy: true, timeout: 10000 }
+                      );
+                    }}
+                  />
+                  {profile?.home_address && (
+                    <QuickPickupButton
+                      icon={<Home className="h-6 w-6 mb-2 text-primary" />}
+                      label="Home"
+                      sublabel={profile.home_address.substring(0, 40)}
+                      onClick={() => {
+                        setLocationValue(profile.home_address!);
+                        if (profile.home_lat && profile.home_lng) {
+                          setLocationCoords({ lat: profile.home_lat, lng: profile.home_lng });
+                        }
+                      }}
+                    />
+                  )}
+                </div>
+
+                <div className="relative">
+                  <div className="absolute inset-x-0 top-0 flex items-center justify-center -mt-1">
+                    <span className="bg-background px-2 text-xs text-muted-foreground">or search</span>
+                  </div>
+                </div>
+
                 <LocationSearch
                   value={locationValue}
                   onChange={setLocationValue}

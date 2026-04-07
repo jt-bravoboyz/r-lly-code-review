@@ -1,13 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Switch } from '@/components/ui/switch';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Home, User, Building2, MapPin, Navigation, CheckCircle2, Lock, Users, UserCheck, Globe, Shield, XCircle, Loader2 } from 'lucide-react';
+import { Home, User, Building2, MapPin, Navigation, CheckCircle2, Lock, Users, UserCheck, Globe, Shield, XCircle, Loader2, Bell } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useMyAttendeeStatus, useUpdateSafetyStatus } from '@/hooks/useSafetyStatus';
 import { openDirections } from '@/lib/mapStyles';
@@ -54,6 +55,9 @@ export function RallyHomeButton({ eventId, trigger, eventStatus, autoOpen, onAut
   const [visibility, setVisibility] = useState<VisibilityType>('squad');
   const [selectedPeople, setSelectedPeople] = useState<string[]>([]);
   const [eventAttendees, setEventAttendees] = useState<EventAttendee[]>([]);
+  const [notifySquad, setNotifySquad] = useState(true);
+  const [squads, setSquads] = useState<{ id: string; name: string }[]>([]);
+  const [selectedSquadId, setSelectedSquadId] = useState<string | null>(null);
   const { profile } = useAuth();
   const { token: mapboxToken } = useMapboxToken();
   
@@ -61,6 +65,35 @@ export function RallyHomeButton({ eventId, trigger, eventStatus, autoOpen, onAut
   const { data: myStatus, refetch: refetchStatus } = useMyAttendeeStatus(eventId);
   const { confirmNotParticipating } = useUpdateSafetyStatus();
   const { notifyGoingHome, notifyArrivedSafe, notifyCarGroupRallyHome } = useSafetyNotifications();
+
+  // Fetch user's squads
+  useEffect(() => {
+    const fetchSquads = async () => {
+      if (!profile?.id) return;
+      const { data } = await supabase
+        .from('squad_members')
+        .select('squad_id, squads:squad_id(id, name)')
+        .eq('profile_id', profile.id);
+      
+      if (data) {
+        const s = data
+          .map((d: any) => d.squads)
+          .filter(Boolean);
+        // Also fetch squads user owns
+        const { data: owned } = await supabase
+          .from('squads')
+          .select('id, name')
+          .eq('owner_id', profile.id);
+        const all = [...s, ...(owned || [])];
+        const unique = Array.from(new Map(all.map((sq: any) => [sq.id, sq])).values()) as { id: string; name: string }[];
+        setSquads(unique);
+        if (unique.length > 0 && !selectedSquadId) {
+          setSelectedSquadId(unique[0].id);
+        }
+      }
+    };
+    if (open) fetchSquads();
+  }, [profile?.id, open]);
   
   // Geocode an address to get coordinates
   const geocodeAddress = async (address: string): Promise<{ lat: number; lng: number } | null> => {
@@ -379,6 +412,82 @@ export function RallyHomeButton({ eventId, trigger, eventStatus, autoOpen, onAut
           notifyGoingHome(eventId);
           // Notify car group members
           notifyCarGroupRallyHome(eventId);
+
+          // DD Departure Alert: if user is DD, notify all accepted passengers
+          if (myStatus?.is_dd) {
+            try {
+              const { data: myRides } = await supabase
+                .from('rides')
+                .select('id')
+                .eq('event_id', eventId)
+                .eq('driver_id', profile.id)
+                .in('status', ['active', 'full', 'paused']);
+              
+              if (myRides && myRides.length > 0) {
+                const rideIds = myRides.map((r: any) => r.id);
+                const { data: passengers } = await supabase
+                  .from('ride_passengers')
+                  .select('passenger_id')
+                  .in('ride_id', rideIds)
+                  .in('status', ['accepted', 'confirmed']);
+                
+                if (passengers && passengers.length > 0) {
+                  const passengerIds = passengers.map((p: any) => p.passenger_id).filter((id: string) => id !== profile.id);
+                  if (passengerIds.length > 0) {
+                    await supabase.functions.invoke('send-event-notification', {
+                      body: {
+                        type: 'dd_departure',
+                        eventId,
+                        targetProfileIds: passengerIds,
+                        excludeProfileId: profile.id,
+                        title: '🚗 Your DD is heading out!',
+                        body: `${profile.display_name || 'Your DD'} is heading out! Get ready.`,
+                        data: { event_id: eventId, url: `/events/${eventId}` },
+                      },
+                    });
+                  }
+                }
+              }
+            } catch (ddErr) {
+              console.error('DD departure alert failed:', ddErr);
+            }
+          }
+
+          // Squad notify
+          if (notifySquad && selectedSquadId) {
+            try {
+              const { data: members } = await supabase
+                .from('squad_members')
+                .select('profile_id')
+                .eq('squad_id', selectedSquadId);
+              const { data: squad } = await supabase
+                .from('squads')
+                .select('owner_id')
+                .eq('id', selectedSquadId)
+                .maybeSingle();
+              
+              const memberIds = [
+                ...(members || []).map((m: any) => m.profile_id),
+                ...(squad?.owner_id ? [squad.owner_id] : []),
+              ].filter((id: string) => id !== profile.id);
+
+              if (memberIds.length > 0) {
+                await supabase.functions.invoke('send-event-notification', {
+                  body: {
+                    type: 'going_home',
+                    eventId,
+                    targetProfileIds: memberIds,
+                    excludeProfileId: profile.id,
+                    title: '🏠 Squad member heading home',
+                    body: `${profile.display_name || 'Someone'} is heading home safely`,
+                    data: { event_id: eventId, url: `/events/${eventId}` },
+                  },
+                });
+              }
+            } catch (squadErr) {
+              console.error('Squad notify failed:', squadErr);
+            }
+          }
           
           const destinationName = (myStatus as any)?.destination_name || 'your destination';
           toast.success(`You're heading to ${destinationName}!`, {
@@ -631,7 +740,34 @@ export function RallyHomeButton({ eventId, trigger, eventStatus, autoOpen, onAut
               </RadioGroup>
             </div>
 
-            {/* People Selection */}
+            {/* Notify My Squad */}
+            {squads.length > 0 && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="font-montserrat text-base flex items-center gap-2">
+                    <Bell className="h-4 w-4 text-primary" />
+                    Notify My Squad
+                  </Label>
+                  <Switch checked={notifySquad} onCheckedChange={setNotifySquad} />
+                </div>
+                {notifySquad && squads.length > 1 && (
+                  <select
+                    className="w-full rounded-lg border border-border bg-background p-2 text-sm"
+                    value={selectedSquadId || ''}
+                    onChange={(e) => setSelectedSquadId(e.target.value)}
+                  >
+                    {squads.map((s) => (
+                      <option key={s.id} value={s.id}>{s.name}</option>
+                    ))}
+                  </select>
+                )}
+                {notifySquad && squads.length === 1 && (
+                  <p className="text-xs text-muted-foreground">
+                    Notifying: {squads[0].name}
+                  </p>
+                )}
+              </div>
+            )}
             {visibility === 'selected' && eventAttendees.length > 0 && (
               <div>
                 <Label className="font-montserrat text-sm mb-2 block">
