@@ -243,10 +243,25 @@ export default function EventDetail() {
   // Always show if user hasn't opted in yet (no sessionStorage blocking)
   useEffect(() => {
     if (isAfterRally && (isAttending || isCreator) && myAttendee?.after_rally_opted_in !== true) {
+      // Skip re-prompt if user already confirmed "not participating" during planning
+      if (myAttendee?.not_participating_rally_home_confirmed === true) return;
+      // Auto-opt-in if user already has a ride plan (DD or rider) — plan carries over
+      if (myAttendee?.is_dd === true || myAttendee?.needs_ride === true) {
+        // Silently opt them in without showing the dialog
+        supabase
+          .from('event_attendees')
+          .update({ after_rally_opted_in: true } as any)
+          .eq('event_id', id!)
+          .eq('profile_id', profile?.id!)
+          .then(() => {
+            refetchMyAttendee();
+          });
+        return;
+      }
       // Only set once per page load to avoid infinite re-triggers
       setShowAfterRallyOptIn(true);
     }
-  }, [isAfterRally, isAttending, isCreator, myAttendee?.after_rally_opted_in]);
+  }, [isAfterRally, isAttending, isCreator, myAttendee?.after_rally_opted_in, myAttendee?.not_participating_rally_home_confirmed, myAttendee?.is_dd, myAttendee?.needs_ride]);
 
   // Trigger the rainbow transition ONLY when user opts in (not on event status change)
   // This creates the dramatic visual effect after they click "I'm In!"

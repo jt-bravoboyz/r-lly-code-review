@@ -79,7 +79,21 @@ function LockedInScreen({ onDone }: { onDone: () => void }) {
   );
 }
 
-export function RidesSelectionModal({
+function QuickPickupButton({ icon, label, sublabel, onClick }: { icon: React.ReactNode; label: string; sublabel: string; onClick: () => void }) {
+  return (
+    <Button
+      variant="outline"
+      className="w-full h-28 text-base flex-col py-4 border-border hover:border-primary hover:bg-primary/5 transition-transform hover:scale-[1.02] active:scale-[0.97]"
+      onClick={onClick}
+    >
+      {icon}
+      <span className="font-montserrat font-bold">{label}</span>
+      <span className="text-xs text-muted-foreground truncate max-w-full">{sublabel}</span>
+    </Button>
+  );
+}
+
+
   open,
   onOpenChange,
   onBack,
