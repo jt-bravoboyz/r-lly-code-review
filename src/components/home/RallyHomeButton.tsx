@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,7 +7,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Home, User, Building2, MapPin, Navigation, CheckCircle2, Lock, Users, UserCheck, Globe, Shield, XCircle, Loader2 } from 'lucide-react';
+import { Home, User, Building2, MapPin, Navigation, CheckCircle2, Lock, Users, UserCheck, Globe, Shield, XCircle, Loader2, Bell } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useMyAttendeeStatus, useUpdateSafetyStatus } from '@/hooks/useSafetyStatus';
 import { openDirections } from '@/lib/mapStyles';
@@ -54,6 +54,9 @@ export function RallyHomeButton({ eventId, trigger, eventStatus, autoOpen, onAut
   const [visibility, setVisibility] = useState<VisibilityType>('squad');
   const [selectedPeople, setSelectedPeople] = useState<string[]>([]);
   const [eventAttendees, setEventAttendees] = useState<EventAttendee[]>([]);
+  const [notifySquad, setNotifySquad] = useState(true);
+  const [squads, setSquads] = useState<{ id: string; name: string }[]>([]);
+  const [selectedSquadId, setSelectedSquadId] = useState<string | null>(null);
   const { profile } = useAuth();
   const { token: mapboxToken } = useMapboxToken();
   
@@ -61,6 +64,35 @@ export function RallyHomeButton({ eventId, trigger, eventStatus, autoOpen, onAut
   const { data: myStatus, refetch: refetchStatus } = useMyAttendeeStatus(eventId);
   const { confirmNotParticipating } = useUpdateSafetyStatus();
   const { notifyGoingHome, notifyArrivedSafe, notifyCarGroupRallyHome } = useSafetyNotifications();
+
+  // Fetch user's squads
+  useEffect(() => {
+    const fetchSquads = async () => {
+      if (!profile?.id) return;
+      const { data } = await supabase
+        .from('squad_members')
+        .select('squad_id, squads:squad_id(id, name)')
+        .eq('profile_id', profile.id);
+      
+      if (data) {
+        const s = data
+          .map((d: any) => d.squads)
+          .filter(Boolean);
+        // Also fetch squads user owns
+        const { data: owned } = await supabase
+          .from('squads')
+          .select('id, name')
+          .eq('owner_id', profile.id);
+        const all = [...s, ...(owned || [])];
+        const unique = Array.from(new Map(all.map((sq: any) => [sq.id, sq])).values()) as { id: string; name: string }[];
+        setSquads(unique);
+        if (unique.length > 0 && !selectedSquadId) {
+          setSelectedSquadId(unique[0].id);
+        }
+      }
+    };
+    if (open) fetchSquads();
+  }, [profile?.id, open]);
   
   // Geocode an address to get coordinates
   const geocodeAddress = async (address: string): Promise<{ lat: number; lng: number } | null> => {
