@@ -789,7 +789,7 @@ export default function EventDetail() {
         )}
 
         {/* DD Dropoff Button - For DDs to confirm passenger dropoffs */}
-        {isDD && (isLiveEvent || isAfterRally) && (
+        {!isCompleted && isDD && (isLiveEvent || isAfterRally) && (
           <DDDropoffButton eventId={event.id} />
         )}
 
