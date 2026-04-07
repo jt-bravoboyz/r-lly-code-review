@@ -65,6 +65,7 @@ import { EventPhotoFeed } from '@/components/events/EventPhotoFeed';
 import { GoingRogueButton } from '@/components/events/GoingRogueButton';
 import { RogueAlertOverlay } from '@/components/events/RogueAlertOverlay';
 import { useRogueAlerts } from '@/hooks/useRogueAlerts';
+import { RallyRecapScreen } from '@/components/events/RallyRecapScreen';
 import { useMyRallyHomePrompt } from '@/hooks/useRallyHomePrompt';
 import { PendingJoinRequests } from '@/components/events/PendingJoinRequests';
 import { TransportModeSelector } from '@/components/events/TransportModeSelector';
