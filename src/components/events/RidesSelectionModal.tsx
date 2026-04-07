@@ -390,6 +390,73 @@ export function RidesSelectionModal({
               </DialogHeader>
 
               <div className="space-y-4 pt-4">
+                {/* Quick-select buttons */}
+                <div className="space-y-3">
+                  <QuickPickupButton
+                    icon={<LocateFixed className="h-6 w-6 mb-2 text-primary" />}
+                    label="Current Location"
+                    sublabel="Use your GPS position"
+                    onClick={async () => {
+                      if (!navigator.geolocation) {
+                        toast.error('Location not available on this device');
+                        return;
+                      }
+                      toast.loading('Getting your location...', { id: 'geo' });
+                      navigator.geolocation.getCurrentPosition(
+                        async (pos) => {
+                          const { latitude, lng } = { latitude: pos.coords.latitude, lng: pos.coords.longitude };
+                          setLocationCoords({ lat: latitude, lng });
+                          // Reverse geocode via Mapbox
+                          try {
+                            const envToken = import.meta.env.VITE_MAPBOX_PUBLIC_TOKEN;
+                            let token = envToken;
+                            if (!token) {
+                              const { data } = await supabase.functions.invoke('get-mapbox-token');
+                              token = data?.token;
+                            }
+                            if (token) {
+                              const res = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${latitude}.json?access_token=${token}&limit=1`);
+                              const geo = await res.json();
+                              const name = geo.features?.[0]?.place_name || `${latitude.toFixed(4)}, ${lng.toFixed(4)}`;
+                              setLocationValue(name);
+                            } else {
+                              setLocationValue(`${latitude.toFixed(4)}, ${lng.toFixed(4)}`);
+                            }
+                          } catch {
+                            setLocationValue(`${latitude.toFixed(4)}, ${lng.toFixed(4)}`);
+                          }
+                          toast.dismiss('geo');
+                          toast.success('Location set!');
+                        },
+                        () => {
+                          toast.dismiss('geo');
+                          toast.error('Could not get your location');
+                        },
+                        { enableHighAccuracy: true, timeout: 10000 }
+                      );
+                    }}
+                  />
+                  {profile?.home_address && (
+                    <QuickPickupButton
+                      icon={<Home className="h-6 w-6 mb-2 text-primary" />}
+                      label="Home"
+                      sublabel={profile.home_address.substring(0, 40)}
+                      onClick={() => {
+                        setLocationValue(profile.home_address!);
+                        if (profile.home_lat && profile.home_lng) {
+                          setLocationCoords({ lat: profile.home_lat, lng: profile.home_lng });
+                        }
+                      }}
+                    />
+                  )}
+                </div>
+
+                <div className="relative">
+                  <div className="absolute inset-x-0 top-0 flex items-center justify-center -mt-1">
+                    <span className="bg-background px-2 text-xs text-muted-foreground">or search</span>
+                  </div>
+                </div>
+
                 <LocationSearch
                   value={locationValue}
                   onChange={setLocationValue}
