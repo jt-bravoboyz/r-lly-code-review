@@ -793,8 +793,8 @@ export default function EventDetail() {
           <DDDropoffButton eventId={event.id} />
         )}
 
-        {/* Tabs for Details, Chat, Tracking, Rides */}
-        <Tabs defaultValue="details" className="w-full">
+        {/* Tabs for Details, Chat, Tracking, Rides — hidden on completed events */}
+        {!isCompleted && <Tabs defaultValue="details" className="w-full">
           <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="details">Details</TabsTrigger>
             <TabsTrigger value="photos" className="flex items-center gap-1">
