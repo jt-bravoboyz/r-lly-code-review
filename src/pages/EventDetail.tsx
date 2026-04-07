@@ -784,7 +784,7 @@ export default function EventDetail() {
         ) : null}
 
         {/* DD Arrived Button - For designated drivers to confirm their own arrival */}
-        {isDD && (isLiveEvent || isAfterRally) && (
+        {!isCompleted && isDD && (isLiveEvent || isAfterRally) && (
           <DDArrivedButton eventId={event.id} />
         )}
 
