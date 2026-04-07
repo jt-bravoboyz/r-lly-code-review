@@ -140,7 +140,8 @@ export default function JoinRally() {
     setJoining(true);
     try {
       const { data, error } = await supabase.rpc('request_join_event', {
-        p_event_id: event.id
+        p_event_id: event.id,
+        p_has_invite_code: true
       });
 
       if (error) {
@@ -163,12 +164,20 @@ export default function JoinRally() {
         throw new Error(result.error);
       }
 
-      toast.success('Request sent! Waiting for host approval...', {
-        description: 'The host will be notified of your request',
-        icon: '⏳',
-      });
-      
-      setAlreadyJoined(false);
+      if (result.status === 'attending') {
+        toast.success("You're in! 🎉", {
+          description: 'Welcome to the R@lly!',
+        });
+        setAlreadyJoined(true);
+        setJoinedEventId(event.id);
+        setShowSafetyChoice(true);
+      } else {
+        toast.success('Request sent! Waiting for host approval...', {
+          description: 'The host will be notified of your request',
+          icon: '⏳',
+        });
+        setIsPending(true);
+      }
       
     } catch (error: any) {
       console.error('[R@lly Debug] Join error:', error);
