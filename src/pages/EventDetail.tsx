@@ -687,7 +687,7 @@ export default function EventDetail() {
         )}
 
         {/* R@lly Home Button - Only show during live events for attendees */}
-        {(isLiveEvent || isAfterRally) && isAttending && (
+        {!isCompleted && (isLiveEvent || isAfterRally) && isAttending && (
           <section className="space-y-4">
             <RallyHomeButton 
               eventId={event.id}
