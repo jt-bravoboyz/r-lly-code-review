@@ -757,7 +757,7 @@ export default function EventDetail() {
 
 
         {/* Safety Tracker + Host Safety Dashboard - only show when R@lly Home is active */}
-        {isAfterRally ? (
+        {!isCompleted && isAfterRally ? (
           <div className="space-y-3">
             <SafetyTracker eventId={event.id} />
             {canManage && (
