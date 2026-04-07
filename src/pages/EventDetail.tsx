@@ -759,6 +759,16 @@ export default function EventDetail() {
           )}
         </div>
 
+        {/* Recap Screen — full-width outside event header card */}
+        {isCompleted && (
+          <RallyRecapScreen
+            eventId={event.id}
+            eventTitle={event.title}
+            eventType={event.event_type}
+            attendeeCount={attendeeCount}
+            ddCount={eventDDs?.length ?? 0}
+          />
+        )}
 
         {/* Safety Tracker + Host Safety Dashboard - only show when R@lly Home is active */}
         {!isCompleted && isAfterRally ? (
