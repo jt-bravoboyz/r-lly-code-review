@@ -716,7 +716,7 @@ export default function EventDetail() {
         )}
 
         {/* Edit My Plan - visible during scheduled phase for attendees who completed join flow */}
-        {isScheduled && isAttending && hasCompletedJoinFlow && (
+        {!isCompleted && isScheduled && isAttending && hasCompletedJoinFlow && (
           <Button
             variant="outline"
             className="w-full font-montserrat font-bold"
