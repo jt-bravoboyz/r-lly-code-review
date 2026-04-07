@@ -171,14 +171,14 @@ export default function Auth() {
       }
       
       // --- Rally auto-join logic ---
-      const pendingCode = sessionStorage.getItem('pendingRallyCode');
+      const pendingCode = localStorage.getItem('pendingRallyCode');
       if (!pendingCode) {
         navigate('/');
         return;
       }
       
       autoJoinAttempted.current = true;
-      sessionStorage.removeItem('pendingRallyCode');
+      localStorage.removeItem('pendingRallyCode');
       
       try {
         // Fetch the event by invite code using the public function
@@ -207,9 +207,10 @@ export default function Auth() {
           return;
         }
         
-        // Request to join the rally (host approval flow)
+        // Request to join the rally — invitee gets auto-accepted
         const { data: joinData, error: joinError } = await supabase.rpc('request_join_event', {
           p_event_id: eventData.id,
+          p_has_invite_code: true,
         });
 
         if (joinError) throw joinError;
@@ -230,11 +231,11 @@ export default function Auth() {
           throw new Error(joinResult.error);
         }
 
-        // Pending by default
-        toast.success('Request sent! Waiting for host approval...', {
-          description: 'The host will be notified of your request',
+        // Invitees auto-join as attending
+        toast.success("You're in! 🎉", {
+          description: `Welcome to ${eventData.title}`,
         });
-        navigate(`/join/${pendingCode}`);
+        navigate(`/events/${eventData.id}`);
       } catch (error: any) {
         console.error('Auto-join failed:', error);
         toast.error('Failed to join rally. Please try again.');
