@@ -93,7 +93,7 @@ function QuickPickupButton({ icon, label, sublabel, onClick }: { icon: React.Rea
   );
 }
 
-
+export function RidesSelectionModal({
   open,
   onOpenChange,
   onBack,
