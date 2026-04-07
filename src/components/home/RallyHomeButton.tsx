@@ -739,7 +739,34 @@ export function RallyHomeButton({ eventId, trigger, eventStatus, autoOpen, onAut
               </RadioGroup>
             </div>
 
-            {/* People Selection */}
+            {/* Notify My Squad */}
+            {squads.length > 0 && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="font-montserrat text-base flex items-center gap-2">
+                    <Bell className="h-4 w-4 text-primary" />
+                    Notify My Squad
+                  </Label>
+                  <Switch checked={notifySquad} onCheckedChange={setNotifySquad} />
+                </div>
+                {notifySquad && squads.length > 1 && (
+                  <select
+                    className="w-full rounded-lg border border-border bg-background p-2 text-sm"
+                    value={selectedSquadId || ''}
+                    onChange={(e) => setSelectedSquadId(e.target.value)}
+                  >
+                    {squads.map((s) => (
+                      <option key={s.id} value={s.id}>{s.name}</option>
+                    ))}
+                  </select>
+                )}
+                {notifySquad && squads.length === 1 && (
+                  <p className="text-xs text-muted-foreground">
+                    Notifying: {squads[0].name}
+                  </p>
+                )}
+              </div>
+            )}
             {visibility === 'selected' && eventAttendees.length > 0 && (
               <div>
                 <Label className="font-montserrat text-sm mb-2 block">
