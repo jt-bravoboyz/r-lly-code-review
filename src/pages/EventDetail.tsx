@@ -65,6 +65,7 @@ import { EventPhotoFeed } from '@/components/events/EventPhotoFeed';
 import { GoingRogueButton } from '@/components/events/GoingRogueButton';
 import { RogueAlertOverlay } from '@/components/events/RogueAlertOverlay';
 import { useRogueAlerts } from '@/hooks/useRogueAlerts';
+import { RallyRecapScreen } from '@/components/events/RallyRecapScreen';
 import { useMyRallyHomePrompt } from '@/hooks/useRallyHomePrompt';
 import { PendingJoinRequests } from '@/components/events/PendingJoinRequests';
 import { TransportModeSelector } from '@/components/events/TransportModeSelector';
@@ -195,6 +196,7 @@ export default function EventDetail() {
   const isScheduled = event?.status === 'scheduled' || !event?.status;
   const isLive = event?.status === 'live';
   const isAfterRally = event?.status === 'after_rally';
+  const isCompleted = event?.status === 'completed';
   
   const hasTransportModeForEvent = Boolean(myAttendee?.arrival_transport_mode);
   const hasCompletedJoinFlow = hasTransportModeForEvent && Boolean(myAttendee?.location_prompt_shown);
@@ -648,8 +650,19 @@ export default function EventDetail() {
             </div>
           )}
 
+        {/* Recap Screen — replaces all action UI for completed events */}
+        {isCompleted && (
+          <RallyRecapScreen
+            eventId={event.id}
+            eventTitle={event.title}
+            eventType={event.event_type}
+            attendeeCount={attendeeCount}
+            ddCount={eventDDs?.length ?? 0}
+          />
+        )}
+
         {/* After R@lly Banner - Show when in after_rally status */}
-        {isAfterRally && (
+        {!isCompleted && isAfterRally && (
           <Card className="gradient-after-rally border-0 after-rally-pulse overflow-hidden relative">
             {/* Animated glow overlay */}
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-[shimmer_3s_ease-in-out_infinite]" />
@@ -674,7 +687,7 @@ export default function EventDetail() {
         )}
 
         {/* R@lly Home Button - Only show during live events for attendees */}
-        {(isLiveEvent || isAfterRally) && isAttending && (
+        {!isCompleted && (isLiveEvent || isAfterRally) && isAttending && (
           <section className="space-y-4">
             <RallyHomeButton 
               eventId={event.id}
@@ -703,7 +716,7 @@ export default function EventDetail() {
         )}
 
         {/* Edit My Plan - visible during scheduled phase for attendees who completed join flow */}
-        {isScheduled && isAttending && hasCompletedJoinFlow && (
+        {!isCompleted && isScheduled && isAttending && hasCompletedJoinFlow && (
           <Button
             variant="outline"
             className="w-full font-montserrat font-bold"
@@ -715,7 +728,7 @@ export default function EventDetail() {
         )}
 
         {/* Going Rogue Button - visible during live/after rally for attendees */}
-        {(isLive || isAfterRally) && isAttending && (
+        {!isCompleted && (isLive || isAfterRally) && isAttending && (
           <GoingRogueButton
             onGoRogue={async (finalWords) => {
               const result = await goRogue.mutateAsync(finalWords);
@@ -744,7 +757,7 @@ export default function EventDetail() {
 
 
         {/* Safety Tracker + Host Safety Dashboard - only show when R@lly Home is active */}
-        {isAfterRally ? (
+        {!isCompleted && isAfterRally ? (
           <div className="space-y-3">
             <SafetyTracker eventId={event.id} />
             {canManage && (
@@ -771,17 +784,17 @@ export default function EventDetail() {
         ) : null}
 
         {/* DD Arrived Button - For designated drivers to confirm their own arrival */}
-        {isDD && (isLiveEvent || isAfterRally) && (
+        {!isCompleted && isDD && (isLiveEvent || isAfterRally) && (
           <DDArrivedButton eventId={event.id} />
         )}
 
         {/* DD Dropoff Button - For DDs to confirm passenger dropoffs */}
-        {isDD && (isLiveEvent || isAfterRally) && (
+        {!isCompleted && isDD && (isLiveEvent || isAfterRally) && (
           <DDDropoffButton eventId={event.id} />
         )}
 
-        {/* Tabs for Details, Chat, Tracking, Rides */}
-        <Tabs defaultValue="details" className="w-full">
+        {/* Tabs for Details, Chat, Tracking, Rides — hidden on completed events */}
+        {!isCompleted && <Tabs defaultValue="details" className="w-full">
           <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="details">Details</TabsTrigger>
             <TabsTrigger value="photos" className="flex items-center gap-1">
@@ -1034,10 +1047,10 @@ export default function EventDetail() {
               </CardContent>
             </Card>
           </TabsContent>
-        </Tabs>
+        </Tabs>}
 
-        {/* Leave Event Button - At bottom for attendees */}
-        {!isCreator && isAttending && (
+        {/* Leave Event Button - At bottom for attendees (hidden on completed) */}
+        {!isCompleted && !isCreator && isAttending && (
           <div className="px-4 pb-24 pt-6">
             <Button 
               className="w-full bg-secondary hover:bg-secondary/90 text-secondary-foreground"
