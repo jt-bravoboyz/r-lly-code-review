@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Car, Shield, Navigation, ArrowLeft, Loader2, MapPin, Home, Sparkles } from 'lucide-react';
+import { Car, Shield, Navigation, ArrowLeft, Loader2, MapPin, Home, Sparkles, LocateFixed } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -34,6 +34,16 @@ interface RidesSelectionModalProps {
 type View = 'choice' | 'meeting-or-pickup' | 'destination-choice' | 'pickup-location' | 'locked-in';
 
 const HYPE_QUOTES = [
+  "Motion detected. The takeover begins now 🚀",
+  "Secure the bag. Secure the ride. Secure the night 🔒",
+  "YKYK. And now we know 😏",
+  "Bet. The night is ours 🌙",
+  "Vibe: Validated ✅",
+  "Coordinate the chaos. Execute the plan 🎯",
+  "Safe and sound? No. Safe and legendary 🌟",
+  "Put the team on your back. It's light work 💪",
+  "The pity party is over. Now let's go 🔥",
+  "Main character energy activated 💫",
   "The horse is prepared for battle 🐎",
   "You're locked in twin 🔒",
   "Tonight's gonna be legendary 🌟",
