@@ -650,8 +650,19 @@ export default function EventDetail() {
             </div>
           )}
 
+        {/* Recap Screen — replaces all action UI for completed events */}
+        {isCompleted && (
+          <RallyRecapScreen
+            eventId={event.id}
+            eventTitle={event.title}
+            eventType={event.event_type}
+            attendeeCount={attendeeCount}
+            ddCount={eventDDs?.length ?? 0}
+          />
+        )}
+
         {/* After R@lly Banner - Show when in after_rally status */}
-        {isAfterRally && (
+        {!isCompleted && isAfterRally && (
           <Card className="gradient-after-rally border-0 after-rally-pulse overflow-hidden relative">
             {/* Animated glow overlay */}
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-[shimmer_3s_ease-in-out_infinite]" />
