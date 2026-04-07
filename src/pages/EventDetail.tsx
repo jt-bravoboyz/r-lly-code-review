@@ -1047,10 +1047,10 @@ export default function EventDetail() {
               </CardContent>
             </Card>
           </TabsContent>
-        </Tabs>
+        </Tabs>}
 
-        {/* Leave Event Button - At bottom for attendees */}
-        {!isCreator && isAttending && (
+        {/* Leave Event Button - At bottom for attendees (hidden on completed) */}
+        {!isCompleted && !isCreator && isAttending && (
           <div className="px-4 pb-24 pt-6">
             <Button 
               className="w-full bg-secondary hover:bg-secondary/90 text-secondary-foreground"
