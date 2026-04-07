@@ -1,92 +1,139 @@
 
 
-# R@lly Recap Implementation Plan
+# Fix: Frictionless Joining for Invitees + DD Passenger Arrival Sync
 
 ## Summary
-Create the cinematic Recap screen that replaces the Tabs/Actions area when `event.status === 'completed'`. Three files created, one edited, one deleted.
+Two fixes: (1) Update `request_join_event` RPC so invited users auto-join as 'attending' instead of 'pending'. (2) Create a database trigger that auto-marks all accepted passengers as arrived when their DD marks arrived — using the DD's exact arrival timestamp for perfect sync.
+
+---
 
 ## Changes
 
-### 1. New: `src/hooks/useRecapData.tsx`
-Aggregation hook that composes existing hooks and runs additional queries:
-- Uses `useRogueAlerts(eventId)` for alerts + reactions
-- Uses `useGalleryPhotos(eventId)` for photo bundle
-- Queries `event_attendees` (where `is_dd = true`) joined with `ride_passengers` (status = 'accepted') to find the DD with most riders → **The Guardian**
-- Queries `rally_media` grouped by `created_by` (where `is_featured = false`) for upload counts → **The Paparazzi**
-- First rogue alert by `created_at` ASC → **The Ghost**
-- Fetches winner display names/avatars from `safe_profiles`
-- Returns `{ rogueTimeline, galleryPhotos, awards, stats, isLoading }`
+### 1. Database Migration — Update `request_join_event` RPC
 
-### 2. New: `src/components/events/RallyRecapScreen.tsx`
-Props: `eventId, eventTitle, eventType, attendeeCount, ddCount`
+Modify the existing RPC to check `event_invites` before assigning status. If the joining user has a matching row in `event_invites` (any status), they get `'attending'` instead of `'pending'`. Also auto-accept the invite.
 
-**Section 1 — Hero Header**
-- First gallery photo as "Shot of the Night" with gold border (`ring-4 ring-yellow-400`) + badge overlay
-- Glassmorphism summary bar: `📸 X Photos | 🔥 Y Rogues | 💬 Z Reactions`
+```sql
+-- Inside request_join_event, after the host/cohost check:
+v_is_invited := EXISTS (
+  SELECT 1 FROM event_invites 
+  WHERE event_id = p_event_id AND invited_profile_id = v_profile_id
+);
 
-**Section 2 — Rogue Timeline (Midnight Theme)**
-- Forced dark: `bg-[#1a1a2e] rounded-2xl px-4 py-6`
-- All text: `text-white`, `text-white/70`, `text-orange-400` for accents
-- Each card: avatar from `safe_profiles`, display name, "Final Words" in `bg-white/10 border-l-2 border-orange-500` quote block, emoji reaction pills
-- Staggered `animate-fade-in`
+v_final_status := CASE 
+  WHEN v_is_host THEN 'attending' 
+  WHEN v_is_invited THEN 'attending'
+  WHEN p_has_invite_code THEN 'attending'
+  ELSE 'pending' 
+END;
 
-**Section 3 — Cinematic Photo Bundle**
-- CSS `columns-2 gap-3` masonry with `break-inside-avoid`
-- Frosted uploader tag: `backdrop-blur-md bg-white/20 rounded-full`
-- "View All" toggle if >6 photos
-
-**Section 4 — Squad Stars (Awards)**
-- Glass cards (`backdrop-blur-xl bg-card/60 border border-border/50`)
-- The Guardian 🛡️, The Ghost 🔥, The Paparazzi 📸
-- Each shows emoji, title, winner avatar + name
-- Staggered `animate-fade-in`
-
-**Section 5 — Safe & Sound Finale**
-- Large shield icon with gold ring accent
-- "🐴 Mission Accomplished." in `font-montserrat` bold, gold text (`text-yellow-500`)
-- "100% SECURED. THE HORSE IS BACK IN THE STABLE."
-- "Share to Story" button via `navigator.share` + clipboard fallback
-- "Powered by R@lly" footer
-
-### 3. Edit: `src/pages/EventDetail.tsx`
-- Import `RallyRecapScreen`
-- Add `const isCompleted = event?.status === 'completed';`
-- Wrap lines ~651–1051 (After R@lly Banner through Leave button) in `{!isCompleted && ( ... )}`
-- After the closing `</div>` of the header card area (line ~743), add:
-```tsx
-{isCompleted && (
-  <RallyRecapScreen
-    eventId={event.id}
-    eventTitle={event.title}
-    eventType={event.event_type}
-    attendeeCount={attendeeCount}
-    ddCount={eventDDs?.length ?? 0}
-  />
-)}
+-- After insert, auto-accept the invite record
+IF v_is_invited THEN
+  UPDATE event_invites 
+  SET status = 'accepted', responded_at = now()
+  WHERE event_id = p_event_id AND invited_profile_id = v_profile_id AND status = 'pending';
+END IF;
 ```
-- Hero carousel and event metadata header remain visible above
 
-### 4. Delete: `src/components/events/RallyRecapCard.tsx`
-Replaced entirely by `RallyRecapScreen`.
+Add optional `p_has_invite_code boolean DEFAULT false` parameter — when true, status = 'attending'.
 
-## Security Confirmation
-- All avatar/name lookups use `safe_profiles` (already used by `useRogueAlerts` realtime handler)
-- Rally-media bucket is public — no signed URLs needed (separate from private `chat-images` bucket)
-- No raw PII exposed in any recap component
-- Admin portal continues querying `profiles` directly — unchanged
+### 2. Database Migration — Trigger: DD Arrival Cascades to Passengers
+
+Create a trigger on `event_attendees` that fires on UPDATE. When a DD sets `arrived_safely = true`, cascade to all their accepted passengers — **using `NEW.arrived_at` (the DD's exact arrival timestamp)** instead of `now()`, so the Recap timeline and Admin Analytics are perfectly synced.
+
+```sql
+CREATE OR REPLACE FUNCTION public.cascade_dd_arrival_to_passengers()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+BEGIN
+  IF NEW.is_dd = true 
+     AND NEW.arrived_safely = true 
+     AND (OLD.arrived_safely IS NULL OR OLD.arrived_safely = false) THEN
+    
+    UPDATE event_attendees ea
+    SET arrived_safely = true,
+        arrived_at = NEW.arrived_at,              -- Use DD's exact timestamp
+        dd_dropoff_confirmed_at = NEW.arrived_at, -- Same synced timestamp
+        dd_dropoff_confirmed_by = NEW.profile_id
+    FROM ride_passengers rp
+    JOIN rides r ON r.id = rp.ride_id
+    WHERE r.event_id = NEW.event_id
+      AND r.driver_id = NEW.profile_id
+      AND rp.status IN ('accepted', 'confirmed')
+      AND ea.event_id = NEW.event_id
+      AND ea.profile_id = rp.passenger_id
+      AND (ea.arrived_safely IS NULL OR ea.arrived_safely = false)
+      -- Exclude rogue users
+      AND NOT EXISTS (
+        SELECT 1 FROM rogue_alerts ra
+        WHERE ra.event_id = NEW.event_id AND ra.profile_id = ea.profile_id
+      );
+  END IF;
+  
+  RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER on_dd_arrival_cascade_passengers
+  AFTER UPDATE ON event_attendees
+  FOR EACH ROW
+  EXECUTE FUNCTION cascade_dd_arrival_to_passengers();
+```
+
+Key difference from previous version: `arrived_at = NEW.arrived_at` and `dd_dropoff_confirmed_at = NEW.arrived_at` instead of `now()`. This ensures the passenger's arrival time matches the DD's arrival time exactly — no clock drift from trigger processing delay.
+
+### 3. Frontend — `src/pages/JoinRally.tsx`
+
+- Pass `p_has_invite_code: true` to the RPC call
+- Update success handling: if result status is `'attending'`, navigate directly to event with "You're in!" toast
+- Keep pending path for strangers without invite
+
+### 4. Frontend — `src/components/home/DDArrivedButton.tsx`
+
+No changes needed — the trigger handles the DB cascade automatically. Existing `refetchInterval` on safety queries picks up passenger updates within seconds.
+
+### 5. Historical Data Fix — One-time SQL (via insert tool)
+
+```sql
+UPDATE event_attendees ea
+SET arrived_safely = true,
+    arrived_at = dd_ea.arrived_at,
+    dd_dropoff_confirmed_at = dd_ea.arrived_at,
+    dd_dropoff_confirmed_by = dd_ea.profile_id
+FROM event_attendees dd_ea
+JOIN rides r ON r.driver_id = dd_ea.profile_id AND r.event_id = dd_ea.event_id
+JOIN ride_passengers rp ON rp.ride_id = r.id AND rp.status IN ('accepted','confirmed')
+WHERE ea.event_id = dd_ea.event_id
+  AND ea.profile_id = rp.passenger_id
+  AND dd_ea.is_dd = true
+  AND dd_ea.arrived_safely = true
+  AND (ea.arrived_safely IS NULL OR ea.arrived_safely = false)
+  AND NOT EXISTS (
+    SELECT 1 FROM rogue_alerts ra WHERE ra.event_id = ea.event_id AND ra.profile_id = ea.profile_id
+  );
+```
+
+Also uses `dd_ea.arrived_at` (the DD's recorded timestamp) instead of `now()` — so historical backfill is accurate too.
+
+---
 
 ## What Is NOT Touched
+
 | Feature | Status |
 |---|---|
-| Going Rogue logic (safety reset, notifications, once-per-event) | Unchanged |
-| Phase-specific buttons (Edit Plan / Rogue / Hidden) | Unchanged — hidden by `!isCompleted` guard |
-| RallyCompleteOverlay (confetti + feedback) | Unchanged — fires on transition |
-| Security hardening (RLS, safe_profiles, signed URLs) | Unchanged |
-| Admin PII access | Unchanged |
+| Going Rogue logic | Unchanged — rogue users excluded from DD cascade |
+| Safety Reset on Rogue | Unchanged |
+| Phase-specific buttons | Unchanged |
+| Security hardening (safe_profiles, RLS) | Unchanged |
+| Recap screen | Unchanged — already reads `arrived_safely` correctly |
+| DD Dropoff Button (manual per-passenger) | Unchanged — still works for individual confirmations |
+| Pending approval for strangers (no invite) | Preserved — only invitees/code-holders auto-join |
 
-## Files
-- **New**: `src/hooks/useRecapData.tsx`
-- **New**: `src/components/events/RallyRecapScreen.tsx`
-- **Edit**: `src/pages/EventDetail.tsx`
-- **Delete**: `src/components/events/RallyRecapCard.tsx`
+## Files Modified
+- **Database migration**: Updated `request_join_event` RPC + new `cascade_dd_arrival_to_passengers` trigger
+- **Edit**: `src/pages/JoinRally.tsx` — pass `p_has_invite_code: true`, update success handling
+- **Data fix** (insert tool): Backfill historical passenger arrivals using DD's actual timestamp
 
