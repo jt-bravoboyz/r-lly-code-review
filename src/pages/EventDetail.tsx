@@ -665,17 +665,6 @@ export default function EventDetail() {
             </div>
           )}
 
-        {/* Recap Screen — replaces all action UI for completed events */}
-        {isCompleted && (
-          <RallyRecapScreen
-            eventId={event.id}
-            eventTitle={event.title}
-            eventType={event.event_type}
-            attendeeCount={attendeeCount}
-            ddCount={eventDDs?.length ?? 0}
-          />
-        )}
-
         {/* After R@lly Banner - Show when in after_rally status */}
         {!isCompleted && isAfterRally && (
           <Card className="gradient-after-rally border-0 after-rally-pulse overflow-hidden relative">
