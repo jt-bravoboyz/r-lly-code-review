@@ -196,6 +196,7 @@ export default function EventDetail() {
   const isScheduled = event?.status === 'scheduled' || !event?.status;
   const isLive = event?.status === 'live';
   const isAfterRally = event?.status === 'after_rally';
+  const isCompleted = event?.status === 'completed';
   
   const hasTransportModeForEvent = Boolean(myAttendee?.arrival_transport_mode);
   const hasCompletedJoinFlow = hasTransportModeForEvent && Boolean(myAttendee?.location_prompt_shown);
