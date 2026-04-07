@@ -728,7 +728,7 @@ export default function EventDetail() {
         )}
 
         {/* Going Rogue Button - visible during live/after rally for attendees */}
-        {(isLive || isAfterRally) && isAttending && (
+        {!isCompleted && (isLive || isAfterRally) && isAttending && (
           <GoingRogueButton
             onGoRogue={async (finalWords) => {
               const result = await goRogue.mutateAsync(finalWords);
