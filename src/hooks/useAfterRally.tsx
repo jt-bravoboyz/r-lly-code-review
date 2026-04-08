@@ -101,7 +101,7 @@ export function useOptIntoAfterRally() {
         .eq('event_id', eventId)
         .eq('profile_id', profileId)
         .select()
-        .single();
+        .maybeSingle();
       
       if (error) throw error;
       return data;
