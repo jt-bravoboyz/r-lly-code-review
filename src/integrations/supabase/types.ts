@@ -3431,12 +3431,10 @@ export type Database = {
         Args: { p_action_type: string; p_profile_id: string }
         Returns: undefined
       }
-      request_join_event:
-        | { Args: { p_event_id: string }; Returns: Json }
-        | {
-            Args: { p_event_id: string; p_has_invite_code?: boolean }
-            Returns: Json
-          }
+      request_join_event: {
+        Args: { p_event_id: string; p_has_invite_code?: boolean }
+        Returns: Json
+      }
       rly_award_points: {
         Args: { p_event_type: string; p_source_id?: string; p_user_id: string }
         Returns: {
