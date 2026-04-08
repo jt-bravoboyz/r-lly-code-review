@@ -770,6 +770,7 @@ export default function EventDetail() {
           />
           )}
         </div>
+        )}
 
         {/* Recap Screen — full-width outside event header card */}
         {isCompleted && (
