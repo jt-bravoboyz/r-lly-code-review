@@ -1,24 +1,33 @@
 
 
-# Fix: Paparazzi Award Placement in RecapTour
+# Plan: Hide Event Details Block on Completed R@llies
 
 ## Problem
-The Paparazzi award is isolated on the final step alongside Mission Accomplished. User wants Paparazzi grouped with all other Squad Stars, and the final step to be Mission Accomplished alone.
+When viewing a past (completed) R@lly, the full event header — title, map, date, location, attendee count, host info, invite link — all renders above the Recap. This info is useless for completed events and pushes the Recap down.
 
-## Changes
+## Fix
 
-### `src/components/events/recap/RecapTour.tsx`
+### `src/pages/EventDetail.tsx`
 
-**1. Steps array (line 56):** Add a new `'finale'` step type. Keep `'paparazzi'` removed since it merges into `'stars'`.
-```
-steps: [..., 'stars', 'finale']  // 'paparazzi' step removed
-```
+Wrap the event header card (the `<div className="rounded-2xl bg-card/50 ...">` block, lines 425–760) in a condition so it only renders when the event is **not** completed.
 
-**2. Squad Stars section (line 243):** Remove the `.filter((a) => a.key !== 'paparazzi')` so ALL awards (including Paparazzi) render together.
+For completed events, show a minimal header instead: just the back button, the event title, and a "Completed" badge — then immediately render the `RallyRecapScreen`.
 
-**3. Current "paparazzi" step (lines 266-297):** Rename to `'finale'` and remove the Paparazzi award card. Keep only the Mission Accomplished section (horse icon, "Mission Accomplished", "The horse is back in the stable", "Tap to finish").
+Specifically:
+1. **Keep** the back button (line 412) and hero media carousel (line 419) for all states
+2. **Wrap** lines 424–760 (the entire `<div className="rounded-2xl bg-card/50 ...">` block) in `{!isCompleted && (...)}` 
+3. **Add** a slim completed header before the Recap: just the event name + "Completed" badge so users know which R@lly they're viewing
 
-**4. CALLOUTS array:** Update the last entry to match — the finale callout stays as "The Paparazzi Has Spoken." or change to something like "Mission Complete." (already the first one, so we can use a new finale callout).
+This is a single conditional wrap — no component changes, no data changes, no security changes.
 
-One file, three small edits. No logic, data, or security changes.
+## What Is NOT Touched
+| Feature | Status |
+|---|---|
+| RecapTour / RecapTimeline | Unchanged |
+| Active/Live event layout | Unchanged |
+| Safety tracking | Unchanged |
+| All other pages | Unchanged |
+
+## Files Modified
+- **Edit**: `src/pages/EventDetail.tsx` — conditionally hide event details block for completed events, add minimal title header
 
