@@ -33,7 +33,7 @@ export function AttendeeLocationItem({
   };
 
   return (
-    <div className="flex items-center justify-between p-2 bg-green-50 rounded-lg">
+    <div className="flex items-center justify-between p-2 bg-green-50 rounded-lg overflow-hidden">
       <div className="flex items-center gap-2 flex-1 min-w-0">
         <Avatar className="h-8 w-8 shrink-0">
           <AvatarImage src={avatarUrl || undefined} />
@@ -51,7 +51,7 @@ export function AttendeeLocationItem({
           </div>
         </div>
       </div>
-      <div className="flex items-center gap-2 shrink-0">
+      <div className="flex items-center gap-2 shrink-0 ml-2">
         <Badge variant="outline" className="text-[10px] bg-green-100 text-green-700 border-green-200">
           {getTimeSinceUpdate()}
         </Badge>
