@@ -34,7 +34,7 @@ const CALLOUTS = [
   'Best Moment Locked.',
   'Chaos. Documented.',
   'Squad Stars Identified.',
-  'The Paparazzi Has Spoken.',
+  'The Horse Is Home.',
 ];
 
 export function RecapTour({
@@ -52,12 +52,12 @@ export function RecapTour({
   const { fireRallyConfetti } = useConfetti();
 
   // Determine which steps exist based on available data
-  const steps: Array<'title' | 'gallery' | 'bestPhoto' | 'rogue' | 'stars' | 'paparazzi'> = ['title'];
+  const steps: Array<'title' | 'gallery' | 'bestPhoto' | 'rogue' | 'stars' | 'finale'> = ['title'];
   if (galleryPhotos.length > 0) steps.push('gallery');
   if (galleryPhotos.length > 0) steps.push('bestPhoto');
   if (rogueTimeline.length > 0) steps.push('rogue');
   if (awards.length > 0) steps.push('stars');
-  steps.push('paparazzi'); // always show finale
+  steps.push('finale'); // always show finale
 
   const currentStep = steps[step];
   const calloutIndex = step < CALLOUTS.length ? step : CALLOUTS.length - 1;
@@ -240,7 +240,7 @@ export function RecapTour({
               🏆 Squad Stars
             </p>
             <div className="space-y-3">
-              {awards.filter((a) => a.key !== 'paparazzi').map((award, i) => (
+              {awards.map((award, i) => (
                 <div
                   key={award.key}
                   className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-xl p-4 flex items-center gap-4 animate-fade-in"
@@ -263,26 +263,10 @@ export function RecapTour({
           </div>
         )}
 
-        {/* Step 6: Paparazzi / Finale */}
-        {currentStep === 'paparazzi' && (
+        {/* Step 6: Finale */}
+        {currentStep === 'finale' && (
           <div className="text-center space-y-6">
-            {paparazziAward && (
-              <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-xl p-5 space-y-3 animate-fade-in">
-                <span className="text-4xl">📸</span>
-                <p className="text-white/40 text-xs uppercase tracking-wide font-montserrat">The Paparazzi</p>
-                <div className="flex items-center justify-center gap-3">
-                  <Avatar className="h-12 w-12 ring-2 ring-primary/30">
-                    <AvatarImage src={paparazziAward.winnerAvatar || undefined} />
-                    <AvatarFallback className="bg-primary/10 text-primary">
-                      {paparazziAward.winnerName.charAt(0)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <p className="text-white font-bold text-lg">{paparazziAward.winnerName}</p>
-                </div>
-              </div>
-            )}
-
-            <div className="space-y-2 pt-4">
+            <div className="space-y-2">
               <div className="w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-primary/80 to-primary/40 flex items-center justify-center ring-4 ring-primary/20">
                 <span className="text-2xl">🐴</span>
               </div>
