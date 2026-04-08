@@ -421,7 +421,19 @@ export default function EventDetail() {
         {/* Live Updates Banner */}
         {updates.length > 0 && <LiveUpdates updates={updates} />}
 
-        {/* Event Header */}
+        {/* Completed R@lly: minimal header */}
+        {isCompleted && (
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-bold tracking-tight font-montserrat">{event.title}</h1>
+            <Badge className="bg-muted text-muted-foreground border-0">
+              <CheckCircle2 className="h-3 w-3 mr-1" />
+              Completed
+            </Badge>
+          </div>
+        )}
+
+        {/* Event Header — hidden for completed events */}
+        {!isCompleted && (
         <div className="rounded-2xl bg-card/50 border border-border/50 p-4 space-y-3">
 
           <div className="flex items-start justify-between gap-4">
@@ -758,6 +770,7 @@ export default function EventDetail() {
           />
           )}
         </div>
+        )}
 
         {/* Recap Screen — full-width outside event header card */}
         {isCompleted && (
