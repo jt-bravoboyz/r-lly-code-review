@@ -1,32 +1,36 @@
 
 
-# Fix: Squad Locations Overflow on Mobile
+# Plan: Create a Visual Demo of the Full R@lly Recap
 
 ## Problem
-On mobile screens, the attendee location rows overflow horizontally because:
-1. The "Last Updated" header in `AttendeeMap.tsx` has `mr-11` (44px right margin) pushing it off-screen
-2. The time badge in `AttendeeLocationItem.tsx` (e.g., "Unknown", "Just now") plus the navigation icon use `shrink-0`, preventing them from fitting within the viewport
+The Recap only renders on `completed` events, and none of your completed events have rogue alerts, reactions, or multiple attendees. So you've only ever seen the bare-bones version (just the Safe & Sound badge).
 
-## Fix
+## Solution
+Seed one of your completed events with sample data so all 5 sections of the Recap are visible, then you can navigate to it and see the full cinematic experience.
 
-### 1. `src/components/tracking/AttendeeMap.tsx` (line 181)
-- Remove the `mr-11` right margin from the "Last Updated" label — it's unnecessary padding that causes horizontal overflow on small screens
+### Step 1: Seed Demo Data into "WHIMSY KNIGHT OUT" (already completed, has 7 photos)
+Insert into the database:
+- **3 rogue alerts** with fake "Final Words" quotes (linked to existing or test profiles)
+- **5-8 rogue reactions** (🤮, 😍, 🍆 emojis) on those alerts
+- **A DD entry** in `event_attendees` with `is_dd=true` and a linked ride with accepted passengers (so "The Guardian" award appears)
 
-### 2. `src/components/tracking/AttendeeLocationItem.tsx` (lines 54-67)
-- Add `ml-2` and constrain the right-side content so the badge text can truncate if needed
-- Ensure the overall row uses `overflow-hidden` to prevent any child from expanding beyond the card width
+This gives us data for:
+- ✅ Hero Header — "Shot of the Night" (already has photos)
+- ✅ Stats Bar — photo count, rogue count, reaction count
+- ✅ Rogue Timeline — 3 entries with final words + emoji reactions
+- ✅ Photo Bundle — masonry grid (7 photos, "View All" button)
+- ✅ Squad Stars — The Guardian, The Ghost, The Paparazzi awards
+- ✅ Safe & Sound Finale — always renders
 
-These are two small CSS tweaks — no logic, data, or security changes.
+### Step 2: Navigate to the Event
+Open `/events/f3f1ec57-531f-4cbc-a9f7-01b1d7d9725b` (WHIMSY KNIGHT OUT) in the preview to see the full Recap.
 
-## What Is NOT Touched
-| Feature | Status |
+### What Is NOT Touched
+| Item | Status |
 |---|---|
-| Location tracking logic | Unchanged |
-| Reverse geocoding | Unchanged |
-| Map rendering | Unchanged |
-| All other components | Unchanged |
+| All app code | Unchanged — no component edits |
+| Existing event data | Unchanged — only adding rows |
+| RLS / Security | Unchanged |
 
-## Files Modified
-- **Edit**: `src/components/tracking/AttendeeMap.tsx` — remove `mr-11` from "Last Updated"
-- **Edit**: `src/components/tracking/AttendeeLocationItem.tsx` — add `overflow-hidden` to row, constrain badge width
+This is a data-only operation — inserting test rows so the existing Recap UI has something to render.
 
