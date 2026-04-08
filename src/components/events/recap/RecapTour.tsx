@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useConfetti } from '@/hooks/useConfetti';
 import { cn } from '@/lib/utils';
@@ -70,7 +71,7 @@ export function RecapTour({
     }
     setIsTransitioning(true);
     setTimeout(() => {
-      setStep(s => s + 1);
+      setStep((s) => s + 1);
       setIsTransitioning(false);
     }, 400);
   }, [step, steps.length, isTransitioning, fireRallyConfetti, onComplete]);
@@ -78,13 +79,17 @@ export function RecapTour({
   // Prevent scroll during tour
   useEffect(() => {
     document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = ''; };
+    return () => {
+      document.body.style.overflow = '';
+    };
   }, []);
 
   const heroPhoto = galleryPhotos[0];
-  const paparazziAward = awards.find(a => a.key === 'paparazzi');
+  const paparazziAward = awards.find((a) => a.key === 'paparazzi');
 
-  return (
+  if (typeof document === 'undefined') return null;
+
+  return createPortal(
     <div
       className="fixed inset-0 z-[100] bg-[#0a0a0f] flex items-center justify-center cursor-pointer select-none"
       onClick={advance}
@@ -92,7 +97,10 @@ export function RecapTour({
       {/* Ambient glow */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-[120px] animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-primary/3 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '1s' }} />
+        <div
+          className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-primary/3 rounded-full blur-[100px] animate-pulse"
+          style={{ animationDelay: '1s' }}
+        />
       </div>
 
       {/* Progress dots */}
@@ -213,7 +221,9 @@ export function RecapTour({
                   {Object.keys(rogue.reactionCounts).length > 0 && (
                     <div className="flex gap-2 pl-11 mt-2">
                       {Object.entries(rogue.reactionCounts).map(([emoji, count]) => (
-                        <span key={emoji} className="text-xs text-white/40">{emoji} {count}</span>
+                        <span key={emoji} className="text-xs text-white/40">
+                          {emoji} {count}
+                        </span>
                       ))}
                     </div>
                   )}
@@ -230,7 +240,7 @@ export function RecapTour({
               🏆 Squad Stars
             </p>
             <div className="space-y-3">
-              {awards.filter(a => a.key !== 'paparazzi').map((award, i) => (
+              {awards.filter((a) => a.key !== 'paparazzi').map((award, i) => (
                 <div
                   key={award.key}
                   className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-xl p-4 flex items-center gap-4 animate-fade-in"
@@ -289,6 +299,7 @@ export function RecapTour({
 
       {/* Bottom fade */}
       <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-[#0a0a0f] to-transparent pointer-events-none" />
-    </div>
+    </div>,
+    document.body
   );
 }
