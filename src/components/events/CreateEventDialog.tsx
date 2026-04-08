@@ -122,11 +122,15 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
     }
   });
 
+  const isSubmittingRef = useRef(false);
+
   const onSubmit = async (data: EventFormData) => {
     if (!profile) {
       toast.error('You must be logged in to create an event');
       return;
     }
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
 
     try {
       const [hours, minutes] = data.time.split(':').map(Number);
@@ -203,6 +207,8 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
       navigate(`/events/${result.id}`);
     } catch (error: any) {
       toast.error(error.message || 'Failed to create event');
+    } finally {
+      isSubmittingRef.current = false;
     }
   };
 
@@ -474,7 +480,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
             <Button 
               type="submit" 
               className="w-full gradient-primary"
-              disabled={createEvent.isPending || joinEvent.isPending || isUploading}
+              disabled={createEvent.isPending || joinEvent.isPending || isUploading || isSubmittingRef.current}
             >
               {isUploading ? (
                 <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> {uploadStatus}</>

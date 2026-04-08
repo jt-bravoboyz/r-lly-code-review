@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, forwardRef } from 'react';
+import { useState, useEffect, useMemo, useRef, forwardRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -156,11 +156,15 @@ export const QuickRallyDialog = forwardRef<HTMLButtonElement, QuickRallyDialogPr
       form.reset();
     };
 
+    const isSubmittingRef = useRef(false);
+
     const onSubmit = async (data: QuickRallyFormData) => {
       if (!profile) {
         toast.error('You must be logged in to create a rally');
         return;
       }
+      if (isSubmittingRef.current) return;
+      isSubmittingRef.current = true;
 
       try {
         // Calculate start time based on selection
@@ -258,6 +262,8 @@ export const QuickRallyDialog = forwardRef<HTMLButtonElement, QuickRallyDialogPr
         
       } catch (error: any) {
         toast.error(error.message || 'Failed to create R@lly');
+      } finally {
+        isSubmittingRef.current = false;
       }
     };
 
@@ -450,7 +456,7 @@ export const QuickRallyDialog = forwardRef<HTMLButtonElement, QuickRallyDialogPr
               <Button 
                 type="submit" 
                 className="w-full gradient-primary text-primary-foreground hover:opacity-90"
-                disabled={createEvent.isPending || createInvites.isPending}
+                disabled={createEvent.isPending || createInvites.isPending || isSubmittingRef.current}
               >
                 {createEvent.isPending || createInvites.isPending ? 'Starting...' : (
                   <>
