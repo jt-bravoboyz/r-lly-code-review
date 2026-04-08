@@ -1,14 +1,24 @@
 
 
-# Fix: RecapTour Fullscreen Coverage
+# Fix: Paparazzi Award Placement in RecapTour
 
 ## Problem
-The RecapTour overlay uses `z-50`, which ties with the BottomNav (`z-50`) and only barely beats the Header (`z-40`). On some devices/browsers, the nav bar and header bleed through.
+The Paparazzi award is isolated on the final step alongside Mission Accomplished. User wants Paparazzi grouped with all other Squad Stars, and the final step to be Mission Accomplished alone.
 
-## Fix
+## Changes
 
-### `src/components/events/recap/RecapTour.tsx` (line 89)
-Change the overlay's class from `z-50` to `z-[100]` so it renders above everything — header, bottom nav, and any other overlays.
+### `src/components/events/recap/RecapTour.tsx`
 
-One line change. No logic, data, or layout changes.
+**1. Steps array (line 56):** Add a new `'finale'` step type. Keep `'paparazzi'` removed since it merges into `'stars'`.
+```
+steps: [..., 'stars', 'finale']  // 'paparazzi' step removed
+```
+
+**2. Squad Stars section (line 243):** Remove the `.filter((a) => a.key !== 'paparazzi')` so ALL awards (including Paparazzi) render together.
+
+**3. Current "paparazzi" step (lines 266-297):** Rename to `'finale'` and remove the Paparazzi award card. Keep only the Mission Accomplished section (horse icon, "Mission Accomplished", "The horse is back in the stable", "Tap to finish").
+
+**4. CALLOUTS array:** Update the last entry to match — the finale callout stays as "The Paparazzi Has Spoken." or change to something like "Mission Complete." (already the first one, so we can use a new finale callout).
+
+One file, three small edits. No logic, data, or security changes.
 
