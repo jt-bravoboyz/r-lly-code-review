@@ -86,7 +86,7 @@ export function RecapTour({
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-[#0a0a0f] flex items-center justify-center cursor-pointer select-none"
+      className="fixed inset-0 z-[100] bg-[#0a0a0f] flex items-center justify-center cursor-pointer select-none"
       onClick={advance}
     >
       {/* Ambient glow */}
