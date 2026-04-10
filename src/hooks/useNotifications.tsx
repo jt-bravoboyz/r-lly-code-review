@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
 import type { Tables } from '@/integrations/supabase/types';
 
 type Notification = Tables<'notifications'>;
@@ -43,10 +44,21 @@ export function useNotifications() {
           filter: `profile_id=eq.${profile.id}`,
         },
         (payload) => {
+          const newNotif = payload.new as Notification;
           queryClient.setQueryData(['notifications', profile.id], (old: Notification[] | undefined) => {
-            if (!old) return [payload.new as Notification];
-            return [payload.new as Notification, ...old];
+            if (!old) return [newNotif];
+            return [newNotif, ...old];
           });
+
+          // Fire toast for high-priority alerts
+          const alertType = newNotif.type;
+          if (alertType === 'rogue_alert' || alertType === 'safety_alert') {
+            toast.warning(newNotif.title, { description: newNotif.body || undefined });
+          } else if (alertType === 'dd_arrived' || alertType === 'referral_success') {
+            toast.success(newNotif.title, { description: newNotif.body || undefined });
+          } else if (alertType === 'event_invite' || alertType === 'rally_started') {
+            toast.info(newNotif.title, { description: newNotif.body || undefined });
+          }
         }
       )
       .on(

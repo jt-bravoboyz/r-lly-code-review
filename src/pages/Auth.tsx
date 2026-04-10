@@ -16,7 +16,11 @@ import { useTutorial } from '@/hooks/useTutorial';
 import { lovable } from '@/integrations/lovable/index';
 // Validation schemas
 const emailSchema = z.string().trim().email('Please enter a valid email address').max(255, 'Email is too long');
-const passwordSchema = z.string().min(6, 'Password must be at least 6 characters').max(128, 'Password is too long');
+const passwordSchema = z.string()
+  .min(8, 'Password must be at least 8 characters')
+  .max(128, 'Password is too long')
+  .regex(/\d/, 'Password must contain at least one number')
+  .regex(/[!@#$%^&*(),.?":{}|<>]/, 'Password must contain at least one special character');
 const displayNameSchema = z.string().trim().min(1, 'Name is required').max(100, 'Name is too long');
 const phoneSchema = z.string().optional().refine(val => {
   if (!val) return true;
@@ -775,7 +779,7 @@ export default function Auth() {
                       borderColor: "rgba(255, 106, 0, 0.2)",
                       color: "rgba(255, 255, 255, 0.90)",
                     }}
-                    minLength={6}
+                    minLength={8}
                     required
                   />
                   <button
@@ -788,6 +792,26 @@ export default function Auth() {
                     {showPassword ? <EyeOff className="h-5 w-5" strokeWidth={1.5} /> : <Eye className="h-5 w-5" strokeWidth={1.5} />}
                   </button>
                 </div>
+
+                {/* Password requirements checklist - only for signup */}
+                {isSignUp && (
+                  <div className="space-y-1 px-1">
+                    {[
+                      { label: '8+ characters', met: password.length >= 8 },
+                      { label: 'One number', met: /\d/.test(password) },
+                      { label: 'One special character (!@#$…)', met: /[!@#$%^&*(),.?":{}|<>]/.test(password) },
+                    ].map((rule) => (
+                      <div key={rule.label} className="flex items-center gap-2">
+                        <span
+                          className="text-xs font-montserrat"
+                          style={{ color: rule.met ? '#22c55e' : 'rgba(255, 255, 255, 0.4)' }}
+                        >
+                          {rule.met ? '✓' : '○'} {rule.label}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
 
                 {/* Confirm Password - only for signup */}
                 {isSignUp && (
@@ -808,7 +832,7 @@ export default function Auth() {
                         borderColor: "rgba(255, 106, 0, 0.2)",
                         color: "rgba(255, 255, 255, 0.90)",
                       }}
-                      minLength={6}
+                      minLength={8}
                       required
                     />
                     <button
@@ -861,7 +885,7 @@ export default function Auth() {
                     color: "#FFFFFF",
                     boxShadow: "0 8px 32px rgba(255, 106, 0, 0.35)",
                   }}
-                  disabled={isLoading}
+                  disabled={isLoading || (isSignUp && (password.length < 8 || !/\d/.test(password) || !/[!@#$%^&*(),.?":{}|<>]/.test(password)))}
                 >
                   {isLoading 
                     ? (isSignUp ? 'Creating account...' : 'Signing in...') 

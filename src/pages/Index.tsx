@@ -15,6 +15,7 @@ import { useMyEvents } from '@/hooks/useMyEvents';
 import { useUnreadCount } from '@/hooks/useNotifications';
 import { usePendingInvites, useInviteRealtime } from '@/hooks/useEventInvites';
 import { useRallyOnboarding } from '@/contexts/RallyOnboardingContext';
+import { NameSetupDialog } from '@/components/profile/NameSetupDialog';
 import rallyLogo from '@/assets/rally-logo.png';
 
 export default function Index() {
@@ -80,6 +81,9 @@ export default function Index() {
       </div>
       {/* PWA Install Prompt */}
       <PWAInstallPrompt />
+      
+      {/* Name setup for Apple/OAuth users */}
+      <NameSetupDialog />
       
       {/* Modern gradient header */}
       <header className="sticky top-0 z-40 bg-primary backdrop-blur-xl border-b border-white/[0.12] shadow-[0_4px_30px_hsl(22,90%,52%/0.15)]" style={{ WebkitBackdropFilter: 'blur(20px)' }}>
