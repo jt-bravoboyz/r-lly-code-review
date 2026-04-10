@@ -1446,6 +1446,7 @@ export type Database = {
           last_rally_home_lat: number | null
           last_rally_home_lng: number | null
           location_sharing_enabled: boolean | null
+          needs_name_setup: boolean
           phone: string | null
           policies_accepted_at: string | null
           referred_by: string | null
@@ -1472,6 +1473,7 @@ export type Database = {
           last_rally_home_lat?: number | null
           last_rally_home_lng?: number | null
           location_sharing_enabled?: boolean | null
+          needs_name_setup?: boolean
           phone?: string | null
           policies_accepted_at?: string | null
           referred_by?: string | null
@@ -1498,6 +1500,7 @@ export type Database = {
           last_rally_home_lat?: number | null
           last_rally_home_lng?: number | null
           location_sharing_enabled?: boolean | null
+          needs_name_setup?: boolean
           phone?: string | null
           policies_accepted_at?: string | null
           referred_by?: string | null
@@ -3499,6 +3502,10 @@ export type Database = {
       rly_recalc_user_badge: { Args: { p_user_id: string }; Returns: undefined }
       rly_update_activity_badges: {
         Args: { p_user_id: string }
+        Returns: undefined
+      }
+      set_referral: {
+        Args: { p_referrer_id: string; p_user_id: string }
         Returns: undefined
       }
       transition_event_status: {

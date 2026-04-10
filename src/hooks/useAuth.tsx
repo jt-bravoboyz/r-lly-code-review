@@ -35,7 +35,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .eq('user_id', userId)
         .maybeSingle();
 
-      // Ignore stale responses if auth user changed mid-flight
       if (currentUserIdRef.current !== userId) return;
 
       if (error) {
@@ -44,13 +43,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      // Ensure the profile belongs to the current session user
       if (!data || data.user_id !== userId) {
         setProfile(null);
         return;
       }
 
       setProfile(data);
+
+      // Post-OAuth referral check: if profile is new (<24h), has no referred_by,
+      // and localStorage has a referrer ID, call the set_referral RPC
+      const referrerId = localStorage.getItem('rally-referrer-id');
+      if (
+        referrerId &&
+        !data.referred_by &&
+        data.created_at &&
+        new Date(data.created_at).getTime() > Date.now() - 24 * 60 * 60 * 1000
+      ) {
+        try {
+          await supabase.rpc('set_referral' as any, {
+            p_user_id: userId,
+            p_referrer_id: referrerId,
+          });
+          localStorage.removeItem('rally-referrer-id');
+        } catch (refErr) {
+          console.error('Post-OAuth referral attribution failed:', refErr);
+        }
+      }
     } catch (e) {
       console.error('Failed to fetch profile:', e);
       if (currentUserIdRef.current === userId) setProfile(null);
@@ -102,7 +120,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signUp = async (email: string, password: string, displayName: string, phone?: string, referredBy?: string) => {
     const redirectUrl = `${window.location.origin}/`;
-    const { error, data: signUpData } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -110,42 +128,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         data: { 
           display_name: displayName,
           phone: phone || null,
+          referred_by: referredBy || null,
         }
       }
     });
     
-    // Mark that this is a new signup - tutorial should show after login
     if (!error) {
       localStorage.setItem('rally-is-new-signup', 'true');
-
-    // Save referral attribution if present — retry loop to handle profile trigger delay
-      if (referredBy && signUpData?.user) {
-        const userId = signUpData.user.id;
-        (async () => {
-          for (let attempt = 0; attempt < 3; attempt++) {
-            await new Promise(r => setTimeout(r, 2000));
-            try {
-              const { data: profile } = await supabase
-                .from('profiles')
-                .select('id')
-                .eq('user_id', userId)
-                .maybeSingle();
-              if (!profile) continue;
-
-              const { error } = await supabase
-                .from('profiles')
-                .update({ referred_by: referredBy } as any)
-                .eq('user_id', userId);
-              if (error) { console.error('Referral update failed:', error); continue; }
-
-              // Points & notification now handled automatically by DB trigger (tr_auto_referral_reward)
-              break; // success
-            } catch (e) {
-              console.error('Referral save attempt failed:', e);
-            }
-          }
-        })();
-      }
     }
     
     return { error: error as Error | null };

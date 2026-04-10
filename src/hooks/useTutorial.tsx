@@ -74,6 +74,14 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     position: 'center',
   },
   {
+    id: 'going-rogue',
+    title: 'GOING ROGUE',
+    command: 'BREAK AWAY PROTOCOL',
+    instruction: 'Going Rogue alerts your entire squad that you\'ve broken off from the group.\n\nYour crew can react with emojis, but heads up — going rogue removes you from the DD\'s auto-safety check.\n\nUse it when you\'re leaving the plan behind.',
+    requiredAction: 'complete',
+    position: 'center',
+  },
+  {
     id: 'safety-intro',
     title: 'R@LLY HOME',
     command: 'SAFETY SYSTEM',
@@ -150,7 +158,7 @@ const TutorialContext = createContext<TutorialContextType | undefined>(undefined
 export function TutorialProvider({ children }: { children: React.ReactNode }) {
   const [isActive, setIsActive] = useState(false);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
-  const { user, loading: authLoading } = useAuth();
+  const { user, profile, loading: authLoading } = useAuth();
 
   const currentStep = isActive ? TUTORIAL_STEPS[currentStepIndex] : null;
 
@@ -164,7 +172,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
   const endTutorial = useCallback(() => {
     setIsActive(false);
     localStorage.setItem('rally-tutorial-complete', 'true');
-    // Clear the new signup flag since tutorial is complete
+    localStorage.setItem('rally-walkthrough-seen', 'true');
     localStorage.removeItem('rally-is-new-signup');
     
     // Check for pending squad redirect
@@ -178,7 +186,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
   const skipTutorial = useCallback(() => {
     setIsActive(false);
     localStorage.setItem('rally-tutorial-complete', 'true');
-    // Clear the new signup flag since tutorial was skipped
+    localStorage.setItem('rally-walkthrough-seen', 'true');
     localStorage.removeItem('rally-is-new-signup');
   }, []);
 
@@ -205,31 +213,34 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     }
   }, [currentStep, nextStep]);
 
-  // Check if tutorial should auto-start for new signups ONLY
+  // Check if tutorial should auto-start for new users
   useEffect(() => {
-    // Wait for auth to finish loading
     if (authLoading) return;
-    
-    // Must be logged in
-    if (!user) return;
-    
+    if (!user || !profile) return;
+
+    // Duplication guard: if user already saw walkthrough on this device, skip
+    if (localStorage.getItem('rally-walkthrough-seen') === 'true') return;
+
     const tutorialComplete = localStorage.getItem('rally-tutorial-complete');
-    const isNewSignup = localStorage.getItem('rally-is-new-signup');
+    if (tutorialComplete === 'true') return;
+
     const onboardingComplete = localStorage.getItem('rally-onboarding-complete');
-    
-    // Only start tutorial if:
-    // 1. User is logged in (checked above)
-    // 2. This is a new signup (flag set during signUp)
-    // 3. Tutorial hasn't been completed yet
-    // 4. Onboarding is complete (if applicable)
-    if (isNewSignup === 'true' && tutorialComplete !== 'true' && onboardingComplete === 'true') {
-      // Small delay to let the app settle
+    if (onboardingComplete !== 'true') return;
+
+    // Profile-age check: auto-start if profile was created within last 24 hours
+    const profileCreated = new Date(profile.created_at || 0).getTime();
+    const isNewProfile = profileCreated > Date.now() - 24 * 60 * 60 * 1000;
+
+    // Also allow if explicit new-signup flag is set (immediate signup flow)
+    const isNewSignup = localStorage.getItem('rally-is-new-signup') === 'true';
+
+    if (isNewProfile || isNewSignup) {
       const timer = setTimeout(() => {
         startTutorial();
       }, 500);
       return () => clearTimeout(timer);
     }
-  }, [user, authLoading, startTutorial]);
+  }, [user, profile, authLoading, startTutorial]);
 
   return (
     <TutorialContext.Provider
