@@ -15,7 +15,7 @@ import { useMyEvents } from '@/hooks/useMyEvents';
 import { useUnreadCount } from '@/hooks/useNotifications';
 import { usePendingInvites, useInviteRealtime } from '@/hooks/useEventInvites';
 import { useRallyOnboarding } from '@/contexts/RallyOnboardingContext';
-import { NameSetupDialog } from '@/components/profile/NameSetupDialog';
+import { IdentitySetupDialog } from '@/components/profile/NameSetupDialog';
 import rallyLogo from '@/assets/rally-logo.png';
 
 export default function Index() {

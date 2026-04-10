@@ -793,20 +793,27 @@ export default function Auth() {
                   </button>
                 </div>
 
-                {/* Password requirements checklist - only for signup */}
-                {isSignUp && (
-                  <div className="space-y-1 px-1">
+                {/* Security standards checklist - only for signup */}
+                {isSignUp && password.length > 0 && (
+                  <div className="space-y-1.5 px-2 py-2 rounded-lg" style={{ backgroundColor: 'rgba(255, 255, 255, 0.04)' }}>
+                    <p className="text-[10px] font-montserrat uppercase tracking-wider mb-1" style={{ color: 'rgba(255, 255, 255, 0.35)' }}>
+                      Security Standards
+                    </p>
                     {[
                       { label: '8+ characters', met: password.length >= 8 },
                       { label: 'One number', met: /\d/.test(password) },
-                      { label: 'One special character (!@#$…)', met: /[!@#$%^&*(),.?":{}|<>]/.test(password) },
+                      { label: 'One special character', met: /[!@#$%^&*(),.?":{}|<>]/.test(password) },
                     ].map((rule) => (
                       <div key={rule.label} className="flex items-center gap-2">
+                        <div
+                          className="w-1.5 h-1.5 rounded-full transition-colors duration-200"
+                          style={{ backgroundColor: rule.met ? '#22c55e' : 'rgba(255, 255, 255, 0.2)' }}
+                        />
                         <span
-                          className="text-xs font-montserrat"
-                          style={{ color: rule.met ? '#22c55e' : 'rgba(255, 255, 255, 0.4)' }}
+                          className="text-xs font-montserrat transition-colors duration-200"
+                          style={{ color: rule.met ? 'rgba(255, 255, 255, 0.8)' : 'rgba(255, 255, 255, 0.35)' }}
                         >
-                          {rule.met ? '✓' : '○'} {rule.label}
+                          {rule.label}
                         </span>
                       </div>
                     ))}

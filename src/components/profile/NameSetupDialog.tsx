@@ -5,9 +5,9 @@ import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
-import { User } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 
-export function NameSetupDialog() {
+export function IdentitySetupDialog() {
   const { profile, refreshProfile } = useAuth();
   const [name, setName] = useState('');
   const [saving, setSaving] = useState(false);
@@ -30,9 +30,9 @@ export function NameSetupDialog() {
 
       if (error) throw error;
       await refreshProfile();
-      toast.success('Welcome to R@lly, ' + trimmed + '! 🎉');
+      toast.success(`You're on the list, ${trimmed}. Welcome to R@lly.`);
     } catch (e: any) {
-      toast.error('Failed to save name. Try again.');
+      toast.error('Failed to save. Try again.');
       console.error(e);
     } finally {
       setSaving(false);
@@ -46,19 +46,19 @@ export function NameSetupDialog() {
       <DialogContent className="sm:max-w-md border-primary/20" onInteractOutside={(e) => e.preventDefault()}>
         <DialogHeader className="text-center">
           <div className="mx-auto mb-4 w-16 h-16 rounded-full bg-primary/15 flex items-center justify-center border border-primary/20">
-            <User className="h-8 w-8 text-primary" />
+            <Sparkles className="h-8 w-8 text-primary" />
           </div>
           <DialogTitle className="text-xl font-bold font-montserrat">
-            Your squad needs a name.
+            Establish your handle.
           </DialogTitle>
           <DialogDescription className="text-muted-foreground font-montserrat">
-            What should we call you?
+            How should you appear on the guest list?
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 pt-2">
           <Input
-            placeholder="Enter your name"
+            placeholder="Your name or handle"
             value={name}
             onChange={(e) => setName(e.target.value)}
             maxLength={100}
@@ -78,3 +78,6 @@ export function NameSetupDialog() {
     </Dialog>
   );
 }
+
+// Keep backward-compatible export
+export { IdentitySetupDialog as NameSetupDialog };

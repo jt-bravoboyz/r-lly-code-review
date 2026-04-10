@@ -50,12 +50,22 @@ export function useNotifications() {
             return [newNotif, ...old];
           });
 
-          // Fire toast for high-priority alerts
+          // Fire premium toasts for high-priority alerts
           const alertType = newNotif.type;
-          if (alertType === 'rogue_alert' || alertType === 'safety_alert') {
+          if (alertType === 'rogue_alert') {
+            toast.warning(newNotif.title || 'New storyline.', {
+              description: newNotif.body || 'Someone is on a different path tonight.',
+            });
+          } else if (alertType === 'safety_alert') {
             toast.warning(newNotif.title, { description: newNotif.body || undefined });
-          } else if (alertType === 'dd_arrived' || alertType === 'referral_success') {
-            toast.success(newNotif.title, { description: newNotif.body || undefined });
+          } else if (alertType === 'dd_arrived') {
+            toast.success(newNotif.title || 'Destination reached.', {
+              description: newNotif.body || 'Plan complete.',
+            });
+          } else if (alertType === 'referral_success') {
+            toast.success(newNotif.title || 'Points added.', {
+              description: newNotif.body || 'Your network is growing.',
+            });
           } else if (alertType === 'event_invite' || alertType === 'rally_started') {
             toast.info(newNotif.title, { description: newNotif.body || undefined });
           }
