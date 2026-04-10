@@ -75,9 +75,9 @@ const TUTORIAL_STEPS: TutorialStep[] = [
   },
   {
     id: 'going-rogue',
-    title: 'GOING ROGUE',
-    command: 'BREAK AWAY PROTOCOL',
-    instruction: 'Going Rogue alerts your entire squad that you\'ve broken off from the group.\n\nYour crew can react with emojis, but heads up — going rogue removes you from the DD\'s auto-safety check.\n\nUse it when you\'re leaving the plan behind.',
+    title: 'GOING ROGUE 🔥',
+    command: 'THE PLOT TWIST',
+    instruction: 'Spontaneity is the vibe. If the night takes you elsewhere, hit \'Going Rogue\'.\n\nIt signals your squad, resets your safety plan, and keeps the night moving on your terms.\n\nYour crew can react — but you\'re off the DD\'s auto-check.',
     requiredAction: 'complete',
     position: 'center',
   },
