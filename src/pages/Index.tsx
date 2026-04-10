@@ -83,7 +83,7 @@ export default function Index() {
       <PWAInstallPrompt />
       
       {/* Name setup for Apple/OAuth users */}
-      <NameSetupDialog />
+      <IdentitySetupDialog />
       
       {/* Modern gradient header */}
       <header className="sticky top-0 z-40 bg-primary backdrop-blur-xl border-b border-white/[0.12] shadow-[0_4px_30px_hsl(22,90%,52%/0.15)]" style={{ WebkitBackdropFilter: 'blur(20px)' }}>
