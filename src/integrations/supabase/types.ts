@@ -3271,6 +3271,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      claim_founding_spot: { Args: { p_user_id: string }; Returns: boolean }
       claim_phone_invites: {
         Args: { p_phone: string; p_profile_id: string }
         Returns: {

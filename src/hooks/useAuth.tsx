@@ -50,8 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       setProfile(data);
 
-      // Post-OAuth referral check: if profile is new (<24h), has no referred_by,
-      // and localStorage has a referrer ID, call the set_referral RPC
+      // Post-OAuth referral check
       const referrerId = localStorage.getItem('rally-referrer-id');
       if (
         referrerId &&
@@ -67,6 +66,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           localStorage.removeItem('rally-referrer-id');
         } catch (refErr) {
           console.error('Post-OAuth referral attribution failed:', refErr);
+        }
+      }
+
+      // Post-OAuth founding member claim
+      const isFounding25 = localStorage.getItem('rally-founding25');
+      if (
+        isFounding25 === 'true' &&
+        !data.founding_member &&
+        data.created_at &&
+        new Date(data.created_at).getTime() > Date.now() - 24 * 60 * 60 * 1000
+      ) {
+        try {
+          await supabase.rpc('claim_founding_spot' as any, {
+            p_user_id: userId,
+          });
+          localStorage.removeItem('rally-founding25');
+        } catch (err) {
+          console.error('Post-OAuth founding claim failed:', err);
         }
       }
     } catch (e) {
@@ -120,6 +137,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signUp = async (email: string, password: string, displayName: string, phone?: string, referredBy?: string) => {
     const redirectUrl = `${window.location.origin}/`;
+    const isFoundingMember = localStorage.getItem('rally-founding25') === 'true';
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -129,12 +147,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           display_name: displayName,
           phone: phone || null,
           referred_by: referredBy || null,
+          ...(isFoundingMember ? { founding_member: 'true' } : {}),
         }
       }
     });
     
     if (!error) {
       localStorage.setItem('rally-is-new-signup', 'true');
+      if (isFoundingMember) {
+        localStorage.removeItem('rally-founding25');
+      }
     }
     
     return { error: error as Error | null };

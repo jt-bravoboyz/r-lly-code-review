@@ -52,9 +52,13 @@ export default function Auth() {
     const params = new URLSearchParams(window.location.search);
     const r = params.get('r') || params.get('referrer') || params.get('invite');
     if (r) {
-      // Persist in localStorage so it survives browser close + OAuth redirect
       localStorage.setItem('rally-referrer-id', r);
       return r;
+    }
+    // Check for ?ref=founding25 parameter
+    const ref = params.get('ref');
+    if (ref === 'founding25') {
+      localStorage.setItem('rally-founding25', 'true');
     }
     return localStorage.getItem('rally-referrer-id') || null;
   }, []);
