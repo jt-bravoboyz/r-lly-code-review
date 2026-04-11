@@ -270,6 +270,10 @@ export default function Index() {
 }
 
 function LandingScreen() {
+  const searchParams = window.location.search;
+  const signUpLink = searchParams ? `/auth${searchParams}` : '/auth';
+  const signInLink = searchParams ? `/auth/return${searchParams}` : '/auth/return';
+
   return (
     <div 
       className="min-h-[100dvh] flex flex-col relative overflow-hidden"
@@ -358,7 +362,7 @@ function LandingScreen() {
                 boxShadow: "0 8px 32px rgba(255, 106, 0, 0.4)",
               }}
             >
-              <Link to="/auth">
+              <Link to={signUpLink}>
                 Get Started 
                 <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </Link>
@@ -375,7 +379,7 @@ function LandingScreen() {
                 color: "rgba(255, 255, 255, 0.90)",
               }}
             >
-              <Link to="/auth/return">Log In</Link>
+              <Link to={signInLink}>Log In</Link>
             </Button>
           </div>
         </div>
