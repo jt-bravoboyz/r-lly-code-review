@@ -21,6 +21,7 @@ const passwordSchema = z.string()
   .max(128, 'Password is too long')
   .regex(/\d/, 'Password must contain at least one number')
   .regex(/[!@#$%^&*(),.?":{}|<>]/, 'Password must contain at least one special character');
+const signInPasswordSchema = z.string().min(1, 'Password is required').max(128, 'Password is too long');
 const displayNameSchema = z.string().trim().min(1, 'Name is required').max(100, 'Name is too long');
 const phoneSchema = z.string().optional().refine(val => {
   if (!val) return true;
@@ -30,7 +31,7 @@ const phoneSchema = z.string().optional().refine(val => {
 
 const signInSchema = z.object({
   email: emailSchema,
-  password: passwordSchema,
+  password: signInPasswordSchema,
 });
 
 const signUpSchema = z.object({
@@ -843,7 +844,7 @@ export default function Auth() {
                         borderColor: "rgba(255, 106, 0, 0.2)",
                         color: "rgba(255, 255, 255, 0.90)",
                       }}
-                      minLength={8}
+                      minLength={isSignUp ? 8 : 1}
                       required
                     />
                     <button
