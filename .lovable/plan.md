@@ -1,102 +1,53 @@
 
 
-# Master Implementation: Onboarding, OAuth Recovery, Referrals, Password Security & Alerts
+# Plan: Founding 25 Invite Flow with `?ref=founding25`
 
-## 1. OAuth & Ghost User Recovery + Apple Relay Handling
+## What This Does
 
-### Database Migration
-- **Update `handle_new_user()` trigger**: Add robust name fallback chain: `display_name` → `full_name` → `name` → email prefix. For `*@privaterelay.appleid.com` emails, skip the email prefix and default to `'R@lly Member'`.
-- **Add `needs_name_setup` column** to `profiles` table (`boolean DEFAULT false`). Set to `true` when the display name ends up as `'R@lly Member'` or matches a gibberish Apple pattern.
-- **Extract `referred_by`** from `raw_user_meta_data` during INSERT and set it on the profile. If present, call `rly_award_points()` for the referrer inline.
-- **Backfill**: UPDATE Joey's profile (`user_id = ebed9c3f-...`) and any profiles with privaterelay emails to `display_name = 'R@lly Member'` and `needs_name_setup = true`.
+When someone visits `https://rallyboyz.lovable.app?ref=founding25`, the app will:
+1. Auto-assign them as a Founding Member (badge + number) on signup
+2. Show the standard tutorial walkthrough (already profile-age triggered)
+3. Display a persistent "Founding Member" testing banner with a link to `rally.canny.io`
 
-### "Name Your Horse" UI — New Component
-- Create `src/components/profile/NameSetupDialog.tsx`: A premium modal that appears when `profile.needs_name_setup === true`. Single input field: "What should we call you?" with a Save button. On save, updates `display_name` and sets `needs_name_setup = false`.
-- Render this dialog in `src/pages/Index.tsx` (the landing page after auth), gated on `profile?.needs_name_setup === true`.
+## Technical Changes
 
-### Edit Username in Profile
-- The Profile page (`src/pages/Profile.tsx`) already supports editing `display_name` via the existing edit mode. No additional work needed here — the user can already tap edit and change their name.
+### 1. Capture `?ref=founding25` Parameter
+**File: `src/pages/Auth.tsx`**
+- The existing referral capture (line 51-60) already reads `?r=` params. Extend it to also check for `ref=founding25` specifically.
+- When detected, store `localStorage.setItem('rally-founding25', 'true')` alongside the referral ID logic.
 
----
+### 2. Auto-Assign Founding Member on Signup
+**File: `src/hooks/useAuth.tsx`**
+- In `signUp()`, check if `localStorage.getItem('rally-founding25') === 'true'`. If so, pass `founding_member: true` in the `options.data` metadata.
+- In `fetchProfile()`, add a post-signup check: if profile is < 24h old, `founding_member` is false, and `rally-founding25` is in localStorage, call an RPC to assign founding status. Clear the flag after.
 
-## 2. Tutorial Fix + Walkthrough Duplication Guard + Going Rogue Step
+**Database Migration:**
+- Update `handle_new_user()` to check `raw_user_meta_data->>'founding_member'`. If `'true'`, set `founding_member = true` and auto-assign the next `founder_number` (SELECT COALESCE(MAX(founder_number), 0) + 1 from profiles WHERE founding_member = true, capped at 25).
+- Create a small `claim_founding_spot(p_user_id uuid)` SECURITY DEFINER RPC for the post-OAuth path. It checks: profile < 24h old, founding_member is false, fewer than 25 founders exist. If valid, assigns founding_member + next founder_number.
 
-### File: `src/hooks/useTutorial.tsx`
+### 3. Founding Member Testing Banner
+**New file: `src/components/onboarding/FoundingMemberBanner.tsx`**
+- A persistent, dismissible banner shown to users where `profile.founding_member === true`.
+- Copy: "Welcome, Founding Member #X. You're one of the first 25. Test all core features and report bugs or feedback."
+- Includes a "Report Feedback" button linking to `https://rally.canny.io`.
+- Dismissible via localStorage flag `rally-founder-banner-dismissed`.
 
-**Auto-start logic (lines 208-232):**
-- Import `profile` from `useAuth()` (currently only uses `user`).
-- Replace the fragile `isNewSignup` localStorage check with: if `tutorial_complete !== 'true'` AND `profile.created_at` is within the last 24 hours, auto-start.
-- **Duplication guard**: Also check `localStorage.getItem('rally-walkthrough-seen')`. If `'true'`, skip regardless of DB state. Set this flag in `endTutorial()` and `skipTutorial()`.
+**File: `src/pages/Index.tsx`**
+- Import and render `<FoundingMemberBanner />` below the header, gated on `profile?.founding_member === true`.
 
-**New "Going Rogue" step** — insert after `rides-intro` (index 5), before `safety-intro`:
-```
-{
-  id: 'going-rogue',
-  title: 'GOING ROGUE',
-  command: 'BREAK AWAY PROTOCOL',
-  instruction: 'Going Rogue alerts your entire squad that you\'ve broken off from the group.\n\nYour crew can react with emojis, but heads up — going rogue removes you from the DD\'s auto-safety check.\n\nUse it when you\'re leaving the plan behind.',
-  requiredAction: 'complete',
-  position: 'center',
-}
-```
-
----
-
-## 3. Referral Fix (Nick's Issue)
-
-### File: `src/hooks/useAuth.tsx`
-- In `signUp()`, add `referred_by` to the `options.data` metadata object. Remove the entire client-side retry loop (lines 121-148).
-- In `fetchProfile()`, add a post-OAuth referral check: if profile is < 24h old, has no `referred_by`, and `rally-referrer-id` exists in localStorage, call an RPC to set the referral. Create a small `set_referral` RPC in the migration for this.
-
-### Database Migration (same migration as #1)
-- Create `set_referral(p_user_id uuid, p_referrer_id uuid)` SECURITY DEFINER function that sets `referred_by` on the profile and triggers `rly_award_points()` for the referrer. Checks that the profile is < 24h old to prevent abuse.
-
----
-
-## 4. Password Security & UX
-
-### File: `src/pages/Auth.tsx`
-- Update `passwordSchema` (line 19): min 8 chars, require `\d` (one number), require one special character.
-- Add a `PasswordChecklist` component below the password field during signup showing three rules with green/gray indicators.
-- Update the Sign Up button's `disabled` to also check password validity.
-- Update the password input `minLength` from 6 to 8.
-
----
-
-## 5. Global Alert Toasts
-
-### File: `src/hooks/useNotifications.tsx`
-- Import `toast` from `sonner`.
-- In the realtime INSERT handler (after updating query cache), check the notification type and fire appropriate toasts:
-  - `rogue_alert` → `toast.warning()`
-  - `dd_arrived` → `toast.success()`
-  - `safety_alert` → `toast.warning()`
-  - `event_invite` → `toast.info()`
-  - `referral_success` → `toast.success()`
-  - `rally_started` → `toast.info()`
-
----
+### 4. Tutorial Already Handled
+The walkthrough already auto-triggers for profiles < 24 hours old. No changes needed — founding members will see the full tutorial including the "Going Rogue" step.
 
 ## Files Modified
 
 | File | Change |
 |---|---|
-| **Migration** | Update `handle_new_user()`, add `needs_name_setup` column, add `set_referral()` RPC, backfill Apple profiles |
-| `src/components/profile/NameSetupDialog.tsx` | **New** — "Name Your Horse" dialog for Apple relay users |
-| `src/pages/Index.tsx` | Render NameSetupDialog when `needs_name_setup` is true |
-| `src/hooks/useTutorial.tsx` | Profile-age auto-start, duplication guard, Going Rogue step |
-| `src/hooks/useAuth.tsx` | Pass `referred_by` in metadata, remove retry loop, add post-OAuth referral check |
-| `src/pages/Auth.tsx` | Stricter password schema + live checklist UI |
-| `src/hooks/useNotifications.tsx` | Toast on realtime INSERT for high-priority alerts |
+| **Migration** | Update `handle_new_user()` to read `founding_member` from metadata; create `claim_founding_spot()` RPC |
+| `src/pages/Auth.tsx` | Capture `?ref=founding25` into localStorage |
+| `src/hooks/useAuth.tsx` | Pass `founding_member` in signup metadata; post-OAuth founding claim |
+| `src/components/onboarding/FoundingMemberBanner.tsx` | **New** — persistent testing banner with Canny link |
+| `src/pages/Index.tsx` | Render FoundingMemberBanner for founding members |
 
-## What Is NOT Touched
-
-| Feature | Status |
-|---|---|
-| Existing point rules / ledger | Unchanged |
-| RLS policies | Unchanged |
-| Pre-auth onboarding slides | Unchanged |
-| RecapTour / RecapTimeline | Unchanged |
-| Profile page edit functionality | Already exists, unchanged |
-| Google/Apple OAuth flows | Unchanged (only trigger handling improved) |
+## Your Invite Link
+After implementation: **`https://rallyboyz.lovable.app?ref=founding25`**
 
