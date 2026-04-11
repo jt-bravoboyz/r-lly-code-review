@@ -78,13 +78,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         new Date(data.created_at).getTime() > Date.now() - 24 * 60 * 60 * 1000
       ) {
         try {
-          await supabase.rpc('claim_founding_spot' as any, {
+          const { data: claimResult } = await supabase.rpc('claim_founding_spot' as any, {
             p_user_id: userId,
           });
-          localStorage.removeItem('rally-founding25');
+          if (claimResult === true) {
+            // Re-fetch profile to get founder state before clearing flag
+            const { data: refreshed } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('user_id', userId)
+              .maybeSingle();
+            if (refreshed && currentUserIdRef.current === userId) {
+              setProfile(refreshed);
+              localStorage.removeItem('rally-founding25');
+            }
+          }
         } catch (err) {
           console.error('Post-OAuth founding claim failed:', err);
         }
+      }
+      
+      // Clear founding flag only once profile confirms founder status
+      if (data.founding_member && localStorage.getItem('rally-founding25') === 'true') {
+        localStorage.removeItem('rally-founding25');
       }
     } catch (e) {
       console.error('Failed to fetch profile:', e);

@@ -8,12 +8,18 @@ export function FoundingMemberBanner() {
     () => localStorage.getItem('rally-founder-banner-dismissed') === 'true'
   );
 
-  if (!profile?.founding_member || dismissed) return null;
+  const isFounder = profile?.founding_member === true;
+  const hasOptimisticFlag = localStorage.getItem('rally-founding25') === 'true';
+
+  // Show if DB confirms OR if localStorage flag is still present (optimistic)
+  if ((!isFounder && !hasOptimisticFlag) || dismissed) return null;
 
   const handleDismiss = () => {
     localStorage.setItem('rally-founder-banner-dismissed', 'true');
     setDismissed(true);
   };
+
+  const founderNumber = profile?.founder_number;
 
   return (
     <div className="mx-4 mt-3 rounded-xl border border-primary/30 bg-primary/10 backdrop-blur-sm p-4 relative">
@@ -30,7 +36,7 @@ export function FoundingMemberBanner() {
         </div>
         <div className="flex-1 min-w-0 pr-4">
           <p className="text-sm font-semibold text-foreground">
-            Founding Member #{profile.founder_number || '?'}
+            {founderNumber ? `Founding Member #${founderNumber}` : 'Founding Member'}
           </p>
           <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
             You're one of the first 25. Test all core features and report any bugs or feedback.

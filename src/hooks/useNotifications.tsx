@@ -66,6 +66,10 @@ export function useNotifications() {
             toast.success(newNotif.title || 'Points added.', {
               description: newNotif.body || 'Your network is growing.',
             });
+          } else if (alertType === 'founding_member_welcome') {
+            toast.success(newNotif.title || 'Welcome to the Founding 25.', {
+              description: newNotif.body || 'Access granted to the Canny feedback portal.',
+            });
           } else if (alertType === 'event_invite' || alertType === 'rally_started') {
             toast.info(newNotif.title, { description: newNotif.body || undefined });
           }
