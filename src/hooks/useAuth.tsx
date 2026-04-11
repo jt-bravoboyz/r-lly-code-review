@@ -154,6 +154,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     if (!error) {
       localStorage.setItem('rally-is-new-signup', 'true');
+      if (isFoundingMember) {
+        localStorage.removeItem('rally-founding25');
+      }
     }
     
     return { error: error as Error | null };
