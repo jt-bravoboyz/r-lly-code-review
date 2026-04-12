@@ -170,9 +170,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     if (!error) {
       localStorage.setItem('rally-is-new-signup', 'true');
-      if (isFoundingMember) {
-        localStorage.removeItem('rally-founding25');
-      }
+      // Do NOT remove rally-founding25 here — let fetchProfile confirm
+      // the DB flag before clearing, to prevent stale state if the
+      // trigger hasn't fired yet.
     }
     
     return { error: error as Error | null };
