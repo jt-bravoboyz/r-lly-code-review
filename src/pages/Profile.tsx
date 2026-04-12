@@ -375,6 +375,18 @@ export default function Profile() {
                   )
                 )}
                 
+                {/* Founding Member Badge */}
+                {profile?.founding_member && (
+                  <div className="flex items-center gap-1.5 mt-2">
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gradient-to-r from-primary/20 to-accent/20 border border-primary/30 shadow-[0_0_8px_hsl(var(--primary)/0.2)]">
+                      <Star className="h-3.5 w-3.5 text-primary fill-primary/40" />
+                      <span className="text-xs font-bold text-primary">
+                        {profile.founder_number ? `Founder #${profile.founder_number}` : 'Founding Member'}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
                 {/* Tier and Points Display */}
                 <div className="flex items-center gap-2 mt-2">
                   {currentTier && (
