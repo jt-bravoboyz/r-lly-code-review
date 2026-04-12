@@ -22,20 +22,23 @@ export function FoundingMemberBanner() {
   const founderNumber = profile?.founder_number;
 
   return (
-    <div className="mx-4 mt-3 rounded-xl border border-primary/30 bg-primary/10 backdrop-blur-sm p-4 relative">
+    <div className="mx-4 mt-3 rounded-xl border border-primary/40 bg-gradient-to-br from-primary/20 via-primary/10 to-accent/10 backdrop-blur-xl p-4 relative overflow-hidden shadow-[0_4px_24px_hsl(var(--primary)/0.25)]">
+      {/* Animated shimmer sweep */}
+      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-[shimmer_3s_ease-in-out_infinite] pointer-events-none" />
+      
       <button
         onClick={handleDismiss}
-        className="absolute top-3 right-3 text-muted-foreground/60 hover:text-foreground transition-colors"
+        className="absolute top-3 right-3 text-muted-foreground/60 hover:text-foreground transition-colors z-10"
       >
         <X className="w-4 h-4" />
       </button>
 
-      <div className="flex items-start gap-3">
-        <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-          <Star className="w-4 h-4 text-primary" />
+      <div className="flex items-start gap-3 relative z-10">
+        <div className="w-11 h-11 rounded-full bg-gradient-to-br from-primary/30 to-primary/50 flex items-center justify-center flex-shrink-0 mt-0.5 shadow-[0_0_12px_hsl(var(--primary)/0.4)] ring-2 ring-primary/20">
+          <Star className="w-5 h-5 text-primary fill-primary/30" />
         </div>
         <div className="flex-1 min-w-0 pr-4">
-          <p className="text-sm font-semibold text-foreground">
+          <p className="text-sm font-bold text-foreground tracking-wide">
             {founderNumber ? `Founding Member #${founderNumber}` : 'Founding Member'}
           </p>
           <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
@@ -45,7 +48,7 @@ export function FoundingMemberBanner() {
             href="https://rally.canny.io"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 mt-2.5 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
+            className="inline-flex items-center gap-1.5 mt-2.5 text-xs font-semibold text-primary hover:text-primary/80 transition-colors bg-primary/10 hover:bg-primary/20 px-3 py-1.5 rounded-full border border-primary/20"
           >
             <MessageSquare className="w-3.5 h-3.5" />
             Report Feedback
