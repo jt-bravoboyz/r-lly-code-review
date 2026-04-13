@@ -1,28 +1,21 @@
 
 
-# Plan: Add Founder 25 Diamond to Nav Bar Avatar
+# Plan: Add Founder 25 Diamond to Rally & Alerts Tab Avatars
 
 ## Changes
 
-### 1. `src/components/layout/Header.tsx`
-- Import `MiniFounderGem` and `useAuth` (already imported)
-- After the `<Avatar>` closing tag (line 54), inside the `<Link>` wrapper, add the founder gem positioned absolutely at bottom-right of the avatar:
-
+### 1. `src/pages/Events.tsx`
+- Import `MiniFounderGem`
+- After the `</Avatar>` tag (line 93), inside the `<Link>` wrapper (line 86), add:
 ```tsx
 {profile?.id && (
-  <MiniFounderGem profileId={profile.id} className="absolute -bottom-0.5 -right-0.5 z-10" />
+  <MiniFounderGem profileId={profile.id} className="absolute -bottom-0.5 -right-0.5 z-10 animate-mini-founder-glow" />
 )}
 ```
 
-- Update `MiniFounderGem` to accept an optional `className` prop for positioning overrides.
-
-### 2. `src/pages/Index.tsx`
+### 2. `src/pages/Notifications.tsx`
 - Import `MiniFounderGem`
-- After the `<Avatar>` closing tag (line 121), inside the `<Link>` wrapper, add the same positioned gem using `profile.id`
+- After the `</Avatar>` tag (line 122), inside the `<Link>` wrapper (line 115), add the same gem overlay.
 
-### 3. `src/components/badges/MiniFounderGem.tsx`
-- Add optional `className` prop that merges with the default `inline-flex items-center ml-1` classes
-- When `className` is provided, use it instead of the default `ml-1` spacing (so it works both inline next to names and absolutely positioned on avatars)
-
-No changes to avatar size, nav layout, or existing elements.
+No other changes needed. Same pattern already used in Header.tsx and Index.tsx.
 
