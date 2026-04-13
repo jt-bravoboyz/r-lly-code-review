@@ -143,7 +143,10 @@ export function RideRequestManager({ rides, onRideComplete }: RideRequestManager
                   </Avatar>
                   
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm">{request.passenger?.display_name || 'Anonymous'}</p>
+                    <p className="font-semibold text-sm inline-flex items-center">
+                      {request.passenger?.display_name || 'Anonymous'}
+                      {request.passenger?.id && <MiniFounderGem profileId={request.passenger.id} />}
+                    </p>
                     <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
                       <Clock className="h-3 w-3" />
                       <span>
