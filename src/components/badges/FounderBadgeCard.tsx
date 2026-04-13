@@ -11,11 +11,6 @@ export function FounderBadgeCard({ isEarned, founderNumber }: FounderBadgeCardPr
       {/* Shimmer sweep */}
       <div className="absolute inset-0 pointer-events-none founder-shimmer" />
 
-      {/* Sonar rings */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <div className="founder-sonar-ring founder-sonar-1" />
-        <div className="founder-sonar-ring founder-sonar-2" />
-      </div>
 
       <div className="relative flex items-center gap-5">
         {/* Gem with sparkles */}
@@ -25,6 +20,10 @@ export function FounderBadgeCard({ isEarned, founderNumber }: FounderBadgeCardPr
           <div className="founder-sparkle founder-sparkle-2" />
           <div className="founder-sparkle founder-sparkle-3" />
           <div className="founder-sparkle founder-sparkle-4" />
+
+          {/* Sonar rings */}
+          <div className="founder-sonar-ring founder-sonar-1" />
+          <div className="founder-sonar-ring founder-sonar-2" />
 
           {/* Outer glow */}
           <div className="absolute inset-[-12px] rounded-full founder-outer-glow" />
@@ -175,7 +174,10 @@ export function FounderBadgeCard({ isEarned, founderNumber }: FounderBadgeCardPr
           height: 80px;
           border-radius: 50%;
           border: 1px solid rgba(199,125,255,0.3);
-          left: 40px;
+          top: 50%;
+          left: 50%;
+          margin-top: -40px;
+          margin-left: -40px;
         }
         .founder-sonar-1 { animation: founderSonar 4s ease-out infinite; }
         .founder-sonar-2 { animation: founderSonar 4s ease-out infinite 2s; }
