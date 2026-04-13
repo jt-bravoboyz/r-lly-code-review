@@ -53,6 +53,8 @@ export function ActivityBadgeGrid({ badges, className }: ActivityBadgeGridProps)
           // Tier label
           const tierLabel = tierLevel >= 1 ? `${badge.currentTierName} Rank` : null;
 
+          const isFounder = badge.badge_key === 'founder_25';
+
           return (
             <Tooltip key={badge.badge_key}>
               <TooltipTrigger asChild>
@@ -61,11 +63,13 @@ export function ActivityBadgeGrid({ badges, className }: ActivityBadgeGridProps)
                     'flex flex-col items-center text-center p-3 rounded-xl transition-all cursor-pointer',
                     badge.isEarned 
                       ? 'hover:scale-[1.03]' 
-                      : 'bg-muted/50 hover:bg-muted'
+                      : 'bg-muted/50 hover:bg-muted',
+                    isFounder && badge.isEarned && 'ring-1 ring-[#F47A19]/40'
                   )}
                   style={badge.isEarned ? {
-                    backgroundColor: `${badge.currentTierColor}0D`,
-                    border: `1px solid ${badge.currentTierColor}33`,
+                    backgroundColor: isFounder ? '#F47A190F' : `${badge.currentTierColor}0D`,
+                    border: `1px solid ${isFounder ? '#F47A1966' : badge.currentTierColor + '33'}`,
+                    ...(isFounder ? { boxShadow: '0 0 12px 2px #F47A1933' } : {}),
                   } : undefined}
                 >
                   <ActivityBadgeIcon
