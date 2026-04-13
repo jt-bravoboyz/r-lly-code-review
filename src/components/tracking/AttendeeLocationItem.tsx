@@ -1,4 +1,5 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { MiniFounderGem } from '@/components/badges/MiniFounderGem';
 import { Badge } from '@/components/ui/badge';
 import { Navigation, MapPin } from 'lucide-react';
 import { useReverseGeocode } from '@/hooks/useReverseGeocode';
@@ -42,7 +43,10 @@ export function AttendeeLocationItem({
           </AvatarFallback>
         </Avatar>
         <div className="flex-1 min-w-0">
-          <span className="text-sm font-medium block truncate">{displayName}</span>
+          <span className="text-sm font-medium truncate inline-flex items-center">
+            {displayName}
+            <MiniFounderGem profileId={id} />
+          </span>
           <div className="flex items-center gap-1 text-xs text-muted-foreground">
             <MapPin className="h-3 w-3 shrink-0" />
             <span className="truncate">

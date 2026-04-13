@@ -647,6 +647,20 @@
     }
   }
 
+  /* Mini founder gem breathing glow */
+  @keyframes mini-founder-glow {
+    0%, 100% {
+      filter: drop-shadow(0 0 2px rgba(155, 77, 202, 0.4));
+    }
+    50% {
+      filter: drop-shadow(0 0 6px rgba(155, 77, 202, 0.7));
+    }
+  }
+
+  .animate-mini-founder-glow {
+    animation: mini-founder-glow 3s ease-in-out infinite;
+  }
+
   /* Shimmer effect for after-rally banner */
   @keyframes shimmer {
     0% {

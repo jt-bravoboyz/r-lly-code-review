@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { MiniFounderGem } from '@/components/badges/MiniFounderGem';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -276,8 +277,9 @@ function MessageBubble({ message, isOwn }: { message: Message; isOwn: boolean })
       </Avatar>
       
       <div className={`max-w-[70%] ${isOwn ? 'items-end' : 'items-start'}`}>
-        <p className={`text-xs text-muted-foreground mb-1 px-2 ${isOwn ? 'text-right' : 'text-left'}`}>
+        <p className={`text-xs text-muted-foreground mb-1 px-2 ${isOwn ? 'text-right' : 'text-left'} inline-flex items-center`}>
           {message.sender?.display_name || 'Anonymous'}
+          <MiniFounderGem profileId={message.sender_id} />
         </p>
         
         {/* Image message */}

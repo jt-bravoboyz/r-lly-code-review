@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { MiniFounderGem } from '@/components/badges/MiniFounderGem';
 import { PUBLIC_APP_URL } from '@/lib/appUrl';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -250,8 +251,9 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
                               )}
                             </div>
                             <div>
-                              <p className="font-medium text-sm">
+                              <p className="font-medium text-sm inline-flex items-center">
                                 {friend.display_name || 'Anonymous'}
+                                <MiniFounderGem profileId={friend.id} />
                               </p>
                               {friend.isSquadMate && (
                                 <p className="text-xs text-muted-foreground">
@@ -593,8 +595,9 @@ function SquadMemberGroup({
                   {member.profile?.display_name?.charAt(0)?.toUpperCase() || '?'}
                 </AvatarFallback>
               </Avatar>
-              <span className="text-sm">
+              <span className="text-sm inline-flex items-center">
                 {member.profile?.display_name || 'Anonymous'}
+                <MiniFounderGem profileId={member.profile_id} />
               </span>
             </div>
           ))}

@@ -3187,6 +3187,7 @@ export type Database = {
           bio: string | null
           created_at: string | null
           display_name: string | null
+          founding_member: boolean | null
           id: string | null
           reward_points: number | null
           user_id: string | null
@@ -3197,6 +3198,7 @@ export type Database = {
           bio?: string | null
           created_at?: string | null
           display_name?: string | null
+          founding_member?: boolean | null
           id?: string | null
           reward_points?: number | null
           user_id?: string | null
@@ -3207,6 +3209,7 @@ export type Database = {
           bio?: string | null
           created_at?: string | null
           display_name?: string | null
+          founding_member?: boolean | null
           id?: string | null
           reward_points?: number | null
           user_id?: string | null

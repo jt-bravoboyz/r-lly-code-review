@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { MiniFounderGem } from '@/components/badges/MiniFounderGem';
 import { Header } from '@/components/layout/Header';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -338,7 +339,10 @@ export default function Profile() {
                     placeholder="Your name"
                   />
                 ) : (
-                  <h2 className="text-xl font-bold">{profile?.display_name || 'Anonymous'}</h2>
+                  <h2 className="text-xl font-bold inline-flex items-center">
+                    {profile?.display_name || 'Anonymous'}
+                    {profile?.id && <MiniFounderGem profileId={profile.id} />}
+                  </h2>
                 )}
                 {isEditing ? (
                   <div className="mt-1 flex items-center gap-2">
