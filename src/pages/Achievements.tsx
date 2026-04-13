@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ChevronDown, Trophy, Star } from 'lucide-react';
+import { ChevronDown, Trophy, Star, Crown } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { 
   useBadgeState, 
@@ -17,11 +17,12 @@ import { TierBadgeIcon } from '@/components/badges/TierBadgeIcon';
 import { TierLadder } from '@/components/badges/TierLadder';
 import { ActivityBadgeGrid } from '@/components/badges/ActivityBadgeGrid';
 import { PointsHistoryList } from '@/components/badges/PointsHistoryList';
+import { FounderBadgeCard } from '@/components/badges/FounderBadgeCard';
 import { cn } from '@/lib/utils';
 
 export default function Achievements() {
   const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
+  const { user, profile, loading: authLoading } = useAuth();
   const { state, currentTier, nextTier, progress, isLoading: badgeLoading, allTiers } = useBadgeState();
   const { badges, isLoading: badgesLoading } = useActivityBadges();
   const { data: pointsHistory, isLoading: historyLoading } = usePointsHistory(50);
@@ -114,6 +115,20 @@ export default function Achievements() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Exclusive Badges */}
+        {profile?.founding_member && (
+          <div className="space-y-2">
+            <h3 className="text-sm font-semibold text-muted-foreground flex items-center gap-1.5 px-1">
+              <Crown className="w-3.5 h-3.5 text-[#F47A19]" />
+              Exclusive
+            </h3>
+            <FounderBadgeCard 
+              isEarned={true} 
+              founderNumber={profile.founder_number} 
+            />
+          </div>
+        )}
 
         {/* Activity Badges */}
         <Card>

@@ -34,7 +34,7 @@ export function ActivityBadgeGrid({ badges, className }: ActivityBadgeGridProps)
   return (
     <TooltipProvider delayDuration={200}>
       <div className={cn('grid grid-cols-3 gap-4', className)}>
-        {badges.map((badge) => {
+        {badges.filter(b => b.badge_key !== 'founder_25').map((badge) => {
           const tierLevel = badge.current_tier_level || 0;
           const isMaxTier = tierLevel >= 5;
 
