@@ -1,42 +1,44 @@
 
 
-# Fix: Referral Points Not Awarded on Signup
+# Plan: Add Referral Signup Alert for Referring User
 
-## Root Cause
+## Overview
 
-The `handle_new_user` database trigger calls `rly_award_points` incorrectly in three ways:
+When a new user signs up via a referral link, create a notification for the referring user in their alerts tab confirming the referral and points credit.
 
-1. **Wrong number of arguments** — passes 4 args `(_referred_by, 'referral', 50, NEW.id::text)` but the function only accepts 3 `(uuid, text, uuid)`
-2. **Wrong event type** — uses `'referral'` but the point rules table has `'referral_signup'`
-3. **Wrong ID type** — passes `_referred_by` which is a profile ID, but `rly_award_points` expects an auth user ID
+## Steps
 
-The call silently fails inside the `EXCEPTION WHEN OTHERS THEN NULL` block, so no error is visible.
+### 1. Update `handle_new_user` trigger (database migration)
 
-## Fix
-
-One database migration to update the referral-awarding section of `handle_new_user`:
-
-1. Look up the referrer's `user_id` from the profiles table using `_referred_by` (which is a profile ID)
-2. Call `rly_award_points(v_referrer_user_id, 'referral_signup', NEW.id)` with the correct auth user ID, correct event type, and correct 3-argument signature
-
-### What changes
+After the `rly_award_points` call succeeds, insert a notification into `public.notifications` for the referring user:
 
 ```sql
--- Replace the current broken call:
-PERFORM rly_award_points(_referred_by, 'referral', 50, NEW.id::text);
-
--- With:
-DECLARE v_referrer_user_id uuid;
-...
-SELECT user_id INTO v_referrer_user_id FROM public.profiles WHERE id = _referred_by;
-IF v_referrer_user_id IS NOT NULL THEN
-  PERFORM public.rly_award_points(v_referrer_user_id, 'referral_signup', NEW.id);
-END IF;
+INSERT INTO public.notifications (profile_id, type, title, body, data)
+VALUES (
+  _referred_by,
+  'referral_success',
+  _display_name || ' joined R@lly using your link.',
+  'Your referral points have been credited.',
+  jsonb_build_object('new_user_id', NEW.id)
+);
 ```
 
+This goes inside the existing `IF _referrer_user_id IS NOT NULL` block, right after the `PERFORM rly_award_points(...)` call. The `_referred_by` is the referrer's profile ID which is what the notifications table expects.
+
+### 2. Add icon for `referral_success` in Notifications page
+
+In `src/pages/Notifications.tsx`, add a case to `getNotificationIcon`:
+
+```tsx
+case 'referral_success':
+  return <UserPlus className="h-5 w-5 text-green-500" />;
+```
+
+Import `UserPlus` from lucide-react.
+
 ### What does NOT change
-- Signup flow for new users
-- Referral link generation or capture
-- Point values (controlled by `rly_point_rules` table)
-- Any other trigger or function
+- Referral point logic, signup flow, referral link system
+- Any existing alert types or styling
+- The notification card layout (uses the existing `SwipeDismissCard` + `Card` pattern)
+- The real-time toast already handles `referral_success` type in `useNotifications.tsx`
 
