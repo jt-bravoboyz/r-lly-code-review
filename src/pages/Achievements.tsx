@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ChevronDown, Trophy, Star } from 'lucide-react';
+import { ChevronDown, Trophy, Star, Crown } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { 
   useBadgeState, 
