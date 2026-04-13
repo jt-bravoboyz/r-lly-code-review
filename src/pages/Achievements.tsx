@@ -17,6 +17,7 @@ import { TierBadgeIcon } from '@/components/badges/TierBadgeIcon';
 import { TierLadder } from '@/components/badges/TierLadder';
 import { ActivityBadgeGrid } from '@/components/badges/ActivityBadgeGrid';
 import { PointsHistoryList } from '@/components/badges/PointsHistoryList';
+import { FounderBadgeCard } from '@/components/badges/FounderBadgeCard';
 import { cn } from '@/lib/utils';
 
 export default function Achievements() {
