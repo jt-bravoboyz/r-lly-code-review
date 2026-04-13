@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { MiniFounderGem } from '@/components/badges/MiniFounderGem';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

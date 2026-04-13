@@ -1,4 +1,5 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { MiniFounderGem } from '@/components/badges/MiniFounderGem';
 import { Badge } from '@/components/ui/badge';
 import { Navigation, MapPin } from 'lucide-react';
 import { useReverseGeocode } from '@/hooks/useReverseGeocode';

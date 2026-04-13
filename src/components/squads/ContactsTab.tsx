@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { MiniFounderGem } from '@/components/badges/MiniFounderGem';
 import { PUBLIC_APP_URL } from '@/lib/appUrl';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';

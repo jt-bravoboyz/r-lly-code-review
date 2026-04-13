@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { MiniFounderGem } from '@/components/badges/MiniFounderGem';
 import { Header } from '@/components/layout/Header';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
