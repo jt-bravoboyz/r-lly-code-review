@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Bell, Car, MapPin, Users, CheckCircle, Clock, Zap, MessageCircle } from 'lucide-react';
+import { Bell, Car, MapPin, Users, CheckCircle, Clock, Zap, MessageCircle, UserPlus } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useNotifications, useMarkNotificationRead, useDeleteNotification } from '@/hooks/useNotifications';
 import { SwipeDismissCard } from '@/components/notifications/SwipeDismissCard';
@@ -53,6 +53,8 @@ export default function Notifications() {
         return <CheckCircle className="h-5 w-5 text-green-500" />;
       case 'location_arrived':
         return <MapPin className="h-5 w-5 text-green-500" />;
+      case 'referral_success':
+        return <UserPlus className="h-5 w-5 text-green-500" />;
       default:
         return <Bell className="h-5 w-5 text-primary" />;
     }
