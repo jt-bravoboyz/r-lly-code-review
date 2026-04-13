@@ -18,6 +18,7 @@ import { useRallyOnboarding } from '@/contexts/RallyOnboardingContext';
 import { IdentitySetupDialog } from '@/components/profile/NameSetupDialog';
 import { FoundingMemberBanner } from '@/components/onboarding/FoundingMemberBanner';
 import rallyLogo from '@/assets/rally-logo.png';
+import { MiniFounderGem } from '@/components/badges/MiniFounderGem';
 
 export default function Index() {
   const { user, profile, loading } = useAuth();
@@ -119,6 +120,9 @@ export default function Index() {
                   {userInitials}
                 </AvatarFallback>
               </Avatar>
+              {profile?.id && (
+                <MiniFounderGem profileId={profile.id} className="absolute -bottom-0.5 -right-0.5 z-10 animate-mini-founder-glow" />
+              )}
             </Link>
           </div>
         </div>

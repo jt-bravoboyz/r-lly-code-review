@@ -2,15 +2,16 @@ import { useFounderIds } from '@/hooks/useFounderIds';
 
 interface MiniFounderGemProps {
   profileId: string;
+  className?: string;
 }
 
-export function MiniFounderGem({ profileId }: MiniFounderGemProps) {
+export function MiniFounderGem({ profileId, className }: MiniFounderGemProps) {
   const { data: founderIds } = useFounderIds();
 
   if (!founderIds?.has(profileId)) return null;
 
   return (
-    <span className="inline-flex items-center ml-1 animate-mini-founder-glow" title="Founding Member">
+    <span className={className || "inline-flex items-center ml-1 animate-mini-founder-glow"} title="Founding Member">
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="miniFounderGrad" x1="0" y1="0" x2="16" y2="16" gradientUnits="userSpaceOnUse">
