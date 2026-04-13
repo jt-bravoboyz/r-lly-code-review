@@ -1,78 +1,48 @@
 
 
-# Plan: End-to-End Founding 25 Hardening & VIP Account Repair
+# Plan: Add "Founder 25" Activity Badge
 
-## Current State
+## Overview
 
-- **Whitney Houston**: `founding_member = false`, `founder_number = null` — broken
-- **Hixx**: Already repaired (`founding_member = true`, `founder_number = 1`)
-- **Caroline Kay**: `founding_member = true` but `founder_number = null` — needs assignment
-- Unsafe delete migration still in repo
-- `handle_new_user()` and `claim_founding_spot()` both use race-prone `MAX(founder_number) + 1`
-- Client clears `localStorage` flag before confirming DB state, causing stale UI
-- Banner has no optimistic fallback for slow DB sync
+Add a new "Founder 25" activity badge to the existing activity badge system. It will appear in the Activity Badges grid on the Achievements page, visually styled as the most premium badge using R@lly Orange (#F47A19). It will be automatically awarded when a user is confirmed as a founding member.
 
----
+## Steps
 
-## Implementation Steps
+### 1. Insert Badge Definition (Database)
 
-### 1. Manual Data Repair (Direct DB updates)
+Insert a new row into `rly_activity_badges`:
+- `badge_key`: `founder_25`
+- `badge_name`: `Founder 25`
+- `description`: `Exclusive badge for the first 25 R@lly members`
+- `requirement_event_type`: `founding_member` (custom type, not tied to normal progression)
+- `requirement_count`: `1` (binary -- you either have it or you don't)
+- No tiered progression (this is a one-time exclusive badge)
 
-Update Whitney's profile: `founding_member = true`, `founder_number = 3`, `needs_name_setup = true`.
-Update Caroline Kay's profile: `founder_number = 2` (she's already a founder but missing a number).
+### 2. Award Badge in Founding Member Flow (useAuth.tsx)
 
-### 2. Neutralize Unsafe Migration
+After a user is confirmed as a founding member (both in the `signUp` path and the post-OAuth `claim_founding_spot` path), insert/upsert a row into `rly_user_activity_badges`:
+- `badge_key`: `founder_25`
+- `progress_count`: `1`
+- `earned_at`: now
+- `current_tier_level`: `1` (Bronze -- marks it as earned)
 
-Replace contents of `supabase/migrations/20260411012456_e05b826d-b7a9-403f-aa36-e0296393735c.sql` with a no-op comment. This prevents the `DELETE FROM auth.users` from ever running again.
+This happens in two places in `fetchProfile`:
+1. After successful `claim_founding_spot` RPC call (post-OAuth flow)
+2. When `data.founding_member === true` is first detected
 
-### 3. Harden `handle_new_user()` (Database Migration)
+### 3. Add Fallback Icon (ActivityBadgeIcon.tsx)
 
-Replace the trigger function with an atomic version:
-- Use `pg_advisory_xact_lock(42)` to serialize founder-number allocation
-- Accept both `'true'` (string) and `true` (boolean) for `founding_member` metadata
-- Preserve the full name fallback chain and `needs_name_setup` for Apple relay users
-- Use `SELECT ... FOR UPDATE` pattern to prevent number collisions
+Add `founder_25` to the `FALLBACK_ICONS` map, using the `Star` icon (or a `Crown`-style icon) to give it a premium feel.
 
-### 4. Harden `claim_founding_spot()` (Same Migration)
+### 4. Premium Visual Treatment (ActivityBadgeGrid.tsx)
 
-Replace with the same atomic locking pattern:
-- `pg_advisory_xact_lock(42)` before reading `MAX(founder_number)`
-- Accept calls idempotently (return `true` if already a founder)
-
-### 5. Fix Auth Pass-Through (`src/hooks/useAuth.tsx`)
-
-- After `claim_founding_spot()` succeeds, **re-fetch the profile** before clearing the `localStorage` flag
-- Only clear `rally-founding25` when `profile.founding_member === true` is confirmed from the DB
-- This eliminates the stale-state window
-
-### 6. Optimistic FoundingMemberBanner (`src/components/onboarding/FoundingMemberBanner.tsx`)
-
-- Add fallback: show banner if `localStorage.getItem('rally-founding25') === 'true'` even when `profile.founding_member` hasn't synced yet
-- When in optimistic mode, show "Founding Member" without a number (graceful fallback)
-- Keep Canny link hard-coded to `https://rally.canny.io`
-
-### 7. Welcome Toast (`src/hooks/useNotifications.tsx`)
-
-- When a `founding_member_welcome` notification type is received (or inline after profile confirms founder status), fire a sonner toast: "Welcome to the Founding 25. Access granted to the Canny feedback portal."
-
----
+Add a special case for `founder_25` badges: apply a golden/orange border glow and R@lly Orange accent to make it visually distinct from other badges, while staying within the existing grid layout.
 
 ## Technical Details
 
-```text
-Database updates (via insert tool):
-  - Whitney: SET founding_member=true, founder_number=3, needs_name_setup=true
-  - Caroline: SET founder_number=2
-
-Migration (schema change):
-  - Neutralize 20260411012456 migration → no-op
-  - New migration: CREATE OR REPLACE handle_new_user() with pg_advisory_xact_lock(42)
-  - New migration: CREATE OR REPLACE claim_founding_spot() with pg_advisory_xact_lock(42)
-
-Files modified:
-  - supabase/migrations/20260411012456_e05b826d...sql → no-op
-  - New migration for hardened functions
-  - src/hooks/useAuth.tsx → re-fetch after claim, delayed flag clear
-  - src/components/onboarding/FoundingMemberBanner.tsx → optimistic fallback
-```
+- **Database insert**: One row into `rly_activity_badges` table
+- **useAuth.tsx**: ~10 lines added after founding member confirmation to upsert badge progress
+- **ActivityBadgeIcon.tsx**: Add `founder_25: Star` (or `Crown`) to `FALLBACK_ICONS`
+- **ActivityBadgeGrid.tsx**: Add special styling condition for `founder_25` badge_key
+- No existing badge, banner, or flow logic is modified
 
