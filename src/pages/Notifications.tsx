@@ -53,6 +53,8 @@ export default function Notifications() {
         return <CheckCircle className="h-5 w-5 text-green-500" />;
       case 'location_arrived':
         return <MapPin className="h-5 w-5 text-green-500" />;
+      case 'referral_success':
+        return <UserPlus className="h-5 w-5 text-green-500" />;
       default:
         return <Bell className="h-5 w-5 text-primary" />;
     }
