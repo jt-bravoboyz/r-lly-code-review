@@ -13,6 +13,7 @@ import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { MiniFounderGem } from '@/components/badges/MiniFounderGem';
 import { EVENT_TYPES } from '@/lib/eventTypes';
 import rallyLogo from '@/assets/rally-logo.png';
 
@@ -91,6 +92,9 @@ export default function Events() {
                 {profile?.display_name?.charAt(0)?.toUpperCase() || '?'}
               </AvatarFallback>
             </Avatar>
+            {profile?.id && (
+              <MiniFounderGem profileId={profile.id} className="absolute -bottom-0.5 -right-0.5 z-10 animate-mini-founder-glow" />
+            )}
           </Link>
         </div>
       </header>

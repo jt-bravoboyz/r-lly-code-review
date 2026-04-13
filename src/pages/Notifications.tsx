@@ -12,6 +12,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { InviteAlertCard } from '@/components/notifications/InviteAlertCard';
 import { Button } from '@/components/ui/button';
 import rallyLogo from '@/assets/rally-logo.png';
+import { MiniFounderGem } from '@/components/badges/MiniFounderGem';
 
 const INVITE_TYPES = ['squad_invite', 'rally_invite', 'event_invite'];
 const ACTIONABLE_TYPES = [...INVITE_TYPES, 'rally_started', 'squad_chat_unread', 'rally_chat_unread', 'chat_unread'];
@@ -120,6 +121,9 @@ export default function Notifications() {
                 {profile?.display_name?.charAt(0)?.toUpperCase() || '?'}
               </AvatarFallback>
             </Avatar>
+            {profile?.id && (
+              <MiniFounderGem profileId={profile.id} className="absolute -bottom-0.5 -right-0.5 z-10 animate-mini-founder-glow" />
+            )}
           </Link>
         </div>
       </header>
