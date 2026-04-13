@@ -1028,14 +1028,6 @@ export default function Auth() {
               </button>
             </p>
           )}
-
-          <button
-            type="button"
-            onClick={() => navigate('/settings-preview')}
-            className="text-sm underline text-primary"
-          >
-            View settings preview (no login)
-          </button>
         </div>
       )}
 
