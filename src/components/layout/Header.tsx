@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
 import { User, Moon } from 'lucide-react';
 import rallyLogo from '@/assets/rally-logo.png';
+import { MiniFounderGem } from '@/components/badges/MiniFounderGem';
 
 interface HeaderProps {
   title?: string;
@@ -52,6 +53,9 @@ export function Header({ title, icon, afterRallyMode }: HeaderProps) {
               {profile?.display_name?.charAt(0)?.toUpperCase() || '?'}
             </AvatarFallback>
           </Avatar>
+          {profile?.id && (
+            <MiniFounderGem profileId={profile.id} className="absolute -bottom-0.5 -right-0.5 z-10 animate-mini-founder-glow" />
+          )}
         </Link>
       </div>
     </header>
