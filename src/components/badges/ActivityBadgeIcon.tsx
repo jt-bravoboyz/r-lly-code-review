@@ -40,6 +40,7 @@ const FALLBACK_ICONS: Record<string, React.ElementType> = {
   enlistment_officer: Megaphone,
   squad_commander: Star,
   enlisted: Tag,
+  founder_25: Crown,
 };
 
 export function ActivityBadgeIcon({ 

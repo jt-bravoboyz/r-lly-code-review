@@ -102,6 +102,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (data.founding_member && localStorage.getItem('rally-founding25') === 'true') {
         localStorage.removeItem('rally-founding25');
       }
+
+      // Auto-award Founder 25 activity badge if founding member
+      if (data.founding_member) {
+        try {
+          await supabase
+            .from('rly_user_activity_badges' as any)
+            .upsert({
+              user_id: userId,
+              badge_key: 'founder_25',
+              progress_count: 1,
+              earned_at: new Date().toISOString(),
+              current_tier_level: 1,
+            }, { onConflict: 'user_id,badge_key' });
+        } catch (badgeErr) {
+          console.error('Failed to award Founder 25 badge:', badgeErr);
+        }
+      }
     } catch (e) {
       console.error('Failed to fetch profile:', e);
       if (currentUserIdRef.current === userId) setProfile(null);
