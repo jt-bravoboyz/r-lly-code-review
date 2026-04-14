@@ -1,21 +1,40 @@
 
 
-# Plan: Add Founder 25 Diamond to Rally & Alerts Tab Avatars
+# Plan: Fix Tutorial Navigation Timing
 
-## Changes
+## Problem
 
-### 1. `src/pages/Events.tsx`
-- Import `MiniFounderGem`
-- After the `</Avatar>` tag (line 93), inside the `<Link>` wrapper (line 86), add:
+When the tutorial auto-starts for new users, it fires 500ms after auth completes — but the user may still be on `/auth` or another route. The tutorial overlay renders on top of whatever screen is showing, resulting in the tutorial appearing over a blank/login screen instead of the Home screen.
+
+## Fix
+
+In `src/hooks/useTutorial.tsx`, modify the auto-start effect (lines 217-243) to:
+
+1. Check if the user is currently on the Home route (`/`)
+2. If not, navigate to `/` first
+3. Wait for the Home screen to render (longer delay), then start the tutorial
+
+### File: `src/hooks/useTutorial.tsx`
+
+In the auto-start `useEffect` (line 237-242), replace the simple 500ms timeout with:
+
 ```tsx
-{profile?.id && (
-  <MiniFounderGem profileId={profile.id} className="absolute -bottom-0.5 -right-0.5 z-10 animate-mini-founder-glow" />
-)}
+// Navigate to home first if not already there
+if (window.location.pathname !== '/') {
+  navigate('/');
+}
+// Give the home screen time to fully render
+const timer = setTimeout(() => {
+  startTutorial();
+}, 1200);
+return () => clearTimeout(timer);
 ```
 
-### 2. `src/pages/Notifications.tsx`
-- Import `MiniFounderGem`
-- After the `</Avatar>` tag (line 122), inside the `<Link>` wrapper (line 115), add the same gem overlay.
+This requires importing `useNavigate` (already imported on line 2) and using the existing `navigate` reference. However, `navigate` is currently only created inside the `TutorialProvider` component — the auto-start effect already has access to it.
 
-No other changes needed. Same pattern already used in Header.tsx and Index.tsx.
+Move the `navigate` call into the effect block so it navigates to Home before starting the tutorial. The 1200ms delay gives the Home screen enough time to mount and render its content behind the overlay.
+
+### No other changes
+- Tutorial steps, content, order, skip logic — all unchanged
+- Only the auto-start timing and navigation are affected
 
