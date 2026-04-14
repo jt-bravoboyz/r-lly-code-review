@@ -70,7 +70,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   rideUpdates: true,
   
   // Display
-  theme: 'system',
+  theme: 'light',
   compactMode: false,
   showAccuracyIndicator: true,
 };

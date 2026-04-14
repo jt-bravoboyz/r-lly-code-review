@@ -153,7 +153,7 @@ export default function Settings() {
 
   const handleResetSettings = () => {
     resetSettings();
-    setTheme('system');
+    setTheme('light');
     triggerHaptic('success');
     toast.success('Settings reset to defaults');
   };
