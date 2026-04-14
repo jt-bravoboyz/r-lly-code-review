@@ -235,9 +235,14 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     const isNewSignup = localStorage.getItem('rally-is-new-signup') === 'true';
 
     if (isNewProfile || isNewSignup) {
+      // Navigate to home first if not already there
+      if (window.location.pathname !== '/') {
+        navigate('/');
+      }
+      // Give the home screen time to fully render
       const timer = setTimeout(() => {
         startTutorial();
-      }, 500);
+      }, 1200);
       return () => clearTimeout(timer);
     }
   }, [user, profile, authLoading, startTutorial]);
