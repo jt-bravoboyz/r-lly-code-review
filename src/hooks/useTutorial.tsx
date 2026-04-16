@@ -176,20 +176,30 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('rally-walkthrough-seen', 'true');
     localStorage.removeItem('rally-is-new-signup');
     
+    // Persist to database
+    if (user) {
+      supabase.from('profiles').update({ walkthrough_completed: true } as any).eq('user_id', user.id).then();
+    }
+    
     // Check for pending squad redirect
     const pendingSquadRedirect = localStorage.getItem('rally-pending-squad-redirect');
     if (pendingSquadRedirect) {
       localStorage.removeItem('rally-pending-squad-redirect');
       navigate(`/squads/${pendingSquadRedirect}`);
     }
-  }, [navigate]);
+  }, [navigate, user]);
 
   const skipTutorial = useCallback(() => {
     setIsActive(false);
     localStorage.setItem('rally-tutorial-complete', 'true');
     localStorage.setItem('rally-walkthrough-seen', 'true');
     localStorage.removeItem('rally-is-new-signup');
-  }, []);
+    
+    // Persist to database
+    if (user) {
+      supabase.from('profiles').update({ walkthrough_completed: true } as any).eq('user_id', user.id).then();
+    }
+  }, [user]);
 
   const nextStep = useCallback(() => {
     if (currentStepIndex < TUTORIAL_STEPS.length - 1) {
