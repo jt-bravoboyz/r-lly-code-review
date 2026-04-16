@@ -27,8 +27,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Prevent race conditions when users switch accounts quickly.
   const currentUserIdRef = useRef<string | null>(null);
 
-  const fetchProfile = async (userId: string) => {
+  const fetchProfile = async (userId: string, retryCount = 0) => {
     try {
+      // Verify the session user is actually hydrated before querying
+      const { data: { user: sessionUser } } = await supabase.auth.getUser();
+      if (!sessionUser || sessionUser.id !== userId) {
+        // Session not ready yet — retry for new OAuth users
+        if (retryCount < 3) {
+          setTimeout(() => fetchProfile(userId, retryCount + 1), 800);
+          return;
+        }
+        return;
+      }
+
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -44,6 +55,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       if (!data || data.user_id !== userId) {
+        // Profile may not exist yet for brand-new OAuth users (trigger delay)
+        if (retryCount < 3) {
+          setTimeout(() => fetchProfile(userId, retryCount + 1), 1000);
+          return;
+        }
         setProfile(null);
         return;
       }

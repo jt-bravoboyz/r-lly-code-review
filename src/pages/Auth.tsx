@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 import { Mail, Lock, User, ChevronRight, ArrowLeft, Phone, Fingerprint, Eye, EyeOff } from 'lucide-react';
 import { z } from 'zod';
 import { PolicyAcceptanceDialog } from '@/components/legal/PolicyAcceptanceDialog';
-import { useTutorial } from '@/hooks/useTutorial';
+// Tutorial auto-starts via useTutorial profile-age check
 import { lovable } from '@/integrations/lovable/index';
 // Validation schemas
 const emailSchema = z.string().trim().email('Please enter a valid email address').max(255, 'Email is too long');
@@ -95,7 +95,7 @@ export default function Auth() {
     authenticateWithBiometric,
     registerBiometric,
   } = useBiometricAuth();
-  const { startTutorial } = useTutorial();
+  
   const joinEvent = useJoinEvent();
   const navigate = useNavigate();
   const autoJoinAttempted = useRef(false);
@@ -384,10 +384,7 @@ export default function Auth() {
       // Mark that user has an account for future visits
       localStorage.setItem('rally-has-account', 'true');
       toast.success('Account created! Welcome to R@lly.');
-      // Start tutorial after signup
-      setTimeout(() => {
-        startTutorial();
-      }, 500);
+      // Tutorial auto-starts via useTutorial profile-age check — no manual trigger needed
     } catch (error: any) {
       const errorMessage = getAuthErrorMessage(error);
       toast.error(errorMessage);
@@ -464,10 +461,11 @@ export default function Auth() {
   const executeAppleSignIn = async () => {
     setIsLoading(true);
     try {
-      const { error } = await lovable.auth.signInWithOAuth('apple', {
+      const result = await lovable.auth.signInWithOAuth('apple', {
         redirect_uri: window.location.origin,
       });
-      if (error) throw error;
+      if (result.error) throw result.error;
+      if (result.redirected) return;
       localStorage.setItem('rally-has-account', 'true');
     } catch (error: any) {
       const errorMessage = getAuthErrorMessage(error);
