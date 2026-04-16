@@ -12,6 +12,7 @@ import { TierUpProvider } from "@/contexts/TierUpContext";
 import { NavigationPortal } from "@/components/navigation/NavigationPortal";
 import { TutorialOverlay } from "@/components/tutorial/TutorialOverlay";
 import { RallyOnboardingOverlay } from "@/components/onboarding/RallyOnboardingOverlay";
+import { AuthRedirectGuard } from "@/components/AuthRedirectGuard";
 import { AppEntry } from "@/components/AppEntry";
 import Index from "./pages/Index";
 import ReturningAuth from "./pages/ReturningAuth";
@@ -48,6 +49,7 @@ const App = () => (
                 <NavigationPortal />
                 <BrowserRouter>
                   <RallyOnboardingOverlay />
+                  <AuthRedirectGuard />
                   <TutorialProvider>
                     <TutorialOverlay />
                     <Routes>
