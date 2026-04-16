@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useBiometricAuth } from '@/hooks/useBiometricAuth';
 import { useJoinEvent } from '@/hooks/useEvents';
 import { supabase } from '@/integrations/supabase/client';
+import { lovable } from '@/integrations/lovable/index';
 import { toast } from 'sonner';
 import { Mail, Lock, ChevronRight, ArrowLeft, Fingerprint } from 'lucide-react';
 import { z } from 'zod';
