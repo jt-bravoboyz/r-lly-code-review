@@ -228,6 +228,10 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     // Database truth: walkthrough already completed
     if ((profile as any).walkthrough_completed === true) return;
 
+    // Gate: wait until name setup is done
+    if ((profile as any).needs_name_setup === true) return;
+    if (!profile.display_name || profile.display_name === 'R@lly Member') return;
+
     // Device guard: already seen on this device
     if (localStorage.getItem('rally-walkthrough-seen') === 'true') return;
 
