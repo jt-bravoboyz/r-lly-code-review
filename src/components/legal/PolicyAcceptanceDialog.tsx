@@ -183,10 +183,10 @@ export function PolicyAcceptanceDialog({ open, onOpenChange, onAccept }: PolicyA
           style={{ WebkitOverflowScrolling: 'touch' }}
         >
           <div
-            className="rounded-lg p-4 text-sm leading-relaxed"
+            className="rounded-lg p-4 text-sm leading-relaxed [&_.text-muted-foreground]:!text-[#E0E0E0] [&_.text-foreground]:!text-[#F5F5F5] [&_strong]:!text-[#F5F5F5] [&_h3]:!text-[#F5F5F5] [&_li]:!text-[#E0E0E0] [&_p]:!text-[#E0E0E0]"
             style={{
               backgroundColor: "rgba(255, 255, 255, 0.03)",
-              color: "rgba(255, 255, 255, 0.75)",
+              color: "#E0E0E0",
             }}
           >
             <ContentComponent />
