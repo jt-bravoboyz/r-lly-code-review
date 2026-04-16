@@ -1,12 +1,13 @@
 // R@lly Service Worker for Push Notifications and Offline Support
 
-const CACHE_NAME = 'rally-cache-v3';
+const CACHE_NAME = 'rally-cache-v4';
 const OFFLINE_URL = '/';
 
 // Files to cache for offline use (avoid caching '/' to prevent stale HTML pointing to old bundles)
 const STATIC_ASSETS = [
   '/manifest.json',
-  '/rally-icon-192.png',
+  '/rally-icon-192-v5.png',
+  '/rally-icon-512-v5.png',
 ];
 
 // Install event - cache static assets
