@@ -263,7 +263,7 @@ export default function ReturningAuth() {
   };
 
   if (user) {
-    return null;
+    return <Navigate to="/" replace />;
   }
 
   return (
