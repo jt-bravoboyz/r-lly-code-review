@@ -229,23 +229,20 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     if (authLoading) return;
     if (!user || !profile) return;
 
-    // Duplication guard: if user already saw walkthrough on this device, skip
+    // Database truth: walkthrough already completed
+    if ((profile as any).walkthrough_completed === true) return;
+
+    // Device guard: already seen on this device
     if (localStorage.getItem('rally-walkthrough-seen') === 'true') return;
 
     const tutorialComplete = localStorage.getItem('rally-tutorial-complete');
     if (tutorialComplete === 'true') return;
 
-    const onboardingComplete = localStorage.getItem('rally-onboarding-complete');
-    if (onboardingComplete !== 'true') return;
-
     // Profile-age check: auto-start if profile was created within last 24 hours
     const profileCreated = new Date(profile.created_at || 0).getTime();
     const isNewProfile = profileCreated > Date.now() - 24 * 60 * 60 * 1000;
 
-    // Also allow if explicit new-signup flag is set (immediate signup flow)
-    const isNewSignup = localStorage.getItem('rally-is-new-signup') === 'true';
-
-    if (isNewProfile || isNewSignup) {
+    if (isNewProfile) {
       // Navigate to home first if not already there
       if (window.location.pathname !== '/') {
         navigate('/');
