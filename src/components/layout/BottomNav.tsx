@@ -2,6 +2,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Home, Zap, Users, User, Bell } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUnreadCount } from '@/hooks/useNotifications';
+import { useTutorial } from '@/hooks/useTutorial';
 
 const navItems = [
   { path: '/', icon: Home, label: 'Home', tutorialId: 'nav-home' },
@@ -14,6 +15,7 @@ const navItems = [
 export function BottomNav() {
   const location = useLocation();
   const totalUnread = useUnreadCount();
+  const { isActive: tutorialActive, currentStep } = useTutorial();
 
   return (
     <nav className="fixed bottom-4 left-4 right-4 z-50 rounded-2xl bg-card/80 backdrop-blur-xl border border-border/60 shadow-[0_4px_24px_hsl(0_0%_0%/0.08)] dark:bg-card/60 dark:border-white/[0.08] dark:shadow-[0_8px_32px_hsl(0_0%_0%/0.4),inset_0_1px_0_hsl(0_0%_100%/0.06)]" style={{ paddingBottom: 'env(safe-area-inset-bottom)', WebkitBackdropFilter: 'blur(20px)' }}>
@@ -21,6 +23,8 @@ export function BottomNav() {
         {navItems.map(({ path, icon: Icon, label, tutorialId }) => {
           const isActive = location.pathname === path || 
             (path !== '/' && location.pathname.startsWith(path));
+
+          const isTutorialTarget = tutorialActive && currentStep?.targetSelector === `[data-tutorial="${tutorialId}"]`;
           
           return (
             <Link
@@ -28,26 +32,30 @@ export function BottomNav() {
               to={path}
               data-tutorial={tutorialId}
               className={cn(
-                "flex flex-col items-center gap-1 px-3 py-2 text-xs font-medium transition-all duration-300",
-                isActive 
-                  ? "text-primary scale-105" 
-                  : "text-muted-foreground hover:text-foreground hover:scale-105"
+                "flex flex-col items-center gap-1 px-3 py-2 text-xs font-medium transition-all duration-300 rounded-2xl",
+                isTutorialTarget
+                  ? "bg-[#F47A19] text-white shadow-[0_0_16px_rgba(244,122,25,0.55)] animate-pulse scale-110"
+                  : isActive 
+                    ? "text-primary scale-105" 
+                    : "text-muted-foreground hover:text-foreground hover:scale-105"
               )}
             >
               <div
                 className={cn(
                   "p-3 rounded-2xl transition-all duration-300 relative",
-                  isActive
-                    ? "bg-gradient-to-br from-primary to-primary/80 shadow-lg shadow-primary/30"
-                    : "bg-transparent hover:bg-white/[0.06]"
+                  isTutorialTarget
+                    ? "bg-transparent"
+                    : isActive
+                      ? "bg-gradient-to-br from-primary to-primary/80 shadow-lg shadow-primary/30"
+                      : "bg-transparent hover:bg-white/[0.06]"
                 )}
               >
                 <Icon
                   className={cn(
                     "h-5 w-5 transition-all",
-                    isActive ? "text-white" : "text-current"
+                    isTutorialTarget ? "text-white" : isActive ? "text-white" : "text-current"
                   )}
-                  strokeWidth={isActive ? 2.5 : 2}
+                  strokeWidth={isActive || isTutorialTarget ? 2.5 : 2}
                 />
 
                 {path === '/notifications' && totalUnread > 0 && (
@@ -64,7 +72,7 @@ export function BottomNav() {
               </div>
               <span className={cn(
                 "transition-all",
-                isActive ? "font-bold text-primary" : "font-medium"
+                isTutorialTarget ? "font-bold text-white" : isActive ? "font-bold text-primary" : "font-medium"
               )}>{label}</span>
             </Link>
           );
