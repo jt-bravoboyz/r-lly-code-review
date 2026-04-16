@@ -1,34 +1,38 @@
 
 
-# Fix: Bottom Nav Button Highlighting During Walkthrough
+# Fix: Google OAuth `invalid_client` Error
 
-## Problem
-The tutorial overlay highlights bottom nav buttons with just an orange outline/border cutout. It's too subtle — users miss which button to tap.
-
-## Solution
-Add tutorial-aware styling directly to the `BottomNav` component. When the walkthrough is active and targeting a nav button, that button gets a filled orange background with a pulsing glow, white icon/text, while others stay dimmed.
+## Root Cause
+The auth logs confirm: `oauth2: "invalid_client" "The provided client secret is invalid."` — the Google OAuth credentials stored in Lovable Cloud are stale or incorrect. Apple OAuth works because it uses a different credential set.
 
 ## Changes
 
-### 1. `src/components/layout/BottomNav.tsx`
-- Import `useTutorial` context
-- Extract `isActive` and `currentStep` from the tutorial context
-- For each nav item, check if `currentStep?.targetSelector === '[data-tutorial="<tutorialId>"]'`
-- If matched and tutorial is active:
-  - Fill the entire `<Link>` area with `bg-[#F47A19]` and `rounded-2xl`
-  - Add pulsing glow: `shadow-[0_0_12px_rgba(244,122,25,0.5)] animate-pulse`
-  - Force icon and label to `text-white`
-- Non-targeted buttons stay unchanged
+### 1. Reset Managed Google Auth (Backend)
+- Use the Configure Social Auth tool to toggle/refresh the managed Google OAuth provider
+- This forces Lovable Cloud to regenerate or re-validate the stored Google client credentials
 
-### 2. `src/hooks/useTutorial.tsx`
-- Ensure the `TutorialContext` value already exposes `isActive` and `currentStep` — it does, so no changes needed here.
+### 2. Harden `redirect_uri` to production domain (Code)
+Currently both `Auth.tsx` and `ReturningAuth.tsx` use `window.location.origin` which changes between preview and production. Update to prefer the production domain:
+
+**`src/pages/Auth.tsx`** and **`src/pages/ReturningAuth.tsx`**:
+```typescript
+const result = await lovable.auth.signInWithOAuth('google', {
+  redirect_uri: 'https://rlly.cloud',
+});
+```
+
+This ensures the redirect URI is stable and matches the authorized origins in Google Cloud Console regardless of which URL the user is currently on.
 
 ### What stays the same
-- Bottom nav appearance outside the walkthrough — unchanged
-- The overlay cutout in `TutorialOverlay.tsx` still renders (it will frame the glowing button)
-- All other tutorial steps unaffected
+- Apple OAuth — already working
+- Email/password auth — unrelated
+- `useAuth.tsx` session handling — already hardened in previous fix
+- All other auth flows
 
-### Technical detail
-The match logic: `isActive && currentStep?.targetSelector === \`[data-tutorial="${tutorialId}"]\``  
-Applied via conditional `cn()` classes on the existing Link and icon wrapper elements.
+### Important Note
+If the managed auth refresh does not resolve the `invalid_client` error, it means the Google Cloud Console credentials need to be manually updated. In that case, you would need to:
+1. Go to Google Cloud Console → APIs & Credentials
+2. Verify the OAuth 2.0 Client ID and Secret
+3. Ensure `https://lovzfxppnxictkvymyot.supabase.co/auth/v1/callback` is in Authorized Redirect URIs
+4. Re-enter the credentials in Lovable Cloud auth settings
 
