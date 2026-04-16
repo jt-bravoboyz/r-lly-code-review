@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, createContext, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from './useAuth';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface TutorialStep {
   id: string;
@@ -175,20 +176,30 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('rally-walkthrough-seen', 'true');
     localStorage.removeItem('rally-is-new-signup');
     
+    // Persist to database
+    if (user) {
+      supabase.from('profiles').update({ walkthrough_completed: true } as any).eq('user_id', user.id).then();
+    }
+    
     // Check for pending squad redirect
     const pendingSquadRedirect = localStorage.getItem('rally-pending-squad-redirect');
     if (pendingSquadRedirect) {
       localStorage.removeItem('rally-pending-squad-redirect');
       navigate(`/squads/${pendingSquadRedirect}`);
     }
-  }, [navigate]);
+  }, [navigate, user]);
 
   const skipTutorial = useCallback(() => {
     setIsActive(false);
     localStorage.setItem('rally-tutorial-complete', 'true');
     localStorage.setItem('rally-walkthrough-seen', 'true');
     localStorage.removeItem('rally-is-new-signup');
-  }, []);
+    
+    // Persist to database
+    if (user) {
+      supabase.from('profiles').update({ walkthrough_completed: true } as any).eq('user_id', user.id).then();
+    }
+  }, [user]);
 
   const nextStep = useCallback(() => {
     if (currentStepIndex < TUTORIAL_STEPS.length - 1) {
@@ -218,23 +229,20 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     if (authLoading) return;
     if (!user || !profile) return;
 
-    // Duplication guard: if user already saw walkthrough on this device, skip
+    // Database truth: walkthrough already completed
+    if ((profile as any).walkthrough_completed === true) return;
+
+    // Device guard: already seen on this device
     if (localStorage.getItem('rally-walkthrough-seen') === 'true') return;
 
     const tutorialComplete = localStorage.getItem('rally-tutorial-complete');
     if (tutorialComplete === 'true') return;
 
-    const onboardingComplete = localStorage.getItem('rally-onboarding-complete');
-    if (onboardingComplete !== 'true') return;
-
     // Profile-age check: auto-start if profile was created within last 24 hours
     const profileCreated = new Date(profile.created_at || 0).getTime();
     const isNewProfile = profileCreated > Date.now() - 24 * 60 * 60 * 1000;
 
-    // Also allow if explicit new-signup flag is set (immediate signup flow)
-    const isNewSignup = localStorage.getItem('rally-is-new-signup') === 'true';
-
-    if (isNewProfile || isNewSignup) {
+    if (isNewProfile) {
       // Navigate to home first if not already there
       if (window.location.pathname !== '/') {
         navigate('/');

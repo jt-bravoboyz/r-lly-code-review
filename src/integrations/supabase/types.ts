@@ -1453,6 +1453,7 @@ export type Database = {
           reward_points: number | null
           updated_at: string | null
           user_id: string
+          walkthrough_completed: boolean
         }
         Insert: {
           avatar_url?: string | null
@@ -1480,6 +1481,7 @@ export type Database = {
           reward_points?: number | null
           updated_at?: string | null
           user_id: string
+          walkthrough_completed?: boolean
         }
         Update: {
           avatar_url?: string | null
@@ -1507,6 +1509,7 @@ export type Database = {
           reward_points?: number | null
           updated_at?: string | null
           user_id?: string
+          walkthrough_completed?: boolean
         }
         Relationships: [
           {
