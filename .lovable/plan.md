@@ -1,73 +1,29 @@
 
 
-# Plan: Fix Security Scan Errors and Warnings
+# Fix: Low Contrast Policy Text in Dark Dialog
 
-## Overview
+## Problem
+The `PolicyAcceptanceDialog` has a dark background (`#1E1E1E`) but the `LegalContent` components use Tailwind theme classes (`text-muted-foreground`, `text-foreground`) which resolve to dark colors in light mode. The inline color on the wrapper div gets overridden by these more specific classes on child elements.
 
-A single database migration to address all 7 security findings: 2 errors (Realtime authorization, chat-images access) and 5 warnings (phone privacy, admin escalation, bucket listing, profile access logs, analytics realtime).
+## Solution
+Add a CSS override inside the scrollable content wrapper in `PolicyAcceptanceDialog.tsx` that forces all text within the policy viewer to use light colors, without modifying `LegalContent.tsx` (which is also used on the standalone Legal page where theme colors are correct).
 
----
+### File: `src/components/legal/PolicyAcceptanceDialog.tsx`
 
-## Migration Details
+On the content wrapper div (around line 148-155), add inline style overrides using CSS custom properties or a style block that targets descendant text:
 
-### 1. Chat-Images Storage — Membership Check (ERROR)
+- Change the wrapper to set `color: #E0E0E0` as the base text color
+- Add a className or nested style that overrides `.text-muted-foreground` and `.text-foreground` within this specific container
+- Use a wrapper `<div style={{ color: '#E0E0E0' }}>` with a `[&_.text-muted-foreground]:!text-[#E0E0E0]` and `[&_.text-foreground]:!text-[#F5F5F5]` Tailwind arbitrary variant to force light colors on all descendants
+- Section headers (`h3` with `text-foreground`) get `#F5F5F5` (slightly brighter than body)
+- Body text (`text-muted-foreground`) gets `#E0E0E0` (soft but legible)
+- Strong tags with `text-foreground` get the same bright treatment
 
-Replace the current permissive policies with ones that verify chat membership via the file path. Chat images are stored as `{chatId_or_eventId}/{filename}`.
+### No other files changed
+- `LegalContent.tsx` — untouched (used correctly on the standalone Legal page)
+- Checkbox text, button, headers — untouched
+- Orange/green section headers come from `text-foreground` on `h3` but within LegalSection they use `uppercase` styling — these will get the light treatment too since they use `text-foreground`. If the user's screenshot shows them as orange/green, that may be from `text-primary` — will verify and preserve.
 
-- **INSERT**: Check `is_chat_member` or `is_event_member` using the first folder segment
-- **SELECT**: Same membership check (private bucket, signed URLs used, but policy still needed)
-
-Since chat images use either event IDs or generic paths as folders, create a helper function `is_chat_image_authorized` that checks if the folder maps to an event the user is a member of, or a chat they participate in.
-
-### 2. Rally-Media SELECT — Membership Check (ERROR, partial)
-
-Drop the open "Anyone can view rally media" SELECT policy. Replace with one requiring `is_event_member` on the first folder segment, matching the existing INSERT policy pattern.
-
-### 3. Realtime Authorization (ERROR)
-
-Enable RLS on `realtime.messages` and add a permissive SELECT policy scoped to authenticated users. This is the standard Supabase approach — the actual data filtering happens via table-level RLS on the published tables. The realtime.messages RLS prevents unauthenticated channel subscriptions.
-
-> Note: We cannot add topic-level authorization policies on `realtime.messages` since it is in the `realtime` reserved schema. Instead, we will **remove tables from realtime publication** that don't need it (analytics_events, system_feedback) and rely on table-level RLS for the rest.
-
-### 4. Analytics/Feedback Realtime Exposure (WARNING)
-
-Remove `analytics_events` and `system_feedback` from the realtime publication since they don't need real-time streaming.
-
-### 5. Phone Invites Privacy (WARNING)
-
-Replace the current SELECT policy to restrict `phone_number` visibility. Since RLS can't mask individual columns, change the policy to only allow the **original inviter** or **admins** to SELECT. Remove the `is_event_host_or_cohost` branch that gives cohosts access to phone numbers.
-
-### 6. Profile Access Logs — Accessed User Visibility (WARNING)
-
-Add a second SELECT policy so users can view logs where they are the **accessed** profile (i.e., see who viewed them).
-
-### 7. Admin Role Escalation Protection (WARNING)
-
-Replace the current INSERT policy on `user_roles` to prevent admins from granting the `admin` role to others via RLS. Only `moderator` and `user` roles can be granted by admins. The `admin` role can only be assigned via service role / migrations.
-
-### 8. Bucket Listing Prevention (WARNING)
-
-Set `avoids_listing = true` on public buckets (`rally-media`, `squad-images`, `avatars`, `event-images`, `email-assets`) to prevent directory enumeration while still allowing direct file access.
-
----
-
-## Technical Details
-
-### Files changed
-- **1 new migration file** in `supabase/migrations/`
-
-### No application code changes needed
-All fixes are RLS/storage policy changes at the database level.
-
-### Key SQL operations
-
-```text
-1. DROP + CREATE chat-images SELECT/INSERT policies with membership check
-2. DROP + CREATE rally-media SELECT policy with is_event_member check  
-3. ALTER PUBLICATION supabase_realtime DROP TABLE analytics_events, system_feedback
-4. DROP + CREATE phone_invites SELECT (inviter-only + admin)
-5. ADD SELECT policy on profile_access_logs for accessed users
-6. DROP + CREATE user_roles INSERT policy blocking admin-role grants
-7. UPDATE storage.buckets SET avoids_listing = true for public buckets
-```
+### Verification
+All 5 policy documents use the same `LegalSection` component, so the fix applies universally across the dropdown.
 
