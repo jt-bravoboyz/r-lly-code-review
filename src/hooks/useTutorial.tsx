@@ -127,10 +127,6 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     instruction: 'Earn points for:\n• Hosting\n• Driving\n• Joining\n• Inviting\n• Building squads\n\nClimb from Bronze to Dark Matter.',
     requiredAction: 'complete',
     illustration: 'badge-ladder',
-    ctaButton: {
-      label: 'View Badges',
-      route: '/achievements',
-    },
   },
   {
     id: 'graduation',
