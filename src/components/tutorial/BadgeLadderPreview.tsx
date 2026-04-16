@@ -1,6 +1,7 @@
 import { BADGE_TIERS } from '@/lib/badges';
+import { TierBadgeIcon } from '@/components/badges/TierBadgeIcon';
+import type { BadgeTier } from '@/hooks/useBadgeSystem';
 
-// Show a curated subset of tiers to keep it compact
 const PREVIEW_TIERS = ['bronze', 'gold', 'emerald', 'ruby', 'diamond', 'dark_matter'];
 
 export function BadgeLadderPreview() {
@@ -12,28 +13,30 @@ export function BadgeLadderPreview() {
         Rank Progression
       </p>
       <div className="flex items-center justify-between gap-1">
-        {tiers.map((tier, i) => (
-          <div key={tier.id} className="flex flex-col items-center gap-1.5 flex-1">
-            {/* Tier emblem circle */}
-            <div
-              className="w-9 h-9 rounded-full flex items-center justify-center shadow-lg"
-              style={{ background: tier.gradient }}
-            >
-              <span className="text-white text-[10px] font-black">
-                {tier.name.charAt(0)}
+        {tiers.map((tier) => {
+          const mapped: BadgeTier = {
+            tier_key: tier.id,
+            tier_name: tier.name,
+            min_points: tier.pointsRequired,
+            max_points: null,
+            sort_order: 0,
+            icon_path: null,
+            gradient: tier.gradient,
+            accent_color: tier.accentColor,
+            congrats_title: '',
+            congrats_body: '',
+          };
+
+          return (
+            <div key={tier.id} className="flex flex-col items-center gap-1.5 flex-1">
+              <TierBadgeIcon tier={mapped} size="sm" />
+              <span className="text-[9px] text-white/50 font-medium leading-tight text-center">
+                {tier.name === 'Dark Matter' ? 'Dark\nMatter' : tier.name}
               </span>
             </div>
-            <span className="text-[9px] text-white/50 font-medium leading-tight text-center">
-              {tier.name === 'Dark Matter' ? 'Dark\nMatter' : tier.name}
-            </span>
-            {/* Connector dot between tiers */}
-            {i < tiers.length - 1 && (
-              <div className="absolute" style={{ display: 'none' }} />
-            )}
-          </div>
-        ))}
+          );
+        })}
       </div>
-      {/* Progress hint */}
       <div className="mt-3 h-1.5 rounded-full bg-white/10 overflow-hidden">
         <div
           className="h-full rounded-full transition-all duration-1000"
@@ -49,4 +52,3 @@ export function BadgeLadderPreview() {
     </div>
   );
 }
-
