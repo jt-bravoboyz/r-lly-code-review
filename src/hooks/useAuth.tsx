@@ -55,6 +55,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       if (!data || data.user_id !== userId) {
+        // Profile may not exist yet for brand-new OAuth users (trigger delay)
+        if (retryCount < 3) {
+          setTimeout(() => fetchProfile(userId, retryCount + 1), 1000);
+          return;
+        }
         setProfile(null);
         return;
       }
