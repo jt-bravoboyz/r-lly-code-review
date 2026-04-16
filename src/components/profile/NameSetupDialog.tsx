@@ -9,28 +9,36 @@ import { Sparkles } from 'lucide-react';
 
 export function IdentitySetupDialog() {
   const { profile, refreshProfile } = useAuth();
-  const [name, setName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [saving, setSaving] = useState(false);
 
-  const isOpen = profile?.needs_name_setup === true;
+  const needsSetup =
+    profile?.needs_name_setup === true ||
+    !profile?.display_name ||
+    profile?.display_name.trim() === '' ||
+    profile?.display_name === 'R@lly Member';
+
+  // Only show when we have a profile but name is missing
+  const isOpen = !!profile && needsSetup;
+
+  const canSubmit = firstName.trim().length > 0 && lastName.trim().length > 0;
 
   const handleSave = async () => {
-    const trimmed = name.trim();
-    if (!trimmed || trimmed.length < 1) {
-      toast.error('Please enter a name');
-      return;
-    }
+    if (!canSubmit) return;
+
+    const displayName = `${firstName.trim()} ${lastName.trim()}`;
 
     setSaving(true);
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ display_name: trimmed, needs_name_setup: false } as any)
+        .update({ display_name: displayName, needs_name_setup: false } as any)
         .eq('id', profile!.id);
 
       if (error) throw error;
       await refreshProfile();
-      toast.success(`You're on the list, ${trimmed}. Welcome to R@lly.`);
+      toast.success(`You're on the list, ${firstName.trim()}. Welcome to R@lly.`);
     } catch (e: any) {
       toast.error('Failed to save. Try again.');
       console.error(e);
@@ -56,19 +64,26 @@ export function IdentitySetupDialog() {
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 pt-2">
+        <div className="space-y-3 pt-2">
           <Input
-            placeholder="Your name or handle"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            maxLength={100}
+            placeholder="First Name"
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+            maxLength={50}
             className="h-14 rounded-xl text-base font-montserrat"
             autoFocus
-            onKeyDown={(e) => e.key === 'Enter' && handleSave()}
+          />
+          <Input
+            placeholder="Last Name"
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+            maxLength={50}
+            className="h-14 rounded-xl text-base font-montserrat"
+            onKeyDown={(e) => e.key === 'Enter' && canSubmit && handleSave()}
           />
           <Button
             onClick={handleSave}
-            disabled={saving || !name.trim()}
+            disabled={saving || !canSubmit}
             className="w-full h-12 rounded-xl font-bold font-montserrat"
           >
             {saving ? 'Saving...' : 'Lock It In'}
