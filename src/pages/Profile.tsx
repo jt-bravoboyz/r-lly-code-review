@@ -719,7 +719,43 @@ export default function Profile() {
         </Button>
       </main>
 
-      <BottomNav />
+      {/* Sticky Edit Mode Action Bar */}
+      {isEditing && (
+        <div
+          className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/60 bg-background/85 backdrop-blur-xl shadow-[0_-8px_32px_rgba(0,0,0,0.25)]"
+          style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+        >
+          <div className="container py-3 flex items-center gap-3">
+            <Button
+              variant="ghost"
+              onClick={() => setIsEditing(false)}
+              disabled={isSaving}
+              className="flex-1 h-12"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSaveProfile}
+              disabled={isSaving}
+              className="flex-[2] h-12 text-base font-semibold"
+            >
+              {isSaving ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                  Saving…
+                </>
+              ) : (
+                <>
+                  <Save className="h-5 w-5 mr-2" />
+                  Save Changes
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {!isEditing && <BottomNav />}
 
       {/* Avatar Source Selection Sheet */}
       <AvatarSourceSheet
