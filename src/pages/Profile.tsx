@@ -277,8 +277,16 @@ export default function Profile() {
     }
   };
 
+  // Auto-scroll focused field into view above the keyboard / sticky bar
+  const handleFieldFocus = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const el = e.currentTarget;
+    setTimeout(() => {
+      el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }, 150);
+  };
+
   return (
-    <div className="min-h-[100dvh] pb-28 bg-gradient-to-b from-secondary/30 via-background to-secondary/20 relative overflow-hidden">
+    <div className={`min-h-[100dvh] ${isEditing ? 'pb-44' : 'pb-28'} scroll-pb-44 bg-gradient-to-b from-secondary/30 via-background to-secondary/20 relative overflow-hidden`}>
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 -right-20 w-60 h-60 bg-primary/5 rounded-full blur-3xl animate-pulse" />
@@ -350,6 +358,7 @@ export default function Profile() {
                     <Input
                       value={editEmail}
                       onChange={(e) => setEditEmail(e.target.value)}
+                      onFocus={handleFieldFocus}
                       className="h-8 text-sm"
                       placeholder="email@example.com"
                       type="email"
@@ -365,6 +374,7 @@ export default function Profile() {
                     <Input
                       value={editPhone}
                       onChange={(e) => handlePhoneChange(e.target.value)}
+                      onFocus={handleFieldFocus}
                       className="h-8 text-sm"
                       placeholder="(555) 123-4567"
                       maxLength={14}
@@ -429,12 +439,30 @@ export default function Profile() {
                   <Pencil className="h-4 w-4" />
                 </Button>
               ) : (
-                <div className="flex gap-1">
-                  <Button variant="ghost" size="icon" onClick={() => setIsEditing(false)} disabled={isSaving}>
-                    <X className="h-4 w-4" />
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsEditing(false)}
+                    disabled={isSaving}
+                    className="h-9 px-3 text-muted-foreground"
+                  >
+                    Cancel
                   </Button>
-                  <Button variant="ghost" size="icon" onClick={handleSaveProfile} disabled={isSaving}>
-                    <Save className="h-4 w-4 text-primary" />
+                  <Button
+                    size="sm"
+                    onClick={handleSaveProfile}
+                    disabled={isSaving}
+                    className="h-9 px-4 rounded-full"
+                  >
+                    {isSaving ? (
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        <Save className="h-4 w-4 mr-1" />
+                        Save
+                      </>
+                    )}
                   </Button>
                 </div>
               )}
@@ -446,6 +474,7 @@ export default function Profile() {
                 <Textarea
                   value={editBio}
                   onChange={(e) => setEditBio(e.target.value)}
+                  onFocus={handleFieldFocus}
                   placeholder="Tell us about yourself..."
                   className="resize-none"
                   rows={3}
@@ -690,7 +719,43 @@ export default function Profile() {
         </Button>
       </main>
 
-      <BottomNav />
+      {/* Sticky Edit Mode Action Bar */}
+      {isEditing && (
+        <div
+          className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/60 bg-background/85 backdrop-blur-xl shadow-[0_-8px_32px_rgba(0,0,0,0.25)]"
+          style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+        >
+          <div className="container py-3 flex items-center gap-3">
+            <Button
+              variant="ghost"
+              onClick={() => setIsEditing(false)}
+              disabled={isSaving}
+              className="flex-1 h-12"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSaveProfile}
+              disabled={isSaving}
+              className="flex-[2] h-12 text-base font-semibold"
+            >
+              {isSaving ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                  Saving…
+                </>
+              ) : (
+                <>
+                  <Save className="h-5 w-5 mr-2" />
+                  Save Changes
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {!isEditing && <BottomNav />}
 
       {/* Avatar Source Selection Sheet */}
       <AvatarSourceSheet
