@@ -17,9 +17,13 @@ import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/component
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { useCreateEvent, useJoinEvent } from '@/hooks/useEvents';
+import { useCreateEventInvites } from '@/hooks/useEventInvites';
+import { useAllMySquads, type Squad } from '@/hooks/useSquads';
 import { useAuth } from '@/hooks/useAuth';
 import { useUploadRallyMedia } from '@/hooks/useRallyMedia';
 import { toast } from 'sonner';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Users, Check } from 'lucide-react';
 import { LocationSearch } from '@/components/location/LocationSearch';
 import { cn } from '@/lib/utils';
 import { EVENT_TYPES } from '@/lib/eventTypes';
@@ -79,11 +83,23 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
   const detailsRef = useRef<HTMLDivElement>(null);
   const reviewRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [selectedSquads, setSelectedSquads] = useState<Squad[]>([]);
   const { profile } = useAuth();
+  const { data: mySquads } = useAllMySquads();
   const createEvent = useCreateEvent();
   const joinEvent = useJoinEvent();
+  const createInvites = useCreateEventInvites();
   const uploadMedia = useUploadRallyMedia();
   const navigate = useNavigate();
+
+  const toggleSquadSelection = (squad: Squad) => {
+    setSelectedSquads(prev => {
+      const exists = prev.some(s => s.id === squad.id);
+      return exists ? prev.filter(s => s.id !== squad.id) : [...prev, squad];
+    });
+  };
+
+  const hasAudience = selectedSquads.length > 0;
 
   const handleScroll = useCallback(() => {
     const container = scrollContainerRef.current;
