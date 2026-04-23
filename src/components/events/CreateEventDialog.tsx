@@ -514,6 +514,42 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
                 <StagedMediaPicker stagedFiles={stagedMedia} onChange={setStagedMedia} />
               </CollapsibleContent>
             </Collapsible>
+
+            {/* Audience picker — at least one squad required */}
+            {mySquads && mySquads.length > 0 && (
+              <div className="space-y-2 pt-2">
+                <FormLabel>Invite Squads</FormLabel>
+                <ScrollArea className="h-24">
+                  <div className="flex flex-wrap gap-2 pb-2">
+                    {mySquads.map((squad) => {
+                      const isSelected = selectedSquads.some(s => s.id === squad.id);
+                      return (
+                        <button
+                          key={squad.id}
+                          type="button"
+                          onClick={() => toggleSquadSelection(squad)}
+                          className={cn(
+                            'flex items-center gap-2 px-3 py-2 rounded-full border transition-colors',
+                            isSelected
+                              ? 'bg-primary text-primary-foreground border-primary'
+                              : 'bg-muted hover:bg-muted/80'
+                          )}
+                        >
+                          <Users className="h-3 w-3" />
+                          <span className="text-sm font-medium">{squad.name}</span>
+                          {isSelected && <Check className="h-3 w-3" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </ScrollArea>
+                {!hasAudience && (
+                  <p className="text-xs text-muted-foreground">
+                    Add at least one friend or squad to start the R@lly.
+                  </p>
+                )}
+              </div>
+            )}
             </div>
 
             {isUploading && (
@@ -527,7 +563,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
             <Button 
               type="submit" 
               className="w-full gradient-primary"
-              disabled={createEvent.isPending || joinEvent.isPending || isUploading || isSubmittingRef.current}
+              disabled={createEvent.isPending || joinEvent.isPending || isUploading || isSubmittingRef.current || !hasAudience}
             >
               {isUploading ? (
                 <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> {uploadStatus}</>
