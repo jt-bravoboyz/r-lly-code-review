@@ -358,6 +358,7 @@ export default function Profile() {
                     <Input
                       value={editEmail}
                       onChange={(e) => setEditEmail(e.target.value)}
+                      onFocus={handleFieldFocus}
                       className="h-8 text-sm"
                       placeholder="email@example.com"
                       type="email"
@@ -373,6 +374,7 @@ export default function Profile() {
                     <Input
                       value={editPhone}
                       onChange={(e) => handlePhoneChange(e.target.value)}
+                      onFocus={handleFieldFocus}
                       className="h-8 text-sm"
                       placeholder="(555) 123-4567"
                       maxLength={14}
