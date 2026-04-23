@@ -216,9 +216,40 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
         }
       }
 
+      // Auto-invite all members from selected squads
+      if (selectedSquads.length > 0) {
+        const allMemberIds = new Set<string>();
+        selectedSquads.forEach(squad => {
+          if (squad.owner_id && squad.owner_id !== profile.id) {
+            allMemberIds.add(squad.owner_id);
+          }
+          squad.members?.forEach(member => {
+            const memberId = member.profile_id || member.profile?.id;
+            if (memberId && memberId !== profile.id) {
+              allMemberIds.add(memberId);
+            }
+          });
+        });
+        const uniqueMemberIds = Array.from(allMemberIds);
+        if (uniqueMemberIds.length > 0) {
+          try {
+            await createInvites.mutateAsync({
+              eventId: result.id,
+              profileIds: uniqueMemberIds,
+              eventTitle: data.title,
+            });
+            toast.success(`Invited ${uniqueMemberIds.length} squad member${uniqueMemberIds.length > 1 ? 's' : ''}!`);
+          } catch (inviteError: any) {
+            console.error('Failed to send squad invites:', inviteError);
+            toast.error('Rally created but some invites failed');
+          }
+        }
+      }
+
       toast.success('Event created!');
       setOpen(false);
       setStagedMedia([]);
+      setSelectedSquads([]);
       form.reset();
       navigate(`/events/${result.id}`);
     } catch (error: any) {
