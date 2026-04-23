@@ -433,38 +433,11 @@ export default function Profile() {
                 )}
               </div>
 
-              {/* Edit button */}
-              {!isEditing ? (
+              {/* Edit button - only shown when not editing; sticky bar handles save/cancel */}
+              {!isEditing && (
                 <Button variant="ghost" size="icon" onClick={handleStartEdit}>
                   <Pencil className="h-4 w-4" />
                 </Button>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setIsEditing(false)}
-                    disabled={isSaving}
-                    className="h-9 px-3 text-muted-foreground"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={handleSaveProfile}
-                    disabled={isSaving}
-                    className="h-9 px-4 rounded-full"
-                  >
-                    {isSaving ? (
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    ) : (
-                      <>
-                        <Save className="h-4 w-4 mr-1" />
-                        Save
-                      </>
-                    )}
-                  </Button>
-                </div>
               )}
             </div>
 
