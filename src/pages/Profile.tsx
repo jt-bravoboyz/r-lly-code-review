@@ -439,12 +439,30 @@ export default function Profile() {
                   <Pencil className="h-4 w-4" />
                 </Button>
               ) : (
-                <div className="flex gap-1">
-                  <Button variant="ghost" size="icon" onClick={() => setIsEditing(false)} disabled={isSaving}>
-                    <X className="h-4 w-4" />
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsEditing(false)}
+                    disabled={isSaving}
+                    className="h-9 px-3 text-muted-foreground"
+                  >
+                    Cancel
                   </Button>
-                  <Button variant="ghost" size="icon" onClick={handleSaveProfile} disabled={isSaving}>
-                    <Save className="h-4 w-4 text-primary" />
+                  <Button
+                    size="sm"
+                    onClick={handleSaveProfile}
+                    disabled={isSaving}
+                    className="h-9 px-4 rounded-full"
+                  >
+                    {isSaving ? (
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        <Save className="h-4 w-4 mr-1" />
+                        Save
+                      </>
+                    )}
                   </Button>
                 </div>
               )}
