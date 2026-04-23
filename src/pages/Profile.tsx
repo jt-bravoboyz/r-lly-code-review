@@ -277,8 +277,16 @@ export default function Profile() {
     }
   };
 
+  // Auto-scroll focused field into view above the keyboard / sticky bar
+  const handleFieldFocus = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const el = e.currentTarget;
+    setTimeout(() => {
+      el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }, 150);
+  };
+
   return (
-    <div className="min-h-[100dvh] pb-28 bg-gradient-to-b from-secondary/30 via-background to-secondary/20 relative overflow-hidden">
+    <div className={`min-h-[100dvh] ${isEditing ? 'pb-44' : 'pb-28'} scroll-pb-44 bg-gradient-to-b from-secondary/30 via-background to-secondary/20 relative overflow-hidden`}>
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 -right-20 w-60 h-60 bg-primary/5 rounded-full blur-3xl animate-pulse" />
