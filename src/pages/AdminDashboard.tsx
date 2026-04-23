@@ -23,6 +23,7 @@ import { AdminCSVExport } from '@/components/admin/AdminCSVExport';
 import { SystemFeedbackCard } from '@/components/admin/SystemFeedbackCard';
 import { TopConnectors } from '@/components/admin/TopConnectors';
 import { ReferralAudit } from '@/components/admin/ReferralAudit';
+import { UserDirectory } from '@/components/admin/UserDirectory';
 import { Shield, Loader2, Home } from 'lucide-react';
 import { Navigate, Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -133,6 +134,9 @@ export default function AdminDashboard() {
             {/* Top Connectors */}
             <TopConnectors topConnectors={data.topConnectors} />
 
+            {/* User Directory (admins only — emails + activity) */}
+            <UserDirectory users={(data as any).userDirectory ?? []} />
+
             {/* Referral Audit */}
             <ReferralAudit referralDetails={data.referralDetails} />
 
@@ -178,6 +182,7 @@ export default function AdminDashboard() {
                 profiles={data.profiles}
                 attendees={data.attendees}
                 rallyEvents={data.rallyEvents}
+                headcountByEvent={(data as any).headcountByEvent ?? {}}
               />
               <ErrorLogFeed />
             </div>

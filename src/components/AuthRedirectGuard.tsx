@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Router-level guard that redirects authenticated users away from auth screens.
@@ -11,18 +12,34 @@ export function AuthRedirectGuard() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Effect: handle already-authenticated visits to /auth*
   useEffect(() => {
     if (loading) return;
     if (!user) return;
 
+    const path = location.pathname.toLowerCase();
     const isAuthRoute =
-      location.pathname === '/auth' || location.pathname === '/auth/return' || location.pathname === '/Auth/return';
+      path === '/auth' || path === '/auth/return';
 
     if (isAuthRoute) {
-      // Authenticated user on an auth page — send them home
       navigate('/', { replace: true });
     }
   }, [user, loading, location.pathname, navigate]);
+
+  // Listener: catch the SIGNED_IN moment of the OAuth handshake immediately
+  useEffect(() => {
+    const { data: subscription } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_IN') {
+        const path = window.location.pathname.toLowerCase();
+        if (path.startsWith('/auth')) {
+          navigate('/', { replace: true });
+        }
+      }
+    });
+    return () => {
+      subscription.subscription.unsubscribe();
+    };
+  }, [navigate]);
 
   return null;
 }

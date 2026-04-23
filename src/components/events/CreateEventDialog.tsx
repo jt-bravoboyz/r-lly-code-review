@@ -17,9 +17,13 @@ import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/component
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { useCreateEvent, useJoinEvent } from '@/hooks/useEvents';
+import { useCreateEventInvites } from '@/hooks/useEventInvites';
+import { useAllMySquads, type Squad } from '@/hooks/useSquads';
 import { useAuth } from '@/hooks/useAuth';
 import { useUploadRallyMedia } from '@/hooks/useRallyMedia';
 import { toast } from 'sonner';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Users, Check } from 'lucide-react';
 import { LocationSearch } from '@/components/location/LocationSearch';
 import { cn } from '@/lib/utils';
 import { EVENT_TYPES } from '@/lib/eventTypes';
@@ -79,11 +83,23 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
   const detailsRef = useRef<HTMLDivElement>(null);
   const reviewRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [selectedSquads, setSelectedSquads] = useState<Squad[]>([]);
   const { profile } = useAuth();
+  const { data: mySquads } = useAllMySquads();
   const createEvent = useCreateEvent();
   const joinEvent = useJoinEvent();
+  const createInvites = useCreateEventInvites();
   const uploadMedia = useUploadRallyMedia();
   const navigate = useNavigate();
+
+  const toggleSquadSelection = (squad: Squad) => {
+    setSelectedSquads(prev => {
+      const exists = prev.some(s => s.id === squad.id);
+      return exists ? prev.filter(s => s.id !== squad.id) : [...prev, squad];
+    });
+  };
+
+  const hasAudience = selectedSquads.length > 0;
 
   const handleScroll = useCallback(() => {
     const container = scrollContainerRef.current;
@@ -200,9 +216,40 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
         }
       }
 
+      // Auto-invite all members from selected squads
+      if (selectedSquads.length > 0) {
+        const allMemberIds = new Set<string>();
+        selectedSquads.forEach(squad => {
+          if (squad.owner_id && squad.owner_id !== profile.id) {
+            allMemberIds.add(squad.owner_id);
+          }
+          squad.members?.forEach(member => {
+            const memberId = member.profile_id || member.profile?.id;
+            if (memberId && memberId !== profile.id) {
+              allMemberIds.add(memberId);
+            }
+          });
+        });
+        const uniqueMemberIds = Array.from(allMemberIds);
+        if (uniqueMemberIds.length > 0) {
+          try {
+            await createInvites.mutateAsync({
+              eventId: result.id,
+              profileIds: uniqueMemberIds,
+              eventTitle: data.title,
+            });
+            toast.success(`Invited ${uniqueMemberIds.length} squad member${uniqueMemberIds.length > 1 ? 's' : ''}!`);
+          } catch (inviteError: any) {
+            console.error('Failed to send squad invites:', inviteError);
+            toast.error('Rally created but some invites failed');
+          }
+        }
+      }
+
       toast.success('Event created!');
       setOpen(false);
       setStagedMedia([]);
+      setSelectedSquads([]);
       form.reset();
       navigate(`/events/${result.id}`);
     } catch (error: any) {
@@ -467,6 +514,42 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
                 <StagedMediaPicker stagedFiles={stagedMedia} onChange={setStagedMedia} />
               </CollapsibleContent>
             </Collapsible>
+
+            {/* Audience picker — at least one squad required */}
+            {mySquads && mySquads.length > 0 && (
+              <div className="space-y-2 pt-2">
+                <FormLabel>Invite Squads</FormLabel>
+                <ScrollArea className="h-24">
+                  <div className="flex flex-wrap gap-2 pb-2">
+                    {mySquads.map((squad) => {
+                      const isSelected = selectedSquads.some(s => s.id === squad.id);
+                      return (
+                        <button
+                          key={squad.id}
+                          type="button"
+                          onClick={() => toggleSquadSelection(squad)}
+                          className={cn(
+                            'flex items-center gap-2 px-3 py-2 rounded-full border transition-colors',
+                            isSelected
+                              ? 'bg-primary text-primary-foreground border-primary'
+                              : 'bg-muted hover:bg-muted/80'
+                          )}
+                        >
+                          <Users className="h-3 w-3" />
+                          <span className="text-sm font-medium">{squad.name}</span>
+                          {isSelected && <Check className="h-3 w-3" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </ScrollArea>
+                {!hasAudience && (
+                  <p className="text-xs text-muted-foreground">
+                    Add at least one friend or squad to start the R@lly.
+                  </p>
+                )}
+              </div>
+            )}
             </div>
 
             {isUploading && (
@@ -480,7 +563,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
             <Button 
               type="submit" 
               className="w-full gradient-primary"
-              disabled={createEvent.isPending || joinEvent.isPending || isUploading || isSubmittingRef.current}
+              disabled={createEvent.isPending || joinEvent.isPending || isUploading || isSubmittingRef.current || !hasAudience}
             >
               {isUploading ? (
                 <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> {uploadStatus}</>

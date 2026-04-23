@@ -25,9 +25,10 @@ interface UserIntelligenceProps {
     id: string;
     creator_id: string;
   }>;
+  headcountByEvent?: Record<string, number>;
 }
 
-export function UserIntelligence({ profiles, attendees, rallyEvents }: UserIntelligenceProps) {
+export function UserIntelligence({ profiles, attendees, rallyEvents, headcountByEvent = {} }: UserIntelligenceProps) {
   const [search, setSearch] = useState('');
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
 
@@ -111,6 +112,21 @@ export function UserIntelligence({ profiles, attendees, rallyEvents }: UserIntel
                   <div className="text-xs text-muted-foreground">Joined</div>
                 </div>
               </div>
+
+              {userEvents.length > 0 && (
+                <div className="space-y-1.5">
+                  <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Hosted Headcount
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {userEvents.map((e, i) => (
+                      <Badge key={e.id} variant="outline" className="text-xs">
+                        R@lly #{i + 1}: {headcountByEvent[e.id] ?? 0}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <div className="flex items-center justify-center p-8 text-sm text-muted-foreground border rounded-lg">

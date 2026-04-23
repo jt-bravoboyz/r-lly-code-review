@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { TrendingUp, Users, ShieldCheck, Link2, Calendar } from 'lucide-react';
+import { TrendingUp, Users, ShieldCheck, Link2, Calendar, UserCheck } from 'lucide-react';
 
 interface SparklineData {
   day: string;
@@ -16,6 +16,7 @@ interface AnalyticsCardsProps {
     completionRate: number;
     safetyRate: number;
     inviteCopied: number;
+    totalLifetimeAttendees?: number;
   };
   sparkline: SparklineData[];
 }
@@ -80,7 +81,7 @@ function StatCard({
 
 export function AnalyticsCards({ summary, sparkline }: AnalyticsCardsProps) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
       <StatCard
         title="Events Created"
         value={summary.totalEventsCreated}
@@ -96,6 +97,12 @@ export function AnalyticsCards({ summary, sparkline }: AnalyticsCardsProps) {
         icon={Users}
         sparkline={sparkline}
         sparklineKey="joined"
+      />
+      <StatCard
+        title="Lifetime Attendees"
+        value={summary.totalLifetimeAttendees ?? 0}
+        subtitle="all check-ins"
+        icon={UserCheck}
       />
       <StatCard
         title="Rally Completion"

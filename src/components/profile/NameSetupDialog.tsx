@@ -8,16 +8,22 @@ import { toast } from 'sonner';
 import { Sparkles } from 'lucide-react';
 
 export function IdentitySetupDialog() {
-  const { profile, refreshProfile } = useAuth();
+  const { profile, user, refreshProfile } = useAuth();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [saving, setSaving] = useState(false);
 
+  // Detect email-username fallback (display_name == email prefix, single token)
+  const emailPrefix = user?.email?.split('@')[0]?.toLowerCase() ?? '';
+  const dn = (profile?.display_name ?? '').trim();
+  const isEmailUsernameFallback =
+    !!emailPrefix && !dn.includes(' ') && dn.toLowerCase() === emailPrefix;
+
   const needsSetup =
     profile?.needs_name_setup === true ||
-    !profile?.display_name ||
-    profile?.display_name.trim() === '' ||
-    profile?.display_name === 'R@lly Member';
+    !dn ||
+    dn === 'R@lly Member' ||
+    isEmailUsernameFallback;
 
   // Only show when we have a profile but name is missing
   const isOpen = !!profile && needsSetup;
