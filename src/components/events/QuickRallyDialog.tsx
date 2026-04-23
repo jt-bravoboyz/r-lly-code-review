@@ -453,18 +453,35 @@ export const QuickRallyDialog = forwardRef<HTMLButtonElement, QuickRallyDialogPr
                 </div>
               )}
 
-              <Button 
-                type="submit" 
-                className="w-full gradient-primary text-primary-foreground hover:opacity-90"
-                disabled={createEvent.isPending || createInvites.isPending || isSubmittingRef.current}
-              >
-                {createEvent.isPending || createInvites.isPending ? 'Starting...' : (
+              {(() => {
+                const hasAudience = selectedSquads.length > 0;
+                return (
                   <>
-                    <Zap className="h-4 w-4 mr-2" />
-                    {selectedTime === 'now' ? 'Start Rally Now' : 'Schedule Rally'}
+                    {!hasAudience && (
+                      <p className="text-xs text-muted-foreground text-center">
+                        Add at least one friend or squad to start the R@lly.
+                      </p>
+                    )}
+                    <Button
+                      type="submit"
+                      className="w-full gradient-primary text-primary-foreground hover:opacity-90"
+                      disabled={
+                        createEvent.isPending ||
+                        createInvites.isPending ||
+                        isSubmittingRef.current ||
+                        !hasAudience
+                      }
+                    >
+                      {createEvent.isPending || createInvites.isPending ? 'Starting...' : (
+                        <>
+                          <Zap className="h-4 w-4 mr-2" />
+                          {selectedTime === 'now' ? 'Start Rally Now' : 'Schedule Rally'}
+                        </>
+                      )}
+                    </Button>
                   </>
-                )}
-              </Button>
+                );
+              })()}
             </form>
           </Form>
         </DialogContent>
