@@ -3260,6 +3260,18 @@ export type Database = {
       }
     }
     Functions: {
+      admin_user_directory: {
+        Args: never
+        Returns: {
+          created_at: string
+          display_name: string
+          email: string
+          founding_member: boolean
+          last_sign_in_at: string
+          profile_id: string
+          user_id: string
+        }[]
+      }
       can_see_destination: {
         Args: {
           attendee_event_id: string
