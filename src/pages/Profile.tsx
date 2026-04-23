@@ -474,6 +474,7 @@ export default function Profile() {
                 <Textarea
                   value={editBio}
                   onChange={(e) => setEditBio(e.target.value)}
+                  onFocus={handleFieldFocus}
                   placeholder="Tell us about yourself..."
                   className="resize-none"
                   rows={3}
