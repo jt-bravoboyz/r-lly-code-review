@@ -3260,6 +3260,10 @@ export type Database = {
       }
     }
     Functions: {
+      admin_delete_auth_user: {
+        Args: { target_user_id: string }
+        Returns: undefined
+      }
       admin_user_directory: {
         Args: never
         Returns: {
