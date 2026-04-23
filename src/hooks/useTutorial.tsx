@@ -228,12 +228,10 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     // Database truth: walkthrough already completed
     if ((profile as any).walkthrough_completed === true) return;
 
-    // Gate: wait until name setup is done (first + last name)
+    // Gate: wait until name setup is done (flag is authoritative)
     if ((profile as any).needs_name_setup === true) return;
     const dn = (profile.display_name ?? '').trim();
     if (!dn || dn === 'R@lly Member') return;
-    // Require both first AND last name (space separator)
-    if (!dn.includes(' ')) return;
 
     // Device guard: already seen on this device
     if (localStorage.getItem('rally-walkthrough-seen') === 'true') return;
