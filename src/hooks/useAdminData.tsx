@@ -383,6 +383,45 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
           currentSquad: profileSquadMap.get(p.id) || null,
         }));
 
+      // Per-event headcount (attendees only, status = attending)
+      const headcountByEvent: Record<string, number> = {};
+      attendees.forEach(a => {
+        if (a.status === 'attending') {
+          headcountByEvent[a.event_id] = (headcountByEvent[a.event_id] || 0) + 1;
+        }
+      });
+
+      // Total lifetime attendees (sum of attending check-ins across all events)
+      const totalLifetimeAttendees = attendees.filter(a => a.status === 'attending').length;
+
+      // Per-profile aggregates for User Directory
+      const ralliesJoinedByProfile: Record<string, number> = {};
+      attendees.forEach(a => {
+        if (a.status === 'attending') {
+          ralliesJoinedByProfile[a.profile_id] = (ralliesJoinedByProfile[a.profile_id] || 0) + 1;
+        }
+      });
+      const ralliesCreatedByProfile: Record<string, number> = {};
+      filteredRallyEvents.forEach(e => {
+        ralliesCreatedByProfile[e.creator_id] = (ralliesCreatedByProfile[e.creator_id] || 0) + 1;
+      });
+
+      // Admin User Directory (email + last sign-in via SECURITY DEFINER RPC)
+      const { data: directoryRows } = await (supabase as any).rpc('admin_user_directory');
+      const userDirectory = (directoryRows ?? []).map((row: any) => ({
+        profileId: row.profile_id as string,
+        userId: row.user_id as string,
+        displayName: (row.display_name as string | null) ?? null,
+        email: (row.email as string | null) ?? null,
+        createdAt: row.created_at as string | null,
+        lastSignInAt: row.last_sign_in_at as string | null,
+        foundingMember: !!row.founding_member,
+        avatarUrl: profiles?.find(p => p.id === row.profile_id)?.avatar_url ?? null,
+        referralCount: referralCounts[row.profile_id] ?? 0,
+        ralliesJoined: ralliesJoinedByProfile[row.profile_id] ?? 0,
+        ralliesCreated: ralliesCreatedByProfile[row.profile_id] ?? 0,
+      }));
+
       return {
         summary: {
           totalEventsCreated,
@@ -395,6 +434,7 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
           goingHome,
           inviteCopied,
           kFactor,
+          totalLifetimeAttendees,
         },
         funnel,
         safety: {
@@ -436,6 +476,8 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
         referralCounts,
         topConnectors,
         referralDetails,
+        headcountByEvent,
+        userDirectory,
       };
     },
     refetchInterval: 30000,
