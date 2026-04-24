@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Users, Image, ChevronRight, ArrowLeft, Crown } from 'lucide-react';
 import { format } from 'date-fns';
+import { getPrivateName } from '@/lib/identity';
 
 interface SquadRow {
   id: string;
@@ -15,8 +16,8 @@ interface SquadRow {
   created_at: string;
   owner_id: string;
   group_photo_url: string | null;
-  owner_profile: { id: string; display_name: string | null; avatar_url: string | null } | null;
-  members: { id: string; profile_id: string; added_at: string; profile: { id: string; display_name: string | null; avatar_url: string | null } | null }[];
+  owner_profile: { id: string; display_name: string | null; full_name: string | null; nickname: string | null; avatar_url: string | null } | null;
+  members: { id: string; profile_id: string; added_at: string; profile: { id: string; display_name: string | null; full_name: string | null; nickname: string | null; avatar_url: string | null } | null }[];
 }
 
 function useAdminSquads() {
@@ -27,10 +28,10 @@ function useAdminSquads() {
         .from('squads')
         .select(`
           *,
-          owner_profile:safe_profiles!squads_owner_id_fkey(id, display_name, avatar_url),
+          owner_profile:safe_profiles!squads_owner_id_fkey(id, display_name, full_name, nickname, avatar_url),
           members:squad_members(
             id, profile_id, added_at,
-            profile:safe_profiles(id, display_name, avatar_url)
+            profile:safe_profiles(id, display_name, full_name, nickname, avatar_url)
           )
         `)
         .order('created_at', { ascending: false })
@@ -83,12 +84,12 @@ export function SquadAudit() {
               <Avatar className="h-8 w-8">
                 <AvatarImage src={member.profile?.avatar_url || undefined} />
                 <AvatarFallback className="text-xs bg-primary/20 text-primary">
-                  {member.profile?.display_name?.charAt(0)?.toUpperCase() || '?'}
+                  {getPrivateName(member.profile as any).charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate flex items-center gap-1.5">
-                  {member.profile?.display_name || 'Unknown'}
+                  {getPrivateName(member.profile as any)}
                   {member.isOwner && <Crown className="h-3 w-3 text-primary" />}
                 </p>
                 <p className="text-xs text-muted-foreground">
@@ -125,7 +126,7 @@ export function SquadAudit() {
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{squad.name}</p>
                 <p className="text-xs text-muted-foreground">
-                  by {squad.owner_profile?.display_name || 'Unknown'} · {format(new Date(squad.created_at), 'MMM d')}
+                  by {getPrivateName(squad.owner_profile as any)} · {format(new Date(squad.created_at), 'MMM d')}
                 </p>
               </div>
               <div className="flex items-center gap-2 shrink-0">
