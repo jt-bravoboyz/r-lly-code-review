@@ -237,13 +237,24 @@ export default function Profile() {
       const phoneDigits = editPhone.replace(/\D/g, '');
       const normalizedPhone = phoneDigits.length >= 10 ? normalizePhoneNumber(phoneDigits) : null;
 
+      const trimmedFull = editFullName.trim();
+      const trimmedNick = editNickname.trim();
+
+      const updatePayload: Record<string, any> = {
+        full_name: trimmedFull || null,
+        nickname: trimmedNick || null,
+        bio: editBio.trim() || null,
+        phone: normalizedPhone,
+      };
+      // The DB trigger will set display_name = COALESCE(nickname, full_name).
+      // For legacy safety, if both are empty, keep whatever editName had.
+      if (!trimmedFull && !trimmedNick && editName.trim()) {
+        updatePayload.display_name = editName.trim();
+      }
+
       const { error } = await supabase
         .from('profiles')
-        .update({ 
-          display_name: editName.trim(),
-          bio: editBio.trim() || null,
-          phone: normalizedPhone
-        })
+        .update(updatePayload)
         .eq('id', profile.id);
 
       if (error) throw error;
