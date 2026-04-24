@@ -1,78 +1,204 @@
 
-# Fix Event Creation Blocking Mason at “Add People”
+# R@lly Friends + Name/Invite Fixes
 
-## Problem
+## 1. Fix Bradley’s Name
 
-The current Create R@lly flow requires `selectedSquads.length > 0` before the Create/Next action can be clicked:
+Update Bradley’s profile record from:
+
+- `Bradley`
+
+To:
+
+- `Bradley Wilson`
+
+Also keep `needs_name_setup = false` so Bradley is not prompted again.
+
+## 2. Require First + Last Name for New Users
+
+Tighten the signup and identity setup flow so new users cannot finish with only one name.
+
+### Changes
+
+- Update signup validation so the name must contain at least two parts.
+- Change the signup name placeholder from generic `Name` to `First and last name`.
+- Keep the existing `IdentitySetupDialog` split into `First Name` and `Last Name`.
+- Update backend profile creation so email-prefix fallback names are treated as incomplete and flagged with `needs_name_setup = true`.
+- Existing OAuth users with `R@lly Member`, empty names, or email-style fallback names still get the first/last name dialog.
+
+### Files
+
+- `src/pages/Auth.tsx`
+- `src/components/profile/NameSetupDialog.tsx`
+- Database function: `handle_new_user()`
+
+## 3. Fix Shared R@lly Link Join After Login
+
+The join flow currently loses or bypasses the pending invite in some login paths.
+
+### Changes
+
+- Store pending R@lly invite codes consistently in `localStorage`.
+- Update `/auth/return` to read the same key as `/auth`.
+- Prevent `AuthRedirectGuard` from sending users to `/` when a pending R@lly code exists.
+- After login, auto-join using:
 
 ```ts
-const hasAudience = selectedSquads.length > 0;
-...
-disabled={... || !hasAudience}
+request_join_event({
+  p_event_id: event.id,
+  p_has_invite_code: true
+})
 ```
 
-But the creation screen only offers **Invite Squads**. If Mason has no squads, or wants to invite individual people/phone contacts, there is no usable “add people” path inside creation. He gets blocked by a requirement he cannot satisfy.
+- If already attending, send the user straight to the R@lly.
+- If join fails, send them back to `/join/:code` with a useful toast.
 
-## Plan
+### Files
 
-### 1. Make “Add People” Optional During Creation
+- `src/components/AuthRedirectGuard.tsx`
+- `src/pages/Auth.tsx`
+- `src/pages/ReturningAuth.tsx`
+- `src/pages/JoinRally.tsx`
 
-Update `src/components/events/CreateEventDialog.tsx` so event creation is not blocked by audience selection.
+## 4. Add Mutual “R@lly Friends”
 
-- Change `hasAudience` from a hard requirement into an optional state indicator.
-- Remove `!hasAudience` from the Create button disabled condition.
-- Replace the blocking copy:
-  - From: “Add at least one friend or squad to start the R@lly.”
-  - To: “You can invite people now or after the R@lly is created.”
-- Keep squad selection as a convenience, but not a gate.
+Create a real mutual friendship system where a friendship becomes active only after acceptance.
 
-### 2. Add a Clear “Invite After Creation” Path
+### Database
 
-When no squads are selected, make the create button still feel safe and intentional:
+Create `public.friendships`:
 
-- Button remains enabled once required form fields are valid.
-- Copy can stay “Create R@lly” or become “Create R@lly — Invite Next” if no audience is selected.
-- After creation, the existing navigation to `/events/:id` remains, where the full invite flow already supports:
-  - Contacts
-  - Phone invites
-  - Squads
-  - Share link
-  - Invite history
+```text
+id
+requester_id
+recipient_id
+status: pending | accepted | declined | blocked
+requested_at
+responded_at
+created_at
+updated_at
+```
 
-This fixes Mason’s immediate blocker without needing to build a complex pre-create invite queue.
+Rules:
 
-### 3. Improve the Empty Squad State
+- `requester_id` and `recipient_id` reference profile IDs.
+- Users cannot friend themselves.
+- Only one friendship row can exist per pair.
+- RLS protects access:
+  - Users can see friendship rows where they are requester or recipient.
+  - Users can create requests only as themselves.
+  - Recipients can accept/decline.
+  - Either side can remove/decline where appropriate.
 
-If the user has no squads, show a small helper panel in the audience area instead of hiding the section entirely:
+Add helpful indexes for requester, recipient, status, and active friend lookups.
 
-- “No squads yet.”
-- “Create the R@lly first, then invite people by contact, phone number, or share link.”
-- Optional lightweight visual with the `Users` icon and R@lly Orange accent.
+## 5. Friend Request Notifications
 
-If squads exist, keep the current squad pill selector.
+When User A requests User B:
 
-### 4. Keep Existing Auto-Invite Behavior
+- Insert an in-app notification for User B.
+- Notification type: `friend_request`.
+- Payload includes:
+  - `friendship_id`
+  - `requester_profile_id`
+  - requester display name/avatar public metadata
 
-Preserve the current squad auto-invite logic:
+Add Accept / Decline actions to the notification UI.
 
-- If Mason selects one or more squads before creating, those squad members are invited after the event is created.
-- If he selects no squads, the event still creates normally and he can invite people from the event page.
+### Push
 
-### 5. Also Fix Quick R@lly if It Has the Same Gate
+- Add friend-request support to the push notification flow.
+- Allow push notifications when the target is the recipient of a pending friendship request.
+- On request creation, send a push:
+  - Title: `New R@lly Friend request`
+  - Body: `{Name} wants to add you on R@lly`
+  - Data: `{ type: 'friend_request', friendship_id }`
 
-`src/components/events/QuickRallyDialog.tsx` has the same pattern: it disables submission when no squad is selected.
+### Files
 
-Apply the same rule there:
+- New/updated database trigger for friendship notifications
+- `src/hooks/useNotifications.tsx`
+- `src/pages/Notifications.tsx`
+- `supabase/functions/send-push-notification/index.ts`
 
-- Squad invites are optional.
-- No selected squad should not block starting/scheduling a Quick R@lly.
-- Update helper copy to explain that invites can happen after creation.
+## 6. Search Profiles by Handle in Contacts
 
-## Files to Change
+Add a search experience to the Contacts tab that finds R@lly users by public handle/display name.
+
+### Privacy
+
+Search only uses public profile fields:
+
+- `id`
+- `display_name`
+- `avatar_url`
+- `bio`
+
+Use the existing safe public profile surface, not raw private profile fields.
+
+### UX
+
+In `ContactsTab`:
+
+- Keep the existing contacts search bar.
+- When the user types a handle/name, show a `R@lly Search` result section.
+- Each result has:
+  - Avatar
+  - Display name
+  - Bio preview
+  - Orange `Add Friend` / `Requested` / `Friends` button
+- Hide the current user from results.
+- Do not expose phone, email, address, or private location data.
+
+### Files
+
+- `src/components/squads/ContactsTab.tsx`
+- New hook: `src/hooks/useFriendships.tsx`
+- Existing hook update: `src/hooks/useRallyFriends.tsx`
+
+## 7. Make Accepted Friends First in Event Creation
+
+When starting a new R@lly, accepted R@lly Friends should appear before squads.
+
+### Standard Create R@lly
+
+In `CreateEventDialog`:
+
+- Add a `R@lly Friends` invite section above `Invite Squads`.
+- Accepted friends appear first.
+- Users can select individual friends.
+- On create, selected friends receive event invites.
+- Keep squad selection optional.
+
+### Quick R@lly
+
+Apply the same friend-first invite picker to `QuickRallyDialog`.
+
+### Files
 
 - `src/components/events/CreateEventDialog.tsx`
 - `src/components/events/QuickRallyDialog.tsx`
+- `src/hooks/useRallyFriends.tsx`
 
-## Result
+## 8. R@lly Orange Buttons
 
-Mason can create the event immediately, even if he has no squads or cannot find the right person during setup. Adding people becomes a follow-up action instead of a hard blocker, while squad auto-invites still work when selected.
+Use the established R@lly Orange styling for all new friend actions:
+
+- Add Friend
+- Requested
+- Accept
+- Decline secondary styling
+- Invite selected friends during creation
+
+Primary action buttons use the project’s orange token / `gradient-primary` / `#F47A19` styling.
+
+## Implementation Order
+
+1. Update Bradley’s profile data.
+2. Add the `friendships` table, RLS policies, indexes, and notification trigger.
+3. Add friendship hooks and mutations.
+4. Fix join-link persistence after login.
+5. Tighten first/last name validation.
+6. Add Contacts tab profile search + friend request buttons.
+7. Add Accept/Decline notification actions.
+8. Prioritize accepted friends in Create R@lly and Quick R@lly.
+9. Run build/type checks and verify the main flows.
