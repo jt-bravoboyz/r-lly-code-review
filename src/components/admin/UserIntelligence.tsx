@@ -4,12 +4,15 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Search, Award } from 'lucide-react';
+import { getPrivateName, hasNickname } from '@/lib/identity';
 
 interface UserIntelligenceProps {
   profiles: Array<{
     id: string;
     user_id: string;
     display_name: string | null;
+    full_name?: string | null;
+    nickname?: string | null;
     avatar_url: string | null;
     founding_member: boolean | null;
     founder_number: number | null;
@@ -32,9 +35,13 @@ export function UserIntelligence({ profiles, attendees, rallyEvents, headcountBy
   const [search, setSearch] = useState('');
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
 
-  const filtered = profiles.filter(p =>
-    p.display_name?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = profiles.filter(p => {
+    const q = search.toLowerCase();
+    return (
+      getPrivateName(p as any).toLowerCase().includes(q) ||
+      (p.nickname?.toLowerCase().includes(q) ?? false)
+    );
+  });
 
   const selected = profiles.find(p => p.id === selectedUser);
   const userAttendees = selectedUser ? attendees.filter(a => a.profile_id === selectedUser) : [];
