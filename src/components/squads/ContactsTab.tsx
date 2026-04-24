@@ -31,6 +31,8 @@ import { useUserContacts } from '@/hooks/useUserContacts';
 import { SquadSymbolBadge, getSquadIcon } from './SquadSymbolPicker';
 import { AddPeopleSheet } from '@/components/contacts/AddPeopleSheet';
 import { cn } from '@/lib/utils';
+import { getFriendshipState, useFriendships, usePublicProfileSearch, useRequestFriend, useRespondToFriendRequest } from '@/hooks/useFriendships';
+import { toast } from 'sonner';
 
 interface ContactsTabProps {
   onInviteToRally?: (profileId: string) => void;
@@ -49,6 +51,10 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
   const { data: allSquads = [], isLoading: loadingSquads } = useAllMySquads();
   const { data: phoneContacts = [], isLoading: loadingContacts } = usePhoneContacts();
   const { data: cloudContacts = [], isLoading: loadingCloud } = useUserContacts();
+  const { data: friendships = [] } = useFriendships();
+  const { data: rallySearchResults = [], isLoading: loadingRallySearch } = usePublicProfileSearch(searchQuery);
+  const requestFriend = useRequestFriend();
+  const respondToFriendRequest = useRespondToFriendRequest();
 
   // Filter friends by search
   const filteredFriends = rallyFriends.filter(
@@ -112,6 +118,21 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
     window.open(`sms:${phone}?body=${message}`, '_blank');
   };
 
+  const handleFriendAction = async (targetProfileId: string) => {
+    const state = getFriendshipState(targetProfileId, friendships, profile?.id);
+    try {
+      if (state.state === 'none') {
+        await requestFriend.mutateAsync(targetProfileId);
+        toast.success('Friend request sent.');
+      } else if (state.state === 'pending_incoming' && state.friendship) {
+        await respondToFriendRequest.mutateAsync({ friendshipId: state.friendship.id, response: 'accepted' });
+        toast.success('R@lly Friend added.');
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Could not update friend request');
+    }
+  };
+
   // Alphabetical grouping for cloud contacts
   const groupedCloudContacts = useMemo(() => {
     const groups: Record<string, typeof filteredCloudContacts> = {};
@@ -141,8 +162,57 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
 
       {/* iOS web app note */}
       <p className="text-xs text-muted-foreground px-1">
-        Apple limits contact syncing on web apps. Type any name or number above to send an invite link manually.
+        Search by handle/name, phone contact, or synced contact.
       </p>
+
+      {searchQuery.trim().length >= 2 && (
+        <Card className="bg-card/90 backdrop-blur-sm shadow-sm rounded-2xl border-primary/10 overflow-hidden">
+          <CardContent className="p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-foreground font-montserrat">R@lly Search</h3>
+              {loadingRallySearch && <span className="text-xs text-muted-foreground">Searching…</span>}
+            </div>
+            {rallySearchResults.length > 0 ? (
+              <div className="space-y-2">
+                {rallySearchResults.map((result) => {
+                  const state = getFriendshipState(result.id, friendships, profile?.id);
+                  return (
+                    <div key={result.id} className="flex items-center justify-between gap-3 p-3 rounded-xl bg-muted/30">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <Avatar className="h-10 w-10 shrink-0">
+                          <AvatarImage src={result.avatar_url || undefined} />
+                          <AvatarFallback className="bg-primary/20 text-primary font-bold">
+                            {result.display_name?.charAt(0)?.toUpperCase() || '?'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0">
+                          <p className="font-medium text-sm truncate">{result.display_name || 'R@lly Member'}</p>
+                          {result.bio && <p className="text-xs text-muted-foreground line-clamp-1">{result.bio}</p>}
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        className={cn(
+                          'h-9 rounded-full shrink-0',
+                          state.state === 'accepted' || state.state === 'pending_outgoing'
+                            ? 'bg-muted text-muted-foreground hover:bg-muted'
+                            : 'bg-primary text-primary-foreground hover:bg-primary/90'
+                        )}
+                        disabled={state.state === 'accepted' || state.state === 'pending_outgoing' || requestFriend.isPending || respondToFriendRequest.isPending}
+                        onClick={() => handleFriendAction(result.id)}
+                      >
+                        {state.label}
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : !loadingRallySearch ? (
+              <p className="text-sm text-muted-foreground">No public R@lly profiles found.</p>
+            ) : null}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Quick Add row — shown when search has no matches */}
       {(() => {
