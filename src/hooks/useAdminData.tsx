@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { DatePreset } from '@/components/admin/AdminDateFilter';
+import { getPrivateName } from '@/lib/identity';
 
 function getDateCutoff(preset: DatePreset): Date | null {
   const now = new Date();
@@ -165,7 +166,7 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
           profileId,
           eventsCreated: data.created,
           avgAttendees: data.created > 0 ? Math.round(data.attendeeSum / data.created) : 0,
-          displayName: profiles?.find(p => p.id === profileId)?.display_name || 'Unknown',
+          displayName: getPrivateName(profiles?.find(p => p.id === profileId) as any) || 'Unknown',
           avatarUrl: profiles?.find(p => p.id === profileId)?.avatar_url,
         }))
         .sort((a, b) => b.eventsCreated - a.eventsCreated)
@@ -349,7 +350,7 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
         .map(([profileId, count]) => ({
           profileId,
           referralCount: count,
-          displayName: profiles?.find(p => p.id === profileId)?.display_name || 'Unknown',
+          displayName: getPrivateName(profiles?.find(p => p.id === profileId) as any) || 'Unknown',
           avatarUrl: profiles?.find(p => p.id === profileId)?.avatar_url,
         }))
         .sort((a, b) => b.referralCount - a.referralCount)
@@ -376,10 +377,10 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
         .filter(p => p.referred_by)
         .map(p => ({
           refereeId: p.id,
-          refereeName: p.display_name,
+          refereeName: getPrivateName(p as any),
           refereeCreatedAt: p.created_at,
           referrerId: p.referred_by!,
-          referrerName: profiles?.find(r => r.id === p.referred_by)?.display_name || 'Unknown',
+          referrerName: getPrivateName(profiles?.find(r => r.id === p.referred_by) as any) || 'Unknown',
           currentSquad: profileSquadMap.get(p.id) || null,
         }));
 
@@ -411,7 +412,7 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
       const userDirectory = (directoryRows ?? []).map((row: any) => ({
         profileId: row.profile_id as string,
         userId: row.user_id as string,
-        displayName: (row.display_name as string | null) ?? null,
+        displayName: getPrivateName({ full_name: row.full_name, nickname: row.nickname, display_name: row.display_name }),
         email: (row.email as string | null) ?? null,
         createdAt: row.created_at as string | null,
         lastSignInAt: row.last_sign_in_at as string | null,
