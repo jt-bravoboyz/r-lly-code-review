@@ -1,39 +1,78 @@
 
+# Fix Event Creation Blocking Mason at “Add People”
 
-# Profile Edit — Make Save Always Reachable
+## Problem
 
-When Ryley taps to edit her bio, the only Save controls are tiny icon buttons sitting *above* the bio textarea inside the card. On mobile with the keyboard open, those icons get pushed off-screen and the bottom nav hides anything below. Three coordinated fixes in `src/pages/Profile.tsx`:
+The current Create R@lly flow requires `selectedSquads.length > 0` before the Create/Next action can be clicked:
 
-## 1. Sticky "Edit Mode" Action Bar (primary fix)
+```ts
+const hasAudience = selectedSquads.length > 0;
+...
+disabled={... || !hasAudience}
+```
 
-When `isEditing === true`, render a **sticky bottom action bar** that floats above the BottomNav and stays visible above the keyboard:
+But the creation screen only offers **Invite Squads**. If Mason has no squads, or wants to invite individual people/phone contacts, there is no usable “add people” path inside creation. He gets blocked by a requirement he cannot satisfy.
 
-- Position: `fixed bottom-0 left-0 right-0 z-50`, with `pb-[env(safe-area-inset-bottom)]` and a backdrop-blur glass surface matching the app's 2026 Glass/Liquid system (R@lly Orange primary).
-- Contains: full-width **"Save Changes"** primary button (orange gradient, large 48px touch target) + **"Cancel"** ghost button.
-- Disable Save while `isSaving`, with inline spinner + "Saving…" label.
-- When this bar is mounted, increase the page's bottom padding (swap `pb-28` for `pb-44` while editing) so the form scrolls clear of the bar.
-- Hide the regular `BottomNav` while editing (or let the action bar sit above it) — cleaner focus, matches iOS modal-edit pattern.
+## Plan
 
-## 2. Header-Level "Save" Affordance
+### 1. Make “Add People” Optional During Creation
 
-Promote the existing inline Save/Cancel icons (currently small ghost icons next to the avatar at lines 432-440) into a clearer, larger pair:
+Update `src/components/events/CreateEventDialog.tsx` so event creation is not blocked by audience selection.
 
-- Replace the icon-only buttons with a **labeled "Save" pill button** (orange, with check icon) + a **"Cancel"** text button.
-- Sized for thumbs (h-9, px-4), placed at the top of the profile card so it's the first thing visible on scroll-to-top — gives users two obvious save paths (top of card + sticky bar at bottom).
+- Change `hasAudience` from a hard requirement into an optional state indicator.
+- Remove `!hasAudience` from the Create button disabled condition.
+- Replace the blocking copy:
+  - From: “Add at least one friend or squad to start the R@lly.”
+  - To: “You can invite people now or after the R@lly is created.”
+- Keep squad selection as a convenience, but not a gate.
 
-## 3. Keyboard-Aware Scroll & Auto-Scroll on Focus
+### 2. Add a Clear “Invite After Creation” Path
 
-- Confirm the page root scrolls (it already uses `min-h-[100dvh]` with the document body as scroller — good). Add `scroll-pb-44` to the main container so focused inputs aren't hidden behind the new sticky bar.
-- On the bio `<Textarea>`, add `onFocus` that calls `el.scrollIntoView({ block: 'center', behavior: 'smooth' })` after a 150ms delay (lets the keyboard finish animating in on iOS).
-- Apply the same `onFocus` scroll helper to the email and phone inputs for consistency.
+When no squads are selected, make the create button still feel safe and intentional:
 
-## Files Touched
+- Button remains enabled once required form fields are valid.
+- Copy can stay “Create R@lly” or become “Create R@lly — Invite Next” if no audience is selected.
+- After creation, the existing navigation to `/events/:id` remains, where the full invite flow already supports:
+  - Contacts
+  - Phone invites
+  - Squads
+  - Share link
+  - Invite history
 
-- `src/pages/Profile.tsx` — only file changed. Edit-mode UI changes plus new sticky action bar component inline.
+This fixes Mason’s immediate blocker without needing to build a complex pre-create invite queue.
 
-No new dependencies, no DB changes, no other files affected. BottomNav and Header are untouched (the sticky bar is local to Profile edit mode).
+### 3. Improve the Empty Squad State
+
+If the user has no squads, show a small helper panel in the audience area instead of hiding the section entirely:
+
+- “No squads yet.”
+- “Create the R@lly first, then invite people by contact, phone number, or share link.”
+- Optional lightweight visual with the `Users` icon and R@lly Orange accent.
+
+If squads exist, keep the current squad pill selector.
+
+### 4. Keep Existing Auto-Invite Behavior
+
+Preserve the current squad auto-invite logic:
+
+- If Mason selects one or more squads before creating, those squad members are invited after the event is created.
+- If he selects no squads, the event still creates normally and he can invite people from the event page.
+
+### 5. Also Fix Quick R@lly if It Has the Same Gate
+
+`src/components/events/QuickRallyDialog.tsx` has the same pattern: it disables submission when no squad is selected.
+
+Apply the same rule there:
+
+- Squad invites are optional.
+- No selected squad should not block starting/scheduling a Quick R@lly.
+- Update helper copy to explain that invites can happen after creation.
+
+## Files to Change
+
+- `src/components/events/CreateEventDialog.tsx`
+- `src/components/events/QuickRallyDialog.tsx`
 
 ## Result
 
-Ryley taps **Edit** → keyboard opens for Bio → a glassy orange **Save Changes** bar is pinned right above her keyboard, and a labeled **Save** pill sits at the top of the card. She can't lose it.
-
+Mason can create the event immediately, even if he has no squads or cannot find the right person during setup. Adding people becomes a follow-up action instead of a hard blocker, while squad auto-invites still work when selected.
