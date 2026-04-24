@@ -25,12 +25,14 @@ export function IdentitySetupDialog() {
   // Only show when we have a profile but name is missing
   const isOpen = !!profile && needsSetup;
 
-  const canSubmit = firstName.trim().length > 0 && lastName.trim().length > 0;
+  const cleanFirstName = firstName.trim();
+  const cleanLastName = lastName.trim();
+  const canSubmit = cleanFirstName.length > 0 && cleanLastName.length > 0;
 
   const handleSave = async () => {
     if (!canSubmit) return;
 
-    const displayName = `${firstName.trim()} ${lastName.trim()}`;
+    const displayName = `${cleanFirstName} ${cleanLastName}`;
 
     setSaving(true);
     try {
@@ -41,7 +43,7 @@ export function IdentitySetupDialog() {
 
       if (error) throw error;
       await refreshProfile();
-      toast.success(`You're on the list, ${firstName.trim()}. Welcome to R@lly.`);
+      toast.success(`You're on the list, ${cleanFirstName}. Welcome to R@lly.`);
     } catch (e: any) {
       toast.error('Failed to save. Try again.');
       console.error(e);
