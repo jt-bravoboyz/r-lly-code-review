@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { sendDDRequestMessage, sendDDAcceptedMessage, sendDDVolunteeredMessage, sendDDRevokedMessage, sendDDDeclinedMessage } from './useSystemMessages';
+import { getPrivateName } from '@/lib/identity';
 
 export interface DDRequest {
   id: string;
@@ -14,11 +15,15 @@ export interface DDRequest {
   requested_profile?: {
     id: string;
     display_name: string | null;
+    full_name?: string | null;
+    nickname?: string | null;
     avatar_url: string | null;
   };
   requested_by_profile?: {
     id: string;
     display_name: string | null;
+    full_name?: string | null;
+    nickname?: string | null;
     avatar_url: string | null;
   };
 }
