@@ -22,6 +22,11 @@ export function AuthRedirectGuard() {
       path === '/auth' || path === '/auth/return';
 
     if (isAuthRoute) {
+      const pendingRallyCode = localStorage.getItem('pendingRallyCode');
+      if (pendingRallyCode) {
+        navigate(`/join/${pendingRallyCode}`, { replace: true });
+        return;
+      }
       navigate('/', { replace: true });
     }
   }, [user, loading, location.pathname, navigate]);
@@ -32,6 +37,11 @@ export function AuthRedirectGuard() {
       if (event === 'SIGNED_IN') {
         const path = window.location.pathname.toLowerCase();
         if (path.startsWith('/auth')) {
+          const pendingRallyCode = localStorage.getItem('pendingRallyCode');
+          if (pendingRallyCode) {
+            navigate(`/join/${pendingRallyCode}`, { replace: true });
+            return;
+          }
           navigate('/', { replace: true });
         }
       }
