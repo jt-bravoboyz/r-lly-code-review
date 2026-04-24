@@ -70,14 +70,14 @@ export default function ReturningAuth() {
       if (!user || !profile || profile.user_id !== user.id) return;
       if (autoJoinAttempted.current) return;
       
-      const pendingCode = sessionStorage.getItem('pendingRallyCode');
+      const pendingCode = localStorage.getItem('pendingRallyCode');
       if (!pendingCode) {
         navigate('/');
         return;
       }
       
       autoJoinAttempted.current = true;
-      sessionStorage.removeItem('pendingRallyCode');
+      localStorage.removeItem('pendingRallyCode');
       
       try {
         const { data: rpcData, error: rpcError } = await supabase
@@ -106,6 +106,7 @@ export default function ReturningAuth() {
         
         const { data: joinData, error: joinError } = await supabase.rpc('request_join_event', {
           p_event_id: eventData.id,
+          p_has_invite_code: true,
         });
 
         if (joinError) throw joinError;
@@ -126,13 +127,13 @@ export default function ReturningAuth() {
           throw new Error(joinResult.error);
         }
 
-        toast.success('Request sent! Waiting for host approval...', {
-          description: 'The host will be notified of your request',
+        toast.success("You're in! 🎉", {
+          description: `Welcome to ${eventData.title}`,
         });
-        navigate(`/join/${pendingCode}`);
+        navigate(`/events/${eventData.id}`);
       } catch (error: any) {
         console.error('Auto-join failed:', error);
-        toast.error('Failed to join rally. Please try again.');
+        toast.error('Failed to join R@lly. Please try again.');
         navigate(`/join/${pendingCode}`);
       }
     };
