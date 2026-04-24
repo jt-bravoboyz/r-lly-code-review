@@ -6,9 +6,12 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { supabase } from '@/integrations/supabase/client';
 import { AttendeeWithSafetyStatus } from '@/hooks/useSafetyStatus';
 import { getUserRideState, type RidePlan } from '@/lib/rideState';
+import { getPrivateName } from '@/lib/identity';
 
 interface AssignedDriver {
   display_name: string | null;
+  full_name?: string | null;
+  nickname?: string | null;
   avatar_url: string | null;
 }
 
@@ -76,7 +79,7 @@ export function RidePlanCard({ myStatus, eventId, onChangePlan, onSetDestination
           if (ride?.driver_id) {
             const { data: driverProfile } = await supabase
               .from('safe_profiles')
-              .select('display_name, avatar_url')
+              .select('display_name, full_name, nickname, avatar_url')
               .eq('id', ride.driver_id)
               .maybeSingle();
             
@@ -144,7 +147,7 @@ export function RidePlanCard({ myStatus, eventId, onChangePlan, onSetDestination
               {rideState.plan === 'rider' && !isLoadingDriver && assignedDriver && (
                 <p className="text-xs text-muted-foreground flex items-center gap-1">
                   <User className="h-3 w-3" />
-                  Riding with {assignedDriver.display_name || 'your DD'}
+                  Riding with {getPrivateName(assignedDriver as any) || 'your DD'}
                 </p>
               )}
               {rideState.plan === 'rider' && !isLoadingDriver && !assignedDriver && (

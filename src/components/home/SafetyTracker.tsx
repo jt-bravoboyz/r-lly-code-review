@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
 import { useEventSafetyStatus, useIsEventSafetyComplete, getSafetyState, getSafetyStateLabel, type SafetyState } from '@/hooks/useSafetyStatus';
 import { useQueryClient } from '@tanstack/react-query';
+import { getPrivateName } from '@/lib/identity';
 
 interface SafetyTrackerProps {
   eventId: string;
@@ -249,11 +250,11 @@ export function SafetyTracker({ eventId }: SafetyTrackerProps) {
                     <Avatar className="h-5 w-5">
                       <AvatarImage src={attendee.profile?.avatar_url || undefined} />
                       <AvatarFallback className="text-[8px] bg-green-200 text-green-700">
-                        {attendee.profile?.display_name?.charAt(0)?.toUpperCase() || '?'}
+                        {getPrivateName(attendee.profile as any).charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <span className="text-xs font-medium text-green-700">
-                      {attendee.profile?.display_name?.split(' ')[0] || 'Unknown'}
+                      {getPrivateName(attendee.profile as any).split(' ')[0]}
                     </span>
                     <CheckCircle2 className="h-3 w-3 text-green-600" />
                   </div>
@@ -277,7 +278,7 @@ export function SafetyTracker({ eventId }: SafetyTrackerProps) {
                 <Avatar className="h-10 w-10">
                   <AvatarImage src={attendee.profile?.avatar_url || undefined} />
                   <AvatarFallback className="bg-secondary text-secondary-foreground">
-                    {attendee.profile?.display_name?.charAt(0)?.toUpperCase() || '?'}
+                    {getPrivateName(attendee.profile as any).charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center ${getIconBackgroundColor(state)}`}>
@@ -287,7 +288,7 @@ export function SafetyTracker({ eventId }: SafetyTrackerProps) {
 
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm truncate">
-                  {attendee.profile?.display_name || 'Unknown'}
+                  {getPrivateName(attendee.profile as any)}
                   {attendee.is_dd && (
                     <Badge variant="secondary" className="ml-2 text-[10px]">
                       <Car className="h-2.5 w-2.5 mr-0.5" />

@@ -13,6 +13,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useMyAttendeeStatus, useUpdateSafetyStatus } from '@/hooks/useSafetyStatus';
 import { openDirections } from '@/lib/mapStyles';
 import { useSafetyNotifications } from '@/hooks/useSafetyNotifications';
+import { getPrivateName } from '@/lib/identity';
 import { useMapboxToken } from '@/hooks/useMapboxToken';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -28,6 +29,8 @@ interface EventAttendee {
   profile: {
     id: string;
     display_name: string | null;
+    full_name?: string | null;
+    nickname?: string | null;
     avatar_url: string | null;
   };
 }
@@ -150,7 +153,7 @@ export function RallyHomeButton({ eventId, trigger, eventStatus, autoOpen, onAut
         .from('event_attendees')
         .select(`
           profile_id,
-          profile:profiles(id, display_name, avatar_url)
+          profile:profiles(id, display_name, full_name, nickname, avatar_url)
         `)
         .eq('event_id', eventId)
         .neq('profile_id', profile.id);
@@ -441,7 +444,7 @@ export function RallyHomeButton({ eventId, trigger, eventStatus, autoOpen, onAut
                         targetProfileIds: passengerIds,
                         excludeProfileId: profile.id,
                         title: '🚗 Your DD is heading out!',
-                        body: `${profile.display_name || 'Your DD'} is heading out! Get ready.`,
+                        body: `${getPrivateName(profile as any)} is heading out! Get ready.`,
                         data: { event_id: eventId, url: `/events/${eventId}` },
                       },
                     });
@@ -479,7 +482,7 @@ export function RallyHomeButton({ eventId, trigger, eventStatus, autoOpen, onAut
                     targetProfileIds: memberIds,
                     excludeProfileId: profile.id,
                     title: '🏠 Squad member heading home',
-                    body: `${profile.display_name || 'Someone'} is heading home safely`,
+                    body: `${getPrivateName(profile as any)} is heading home safely`,
                     data: { event_id: eventId, url: `/events/${eventId}` },
                   },
                 });
@@ -788,10 +791,10 @@ export function RallyHomeButton({ eventId, trigger, eventStatus, autoOpen, onAut
                         <Avatar className="h-8 w-8">
                           <AvatarImage src={attendee.profile?.avatar_url || undefined} />
                           <AvatarFallback className="bg-secondary text-secondary-foreground text-xs">
-                            {attendee.profile?.display_name?.charAt(0)?.toUpperCase() || '?'}
+                            {getPrivateName(attendee.profile as any).charAt(0).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
-                        <span className="text-sm">{attendee.profile?.display_name || 'Unknown'}</span>
+                        <span className="text-sm">{getPrivateName(attendee.profile as any)}</span>
                       </div>
                     ))}
                   </div>

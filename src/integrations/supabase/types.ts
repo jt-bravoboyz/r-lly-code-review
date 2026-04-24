@@ -1614,6 +1614,7 @@ export type Database = {
           display_name: string | null
           founder_number: number | null
           founding_member: boolean | null
+          full_name: string | null
           home_address: string | null
           home_lat: number | null
           home_lng: number | null
@@ -1624,6 +1625,7 @@ export type Database = {
           last_rally_home_lng: number | null
           location_sharing_enabled: boolean | null
           needs_name_setup: boolean
+          nickname: string | null
           phone: string | null
           policies_accepted_at: string | null
           referred_by: string | null
@@ -1642,6 +1644,7 @@ export type Database = {
           display_name?: string | null
           founder_number?: number | null
           founding_member?: boolean | null
+          full_name?: string | null
           home_address?: string | null
           home_lat?: number | null
           home_lng?: number | null
@@ -1652,6 +1655,7 @@ export type Database = {
           last_rally_home_lng?: number | null
           location_sharing_enabled?: boolean | null
           needs_name_setup?: boolean
+          nickname?: string | null
           phone?: string | null
           policies_accepted_at?: string | null
           referred_by?: string | null
@@ -1670,6 +1674,7 @@ export type Database = {
           display_name?: string | null
           founder_number?: number | null
           founding_member?: boolean | null
+          full_name?: string | null
           home_address?: string | null
           home_lat?: number | null
           home_lng?: number | null
@@ -1680,6 +1685,7 @@ export type Database = {
           last_rally_home_lng?: number | null
           location_sharing_enabled?: boolean | null
           needs_name_setup?: boolean
+          nickname?: string | null
           phone?: string | null
           policies_accepted_at?: string | null
           referred_by?: string | null
@@ -3231,7 +3237,9 @@ export type Database = {
           bio: string | null
           created_at: string | null
           display_name: string | null
+          full_name: string | null
           id: string | null
+          nickname: string | null
           reward_points: number | null
           user_id: string | null
         }
@@ -3241,7 +3249,9 @@ export type Database = {
           bio?: string | null
           created_at?: string | null
           display_name?: string | null
+          full_name?: string | null
           id?: string | null
+          nickname?: string | null
           reward_points?: number | null
           user_id?: string | null
         }
@@ -3251,7 +3261,9 @@ export type Database = {
           bio?: string | null
           created_at?: string | null
           display_name?: string | null
+          full_name?: string | null
           id?: string | null
+          nickname?: string | null
           reward_points?: number | null
           user_id?: string | null
         }
@@ -3392,7 +3404,9 @@ export type Database = {
           created_at: string | null
           display_name: string | null
           founding_member: boolean | null
+          full_name: string | null
           id: string | null
+          nickname: string | null
           reward_points: number | null
           user_id: string | null
         }
@@ -3403,7 +3417,9 @@ export type Database = {
           created_at?: string | null
           display_name?: string | null
           founding_member?: boolean | null
+          full_name?: string | null
           id?: string | null
+          nickname?: string | null
           reward_points?: number | null
           user_id?: string | null
         }
@@ -3414,7 +3430,9 @@ export type Database = {
           created_at?: string | null
           display_name?: string | null
           founding_member?: boolean | null
+          full_name?: string | null
           id?: string | null
+          nickname?: string | null
           reward_points?: number | null
           user_id?: string | null
         }
@@ -3429,7 +3447,9 @@ export type Database = {
           display_name: string | null
           founder_number: number | null
           founding_member: boolean | null
+          full_name: string | null
           id: string | null
+          nickname: string | null
           reward_points: number | null
           user_id: string | null
         }
@@ -3441,7 +3461,9 @@ export type Database = {
           display_name?: string | null
           founder_number?: number | null
           founding_member?: boolean | null
+          full_name?: string | null
           id?: string | null
+          nickname?: string | null
           reward_points?: number | null
           user_id?: string | null
         }
@@ -3453,7 +3475,9 @@ export type Database = {
           display_name?: string | null
           founder_number?: number | null
           founding_member?: boolean | null
+          full_name?: string | null
           id?: string | null
+          nickname?: string | null
           reward_points?: number | null
           user_id?: string | null
         }
@@ -3468,7 +3492,9 @@ export type Database = {
           display_name: string
           email: string
           founding_member: boolean
+          full_name: string
           last_sign_in_at: string
+          nickname: string
           profile_id: string
           user_id: string
         }[]

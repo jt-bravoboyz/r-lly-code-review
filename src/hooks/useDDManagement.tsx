@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { sendDDRequestMessage, sendDDAcceptedMessage, sendDDVolunteeredMessage, sendDDRevokedMessage, sendDDDeclinedMessage } from './useSystemMessages';
+import { getPrivateName } from '@/lib/identity';
 
 export interface DDRequest {
   id: string;
@@ -14,11 +15,15 @@ export interface DDRequest {
   requested_profile?: {
     id: string;
     display_name: string | null;
+    full_name?: string | null;
+    nickname?: string | null;
     avatar_url: string | null;
   };
   requested_by_profile?: {
     id: string;
     display_name: string | null;
+    full_name?: string | null;
+    nickname?: string | null;
     avatar_url: string | null;
   };
 }
@@ -34,8 +39,8 @@ export function useDDRequests(eventId: string | undefined) {
         .from('event_dd_requests')
         .select(`
           *,
-          requested_profile:profiles!event_dd_requests_requested_profile_id_fkey(id, display_name, avatar_url),
-          requested_by_profile:profiles!event_dd_requests_requested_by_profile_id_fkey(id, display_name, avatar_url)
+          requested_profile:profiles!event_dd_requests_requested_profile_id_fkey(id, display_name, full_name, nickname, avatar_url),
+          requested_by_profile:profiles!event_dd_requests_requested_by_profile_id_fkey(id, display_name, full_name, nickname, avatar_url)
         `)
         .eq('event_id', eventId)
         .order('created_at', { ascending: false });
@@ -60,7 +65,7 @@ export function useMyDDRequest(eventId: string | undefined) {
         .from('event_dd_requests')
         .select(`
           *,
-          requested_by_profile:profiles!event_dd_requests_requested_by_profile_id_fkey(id, display_name, avatar_url)
+          requested_by_profile:profiles!event_dd_requests_requested_by_profile_id_fkey(id, display_name, full_name, nickname, avatar_url)
         `)
         .eq('event_id', eventId)
         .eq('requested_profile_id', profile.id)
@@ -87,7 +92,7 @@ export function useEventDDs(eventId: string | undefined) {
           id,
           profile_id,
           is_dd,
-          profile:profiles!event_attendees_profile_id_fkey(id, display_name, avatar_url)
+          profile:profiles!event_attendees_profile_id_fkey(id, display_name, full_name, nickname, avatar_url)
         `)
         .eq('event_id', eventId)
         .eq('is_dd', true);
@@ -148,7 +153,7 @@ export function useCreateDDRequest() {
       // Send system message
       const chatId = await getEventChatId(eventId);
       if (chatId) {
-        await sendDDRequestMessage(chatId, requestedName, profile.display_name || 'Host');
+        await sendDDRequestMessage(chatId, requestedName, getPrivateName(profile as any) || 'Host');
       }
 
       return data;

@@ -56,7 +56,9 @@ function normalizePhoneNumber(phone: string): string {
 export default function Profile() {
   const [isEditing, setIsEditing] = useState(false);
   const [editBio, setEditBio] = useState('');
-  const [editName, setEditName] = useState('');
+  const [editName, setEditName] = useState(''); // legacy display_name (kept for fallback save)
+  const [editFullName, setEditFullName] = useState('');
+  const [editNickname, setEditNickname] = useState('');
   const [editPhone, setEditPhone] = useState('');
   const [editEmail, setEditEmail] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -203,6 +205,8 @@ export default function Profile() {
 
   const handleStartEdit = () => {
     setEditName(profile?.display_name || '');
+    setEditFullName((profile as any)?.full_name || profile?.display_name || '');
+    setEditNickname((profile as any)?.nickname || '');
     setEditBio((profile as any)?.bio || '');
     setEditPhone(profile?.phone ? formatPhoneForDisplay(profile.phone) : '');
     setEditEmail(user?.email || '');
@@ -233,13 +237,24 @@ export default function Profile() {
       const phoneDigits = editPhone.replace(/\D/g, '');
       const normalizedPhone = phoneDigits.length >= 10 ? normalizePhoneNumber(phoneDigits) : null;
 
+      const trimmedFull = editFullName.trim();
+      const trimmedNick = editNickname.trim();
+
+      const updatePayload: Record<string, any> = {
+        full_name: trimmedFull || null,
+        nickname: trimmedNick || null,
+        bio: editBio.trim() || null,
+        phone: normalizedPhone,
+      };
+      // The DB trigger will set display_name = COALESCE(nickname, full_name).
+      // For legacy safety, if both are empty, keep whatever editName had.
+      if (!trimmedFull && !trimmedNick && editName.trim()) {
+        updatePayload.display_name = editName.trim();
+      }
+
       const { error } = await supabase
         .from('profiles')
-        .update({ 
-          display_name: editName.trim(),
-          bio: editBio.trim() || null,
-          phone: normalizedPhone
-        })
+        .update(updatePayload)
         .eq('id', profile.id);
 
       if (error) throw error;
@@ -340,12 +355,32 @@ export default function Profile() {
               
               <div className="flex-1">
                 {isEditing ? (
-                  <Input
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
-                    className="text-xl font-bold mb-1"
-                    placeholder="Your name"
-                  />
+                  <div className="space-y-2 mb-1">
+                    <div className="space-y-1">
+                      <Input
+                        value={editNickname}
+                        onChange={(e) => setEditNickname(e.target.value)}
+                        className="text-xl font-bold"
+                        placeholder="Nickname (optional)"
+                        maxLength={30}
+                      />
+                      <p className="text-[11px] text-muted-foreground px-1">
+                        This is your R@lly handle. If left blank, we'll use your real name.
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      <Input
+                        value={editFullName}
+                        onChange={(e) => setEditFullName(e.target.value)}
+                        className="text-sm"
+                        placeholder="Full name (First Last)"
+                        maxLength={100}
+                      />
+                      <p className="text-[11px] text-muted-foreground px-1">
+                        Legal/real name. Used for safety check-ins (R@lly Home, DD) and admin records.
+                      </p>
+                    </div>
+                  </div>
                 ) : (
                   <h2 className="text-xl font-bold inline-flex items-center">
                     {profile?.display_name || 'Anonymous'}
