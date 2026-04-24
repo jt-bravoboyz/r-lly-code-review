@@ -153,7 +153,7 @@ export function useCreateDDRequest() {
       // Send system message
       const chatId = await getEventChatId(eventId);
       if (chatId) {
-        await sendDDRequestMessage(chatId, requestedName, profile.display_name || 'Host');
+        await sendDDRequestMessage(chatId, requestedName, getPrivateName(profile as any) || 'Host');
       }
 
       return data;
