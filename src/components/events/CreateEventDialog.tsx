@@ -525,7 +525,37 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
               </CollapsibleContent>
             </Collapsible>
 
-            {/* Audience picker — squad invites are optional */}
+            {/* Audience picker — friends and squad invites are optional */}
+            {rallyFriends.length > 0 && (
+              <div className="space-y-2 pt-2">
+                <FormLabel>R@lly Friends (optional)</FormLabel>
+                <ScrollArea className="h-24">
+                  <div className="flex flex-wrap gap-2 pb-2">
+                    {rallyFriends.map((friend) => {
+                      const isSelected = selectedFriendIds.includes(friend.id);
+                      return (
+                        <button
+                          key={friend.id}
+                          type="button"
+                          onClick={() => toggleFriendSelection(friend.id)}
+                          className={cn(
+                            'flex items-center gap-2 px-3 py-2 rounded-full border transition-colors',
+                            isSelected
+                              ? 'bg-primary text-primary-foreground border-primary'
+                              : 'bg-muted hover:bg-muted/80'
+                          )}
+                        >
+                          <UserPlus className="h-3 w-3" />
+                          <span className="text-sm font-medium">{friend.display_name || 'R@lly Friend'}</span>
+                          {isSelected && <Check className="h-3 w-3" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </ScrollArea>
+              </div>
+            )}
+
             {mySquads && mySquads.length > 0 ? (
               <div className="space-y-2 pt-2">
                 <FormLabel>Invite Squads (optional)</FormLabel>
