@@ -13,15 +13,20 @@ import { InviteAlertCard } from '@/components/notifications/InviteAlertCard';
 import { Button } from '@/components/ui/button';
 import rallyLogo from '@/assets/rally-logo.png';
 import { MiniFounderGem } from '@/components/badges/MiniFounderGem';
+import { useMarkFriendRequestNotificationsRead } from '@/hooks/useNotifications';
+import { useRespondToFriendRequest } from '@/hooks/useFriendships';
+import { toast } from 'sonner';
 
 const INVITE_TYPES = ['squad_invite', 'rally_invite', 'event_invite'];
-const ACTIONABLE_TYPES = [...INVITE_TYPES, 'rally_started', 'squad_chat_unread', 'rally_chat_unread', 'chat_unread'];
+const ACTIONABLE_TYPES = [...INVITE_TYPES, 'friend_request', 'rally_started', 'squad_chat_unread', 'rally_chat_unread', 'chat_unread'];
 
 export default function Notifications() {
   const { profile, loading: authLoading } = useAuth();
   const { data: notifications, isLoading } = useNotifications();
   const markRead = useMarkNotificationRead();
   const deleteNotification = useDeleteNotification();
+  const respondToFriendRequest = useRespondToFriendRequest();
+  const markFriendRequestRead = useMarkFriendRequestNotificationsRead();
   const navigate = useNavigate();
 
   const { inviteNotifications, regularNotifications } = useMemo(() => {
@@ -56,8 +61,20 @@ export default function Notifications() {
         return <MapPin className="h-5 w-5 text-green-500" />;
       case 'referral_success':
         return <UserPlus className="h-5 w-5 text-green-500" />;
+      case 'friend_request':
+        return <UserPlus className="h-5 w-5 text-primary" />;
       default:
         return <Bell className="h-5 w-5 text-primary" />;
+    }
+  };
+
+  const handleFriendResponse = async (friendshipId: string, response: 'accepted' | 'declined') => {
+    try {
+      await respondToFriendRequest.mutateAsync({ friendshipId, response });
+      await markFriendRequestRead.mutateAsync(friendshipId);
+      toast.success(response === 'accepted' ? 'R@lly Friend added.' : 'Friend request declined.');
+    } catch (error: any) {
+      toast.error(error.message || 'Could not update friend request');
     }
   };
 
