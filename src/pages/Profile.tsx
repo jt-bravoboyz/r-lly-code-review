@@ -56,7 +56,9 @@ function normalizePhoneNumber(phone: string): string {
 export default function Profile() {
   const [isEditing, setIsEditing] = useState(false);
   const [editBio, setEditBio] = useState('');
-  const [editName, setEditName] = useState('');
+  const [editName, setEditName] = useState(''); // legacy display_name (kept for fallback save)
+  const [editFullName, setEditFullName] = useState('');
+  const [editNickname, setEditNickname] = useState('');
   const [editPhone, setEditPhone] = useState('');
   const [editEmail, setEditEmail] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -203,6 +205,8 @@ export default function Profile() {
 
   const handleStartEdit = () => {
     setEditName(profile?.display_name || '');
+    setEditFullName((profile as any)?.full_name || profile?.display_name || '');
+    setEditNickname((profile as any)?.nickname || '');
     setEditBio((profile as any)?.bio || '');
     setEditPhone(profile?.phone ? formatPhoneForDisplay(profile.phone) : '');
     setEditEmail(user?.email || '');
