@@ -12,6 +12,7 @@ import { useRides } from '@/hooks/useRides';
 import { getRideStatus, type RideStatus } from '@/lib/rideStatus';
 import { toast } from 'sonner';
 import { trackEvent } from '@/lib/analytics';
+import { getPrivateName } from '@/lib/identity';
 interface HostSafetyDashboardProps {
   eventId: string;
   isAfterRally?: boolean;
@@ -263,10 +264,10 @@ export function HostSafetyDashboard({
                       <Avatar className="h-6 w-6">
                         <AvatarImage src={dd.profile?.avatar_url || undefined} />
                         <AvatarFallback className="text-xs">
-                          {dd.profile?.display_name?.charAt(0)?.toUpperCase() || '?'}
+                          {getPrivateName(dd.profile as any).charAt(0).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
-                      <span className="text-xs font-medium text-orange-500">{dd.profile?.display_name}</span>
+                      <span className="text-xs font-medium text-orange-500">{getPrivateName(dd.profile as any)}</span>
                       {arrived ? <CheckCircle2 className="h-3 w-3 text-green-600" /> : <Navigation className="h-3 w-3 text-orange-600 animate-pulse" />}
                     </div>;
             })}
@@ -309,10 +310,10 @@ export function HostSafetyDashboard({
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={attendee.profile?.avatar_url || undefined} />
                       <AvatarFallback className="text-xs">
-                        {attendee.profile?.display_name?.charAt(0)?.toUpperCase() || '?'}
+                        {getPrivateName(attendee.profile as any).charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="text-sm flex-1 truncate text-primary brightness-75 font-medium">{attendee.profile?.display_name}</span>
+                    <span className="text-sm flex-1 truncate text-primary brightness-75 font-medium">{getPrivateName(attendee.profile as any)}</span>
                     {showRidePill ? (
                       <Badge variant="outline" className={`text-[10px] whitespace-nowrap ${ridePillStyles[rideStatus.type]}`}>
                         {rideStatus.type === 'dd' && <Car className="h-2.5 w-2.5 mr-1" />}
