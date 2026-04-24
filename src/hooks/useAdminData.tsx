@@ -31,7 +31,7 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
       // Fetch profiles (include referred_by for referral tracking)
       const { data: profiles } = await supabase
         .from('profiles')
-        .select('id, user_id, display_name, avatar_url, founding_member, founder_number, created_at, referred_by')
+        .select('id, user_id, display_name, full_name, nickname, avatar_url, founding_member, founder_number, created_at, referred_by')
         .range(0, 9999);
 
       // Get ALL admin user IDs from user_roles (any role = admin user)
