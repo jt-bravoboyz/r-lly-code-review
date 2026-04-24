@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Calendar as CalendarIcon, Loader2, RotateCcw, ChevronDown, DollarSign } from 'lucide-react';
+import { Plus, Calendar as CalendarIcon, Loader2, RotateCcw, ChevronDown, DollarSign, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -30,6 +30,7 @@ import { EVENT_TYPES } from '@/lib/eventTypes';
 import { TimelineSlider } from '@/components/events/TimelineSlider';
 import { StagedMediaPicker, type StagedFile } from '@/components/events/StagedMediaPicker';
 import { Progress } from '@/components/ui/progress';
+import { useRallyFriends } from '@/hooks/useRallyFriends';
 
 const eventSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters'),
@@ -84,8 +85,10 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
   const reviewRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [selectedSquads, setSelectedSquads] = useState<Squad[]>([]);
+  const [selectedFriendIds, setSelectedFriendIds] = useState<string[]>([]);
   const { profile } = useAuth();
   const { data: mySquads } = useAllMySquads();
+  const { data: rallyFriends = [] } = useRallyFriends();
   const createEvent = useCreateEvent();
   const joinEvent = useJoinEvent();
   const createInvites = useCreateEventInvites();
@@ -100,6 +103,10 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
   };
 
   const hasAudience = selectedSquads.length > 0;
+
+  const toggleFriendSelection = (friendId: string) => {
+    setSelectedFriendIds(prev => prev.includes(friendId) ? prev.filter(id => id !== friendId) : [...prev, friendId]);
+  };
 
   const handleScroll = useCallback(() => {
     const container = scrollContainerRef.current;
@@ -216,9 +223,10 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
         }
       }
 
-      // Auto-invite all members from selected squads
+      const allMemberIds = new Set<string>(selectedFriendIds.filter(id => id !== profile.id));
+
+      // Auto-invite selected friends and all members from selected squads
       if (selectedSquads.length > 0) {
-        const allMemberIds = new Set<string>();
         selectedSquads.forEach(squad => {
           if (squad.owner_id && squad.owner_id !== profile.id) {
             allMemberIds.add(squad.owner_id);
@@ -230,19 +238,20 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
             }
           });
         });
-        const uniqueMemberIds = Array.from(allMemberIds);
-        if (uniqueMemberIds.length > 0) {
-          try {
-            await createInvites.mutateAsync({
-              eventId: result.id,
-              profileIds: uniqueMemberIds,
-              eventTitle: data.title,
-            });
-            toast.success(`Invited ${uniqueMemberIds.length} squad member${uniqueMemberIds.length > 1 ? 's' : ''}!`);
-          } catch (inviteError: any) {
-            console.error('Failed to send squad invites:', inviteError);
-            toast.error('Rally created but some invites failed');
-          }
+      }
+
+      const uniqueMemberIds = Array.from(allMemberIds);
+      if (uniqueMemberIds.length > 0) {
+        try {
+          await createInvites.mutateAsync({
+            eventId: result.id,
+            profileIds: uniqueMemberIds,
+            eventTitle: data.title,
+          });
+          toast.success(`Invited ${uniqueMemberIds.length} friend${uniqueMemberIds.length > 1 ? 's' : ''}!`);
+        } catch (inviteError: any) {
+          console.error('Failed to send invites:', inviteError);
+          toast.error('R@lly created but some invites failed');
         }
       }
 
@@ -250,6 +259,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
       setOpen(false);
       setStagedMedia([]);
       setSelectedSquads([]);
+      setSelectedFriendIds([]);
       form.reset();
       navigate(`/events/${result.id}`);
     } catch (error: any) {
