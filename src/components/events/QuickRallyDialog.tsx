@@ -239,26 +239,27 @@ export const QuickRallyDialog = forwardRef<HTMLButtonElement, QuickRallyDialogPr
           });
           
         }
-          const uniqueMemberIds = Array.from(allMemberIds);
+
+        const uniqueMemberIds = Array.from(allMemberIds);
           
           if (import.meta.env.DEV) console.log('[R@lly Debug] Unique member IDs to invite:', uniqueMemberIds);
           
-          if (uniqueMemberIds.length > 0) {
-            try {
-              await createInvites.mutateAsync({
-                eventId: result.id,
-                profileIds: uniqueMemberIds,
-                eventTitle: data.title,
-              });
-              toast.success(`Invited ${uniqueMemberIds.length} friend${uniqueMemberIds.length > 1 ? 's' : ''}!`);
-            } catch (inviteError: any) {
-              // Don't fail the whole creation if invites fail
-              console.error('Failed to send squad invites:', inviteError);
-              toast.error('R@lly created but some invites failed');
-            }
-          } else {
-            if (import.meta.env.DEV) console.log('[R@lly Debug] No members to invite (all excluded or empty)');
+        if (uniqueMemberIds.length > 0) {
+          try {
+            await createInvites.mutateAsync({
+              eventId: result.id,
+              profileIds: uniqueMemberIds,
+              eventTitle: data.title,
+            });
+            toast.success(`Invited ${uniqueMemberIds.length} friend${uniqueMemberIds.length > 1 ? 's' : ''}!`);
+          } catch (inviteError: any) {
+            // Don't fail the whole creation if invites fail
+            console.error('Failed to send invites:', inviteError);
+            toast.error('R@lly created but some invites failed');
           }
+        } else {
+          if (import.meta.env.DEV) console.log('[R@lly Debug] No members to invite (all excluded or empty)');
+        }
         
         // Fire confetti celebration!
         fireRallyConfetti();
