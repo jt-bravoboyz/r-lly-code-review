@@ -1,5 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { getPrivateName } from '@/lib/identity';
 
 export function useSafetyNotifications() {
   const { profile } = useAuth();
@@ -14,7 +15,7 @@ export function useSafetyNotifications() {
           type: 'going_home',
           eventId,
           title: '🏠 Someone is Heading Home',
-          body: `${profile.display_name || 'An attendee'} started Participating in R@lly Home`,
+          body: `${getPrivateName(profile as any)} started Participating in R@lly Home`,
           excludeProfileId: profile.id,
         },
       });
@@ -33,7 +34,7 @@ export function useSafetyNotifications() {
           type: 'arrived_safe',
           eventId,
           title: '✅ Safe Arrival!',
-          body: `${profile.display_name || 'An attendee'} has arrived safely`,
+          body: `${getPrivateName(profile as any)} has arrived safely`,
           excludeProfileId: profile.id,
         },
       });
