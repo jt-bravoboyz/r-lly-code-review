@@ -419,7 +419,7 @@ export const QuickRallyDialog = forwardRef<HTMLButtonElement, QuickRallyDialogPr
               />
 
               {/* Squad Selection - Multi-select */}
-              {squads && squads.length > 0 && (
+              {squads && squads.length > 0 ? (
                 <div className="space-y-2">
                   <FormLabel>Invite Squads (optional)</FormLabel>
                   <ScrollArea className="h-24">
@@ -450,38 +450,40 @@ export const QuickRallyDialog = forwardRef<HTMLButtonElement, QuickRallyDialogPr
                       {selectedSquads.length} squad{selectedSquads.length > 1 ? 's' : ''} selected
                     </p>
                   )}
+                  {selectedSquads.length === 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      You can invite people now or after the R@lly is created.
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="rounded-lg border border-primary/20 bg-primary/10 p-3">
+                  <div className="flex gap-3">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
+                      <Users className="h-4 w-4" />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-semibold text-foreground">No squads yet.</p>
+                      <p className="text-xs leading-relaxed text-muted-foreground">
+                        Start the R@lly first, then invite people by contact, phone number, or share link.
+                      </p>
+                    </div>
+                  </div>
                 </div>
               )}
 
-              {(() => {
-                const hasAudience = selectedSquads.length > 0;
-                return (
+              <Button
+                type="submit"
+                className="w-full gradient-primary text-primary-foreground hover:opacity-90"
+                disabled={createEvent.isPending || createInvites.isPending || isSubmittingRef.current}
+              >
+                {createEvent.isPending || createInvites.isPending ? 'Starting...' : (
                   <>
-                    {!hasAudience && (
-                      <p className="text-xs text-muted-foreground text-center">
-                        Add at least one friend or squad to start the R@lly.
-                      </p>
-                    )}
-                    <Button
-                      type="submit"
-                      className="w-full gradient-primary text-primary-foreground hover:opacity-90"
-                      disabled={
-                        createEvent.isPending ||
-                        createInvites.isPending ||
-                        isSubmittingRef.current ||
-                        !hasAudience
-                      }
-                    >
-                      {createEvent.isPending || createInvites.isPending ? 'Starting...' : (
-                        <>
-                          <Zap className="h-4 w-4 mr-2" />
-                          {selectedTime === 'now' ? 'Start Rally Now' : 'Schedule Rally'}
-                        </>
-                      )}
-                    </Button>
+                    <Zap className="h-4 w-4 mr-2" />
+                    {selectedTime === 'now' ? 'Start Rally Now' : 'Schedule Rally'}
                   </>
-                );
-              })()}
+                )}
+              </Button>
             </form>
           </Form>
         </DialogContent>

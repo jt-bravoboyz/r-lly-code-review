@@ -515,10 +515,10 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
               </CollapsibleContent>
             </Collapsible>
 
-            {/* Audience picker — at least one squad required */}
-            {mySquads && mySquads.length > 0 && (
+            {/* Audience picker — squad invites are optional */}
+            {mySquads && mySquads.length > 0 ? (
               <div className="space-y-2 pt-2">
-                <FormLabel>Invite Squads</FormLabel>
+                <FormLabel>Invite Squads (optional)</FormLabel>
                 <ScrollArea className="h-24">
                   <div className="flex flex-wrap gap-2 pb-2">
                     {mySquads.map((squad) => {
@@ -545,9 +545,23 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
                 </ScrollArea>
                 {!hasAudience && (
                   <p className="text-xs text-muted-foreground">
-                    Add at least one friend or squad to start the R@lly.
+                    You can invite people now or after the R@lly is created.
                   </p>
                 )}
+              </div>
+            ) : (
+              <div className="mt-2 rounded-lg border border-primary/20 bg-primary/10 p-3">
+                <div className="flex gap-3">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
+                    <Users className="h-4 w-4" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold text-foreground">No squads yet.</p>
+                    <p className="text-xs leading-relaxed text-muted-foreground">
+                      Create the R@lly first, then invite people by contact, phone number, or share link.
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
             </div>
@@ -563,7 +577,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
             <Button 
               type="submit" 
               className="w-full gradient-primary"
-              disabled={createEvent.isPending || joinEvent.isPending || isUploading || isSubmittingRef.current || !hasAudience}
+              disabled={createEvent.isPending || joinEvent.isPending || isUploading || isSubmittingRef.current}
             >
               {isUploading ? (
                 <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> {uploadStatus}</>
