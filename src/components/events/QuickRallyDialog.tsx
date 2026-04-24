@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef, forwardRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Zap, Users, Beer, Check, Clock, ChevronDown } from 'lucide-react';
+import { Zap, Users, Beer, Check, Clock, ChevronDown, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
