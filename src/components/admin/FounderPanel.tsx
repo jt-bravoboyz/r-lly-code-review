@@ -3,12 +3,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Award } from 'lucide-react';
+import { getPrivateName, hasNickname } from '@/lib/identity';
 
 interface FounderPanelProps {
   founders: Array<{
     id: string;
     user_id: string;
     display_name: string | null;
+    full_name?: string | null;
+    nickname?: string | null;
     avatar_url: string | null;
     founding_member: boolean | null;
     founder_number: number | null;
@@ -78,11 +81,14 @@ export const FounderPanel = React.forwardRef<HTMLDivElement, FounderPanelProps>(
               <div key={f.id} className="flex items-center gap-3 p-3 rounded-lg border">
                 <Avatar className="h-9 w-9">
                   <AvatarImage src={f.avatar_url || undefined} />
-                  <AvatarFallback>{f.display_name?.charAt(0)?.toUpperCase() || '?'}</AvatarFallback>
+                  <AvatarFallback>{getPrivateName(f as any).charAt(0).toUpperCase()}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium truncate">{f.display_name || 'Unnamed'}</span>
+                    <span className="text-sm font-medium truncate">{getPrivateName(f as any)}</span>
+                    {hasNickname(f as any) && (
+                      <span className="text-[10px] text-muted-foreground truncate">"{f.nickname}"</span>
+                    )}
                     {f.founder_number && (
                       <Badge variant="secondary" className="text-xs">#{f.founder_number}</Badge>
                     )}
