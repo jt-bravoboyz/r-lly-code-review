@@ -215,6 +215,33 @@ export default function Notifications() {
                               : 'Just now'}
                           </span>
                         </div>
+                        {notification.type === 'friend_request' && !notification.read && (notification.data as Record<string, any> | null)?.friendship_id && (
+                          <div className="flex gap-2 mt-3">
+                            <Button
+                              size="sm"
+                              className="h-9 rounded-full bg-primary text-primary-foreground hover:bg-primary/90"
+                              disabled={respondToFriendRequest.isPending || markFriendRequestRead.isPending}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleFriendResponse((notification.data as Record<string, any>).friendship_id, 'accepted');
+                              }}
+                            >
+                              Accept
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-9 rounded-full"
+                              disabled={respondToFriendRequest.isPending || markFriendRequestRead.isPending}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleFriendResponse((notification.data as Record<string, any>).friendship_id, 'declined');
+                              }}
+                            >
+                              Decline
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </CardContent>
