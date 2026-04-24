@@ -24,6 +24,8 @@ export interface AttendeeWithSafetyStatus {
   profile?: {
     id: string;
     display_name: string | null;
+    full_name?: string | null;
+    nickname?: string | null;
     avatar_url: string | null;
   };
 }
@@ -127,7 +129,7 @@ export function useEventSafetyStatus(eventId: string | undefined) {
 
       const { data: profiles } = await supabase
         .from('safe_profiles')
-        .select('id, display_name, avatar_url')
+        .select('id, display_name, full_name, nickname, avatar_url')
         .in('id', profileIds);
 
       const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
