@@ -111,8 +111,10 @@ export function useRequestFriend() {
       return data as { id: string };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['friendships', profile?.id] });
-      queryClient.invalidateQueries({ queryKey: ['rally-friends', profile?.id] });
+      queryClient.invalidateQueries({ queryKey: ['friendships'] });
+      queryClient.invalidateQueries({ queryKey: ['rally-friends'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['public-profile-search'] });
     },
   });
 }
@@ -132,9 +134,10 @@ export function useRespondToFriendRequest() {
       return { friendshipId, response };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['friendships', profile?.id] });
-      queryClient.invalidateQueries({ queryKey: ['rally-friends', profile?.id] });
-      queryClient.invalidateQueries({ queryKey: ['notifications', profile?.id] });
+      queryClient.invalidateQueries({ queryKey: ['friendships'] });
+      queryClient.invalidateQueries({ queryKey: ['rally-friends'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['public-profile-search'] });
     },
   });
 }

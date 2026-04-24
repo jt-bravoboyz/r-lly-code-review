@@ -151,7 +151,7 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search contacts..."
+            placeholder="Search R@lly friends, handles, contacts..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10 bg-white/80 backdrop-blur-sm border-0 shadow-sm rounded-xl"
@@ -208,7 +208,7 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
                 })}
               </div>
             ) : !loadingRallySearch ? (
-              <p className="text-sm text-muted-foreground">No public R@lly profiles found.</p>
+              <p className="text-sm text-muted-foreground">No app profile found for that name yet.</p>
             ) : null}
           </CardContent>
         </Card>
@@ -360,7 +360,7 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
                     </div>
                   ) : (
                     <p className="text-sm text-muted-foreground text-center py-4">
-                      No R@lly friends yet. Attend events to connect!
+                      No R@lly friends yet. Search by name above or attend events to connect.
                     </p>
                   )}
                 </CardContent>

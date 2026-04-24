@@ -17,7 +17,7 @@ import { useMarkFriendRequestNotificationsRead } from '@/hooks/useNotifications'
 import { useRespondToFriendRequest } from '@/hooks/useFriendships';
 import { toast } from 'sonner';
 
-const INVITE_TYPES = ['squad_invite', 'rally_invite', 'event_invite'];
+const INVITE_TYPES = ['squad_invite', 'rally_invite', 'event_invite', 'friend_request'];
 const ACTIONABLE_TYPES = [...INVITE_TYPES, 'friend_request', 'rally_started', 'squad_chat_unread', 'rally_chat_unread', 'chat_unread'];
 
 export default function Notifications() {

@@ -1,10 +1,12 @@
-import { Users, Calendar, ExternalLink } from 'lucide-react';
+import { Users, Calendar, ExternalLink, UserPlus } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useMarkNotificationRead } from '@/hooks/useNotifications';
+import { useMarkFriendRequestNotificationsRead, useMarkNotificationRead } from '@/hooks/useNotifications';
 import { formatDistanceToNow } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import type { Tables } from '@/integrations/supabase/types';
+import { useRespondToFriendRequest } from '@/hooks/useFriendships';
+import { toast } from 'sonner';
 
 type Notification = Tables<'notifications'>;
 
@@ -14,11 +16,14 @@ interface InviteAlertCardProps {
 
 export function InviteAlertCard({ notification }: InviteAlertCardProps) {
   const markRead = useMarkNotificationRead();
+  const markFriendRequestRead = useMarkFriendRequestNotificationsRead();
+  const respondToFriendRequest = useRespondToFriendRequest();
   const navigate = useNavigate();
 
   const data = notification.data as Record<string, any> | null;
   const isSquadInvite = notification.type === 'squad_invite';
   const isRallyInvite = notification.type === 'rally_invite' || notification.type === 'event_invite';
+  const isFriendRequest = notification.type === 'friend_request';
 
   const handleViewInvite = () => {
     if (!notification.read) {
@@ -32,7 +37,19 @@ export function InviteAlertCard({ notification }: InviteAlertCardProps) {
     }
   };
 
-  const Icon = isSquadInvite ? Users : Calendar;
+  const handleFriendResponse = async (response: 'accepted' | 'declined') => {
+    if (!data?.friendship_id) return;
+
+    try {
+      await respondToFriendRequest.mutateAsync({ friendshipId: data.friendship_id, response });
+      await markFriendRequestRead.mutateAsync(data.friendship_id);
+      toast.success(response === 'accepted' ? 'R@lly Friend added.' : 'Friend request declined.');
+    } catch (error: any) {
+      toast.error(error.message || 'Could not update friend request');
+    }
+  };
+
+  const Icon = isFriendRequest ? UserPlus : isSquadInvite ? Users : Calendar;
 
   return (
     <Card
@@ -68,16 +85,38 @@ export function InviteAlertCard({ notification }: InviteAlertCardProps) {
                 : 'Just now'}
             </div>
 
-            <div className="mt-3">
-              <Button
-                size="sm"
-                onClick={handleViewInvite}
-                className="gap-1.5"
-              >
-                <ExternalLink className="h-3.5 w-3.5" />
-                View Invite
-              </Button>
-            </div>
+            {isFriendRequest && !notification.read && data?.friendship_id ? (
+              <div className="flex gap-2 mt-3">
+                <Button
+                  size="sm"
+                  className="h-9 rounded-full bg-primary text-primary-foreground hover:bg-primary/90"
+                  disabled={respondToFriendRequest.isPending || markFriendRequestRead.isPending}
+                  onClick={() => handleFriendResponse('accepted')}
+                >
+                  Accept
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-9 rounded-full"
+                  disabled={respondToFriendRequest.isPending || markFriendRequestRead.isPending}
+                  onClick={() => handleFriendResponse('declined')}
+                >
+                  Decline
+                </Button>
+              </div>
+            ) : !isFriendRequest ? (
+              <div className="mt-3">
+                <Button
+                  size="sm"
+                  onClick={handleViewInvite}
+                  className="gap-1.5"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  View Invite
+                </Button>
+              </div>
+            ) : null}
           </div>
         </div>
       </CardContent>
