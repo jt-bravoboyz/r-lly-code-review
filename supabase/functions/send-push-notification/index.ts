@@ -272,6 +272,23 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
+    // Allow friend requests and accepted friends
+    const { data: friendConnections } = await supabase
+      .from('friendships')
+      .select('requester_id, recipient_id, status')
+      .or(`requester_id.eq.${callerProfile.id},recipient_id.eq.${callerProfile.id}`)
+      .in('status', ['pending', 'accepted']);
+
+    if (friendConnections) {
+      for (const friendship of friendConnections) {
+        const otherProfileId = friendship.requester_id === callerProfile.id ? friendship.recipient_id : friendship.requester_id;
+        const isOutgoingPending = friendship.status === 'pending' && friendship.requester_id === callerProfile.id;
+        if (friendship.status === 'accepted' || isOutgoingPending) {
+          allowedProfileIds.push(otherProfileId);
+        }
+      }
+    }
+
     // Remove duplicates
     allowedProfileIds = [...new Set(allowedProfileIds)];
 

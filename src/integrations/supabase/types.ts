@@ -1029,6 +1029,96 @@ export type Database = {
         }
         Relationships: []
       }
+      friendships: {
+        Row: {
+          created_at: string
+          id: string
+          recipient_id: string
+          requested_at: string
+          requester_id: string
+          responded_at: string | null
+          status: Database["public"]["Enums"]["friendship_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          recipient_id: string
+          requested_at?: string
+          requester_id: string
+          responded_at?: string | null
+          status?: Database["public"]["Enums"]["friendship_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          recipient_id?: string
+          requested_at?: string
+          requester_id?: string
+          responded_at?: string | null
+          status?: Database["public"]["Enums"]["friendship_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "friendships_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "friendships_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "friendships_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "friendships_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles_with_connection"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "friendships_requester_id_fkey"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "friendships_requester_id_fkey"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "friendships_requester_id_fkey"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "friendships_requester_id_fkey"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles_with_connection"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invite_history: {
         Row: {
           id: string
@@ -3383,6 +3473,10 @@ export type Database = {
           user_id: string
         }[]
       }
+      are_rally_friends: {
+        Args: { p_profile_a: string; p_profile_b: string }
+        Returns: boolean
+      }
       can_see_destination: {
         Args: {
           attendee_event_id: string
@@ -3426,6 +3520,7 @@ export type Database = {
         Args: { retention_days?: number }
         Returns: number
       }
+      current_profile_id: { Args: never; Returns: string }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
@@ -3435,6 +3530,10 @@ export type Database = {
         Returns: number
       }
       generate_secure_invite_code: { Args: never; Returns: string }
+      get_accepted_friend_ids: {
+        Args: { p_profile_id: string }
+        Returns: string[]
+      }
       get_connection_type: {
         Args: { target_profile_id: string }
         Returns: Database["public"]["Enums"]["connection_type"]
@@ -3659,6 +3758,15 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: undefined
       }
+      search_public_profiles: {
+        Args: { p_limit?: number; p_query: string }
+        Returns: {
+          avatar_url: string
+          bio: string
+          display_name: string
+          id: string
+        }[]
+      }
       set_referral: {
         Args: { p_referrer_id: string; p_user_id: string }
         Returns: undefined
@@ -3701,6 +3809,7 @@ export type Database = {
     Enums: {
       app_role: "admin" | "moderator" | "user"
       connection_type: "event" | "squad" | "self" | "none"
+      friendship_status: "pending" | "accepted" | "declined" | "blocked"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -3830,6 +3939,7 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "moderator", "user"],
       connection_type: ["event", "squad", "self", "none"],
+      friendship_status: ["pending", "accepted", "declined", "blocked"],
     },
   },
 } as const

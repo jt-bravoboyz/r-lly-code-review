@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef, forwardRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Zap, Users, Beer, Check, Clock, ChevronDown } from 'lucide-react';
+import { Zap, Users, Beer, Check, Clock, ChevronDown, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -22,6 +22,8 @@ import { useConfetti } from '@/hooks/useConfetti';
 import { LocationSearch } from '@/components/location/LocationSearch';
 import { format, addHours, setHours, setMinutes, isAfter, isSameDay } from 'date-fns';
 import { EVENT_TYPES, getEventTypeLabel } from '@/lib/eventTypes';
+import { useRallyFriends } from '@/hooks/useRallyFriends';
+import { cn } from '@/lib/utils';
 
 const quickRallySchema = z.object({
   title: z.string().min(1, 'Give your rally a name'),
@@ -98,12 +100,14 @@ export const QuickRallyDialog = forwardRef<HTMLButtonElement, QuickRallyDialogPr
   function QuickRallyDialog({ trigger, preselectedSquad }, ref) {
     const [open, setOpen] = useState(false);
     const [selectedSquads, setSelectedSquads] = useState<Squad[]>(preselectedSquad ? [preselectedSquad] : []);
+    const [selectedFriendIds, setSelectedFriendIds] = useState<string[]>([]);
     const [selectedLocationCoords, setSelectedLocationCoords] = useState<{ lat: number; lng: number } | null>(null);
     const [selectedTime, setSelectedTime] = useState<string>('now');
     const [showEventType, setShowEventType] = useState(false);
     
     const { profile } = useAuth();
     const { data: squads } = useAllMySquads();
+    const { data: rallyFriends = [] } = useRallyFriends();
     const { location, getCurrentLocation } = useLocation();
     const createEvent = useCreateEvent();
     const joinEvent = useJoinEvent();
@@ -147,9 +151,14 @@ export const QuickRallyDialog = forwardRef<HTMLButtonElement, QuickRallyDialogPr
       });
     };
 
+    const toggleFriendSelection = (friendId: string) => {
+      setSelectedFriendIds(prev => prev.includes(friendId) ? prev.filter(id => id !== friendId) : [...prev, friendId]);
+    };
+
     const handleClose = () => {
       setOpen(false);
       setSelectedSquads(preselectedSquad ? [preselectedSquad] : []);
+      setSelectedFriendIds([]);
       setSelectedLocationCoords(null);
       setSelectedTime('now');
       setShowEventType(false);
@@ -195,10 +204,10 @@ export const QuickRallyDialog = forwardRef<HTMLButtonElement, QuickRallyDialogPr
           });
         }
         
-        // Auto-invite all members from selected squads
+        const allMemberIds = new Set<string>(selectedFriendIds.filter(id => id !== profile.id));
+
+        // Auto-invite selected friends and all members from selected squads
         if (selectedSquads.length > 0) {
-          // Collect all member profile IDs from selected squads, excluding the host
-          const allMemberIds = new Set<string>();
           
           if (import.meta.env.DEV) {
             console.log('[R@lly Debug] Processing squad invites:', { 
@@ -229,26 +238,27 @@ export const QuickRallyDialog = forwardRef<HTMLButtonElement, QuickRallyDialogPr
             });
           });
           
-          const uniqueMemberIds = Array.from(allMemberIds);
+        }
+
+        const uniqueMemberIds = Array.from(allMemberIds);
           
           if (import.meta.env.DEV) console.log('[R@lly Debug] Unique member IDs to invite:', uniqueMemberIds);
           
-          if (uniqueMemberIds.length > 0) {
-            try {
-              await createInvites.mutateAsync({
-                eventId: result.id,
-                profileIds: uniqueMemberIds,
-                eventTitle: data.title,
-              });
-              toast.success(`Invited ${uniqueMemberIds.length} squad member${uniqueMemberIds.length > 1 ? 's' : ''}!`);
-            } catch (inviteError: any) {
-              // Don't fail the whole creation if invites fail
-              console.error('Failed to send squad invites:', inviteError);
-              toast.error('Rally created but some invites failed');
-            }
-          } else {
-            if (import.meta.env.DEV) console.log('[R@lly Debug] No members to invite (all excluded or empty)');
+        if (uniqueMemberIds.length > 0) {
+          try {
+            await createInvites.mutateAsync({
+              eventId: result.id,
+              profileIds: uniqueMemberIds,
+              eventTitle: data.title,
+            });
+            toast.success(`Invited ${uniqueMemberIds.length} friend${uniqueMemberIds.length > 1 ? 's' : ''}!`);
+          } catch (inviteError: any) {
+            // Don't fail the whole creation if invites fail
+            console.error('Failed to send invites:', inviteError);
+            toast.error('R@lly created but some invites failed');
           }
+        } else {
+          if (import.meta.env.DEV) console.log('[R@lly Debug] No members to invite (all excluded or empty)');
         }
         
         // Fire confetti celebration!
@@ -417,6 +427,36 @@ export const QuickRallyDialog = forwardRef<HTMLButtonElement, QuickRallyDialogPr
                   </FormItem>
                 )}
               />
+
+              {rallyFriends.length > 0 && (
+                <div className="space-y-2">
+                  <FormLabel>R@lly Friends (optional)</FormLabel>
+                  <ScrollArea className="h-24">
+                    <div className="flex flex-wrap gap-2 pb-2">
+                      {rallyFriends.map((friend) => {
+                        const isSelected = selectedFriendIds.includes(friend.id);
+                        return (
+                          <button
+                            key={friend.id}
+                            type="button"
+                            onClick={() => toggleFriendSelection(friend.id)}
+                            className={cn(
+                              'flex items-center gap-2 px-3 py-2 rounded-full border transition-colors',
+                              isSelected
+                                ? 'bg-primary text-primary-foreground border-primary'
+                                : 'bg-muted hover:bg-muted/80'
+                            )}
+                          >
+                            <UserPlus className="h-3 w-3" />
+                            <span className="text-sm font-medium">{friend.display_name || 'R@lly Friend'}</span>
+                            {isSelected && <Check className="h-3 w-3" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </ScrollArea>
+                </div>
+              )}
 
               {/* Squad Selection - Multi-select */}
               {squads && squads.length > 0 ? (

@@ -98,6 +98,15 @@ export function useRallyFriends() {
         }
       });
 
+      // Fetch accepted mutual R@lly Friends first
+      const acceptedFriendIds = new Set<string>();
+      const { data: friendIds } = await (supabase as any).rpc('get_accepted_friend_ids', { p_profile_id: profile.id });
+
+      (friendIds || []).forEach((id: string) => {
+        acceptedFriendIds.add(id);
+        connectedProfileIds.add(id);
+      });
+
       // Fetch referral connections (people you referred + who referred you)
       const referralIds = new Set<string>();
       
@@ -139,7 +148,7 @@ export function useRallyFriends() {
         display_name: p.display_name,
         avatar_url: p.avatar_url,
         isSquadMate: squadMateMap.has(p.id!),
-        isReferral: referralIds.has(p.id!),
+        isReferral: referralIds.has(p.id!) || acceptedFriendIds.has(p.id!),
         squadSymbols: squadMateMap.get(p.id!) || [],
       }));
 

@@ -70,7 +70,7 @@ export function useNotifications() {
             toast.success(newNotif.title || 'Welcome to the Founding 25.', {
               description: newNotif.body || 'Access granted to the Canny feedback portal.',
             });
-          } else if (alertType === 'event_invite' || alertType === 'rally_started') {
+          } else if (alertType === 'event_invite' || alertType === 'rally_started' || alertType === 'friend_request') {
             toast.info(newNotif.title, { description: newNotif.body || undefined });
           }
         }
@@ -146,6 +146,27 @@ export function useClearChatNotification() {
         .eq('profile_id', profile?.id ?? '')
         .in('type', ['squad_chat_unread', 'rally_chat_unread', 'chat_unread'])
         .filter('data->>chat_id', 'eq', chatId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications', profile?.id] });
+    },
+  });
+}
+
+export function useMarkFriendRequestNotificationsRead() {
+  const queryClient = useQueryClient();
+  const { profile } = useAuth();
+
+  return useMutation({
+    mutationFn: async (friendshipId: string) => {
+      const { error } = await supabase
+        .from('notifications')
+        .update({ read: true })
+        .eq('profile_id', profile?.id ?? '')
+        .eq('type', 'friend_request')
+        .filter('data->>friendship_id', 'eq', friendshipId);
 
       if (error) throw error;
     },

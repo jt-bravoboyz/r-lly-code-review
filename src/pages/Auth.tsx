@@ -22,7 +22,10 @@ const passwordSchema = z.string()
   .regex(/\d/, 'Password must contain at least one number')
   .regex(/[!@#$%^&*(),.?":{}|<>]/, 'Password must contain at least one special character');
 const signInPasswordSchema = z.string().min(1, 'Password is required').max(128, 'Password is too long');
-const displayNameSchema = z.string().trim().min(1, 'Name is required').max(100, 'Name is too long');
+const displayNameSchema = z.string().trim().min(1, 'Name is required').max(100, 'Name is too long').refine(
+  (value) => value.split(/\s+/).filter(Boolean).length >= 2,
+  'Enter first and last name'
+);
 const phoneSchema = z.string().optional().refine(val => {
   if (!val) return true;
   const digits = val.replace(/\D/g, '');
@@ -247,7 +250,7 @@ export default function Auth() {
         navigate(`/events/${eventData.id}`);
       } catch (error: any) {
         console.error('Auto-join failed:', error);
-        toast.error('Failed to join rally. Please try again.');
+          toast.error('Failed to join R@lly. Please try again.');
         navigate(`/join/${pendingCode}`);
       }
     };
@@ -686,7 +689,7 @@ export default function Auth() {
                     />
                     <Input
                       type="text"
-                      placeholder="Name"
+                      placeholder="First and last name"
                       value={displayName}
                       onChange={(e) => setDisplayName(e.target.value)}
                       className="pl-12 h-14 rounded-xl font-montserrat text-base"
@@ -697,6 +700,9 @@ export default function Auth() {
                       }}
                       required
                     />
+                    {errors.displayName && (
+                      <p className="text-red-400 text-sm mt-1">{errors.displayName}</p>
+                    )}
                   </div>
                 )}
 
