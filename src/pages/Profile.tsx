@@ -355,12 +355,32 @@ export default function Profile() {
               
               <div className="flex-1">
                 {isEditing ? (
-                  <Input
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
-                    className="text-xl font-bold mb-1"
-                    placeholder="Your name"
-                  />
+                  <div className="space-y-2 mb-1">
+                    <div className="space-y-1">
+                      <Input
+                        value={editNickname}
+                        onChange={(e) => setEditNickname(e.target.value)}
+                        className="text-xl font-bold"
+                        placeholder="Nickname (optional)"
+                        maxLength={30}
+                      />
+                      <p className="text-[11px] text-muted-foreground px-1">
+                        This is your R@lly handle. If left blank, we'll use your real name.
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      <Input
+                        value={editFullName}
+                        onChange={(e) => setEditFullName(e.target.value)}
+                        className="text-sm"
+                        placeholder="Full name (First Last)"
+                        maxLength={100}
+                      />
+                      <p className="text-[11px] text-muted-foreground px-1">
+                        Legal/real name. Used for safety check-ins (R@lly Home, DD) and admin records.
+                      </p>
+                    </div>
+                  </div>
                 ) : (
                   <h2 className="text-xl font-bold inline-flex items-center">
                     {profile?.display_name || 'Anonymous'}
