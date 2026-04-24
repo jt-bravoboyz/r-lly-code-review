@@ -76,9 +76,14 @@ export function UserIntelligence({ profiles, attendees, rallyEvents, headcountBy
               >
                 <Avatar className="h-7 w-7">
                   <AvatarImage src={p.avatar_url || undefined} />
-                  <AvatarFallback className="text-xs">{p.display_name?.charAt(0)?.toUpperCase() || '?'}</AvatarFallback>
+                  <AvatarFallback className="text-xs">{getPrivateName(p as any).charAt(0).toUpperCase()}</AvatarFallback>
                 </Avatar>
-                <span className="text-sm truncate">{p.display_name || 'Unnamed'}</span>
+                <span className="text-sm truncate flex items-center gap-1.5">
+                  {getPrivateName(p as any)}
+                  {hasNickname(p as any) && (
+                    <span className="text-[10px] text-muted-foreground">"{p.nickname}"</span>
+                  )}
+                </span>
                 {p.founding_member && <Award className="h-3 w-3 text-yellow-500 shrink-0" />}
               </button>
             ))}
@@ -90,10 +95,13 @@ export function UserIntelligence({ profiles, attendees, rallyEvents, headcountBy
               <div className="flex items-center gap-3">
                 <Avatar className="h-10 w-10">
                   <AvatarImage src={selected.avatar_url || undefined} />
-                  <AvatarFallback>{selected.display_name?.charAt(0)?.toUpperCase() || '?'}</AvatarFallback>
+                  <AvatarFallback>{getPrivateName(selected as any).charAt(0).toUpperCase()}</AvatarFallback>
                 </Avatar>
                 <div>
-                  <div className="font-medium">{selected.display_name}</div>
+                  <div className="font-medium">{getPrivateName(selected as any)}</div>
+                  {hasNickname(selected as any) && (
+                    <div className="text-xs text-muted-foreground">Public handle: "{selected.nickname}"</div>
+                  )}
                   {selected.founding_member && (
                     <Badge variant="secondary" className="text-xs">
                       Founder #{selected.founder_number || '—'}
