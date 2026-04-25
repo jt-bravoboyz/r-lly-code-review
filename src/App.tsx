@@ -14,6 +14,7 @@ import { TutorialOverlay } from "@/components/tutorial/TutorialOverlay";
 import { RallyOnboardingOverlay } from "@/components/onboarding/RallyOnboardingOverlay";
 import { AuthRedirectGuard } from "@/components/AuthRedirectGuard";
 import { AppEntry } from "@/components/AppEntry";
+import { PhotoPermissionDialog } from "@/components/events/PhotoPermissionDialog";
 import Index from "./pages/Index";
 import ReturningAuth from "./pages/ReturningAuth";
 import Events from "./pages/Events";
@@ -48,6 +49,7 @@ const App = () => (
                 <Toaster />
                 <Sonner />
                 <NavigationPortal />
+                <PhotoPermissionDialog />
                 <BrowserRouter>
                   <RallyOnboardingOverlay />
                   <AuthRedirectGuard />
