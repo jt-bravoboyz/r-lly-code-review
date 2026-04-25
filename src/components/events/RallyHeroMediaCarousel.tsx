@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { Play, X, Pencil, Trash2, GripVertical, ArrowUp, ArrowDown } from 'lucide-react';
+import { Play, X, Pencil, Trash2, GripVertical, ArrowUp, ArrowDown, Download } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { useFeaturedMedia, useRallyMedia, useDeleteRallyMedia } from '@/hooks/useRallyMedia';
@@ -9,6 +9,9 @@ import { Carousel, CarouselContent, CarouselItem, CarouselApi } from '@/componen
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { downloadPhoto } from '@/lib/downloadMedia';
+import { ensurePhotoPermission } from './PhotoPermissionDialog';
+import { useHaptics } from '@/hooks/useHaptics';
 
 interface RallyHeroMediaCarouselProps {
   eventId: string;
@@ -22,9 +25,12 @@ export function RallyHeroMediaCarousel({ eventId, canManage = false }: RallyHero
   const queryClient = useQueryClient();
   const [viewerUrl, setViewerUrl] = useState<string | null>(null);
   const [viewerType, setViewerType] = useState<'photo' | 'video'>('photo');
+  const [viewerId, setViewerId] = useState<string | null>(null);
+  const [downloadingViewer, setDownloadingViewer] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [api, setApi] = useState<CarouselApi>();
   const [editOpen, setEditOpen] = useState(false);
+  const { triggerHaptic } = useHaptics();
 
   // Sort: videos first, then photos by order_index
   const sorted = useMemo(() => {
@@ -99,9 +105,35 @@ export function RallyHeroMediaCarousel({ eventId, canManage = false }: RallyHero
     return null;
   }
 
-  const openViewer = (url: string, type: 'photo' | 'video') => {
+  const openViewer = (url: string, type: 'photo' | 'video', id: string) => {
     setViewerUrl(url);
     setViewerType(type);
+    setViewerId(id);
+  };
+
+  const closeViewer = () => {
+    setViewerUrl(null);
+    setViewerId(null);
+  };
+
+  const handleDownloadCurrent = async () => {
+    if (!viewerUrl || !viewerId || viewerType !== 'photo' || downloadingViewer) return;
+    setDownloadingViewer(true);
+    try {
+      const ok = await ensurePhotoPermission();
+      if (!ok) {
+        setDownloadingViewer(false);
+        return;
+      }
+      await downloadPhoto({ url: viewerUrl, id: viewerId, eventId });
+      triggerHaptic('light');
+      toast.success('Photo saved! 📸');
+    } catch {
+      triggerHaptic('error');
+      toast.error('Could not save photo');
+    } finally {
+      setDownloadingViewer(false);
+    }
   };
 
   return (
@@ -117,7 +149,7 @@ export function RallyHeroMediaCarousel({ eventId, canManage = false }: RallyHero
               <CarouselItem
                 key={item.id}
                 className="pl-0 basis-full cursor-pointer"
-                onClick={() => openViewer(item.url, item.type as 'photo' | 'video')}
+                onClick={() => openViewer(item.url, item.type as 'photo' | 'video', item.id)}
               >
                 <div className="relative aspect-[16/9] w-full overflow-hidden rounded-xl bg-muted">
                   {item.type === 'video' ? (
@@ -278,14 +310,27 @@ export function RallyHeroMediaCarousel({ eventId, canManage = false }: RallyHero
         <div
           className="fixed inset-0 z-[99999] bg-black flex items-center justify-center"
           style={{ top: 0, left: 0, right: 0, bottom: 0, width: '100vw', height: '100vh', position: 'fixed' }}
-          onClick={() => setViewerUrl(null)}
+          onClick={closeViewer}
         >
-          <button
-            onClick={(e) => { e.stopPropagation(); setViewerUrl(null); }}
-            className="absolute top-4 right-4 z-[100000] bg-white/20 text-white rounded-full p-2 hover:bg-white/40 transition-colors"
-          >
-            <X className="h-6 w-6" />
-          </button>
+          <div className="absolute top-4 right-4 z-[100000] flex items-center gap-2">
+            {viewerType === 'photo' && (
+              <button
+                onClick={(e) => { e.stopPropagation(); handleDownloadCurrent(); }}
+                disabled={downloadingViewer}
+                className="bg-white/15 backdrop-blur-md text-primary rounded-full p-2 hover:bg-white/25 transition-colors disabled:opacity-60"
+                aria-label="Save photo"
+              >
+                <Download className="h-5 w-5" />
+              </button>
+            )}
+            <button
+              onClick={(e) => { e.stopPropagation(); closeViewer(); }}
+              className="bg-white/20 text-white rounded-full p-2 hover:bg-white/40 transition-colors"
+              aria-label="Close"
+            >
+              <X className="h-6 w-6" />
+            </button>
+          </div>
           {viewerType === 'photo' && (
             <img src={viewerUrl} alt="" className="w-full h-full object-contain" onClick={e => e.stopPropagation()} />
           )}
