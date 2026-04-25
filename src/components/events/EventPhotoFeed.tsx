@@ -127,6 +127,74 @@ export function EventPhotoFeed({ eventId, isHost }: EventPhotoFeedProps) {
     return photo.created_by === profile?.id || isHost;
   };
 
+  // ---- Download handlers ----
+  const handleDownloadCurrent = async () => {
+    if (viewerIndex === null || downloadingViewer) return;
+    const photo = photos[viewerIndex];
+    if (!photo) return;
+    setDownloadingViewer(true);
+    try {
+      const ok = await ensurePhotoPermission();
+      if (!ok) { setDownloadingViewer(false); return; }
+      await downloadPhoto({ url: photo.url, id: photo.id, eventId });
+      triggerHaptic('light');
+      toast.success('Photo saved! 📸');
+    } catch {
+      triggerHaptic('error');
+      toast.error('Could not save photo');
+    } finally {
+      setDownloadingViewer(false);
+    }
+  };
+
+  // ---- Select Mode ----
+  const enterSelectMode = () => {
+    setSelectMode(true);
+    setSelectedIds(new Set());
+  };
+  const exitSelectMode = () => {
+    setSelectMode(false);
+    setSelectedIds(new Set());
+  };
+  const toggleSelected = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+  const handleBatchSave = async () => {
+    if (batchSaving || selectedIds.size === 0) return;
+    const items = photos
+      .filter(p => selectedIds.has(p.id))
+      .map(p => ({ url: p.url, id: p.id, eventId }));
+    if (items.length === 0) return;
+
+    const ok = await ensurePhotoPermission();
+    if (!ok) return;
+
+    setBatchSaving(true);
+    const toastId = toast.loading(`Saving 0 of ${items.length}…`);
+    try {
+      const { saved, failed } = await downloadPhotosBatch(items, (done, total) => {
+        toast.loading(`Saving ${done} of ${total}…`, { id: toastId });
+      });
+      if (saved > 0 && failed === 0) {
+        triggerHaptic('success');
+        toast.success(`${saved} photo${saved > 1 ? 's' : ''} saved! 📸`, { id: toastId });
+      } else if (saved > 0 && failed > 0) {
+        triggerHaptic('warning');
+        toast.warning(`Saved ${saved}, ${failed} failed`, { id: toastId });
+      } else {
+        triggerHaptic('error');
+        toast.error('Could not save photos', { id: toastId });
+      }
+      exitSelectMode();
+    } finally {
+      setBatchSaving(false);
+    }
+  };
+
   // Touch swipe for fullscreen viewer
   const touchStartX = useRef(0);
   const handleTouchStart = (e: React.TouchEvent) => { touchStartX.current = e.touches[0].clientX; };
