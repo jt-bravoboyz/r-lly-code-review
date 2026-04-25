@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { Camera, ImagePlus, X, Loader2, Trash2 } from 'lucide-react';
+import { Camera, ImagePlus, X, Loader2, Trash2, Download, Check, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useGalleryPhotos, useUploadRallyMedia, useDeleteRallyMedia, type RallyMedia } from '@/hooks/useRallyMedia';
@@ -9,6 +9,9 @@ import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { createPortal } from 'react-dom';
+import { downloadPhoto, downloadPhotosBatch } from '@/lib/downloadMedia';
+import { ensurePhotoPermission } from './PhotoPermissionDialog';
+import { useHaptics } from '@/hooks/useHaptics';
 
 const MAX_PHOTO_SIZE = 10 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic'];
@@ -27,7 +30,12 @@ export function EventPhotoFeed({ eventId, isHost }: EventPhotoFeedProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
+  const [downloadingViewer, setDownloadingViewer] = useState(false);
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [batchSaving, setBatchSaving] = useState(false);
   const [profiles, setProfiles] = useState<Record<string, { display_name: string; avatar_url: string | null }>>({});
+  const { triggerHaptic } = useHaptics();
 
   const photos = galleryMedia || [];
 
