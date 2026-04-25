@@ -1,6 +1,6 @@
 import { Capacitor } from '@capacitor/core';
 import { Filesystem } from '@capacitor/filesystem';
-import { App } from '@capacitor/app';
+
 
 export type PhotoPermissionState = 'granted' | 'denied' | 'prompt' | 'na';
 
@@ -32,11 +32,14 @@ export async function openAppSettings(): Promise<void> {
   if (!Capacitor.isNativePlatform()) return;
   try {
     const platform = Capacitor.getPlatform();
-    if (platform === 'ios') {
-      await App.openUrl({ url: 'app-settings:' });
-    } else if (platform === 'android') {
-      // Best-effort: open generic settings; on most devices this lands on app permissions
-      await App.openUrl({ url: 'package:' });
+    const url = platform === 'ios' ? 'app-settings:' : 'package:';
+    // Lazy-load so missing plugin method doesn't break the bundle
+    const { App } = await import('@capacitor/app');
+    const appAny = App as unknown as { openUrl?: (opts: { url: string }) => Promise<unknown> };
+    if (typeof appAny.openUrl === 'function') {
+      await appAny.openUrl({ url });
+    } else if (platform !== 'ios') {
+      window.location.href = url;
     }
   } catch {
     // no-op
