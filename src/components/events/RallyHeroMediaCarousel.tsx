@@ -25,9 +25,12 @@ export function RallyHeroMediaCarousel({ eventId, canManage = false }: RallyHero
   const queryClient = useQueryClient();
   const [viewerUrl, setViewerUrl] = useState<string | null>(null);
   const [viewerType, setViewerType] = useState<'photo' | 'video'>('photo');
+  const [viewerId, setViewerId] = useState<string | null>(null);
+  const [downloadingViewer, setDownloadingViewer] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [api, setApi] = useState<CarouselApi>();
   const [editOpen, setEditOpen] = useState(false);
+  const { triggerHaptic } = useHaptics();
 
   // Sort: videos first, then photos by order_index
   const sorted = useMemo(() => {
@@ -102,9 +105,35 @@ export function RallyHeroMediaCarousel({ eventId, canManage = false }: RallyHero
     return null;
   }
 
-  const openViewer = (url: string, type: 'photo' | 'video') => {
+  const openViewer = (url: string, type: 'photo' | 'video', id: string) => {
     setViewerUrl(url);
     setViewerType(type);
+    setViewerId(id);
+  };
+
+  const closeViewer = () => {
+    setViewerUrl(null);
+    setViewerId(null);
+  };
+
+  const handleDownloadCurrent = async () => {
+    if (!viewerUrl || !viewerId || viewerType !== 'photo' || downloadingViewer) return;
+    setDownloadingViewer(true);
+    try {
+      const ok = await ensurePhotoPermission();
+      if (!ok) {
+        setDownloadingViewer(false);
+        return;
+      }
+      await downloadPhoto({ url: viewerUrl, id: viewerId, eventId });
+      triggerHaptic('light');
+      toast.success('Photo saved! 📸');
+    } catch {
+      triggerHaptic('error');
+      toast.error('Could not save photo');
+    } finally {
+      setDownloadingViewer(false);
+    }
   };
 
   return (
