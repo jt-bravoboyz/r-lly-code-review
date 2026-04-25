@@ -379,6 +379,16 @@ export function EventPhotoFeed({ eventId, isHost }: EventPhotoFeedProps) {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              <button
+                onClick={handleDownloadCurrent}
+                disabled={downloadingViewer}
+                className="p-2 rounded-full bg-white/15 backdrop-blur-md hover:bg-white/25 transition-colors disabled:opacity-60"
+                aria-label="Save photo"
+              >
+                {downloadingViewer
+                  ? <Loader2 className="h-4 w-4 text-primary animate-spin" />
+                  : <Download className="h-4 w-4 text-primary" />}
+              </button>
               {canDelete(photos[viewerIndex]) && (
                 <button
                   onClick={() => handleDelete(photos[viewerIndex].id)}
