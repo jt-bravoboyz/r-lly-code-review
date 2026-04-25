@@ -149,7 +149,7 @@ export function RallyHeroMediaCarousel({ eventId, canManage = false }: RallyHero
               <CarouselItem
                 key={item.id}
                 className="pl-0 basis-full cursor-pointer"
-                onClick={() => openViewer(item.url, item.type as 'photo' | 'video')}
+                onClick={() => openViewer(item.url, item.type as 'photo' | 'video', item.id)}
               >
                 <div className="relative aspect-[16/9] w-full overflow-hidden rounded-xl bg-muted">
                   {item.type === 'video' ? (
