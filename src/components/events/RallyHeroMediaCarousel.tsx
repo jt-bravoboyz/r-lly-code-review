@@ -310,14 +310,27 @@ export function RallyHeroMediaCarousel({ eventId, canManage = false }: RallyHero
         <div
           className="fixed inset-0 z-[99999] bg-black flex items-center justify-center"
           style={{ top: 0, left: 0, right: 0, bottom: 0, width: '100vw', height: '100vh', position: 'fixed' }}
-          onClick={() => setViewerUrl(null)}
+          onClick={closeViewer}
         >
-          <button
-            onClick={(e) => { e.stopPropagation(); setViewerUrl(null); }}
-            className="absolute top-4 right-4 z-[100000] bg-white/20 text-white rounded-full p-2 hover:bg-white/40 transition-colors"
-          >
-            <X className="h-6 w-6" />
-          </button>
+          <div className="absolute top-4 right-4 z-[100000] flex items-center gap-2">
+            {viewerType === 'photo' && (
+              <button
+                onClick={(e) => { e.stopPropagation(); handleDownloadCurrent(); }}
+                disabled={downloadingViewer}
+                className="bg-white/15 backdrop-blur-md text-primary rounded-full p-2 hover:bg-white/25 transition-colors disabled:opacity-60"
+                aria-label="Save photo"
+              >
+                <Download className="h-5 w-5" />
+              </button>
+            )}
+            <button
+              onClick={(e) => { e.stopPropagation(); closeViewer(); }}
+              className="bg-white/20 text-white rounded-full p-2 hover:bg-white/40 transition-colors"
+              aria-label="Close"
+            >
+              <X className="h-6 w-6" />
+            </button>
+          </div>
           {viewerType === 'photo' && (
             <img src={viewerUrl} alt="" className="w-full h-full object-contain" onClick={e => e.stopPropagation()} />
           )}
