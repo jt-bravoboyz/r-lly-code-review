@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { Play, X, Pencil, Trash2, GripVertical, ArrowUp, ArrowDown } from 'lucide-react';
+import { Play, X, Pencil, Trash2, GripVertical, ArrowUp, ArrowDown, Download } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { useFeaturedMedia, useRallyMedia, useDeleteRallyMedia } from '@/hooks/useRallyMedia';
@@ -9,6 +9,9 @@ import { Carousel, CarouselContent, CarouselItem, CarouselApi } from '@/componen
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { downloadPhoto } from '@/lib/downloadMedia';
+import { ensurePhotoPermission } from './PhotoPermissionDialog';
+import { useHaptics } from '@/hooks/useHaptics';
 
 interface RallyHeroMediaCarouselProps {
   eventId: string;
