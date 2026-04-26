@@ -80,11 +80,11 @@ export function GrowthNarrative({
           </div>
         </div>
 
-        {/* Top 3 viral hosts */}
+        {/* Top viral hosts (up to 5) */}
         <div className="md:col-span-7">
           <div className="flex items-center gap-2 mb-3">
-            <h3 className="text-sm font-semibold">Top Viral Hosts</h3>
-            <InfoTip text="The hosts driving the most growth — ranked by personal K-factor (invites sent per R@lly created)." />
+            <h3 className="text-sm font-semibold">Top Hosts by Impact</h3>
+            <InfoTip text="Ranked by total attendees delivered (real impact), with viral coefficient (invites per R@lly) as a tiebreaker. The pill shows their personal K-factor — invites sent per R@lly created." />
           </div>
           {topViralHosts.length === 0 ? (
             <p className="text-xs text-muted-foreground">
