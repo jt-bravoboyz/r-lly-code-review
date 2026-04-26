@@ -1121,6 +1121,7 @@ export type Database = {
       }
       invite_history: {
         Row: {
+          hidden_at: string | null
           id: string
           invite_count: number
           invited_name: string | null
@@ -1130,6 +1131,7 @@ export type Database = {
           last_invited_at: string
         }
         Insert: {
+          hidden_at?: string | null
           id?: string
           invite_count?: number
           invited_name?: string | null
@@ -1139,6 +1141,7 @@ export type Database = {
           last_invited_at?: string
         }
         Update: {
+          hidden_at?: string | null
           id?: string
           invite_count?: number
           invited_name?: string | null
