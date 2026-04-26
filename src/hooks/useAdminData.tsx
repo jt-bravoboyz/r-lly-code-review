@@ -754,6 +754,7 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
         eventLocations,
         adminFilterActive: filterAdminData && adminProfileIds.size > 0,
         adminAccountCount: adminProfileIds.size,
+        attributionAudit,
       };
     },
     refetchInterval: 30000,
