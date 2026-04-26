@@ -28,6 +28,7 @@ import { RallyPulse } from '@/components/admin/RallyPulse';
 import { HeatMap } from '@/components/admin/HeatMap';
 import { RetentionCohorts } from '@/components/admin/RetentionCohorts';
 import { BentoCard } from '@/components/admin/BentoCard';
+import { AttributionAudit } from '@/components/admin/AttributionAudit';
 import { SubTabBar } from '@/components/admin/SubTabBar';
 import { Shield, Loader2, Home } from 'lucide-react';
 import { Navigate, Link } from 'react-router-dom';
