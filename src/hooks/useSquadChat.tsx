@@ -97,7 +97,7 @@ export function useSquadChat(squadId: string | undefined) {
         .from('messages')
         .select(`
           *,
-          sender:profiles(id, display_name, avatar_url)
+          sender:profiles(id, display_name, nickname, full_name, avatar_url)
         `)
         .eq('chat_id', chat.id)
         .order('created_at', { ascending: true });
@@ -128,7 +128,7 @@ export function useSquadChat(squadId: string | undefined) {
             .from('messages')
             .select(`
               *,
-              sender:profiles(id, display_name, avatar_url)
+              sender:profiles(id, display_name, nickname, full_name, avatar_url)
             `)
             .eq('id', payload.new.id)
             .single();
