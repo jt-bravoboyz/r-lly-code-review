@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { Mail, Lock, User, ChevronRight, ArrowLeft, Phone, Fingerprint, Eye, EyeOff } from 'lucide-react';
 import { z } from 'zod';
 import { PolicyAcceptanceDialog } from '@/components/legal/PolicyAcceptanceDialog';
+import { trackEvent } from '@/lib/analytics';
 // Tutorial auto-starts via useTutorial profile-age check
 import { lovable } from '@/integrations/lovable/index';
 // Validation schemas
@@ -243,6 +244,12 @@ export default function Auth() {
           throw new Error(joinResult.error);
         }
 
+        // Track invite-code redemption so admin "Invite copies" reflects code-based joins.
+        trackEvent('invite_code_redeemed', {
+          event_id: eventData.id,
+          invite_code: pendingCode,
+          source: 'auth_pending_code',
+        });
         // Invitees auto-join as attending
         toast.success("You're in! 🎉", {
           description: `Welcome to ${eventData.title}`,

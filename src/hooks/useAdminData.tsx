@@ -170,7 +170,12 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
 
       const safetyConfirmed = attendees.filter(a => a.arrived_safely === true).length;
       const goingHome = attendees.filter(a => a.going_home_at !== null).length;
-      const safetyRate = goingHome > 0 ? (safetyConfirmed / goingHome * 100) : 0;
+      // Cap at 100 — confirmations can occasionally exceed going-home flips
+      // (e.g., host-confirmed dropoffs without a going_home_at timestamp), and a
+      // partner-facing "safety rate" must never read above 100%.
+      const safetyRate = goingHome > 0
+        ? Math.min(100, (safetyConfirmed / goingHome) * 100)
+        : 0;
 
       // === REAL INVITE AGGREGATION ===
       // Sum every invite channel per host profile (not user_id, since the invite tables key by profile_id).
@@ -187,9 +192,17 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
 
       // Total real invites sent (sum across all hosts after admin strip).
       const realInvitesSent = Object.values(invitesByProfile).reduce((a, b) => a + b, 0);
-      // Fallback to analytics-only if no invite tables have data yet, so old projects don't break.
-      const analyticsInviteCount = events.filter(e => e.event_name === 'invite_link_copied').length;
-      const inviteCopied = realInvitesSent > 0 ? realInvitesSent : analyticsInviteCount;
+      // Analytics-only signals:
+      //   - invite_link_copied: fired when a host copies the share URL.
+      //   - invite_code_redeemed: fired when an invitee enters a code to join.
+      // Both prove an invite was actually used, so they count toward "Invite copies".
+      const analyticsLinkCopied = events.filter(e => e.event_name === 'invite_link_copied').length;
+      const analyticsCodeRedeemed = events.filter(e => e.event_name === 'invite_code_redeemed').length;
+      const analyticsInviteCount = analyticsLinkCopied + analyticsCodeRedeemed;
+      // Real-table sum is preferred; analytics adds code-redemptions which aren't in the invite tables.
+      const inviteCopied = realInvitesSent > 0
+        ? realInvitesSent + analyticsCodeRedeemed
+        : analyticsInviteCount;
 
       // K-Factor: real invites generated per R@lly created.
       const kFactor = totalEventsCreated > 0 ? (inviteCopied / totalEventsCreated) : 0;

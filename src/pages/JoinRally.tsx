@@ -13,6 +13,7 @@ import { format } from 'date-fns';
 import rallyLogo from '@/assets/rally-logo.png';
 import { SafetyChoiceModal } from '@/components/events/SafetyChoiceModal';
 import { RidesSelectionModal } from '@/components/events/RidesSelectionModal';
+import { trackEvent } from '@/lib/analytics';
 
 interface EventPreview {
   id: string;
@@ -165,6 +166,12 @@ export default function JoinRally() {
       }
 
       if (result.status === 'attending') {
+        // Track invite-code redemption so admin "Invite copies" reflects code-based joins.
+        trackEvent('invite_code_redeemed', {
+          event_id: event.id,
+          invite_code: event.invite_code,
+          source: 'join_rally_page',
+        });
         toast.success("You're in! 🎉", {
           description: 'Welcome to the R@lly!',
         });

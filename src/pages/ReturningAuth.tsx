@@ -8,6 +8,7 @@ import { useBiometricAuth } from '@/hooks/useBiometricAuth';
 import { useJoinEvent } from '@/hooks/useEvents';
 import { supabase } from '@/integrations/supabase/client';
 import { lovable } from '@/integrations/lovable/index';
+import { trackEvent } from '@/lib/analytics';
 import { toast } from 'sonner';
 import { Mail, Lock, ChevronRight, ArrowLeft, Fingerprint } from 'lucide-react';
 import { z } from 'zod';
@@ -127,6 +128,12 @@ export default function ReturningAuth() {
           throw new Error(joinResult.error);
         }
 
+        // Track invite-code redemption so admin "Invite copies" reflects code-based joins.
+        trackEvent('invite_code_redeemed', {
+          event_id: eventData.id,
+          invite_code: pendingCode,
+          source: 'returning_auth_pending_code',
+        });
         toast.success("You're in! 🎉", {
           description: `Welcome to ${eventData.title}`,
         });
