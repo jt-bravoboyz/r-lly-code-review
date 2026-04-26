@@ -63,10 +63,10 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
         events = events.filter(e => e.created_at && new Date(e.created_at) >= dateCutoff);
       }
 
-      // Fetch real event data
+      // Fetch real event data (lat/lng included for HeatMap)
       const { data: rallyEvents } = await supabase
         .from('events')
-        .select('id, created_at, status, creator_id, cover_charge, location_name')
+        .select('id, created_at, status, creator_id, cover_charge, location_name, location_lat, location_lng, start_time')
         .range(0, 9999);
 
       const { data: rawAttendees } = await supabase
