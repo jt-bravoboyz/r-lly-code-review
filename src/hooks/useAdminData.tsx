@@ -148,9 +148,26 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
       const goingHome = attendees.filter(a => a.going_home_at !== null).length;
       const safetyRate = goingHome > 0 ? (safetyConfirmed / goingHome * 100) : 0;
 
-      const inviteCopied = events.filter(e => e.event_name === 'invite_link_copied').length;
+      // === REAL INVITE AGGREGATION ===
+      // Sum every invite channel per host profile (not user_id, since the invite tables key by profile_id).
+      // Also strip admin profiles when filterAdminData is on so partner-facing K-Factor is clean.
+      const invitesByProfile: Record<string, number> = {};
+      const addInvite = (profileId: string | null | undefined, n = 1) => {
+        if (!profileId) return;
+        if (filterAdminData && adminProfileIds.has(profileId)) return;
+        invitesByProfile[profileId] = (invitesByProfile[profileId] || 0) + n;
+      };
+      (inviteHistoryRows || []).forEach(r => addInvite(r.inviter_id as string, (r as any).invite_count || 1));
+      (phoneInviteRows || []).forEach(r => addInvite(r.invited_by as string, 1));
+      (eventInviteRows || []).forEach(r => addInvite(r.invited_by as string, 1));
 
-      // K-Factor
+      // Total real invites sent (sum across all hosts after admin strip).
+      const realInvitesSent = Object.values(invitesByProfile).reduce((a, b) => a + b, 0);
+      // Fallback to analytics-only if no invite tables have data yet, so old projects don't break.
+      const analyticsInviteCount = events.filter(e => e.event_name === 'invite_link_copied').length;
+      const inviteCopied = realInvitesSent > 0 ? realInvitesSent : analyticsInviteCount;
+
+      // K-Factor: real invites generated per R@lly created.
       const kFactor = totalEventsCreated > 0 ? (inviteCopied / totalEventsCreated) : 0;
 
       // Safety metrics
