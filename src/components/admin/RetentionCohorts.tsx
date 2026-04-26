@@ -46,10 +46,11 @@ export function RetentionCohorts({ cohorts, span = 6 }: RetentionCohortsProps) {
             {cohorts.map(cohort => (
               <div
                 key={cohort.weekStart}
-                className="grid grid-cols-[80px_36px_1fr_1fr_1fr] items-center gap-2 rounded-xl border border-border/30 bg-background/40 px-2 py-2"
+                className="relative grid grid-cols-[80px_36px_1fr_1fr_1fr] items-center gap-2 rounded-xl border border-border/30 bg-background/40 px-2 py-2 overflow-hidden"
               >
-                <span className="text-xs font-medium tabular-nums">{cohort.weekLabel}</span>
-                <span className="text-xs text-muted-foreground text-right tabular-nums">{cohort.cohortSize}</span>
+                <CohortSparkline rates={cohort.returnRates} disabled={cohort.cohortSize === 0} />
+                <span className="relative z-10 text-xs font-medium tabular-nums">{cohort.weekLabel}</span>
+                <span className="relative z-10 text-xs text-muted-foreground text-right tabular-nums">{cohort.cohortSize}</span>
                 {cohort.returnRates.map((rate, i) => (
                   <CohortBar key={i} rate={rate} disabled={cohort.cohortSize === 0} />
                 ))}
@@ -59,6 +60,39 @@ export function RetentionCohorts({ cohorts, span = 6 }: RetentionCohortsProps) {
         )}
       </div>
     </BentoCard>
+  );
+}
+
+function CohortSparkline({ rates, disabled }: { rates: (number | null)[]; disabled: boolean }) {
+  if (disabled) return null;
+  const points = rates
+    .map((r, i) => (r === null ? null : { i, r: Math.max(0, Math.min(100, r)) }))
+    .filter((p): p is { i: number; r: number } => p !== null);
+  if (points.length < 2) return null;
+  const w = 100;
+  const h = 100;
+  const stepX = w / Math.max(1, rates.length - 1);
+  const path = points
+    .map(p => `${(p.i * stepX).toFixed(2)},${(h - (p.r / 100) * h).toFixed(2)}`)
+    .join(' ');
+  return (
+    <svg
+      aria-hidden
+      viewBox={`0 0 ${w} ${h}`}
+      preserveAspectRatio="none"
+      className="pointer-events-none absolute inset-0 h-full w-full"
+    >
+      <polyline
+        points={path}
+        fill="none"
+        stroke="hsl(var(--primary))"
+        strokeOpacity={0.18}
+        strokeWidth={1.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        vectorEffect="non-scaling-stroke"
+      />
+    </svg>
   );
 }
 

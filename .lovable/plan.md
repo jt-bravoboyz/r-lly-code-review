@@ -1,107 +1,47 @@
-## The Hamilton Pass — App-Wide Admin Dashboard Refinement
+## Hamilton Pass — Completion Pass
 
-### 1. Fix the Data "Ghost" (Critical)
+The bulk of the plan landed in the previous loop, but four loose ends remain. This pass closes them so the build is green and every section of the original plan is honored.
 
-**Diagnosis.** When the date filter is `today` (or any non-`all` preset), `useAdminData` filters `filteredRallyEvents` to events *created* in the last 24h, then attendees are filtered to only those event IDs. But `events` (analytics) is filtered by *event timestamp*. So an invite copy/redeem fired today on Ansley's older R@lly:
+### 1. Fix the build (critical)
 
-- ✅ Counts toward `inviteCopied` → inflates K-Factor
-- ❌ The R@lly itself is excluded from `filteredRallyEvents`
-- ❌ So all of its attendees are stripped from `attendees`
-- ❌ `verified` shows 0, `K-Factor` shows 7x — the ghost
+`src/pages/AdminDashboard.tsx` still imports `KFactorCard` from a file that has been deleted, breaking the whole admin route.
 
-**Second bug.** `RallyPulse.verified` reads `totalLifetimeAttendees`, computed as `attendees.filter(a => a.status === 'attending').length`. Many real attendees have `status = 'going'` or `null` and are silently dropped.
+- Remove the `KFactorCard` import line at the top of `AdminDashboard.tsx`.
+- (No JSX usage remains — only the dangling import.)
 
-**The fix** (`src/hooks/useAdminData.tsx`):
+### 2. Wire `livePaidNowCount` through to the Commercial hero
 
-- Decouple the date filter for activity from event-creation date. When a date preset is active, build a set of *active rally IDs* = events created in the window **OR** events that received any signal (analytics event, attendee join, invite) in the window. Use that union as the basis for `filteredRallyEvents` and `attendees`.
-- Compute `verified` as `attendees.filter(a => a.status === 'attending' || a.status === 'going' || a.arrived_safely === true || a.going_home_at !== null).length` — i.e. anyone with real on-the-ground signal. Rename internally to `verifiedFootTraffic`.
-- Add a single `attributionAudit` object the dashboard can render in dev: `{ totalInvites, sumOfHostInvites, totalAttendees, sumOfHostAttendees }` so the Hamilton "no echoes" rule is verifiable.
-- `RallyPulse` reads `verifiedFootTraffic` from `summary` (unified source of truth with `GrowthNarrative`'s host attendee counts).
+`useAdminData` already computes `livePaidNowCount`, and `CommercialDashboard` already accepts the prop, but `AdminDashboard.renderCommercial` doesn't pass it. The pulsing "Live Now" chip on Revenue Potential never lights up.
 
-### 2. Universal Visual Refinement — Bento + Glass everywhere
+- In the `<CommercialDashboard …/>` call inside `renderCommercial`, add `livePaidNowCount={data.summary.livePaidNowCount ?? 0}` (and `revenuePotential` / `avgTicket` if present on `data.commercial` for full ROI accuracy — falls back to derived if absent).
 
-Apply the existing `BentoCard` / `MetricPill` / `InfoTip` / `LiveNowBadge` primitives (see `mem://style/admin-apple-pro-design`) to every legacy admin component.
+### 3. Finish the GrowthMetrics echo removal
 
-**Refactor (in place — no new files unless noted):**
+Plan §4 says: remove `GrowthMetrics.topHosts` block (echoes `GrowthNarrative.topViralHosts`). The render block is gone, but the prop/interface still expects `topHosts`, which keeps the data flowing and tempts re-introduction.
 
-- `RetentionMetrics.tsx` — drop `Card`, render as a 6-up `BentoCard` strip with `tabular-nums`, hide DAU/WAU duplication when MAU dominates the hero.
-- `FounderPanel.tsx` — bento conversion; collapse the 3 summary tiles into one `MetricPill` row above the founder list.
-- `GrowthMetrics.tsx` — convert to bento; **remove the "Top Hosts" sub-list entirely** (echoes `GrowthNarrative.topViralHosts`).
-- `SafetyMetrics.tsx` — bento conversion; remove "After R@lly Rate" tile (already implied by safety pulse).
-- `FunnelChart.tsx` — bento conversion, glass bars, `tabular-nums`, soft primary gradient on bars.
-- `CommercialDashboard.tsx` — full bento rewrite (see §3).
-- `OnboardingDropoff.tsx`, `LiveActivityFeed.tsx`, `ErrorLogFeed.tsx`, `FeatureFlags.tsx`, `SquadAudit.tsx`, `UserIntelligence.tsx`, `FeedbackPanel.tsx`, `SystemFeedbackCard.tsx`, `ReferralAudit.tsx`, `UserDirectory.tsx`, `TopConnectors.tsx` — wrap in `BentoCard` headers with consistent `text-xs uppercase tracking-wider text-primary` eyebrows and `tabular-nums` on every number.
+- In `src/components/admin/GrowthMetrics.tsx`, drop `topHosts` from the `growth` prop interface. The component is now strictly a Crew Recurrence card — anything else is the narrative's job.
+- Confirm no callers pass `topHosts` and the field on `data.growth` from the hook can stay (other consumers may use it; only the prop surface narrows).
 
-### 3. Page-Specific Storytelling
+### 4. RetentionCohorts — sparkline overlays
 
-**Geography (Partner + Commercial sub-tab):**
-- `HeatMap` becomes the hero (span 12, taller aspect `16/6`).
-- Demote the "list view" of cities into a small `MetricPill` cluster ("Top: Atlanta · NYC · LA") under the map.
-- Remove `SquadInsights` / `SafetyROI` from Geography (move SafetyROI into Retention sub-tab; SquadInsights into Hosts).
+Plan §3 calls for 4-week trend sparklines as a row background on `RetentionCohorts`. Currently the file has no SVG/sparkline at all.
 
-**Retention:**
-- New hero: `RetentionCohorts` rendered with **sparkline overlays** per cohort row (4-week trend curve in the row background) — extend the existing component, no new file.
-- `RetentionMetrics` demoted to a single horizontal bento strip below the cohort hero.
-- `SafetyROI` joins this view as the secondary card (retention = repeat behavior = safety follow-through).
+- Extend `src/components/admin/RetentionCohorts.tsx`: for each cohort row, render a faint absolute-positioned SVG polyline behind the bars built from that row's `returnRates` (filter nulls, normalize 0–100%). Use `stroke="hsl(var(--primary))"`, `stroke-opacity={0.18}`, `fill="none"`, `stroke-width={1.5}`. Position it `inset-0` inside the row container with `pointer-events-none` so the existing bars stay interactive and on top.
+- No new file. No prop changes — uses existing `returnRates` array.
 
-**Founders:**
-- New hero `FounderPulse` block at top (mirrors RallyPulse): `Claimed → Hosted → Connected → Safe`. Keep the existing roster list below in cleaner bento rows. (Inlined into `FounderPanel.tsx` — no new file.)
+### 5. Quick verification
 
-**Commercial:**
-- Rewrite `CommercialDashboard.tsx` around ROI vocabulary:
-  - Hero: **Revenue Potential** (= GMV + projected GMV from currently-live paid R@llies).
-  - Bento row: `Realized Revenue` · `Avg Ticket` · `Paid R@llies` · `Avg Dwell (mins)`.
-  - Replace "Member Count" / "Event Density by City" copy with **"Market Penetration"** ranked list.
-  - "Rideshare Provider Split" relabeled **"Transit Liquidity"** with a stacked horizontal bar.
-- Add the `LiveNowBadge` when any paid R@lly is live (new field `livePaidNowCount` in the hook).
-
-**Technical:**
-- Bento conversion across Funnel / Users / System.
-- `FunnelChart` keeps the funnel bars but adopts glass + tabular-nums; mode split moves into a small footer pill row (no separate sub-card).
-- Add `LiveNowBadge` to the System tab header.
-- **Error Log Feed exception (debug-grade contrast):** `ErrorLogFeed` is wrapped in a `BentoCard` for layout consistency, but the inner content keeps a high-contrast utility skin so it stays usable in the field:
-  - Solid `bg-background` (not the glass tint) on the log surface, full-opacity borders.
-  - Severity prefixes use saturated tokens: `ERROR` → `text-red-500`, `WARN` → `text-amber-500`, `INFO` → `text-sky-400`, with bold weight and uppercase.
-  - Monospace stack traces (`font-mono text-xs leading-snug`) with `whitespace-pre-wrap` and `break-all` so nothing clips on mobile.
-  - Row hover/active state uses a strong `bg-foreground/5` so a tapped error stays visible in sunlight.
-  - Keep copy-to-clipboard on each row and a "Copy all visible" button in the card header. No glass blur, no muted-foreground body text — readability beats aesthetics here.
-
-### 4. The Hamilton Rule — Echo Audit
-
-For each tab, the same number must appear at most once across hero + sub-cards.
-
-| Metric | Hero owner | Removed echoes |
-|---|---|---|
-| K-Factor (`x.xx`) | `GrowthNarrative` | already removed `KFactorCard` import; delete file |
-| Top hosts | `GrowthNarrative` | remove `GrowthMetrics.topHosts` block |
-| Total R@llies created | `RallyPulse.created` | remove from `GrowthMetrics` chip text |
-| Verified attendees | `RallyPulse.verified` | remove from `FounderPanel` summary tiles (keep per-founder only) |
-| Safety rate | `RallyPulse.safety` | remove `SafetyMetrics.afterRallyRate` |
-| GMV | `CommercialDashboard.realizedRevenue` | drop the duplicate "Total Revenue" mini-tile |
-| Paid event count | `CommercialDashboard` chip | remove subtitle on GMV card |
-
-Delete `KFactorCard.tsx` (unused after removal).
-
-### 5. Polish Pass
-
-- `tabular-nums` on every numeric span across all admin components (audit pass).
-- `LiveNowBadge` in the header eyebrow of every tab whose data is currently active (`liveNowCount > 0` for Partner/Geography/Retention; `livePaidNowCount > 0` for Commercial; analytics-stream-active for Technical/System).
-- All new section headers use the eyebrow pattern: `text-xs font-semibold uppercase tracking-wider text-primary` — except Error Log Feed, which keeps a debug-grade skin (see §3 Technical).
-- Mobile: every bento row collapses to single column under `sm`, identical to `RallyPulse` pattern.
+After the four edits:
+- `/admin` loads (build green).
+- Commercial → Revenue: pulsing green Live Now chip appears when any paid R@lly is currently live.
+- Partner → Hosts: only `GrowthNarrative` lists top hosts; `GrowthMetrics` shows just Crew Recurrence.
+- Partner → Retention: each cohort row shows a faint orange trend line behind its bars.
 
 ### Files
 
 **Modified:**
-- `src/hooks/useAdminData.tsx` (ghost fix, `verifiedFootTraffic`, `livePaidNowCount`, `attributionAudit`)
-- `src/components/admin/RallyPulse.tsx` (consume new field)
-- `src/components/admin/CommercialDashboard.tsx` (full ROI rewrite)
-- `src/components/admin/RetentionMetrics.tsx`, `RetentionCohorts.tsx` (sparkline overlay)
-- `src/components/admin/FounderPanel.tsx` (FounderPulse hero)
-- `src/components/admin/ErrorLogFeed.tsx` (bento shell + high-contrast utility skin, copy-all button)
-- `src/components/admin/GrowthMetrics.tsx`, `SafetyMetrics.tsx`, `FunnelChart.tsx`, `HeatMap.tsx`, `OnboardingDropoff.tsx`, `LiveActivityFeed.tsx`, `FeatureFlags.tsx`, `SquadAudit.tsx`, `UserIntelligence.tsx`, `FeedbackPanel.tsx`, `SystemFeedbackCard.tsx`, `ReferralAudit.tsx`, `UserDirectory.tsx`, `TopConnectors.tsx` (bento + tabular-nums)
-- `src/pages/AdminDashboard.tsx` (re-wire Geography/Retention/Founders/Commercial layout, remove `KFactorCard` import)
+- `src/pages/AdminDashboard.tsx` — remove dead import, pass `livePaidNowCount`.
+- `src/components/admin/GrowthMetrics.tsx` — narrow prop interface.
+- `src/components/admin/RetentionCohorts.tsx` — add per-row sparkline overlay.
 
-**Deleted:**
-- `src/components/admin/KFactorCard.tsx`
-
-**New:** none — everything reuses existing primitives.
+**No deletions, no new files.**

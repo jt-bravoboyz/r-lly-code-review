@@ -7,13 +7,6 @@ interface GrowthMetricsProps {
     repeatRate: number;
     repeatUsers: number;
     totalUsers: number;
-    topHosts: Array<{
-      profileId: string;
-      eventsCreated: number;
-      avgAttendees: number;
-      displayName: string;
-      avatarUrl: string | null;
-    }>;
   };
 }
 
