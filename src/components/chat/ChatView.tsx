@@ -249,6 +249,18 @@ export function ChatView({ chatId, messages, isLoading, storagePath = 'general' 
         </div>
       )}
 
+      {/* Typing indicator */}
+      {Object.keys(typingUsers).length > 0 && (
+        <div className="px-4 pt-1 pb-0 text-xs text-muted-foreground italic">
+          {(() => {
+            const names = Object.values(typingUsers).map((t) => t.name);
+            if (names.length === 1) return `${names[0]} is typing…`;
+            if (names.length === 2) return `${names[0]} and ${names[1]} are typing…`;
+            return `${names.length} people are typing…`;
+          })()}
+        </div>
+      )}
+
       {/* Input area */}
       <div className="p-4 border-t bg-background">
         <div className="flex items-center gap-2">
@@ -269,7 +281,10 @@ export function ChatView({ chatId, messages, isLoading, storagePath = 'general' 
           </Button>
           <Input
             value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
+            onChange={(e) => {
+              setNewMessage(e.target.value);
+              if (e.target.value.trim()) broadcastTyping();
+            }}
             onKeyPress={handleKeyPress}
             placeholder="Type a message..."
             className="flex-1 rounded-full"
