@@ -185,18 +185,16 @@ function renderPartner(subTab: string, data: any) {
           topViralHosts={data.topViralHosts ?? []}
           repeatRateThisWeek={data.repeatRateThisWeek ?? 0}
           repeatRateDelta={data.repeatRateDelta ?? 0}
+          liveNowCount={data.summary.liveNowCount ?? 0}
         />
-        <BentoCard span={4}>
-          <KFactorCard
-            kFactor={data.summary.kFactor}
-            inviteCopied={data.summary.inviteCopied}
-            totalEvents={data.summary.totalEventsCreated}
-            embedded
-          />
-        </BentoCard>
-        <div className="md:col-span-8">
-          <AnalyticsCards summary={data.summary} sparkline={data.sparkline} />
-        </div>
+        <RallyPulse
+          created={data.summary.totalEventsCreated}
+          committed={data.summary.totalJoined}
+          verified={data.summary.totalLifetimeAttendees ?? 0}
+          conversionRate={data.summary.conversionRate}
+          safetyRate={data.summary.safetyRate}
+          liveNowCount={data.summary.liveNowCount ?? 0}
+        />
       </div>
     );
   }
