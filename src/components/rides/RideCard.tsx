@@ -306,7 +306,7 @@ export function RideCard({ ride }: RideCardProps) {
                             pickupLocation={p.pickup_location}
                             pickupLat={p.pickup_lat}
                             pickupLng={p.pickup_lng}
-                            passengerName={p.passenger?.display_name || undefined}
+                            passengerName={pName}
                             size="icon"
                             variant="secondary"
                             className="bg-green-100 hover:bg-green-200 text-green-700"
@@ -318,7 +318,8 @@ export function RideCard({ ride }: RideCardProps) {
                         </Badge>
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
