@@ -85,18 +85,27 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
         .select('entered_at, last_seen_at')
         .range(0, 9999);
 
-      // Filter admin data
+      // Two parallel datasets:
+      //   - *Raw: ground truth (admins included). Used for "true headcount" displays.
+      //   - filteredRallyEvents / attendees: admin-stripped. Used for K-Factor, growth metrics,
+      //     conversion, retention, top-host averages — anything reported externally.
+      let rallyEventsRaw = rallyEvents || [];
+      let attendeesRaw = rawAttendees || [];
       let filteredRallyEvents = rallyEvents || [];
       let attendees = rawAttendees || [];
+
       if (filterAdminData && adminProfileIds.size > 0) {
         filteredRallyEvents = filteredRallyEvents.filter(e => !adminProfileIds.has(e.creator_id));
         attendees = attendees.filter(a => !adminProfileIds.has(a.profile_id));
       }
 
-      // Apply date filter to events and attendees
+      // Apply date filter to BOTH datasets
       if (dateCutoff) {
+        rallyEventsRaw = rallyEventsRaw.filter(e => e.created_at && new Date(e.created_at) >= dateCutoff);
+        const rawEventIds = new Set(rallyEventsRaw.map(e => e.id));
+        attendeesRaw = attendeesRaw.filter(a => rawEventIds.has(a.event_id));
+
         filteredRallyEvents = filteredRallyEvents.filter(e => e.created_at && new Date(e.created_at) >= dateCutoff);
-        // Filter attendees to only those in date-filtered events
         const filteredEventIds = new Set(filteredRallyEvents.map(e => e.id));
         attendees = attendees.filter(a => filteredEventIds.has(a.event_id));
       }
