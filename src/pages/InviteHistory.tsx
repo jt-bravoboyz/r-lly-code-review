@@ -207,9 +207,21 @@ export default function InviteHistory() {
                 </div>
               ) : inviteHistory && inviteHistory.length > 0 ? (
                 <div className="space-y-3 pr-4">
-                  <p className="text-sm text-muted-foreground mb-2">
-                    People you've invited before - tap to quickly re-invite
-                  </p>
+                  <div className="flex items-center justify-between mb-2 gap-2">
+                    <p className="text-sm text-muted-foreground">
+                      People you've invited before - tap to quickly re-invite
+                    </p>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-primary hover:text-primary hover:bg-primary/10 shrink-0 gap-1"
+                      onClick={() => setConfirmClearOpen(true)}
+                      disabled={clearHistory.isPending}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      Clear History
+                    </Button>
+                  </div>
                   {inviteHistory.map(renderInviteHistoryEntry)}
                 </div>
               ) : (
