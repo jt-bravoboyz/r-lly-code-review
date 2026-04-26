@@ -18,6 +18,7 @@ import { useSquadDetail, useUpdateSquadPhoto, useSquadEventHistory } from '@/hoo
 import { useDeleteSquad, useRemoveSquadMember } from '@/hooks/useSquads';
 import { useSquadMedia, useAddSquadMedia } from '@/hooks/useSquadMedia';
 import { useAuth } from '@/hooks/useAuth';
+import { usePublicProfile } from '@/contexts/PublicProfileContext';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
@@ -101,6 +102,7 @@ export default function SquadDetail() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { profile } = useAuth();
+  const { openProfile } = usePublicProfile();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
@@ -509,7 +511,11 @@ export default function SquadDetail() {
                 <Card key={member.profile_id}>
                   <CardContent className="p-3 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10">
+                      <Avatar
+                        className="h-10 w-10 cursor-pointer"
+                        onClick={() => member.profile?.id && openProfile(member.profile.id)}
+                        aria-label={`View ${member.profile?.display_name || 'member'}'s profile`}
+                      >
                         <AvatarImage src={member.profile?.avatar_url || undefined} />
                         <AvatarFallback className="bg-primary/20 text-primary">
                           {member.profile?.display_name?.charAt(0)?.toUpperCase() || '?'}
@@ -517,7 +523,13 @@ export default function SquadDetail() {
                       </Avatar>
                       <div>
                         <p className="font-medium flex items-center gap-2">
-                          {member.profile?.display_name || 'Unknown'}
+                          <button
+                            type="button"
+                            onClick={() => member.profile?.id && openProfile(member.profile.id)}
+                            className="hover:underline text-left"
+                          >
+                            {member.profile?.display_name || 'Unknown'}
+                          </button>
                           {member.isOwner && (
                             <Badge variant="secondary" className="gap-1 text-xs">
                               <Crown className="h-3 w-3" />

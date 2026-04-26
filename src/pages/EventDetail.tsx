@@ -28,6 +28,7 @@ import { useAutoArrival } from '@/hooks/useAutoArrival';
 import { useAfterRallyTransition } from '@/hooks/useAfterRallyTransition';
 import { RideCard } from '@/components/rides/RideCard';
 import { RiderLine } from '@/components/rides/RiderLine';
+import { usePublicProfile } from '@/contexts/PublicProfileContext';
 import { CreateRideDialog } from '@/components/rides/CreateRideDialog';
 import { RequestRideDialog } from '@/components/rides/RequestRideDialog';
 import { DDRequestBanner } from '@/components/rides/DDRequestBanner';
@@ -88,6 +89,7 @@ export default function EventDetail() {
   const { id } = useParams<{ id: string }>();
   useRenderLoopDetector('EventDetail');
   const { user, profile, loading: authLoading } = useAuth();
+  const { openProfile } = usePublicProfile();
   const { data: event, isLoading } = useEvent(id);
   const { data: rides } = useRides(id);
   const { updates } = useEventRealtime(id);
