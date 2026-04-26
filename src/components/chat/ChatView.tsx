@@ -11,6 +11,8 @@ import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useClearChatNotification } from '@/hooks/useNotifications';
+import { getPublicName } from '@/lib/identity';
+import { usePublicProfile } from '@/contexts/PublicProfileContext';
 
 interface ChatViewProps {
   chatId: string;
@@ -227,6 +229,7 @@ export function ChatView({ chatId, messages, isLoading, storagePath = 'general' 
 }
 
 function MessageBubble({ message, isOwn }: { message: Message; isOwn: boolean }) {
+  const { openProfile } = usePublicProfile();
   // System messages have a special layout
   const isSystemMessage = message.message_type === 'system';
   
@@ -262,18 +265,31 @@ function MessageBubble({ message, isOwn }: { message: Message; isOwn: boolean })
     });
   };
 
+  const senderName = getPublicName(message.sender as any);
+  const handleAvatarClick = () => {
+    if (!isOwn && message.sender_id) openProfile(message.sender_id);
+  };
+
   return (
     <div className={`flex items-end gap-2 ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}>
-      <Avatar className="h-8 w-8 shrink-0">
-        <AvatarImage src={message.sender?.avatar_url || undefined} />
-        <AvatarFallback className="bg-primary/20 text-primary text-xs font-bold">
-          {message.sender?.display_name?.charAt(0)?.toUpperCase() || '?'}
-        </AvatarFallback>
-      </Avatar>
+      <button
+        type="button"
+        onClick={handleAvatarClick}
+        disabled={isOwn}
+        className={`shrink-0 ${!isOwn ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
+        aria-label={`View ${senderName}'s profile`}
+      >
+        <Avatar className="h-8 w-8">
+          <AvatarImage src={message.sender?.avatar_url || undefined} />
+          <AvatarFallback className="bg-primary/20 text-primary text-xs font-bold">
+            {senderName.charAt(0).toUpperCase()}
+          </AvatarFallback>
+        </Avatar>
+      </button>
       
       <div className={`max-w-[70%] ${isOwn ? 'items-end' : 'items-start'}`}>
         <p className={`text-xs text-muted-foreground mb-1 px-2 ${isOwn ? 'text-right' : 'text-left'} inline-flex items-center`}>
-          {message.sender?.display_name || 'Anonymous'}
+          {senderName}
           <MiniFounderGem profileId={message.sender_id} />
         </p>
         
