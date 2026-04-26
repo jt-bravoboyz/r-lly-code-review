@@ -16,6 +16,7 @@ import { AuthRedirectGuard } from "@/components/AuthRedirectGuard";
 import { AppEntry } from "@/components/AppEntry";
 import { PhotoPermissionDialog } from "@/components/events/PhotoPermissionDialog";
 import { PublicProfileProvider } from "@/contexts/PublicProfileContext";
+import { ConnectionStatusBanner } from "@/components/layout/ConnectionStatusBanner";
 import Index from "./pages/Index";
 import ReturningAuth from "./pages/ReturningAuth";
 import Events from "./pages/Events";
