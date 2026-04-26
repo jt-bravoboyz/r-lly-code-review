@@ -170,7 +170,12 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
 
       const safetyConfirmed = attendees.filter(a => a.arrived_safely === true).length;
       const goingHome = attendees.filter(a => a.going_home_at !== null).length;
-      const safetyRate = goingHome > 0 ? (safetyConfirmed / goingHome * 100) : 0;
+      // Cap at 100 — confirmations can occasionally exceed going-home flips
+      // (e.g., host-confirmed dropoffs without a going_home_at timestamp), and a
+      // partner-facing "safety rate" must never read above 100%.
+      const safetyRate = goingHome > 0
+        ? Math.min(100, (safetyConfirmed / goingHome) * 100)
+        : 0;
 
       // === REAL INVITE AGGREGATION ===
       // Sum every invite channel per host profile (not user_id, since the invite tables key by profile_id).
