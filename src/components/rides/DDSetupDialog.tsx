@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { sendDDVolunteeredMessage } from '@/hooks/useSystemMessages';
 import { StructuredLocation, isValidLocation } from '@/types/location';
+import { getPublicName } from '@/lib/identity';
 interface EventAttendee {
   profile_id: string;
   profile: {
@@ -323,7 +324,7 @@ export function DDSetupDialog({
               profile_id: profileId,
               type: 'priority_ride_offer',
               title: 'Priority Ride Offer! 🚗',
-              body: `${profile.display_name || 'A DD'} is offering you a ride first! Accept within 15 minutes.`,
+              body: `${getPublicName(profile as any)} is offering you a ride first! Accept within 15 minutes.`,
               data: {
                 ride_id: rideId,
                 event_id: eventId,
@@ -340,7 +341,7 @@ export function DDSetupDialog({
       if (mode !== 'edit') {
         const chatId = await getEventChatId(eventId);
         if (chatId) {
-          await sendDDVolunteeredMessage(chatId, profile.display_name || 'Someone');
+          await sendDDVolunteeredMessage(chatId, getPublicName(profile as any));
         }
       }
 
@@ -508,10 +509,10 @@ export function DDSetupDialog({
                           <Avatar className="h-8 w-8">
                             <AvatarImage src={attendee.profile?.avatar_url || undefined} />
                             <AvatarFallback className="bg-secondary text-secondary-foreground text-xs">
-                              {attendee.profile?.display_name?.charAt(0)?.toUpperCase() || '?'}
+                              {getPublicName(attendee.profile as any).charAt(0).toUpperCase() || '?'}
                             </AvatarFallback>
                           </Avatar>
-                          <span className="text-sm">{attendee.profile?.display_name || 'Unknown'}</span>
+                          <span className="text-sm">{getPublicName(attendee.profile as any)}</span>
                         </div>)}
                     </div>
                   </ScrollArea> : <p className="text-sm text-muted-foreground text-center py-3">

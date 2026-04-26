@@ -11,6 +11,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useIsDD } from '@/hooks/useDDManagement';
 
 import { toast } from 'sonner';
+import { getPublicName } from '@/lib/identity';
 
 interface RiderLineProps {
   eventId: string;
@@ -139,7 +140,7 @@ export function RiderLine({ eventId }: RiderLineProps) {
               passengerId: passenger.id,
               requestId: p.id,
               rideId: p.ride_id,
-              displayName: passenger.display_name || 'Anonymous',
+              displayName: getPublicName(passenger as any),
               avatarUrl: passenger.avatar_url,
               pickupLocation: p.pickup_location,
               pickupLat: p.pickup_lat || riderLat,
@@ -177,7 +178,7 @@ export function RiderLine({ eventId }: RiderLineProps) {
             passengerId: p.id,
             requestId: '', // no ride_passenger row yet
             rideId: '',
-            displayName: p.display_name || 'Anonymous',
+            displayName: getPublicName(p as any),
             avatarUrl: p.avatar_url,
             pickupLocation: br.ride_pickup_location,
             pickupLat: br.ride_pickup_lat || riderLat,

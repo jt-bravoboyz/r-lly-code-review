@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { LocationSearch } from '@/components/location/LocationSearch';
 import { LocationMapPreview } from '@/components/location/LocationMapPreview';
+import { getPublicName } from '@/lib/identity';
 
 const requestSchema = z.object({
   pickup_location: z.string().min(1, 'Pickup location is required').max(200, 'Location too long'),
@@ -107,12 +108,12 @@ export function RequestRideDialog({ eventId, rideId, driverName, trigger, eventN
               targetProfileIds: recipientIds,
               excludeProfileId: profile.id,
               title: '🚗 New Ride Request!',
-              body: `${profile.display_name || 'Someone'} needs a ride from ${data.pickup_location}`,
+              body: `${getPublicName(profile as any)} needs a ride from ${data.pickup_location}`,
               data: {
                 event_id: eventId,
                 pickup_location: data.pickup_location,
                 requester_id: profile.id,
-                requester_name: profile.display_name,
+                requester_name: getPublicName(profile as any),
                 url: `/events/${eventId}`,
               },
             },

@@ -421,6 +421,7 @@ Deno.serve(async (req) => {
         event_id: eventId,
         squad_id: squadId,
         invite_code: inviteCode,
+        dedupe_key: `event-notif:${eventId ?? squadId ?? 'none'}:${type}:${profileId}`,
       },
       read: false,
     }));

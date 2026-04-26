@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useCreateRide } from '@/hooks/useRides';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { getPublicName } from '@/lib/identity';
 
 const rideSchema = z.object({
   available_seats: z.string().min(1, 'Number of seats is required'),
@@ -55,7 +56,7 @@ export function CreateRideDialog({ eventId, trigger, eventLocationName }: Create
         destination: 'Safe rides home',
         available_seats: parseInt(data.available_seats),
         departure_time: new Date(data.departure_time).toISOString(),
-        driverName: profile.display_name || 'Someone',
+        driverName: getPublicName(profile as any),
       });
       
       toast.success('You\'re now offering DD rides! 🚗', {

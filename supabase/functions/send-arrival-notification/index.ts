@@ -207,6 +207,7 @@ Deno.serve(async (req) => {
         venueName: venue.name,
         eventId,
         timestamp: new Date().toISOString(),
+        dedupe_key: `arrival:${type}:${eventId ?? 'none'}:${profileId}:${venueId}`,
       },
     }));
 

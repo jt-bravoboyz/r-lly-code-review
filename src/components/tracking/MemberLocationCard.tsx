@@ -7,6 +7,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { useReverseGeocode } from '@/hooks/useReverseGeocode';
 import { useAppSettings } from '@/hooks/useAppSettings';
 import { formatDistance as formatDistanceUtil } from '@/lib/formatDistance';
+import { usePublicProfile } from '@/contexts/PublicProfileContext';
 
 interface MemberLocationCardProps {
   profileId: string;
@@ -34,6 +35,7 @@ export function MemberLocationCard({
   const { compassHeading, navigateToMember } = useLocationContext();
   const { address, isLoading: addressLoading } = useReverseGeocode(lat, lng);
   const { settings } = useAppSettings();
+  const { openProfile } = usePublicProfile();
 
   // Calculate the arrow rotation relative to device heading
   const getArrowRotation = () => {
@@ -62,7 +64,11 @@ export function MemberLocationCard({
     <div className="flex items-center gap-3 p-3 bg-white rounded-xl border border-muted shadow-sm">
       {/* Avatar with direction indicator */}
       <div className="relative flex-shrink-0">
-        <Avatar className="h-12 w-12 ring-2 ring-primary/20">
+        <Avatar
+          className="h-12 w-12 ring-2 ring-primary/20 cursor-pointer"
+          onClick={() => profileId && openProfile(profileId)}
+          aria-label={`View ${displayName}'s profile`}
+        >
           <AvatarImage src={avatarUrl || undefined} />
           <AvatarFallback className="bg-primary text-primary-foreground font-bold">
             {displayName?.charAt(0)?.toUpperCase() || '?'}

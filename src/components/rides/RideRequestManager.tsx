@@ -9,6 +9,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useUpdateRideRequest } from '@/hooks/useRides';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { getPublicName } from '@/lib/identity';
+import { usePublicProfile } from '@/contexts/PublicProfileContext';
 
 interface RideRequest {
   id: string;
@@ -39,6 +41,7 @@ interface RideRequestManagerProps {
 export function RideRequestManager({ rides, onRideComplete }: RideRequestManagerProps) {
   const { profile } = useAuth();
   const updateRequest = useUpdateRideRequest();
+  const { openProfile } = usePublicProfile();
   const [pendingActions, setPendingActions] = useState<Set<string>>(new Set());
 
   // Filter to only show rides where current user is the driver
@@ -136,16 +139,26 @@ export function RideRequestManager({ rides, onRideComplete }: RideRequestManager
             <Card key={request.id} className="bg-amber-50 border-amber-200">
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
-                  <Avatar className="h-10 w-10">
+                  <Avatar
+                    className="h-10 w-10 cursor-pointer"
+                    onClick={() => request.passenger?.id && openProfile(request.passenger.id)}
+                    aria-label={`View ${getPublicName(request.passenger as any)}'s profile`}
+                  >
                     <AvatarImage src={request.passenger?.avatar_url || undefined} />
                     <AvatarFallback className="bg-amber-200 text-amber-700">
-                      {request.passenger?.display_name?.charAt(0)?.toUpperCase() || '?'}
+                      {getPublicName(request.passenger as any).charAt(0).toUpperCase() || '?'}
                     </AvatarFallback>
                   </Avatar>
                   
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-sm inline-flex items-center">
-                      {request.passenger?.display_name || 'Anonymous'}
+                      <button
+                        type="button"
+                        onClick={() => request.passenger?.id && openProfile(request.passenger.id)}
+                        className="hover:underline"
+                      >
+                        {getPublicName(request.passenger as any)}
+                      </button>
                       {request.passenger?.id && <MiniFounderGem profileId={request.passenger.id} />}
                     </p>
                     <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
@@ -169,7 +182,7 @@ export function RideRequestManager({ rides, onRideComplete }: RideRequestManager
                       size="sm"
                       variant="outline"
                       className="h-8 w-8 p-0 border-red-200 text-red-600 hover:bg-red-50"
-                      onClick={() => handleDecline(request.id, request.passenger?.display_name || 'User')}
+                      onClick={() => handleDecline(request.id, getPublicName(request.passenger as any))}
                       disabled={pendingActions.has(request.id)}
                     >
                       <X className="h-4 w-4" />
@@ -177,7 +190,7 @@ export function RideRequestManager({ rides, onRideComplete }: RideRequestManager
                     <Button
                       size="sm"
                       className="h-8 w-8 p-0 bg-green-500 hover:bg-green-600"
-                      onClick={() => handleAccept(request.id, request.passenger?.display_name || 'User')}
+                      onClick={() => handleAccept(request.id, getPublicName(request.passenger as any))}
                       disabled={pendingActions.has(request.id)}
                     >
                       <Check className="h-4 w-4" />
@@ -201,16 +214,20 @@ export function RideRequestManager({ rides, onRideComplete }: RideRequestManager
             <Card key={request.id} className="bg-green-50 border-green-200">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
-                  <Avatar className="h-10 w-10">
+                  <Avatar
+                    className="h-10 w-10 cursor-pointer"
+                    onClick={() => request.passenger?.id && openProfile(request.passenger.id)}
+                    aria-label={`View ${getPublicName(request.passenger as any)}'s profile`}
+                  >
                     <AvatarImage src={request.passenger?.avatar_url || undefined} />
                     <AvatarFallback className="bg-green-200 text-green-700">
-                      {request.passenger?.display_name?.charAt(0)?.toUpperCase() || '?'}
+                      {getPublicName(request.passenger as any).charAt(0).toUpperCase() || '?'}
                     </AvatarFallback>
                   </Avatar>
                   
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-sm inline-flex items-center">
-                      {request.passenger?.display_name || 'Anonymous'}
+                      {getPublicName(request.passenger as any)}
                       {request.passenger?.id && <MiniFounderGem profileId={request.passenger.id} />}
                     </p>
                     <Badge variant="outline" className="text-[10px] bg-green-100 text-green-700 border-green-200 mt-1">

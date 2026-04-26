@@ -11,6 +11,7 @@ import { useRides } from '@/hooks/useRides';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
+import { getPublicName } from '@/lib/identity';
 
 interface DDDropoffButtonProps {
   eventId: string;
@@ -84,7 +85,7 @@ export function DDDropoffButton({ eventId }: DDDropoffButtonProps) {
       if (error) throw error;
 
       // Send notification to host/cohosts
-      notifyDDDropoff(eventId, passengerName, profile.display_name || 'DD');
+      notifyDDDropoff(eventId, passengerName, getPublicName(profile as any));
 
       toast.success(`Confirmed drop-off for ${passengerName}!`);
       queryClient.invalidateQueries({ queryKey: ['event-safety-status', eventId] });
@@ -116,12 +117,12 @@ export function DDDropoffButton({ eventId }: DDDropoffButtonProps) {
             <Avatar className="h-8 w-8">
               <AvatarImage src={passenger.profile?.avatar_url || undefined} />
               <AvatarFallback className="text-xs">
-                {passenger.profile?.display_name?.charAt(0)?.toUpperCase() || '?'}
+                {getPublicName(passenger.profile as any).charAt(0).toUpperCase() || '?'}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">
-                {passenger.profile?.display_name || 'Unknown'}
+                {getPublicName(passenger.profile as any)}
               </p>
               <Badge variant="outline" className="text-orange-600 border-orange-300 text-[10px]">
                 <Navigation className="h-2.5 w-2.5 mr-1" />
@@ -133,7 +134,7 @@ export function DDDropoffButton({ eventId }: DDDropoffButtonProps) {
               variant="outline"
               onClick={() => handleConfirmDropoff(
                 passenger.profile_id, 
-                passenger.profile?.display_name || 'Passenger'
+                getPublicName(passenger.profile as any)
               )}
               disabled={loading === passenger.profile_id}
             >
