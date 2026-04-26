@@ -95,6 +95,9 @@ export default function Notifications() {
       } else {
         navigate(`/chat?id=${data.chat_id}`);
       }
+    } else {
+      // No navigation target — toggle expansion to reveal full body
+      setExpandedId((prev) => (prev === notification.id ? null : notification.id));
     }
   };
 
