@@ -85,18 +85,27 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
         .select('entered_at, last_seen_at')
         .range(0, 9999);
 
-      // Filter admin data
+      // Two parallel datasets:
+      //   - *Raw: ground truth (admins included). Used for "true headcount" displays.
+      //   - filteredRallyEvents / attendees: admin-stripped. Used for K-Factor, growth metrics,
+      //     conversion, retention, top-host averages — anything reported externally.
+      let rallyEventsRaw = rallyEvents || [];
+      let attendeesRaw = rawAttendees || [];
       let filteredRallyEvents = rallyEvents || [];
       let attendees = rawAttendees || [];
+
       if (filterAdminData && adminProfileIds.size > 0) {
         filteredRallyEvents = filteredRallyEvents.filter(e => !adminProfileIds.has(e.creator_id));
         attendees = attendees.filter(a => !adminProfileIds.has(a.profile_id));
       }
 
-      // Apply date filter to events and attendees
+      // Apply date filter to BOTH datasets
       if (dateCutoff) {
+        rallyEventsRaw = rallyEventsRaw.filter(e => e.created_at && new Date(e.created_at) >= dateCutoff);
+        const rawEventIds = new Set(rallyEventsRaw.map(e => e.id));
+        attendeesRaw = attendeesRaw.filter(a => rawEventIds.has(a.event_id));
+
         filteredRallyEvents = filteredRallyEvents.filter(e => e.created_at && new Date(e.created_at) >= dateCutoff);
-        // Filter attendees to only those in date-filtered events
         const filteredEventIds = new Set(filteredRallyEvents.map(e => e.id));
         attendees = attendees.filter(a => filteredEventIds.has(a.event_id));
       }
@@ -384,26 +393,35 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
           currentSquad: profileSquadMap.get(p.id) || null,
         }));
 
-      // Per-event headcount (attendees only, status = attending)
+      // Per-event headcount — TWO variants:
+      //   headcountByEvent: ground truth (raw, admins included). Used for host badges.
+      //   headcountByEventGrowth: admin-stripped. Used in K-Factor / partnership reporting.
       const headcountByEvent: Record<string, number> = {};
-      attendees.forEach(a => {
+      attendeesRaw.forEach(a => {
         if (a.status === 'attending') {
           headcountByEvent[a.event_id] = (headcountByEvent[a.event_id] || 0) + 1;
+        }
+      });
+      const headcountByEventGrowth: Record<string, number> = {};
+      attendees.forEach(a => {
+        if (a.status === 'attending') {
+          headcountByEventGrowth[a.event_id] = (headcountByEventGrowth[a.event_id] || 0) + 1;
         }
       });
 
       // Total lifetime attendees (sum of attending check-ins across all events)
       const totalLifetimeAttendees = attendees.filter(a => a.status === 'attending').length;
 
-      // Per-profile aggregates for User Directory
+      // Per-profile aggregates for User Directory — use RAW so each user's
+      // true rally activity is shown (admin team activity is real activity).
       const ralliesJoinedByProfile: Record<string, number> = {};
-      attendees.forEach(a => {
+      attendeesRaw.forEach(a => {
         if (a.status === 'attending') {
           ralliesJoinedByProfile[a.profile_id] = (ralliesJoinedByProfile[a.profile_id] || 0) + 1;
         }
       });
       const ralliesCreatedByProfile: Record<string, number> = {};
-      filteredRallyEvents.forEach(e => {
+      rallyEventsRaw.forEach(e => {
         ralliesCreatedByProfile[e.creator_id] = (ralliesCreatedByProfile[e.creator_id] || 0) + 1;
       });
 
@@ -457,7 +475,9 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
         feedback: feedback || [],
         profiles: profiles || [],
         attendees,
+        attendeesRaw,
         rallyEvents: filteredRallyEvents,
+        rallyEventsRaw,
         commercial: {
           totalGMV,
           paidEventsCount,
@@ -478,7 +498,10 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
         topConnectors,
         referralDetails,
         headcountByEvent,
+        headcountByEventGrowth,
         userDirectory,
+        adminFilterActive: filterAdminData && adminProfileIds.size > 0,
+        adminAccountCount: adminProfileIds.size,
       };
     },
     refetchInterval: 30000,

@@ -91,6 +91,14 @@ export default function AdminDashboard() {
           </div>
         ) : viewMode === 'partner' ? (
           <>
+            {/* Data philosophy banner — explains the dual-source model to admins */}
+            {(data as any).adminFilterActive && (
+              <div className="rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-xs text-muted-foreground">
+                <span className="font-semibold text-foreground">Data integrity:</span>{' '}
+                Growth metrics (K-Factor, conversion, top-host averages) exclude {(data as any).adminAccountCount} internal team account{(data as any).adminAccountCount === 1 ? '' : 's'} for clean partner reporting. Per-event headcount, founder activity, safety usage, and CSV exports reflect every real attendee.
+              </div>
+            )}
+
             {/* 1. K-Factor — first thing visible */}
             <KFactorCard
               kFactor={data.summary.kFactor}
@@ -114,18 +122,20 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            {/* 5. Growth + Safety */}
+            {/* 5. Growth + Safety
+                  - Growth top hosts use cleaned `attendees` (admin-stripped) for partnership reporting.
+                  - Safety metrics use `attendeesRaw` so real-world safety usage is reported truthfully. */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <GrowthMetrics growth={data.growth} />
-              <SafetyMetrics safety={data.safety} attendees={data.attendees} />
+              <SafetyMetrics safety={data.safety} attendees={(data as any).attendeesRaw ?? data.attendees} />
             </div>
 
-            {/* 6. Founder + Feedback */}
+            {/* 6. Founder + Feedback — Founders use raw attendee data so their true rally activity shows */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <FounderPanel
                 founders={data.founders}
-                attendees={data.attendees}
-                rallyEvents={data.rallyEvents}
+                attendees={(data as any).attendeesRaw ?? data.attendees}
+                rallyEvents={(data as any).rallyEventsRaw ?? data.rallyEvents}
                 referralCounts={data.referralCounts}
               />
               <FeedbackPanel feedback={data.feedback} profiles={data.profiles} />
@@ -143,11 +153,11 @@ export default function AdminDashboard() {
             {/* 7. System Feedback */}
             <SystemFeedbackCard />
 
-            {/* 7. CSV Export */}
+            {/* 7. CSV Export — uses RAW data so exports match the database 1:1 */}
             <div className="flex justify-end">
               <AdminCSVExport
-                events={data.rallyEvents}
-                attendees={data.attendees}
+                events={(data as any).rallyEventsRaw ?? data.rallyEvents}
+                attendees={(data as any).attendeesRaw ?? data.attendees}
                 label="Export Partner Report"
               />
             </div>
@@ -163,8 +173,8 @@ export default function AdminDashboard() {
             />
             <div className="flex justify-end">
               <AdminCSVExport
-                events={data.rallyEvents}
-                attendees={data.attendees}
+                events={(data as any).rallyEventsRaw ?? data.rallyEvents}
+                attendees={(data as any).attendeesRaw ?? data.attendees}
                 label="Export Commercial Report"
               />
             </div>
@@ -180,8 +190,8 @@ export default function AdminDashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <UserIntelligence
                 profiles={data.profiles}
-                attendees={data.attendees}
-                rallyEvents={data.rallyEvents}
+                attendees={(data as any).attendeesRaw ?? data.attendees}
+                rallyEvents={(data as any).rallyEventsRaw ?? data.rallyEvents}
                 headcountByEvent={(data as any).headcountByEvent ?? {}}
               />
               <ErrorLogFeed />
