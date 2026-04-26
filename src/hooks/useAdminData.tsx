@@ -190,22 +190,28 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
       (phoneInviteRows || []).forEach(r => addInvite(r.invited_by as string, 1));
       (eventInviteRows || []).forEach(r => addInvite(r.invited_by as string, 1));
 
-      // Total real invites sent (sum across all hosts after admin strip).
-      const realInvitesSent = Object.values(invitesByProfile).reduce((a, b) => a + b, 0);
-      // Analytics-only signals:
-      //   - invite_link_copied: fired when a host copies the share URL.
-      //   - invite_code_redeemed: fired when an invitee enters a code to join.
-      // Both prove an invite was actually used, so they count toward "Invite copies".
-      const analyticsLinkCopied = events.filter(e => e.event_name === 'invite_link_copied').length;
-      const analyticsCodeRedeemed = events.filter(e => e.event_name === 'invite_code_redeemed').length;
-      const analyticsInviteCount = analyticsLinkCopied + analyticsCodeRedeemed;
-      // Real-table sum is preferred; analytics adds code-redemptions which aren't in the invite tables.
-      const inviteCopied = realInvitesSent > 0
-        ? realInvitesSent + analyticsCodeRedeemed
-        : analyticsInviteCount;
+      // Hamilton attribution: credit analytics-only invite signals back to the
+      // host of the rally being shared. This makes the global K-Factor reconcile
+      // with the sum of per-host impact in the Growth Narrative (no orphan invites).
+      const eventCreatorById: Record<string, string> = {};
+      (rallyEvents || []).forEach(e => { eventCreatorById[e.id] = e.creator_id; });
+      events
+        .filter(e => e.event_name === 'invite_link_copied' || e.event_name === 'invite_code_redeemed')
+        .forEach(e => {
+          const eid = (e.metadata as any)?.event_id;
+          const host = eid ? eventCreatorById[eid] : null;
+          if (host) addInvite(host, 1);
+        });
+
+      // Single source of truth: total invites = sum across all hosts (post-attribution).
+      // Guarantees inviteCopied === Σ invitesByProfile, so global K-Factor === Σ host impact.
+      const inviteCopied = Object.values(invitesByProfile).reduce((a, b) => a + b, 0);
 
       // K-Factor: real invites generated per R@lly created.
       const kFactor = totalEventsCreated > 0 ? (inviteCopied / totalEventsCreated) : 0;
+
+      // Live Now indicator — any active R@lly happening right now (post admin/date filter).
+      const liveNowCount = filteredRallyEvents.filter(e => e.status === 'live').length;
 
       // Safety metrics
       const afterRallyEvents = filteredRallyEvents.filter(e => e.status === 'completed' || e.status === 'after_rally').length;
