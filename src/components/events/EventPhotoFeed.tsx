@@ -12,6 +12,7 @@ import { createPortal } from 'react-dom';
 import { downloadPhoto, downloadPhotosBatch } from '@/lib/downloadMedia';
 import { ensurePhotoPermission } from './PhotoPermissionDialog';
 import { useHaptics } from '@/hooks/useHaptics';
+import { usePublicProfile } from '@/contexts/PublicProfileContext';
 
 const MAX_PHOTO_SIZE = 10 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic'];
@@ -23,6 +24,7 @@ interface EventPhotoFeedProps {
 
 export function EventPhotoFeed({ eventId, isHost }: EventPhotoFeedProps) {
   const { profile } = useAuth();
+  const { openProfile } = usePublicProfile();
   const { data: galleryMedia, isLoading } = useGalleryPhotos(eventId);
   const uploadMedia = useUploadRallyMedia();
   const deleteMedia = useDeleteRallyMedia();
@@ -363,7 +365,11 @@ export function EventPhotoFeed({ eventId, isHost }: EventPhotoFeedProps) {
           {/* Header */}
           <div className="flex items-center justify-between p-4 relative z-10">
             <div className="flex items-center gap-2">
-              <Avatar className="h-6 w-6">
+              <Avatar
+                className="h-6 w-6 cursor-pointer"
+                onClick={() => photos[viewerIndex].created_by && openProfile(photos[viewerIndex].created_by)}
+                aria-label="View uploader profile"
+              >
                 <AvatarImage src={profiles[photos[viewerIndex].created_by]?.avatar_url || undefined} />
                 <AvatarFallback className="text-[8px] bg-white/20 text-white">
                   {profiles[photos[viewerIndex].created_by]?.display_name?.charAt(0)?.toUpperCase() || '?'}
@@ -371,7 +377,7 @@ export function EventPhotoFeed({ eventId, isHost }: EventPhotoFeedProps) {
               </Avatar>
               <div>
                 <p className="text-white text-xs font-medium">
-                  {profiles[photos[viewerIndex].created_by]?.display_name || 'Unknown'}
+                  {profiles[photos[viewerIndex].created_by]?.display_name || 'R@lly Member'}
                 </p>
                 <p className="text-white/50 text-[10px]">
                   {format(new Date(photos[viewerIndex].created_at), 'h:mm a')}
