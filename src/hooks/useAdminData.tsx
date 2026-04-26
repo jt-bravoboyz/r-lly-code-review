@@ -661,6 +661,26 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
           locationName: e.location_name || null,
         }));
 
+      // Hamilton attribution audit — exposed so the dashboard can verify the no-echoes
+      // rule (sum of host impact must equal global totals).
+      const sumHostInvites = Object.values(invitesByProfile).reduce((a, b) => a + b, 0);
+      const sumHostAttendees = Object.values(hostCounts).reduce((s, h) => s + h.attendeeSum, 0);
+      const attributionAudit = {
+        totalInvites: inviteCopied,
+        sumOfHostInvites: sumHostInvites,
+        invitesReconciled: inviteCopied === sumHostInvites,
+        totalAttendees: attendees.length,
+        sumOfHostAttendees: sumHostAttendees,
+        verifiedFootTraffic,
+      };
+
+      // Realized vs. projected revenue (Commercial hero).
+      const liveCoverSum = filteredRallyEvents
+        .filter(e => e.status === 'live' && e.cover_charge && Number(e.cover_charge) > 0)
+        .reduce((s, e) => s + Number(e.cover_charge || 0), 0);
+      const avgTicket = paidEventsCount > 0 ? totalGMV / paidEventsCount : 0;
+      const revenuePotential = totalGMV + liveCoverSum;
+
       return {
         summary: {
           totalEventsCreated,
@@ -674,7 +694,9 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
           inviteCopied,
           kFactor,
           totalLifetimeAttendees,
+          verifiedFootTraffic,
           liveNowCount,
+          livePaidNowCount,
         },
         funnel,
         safety: {
@@ -703,6 +725,9 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
           totalGMV,
           paidEventsCount,
           eventsByCity,
+          revenuePotential,
+          avgTicket,
+          livePaidNowCount,
         },
         transit: {
           arrivalModeCounts,
