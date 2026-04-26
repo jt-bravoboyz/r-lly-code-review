@@ -36,7 +36,7 @@ export function SubTabBar({ tabs, active, onChange, className }: SubTabBarProps)
         className
       )}
     >
-      <div className="relative inline-flex items-center gap-1 rounded-full border border-border/50 bg-muted/40 p-1 backdrop-blur-sm overflow-x-auto max-w-full no-scrollbar">
+      <div className="relative inline-flex items-center gap-1 rounded-full border border-border/50 bg-muted/40 p-1 backdrop-blur-sm overflow-x-auto max-w-full scrollbar-hide">
         <div
           className="absolute top-1 bottom-1 rounded-full bg-card shadow-sm border border-border/40 transition-all duration-300 ease-out"
           style={{ left: indicator.left, width: indicator.width }}
