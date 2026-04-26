@@ -479,7 +479,12 @@ export default function EventDetail() {
                 <div className="flex items-center gap-2 mt-1">
                   <div className="flex items-center -space-x-2">
                     {(event.attendees ?? []).slice(0, 5).map((a) => (
-                      <Avatar key={a.id} className="h-6 w-6 border-2 border-background">
+                      <Avatar
+                        key={a.id}
+                        className="h-6 w-6 border-2 border-background cursor-pointer"
+                        onClick={(e) => { e.stopPropagation(); a.profile?.id && openProfile(a.profile.id); }}
+                        aria-label={`View ${a.profile?.display_name || 'attendee'}'s profile`}
+                      >
                         <AvatarImage src={a.profile?.avatar_url || undefined} />
                         <AvatarFallback className="text-[9px]">
                           {a.profile?.display_name?.charAt(0)?.toUpperCase() || '?'}
@@ -578,7 +583,11 @@ export default function EventDetail() {
           {event.creator && (
             <div className="flex items-center justify-between pt-2">
               <div className="flex items-center gap-3">
-                <Avatar>
+                <Avatar
+                  className="cursor-pointer"
+                  onClick={() => event.creator?.id && openProfile(event.creator.id)}
+                  aria-label={`View ${event.creator.display_name || 'host'}'s profile`}
+                >
                   <AvatarImage src={event.creator.avatar_url || undefined} />
                   <AvatarFallback>
                     {event.creator.display_name?.charAt(0)?.toUpperCase()}
@@ -587,7 +596,13 @@ export default function EventDetail() {
                 <div>
                   <p className="text-sm text-muted-foreground">Hosted by</p>
                   <div className="flex items-center gap-2">
-                    <p className="font-medium">{event.creator.display_name}</p>
+                    <button
+                      type="button"
+                      onClick={() => event.creator?.id && openProfile(event.creator.id)}
+                      className="font-medium hover:underline text-left"
+                    >
+                      {event.creator.display_name}
+                    </button>
                     <Badge variant="secondary" className="text-[10px]">
                       <Crown className="h-2.5 w-2.5 mr-1" />
                       Host
@@ -611,7 +626,11 @@ export default function EventDetail() {
               <p className="text-xs text-muted-foreground mb-1.5">Co-hosts</p>
               <div className="flex flex-wrap gap-2">
                 {cohosts.map((cohost) => (
-                  <div key={cohost.id} className="flex items-center gap-1.5 bg-muted/50 rounded-full pl-1 pr-2.5 py-0.5">
+                  <div
+                    key={cohost.id}
+                    className="flex items-center gap-1.5 bg-muted/50 rounded-full pl-1 pr-2.5 py-0.5 cursor-pointer"
+                    onClick={() => cohost.profile?.id && openProfile(cohost.profile.id)}
+                  >
                     <Avatar className="h-5 w-5">
                       <AvatarImage src={cohost.profile?.avatar_url || undefined} />
                       <AvatarFallback className="text-[9px]">
