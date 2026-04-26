@@ -30,6 +30,8 @@ export default function InviteHistory() {
   const { user, loading } = useAuth();
   const { data: pastInvites, isLoading: loadingPastInvites } = usePastEventInvites();
   const { data: inviteHistory, isLoading: loadingHistory } = useInviteHistory();
+  const clearHistory = useClearInviteHistory();
+  const [confirmClearOpen, setConfirmClearOpen] = useState(false);
 
   if (loading) {
     return (
