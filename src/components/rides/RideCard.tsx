@@ -329,14 +329,25 @@ export function RideCard({ ride }: RideCardProps) {
               <div className="flex items-center gap-2 mt-3">
                 <Users className="h-4 w-4 text-muted-foreground" />
                 <div className="flex -space-x-2">
-                  {acceptedPassengers.slice(0, 3).map((p) => (
-                    <Avatar key={p.id} className="h-6 w-6 border-2 border-background">
-                      <AvatarImage src={p.passenger?.avatar_url || undefined} />
-                      <AvatarFallback className="text-[10px]">
-                        {p.passenger?.display_name?.charAt(0)?.toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                  ))}
+                  {acceptedPassengers.slice(0, 3).map((p) => {
+                    const pName = getPublicName(p.passenger as any);
+                    return (
+                      <button
+                        type="button"
+                        key={p.id}
+                        onClick={() => p.passenger?.id && openProfile(p.passenger.id)}
+                        className="hover:opacity-80 transition-opacity"
+                        aria-label={`View ${pName}'s profile`}
+                      >
+                        <Avatar className="h-6 w-6 border-2 border-background">
+                          <AvatarImage src={p.passenger?.avatar_url || undefined} />
+                          <AvatarFallback className="text-[10px]">
+                            {pName.charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                      </button>
+                    );
+                  })}
                   {acceptedPassengers.length > 3 && (
                     <span className="text-xs text-muted-foreground ml-2">
                       +{acceptedPassengers.length - 3}
@@ -355,16 +366,23 @@ export function RideCard({ ride }: RideCardProps) {
                 </p>
                 {pendingPassengers.map((p) => {
                   const isActionPending = pendingActions.has(p.id);
-                  const passengerName = p.passenger?.display_name || 'Unknown';
+                  const passengerName = getPublicName(p.passenger as any);
                   return (
                     <div key={p.id} className="p-2 rounded-lg bg-amber-50 border border-amber-200">
                       <div className="flex items-center gap-2">
-                        <Avatar className="h-6 w-6">
-                          <AvatarImage src={p.passenger?.avatar_url || undefined} />
-                          <AvatarFallback className="text-[10px] bg-amber-200 text-amber-700">
-                            {passengerName.charAt(0).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
+                        <button
+                          type="button"
+                          onClick={() => p.passenger?.id && openProfile(p.passenger.id)}
+                          className="hover:opacity-80 transition-opacity"
+                          aria-label={`View ${passengerName}'s profile`}
+                        >
+                          <Avatar className="h-6 w-6">
+                            <AvatarImage src={p.passenger?.avatar_url || undefined} />
+                            <AvatarFallback className="text-[10px] bg-amber-200 text-amber-700">
+                              {passengerName.charAt(0).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                        </button>
                         <span className="text-sm font-medium flex-1 truncate">{passengerName}</span>
                         {/* Navigate to pending pickup */}
                         {p.pickup_location && (
