@@ -538,10 +538,10 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
 
       // Verified Foot Traffic — anyone with on-the-ground signal, not just status='attending'.
       // The old `status === 'attending'` filter silently dropped attendees with status='going'
-      // or null, producing the "0 verified, 7x K-factor" ghost.
+      // or 'safe' (e.g. Caroline / Ansley), producing the "0 verified, 7x K-factor" ghost.
+      const VERIFIED_STATUSES = new Set(['attending', 'going', 'safe']);
       const verifiedFootTraffic = attendees.filter(a =>
-        a.status === 'attending' ||
-        a.status === 'going' ||
+        (a.status && VERIFIED_STATUSES.has(a.status)) ||
         a.arrived_safely === true ||
         a.going_home_at !== null
       ).length;
