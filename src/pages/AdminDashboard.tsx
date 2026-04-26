@@ -190,7 +190,7 @@ function renderPartner(subTab: string, data: any) {
         <RallyPulse
           created={data.summary.totalEventsCreated}
           committed={data.summary.totalJoined}
-          verified={data.summary.totalLifetimeAttendees ?? 0}
+          verified={data.summary.verifiedFootTraffic ?? data.summary.totalLifetimeAttendees ?? 0}
           conversionRate={data.summary.conversionRate}
           safetyRate={data.summary.safetyRate}
           liveNowCount={data.summary.liveNowCount ?? 0}

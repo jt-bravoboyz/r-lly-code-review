@@ -1,12 +1,11 @@
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Gift, Users } from 'lucide-react';
 import { format } from 'date-fns';
+import { BentoCard } from './BentoCard';
+import { MetricPill } from './MetricPill';
 
 export interface ReferralDetail {
   refereeId: string;
@@ -42,40 +41,44 @@ export function ReferralAudit({ referralDetails }: ReferralAuditProps) {
   };
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center gap-2">
-        <Users className="h-5 w-5 text-primary" />
-        <CardTitle className="text-base font-montserrat">Referral Audit</CardTitle>
-        <Badge variant="secondary" className="ml-auto">{referralDetails.length}</Badge>
-      </CardHeader>
-      <CardContent>
-        {referralDetails.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-6">No referrals tracked yet.</p>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Referrer</TableHead>
-                <TableHead>Referee</TableHead>
-                <TableHead>Signup Date</TableHead>
-                <TableHead>Current Squad</TableHead>
-                <TableHead className="text-right">Action</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+    <BentoCard span={12}>
+      <div className="flex items-center gap-2 mb-3">
+        <Users className="h-4 w-4 text-primary" />
+        <span className="text-xs font-semibold uppercase tracking-wider text-primary">
+          Referral Audit
+        </span>
+        <MetricPill tone="muted" className="ml-auto">
+          <span className="tabular-nums">{referralDetails.length}</span>
+        </MetricPill>
+      </div>
+      {referralDetails.length === 0 ? (
+        <p className="text-sm text-muted-foreground text-center py-6">No referrals tracked yet.</p>
+      ) : (
+        <div className="overflow-x-auto -mx-1">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border/30">
+                <th className="text-left py-2 px-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Referrer</th>
+                <th className="text-left py-2 px-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Referee</th>
+                <th className="text-left py-2 px-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Signup</th>
+                <th className="text-left py-2 px-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Squad</th>
+                <th className="text-right py-2 px-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Action</th>
+              </tr>
+            </thead>
+            <tbody>
               {referralDetails.map((r) => (
-                <TableRow key={r.refereeId}>
-                  <TableCell className="font-medium">{r.referrerName || 'Unknown'}</TableCell>
-                  <TableCell>{r.refereeName || 'Unknown'}</TableCell>
-                  <TableCell className="text-muted-foreground text-xs">
+                <tr key={r.refereeId} className="border-b border-border/20 last:border-0 hover:bg-background/40 transition-colors">
+                  <td className="py-2 px-2 font-medium">{r.referrerName || 'Unknown'}</td>
+                  <td className="py-2 px-2">{r.refereeName || 'Unknown'}</td>
+                  <td className="py-2 px-2 text-muted-foreground text-xs tabular-nums">
                     {r.refereeCreatedAt ? format(new Date(r.refereeCreatedAt), 'MMM d, yyyy') : '—'}
-                  </TableCell>
-                  <TableCell className="text-xs">
+                  </td>
+                  <td className="py-2 px-2 text-xs">
                     {r.currentSquad ? (
-                      <Badge variant="outline" className="font-normal">{r.currentSquad}</Badge>
+                      <MetricPill tone="muted">{r.currentSquad}</MetricPill>
                     ) : '—'}
-                  </TableCell>
-                  <TableCell className="text-right">
+                  </td>
+                  <td className="py-2 px-2 text-right">
                     <Button
                       size="sm"
                       variant="outline"
@@ -85,13 +88,13 @@ export function ReferralAudit({ referralDetails }: ReferralAuditProps) {
                       <Gift className="h-3 w-3 mr-1" />
                       {awarding === r.refereeId ? 'Awarding…' : 'Award'}
                     </Button>
-                  </TableCell>
-                </TableRow>
+                  </td>
+                </tr>
               ))}
-            </TableBody>
-          </Table>
-        )}
-      </CardContent>
-    </Card>
+            </tbody>
+          </table>
+        </div>
+      )}
+    </BentoCard>
   );
 }

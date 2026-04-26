@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
 import { Search, Download, ArrowUpDown, Award } from 'lucide-react';
+import { BentoCard } from './BentoCard';
+import { MetricPill } from './MetricPill';
 
 export interface DirectoryUser {
   profileId: string;
@@ -87,16 +87,7 @@ export function UserDirectory({ users }: UserDirectoryProps) {
   };
 
   const exportCSV = () => {
-    const header = [
-      'Name',
-      'Email',
-      'Joined',
-      'Last Active',
-      'Referrals',
-      'R@llies Joined',
-      'R@llies Hosted',
-      'Founding Member',
-    ].join(',');
+    const header = ['Name', 'Email', 'Joined', 'Last Active', 'Referrals', 'R@llies Joined', 'R@llies Hosted', 'Founding Member'].join(',');
     const rows = filtered.map(u =>
       [
         csvEscape(u.displayName ?? ''),
@@ -119,11 +110,11 @@ export function UserDirectory({ users }: UserDirectoryProps) {
     URL.revokeObjectURL(url);
   };
 
-  const HeaderButton = ({ k, label }: { k: SortKey; label: string }) => (
+  const HeaderButton = ({ k, label, align = 'left' }: { k: SortKey; label: string; align?: 'left' | 'right' }) => (
     <button
       type="button"
       onClick={() => toggleSort(k)}
-      className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground hover:text-foreground"
+      className={`flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground ${align === 'right' ? 'ml-auto' : ''}`}
     >
       {label}
       <ArrowUpDown className="h-3 w-3" />
@@ -131,9 +122,16 @@ export function UserDirectory({ users }: UserDirectoryProps) {
   );
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between gap-3">
-        <CardTitle className="text-lg">User Directory</CardTitle>
+    <BentoCard span={12}>
+      <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-semibold uppercase tracking-wider text-primary">
+            User Directory
+          </span>
+          <MetricPill tone="muted">
+            <span className="tabular-nums">{users.length}</span>
+          </MetricPill>
+        </div>
         <div className="flex items-center gap-2">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -141,7 +139,7 @@ export function UserDirectory({ users }: UserDirectoryProps) {
               placeholder="Search name or email…"
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="pl-9 h-9 w-64"
+              className="pl-9 h-9 w-48 sm:w-64 bg-background/40 border-border/40"
             />
           </div>
           <Button variant="outline" size="sm" onClick={exportCSV} className="gap-2">
@@ -149,79 +147,65 @@ export function UserDirectory({ users }: UserDirectoryProps) {
             Export
           </Button>
         </div>
-      </CardHeader>
-      <CardContent>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b">
-                <th className="text-left py-2 pr-3">User</th>
-                <th className="text-left py-2 pr-3">
-                  <HeaderButton k="email" label="Email" />
-                </th>
-                <th className="text-left py-2 pr-3">
-                  <HeaderButton k="createdAt" label="Joined" />
-                </th>
-                <th className="text-left py-2 pr-3">
-                  <HeaderButton k="lastSignInAt" label="Last Active" />
-                </th>
-                <th className="text-right py-2 pr-3">
-                  <HeaderButton k="referralCount" label="Referrals" />
-                </th>
-                <th className="text-right py-2 pr-3">
-                  <HeaderButton k="ralliesJoined" label="Joined" />
-                </th>
-                <th className="text-right py-2">
-                  <HeaderButton k="ralliesCreated" label="Hosted" />
-                </th>
+      </div>
+      <div className="overflow-x-auto -mx-1">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-border/30">
+              <th className="text-left py-2 px-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">User</th>
+              <th className="text-left py-2 px-2"><HeaderButton k="email" label="Email" /></th>
+              <th className="text-left py-2 px-2"><HeaderButton k="createdAt" label="Joined" /></th>
+              <th className="text-left py-2 px-2"><HeaderButton k="lastSignInAt" label="Last Active" /></th>
+              <th className="text-right py-2 px-2"><HeaderButton k="referralCount" label="Refs" align="right" /></th>
+              <th className="text-right py-2 px-2"><HeaderButton k="ralliesJoined" label="Joined" align="right" /></th>
+              <th className="text-right py-2 px-2"><HeaderButton k="ralliesCreated" label="Hosted" align="right" /></th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.length === 0 && (
+              <tr>
+                <td colSpan={7} className="py-6 text-center text-muted-foreground">
+                  No users match.
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {filtered.length === 0 && (
-                <tr>
-                  <td colSpan={7} className="py-6 text-center text-muted-foreground">
-                    No users match.
-                  </td>
-                </tr>
-              )}
-              {filtered.map(u => (
-                <tr key={u.profileId} className="border-b last:border-0 hover:bg-muted/30">
-                  <td className="py-2 pr-3">
-                    <div className="flex items-center gap-2">
-                      <Avatar className="h-7 w-7">
-                        <AvatarImage src={u.avatarUrl || undefined} />
-                        <AvatarFallback className="text-xs">
-                          {u.displayName?.charAt(0)?.toUpperCase() || '?'}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-medium truncate max-w-[180px]">
-                          {u.displayName || 'Unnamed'}
-                        </span>
-                        {u.foundingMember && (
-                          <Award className="h-3.5 w-3.5 text-yellow-500 shrink-0" />
-                        )}
-                      </div>
+            )}
+            {filtered.map(u => (
+              <tr key={u.profileId} className="border-b border-border/20 last:border-0 hover:bg-background/40 transition-colors">
+                <td className="py-2 px-2">
+                  <div className="flex items-center gap-2">
+                    <Avatar className="h-7 w-7">
+                      <AvatarImage src={u.avatarUrl || undefined} />
+                      <AvatarFallback className="text-xs">
+                        {u.displayName?.charAt(0)?.toUpperCase() || '?'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span className="font-medium truncate max-w-[160px]">
+                        {u.displayName || 'Unnamed'}
+                      </span>
+                      {u.foundingMember && (
+                        <Award className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+                      )}
                     </div>
-                  </td>
-                  <td className="py-2 pr-3 text-muted-foreground truncate max-w-[220px]">
-                    {u.email ?? '—'}
-                  </td>
-                  <td className="py-2 pr-3 text-muted-foreground">{formatDate(u.createdAt)}</td>
-                  <td className="py-2 pr-3 text-muted-foreground">
-                    {formatDate(u.lastSignInAt)}
-                  </td>
-                  <td className="py-2 pr-3 text-right">
-                    <Badge variant="secondary">{u.referralCount}</Badge>
-                  </td>
-                  <td className="py-2 pr-3 text-right font-medium">{u.ralliesJoined}</td>
-                  <td className="py-2 text-right font-medium">{u.ralliesCreated}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </CardContent>
-    </Card>
+                  </div>
+                </td>
+                <td className="py-2 px-2 text-muted-foreground truncate max-w-[200px]">
+                  {u.email ?? '—'}
+                </td>
+                <td className="py-2 px-2 text-muted-foreground tabular-nums">{formatDate(u.createdAt)}</td>
+                <td className="py-2 px-2 text-muted-foreground tabular-nums">{formatDate(u.lastSignInAt)}</td>
+                <td className="py-2 px-2 text-right">
+                  <span className="inline-flex h-5 items-center rounded-full bg-muted/40 px-2 text-xs font-medium tabular-nums">
+                    {u.referralCount}
+                  </span>
+                </td>
+                <td className="py-2 px-2 text-right font-medium tabular-nums">{u.ralliesJoined}</td>
+                <td className="py-2 px-2 text-right font-medium tabular-nums">{u.ralliesCreated}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </BentoCard>
   );
 }
