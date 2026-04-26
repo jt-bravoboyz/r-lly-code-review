@@ -23,6 +23,7 @@ import { LocationSearch } from '@/components/location/LocationSearch';
 import { format, addHours, setHours, setMinutes, isAfter, isSameDay } from 'date-fns';
 import { EVENT_TYPES, getEventTypeLabel } from '@/lib/eventTypes';
 import { useRallyFriends } from '@/hooks/useRallyFriends';
+import { useRecentlyFriended } from '@/hooks/useFriendships';
 import { cn } from '@/lib/utils';
 
 const quickRallySchema = z.object({
@@ -108,6 +109,7 @@ export const QuickRallyDialog = forwardRef<HTMLButtonElement, QuickRallyDialogPr
     const { profile } = useAuth();
     const { data: squads } = useAllMySquads();
     const { data: rallyFriends = [] } = useRallyFriends();
+    const { data: recentlyFriended = [] } = useRecentlyFriended(8);
     const { location, getCurrentLocation } = useLocation();
     const createEvent = useCreateEvent();
     const joinEvent = useJoinEvent();
@@ -427,6 +429,36 @@ export const QuickRallyDialog = forwardRef<HTMLButtonElement, QuickRallyDialogPr
                   </FormItem>
                 )}
               />
+
+              {recentlyFriended.length > 0 && (
+                <div className="space-y-2">
+                  <FormLabel>Recently Friended</FormLabel>
+                  <ScrollArea className="h-24">
+                    <div className="flex flex-wrap gap-2 pb-2">
+                      {recentlyFriended.map((friend: any) => {
+                        const isSelected = selectedFriendIds.includes(friend.profile_id);
+                        return (
+                          <button
+                            key={friend.profile_id}
+                            type="button"
+                            onClick={() => toggleFriendSelection(friend.profile_id)}
+                            className={cn(
+                              'flex items-center gap-2 px-3 py-2 rounded-full border transition-colors',
+                              isSelected
+                                ? 'bg-primary text-primary-foreground border-primary'
+                                : 'bg-primary/10 hover:bg-primary/20 border-primary/30'
+                            )}
+                          >
+                            <UserPlus className="h-3 w-3" />
+                            <span className="text-sm font-medium">{friend.display_name || 'R@lly Friend'}</span>
+                            {isSelected && <Check className="h-3 w-3" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </ScrollArea>
+                </div>
+              )}
 
               {rallyFriends.length > 0 && (
                 <div className="space-y-2">
