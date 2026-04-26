@@ -192,9 +192,17 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
 
       // Total real invites sent (sum across all hosts after admin strip).
       const realInvitesSent = Object.values(invitesByProfile).reduce((a, b) => a + b, 0);
-      // Fallback to analytics-only if no invite tables have data yet, so old projects don't break.
-      const analyticsInviteCount = events.filter(e => e.event_name === 'invite_link_copied').length;
-      const inviteCopied = realInvitesSent > 0 ? realInvitesSent : analyticsInviteCount;
+      // Analytics-only signals:
+      //   - invite_link_copied: fired when a host copies the share URL.
+      //   - invite_code_redeemed: fired when an invitee enters a code to join.
+      // Both prove an invite was actually used, so they count toward "Invite copies".
+      const analyticsLinkCopied = events.filter(e => e.event_name === 'invite_link_copied').length;
+      const analyticsCodeRedeemed = events.filter(e => e.event_name === 'invite_code_redeemed').length;
+      const analyticsInviteCount = analyticsLinkCopied + analyticsCodeRedeemed;
+      // Real-table sum is preferred; analytics adds code-redemptions which aren't in the invite tables.
+      const inviteCopied = realInvitesSent > 0
+        ? realInvitesSent + analyticsCodeRedeemed
+        : analyticsInviteCount;
 
       // K-Factor: real invites generated per R@lly created.
       const kFactor = totalEventsCreated > 0 ? (inviteCopied / totalEventsCreated) : 0;
