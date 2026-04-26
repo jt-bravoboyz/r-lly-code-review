@@ -605,6 +605,12 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
         headcountByEvent,
         headcountByEventGrowth,
         userDirectory,
+        topViralHosts,
+        repeatRateThisWeek,
+        repeatRateLastWeek,
+        repeatRateDelta,
+        weeklyCohorts,
+        eventLocations,
         adminFilterActive: filterAdminData && adminProfileIds.size > 0,
         adminAccountCount: adminProfileIds.size,
       };
