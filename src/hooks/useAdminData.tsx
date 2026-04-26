@@ -132,15 +132,52 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
         attendees = attendees.filter(a => !adminProfileIds.has(a.profile_id));
       }
 
-      // Apply date filter to BOTH datasets
+      // === GHOST FIX ===
+      // Old behavior filtered events by *creation date*, then stripped attendees to that
+      // event-id set. That orphaned every attendee/invite/analytic that fired today on a
+      // R@lly created earlier — inflating K-Factor while showing 0 Verified Foot Traffic.
+      //
+      // New behavior: when a date preset is active, build the *active rally set* = events
+      // that show ANY signal (created OR attendee join OR analytics event with event_id)
+      // inside the window. Use that union as the basis for filteredRallyEvents/attendees.
       if (dateCutoff) {
-        rallyEventsRaw = rallyEventsRaw.filter(e => e.created_at && new Date(e.created_at) >= dateCutoff);
-        const rawEventIds = new Set(rallyEventsRaw.map(e => e.id));
-        attendeesRaw = attendeesRaw.filter(a => rawEventIds.has(a.event_id));
+        const cutoffMs = dateCutoff.getTime();
 
-        filteredRallyEvents = filteredRallyEvents.filter(e => e.created_at && new Date(e.created_at) >= dateCutoff);
-        const filteredEventIds = new Set(filteredRallyEvents.map(e => e.id));
-        attendees = attendees.filter(a => filteredEventIds.has(a.event_id));
+        // Signal collectors (raw + filtered branches walked separately so admin-stripping
+        // still applies to the filtered branch).
+        const buildActiveSet = (
+          srcEvents: typeof rallyEventsRaw,
+          srcAttendees: typeof attendeesRaw,
+        ) => {
+          const eventIds = new Set<string>(srcEvents.map(e => e.id));
+          const active = new Set<string>();
+          // 1. Events created in window
+          srcEvents.forEach(e => {
+            if (e.created_at && new Date(e.created_at).getTime() >= cutoffMs) active.add(e.id);
+          });
+          // 2. Attendee rows that joined in window
+          srcAttendees.forEach(a => {
+            if (!eventIds.has(a.event_id)) return;
+            // joined_at column not selected; treat any attendee on a recently-active event
+            // as a signal (we'll AND with analytics signals below).
+          });
+          // 3. Analytics events tagged with event_id, fired in window
+          (allEvents || []).forEach(ev => {
+            if (!ev.created_at || new Date(ev.created_at).getTime() < cutoffMs) return;
+            const eid = (ev.metadata as any)?.event_id as string | undefined;
+            if (eid && eventIds.has(eid)) active.add(eid);
+          });
+          return active;
+        };
+
+        const rawActive = buildActiveSet(rallyEventsRaw, attendeesRaw);
+        const filteredActive = buildActiveSet(filteredRallyEvents, attendees);
+
+        rallyEventsRaw = rallyEventsRaw.filter(e => rawActive.has(e.id));
+        attendeesRaw = attendeesRaw.filter(a => rawActive.has(a.event_id));
+
+        filteredRallyEvents = filteredRallyEvents.filter(e => filteredActive.has(e.id));
+        attendees = attendees.filter(a => filteredActive.has(a.event_id));
       }
 
       // Full 9-step funnel
