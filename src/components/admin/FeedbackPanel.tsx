@@ -62,7 +62,7 @@ export const FeedbackPanel = React.forwardRef<HTMLDivElement, FeedbackPanelProps
                 <div key={f.id} className="p-3 border rounded-lg space-y-1">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">
-                      {profile?.display_name || 'Anonymous'}
+                      {getPrivateName(profile)}
                       {profile?.founding_member && (
                         <span className="ml-1 text-yellow-500 text-xs">★ Founder</span>
                       )}

@@ -46,7 +46,7 @@ export function ContactSelector({
       const key = entry.invited_profile_id || entry.invited_phone || entry.id;
       contactMap.set(key, {
         id: entry.id,
-        name: entry.profile?.display_name || entry.invited_name || 'Unknown',
+        name: getPublicName(entry.profile) !== 'R@lly Member' ? getPublicName(entry.profile) : (entry.invited_name || 'A R@llier'),
         phone: entry.invited_phone || undefined,
         profileId: entry.invited_profile_id || undefined,
         avatarUrl: entry.profile?.avatar_url || undefined,

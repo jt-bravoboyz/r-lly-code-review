@@ -452,7 +452,7 @@ export function InviteToEventDialog({
                         </Avatar>
                         <div>
                           <p className="text-sm font-medium">
-                            {(invite as any).invited_profile?.display_name || 'Unknown'}
+                            {getPublicName((invite as any).invited_profile)}
                           </p>
                           <p className="text-xs text-muted-foreground">
                             {format(new Date(invite.invited_at), 'MMM d, h:mm a')}

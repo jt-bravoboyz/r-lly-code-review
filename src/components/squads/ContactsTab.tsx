@@ -322,7 +322,7 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
                             </div>
                             <div>
                               <p className="font-medium text-sm inline-flex items-center">
-                                {friend.display_name || 'Anonymous'}
+                                {getPublicName(friend)}
                                 <MiniFounderGem profileId={friend.id} />
                               </p>
                               {friend.isSquadMate && (
@@ -483,7 +483,7 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
                             </Avatar>
                             <div>
                               <p className="font-medium text-sm">
-                                {contact.display_name || 'Unknown'}
+                                {getPublicName(contact)}
                               </p>
                               <p className="text-xs text-muted-foreground">
                                 {contact.phone_number}
@@ -666,7 +666,7 @@ function SquadMemberGroup({
                 </AvatarFallback>
               </Avatar>
               <span className="text-sm inline-flex items-center">
-                {member.profile?.display_name || 'Anonymous'}
+                {getPublicName(member.profile)}
                 <MiniFounderGem profileId={member.profile_id} />
               </span>
             </div>

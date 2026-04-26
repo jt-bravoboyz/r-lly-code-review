@@ -263,7 +263,7 @@ export function SquadInviteDialog({ squadId, squadName, trigger }: SquadInviteDi
                           <AvatarImage src={p.avatar_url || undefined} />
                           <AvatarFallback className="text-xs">{(p.display_name || '?')[0]}</AvatarFallback>
                         </Avatar>
-                        <span className="text-sm font-medium">{p.display_name || 'Unknown'}</span>
+                        <span className="text-sm font-medium">{getPublicName(p)}</span>
                       </div>
                       <Button
                         size="sm"

@@ -336,7 +336,7 @@ export function EventPhotoFeed({ eventId, isHost }: EventPhotoFeedProps) {
                       </AvatarFallback>
                     </Avatar>
                     <span className="text-[9px] text-white/90 truncate">
-                      {uploaderProfile?.display_name || 'Unknown'}
+                      {getPublicName(uploaderProfile)}
                     </span>
                   </div>
                 </div>

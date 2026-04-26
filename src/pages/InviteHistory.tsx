@@ -134,7 +134,7 @@ export default function InviteHistory() {
             </Avatar>
             <div>
               <p className="font-medium">
-                {entry.profile?.display_name || entry.invited_name || 'Unknown'}
+                {getPublicName(entry.profile) !== 'R@lly Member' ? getPublicName(entry.profile) : (entry.invited_name || 'A R@llier')}
               </p>
               <div className="flex items-center gap-2">
                 {entry.invited_phone && (

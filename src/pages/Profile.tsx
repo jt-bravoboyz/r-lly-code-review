@@ -384,7 +384,7 @@ export default function Profile() {
                   </div>
                 ) : (
                   <h2 className="text-xl font-bold inline-flex items-center">
-                    {profile?.display_name || 'Anonymous'}
+                    {getPublicName(profile)}
                     {profile?.id && <MiniFounderGem profileId={profile.id} />}
                   </h2>
                 )}
