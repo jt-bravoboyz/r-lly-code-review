@@ -182,8 +182,8 @@ export default function AdminDashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <UserIntelligence
                 profiles={data.profiles}
-                attendees={data.attendees}
-                rallyEvents={data.rallyEvents}
+                attendees={(data as any).attendeesRaw ?? data.attendees}
+                rallyEvents={(data as any).rallyEventsRaw ?? data.rallyEvents}
                 headcountByEvent={(data as any).headcountByEvent ?? {}}
               />
               <ErrorLogFeed />
