@@ -249,6 +249,10 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
 
       // Live Now indicator — any active R@lly happening right now (post admin/date filter).
       const liveNowCount = filteredRallyEvents.filter(e => e.status === 'live').length;
+      // Live paid R@llies right now — drives the Commercial "Live Now" badge.
+      const livePaidNowCount = filteredRallyEvents.filter(
+        e => e.status === 'live' && e.cover_charge && Number(e.cover_charge) > 0
+      ).length;
 
       // Safety metrics
       const afterRallyEvents = filteredRallyEvents.filter(e => e.status === 'completed' || e.status === 'after_rally').length;
