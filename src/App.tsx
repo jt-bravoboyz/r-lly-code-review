@@ -49,6 +49,7 @@ const App = () => (
             <TierUpProvider>
               <TooltipProvider>
                 <PublicProfileProvider>
+                <ConnectionStatusBanner />
                 <Toaster />
                 <Sonner />
                 <NavigationPortal />
