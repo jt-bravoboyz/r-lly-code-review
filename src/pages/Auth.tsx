@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { Mail, Lock, User, ChevronRight, ArrowLeft, Phone, Fingerprint, Eye, EyeOff } from 'lucide-react';
 import { z } from 'zod';
 import { PolicyAcceptanceDialog } from '@/components/legal/PolicyAcceptanceDialog';
+import { trackEvent } from '@/lib/analytics';
 // Tutorial auto-starts via useTutorial profile-age check
 import { lovable } from '@/integrations/lovable/index';
 // Validation schemas
