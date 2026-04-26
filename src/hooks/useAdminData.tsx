@@ -63,10 +63,10 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
         events = events.filter(e => e.created_at && new Date(e.created_at) >= dateCutoff);
       }
 
-      // Fetch real event data
+      // Fetch real event data (lat/lng included for HeatMap)
       const { data: rallyEvents } = await supabase
         .from('events')
-        .select('id, created_at, status, creator_id, cover_charge, location_name')
+        .select('id, created_at, status, creator_id, cover_charge, location_name, location_lat, location_lng, start_time')
         .range(0, 9999);
 
       const { data: rawAttendees } = await supabase
@@ -441,6 +441,111 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
         ralliesCreated: ralliesCreatedByProfile[row.profile_id] ?? 0,
       }));
 
+      // === GROWTH NARRATIVE ===
+
+      // Top viral hosts: rank by personal K-factor (invites per rally created),
+      // tie-broken by total headcount delivered. Uses cleaned dataset for partner reporting.
+      const inviteCopiedByUser: Record<string, number> = {};
+      events.filter(e => e.event_name === 'invite_link_copied').forEach(e => {
+        if (e.user_id) inviteCopiedByUser[e.user_id] = (inviteCopiedByUser[e.user_id] || 0) + 1;
+      });
+      const profileToUserId: Record<string, string> = {};
+      (profiles || []).forEach(p => { profileToUserId[p.id] = p.user_id; });
+
+      const topViralHosts = Object.entries(hostCounts)
+        .map(([profileId, data]) => {
+          const userId = profileToUserId[profileId];
+          const invitesCopied = userId ? (inviteCopiedByUser[userId] || 0) : 0;
+          const personalK = data.created > 0 ? invitesCopied / data.created : 0;
+          const profile = profiles?.find(p => p.id === profileId) as any;
+          return {
+            profileId,
+            displayName: getPrivateName(profile) || 'Unknown',
+            avatarUrl: profile?.avatar_url || null,
+            ralliesCreated: data.created,
+            invitesCopied,
+            viralCoefficient: personalK,
+            headcountDelivered: data.attendeeSum,
+          };
+        })
+        .filter(h => h.ralliesCreated > 0)
+        .sort((a, b) => {
+          if (b.viralCoefficient !== a.viralCoefficient) return b.viralCoefficient - a.viralCoefficient;
+          return b.headcountDelivered - a.headcountDelivered;
+        })
+        .slice(0, 3);
+
+      // Week-over-week repeat rate delta
+      const oneWeekAgoMs = now.getTime() - 7 * 24 * 60 * 60 * 1000;
+      const twoWeeksAgoMs = now.getTime() - 14 * 24 * 60 * 60 * 1000;
+      const eventDateById: Record<string, number> = {};
+      filteredRallyEvents.forEach(e => {
+        if (e.created_at) eventDateById[e.id] = new Date(e.created_at).getTime();
+      });
+      const usersThisWeek: Record<string, number> = {};
+      const usersLastWeek: Record<string, number> = {};
+      attendees.forEach(a => {
+        const ts = eventDateById[a.event_id];
+        if (!ts) return;
+        if (ts >= oneWeekAgoMs) usersThisWeek[a.profile_id] = (usersThisWeek[a.profile_id] || 0) + 1;
+        else if (ts >= twoWeeksAgoMs) usersLastWeek[a.profile_id] = (usersLastWeek[a.profile_id] || 0) + 1;
+      });
+      const repeatRateThisWeek = Object.keys(usersThisWeek).length > 0
+        ? Object.values(usersThisWeek).filter(c => c >= 2).length / Object.keys(usersThisWeek).length * 100
+        : 0;
+      const repeatRateLastWeek = Object.keys(usersLastWeek).length > 0
+        ? Object.values(usersLastWeek).filter(c => c >= 2).length / Object.keys(usersLastWeek).length * 100
+        : 0;
+      const repeatRateDelta = repeatRateThisWeek - repeatRateLastWeek;
+
+      // 4-week cohort matrix: for each of last 4 weeks, % of joiners returning in subsequent weeks
+      const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+      const weekStart = (offset: number) => {
+        const d = new Date(now.getTime() - offset * WEEK_MS);
+        d.setHours(0, 0, 0, 0);
+        // align to Sunday
+        d.setDate(d.getDate() - d.getDay());
+        return d.getTime();
+      };
+      // Build per-user list of attendance week-buckets (using filteredRallyEvents to keep growth-clean cohorts)
+      const userWeeks: Record<string, Set<number>> = {};
+      attendees.forEach(a => {
+        const ts = eventDateById[a.event_id];
+        if (!ts) return;
+        const weekIdx = Math.floor((now.getTime() - ts) / WEEK_MS);
+        if (!userWeeks[a.profile_id]) userWeeks[a.profile_id] = new Set();
+        userWeeks[a.profile_id].add(weekIdx);
+      });
+      const weeklyCohorts = Array.from({ length: 4 }, (_, i) => {
+        // i = weeks ago (0 = this week)
+        const cohortWeekIdx = i;
+        const cohortDate = new Date(weekStart(cohortWeekIdx));
+        const cohortUsers = Object.entries(userWeeks)
+          .filter(([, weeks]) => weeks.has(cohortWeekIdx))
+          .map(([uid]) => uid);
+        const returns = [1, 2, 3].map(offset => {
+          if (cohortUsers.length === 0) return null;
+          const returned = cohortUsers.filter(uid => userWeeks[uid].has(cohortWeekIdx - offset)).length;
+          return returned / cohortUsers.length * 100;
+        });
+        return {
+          weekStart: cohortDate.toISOString(),
+          weekLabel: cohortDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+          cohortSize: cohortUsers.length,
+          returnRates: returns, // [%week+1, %week+2, %week+3] or nulls
+        };
+      });
+
+      // Geographic spread for HeatMap (host-provided event coords only — never user GPS)
+      const eventLocations = filteredRallyEvents
+        .filter(e => e.location_lat != null && e.location_lng != null)
+        .map(e => ({
+          id: e.id,
+          lat: Number(e.location_lat),
+          lng: Number(e.location_lng),
+          locationName: e.location_name || null,
+        }));
+
       return {
         summary: {
           totalEventsCreated,
@@ -500,6 +605,12 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
         headcountByEvent,
         headcountByEventGrowth,
         userDirectory,
+        topViralHosts,
+        repeatRateThisWeek,
+        repeatRateLastWeek,
+        repeatRateDelta,
+        weeklyCohorts,
+        eventLocations,
         adminFilterActive: filterAdminData && adminProfileIds.size > 0,
         adminAccountCount: adminProfileIds.size,
       };
