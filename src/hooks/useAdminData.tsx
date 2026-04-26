@@ -412,15 +412,16 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
       // Total lifetime attendees (sum of attending check-ins across all events)
       const totalLifetimeAttendees = attendees.filter(a => a.status === 'attending').length;
 
-      // Per-profile aggregates for User Directory
+      // Per-profile aggregates for User Directory — use RAW so each user's
+      // true rally activity is shown (admin team activity is real activity).
       const ralliesJoinedByProfile: Record<string, number> = {};
-      attendees.forEach(a => {
+      attendeesRaw.forEach(a => {
         if (a.status === 'attending') {
           ralliesJoinedByProfile[a.profile_id] = (ralliesJoinedByProfile[a.profile_id] || 0) + 1;
         }
       });
       const ralliesCreatedByProfile: Record<string, number> = {};
-      filteredRallyEvents.forEach(e => {
+      rallyEventsRaw.forEach(e => {
         ralliesCreatedByProfile[e.creator_id] = (ralliesCreatedByProfile[e.creator_id] || 0) + 1;
       });
 
