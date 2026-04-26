@@ -91,6 +91,14 @@ export default function AdminDashboard() {
           </div>
         ) : viewMode === 'partner' ? (
           <>
+            {/* Data philosophy banner — explains the dual-source model to admins */}
+            {(data as any).adminFilterActive && (
+              <div className="rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-xs text-muted-foreground">
+                <span className="font-semibold text-foreground">Data integrity:</span>{' '}
+                Growth metrics (K-Factor, conversion, top-host averages) exclude {(data as any).adminAccountCount} internal team account{(data as any).adminAccountCount === 1 ? '' : 's'} for clean partner reporting. Per-event headcount, founder activity, safety usage, and CSV exports reflect every real attendee.
+              </div>
+            )}
+
             {/* 1. K-Factor — first thing visible */}
             <KFactorCard
               kFactor={data.summary.kFactor}
