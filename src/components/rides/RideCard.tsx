@@ -130,13 +130,21 @@ export function RideCard({ ride }: RideCardProps) {
           <div className="flex-1 min-w-0">
             {/* Driver info */}
             <div className="flex items-center gap-2 mb-2">
-              <Avatar className="h-6 w-6">
-                <AvatarImage src={ride.driver?.avatar_url || undefined} />
-                <AvatarFallback className="text-xs">
-                  {ride.driver?.display_name?.charAt(0)?.toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <span className="font-medium text-sm">{ride.driver?.display_name}</span>
+              <button
+                type="button"
+                onClick={() => ride.driver?.id && !isDriver && openProfile(ride.driver.id)}
+                disabled={isDriver || !ride.driver?.id}
+                className={`flex items-center gap-2 ${!isDriver && ride.driver?.id ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
+                aria-label={`View ${driverName}'s profile`}
+              >
+                <Avatar className="h-6 w-6">
+                  <AvatarImage src={ride.driver?.avatar_url || undefined} />
+                  <AvatarFallback className="text-xs">
+                    {driverName.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="font-medium text-sm">{driverName}</span>
+              </button>
               {isDriver && (
                 <Badge variant="secondary" className="text-[10px] bg-primary/10 text-primary">
                   You're driving
