@@ -23,6 +23,7 @@ import { LocationSearch } from '@/components/location/LocationSearch';
 import { format, addHours, setHours, setMinutes, isAfter, isSameDay } from 'date-fns';
 import { EVENT_TYPES, getEventTypeLabel } from '@/lib/eventTypes';
 import { useRallyFriends } from '@/hooks/useRallyFriends';
+import { useRecentlyFriended } from '@/hooks/useFriendships';
 import { cn } from '@/lib/utils';
 
 const quickRallySchema = z.object({
