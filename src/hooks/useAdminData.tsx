@@ -474,7 +474,9 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
         feedback: feedback || [],
         profiles: profiles || [],
         attendees,
+        attendeesRaw,
         rallyEvents: filteredRallyEvents,
+        rallyEventsRaw,
         commercial: {
           totalGMV,
           paidEventsCount,
@@ -495,7 +497,10 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
         topConnectors,
         referralDetails,
         headcountByEvent,
+        headcountByEventGrowth,
         userDirectory,
+        adminFilterActive: filterAdminData && adminProfileIds.size > 0,
+        adminAccountCount: adminProfileIds.size,
       };
     },
     refetchInterval: 30000,
