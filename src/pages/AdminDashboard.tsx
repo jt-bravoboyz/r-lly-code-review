@@ -114,18 +114,20 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            {/* 5. Growth + Safety */}
+            {/* 5. Growth + Safety
+                  - Growth top hosts use cleaned `attendees` (admin-stripped) for partnership reporting.
+                  - Safety metrics use `attendeesRaw` so real-world safety usage is reported truthfully. */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <GrowthMetrics growth={data.growth} />
-              <SafetyMetrics safety={data.safety} attendees={data.attendees} />
+              <SafetyMetrics safety={data.safety} attendees={(data as any).attendeesRaw ?? data.attendees} />
             </div>
 
-            {/* 6. Founder + Feedback */}
+            {/* 6. Founder + Feedback — Founders use raw attendee data so their true rally activity shows */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <FounderPanel
                 founders={data.founders}
-                attendees={data.attendees}
-                rallyEvents={data.rallyEvents}
+                attendees={(data as any).attendeesRaw ?? data.attendees}
+                rallyEvents={(data as any).rallyEventsRaw ?? data.rallyEvents}
                 referralCounts={data.referralCounts}
               />
               <FeedbackPanel feedback={data.feedback} profiles={data.profiles} />
