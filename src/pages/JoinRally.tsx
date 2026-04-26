@@ -13,6 +13,7 @@ import { format } from 'date-fns';
 import rallyLogo from '@/assets/rally-logo.png';
 import { SafetyChoiceModal } from '@/components/events/SafetyChoiceModal';
 import { RidesSelectionModal } from '@/components/events/RidesSelectionModal';
+import { trackEvent } from '@/lib/analytics';
 
 interface EventPreview {
   id: string;
