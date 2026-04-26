@@ -1,15 +1,27 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
-import { Calendar, MapPin, Check, X, Clock, ChevronRight, Users, History } from 'lucide-react';
+import { Calendar, MapPin, Check, X, Clock, ChevronRight, Users, History, Trash2 } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { toast } from 'sonner';
 import { usePastEventInvites, PastEventInvite } from '@/hooks/usePastEventInvites';
-import { useInviteHistory, InviteHistoryEntry } from '@/hooks/useInviteHistory';
+import { useInviteHistory, InviteHistoryEntry, useClearInviteHistory } from '@/hooks/useInviteHistory';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -18,6 +30,8 @@ export default function InviteHistory() {
   const { user, loading } = useAuth();
   const { data: pastInvites, isLoading: loadingPastInvites } = usePastEventInvites();
   const { data: inviteHistory, isLoading: loadingHistory } = useInviteHistory();
+  const clearHistory = useClearInviteHistory();
+  const [confirmClearOpen, setConfirmClearOpen] = useState(false);
 
   if (loading) {
     return (
@@ -193,9 +207,21 @@ export default function InviteHistory() {
                 </div>
               ) : inviteHistory && inviteHistory.length > 0 ? (
                 <div className="space-y-3 pr-4">
-                  <p className="text-sm text-muted-foreground mb-2">
-                    People you've invited before - tap to quickly re-invite
-                  </p>
+                  <div className="flex items-center justify-between mb-2 gap-2">
+                    <p className="text-sm text-muted-foreground">
+                      People you've invited before - tap to quickly re-invite
+                    </p>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-primary hover:text-primary hover:bg-primary/10 shrink-0 gap-1"
+                      onClick={() => setConfirmClearOpen(true)}
+                      disabled={clearHistory.isPending}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      Clear History
+                    </Button>
+                  </div>
                   {inviteHistory.map(renderInviteHistoryEntry)}
                 </div>
               ) : (
@@ -213,6 +239,34 @@ export default function InviteHistory() {
       </main>
 
       <BottomNav />
+
+      <AlertDialog open={confirmClearOpen} onOpenChange={setConfirmClearOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Clear your invite history?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This hides everyone from your "Sent" list so you start fresh. No one is notified, and your records are kept for R@lly analytics.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
+              onClick={async () => {
+                try {
+                  await clearHistory.mutateAsync();
+                  toast.success('Invite history cleared');
+                  setConfirmClearOpen(false);
+                } catch {
+                  toast.error('Could not clear history. Try again.');
+                }
+              }}
+            >
+              Clear History
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

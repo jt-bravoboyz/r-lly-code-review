@@ -34,6 +34,7 @@ export function useInviteHistory() {
           profile:profiles!invite_history_invited_profile_id_fkey(id, display_name, avatar_url)
         `)
         .eq('inviter_id', profile.id)
+        .is('hidden_at', null)
         .order('last_invited_at', { ascending: false })
         .limit(50);
 
@@ -101,6 +102,30 @@ export function useRecordInvite() {
 
         if (error) throw error;
       }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['invite-history'] });
+    },
+  });
+}
+
+// Soft-delete: hide all of the user's invite history entries from their UI
+// (records remain in the database for analytics)
+export function useClearInviteHistory() {
+  const queryClient = useQueryClient();
+  const { profile } = useAuth();
+
+  return useMutation({
+    mutationFn: async () => {
+      if (!profile?.id) throw new Error('Not authenticated');
+
+      const { error } = await supabase
+        .from('invite_history')
+        .update({ hidden_at: new Date().toISOString() })
+        .eq('inviter_id', profile.id)
+        .is('hidden_at', null);
+
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['invite-history'] });

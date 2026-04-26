@@ -38,8 +38,11 @@ export function ChatView({ chatId, messages, isLoading, storagePath = 'general' 
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [typingUsers, setTypingUsers] = useState<Record<string, { name: string; at: number }>>({});
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const typingChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const lastTypingSentAt = useRef<number>(0);
   const { profile } = useAuth();
   const sendMessage = useSendMessage();
   const clearChatNotification = useClearChatNotification();
@@ -48,6 +51,63 @@ export function ChatView({ chatId, messages, isLoading, storagePath = 'general' 
     if (!chatId) return;
     clearChatNotification.mutate(chatId);
   }, [chatId]);
+
+  // Typing indicator: subscribe to broadcast on typing_indicator:chat-{chatId}
+  useEffect(() => {
+    if (!chatId || !profile?.id) return;
+
+    const channel = supabase.channel(`typing_indicator:chat-${chatId}`, {
+      config: { broadcast: { self: false } },
+    });
+
+    channel
+      .on('broadcast', { event: 'typing' }, (payload) => {
+        const { profileId, name } = (payload.payload || {}) as { profileId?: string; name?: string };
+        if (!profileId || profileId === profile.id || !name) return;
+        setTypingUsers((prev) => ({ ...prev, [profileId]: { name, at: Date.now() } }));
+      })
+      .subscribe();
+
+    typingChannelRef.current = channel;
+
+    // Sweep stale typers every second
+    const sweep = setInterval(() => {
+      setTypingUsers((prev) => {
+        const now = Date.now();
+        const next: typeof prev = {};
+        let changed = false;
+        for (const [id, v] of Object.entries(prev)) {
+          if (now - v.at < 3500) next[id] = v;
+          else changed = true;
+        }
+        return changed ? next : prev;
+      });
+    }, 1000);
+
+    return () => {
+      clearInterval(sweep);
+      supabase.removeChannel(channel);
+      typingChannelRef.current = null;
+    };
+  }, [chatId, profile?.id]);
+
+  const broadcastTyping = () => {
+    const channel = typingChannelRef.current;
+    if (!channel || !profile?.id) return;
+    const now = Date.now();
+    if (now - lastTypingSentAt.current < 1500) return;
+    lastTypingSentAt.current = now;
+    const name =
+      (profile as any).nickname?.trim() ||
+      (profile as any).display_name?.trim() ||
+      (profile as any).full_name?.trim() ||
+      'Someone';
+    channel.send({
+      type: 'broadcast',
+      event: 'typing',
+      payload: { profileId: profile.id, name },
+    });
+  };
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
@@ -189,6 +249,18 @@ export function ChatView({ chatId, messages, isLoading, storagePath = 'general' 
         </div>
       )}
 
+      {/* Typing indicator */}
+      {Object.keys(typingUsers).length > 0 && (
+        <div className="px-4 pt-1 pb-0 text-xs text-muted-foreground italic">
+          {(() => {
+            const names = Object.values(typingUsers).map((t) => t.name);
+            if (names.length === 1) return `${names[0]} is typing…`;
+            if (names.length === 2) return `${names[0]} and ${names[1]} are typing…`;
+            return `${names.length} people are typing…`;
+          })()}
+        </div>
+      )}
+
       {/* Input area */}
       <div className="p-4 border-t bg-background">
         <div className="flex items-center gap-2">
@@ -209,7 +281,10 @@ export function ChatView({ chatId, messages, isLoading, storagePath = 'general' 
           </Button>
           <Input
             value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
+            onChange={(e) => {
+              setNewMessage(e.target.value);
+              if (e.target.value.trim()) broadcastTyping();
+            }}
             onKeyPress={handleKeyPress}
             placeholder="Type a message..."
             className="flex-1 rounded-full"
