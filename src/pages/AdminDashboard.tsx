@@ -14,7 +14,6 @@ import { FeatureFlags } from '@/components/admin/FeatureFlags';
 import { ErrorLogFeed } from '@/components/admin/ErrorLogFeed';
 import { OnboardingDropoff } from '@/components/admin/OnboardingDropoff';
 import { CommercialDashboard } from '@/components/admin/CommercialDashboard';
-import { KFactorCard } from '@/components/admin/KFactorCard';
 import { SquadInsights } from '@/components/admin/SquadInsights';
 import { SquadAudit } from '@/components/admin/SquadAudit';
 import { SafetyROI } from '@/components/admin/SafetyROI';
@@ -343,6 +342,9 @@ function renderCommercial(subTab: string, data: any) {
             providerSplit={data.transit?.providerSplit ?? {}}
             eventsByCity={data.commercial?.eventsByCity ?? []}
             avgDwellTime={data.avgDwellTime}
+            revenuePotential={data.commercial?.revenuePotential}
+            avgTicket={data.commercial?.avgTicket}
+            livePaidNowCount={data.summary?.livePaidNowCount ?? 0}
           />
         </div>
         <div className="md:col-span-12 flex justify-end">
