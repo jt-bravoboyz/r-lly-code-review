@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { Activity, Calendar, Users, Zap, ShieldCheck, PartyPopper } from 'lucide-react';
+import { BentoCard } from './BentoCard';
+import { LiveNowBadge } from './RallyPulse';
 
 interface ActivityItem {
   id: string;
@@ -35,7 +36,6 @@ export const LiveActivityFeed = React.forwardRef<HTMLDivElement>((_, ref) => {
   const [items, setItems] = useState<ActivityItem[]>([]);
 
   useEffect(() => {
-    // Fetch recent
     supabase
       .from('analytics_events')
       .select('id, event_name, created_at, user_id')
@@ -45,7 +45,6 @@ export const LiveActivityFeed = React.forwardRef<HTMLDivElement>((_, ref) => {
         if (data) setItems(data);
       });
 
-    // Subscribe to realtime
     const channel = supabase
       .channel('admin-live-feed')
       .on(
@@ -61,16 +60,23 @@ export const LiveActivityFeed = React.forwardRef<HTMLDivElement>((_, ref) => {
     return () => { supabase.removeChannel(channel); };
   }, []);
 
+  // Stream-active heuristic: a row in the last 5 minutes
+  const fiveMinAgo = Date.now() - 5 * 60 * 1000;
+  const liveStream = items.some(i => i.created_at && new Date(i.created_at).getTime() >= fiveMinAgo);
+
   return (
-    <Card ref={ref}>
-      <CardHeader>
-        <CardTitle className="text-lg flex items-center gap-2">
-          <Activity className="h-5 w-5 text-green-500 animate-pulse" />
-          Live Activity
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-2 max-h-96 overflow-y-auto">
+    <div ref={ref}>
+      <BentoCard span={12}>
+        <div className="flex items-center justify-between mb-3 gap-2">
+          <div className="flex items-center gap-2">
+            <Activity className="h-4 w-4 text-primary" />
+            <span className="text-xs font-semibold uppercase tracking-wider text-primary">
+              Live Activity
+            </span>
+          </div>
+          {liveStream && <LiveNowBadge count={items.filter(i => i.created_at && new Date(i.created_at).getTime() >= fiveMinAgo).length} />}
+        </div>
+        <div className="space-y-1 max-h-96 overflow-y-auto pr-1 -mr-1">
           {items.length === 0 && (
             <p className="text-sm text-muted-foreground text-center py-4">Waiting for activity...</p>
           )}
@@ -81,16 +87,19 @@ export const LiveActivityFeed = React.forwardRef<HTMLDivElement>((_, ref) => {
             const date = new Date(item.created_at!).toLocaleDateString();
 
             return (
-              <div key={item.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 text-sm">
+              <div
+                key={item.id}
+                className="flex items-center gap-3 px-3 py-2 rounded-xl border border-border/30 bg-background/40 hover:bg-background/70 transition-colors text-sm"
+              >
                 <Icon className="h-4 w-4 text-primary shrink-0" />
-                <span className="flex-1">{label}</span>
-                <span className="text-xs text-muted-foreground whitespace-nowrap">{date} {time}</span>
+                <span className="flex-1 truncate">{label}</span>
+                <span className="text-[11px] text-muted-foreground whitespace-nowrap tabular-nums">{date} {time}</span>
               </div>
             );
           })}
         </div>
-      </CardContent>
-    </Card>
+      </BentoCard>
+    </div>
   );
 });
 LiveActivityFeed.displayName = 'LiveActivityFeed';

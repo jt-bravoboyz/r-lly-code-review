@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Settings } from 'lucide-react';
+import { BentoCard } from './BentoCard';
 
 interface Flag {
   key: string;
@@ -39,21 +39,27 @@ export const FeatureFlags = React.forwardRef<HTMLDivElement>((_, ref) => {
   };
 
   return (
-    <Card ref={ref}>
-      <CardHeader>
-        <CardTitle className="text-lg flex items-center gap-2">
-          <Settings className="h-5 w-5" />
-          Feature Flags
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
+    <div ref={ref}>
+      <BentoCard span={12}>
+        <div className="flex items-center gap-2 mb-3">
+          <Settings className="h-4 w-4 text-primary" />
+          <span className="text-xs font-semibold uppercase tracking-wider text-primary">
+            Feature Flags
+          </span>
+          <span className="ml-auto text-[11px] text-muted-foreground tabular-nums">
+            {flags.length} flag{flags.length === 1 ? '' : 's'}
+          </span>
+        </div>
+        <div className="space-y-2">
           {flags.map(flag => (
-            <div key={flag.key} className="flex items-center justify-between p-3 border rounded-lg">
-              <div>
-                <div className="text-sm font-medium font-mono">{flag.key}</div>
+            <div
+              key={flag.key}
+              className="flex items-center justify-between p-3 rounded-xl border border-border/40 bg-background/40 hover:bg-background/70 transition-colors"
+            >
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-medium font-mono truncate">{flag.key}</div>
                 {flag.description && (
-                  <div className="text-xs text-muted-foreground">{flag.description}</div>
+                  <div className="text-xs text-muted-foreground truncate">{flag.description}</div>
                 )}
               </div>
               <Switch
@@ -63,8 +69,8 @@ export const FeatureFlags = React.forwardRef<HTMLDivElement>((_, ref) => {
             </div>
           ))}
         </div>
-      </CardContent>
-    </Card>
+      </BentoCard>
+    </div>
   );
 });
 FeatureFlags.displayName = 'FeatureFlags';

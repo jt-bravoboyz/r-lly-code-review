@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { MessageSquare, Bug, Lightbulb, HelpCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
+import { BentoCard } from './BentoCard';
+import { MetricPill } from './MetricPill';
 
 interface FeedbackRow {
   id: string;
@@ -20,10 +20,10 @@ const typeIcon: Record<string, any> = {
   other: HelpCircle,
 };
 
-const typeColor: Record<string, string> = {
-  bug: 'destructive',
-  feature: 'default',
-  other: 'secondary',
+const typeTone: Record<string, 'warning' | 'accent' | 'muted'> = {
+  bug: 'warning',
+  feature: 'accent',
+  other: 'muted',
 };
 
 export function SystemFeedbackCard() {
@@ -42,7 +42,6 @@ export function SystemFeedbackCard() {
     };
     load();
 
-    // Realtime
     const channel = supabase
       .channel('system-feedback-realtime')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'system_feedback' }, (payload) => {
@@ -54,48 +53,51 @@ export function SystemFeedbackCard() {
   }, []);
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base flex items-center gap-2">
-          <MessageSquare className="h-4 w-4 text-primary" />
+    <BentoCard span={12}>
+      <div className="flex items-center gap-2 mb-3">
+        <MessageSquare className="h-4 w-4 text-primary" />
+        <span className="text-xs font-semibold uppercase tracking-wider text-primary">
           System Feedback
-          {feedback.length > 0 && (
-            <Badge variant="secondary" className="ml-auto text-xs">{feedback.length}</Badge>
-          )}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {loading ? (
-          <p className="text-sm text-muted-foreground">Loading...</p>
-        ) : feedback.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-4">No feedback yet</p>
-        ) : (
-          <div className="space-y-3 max-h-80 overflow-y-auto">
-            {feedback.map((fb) => {
-              const Icon = typeIcon[fb.type] || HelpCircle;
-              return (
-                <div key={fb.id} className="flex gap-3 p-3 rounded-lg bg-muted/50 border border-border/50">
-                  <Icon className="h-4 w-4 mt-0.5 shrink-0 text-muted-foreground" />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Badge variant={typeColor[fb.type] as any} className="text-[10px] capitalize">
-                        {fb.type}
-                      </Badge>
-                      {fb.screen_path && (
-                        <span className="text-[10px] text-muted-foreground font-mono truncate">{fb.screen_path}</span>
-                      )}
-                    </div>
-                    <p className="text-sm text-foreground">{fb.message}</p>
-                    <p className="text-[10px] text-muted-foreground mt-1">
-                      {formatDistanceToNow(new Date(fb.created_at), { addSuffix: true })}
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+        </span>
+        {feedback.length > 0 && (
+          <MetricPill tone="muted" className="ml-auto">
+            <span className="tabular-nums">{feedback.length}</span>
+          </MetricPill>
         )}
-      </CardContent>
-    </Card>
+      </div>
+      {loading ? (
+        <p className="text-sm text-muted-foreground">Loading...</p>
+      ) : feedback.length === 0 ? (
+        <p className="text-sm text-muted-foreground text-center py-4">No feedback yet</p>
+      ) : (
+        <div className="space-y-2 max-h-80 overflow-y-auto pr-1 -mr-1">
+          {feedback.map((fb) => {
+            const Icon = typeIcon[fb.type] || HelpCircle;
+            return (
+              <div
+                key={fb.id}
+                className="flex gap-3 p-3 rounded-xl border border-border/30 bg-background/40"
+              >
+                <Icon className="h-4 w-4 mt-0.5 shrink-0 text-muted-foreground" />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <MetricPill tone={typeTone[fb.type] || 'muted'} className="capitalize">
+                      {fb.type}
+                    </MetricPill>
+                    {fb.screen_path && (
+                      <span className="text-[10px] text-muted-foreground font-mono truncate">{fb.screen_path}</span>
+                    )}
+                  </div>
+                  <p className="text-sm text-foreground">{fb.message}</p>
+                  <p className="text-[10px] text-muted-foreground mt-1 tabular-nums">
+                    {formatDistanceToNow(new Date(fb.created_at), { addSuffix: true })}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </BentoCard>
   );
 }

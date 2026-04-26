@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Users, Image, ChevronRight, ArrowLeft, Crown } from 'lucide-react';
+import { Users, Image as ImageIcon, ChevronRight, ArrowLeft, Crown } from 'lucide-react';
 import { format } from 'date-fns';
 import { getPrivateName } from '@/lib/identity';
+import { BentoCard } from './BentoCard';
+import { MetricPill } from './MetricPill';
 
 interface SquadRow {
   id: string;
@@ -38,8 +38,6 @@ function useAdminSquads() {
         .range(0, 999);
 
       if (error) throw error;
-
-      // Count media per squad (rally_media is event-based, squad photos are just group_photo_url)
       return (data || []) as unknown as SquadRow[];
     },
   });
@@ -51,11 +49,11 @@ export function SquadAudit() {
 
   if (isLoading) {
     return (
-      <Card>
-        <CardContent className="flex items-center justify-center py-12">
+      <BentoCard span={12}>
+        <div className="flex items-center justify-center py-10">
           <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-        </CardContent>
-      </Card>
+        </div>
+      </BentoCard>
     );
   }
 
@@ -68,19 +66,22 @@ export function SquadAudit() {
     ];
 
     return (
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedSquadId(null)}>
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <CardTitle className="text-base font-montserrat">{selectedSquad.name}</CardTitle>
-            <Badge variant="secondary" className="ml-auto">{allMembers.length} members</Badge>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-2">
+      <BentoCard span={12}>
+        <div className="flex items-center gap-2 mb-3">
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedSquadId(null)}>
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <h3 className="text-base font-semibold font-montserrat truncate">{selectedSquad.name}</h3>
+          <MetricPill tone="muted" className="ml-auto">
+            <span className="tabular-nums">{allMembers.length}</span> members
+          </MetricPill>
+        </div>
+        <div className="space-y-2">
           {allMembers.map(member => (
-            <div key={member.profile_id} className="flex items-center gap-3 p-2 rounded-lg bg-muted/50">
+            <div
+              key={member.profile_id}
+              className="flex items-center gap-3 p-2 rounded-xl border border-border/30 bg-background/40"
+            >
               <Avatar className="h-8 w-8">
                 <AvatarImage src={member.profile?.avatar_url || undefined} />
                 <AvatarFallback className="text-xs bg-primary/20 text-primary">
@@ -92,27 +93,29 @@ export function SquadAudit() {
                   {getPrivateName(member.profile as any)}
                   {member.isOwner && <Crown className="h-3 w-3 text-primary" />}
                 </p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-[11px] text-muted-foreground tabular-nums">
                   {member.isOwner ? 'Owner' : 'Member'} · {format(new Date(member.added_at), 'MMM d, yyyy')}
                 </p>
               </div>
-              <p className="text-[10px] text-muted-foreground font-mono truncate max-w-[100px]">{member.profile_id.slice(0, 8)}</p>
             </div>
           ))}
-        </CardContent>
-      </Card>
+        </div>
+      </BentoCard>
     );
   }
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base flex items-center gap-2">
-          <Users className="h-4 w-4" />
-          Squad Audit ({squads?.length || 0})
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-2 max-h-[500px] overflow-y-auto">
+    <BentoCard span={12}>
+      <div className="flex items-center gap-2 mb-3">
+        <Users className="h-4 w-4 text-primary" />
+        <span className="text-xs font-semibold uppercase tracking-wider text-primary">
+          Squad Audit
+        </span>
+        <MetricPill tone="muted" className="ml-auto">
+          <span className="tabular-nums">{squads?.length || 0}</span>
+        </MetricPill>
+      </div>
+      <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1 -mr-1">
         {squads?.map(squad => {
           const totalMembers = 1 + (squad.members?.length || 0);
           const hasPhoto = !!squad.group_photo_url;
@@ -121,24 +124,24 @@ export function SquadAudit() {
             <button
               key={squad.id}
               onClick={() => setSelectedSquadId(squad.id)}
-              className="w-full flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors text-left"
+              className="w-full flex items-center gap-3 p-3 rounded-xl border border-border/30 bg-background/40 hover:bg-background/70 transition-colors text-left"
             >
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{squad.name}</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-[11px] text-muted-foreground tabular-nums">
                   by {getPrivateName(squad.owner_profile as any)} · {format(new Date(squad.created_at), 'MMM d')}
                 </p>
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                <Badge variant="outline" className="gap-1 text-xs">
+                <MetricPill tone="muted">
                   <Users className="h-3 w-3" />
-                  {totalMembers}
-                </Badge>
+                  <span className="tabular-nums">{totalMembers}</span>
+                </MetricPill>
                 {hasPhoto && (
-                  <Badge variant="outline" className="gap-1 text-xs">
-                    <Image className="h-3 w-3" />
-                    1
-                  </Badge>
+                  <MetricPill tone="muted">
+                    <ImageIcon className="h-3 w-3" />
+                    <span className="tabular-nums">1</span>
+                  </MetricPill>
                 )}
                 <ChevronRight className="h-4 w-4 text-muted-foreground" />
               </div>
@@ -148,7 +151,7 @@ export function SquadAudit() {
         {(!squads || squads.length === 0) && (
           <p className="text-sm text-muted-foreground text-center py-6">No squads created yet</p>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </BentoCard>
   );
 }
