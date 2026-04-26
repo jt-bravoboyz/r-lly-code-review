@@ -27,6 +27,7 @@ import { AvatarSourceSheet } from '@/components/profile/AvatarSourceSheet';
 import { useBadgeState, useActivityBadges } from '@/hooks/useBadgeSystem';
 import { TierBadgeIcon } from '@/components/badges/TierBadgeIcon';
 import { ActivityBadgeIcon } from '@/components/badges/ActivityBadgeIcon';
+import { getBadgeMeta } from '@/lib/badges';
 
 // Helper to format phone for display
 function formatPhoneForDisplay(phone: string): string {
