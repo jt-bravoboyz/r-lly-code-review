@@ -515,8 +515,16 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
         }
       });
 
-      // Total lifetime attendees (sum of attending check-ins across all events)
-      const totalLifetimeAttendees = attendees.filter(a => a.status === 'attending').length;
+      // Verified Foot Traffic — anyone with on-the-ground signal, not just status='attending'.
+      // The old `status === 'attending'` filter silently dropped attendees with status='going'
+      // or null, producing the "0 verified, 7x K-factor" ghost.
+      const verifiedFootTraffic = attendees.filter(a =>
+        a.status === 'attending' ||
+        a.status === 'going' ||
+        a.arrived_safely === true ||
+        a.going_home_at !== null
+      ).length;
+      const totalLifetimeAttendees = verifiedFootTraffic;
 
       // Per-profile aggregates for User Directory — use RAW so each user's
       // true rally activity is shown (admin team activity is real activity).
