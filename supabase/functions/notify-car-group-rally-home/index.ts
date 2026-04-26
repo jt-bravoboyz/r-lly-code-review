@@ -168,6 +168,7 @@ serve(async (req) => {
         event_title: eventTitle,
         actor_profile_id: actorProfileId,
         deep_link: `/events/${eventId}`,
+        dedupe_key: `rally-home:${eventId}:${actorProfileId}`,
       },
     }));
 
