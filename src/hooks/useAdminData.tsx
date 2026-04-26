@@ -35,6 +35,22 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
         .select('id, user_id, display_name, full_name, nickname, avatar_url, founding_member, founder_number, created_at, referred_by')
         .range(0, 9999);
 
+      // Manual overrides for growth/internal classification.
+      // FORCE_INCLUDE: real users we want counted in growth metrics even if they
+      // happen to have an admin role (JT, Nick Haddad, Sko are real founders/operators
+      // whose activity is meaningful market signal).
+      // FORCE_EXCLUDE: dummy/seed accounts that should never appear in growth metrics
+      // even though they have no admin role (Fake Eric, Test).
+      const FORCE_INCLUDE_USER_IDS = new Set<string>([
+        '6b3ae8dd-fb12-4a48-b3b0-9a850b5daba8', // JT
+        'cdba9c99-e0aa-48c8-8dde-39af364f57e4', // Nick Haddad
+        '8e66c7bd-5fa3-41ab-bcce-3a861e0e6e0b', // Sko
+      ]);
+      const FORCE_EXCLUDE_USER_IDS = new Set<string>([
+        '8604e75d-d8eb-460a-853f-795a0819811e', // Fake Eric
+        '1daec22c-9c87-453f-b103-1966b8fc7ca0', // Test
+      ]);
+
       // Get ALL admin user IDs from user_roles (any role = admin user)
       let adminProfileIds: Set<string> = new Set();
       let adminUserIds: Set<string> = new Set();
@@ -42,9 +58,17 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
         const { data: adminUsers } = await supabase
           .from('user_roles')
           .select('user_id');
-        
+
         if (adminUsers) {
-          adminUserIds = new Set(adminUsers.map(u => u.user_id));
+          // Start from role-based admins, then apply manual overrides.
+          adminUserIds = new Set(
+            adminUsers
+              .map(u => u.user_id)
+              .filter(uid => !FORCE_INCLUDE_USER_IDS.has(uid))
+          );
+          // Add force-excluded dummy accounts to the internal set so they're filtered out.
+          FORCE_EXCLUDE_USER_IDS.forEach(uid => adminUserIds.add(uid));
+
           profiles.forEach(p => {
             if (adminUserIds.has(p.user_id)) {
               adminProfileIds.add(p.id);
