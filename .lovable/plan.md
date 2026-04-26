@@ -1,69 +1,67 @@
-# Combined Security Plan: Storage Hardening + Prior Security Items
+## Security Hardening: Realtime Channels & Profiles Finding
 
-## Status of Prior Plan (Already Implemented)
+### Background
 
-The four-part security plan from the previous session has already been executed:
+Two findings were raised. After investigation:
 
-1. **Realtime lockdown** — `realtime.messages` is now deny-by-default, with an explicit allow-list for `typing_indicator:%` topics.
-2. **Invite history soft-delete** — `hidden_at` column added; "Clear History" button (R@lly Orange ghost) with confirmation modal in `src/pages/InviteHistory.tsx`; page filters `hidden_at IS NULL`; safety DELETE policy also in place.
-3. **Typing indicator** — Live "is typing…" status in `ChatView.tsx` using nickname (with display_name/full_name fallback) over Supabase Realtime Broadcast.
-4. **Analytics preservation** — Verified admin growth stats use `phone_invites`/`event_invites`, unaffected by soft-delete.
+**1. `realtime_missing_channel_authorization` (error)** — Partially valid.
+The app uses two distinct Realtime patterns:
+- **`postgres_changes` subscriptions** (notifications, event_attendees, rides, chat messages, etc.). Payloads from these are *already* filtered by RLS on the underlying tables (`messages`, `notifications`, `event_attendees`, etc.). A user subscribing to `notifications-realtime` only receives rows they could `SELECT` directly. This part of the finding overstates the risk.
+- **Broadcast channels** (currently only `typing_indicator:chat-<id>`). These DO flow through `realtime.messages` and need explicit policies. The existing policy allows authenticated users to write to ANY `typing_indicator:%` topic — including chats they aren't members of — which leaks "user is typing" presence to outsiders.
 
-No additional work needed for items 1–4.
+**2. `profiles_no_friend_visibility` (warn)** — Already correct, no action needed. The finding's own description concludes "No action needed here" because PII columns are owner-restricted and cross-table joins go through `SECURITY DEFINER` functions that scope access correctly.
 
-## New Items to Add (This Turn)
+### Plan
 
-### A. event-images bucket — add UPDATE & DELETE policies
+**A. Tighten the `typing_indicator` broadcast policy**
+Replace the broad `typing_indicator:%` policy on `realtime.messages` with one that only allows authenticated users to send/receive on `typing_indicator:chat-<chatId>` topics where they are a verified `chat_participants` member (reusing the existing `is_chat_member()` SECURITY DEFINER function).
 
-**Why:** The bucket currently allows INSERT (creators/cohosts) and public SELECT, but creators cannot replace or remove outdated event images, and there is no guard against unauthorized overwrites.
+**B. Add a deny-by-default posture for any future broadcast topics**
+The existing `realtime.messages` policies are already deny-by-default (no policy = no access). Postgres-changes traffic does not pass through `realtime.messages`, so no policy work is required there — RLS on the source tables (already in place) is the security boundary.
 
-**Migration:** Two new `storage.objects` policies mirroring the existing INSERT folder-based check:
+**C. Resolve both findings in the scanner**
+- Mark `realtime_missing_channel_authorization` as fixed with an explanation that postgres_changes payloads are RLS-filtered and the broadcast policy was tightened to chat-membership.
+- Mark `profiles_no_friend_visibility` as fixed (per the scanner's own conclusion, no action needed).
+
+### Technical Changes
+
+One SQL migration:
 
 ```sql
-CREATE POLICY "Event creators can update event images"
-ON storage.objects FOR UPDATE TO authenticated
+-- Drop the old overly-permissive typing indicator policies
+DROP POLICY IF EXISTS "<existing typing policies>" ON realtime.messages;
+
+-- Allow only chat members to broadcast/receive on their chat's typing topic
+CREATE POLICY "Chat members can use typing_indicator broadcast"
+ON realtime.messages
+FOR SELECT TO authenticated
 USING (
-  bucket_id = 'event-images'
-  AND (storage.foldername(name))[1]::uuid IN (
-    SELECT e.id FROM events e
-    JOIN profiles p ON p.id = e.creator_id
-    WHERE p.user_id = auth.uid()
-    UNION
-    SELECT ec.event_id FROM event_cohosts ec
-    JOIN profiles p ON p.id = ec.profile_id
-    WHERE p.user_id = auth.uid()
+  realtime.topic() LIKE 'typing_indicator:chat-%'
+  AND public.is_chat_member(
+    substring(realtime.topic() from 'typing_indicator:chat-(.+)')::uuid
   )
 );
 
-CREATE POLICY "Event creators can delete event images"
-ON storage.objects FOR DELETE TO authenticated
-USING ( /* same expression */ );
+CREATE POLICY "Chat members can send typing_indicator broadcast"
+ON realtime.messages
+FOR INSERT TO authenticated
+WITH CHECK (
+  realtime.topic() LIKE 'typing_indicator:chat-%'
+  AND public.is_chat_member(
+    substring(realtime.topic() from 'typing_indicator:chat-(.+)')::uuid
+  )
+);
 ```
 
-### B. invite_history phone exposure — verified secure, mark resolved
+The migration will first inspect existing `realtime.messages` policies (via `pg_policies`) and drop only the prior typing-indicator ones.
 
-**Verification:**
-- All 4 RLS policies (SELECT/INSERT/UPDATE/DELETE) on `invite_history` correctly scope to the inviter via `auth.uid() IN (SELECT user_id FROM profiles WHERE id = inviter_id)`.
-- No public schema views reference `invite_history` (confirmed by scanning `information_schema.views`).
-- The `invited_phone` column cannot leak to any other user.
+### Files Touched
 
-**Action:** Mark this `supabase_lov` finding as fixed via the security tool with an explanation.
+- One new SQL migration under `supabase/migrations/`.
+- No app code changes — `ChatView.tsx` already builds the topic as `typing_indicator:chat-${chatId}`.
 
-## Things Worth Adding (Recommendations)
+### What's Out of Scope
 
-While reviewing, I recommend you also approve these small additions for completeness:
-
-1. **rally-media bucket parity check** — Confirm the same UPDATE/DELETE coverage exists on `rally-media` (event photos/videos uploaded by attendees during the rally). If missing, add owner-scoped UPDATE/DELETE policies so users can remove their own uploads. *(Will check in implementation step; only adds policies if a gap exists.)*
-
-2. **Soft-delete trigger for storage cleanup** *(optional, skip unless you want it)* — When a creator deletes an event-images object via the new DELETE policy, no DB row needs cleanup since URLs are stored on the `events` table directly. No action required, just flagging.
-
-3. **invite_history retention note** *(optional)* — Since soft-delete keeps phone numbers indefinitely, consider a future scheduled job (e.g. 12-month auto-purge of `hidden_at` rows older than 1 year) to limit PII retention. Not in scope for this turn — flagging for your roadmap.
-
-## Files to Change This Turn
-
-- New SQL migration: 2 storage policies on `storage.objects` for `event-images` (and `rally-media` if a gap is found).
-- `security--manage_security_finding`: mark both new findings resolved.
-
-## No Frontend Changes
-
-Existing UI already attempts overwrite/delete via the Storage SDK — these policies simply unblock the flow safely.
+- No changes to the `profiles` table or its RLS (finding #2 is already correctly resolved).
+- No changes to `postgres_changes` channels — those rely on table-level RLS which is already in place.
+- No new soft-delete / chat / invite work (those were completed in prior plans).
