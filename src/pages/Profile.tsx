@@ -522,9 +522,16 @@ export default function Profile() {
             {/* Legacy Badges */}
             {profile?.badges && profile.badges.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-border">
-                {profile.badges.map((badge, index) => (
-                  <span key={index} className="badge-dark">{badge}</span>
-                ))}
+                {profile.badges
+                  .filter((b) => !b.startsWith('founder_') && b !== 'founding_member')
+                  .map((badge, index) => {
+                    const meta = getBadgeMeta(badge);
+                    return (
+                      <span key={index} className={meta.className}>
+                        {meta.label}
+                      </span>
+                    );
+                  })}
               </div>
             )}
           </CardContent>

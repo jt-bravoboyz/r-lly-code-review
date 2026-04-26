@@ -193,7 +193,7 @@ export function RideCard({ ride }: RideCardProps) {
                 </div>
                 <div className="flex items-center justify-between">
                   <p className="text-xs text-green-600 flex-1">
-                    {ride.driver?.display_name} will pick you up
+                    {driverName} will pick you up
                     {myRequest?.pickup_location && ` from ${myRequest.pickup_location}`}
                   </p>
                   {/* Update pickup location button */}
@@ -434,7 +434,7 @@ export function RideCard({ ride }: RideCardProps) {
                 <RequestRideDialog
                   eventId={ride.event_id || undefined}
                   rideId={ride.id}
-                  driverName={ride.driver?.display_name || undefined}
+                  driverName={driverName}
                   trigger={
                     <Button 
                       className="w-full"
@@ -442,7 +442,7 @@ export function RideCard({ ride }: RideCardProps) {
                       size="sm"
                     >
                       <Navigation className="h-4 w-4 mr-2" />
-                      Request Ride from {ride.driver?.display_name?.split(' ')[0] || 'Driver'}
+                      Request Ride from {driverName.split(" ")[0]}
                     </Button>
                   }
                 />
