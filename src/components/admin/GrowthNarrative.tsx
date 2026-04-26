@@ -99,10 +99,11 @@ export function GrowthNarrative({
                 >
                   <span
                     className={cn(
-                      'flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold tabular-nums',
+                      'flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold tabular-nums',
                       idx === 0 && 'bg-primary text-primary-foreground',
-                      idx === 1 && 'bg-primary/20 text-primary',
-                      idx === 2 && 'bg-muted text-muted-foreground'
+                      idx === 1 && 'bg-primary/30 text-primary',
+                      idx === 2 && 'bg-primary/15 text-primary',
+                      idx >= 3 && 'bg-muted text-muted-foreground'
                     )}
                   >
                     {idx + 1}
