@@ -469,19 +469,12 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
 
       // === GROWTH NARRATIVE ===
 
-      // Top viral hosts: rank by personal K-factor (invites per rally created),
-      // tie-broken by total headcount delivered. Uses cleaned dataset for partner reporting.
-      const inviteCopiedByUser: Record<string, number> = {};
-      events.filter(e => e.event_name === 'invite_link_copied').forEach(e => {
-        if (e.user_id) inviteCopiedByUser[e.user_id] = (inviteCopiedByUser[e.user_id] || 0) + 1;
-      });
-      const profileToUserId: Record<string, string> = {};
-      (profiles || []).forEach(p => { profileToUserId[p.id] = p.user_id; });
-
+      // Top viral hosts: ranked by personal K-factor (real invites per R@lly created),
+      // tie-broken by total headcount delivered. Uses the unified invitesByProfile map so
+      // every invite channel (invite_history, phone_invites, event_invites) is counted.
       const topViralHosts = Object.entries(hostCounts)
         .map(([profileId, data]) => {
-          const userId = profileToUserId[profileId];
-          const invitesCopied = userId ? (inviteCopiedByUser[userId] || 0) : 0;
+          const invitesCopied = invitesByProfile[profileId] || 0;
           const personalK = data.created > 0 ? invitesCopied / data.created : 0;
           const profile = profiles?.find(p => p.id === profileId) as any;
           return {
@@ -496,10 +489,14 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
         })
         .filter(h => h.ralliesCreated > 0)
         .sort((a, b) => {
+          // Primary: who delivered the most attendees (real impact).
+          if (b.headcountDelivered !== a.headcountDelivered) return b.headcountDelivered - a.headcountDelivered;
+          // Tiebreak: viral coefficient.
           if (b.viralCoefficient !== a.viralCoefficient) return b.viralCoefficient - a.viralCoefficient;
-          return b.headcountDelivered - a.headcountDelivered;
+          // Final tiebreak: most R@llies hosted.
+          return b.ralliesCreated - a.ralliesCreated;
         })
-        .slice(0, 3);
+        .slice(0, 5);
 
       // Week-over-week repeat rate delta
       const oneWeekAgoMs = now.getTime() - 7 * 24 * 60 * 60 * 1000;
