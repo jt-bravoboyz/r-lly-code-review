@@ -41,9 +41,7 @@ export function KFactorCard({ kFactor, inviteCopied, totalEvents, embedded = fal
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle asChild>
-          <div>{Header}</div>
-        </CardTitle>
+        <CardTitle className="text-sm font-medium">{Header}</CardTitle>
       </CardHeader>
       <CardContent>{Body}</CardContent>
     </Card>
