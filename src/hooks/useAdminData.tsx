@@ -189,8 +189,21 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
         'rally_started', 'rally_ended', 'rally_completed',
         'safety_confirmed', 'invite_link_copied', 'rally_home_opened'
       ];
-      
+
+      // === SOURCE SYNC ===
+      // event_created and event_joined previously read from analytics_events only,
+      // which under-counts (trackEvent doesn't fire on every join path). Pull these
+      // two rows from the same ground-truth tables RallyPulse uses so Partner ↔ Technical
+      // never disagree on Created / Joined.
       const funnel = funnelSteps.map(step => {
+        if (step === 'event_created') {
+          const uniqueCreators = new Set(filteredRallyEvents.map(e => e.creator_id).filter(Boolean));
+          return { step, total: filteredRallyEvents.length, uniqueUsers: uniqueCreators.size };
+        }
+        if (step === 'event_joined') {
+          const uniqueJoiners = new Set(attendees.map(a => a.profile_id).filter(Boolean));
+          return { step, total: attendees.length, uniqueUsers: uniqueJoiners.size };
+        }
         const matching = events.filter(e => e.event_name === step);
         const uniqueUsers = new Set(matching.map(e => e.user_id).filter(Boolean));
         return { step, total: matching.length, uniqueUsers: uniqueUsers.size };
@@ -202,8 +215,10 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
       
       const totalJoined = attendees.length;
       const viewedCount = events.filter(e => e.event_name === 'event_viewed').length;
-      const joinedCount = events.filter(e => e.event_name === 'event_joined').length;
-      const conversionRate = viewedCount > 0 ? (joinedCount / viewedCount * 100) : 0;
+      // Conversion uses ground-truth joins (matches RallyPulse "Committed Users") over
+      // analytics-only views. Old code divided analytics joins / analytics views, so the
+      // partner pulse showed "16 committed / 12% conversion" while the funnel said 5.
+      const conversionRate = viewedCount > 0 ? (totalJoined / viewedCount * 100) : 0;
 
       const completedEvents = filteredRallyEvents.filter(e => e.status === 'completed').length;
       const completionRate = totalEventsCreated > 0 ? (completedEvents / totalEventsCreated * 100) : 0;
