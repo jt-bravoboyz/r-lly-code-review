@@ -625,6 +625,7 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
           inviteCopied,
           kFactor,
           totalLifetimeAttendees,
+          liveNowCount,
         },
         funnel,
         safety: {
