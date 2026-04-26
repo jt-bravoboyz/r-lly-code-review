@@ -28,6 +28,7 @@ export default function Notifications() {
   const respondToFriendRequest = useRespondToFriendRequest();
   const markFriendRequestRead = useMarkFriendRequestNotificationsRead();
   const navigate = useNavigate();
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const { inviteNotifications, regularNotifications } = useMemo(() => {
     if (!notifications) return { inviteNotifications: [], regularNotifications: [] };
