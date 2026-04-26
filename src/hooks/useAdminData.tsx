@@ -85,6 +85,15 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
         .select('entered_at, last_seen_at')
         .range(0, 9999);
 
+      // Real invite signals — many invite paths don't fire trackEvent('invite_link_copied'),
+      // so K-Factor/viral coefficient must aggregate every channel.
+      const [{ data: inviteHistoryRows }, { data: phoneInviteRows }, { data: eventInviteRows }] =
+        await Promise.all([
+          supabase.from('invite_history').select('inviter_id, invite_count').range(0, 9999),
+          supabase.from('phone_invites').select('invited_by, event_id').range(0, 9999),
+          supabase.from('event_invites').select('invited_by, event_id').range(0, 9999),
+        ]);
+
       // Two parallel datasets:
       //   - *Raw: ground truth (admins included). Used for "true headcount" displays.
       //   - filteredRallyEvents / attendees: admin-stripped. Used for K-Factor, growth metrics,
