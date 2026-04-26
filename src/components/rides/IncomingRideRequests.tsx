@@ -18,6 +18,7 @@ export function IncomingRideRequests({ eventId }: IncomingRideRequestsProps) {
   const { data: requests, isLoading } = useRideRequests(eventId);
   const acceptRequest = useAcceptRideRequest();
   const dismissRequest = useDismissRideRequest();
+  const { openProfile } = usePublicProfile();
   const [pendingActions, setPendingActions] = useState<Set<string>>(new Set());
 
   // Filter to only show unread (pending) requests
@@ -37,7 +38,7 @@ export function IncomingRideRequests({ eventId }: IncomingRideRequestsProps) {
         pickupLocation: request.data.pickup_location,
         eventId: request.data.event_id
       });
-      toast.success(`You're picking up ${request.requester?.display_name || 'the rider'}!`);
+      toast.success(`You're picking up ${getPublicName(request.requester as any)}!`);
     } catch (error: any) {
       toast.error(error.message || 'Failed to accept request');
     } finally {
@@ -99,17 +100,21 @@ export function IncomingRideRequests({ eventId }: IncomingRideRequestsProps) {
             <Card key={request.id} className="bg-gradient-to-r from-blue-50 to-blue-100/50 border-blue-200 rounded-2xl overflow-hidden">
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
-                  <Avatar className="h-12 w-12 ring-2 ring-blue-200">
+                  <Avatar
+                    className="h-12 w-12 ring-2 ring-blue-200 cursor-pointer"
+                    onClick={() => request.requester?.id && openProfile(request.requester.id)}
+                    aria-label={`View ${getPublicName(request.requester as any)}'s profile`}
+                  >
                     <AvatarImage src={request.requester?.avatar_url || undefined} />
                     <AvatarFallback className="bg-blue-500 text-white font-bold">
-                      {request.requester?.display_name?.charAt(0)?.toUpperCase() || '?'}
+                      {getPublicName(request.requester as any).charAt(0).toUpperCase() || '?'}
                     </AvatarFallback>
                   </Avatar>
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-bold text-foreground font-montserrat">
-                        {request.requester?.display_name || 'Someone'}
+                        {getPublicName(request.requester as any)}
                       </span>
                       <span className="text-sm text-muted-foreground">needs a ride</span>
                     </div>

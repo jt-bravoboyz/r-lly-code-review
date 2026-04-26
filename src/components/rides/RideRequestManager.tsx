@@ -41,6 +41,7 @@ interface RideRequestManagerProps {
 export function RideRequestManager({ rides, onRideComplete }: RideRequestManagerProps) {
   const { profile } = useAuth();
   const updateRequest = useUpdateRideRequest();
+  const { openProfile } = usePublicProfile();
   const [pendingActions, setPendingActions] = useState<Set<string>>(new Set());
 
   // Filter to only show rides where current user is the driver
