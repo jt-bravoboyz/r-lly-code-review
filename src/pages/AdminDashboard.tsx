@@ -25,6 +25,7 @@ import { TopConnectors } from '@/components/admin/TopConnectors';
 import { ReferralAudit } from '@/components/admin/ReferralAudit';
 import { UserDirectory } from '@/components/admin/UserDirectory';
 import { GrowthNarrative } from '@/components/admin/GrowthNarrative';
+import { RallyPulse } from '@/components/admin/RallyPulse';
 import { HeatMap } from '@/components/admin/HeatMap';
 import { RetentionCohorts } from '@/components/admin/RetentionCohorts';
 import { BentoCard } from '@/components/admin/BentoCard';
