@@ -85,6 +85,15 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
         .select('entered_at, last_seen_at')
         .range(0, 9999);
 
+      // Real invite signals — many invite paths don't fire trackEvent('invite_link_copied'),
+      // so K-Factor/viral coefficient must aggregate every channel.
+      const [{ data: inviteHistoryRows }, { data: phoneInviteRows }, { data: eventInviteRows }] =
+        await Promise.all([
+          supabase.from('invite_history').select('inviter_id, invite_count').range(0, 9999),
+          supabase.from('phone_invites').select('invited_by, event_id').range(0, 9999),
+          supabase.from('event_invites').select('invited_by, event_id').range(0, 9999),
+        ]);
+
       // Two parallel datasets:
       //   - *Raw: ground truth (admins included). Used for "true headcount" displays.
       //   - filteredRallyEvents / attendees: admin-stripped. Used for K-Factor, growth metrics,
@@ -139,9 +148,26 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
       const goingHome = attendees.filter(a => a.going_home_at !== null).length;
       const safetyRate = goingHome > 0 ? (safetyConfirmed / goingHome * 100) : 0;
 
-      const inviteCopied = events.filter(e => e.event_name === 'invite_link_copied').length;
+      // === REAL INVITE AGGREGATION ===
+      // Sum every invite channel per host profile (not user_id, since the invite tables key by profile_id).
+      // Also strip admin profiles when filterAdminData is on so partner-facing K-Factor is clean.
+      const invitesByProfile: Record<string, number> = {};
+      const addInvite = (profileId: string | null | undefined, n = 1) => {
+        if (!profileId) return;
+        if (filterAdminData && adminProfileIds.has(profileId)) return;
+        invitesByProfile[profileId] = (invitesByProfile[profileId] || 0) + n;
+      };
+      (inviteHistoryRows || []).forEach(r => addInvite(r.inviter_id as string, (r as any).invite_count || 1));
+      (phoneInviteRows || []).forEach(r => addInvite(r.invited_by as string, 1));
+      (eventInviteRows || []).forEach(r => addInvite(r.invited_by as string, 1));
 
-      // K-Factor
+      // Total real invites sent (sum across all hosts after admin strip).
+      const realInvitesSent = Object.values(invitesByProfile).reduce((a, b) => a + b, 0);
+      // Fallback to analytics-only if no invite tables have data yet, so old projects don't break.
+      const analyticsInviteCount = events.filter(e => e.event_name === 'invite_link_copied').length;
+      const inviteCopied = realInvitesSent > 0 ? realInvitesSent : analyticsInviteCount;
+
+      // K-Factor: real invites generated per R@lly created.
       const kFactor = totalEventsCreated > 0 ? (inviteCopied / totalEventsCreated) : 0;
 
       // Safety metrics
@@ -443,19 +469,12 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
 
       // === GROWTH NARRATIVE ===
 
-      // Top viral hosts: rank by personal K-factor (invites per rally created),
-      // tie-broken by total headcount delivered. Uses cleaned dataset for partner reporting.
-      const inviteCopiedByUser: Record<string, number> = {};
-      events.filter(e => e.event_name === 'invite_link_copied').forEach(e => {
-        if (e.user_id) inviteCopiedByUser[e.user_id] = (inviteCopiedByUser[e.user_id] || 0) + 1;
-      });
-      const profileToUserId: Record<string, string> = {};
-      (profiles || []).forEach(p => { profileToUserId[p.id] = p.user_id; });
-
+      // Top viral hosts: ranked by personal K-factor (real invites per R@lly created),
+      // tie-broken by total headcount delivered. Uses the unified invitesByProfile map so
+      // every invite channel (invite_history, phone_invites, event_invites) is counted.
       const topViralHosts = Object.entries(hostCounts)
         .map(([profileId, data]) => {
-          const userId = profileToUserId[profileId];
-          const invitesCopied = userId ? (inviteCopiedByUser[userId] || 0) : 0;
+          const invitesCopied = invitesByProfile[profileId] || 0;
           const personalK = data.created > 0 ? invitesCopied / data.created : 0;
           const profile = profiles?.find(p => p.id === profileId) as any;
           return {
@@ -470,10 +489,14 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
         })
         .filter(h => h.ralliesCreated > 0)
         .sort((a, b) => {
+          // Primary: who delivered the most attendees (real impact).
+          if (b.headcountDelivered !== a.headcountDelivered) return b.headcountDelivered - a.headcountDelivered;
+          // Tiebreak: viral coefficient.
           if (b.viralCoefficient !== a.viralCoefficient) return b.viralCoefficient - a.viralCoefficient;
-          return b.headcountDelivered - a.headcountDelivered;
+          // Final tiebreak: most R@llies hosted.
+          return b.ralliesCreated - a.ralliesCreated;
         })
-        .slice(0, 3);
+        .slice(0, 5);
 
       // Week-over-week repeat rate delta
       const oneWeekAgoMs = now.getTime() - 7 * 24 * 60 * 60 * 1000;
