@@ -225,19 +225,28 @@ export function RideCard({ ride }: RideCardProps) {
                   <div className="mt-2 pt-2 border-t border-green-200">
                     <p className="text-xs text-green-600 mb-1">Also riding:</p>
                     <div className="flex flex-wrap gap-2">
-                      {otherRiders.map((p) => (
-                        <div key={p.id} className="flex items-center gap-1 bg-green-100 rounded-full px-2 py-0.5">
-                          <Avatar className="h-4 w-4">
-                            <AvatarImage src={p.passenger?.avatar_url || undefined} />
-                            <AvatarFallback className="text-[8px] bg-green-200">
-                              {p.passenger?.display_name?.charAt(0)?.toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="text-[10px] text-green-700 font-medium">
-                            {p.passenger?.display_name?.split(' ')[0]}
-                          </span>
-                        </div>
-                      ))}
+                      {otherRiders.map((p) => {
+                        const pName = getPublicName(p.passenger as any);
+                        return (
+                          <button
+                            type="button"
+                            key={p.id}
+                            onClick={() => p.passenger?.id && openProfile(p.passenger.id)}
+                            className="flex items-center gap-1 bg-green-100 rounded-full px-2 py-0.5 hover:bg-green-200 transition-colors"
+                            aria-label={`View ${pName}'s profile`}
+                          >
+                            <Avatar className="h-4 w-4">
+                              <AvatarImage src={p.passenger?.avatar_url || undefined} />
+                              <AvatarFallback className="text-[8px] bg-green-200">
+                                {pName.charAt(0).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="text-[10px] text-green-700 font-medium">
+                              {pName.split(' ')[0]}
+                            </span>
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -260,17 +269,26 @@ export function RideCard({ ride }: RideCardProps) {
                   </Badge>
                 </div>
                 <div className="space-y-2">
-                  {acceptedPassengers.map((p) => (
+                  {acceptedPassengers.map((p) => {
+                    const pName = getPublicName(p.passenger as any);
+                    return (
                     <div key={p.id} className="flex items-start gap-2 p-2 rounded-lg bg-green-50 border border-green-200">
-                      <Avatar className="h-7 w-7 shrink-0">
-                        <AvatarImage src={p.passenger?.avatar_url || undefined} />
-                        <AvatarFallback className="text-[10px] bg-green-200 text-green-700">
-                          {p.passenger?.display_name?.charAt(0)?.toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
+                      <button
+                        type="button"
+                        onClick={() => p.passenger?.id && openProfile(p.passenger.id)}
+                        className="shrink-0 hover:opacity-80 transition-opacity"
+                        aria-label={`View ${pName}'s profile`}
+                      >
+                        <Avatar className="h-7 w-7">
+                          <AvatarImage src={p.passenger?.avatar_url || undefined} />
+                          <AvatarFallback className="text-[10px] bg-green-200 text-green-700">
+                            {pName.charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                      </button>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-foreground truncate">
-                          {p.passenger?.display_name}
+                          {pName}
                         </p>
                         {p.pickup_location && (
                           <div className="flex items-center gap-1 mt-0.5">
