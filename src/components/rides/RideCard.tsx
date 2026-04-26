@@ -12,6 +12,8 @@ import { UpdatePickupDialog } from './UpdatePickupDialog';
 import { NavigateToPickupButton } from './NavigateToPickupButton';
 import { RiderETADisplay } from './RiderETADisplay';
 import { toast } from 'sonner';
+import { getPublicName } from '@/lib/identity';
+import { usePublicProfile } from '@/contexts/PublicProfileContext';
 
 interface PassengerInfo {
   id: string;
@@ -22,6 +24,8 @@ interface PassengerInfo {
   passenger?: {
     id: string;
     display_name: string | null;
+    nickname?: string | null;
+    full_name?: string | null;
     avatar_url: string | null;
   } | null;
 }
@@ -38,6 +42,8 @@ interface RideCardProps {
     driver?: {
       id: string;
       display_name: string | null;
+      nickname?: string | null;
+      full_name?: string | null;
       avatar_url: string | null;
     } | null;
     passengers?: PassengerInfo[];
@@ -47,7 +53,10 @@ interface RideCardProps {
 export function RideCard({ ride }: RideCardProps) {
   const { profile } = useAuth();
   const updateRequest = useUpdateRideRequest();
+  const { openProfile } = usePublicProfile();
   const [pendingActions, setPendingActions] = useState<Set<string>>(new Set());
+
+  const driverName = getPublicName(ride.driver as any);
 
   // Normalize: treat 'accepted' and 'confirmed' the same
   const acceptedPassengers = ride.passengers?.filter(p => 

@@ -252,7 +252,11 @@ export function useSendMessage() {
               title: `${senderName} sent a message`,
               body: messagePreview,
               tag: `chat-${chatId}`,
-              data: { chatId, type: 'new_message' }
+              data: {
+                chatId,
+                type: 'new_message',
+                dedupe_key: `chat-msg:${chatId}:${activeProfile.id}`,
+              }
             }
           });
         }
