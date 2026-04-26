@@ -239,6 +239,34 @@ export default function InviteHistory() {
       </main>
 
       <BottomNav />
+
+      <AlertDialog open={confirmClearOpen} onOpenChange={setConfirmClearOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Clear your invite history?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This hides everyone from your "Sent" list so you start fresh. No one is notified, and your records are kept for R@lly analytics.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
+              onClick={async () => {
+                try {
+                  await clearHistory.mutateAsync();
+                  toast.success('Invite history cleared');
+                  setConfirmClearOpen(false);
+                } catch {
+                  toast.error('Could not clear history. Try again.');
+                }
+              }}
+            >
+              Clear History
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
