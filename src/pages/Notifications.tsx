@@ -207,7 +207,11 @@ export default function Notifications() {
                           )}
                         </div>
                         {notification.body && (
-                          <p className="text-sm text-muted-foreground mt-0.5 line-clamp-2">
+                          <p
+                            className={`text-sm text-muted-foreground mt-0.5 whitespace-pre-line ${
+                              expandedId === notification.id ? '' : 'line-clamp-2'
+                            }`}
+                          >
                             {notification.body}
                           </p>
                         )}
