@@ -9,6 +9,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useUpdateRideRequest } from '@/hooks/useRides';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+import { getPublicName } from '@/lib/identity';
+import { usePublicProfile } from '@/contexts/PublicProfileContext';
 
 interface RideRequest {
   id: string;

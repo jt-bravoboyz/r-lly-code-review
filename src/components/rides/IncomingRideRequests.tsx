@@ -7,6 +7,8 @@ import { MapPin, Check, X, Clock, Navigation, Loader2 } from 'lucide-react';
 import { useRideRequests, useAcceptRideRequest, useDismissRideRequest } from '@/hooks/useRideRequests';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
+import { getPublicName } from '@/lib/identity';
+import { usePublicProfile } from '@/contexts/PublicProfileContext';
 
 interface IncomingRideRequestsProps {
   eventId?: string;

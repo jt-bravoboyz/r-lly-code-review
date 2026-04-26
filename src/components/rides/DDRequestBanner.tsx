@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DDDisclaimerDialog } from './DDDisclaimerDialog';
 import { useRespondToDDRequest, DDRequest } from '@/hooks/useDDManagement';
 import { toast } from 'sonner';
+import { getPublicName } from '@/lib/identity';
 
 interface DDRequestBannerProps {
   request: DDRequest;
@@ -64,7 +65,7 @@ export function DDRequestBanner({ request, eventId, userName }: DDRequestBannerP
               </div>
               <p className="text-sm text-muted-foreground mb-3">
                 <span className="font-medium text-foreground">
-                  {request.requested_by_profile?.display_name || 'The host'}
+                  {getPublicName(request.requested_by_profile as any) || 'The host'}
                 </span>
                 {' '}has requested you to be the Designated Driver for this R@lly.
               </p>
