@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -28,6 +28,7 @@ export default function Notifications() {
   const respondToFriendRequest = useRespondToFriendRequest();
   const markFriendRequestRead = useMarkFriendRequestNotificationsRead();
   const navigate = useNavigate();
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const { inviteNotifications, regularNotifications } = useMemo(() => {
     if (!notifications) return { inviteNotifications: [], regularNotifications: [] };
@@ -94,6 +95,9 @@ export default function Notifications() {
       } else {
         navigate(`/chat?id=${data.chat_id}`);
       }
+    } else {
+      // No navigation target — toggle expansion to reveal full body
+      setExpandedId((prev) => (prev === notification.id ? null : notification.id));
     }
   };
 
@@ -203,7 +207,11 @@ export default function Notifications() {
                           )}
                         </div>
                         {notification.body && (
-                          <p className="text-sm text-muted-foreground mt-0.5 line-clamp-2">
+                          <p
+                            className={`text-sm text-muted-foreground mt-0.5 whitespace-pre-line ${
+                              expandedId === notification.id ? '' : 'line-clamp-2'
+                            }`}
+                          >
                             {notification.body}
                           </p>
                         )}

@@ -1,53 +1,44 @@
-# Final 2 Caroline Polish Items
+# Expandable Notifications + Resend Caroline's Message to JT
 
-## 1. QuickRallyDialog — Recently Friended Row
+## What was actually sent (verified in DB)
 
-**File:** `src/components/events/QuickRallyDialog.tsx`
+**Caroline Kay** received the correct founder-feedback notification:
+- **Title:** `⚡ You spoke. We r@llied.`
+- **Body:** "Founding Member feedback shipped: identity in chat, smart invites, clickable avatars, dedupe on alerts, 8-hour auto-end, and badge fixes — all live. Thank you for making R@lly sharper. 🧡"
 
-- Import `useRecentlyFriended` from `@/hooks/useFriendships`.
-- Call `const { data: recentlyFriended = [] } = useRecentlyFriended(8);` inside the component.
-- Insert a "Recently Friended" chip row directly above the existing "R@lly Friends" block (around line 431), mirroring the orange-tinted pill styling already used in `CreateEventDialog.tsx` (lines 530–559):
-  - `bg-primary/10` / `border-primary/30` for unselected state
-  - `bg-primary text-primary-foreground` when selected
-  - Uses `friend.profile_id` (not `friend.id`) since the hook returns the friendship row shape
-  - Same `toggleFriendSelection` handler — no new state needed
+We're leaving Caroline's notification untouched.
 
-No other logic changes; selected IDs already feed into the existing `selectedFriendIds` array used at submit time.
+## Two fixes
 
-## 2. Branded System Notification — Caroline Kay + JT
+### 1. Make notifications expandable so the full message is readable
 
-**Migration SQL** (insert into `public.notifications`, gated by `dedupe_key` so it can't double-fire if re-run):
+`src/pages/Notifications.tsx` (line 206) currently renders the body with `line-clamp-2`, truncating long messages with no way to read the rest. Tapping a `system_message` only marks it read — there's no destination to navigate to, so the full body is unreachable.
 
-```sql
-INSERT INTO public.notifications (profile_id, type, title, body, data)
-SELECT
-  p.id,
-  'system_message',
-  '⚡ You spoke. We r@llied.',
-  CASE
-    WHEN p.full_name ILIKE 'Caroline%'
-      THEN 'Founding Member feedback shipped: identity in chat, smart invites, clickable avatars, dedupe on alerts, 8-hour auto-end, and badge fixes — all live. Thank you for making R@lly sharper. 🧡'
-    ELSE 'Founder verification ping — Caroline''s feedback shipped: identity, smart invites, avatar profile cards, notification dedupe, 8-hour auto-end, badge rendering. Confirm branding & badge formatting end-to-end.'
-  END,
-  jsonb_build_object(
-    'dedupe_key', 'caroline-polish-shipped-2026-04-26',
-    'source', 'founder-feedback',
-    'campaign', 'caroline-polish-v1'
-  )
-FROM public.profiles p
-WHERE p.id IN (
-  'a5bdc43f-7fa7-4893-8343-da76cfc4a77f',  -- Caroline Kay
-  '536e4694-245b-48d8-9930-018d72f266e0'   -- JT
-)
-AND NOT EXISTS (
-  SELECT 1 FROM public.notifications n
-  WHERE n.profile_id = p.id
-    AND n.data->>'dedupe_key' = 'caroline-polish-shipped-2026-04-26'
-);
-```
+**Change:** Add an `expandedId` state on the Notifications page. When a notification is tapped:
+- If it's a `system_message` (or any type with no navigation target), toggle expansion — remove `line-clamp-2` and apply `whitespace-pre-line` so paragraph breaks render.
+- Otherwise, keep the existing navigation behavior.
+- Mark-as-read still fires on first tap.
 
-Both notifications will appear instantly in the in-app Command Center via the existing realtime subscription on the `notifications` table.
+Small, contained edit to one file (`src/pages/Notifications.tsx`).
 
-## Files Touched
-- `src/components/events/QuickRallyDialog.tsx` (1 edit)
-- New migration file (1 SQL insert)
+### 2. Resend Caroline's exact notification to JT
+
+Delete JT's existing `caroline-polish-shipped-2026-04-26` notification (the founder verification ping) and insert a copy of the **exact** message Caroline received — same title, same body — so you can preview what she sees end-to-end.
+
+- **Recipient:** JT (`536e4694-245b-48d8-9930-018d72f266e0`)
+- **Title:** `⚡ You spoke. We r@llied.`
+- **Body:** (verbatim copy of Caroline's body above)
+- **Data:** `{ dedupe_key: 'caroline-mirror-to-jt-2026-04-26', source: 'founder-feedback', campaign: 'caroline-polish-v1' }`
+
+New dedupe key so the insert is idempotent and won't collide with the existing row.
+
+## Files touched
+
+- `src/pages/Notifications.tsx` — expandable system messages (1 edit)
+- New data migration: delete JT's old `caroline-polish-shipped-2026-04-26` notification, insert mirror of Caroline's message under the new dedupe key
+
+## What you'll see after deploy
+
+- **Caroline:** unchanged — her existing alert stays exactly as is, but is now tappable to expand if she wants to read the full body.
+- **JT:** one unread alert that mirrors Caroline's exact message, so you can verify her experience end-to-end.
+- All other notification types (invites, chat unreads, rally started, etc.) keep their tap-to-navigate behavior.
