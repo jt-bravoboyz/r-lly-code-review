@@ -1,44 +1,69 @@
-# Expandable Notifications + Resend Caroline's Message to JT
+# Combined Security Plan: Storage Hardening + Prior Security Items
 
-## What was actually sent (verified in DB)
+## Status of Prior Plan (Already Implemented)
 
-**Caroline Kay** received the correct founder-feedback notification:
-- **Title:** `⚡ You spoke. We r@llied.`
-- **Body:** "Founding Member feedback shipped: identity in chat, smart invites, clickable avatars, dedupe on alerts, 8-hour auto-end, and badge fixes — all live. Thank you for making R@lly sharper. 🧡"
+The four-part security plan from the previous session has already been executed:
 
-We're leaving Caroline's notification untouched.
+1. **Realtime lockdown** — `realtime.messages` is now deny-by-default, with an explicit allow-list for `typing_indicator:%` topics.
+2. **Invite history soft-delete** — `hidden_at` column added; "Clear History" button (R@lly Orange ghost) with confirmation modal in `src/pages/InviteHistory.tsx`; page filters `hidden_at IS NULL`; safety DELETE policy also in place.
+3. **Typing indicator** — Live "is typing…" status in `ChatView.tsx` using nickname (with display_name/full_name fallback) over Supabase Realtime Broadcast.
+4. **Analytics preservation** — Verified admin growth stats use `phone_invites`/`event_invites`, unaffected by soft-delete.
 
-## Two fixes
+No additional work needed for items 1–4.
 
-### 1. Make notifications expandable so the full message is readable
+## New Items to Add (This Turn)
 
-`src/pages/Notifications.tsx` (line 206) currently renders the body with `line-clamp-2`, truncating long messages with no way to read the rest. Tapping a `system_message` only marks it read — there's no destination to navigate to, so the full body is unreachable.
+### A. event-images bucket — add UPDATE & DELETE policies
 
-**Change:** Add an `expandedId` state on the Notifications page. When a notification is tapped:
-- If it's a `system_message` (or any type with no navigation target), toggle expansion — remove `line-clamp-2` and apply `whitespace-pre-line` so paragraph breaks render.
-- Otherwise, keep the existing navigation behavior.
-- Mark-as-read still fires on first tap.
+**Why:** The bucket currently allows INSERT (creators/cohosts) and public SELECT, but creators cannot replace or remove outdated event images, and there is no guard against unauthorized overwrites.
 
-Small, contained edit to one file (`src/pages/Notifications.tsx`).
+**Migration:** Two new `storage.objects` policies mirroring the existing INSERT folder-based check:
 
-### 2. Resend Caroline's exact notification to JT
+```sql
+CREATE POLICY "Event creators can update event images"
+ON storage.objects FOR UPDATE TO authenticated
+USING (
+  bucket_id = 'event-images'
+  AND (storage.foldername(name))[1]::uuid IN (
+    SELECT e.id FROM events e
+    JOIN profiles p ON p.id = e.creator_id
+    WHERE p.user_id = auth.uid()
+    UNION
+    SELECT ec.event_id FROM event_cohosts ec
+    JOIN profiles p ON p.id = ec.profile_id
+    WHERE p.user_id = auth.uid()
+  )
+);
 
-Delete JT's existing `caroline-polish-shipped-2026-04-26` notification (the founder verification ping) and insert a copy of the **exact** message Caroline received — same title, same body — so you can preview what she sees end-to-end.
+CREATE POLICY "Event creators can delete event images"
+ON storage.objects FOR DELETE TO authenticated
+USING ( /* same expression */ );
+```
 
-- **Recipient:** JT (`536e4694-245b-48d8-9930-018d72f266e0`)
-- **Title:** `⚡ You spoke. We r@llied.`
-- **Body:** (verbatim copy of Caroline's body above)
-- **Data:** `{ dedupe_key: 'caroline-mirror-to-jt-2026-04-26', source: 'founder-feedback', campaign: 'caroline-polish-v1' }`
+### B. invite_history phone exposure — verified secure, mark resolved
 
-New dedupe key so the insert is idempotent and won't collide with the existing row.
+**Verification:**
+- All 4 RLS policies (SELECT/INSERT/UPDATE/DELETE) on `invite_history` correctly scope to the inviter via `auth.uid() IN (SELECT user_id FROM profiles WHERE id = inviter_id)`.
+- No public schema views reference `invite_history` (confirmed by scanning `information_schema.views`).
+- The `invited_phone` column cannot leak to any other user.
 
-## Files touched
+**Action:** Mark this `supabase_lov` finding as fixed via the security tool with an explanation.
 
-- `src/pages/Notifications.tsx` — expandable system messages (1 edit)
-- New data migration: delete JT's old `caroline-polish-shipped-2026-04-26` notification, insert mirror of Caroline's message under the new dedupe key
+## Things Worth Adding (Recommendations)
 
-## What you'll see after deploy
+While reviewing, I recommend you also approve these small additions for completeness:
 
-- **Caroline:** unchanged — her existing alert stays exactly as is, but is now tappable to expand if she wants to read the full body.
-- **JT:** one unread alert that mirrors Caroline's exact message, so you can verify her experience end-to-end.
-- All other notification types (invites, chat unreads, rally started, etc.) keep their tap-to-navigate behavior.
+1. **rally-media bucket parity check** — Confirm the same UPDATE/DELETE coverage exists on `rally-media` (event photos/videos uploaded by attendees during the rally). If missing, add owner-scoped UPDATE/DELETE policies so users can remove their own uploads. *(Will check in implementation step; only adds policies if a gap exists.)*
+
+2. **Soft-delete trigger for storage cleanup** *(optional, skip unless you want it)* — When a creator deletes an event-images object via the new DELETE policy, no DB row needs cleanup since URLs are stored on the `events` table directly. No action required, just flagging.
+
+3. **invite_history retention note** *(optional)* — Since soft-delete keeps phone numbers indefinitely, consider a future scheduled job (e.g. 12-month auto-purge of `hidden_at` rows older than 1 year) to limit PII retention. Not in scope for this turn — flagging for your roadmap.
+
+## Files to Change This Turn
+
+- New SQL migration: 2 storage policies on `storage.objects` for `event-images` (and `rally-media` if a gap is found).
+- `security--manage_security_finding`: mark both new findings resolved.
+
+## No Frontend Changes
+
+Existing UI already attempts overwrite/delete via the Storage SDK — these policies simply unblock the flow safely.
