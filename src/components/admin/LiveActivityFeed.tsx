@@ -27,6 +27,7 @@ const EVENT_LABELS: Record<string, string> = {
   rally_completed: 'Rally completed',
   safety_confirmed: 'Safety confirmed',
   invite_link_copied: 'Copied invite link',
+  invite_code_redeemed: 'Joined via invite code',
   recap_shared: 'Shared recap',
 };
 
