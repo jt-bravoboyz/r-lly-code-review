@@ -393,11 +393,19 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
           currentSquad: profileSquadMap.get(p.id) || null,
         }));
 
-      // Per-event headcount (attendees only, status = attending)
+      // Per-event headcount — TWO variants:
+      //   headcountByEvent: ground truth (raw, admins included). Used for host badges.
+      //   headcountByEventGrowth: admin-stripped. Used in K-Factor / partnership reporting.
       const headcountByEvent: Record<string, number> = {};
-      attendees.forEach(a => {
+      attendeesRaw.forEach(a => {
         if (a.status === 'attending') {
           headcountByEvent[a.event_id] = (headcountByEvent[a.event_id] || 0) + 1;
+        }
+      });
+      const headcountByEventGrowth: Record<string, number> = {};
+      attendees.forEach(a => {
+        if (a.status === 'attending') {
+          headcountByEventGrowth[a.event_id] = (headcountByEventGrowth[a.event_id] || 0) + 1;
         }
       });
 
