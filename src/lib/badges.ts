@@ -160,3 +160,44 @@ export const getTierQuote = (tierKey: string): string => {
   };
   return quotes[tierKey] || '';
 };
+
+// ============================================================
+// Legacy badge metadata (renders text badges from profile.badges array)
+// ============================================================
+export interface LegacyBadgeMeta {
+  label: string;
+  icon: 'star' | 'shield' | 'award' | 'flame';
+  className: string;
+}
+
+export function getBadgeMeta(badgeKey: string): LegacyBadgeMeta {
+  if (badgeKey === 'founding_member') {
+    return {
+      label: 'Founding Member',
+      icon: 'star',
+      className:
+        'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gradient-to-r from-primary/20 to-accent/20 border border-primary/30 text-xs font-bold text-primary shadow-[0_0_8px_hsl(var(--primary)/0.2)]',
+    };
+  }
+  if (badgeKey.startsWith('founder_')) {
+    const n = badgeKey.replace('founder_', '');
+    return {
+      label: `Founder #${n}`,
+      icon: 'star',
+      className:
+        'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gradient-to-r from-primary/30 to-accent/30 border border-primary/40 text-xs font-bold text-primary',
+    };
+  }
+  // Generic fallback: pretty-print snake_case
+  const pretty = badgeKey
+    .split('_')
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
+  return {
+    label: pretty,
+    icon: 'award',
+    className:
+      'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted border border-border text-xs font-medium text-foreground',
+  };
+}
+

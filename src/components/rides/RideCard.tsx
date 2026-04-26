@@ -12,6 +12,8 @@ import { UpdatePickupDialog } from './UpdatePickupDialog';
 import { NavigateToPickupButton } from './NavigateToPickupButton';
 import { RiderETADisplay } from './RiderETADisplay';
 import { toast } from 'sonner';
+import { getPublicName } from '@/lib/identity';
+import { usePublicProfile } from '@/contexts/PublicProfileContext';
 
 interface PassengerInfo {
   id: string;
@@ -22,6 +24,8 @@ interface PassengerInfo {
   passenger?: {
     id: string;
     display_name: string | null;
+    nickname?: string | null;
+    full_name?: string | null;
     avatar_url: string | null;
   } | null;
 }
@@ -38,6 +42,8 @@ interface RideCardProps {
     driver?: {
       id: string;
       display_name: string | null;
+      nickname?: string | null;
+      full_name?: string | null;
       avatar_url: string | null;
     } | null;
     passengers?: PassengerInfo[];
@@ -47,7 +53,10 @@ interface RideCardProps {
 export function RideCard({ ride }: RideCardProps) {
   const { profile } = useAuth();
   const updateRequest = useUpdateRideRequest();
+  const { openProfile } = usePublicProfile();
   const [pendingActions, setPendingActions] = useState<Set<string>>(new Set());
+
+  const driverName = getPublicName(ride.driver as any);
 
   // Normalize: treat 'accepted' and 'confirmed' the same
   const acceptedPassengers = ride.passengers?.filter(p => 
@@ -121,13 +130,21 @@ export function RideCard({ ride }: RideCardProps) {
           <div className="flex-1 min-w-0">
             {/* Driver info */}
             <div className="flex items-center gap-2 mb-2">
-              <Avatar className="h-6 w-6">
-                <AvatarImage src={ride.driver?.avatar_url || undefined} />
-                <AvatarFallback className="text-xs">
-                  {ride.driver?.display_name?.charAt(0)?.toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <span className="font-medium text-sm">{ride.driver?.display_name}</span>
+              <button
+                type="button"
+                onClick={() => ride.driver?.id && !isDriver && openProfile(ride.driver.id)}
+                disabled={isDriver || !ride.driver?.id}
+                className={`flex items-center gap-2 ${!isDriver && ride.driver?.id ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
+                aria-label={`View ${driverName}'s profile`}
+              >
+                <Avatar className="h-6 w-6">
+                  <AvatarImage src={ride.driver?.avatar_url || undefined} />
+                  <AvatarFallback className="text-xs">
+                    {driverName.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="font-medium text-sm">{driverName}</span>
+              </button>
               {isDriver && (
                 <Badge variant="secondary" className="text-[10px] bg-primary/10 text-primary">
                   You're driving
@@ -176,7 +193,7 @@ export function RideCard({ ride }: RideCardProps) {
                 </div>
                 <div className="flex items-center justify-between">
                   <p className="text-xs text-green-600 flex-1">
-                    {ride.driver?.display_name} will pick you up
+                    {driverName} will pick you up
                     {myRequest?.pickup_location && ` from ${myRequest.pickup_location}`}
                   </p>
                   {/* Update pickup location button */}
@@ -208,19 +225,28 @@ export function RideCard({ ride }: RideCardProps) {
                   <div className="mt-2 pt-2 border-t border-green-200">
                     <p className="text-xs text-green-600 mb-1">Also riding:</p>
                     <div className="flex flex-wrap gap-2">
-                      {otherRiders.map((p) => (
-                        <div key={p.id} className="flex items-center gap-1 bg-green-100 rounded-full px-2 py-0.5">
-                          <Avatar className="h-4 w-4">
-                            <AvatarImage src={p.passenger?.avatar_url || undefined} />
-                            <AvatarFallback className="text-[8px] bg-green-200">
-                              {p.passenger?.display_name?.charAt(0)?.toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="text-[10px] text-green-700 font-medium">
-                            {p.passenger?.display_name?.split(' ')[0]}
-                          </span>
-                        </div>
-                      ))}
+                      {otherRiders.map((p) => {
+                        const pName = getPublicName(p.passenger as any);
+                        return (
+                          <button
+                            type="button"
+                            key={p.id}
+                            onClick={() => p.passenger?.id && openProfile(p.passenger.id)}
+                            className="flex items-center gap-1 bg-green-100 rounded-full px-2 py-0.5 hover:bg-green-200 transition-colors"
+                            aria-label={`View ${pName}'s profile`}
+                          >
+                            <Avatar className="h-4 w-4">
+                              <AvatarImage src={p.passenger?.avatar_url || undefined} />
+                              <AvatarFallback className="text-[8px] bg-green-200">
+                                {pName.charAt(0).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="text-[10px] text-green-700 font-medium">
+                              {pName.split(' ')[0]}
+                            </span>
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -243,17 +269,26 @@ export function RideCard({ ride }: RideCardProps) {
                   </Badge>
                 </div>
                 <div className="space-y-2">
-                  {acceptedPassengers.map((p) => (
+                  {acceptedPassengers.map((p) => {
+                    const pName = getPublicName(p.passenger as any);
+                    return (
                     <div key={p.id} className="flex items-start gap-2 p-2 rounded-lg bg-green-50 border border-green-200">
-                      <Avatar className="h-7 w-7 shrink-0">
-                        <AvatarImage src={p.passenger?.avatar_url || undefined} />
-                        <AvatarFallback className="text-[10px] bg-green-200 text-green-700">
-                          {p.passenger?.display_name?.charAt(0)?.toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
+                      <button
+                        type="button"
+                        onClick={() => p.passenger?.id && openProfile(p.passenger.id)}
+                        className="shrink-0 hover:opacity-80 transition-opacity"
+                        aria-label={`View ${pName}'s profile`}
+                      >
+                        <Avatar className="h-7 w-7">
+                          <AvatarImage src={p.passenger?.avatar_url || undefined} />
+                          <AvatarFallback className="text-[10px] bg-green-200 text-green-700">
+                            {pName.charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                      </button>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-foreground truncate">
-                          {p.passenger?.display_name}
+                          {pName}
                         </p>
                         {p.pickup_location && (
                           <div className="flex items-center gap-1 mt-0.5">
@@ -271,7 +306,7 @@ export function RideCard({ ride }: RideCardProps) {
                             pickupLocation={p.pickup_location}
                             pickupLat={p.pickup_lat}
                             pickupLng={p.pickup_lng}
-                            passengerName={p.passenger?.display_name || undefined}
+                            passengerName={pName}
                             size="icon"
                             variant="secondary"
                             className="bg-green-100 hover:bg-green-200 text-green-700"
@@ -283,7 +318,8 @@ export function RideCard({ ride }: RideCardProps) {
                         </Badge>
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -293,14 +329,25 @@ export function RideCard({ ride }: RideCardProps) {
               <div className="flex items-center gap-2 mt-3">
                 <Users className="h-4 w-4 text-muted-foreground" />
                 <div className="flex -space-x-2">
-                  {acceptedPassengers.slice(0, 3).map((p) => (
-                    <Avatar key={p.id} className="h-6 w-6 border-2 border-background">
-                      <AvatarImage src={p.passenger?.avatar_url || undefined} />
-                      <AvatarFallback className="text-[10px]">
-                        {p.passenger?.display_name?.charAt(0)?.toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                  ))}
+                  {acceptedPassengers.slice(0, 3).map((p) => {
+                    const pName = getPublicName(p.passenger as any);
+                    return (
+                      <button
+                        type="button"
+                        key={p.id}
+                        onClick={() => p.passenger?.id && openProfile(p.passenger.id)}
+                        className="hover:opacity-80 transition-opacity"
+                        aria-label={`View ${pName}'s profile`}
+                      >
+                        <Avatar className="h-6 w-6 border-2 border-background">
+                          <AvatarImage src={p.passenger?.avatar_url || undefined} />
+                          <AvatarFallback className="text-[10px]">
+                            {pName.charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                      </button>
+                    );
+                  })}
                   {acceptedPassengers.length > 3 && (
                     <span className="text-xs text-muted-foreground ml-2">
                       +{acceptedPassengers.length - 3}
@@ -319,16 +366,23 @@ export function RideCard({ ride }: RideCardProps) {
                 </p>
                 {pendingPassengers.map((p) => {
                   const isActionPending = pendingActions.has(p.id);
-                  const passengerName = p.passenger?.display_name || 'Unknown';
+                  const passengerName = getPublicName(p.passenger as any);
                   return (
                     <div key={p.id} className="p-2 rounded-lg bg-amber-50 border border-amber-200">
                       <div className="flex items-center gap-2">
-                        <Avatar className="h-6 w-6">
-                          <AvatarImage src={p.passenger?.avatar_url || undefined} />
-                          <AvatarFallback className="text-[10px] bg-amber-200 text-amber-700">
-                            {passengerName.charAt(0).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
+                        <button
+                          type="button"
+                          onClick={() => p.passenger?.id && openProfile(p.passenger.id)}
+                          className="hover:opacity-80 transition-opacity"
+                          aria-label={`View ${passengerName}'s profile`}
+                        >
+                          <Avatar className="h-6 w-6">
+                            <AvatarImage src={p.passenger?.avatar_url || undefined} />
+                            <AvatarFallback className="text-[10px] bg-amber-200 text-amber-700">
+                              {passengerName.charAt(0).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                        </button>
                         <span className="text-sm font-medium flex-1 truncate">{passengerName}</span>
                         {/* Navigate to pending pickup */}
                         {p.pickup_location && (
@@ -380,7 +434,7 @@ export function RideCard({ ride }: RideCardProps) {
                 <RequestRideDialog
                   eventId={ride.event_id || undefined}
                   rideId={ride.id}
-                  driverName={ride.driver?.display_name || undefined}
+                  driverName={driverName}
                   trigger={
                     <Button 
                       className="w-full"
@@ -388,7 +442,7 @@ export function RideCard({ ride }: RideCardProps) {
                       size="sm"
                     >
                       <Navigation className="h-4 w-4 mr-2" />
-                      Request Ride from {ride.driver?.display_name?.split(' ')[0] || 'Driver'}
+                      Request Ride from {driverName.split(" ")[0]}
                     </Button>
                   }
                 />

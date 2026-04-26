@@ -15,6 +15,7 @@ import { RallyOnboardingOverlay } from "@/components/onboarding/RallyOnboardingO
 import { AuthRedirectGuard } from "@/components/AuthRedirectGuard";
 import { AppEntry } from "@/components/AppEntry";
 import { PhotoPermissionDialog } from "@/components/events/PhotoPermissionDialog";
+import { PublicProfileProvider } from "@/contexts/PublicProfileContext";
 import Index from "./pages/Index";
 import ReturningAuth from "./pages/ReturningAuth";
 import Events from "./pages/Events";
@@ -46,6 +47,7 @@ const App = () => (
           <RallyOnboardingProvider>
             <TierUpProvider>
               <TooltipProvider>
+                <PublicProfileProvider>
                 <Toaster />
                 <Sonner />
                 <NavigationPortal />
@@ -84,6 +86,7 @@ const App = () => (
                     </Routes>
                   </TutorialProvider>
                 </BrowserRouter>
+                </PublicProfileProvider>
               </TooltipProvider>
             </TierUpProvider>
           </RallyOnboardingProvider>

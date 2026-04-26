@@ -3503,6 +3503,13 @@ export type Database = {
         Args: { p_profile_a: string; p_profile_b: string }
         Returns: boolean
       }
+      auto_complete_stale_rallies: {
+        Args: never
+        Returns: {
+          event_id: string
+          title: string
+        }[]
+      }
       can_see_destination: {
         Args: {
           attendee_event_id: string
@@ -3609,6 +3616,15 @@ export type Database = {
           recent_accessors: Json
           total_accesses: number
           unique_accessors: number
+        }[]
+      }
+      get_recently_friended: {
+        Args: { p_limit?: number; p_profile_id: string }
+        Returns: {
+          avatar_url: string
+          display_name: string
+          profile_id: string
+          responded_at: string
         }[]
       }
       get_referral_count: { Args: { p_profile_id: string }; Returns: number }

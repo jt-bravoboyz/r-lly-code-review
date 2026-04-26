@@ -40,6 +40,32 @@ export function getFriendshipState(
   return { label: 'Add Friend', state: 'none' as const, friendship };
 }
 
+export interface RecentlyFriendedProfile {
+  profile_id: string;
+  display_name: string | null;
+  avatar_url: string | null;
+  responded_at: string | null;
+}
+
+export function useRecentlyFriended(limit: number = 8) {
+  const { profile } = useAuth();
+
+  return useQuery({
+    queryKey: ['recently-friended', profile?.id, limit],
+    queryFn: async () => {
+      if (!profile?.id) return [];
+      const { data, error } = await (supabase as any).rpc('get_recently_friended', {
+        p_profile_id: profile.id,
+        p_limit: limit,
+      });
+      if (error) throw error;
+      return (data || []) as RecentlyFriendedProfile[];
+    },
+    enabled: !!profile?.id,
+    staleTime: 1000 * 60 * 2,
+  });
+}
+
 export function useFriendships() {
   const { profile } = useAuth();
 
