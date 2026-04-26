@@ -325,6 +325,11 @@ function renderTechnical(subTab: string, data: any) {
         <div className="md:col-span-12">
           <FeatureFlags />
         </div>
+        {data.attributionAudit && (
+          <div className="md:col-span-12">
+            <AttributionAudit audit={data.attributionAudit} />
+          </div>
+        )}
       </div>
     );
   }
