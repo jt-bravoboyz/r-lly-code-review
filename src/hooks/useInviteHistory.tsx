@@ -34,6 +34,7 @@ export function useInviteHistory() {
           profile:profiles!invite_history_invited_profile_id_fkey(id, display_name, avatar_url)
         `)
         .eq('inviter_id', profile.id)
+        .is('hidden_at', null)
         .order('last_invited_at', { ascending: false })
         .limit(50);
 
