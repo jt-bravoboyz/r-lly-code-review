@@ -145,11 +145,11 @@ export default function AdminDashboard() {
             {/* 7. System Feedback */}
             <SystemFeedbackCard />
 
-            {/* 7. CSV Export */}
+            {/* 7. CSV Export — uses RAW data so exports match the database 1:1 */}
             <div className="flex justify-end">
               <AdminCSVExport
-                events={data.rallyEvents}
-                attendees={data.attendees}
+                events={(data as any).rallyEventsRaw ?? data.rallyEvents}
+                attendees={(data as any).attendeesRaw ?? data.attendees}
                 label="Export Partner Report"
               />
             </div>
@@ -165,8 +165,8 @@ export default function AdminDashboard() {
             />
             <div className="flex justify-end">
               <AdminCSVExport
-                events={data.rallyEvents}
-                attendees={data.attendees}
+                events={(data as any).rallyEventsRaw ?? data.rallyEvents}
+                attendees={(data as any).attendeesRaw ?? data.attendees}
                 label="Export Commercial Report"
               />
             </div>
