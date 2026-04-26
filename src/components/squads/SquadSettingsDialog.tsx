@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { getPublicName } from '@/lib/identity';
 import { Settings, Pencil, Trash2, Crown, Camera } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -174,7 +175,7 @@ export function SquadSettingsDialog({
                   </Avatar>
                   <div>
                     <p className="text-sm font-medium flex items-center gap-1.5">
-                      {member.profile?.display_name || 'Unknown'}
+                      {getPublicName(member.profile)}
                       {member.isOwner && (
                         <Badge variant="secondary" className="text-[10px] gap-0.5 px-1.5 py-0">
                           <Crown className="h-2.5 w-2.5" /> Captain

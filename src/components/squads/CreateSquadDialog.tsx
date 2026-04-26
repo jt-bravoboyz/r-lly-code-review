@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { getPublicName } from '@/lib/identity';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -123,7 +124,7 @@ export function CreateSquadDialog() {
                           {p.display_name?.charAt(0)?.toUpperCase() || '?'}
                         </AvatarFallback>
                       </Avatar>
-                      <span className="text-sm font-medium">{p.display_name || 'Anonymous'}</span>
+                      <span className="text-sm font-medium">{getPublicName(p)}</span>
                     </div>
                   ))}
                 </div>

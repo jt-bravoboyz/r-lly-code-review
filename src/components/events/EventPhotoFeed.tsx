@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { getPublicName } from '@/lib/identity';
 import { Camera, ImagePlus, X, Loader2, Trash2, Download, Check, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -336,7 +337,7 @@ export function EventPhotoFeed({ eventId, isHost }: EventPhotoFeedProps) {
                       </AvatarFallback>
                     </Avatar>
                     <span className="text-[9px] text-white/90 truncate">
-                      {uploaderProfile?.display_name || 'Unknown'}
+                      {getPublicName(uploaderProfile)}
                     </span>
                   </div>
                 </div>

@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { getPublicName } from '@/lib/identity';
 import { supabase } from '@/integrations/supabase/client';
 import { useRogueAlerts } from '@/hooks/useRogueAlerts';
 import { useGalleryPhotos } from '@/hooks/useRallyMedia';
@@ -24,7 +25,7 @@ export function useRecapData(eventId: string | undefined) {
     });
     return {
       id: alert.id,
-      displayName: alert.profile?.display_name || 'Unknown',
+      displayName: getPublicName(alert.profile),
       avatarUrl: alert.profile?.avatar_url || null,
       finalWords: alert.final_words,
       createdAt: alert.created_at,
@@ -83,7 +84,7 @@ export function useRecapData(eventId: string | undefined) {
         .eq('id', topDriverId)
         .single();
 
-      return { name: profile?.display_name || 'Unknown', avatar: profile?.avatar_url || null };
+      return { name: getPublicName(profile), avatar: profile?.avatar_url || null };
     },
     enabled: !!eventId,
   });
@@ -111,7 +112,7 @@ export function useRecapData(eventId: string | undefined) {
         .eq('id', topUserId)
         .single();
 
-      return { name: profile?.display_name || 'Unknown', avatar: profile?.avatar_url || null };
+      return { name: getPublicName(profile), avatar: profile?.avatar_url || null };
     },
     enabled: !!eventId,
   });

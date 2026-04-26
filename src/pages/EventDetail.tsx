@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { getPublicName } from '@/lib/identity';
 import { PUBLIC_APP_URL } from '@/lib/appUrl';
 import { useParams, Navigate, Link, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
@@ -639,7 +640,7 @@ export default function EventDetail() {
                         {cohost.profile?.display_name?.charAt(0)?.toUpperCase() || '?'}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="text-xs font-medium">{cohost.profile?.display_name || 'Unknown'}</span>
+                    <span className="text-xs font-medium">{getPublicName(cohost.profile)}</span>
                     <Crown className="h-2.5 w-2.5 text-muted-foreground" />
                   </div>
                 ))}

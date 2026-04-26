@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { getPublicName } from '@/lib/identity';
 import { PUBLIC_APP_URL } from '@/lib/appUrl';
 import { Mail, MessageSquare, Copy, Check, Send, UserPlus, Search, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -263,7 +264,7 @@ export function SquadInviteDialog({ squadId, squadName, trigger }: SquadInviteDi
                           <AvatarImage src={p.avatar_url || undefined} />
                           <AvatarFallback className="text-xs">{(p.display_name || '?')[0]}</AvatarFallback>
                         </Avatar>
-                        <span className="text-sm font-medium">{p.display_name || 'Unknown'}</span>
+                        <span className="text-sm font-medium">{getPublicName(p)}</span>
                       </div>
                       <Button
                         size="sm"

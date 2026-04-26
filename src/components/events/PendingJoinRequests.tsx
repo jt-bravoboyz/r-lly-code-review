@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { getPublicName } from '@/lib/identity';
 import { Check, X, UserPlus, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -115,7 +116,7 @@ export function PendingJoinRequests({ eventId }: PendingJoinRequestsProps) {
               
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm truncate">
-                  {request.profile?.display_name || 'Unknown'}
+                  {getPublicName(request.profile)}
                 </p>
                 <p className="text-xs text-muted-foreground flex items-center gap-1">
                   <Clock className="h-3 w-3" />

@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { getPublicName } from '@/lib/identity';
 import { MiniFounderGem } from '@/components/badges/MiniFounderGem';
 import { Header } from '@/components/layout/Header';
 import { BottomNav } from '@/components/layout/BottomNav';
@@ -384,7 +385,7 @@ export default function Profile() {
                   </div>
                 ) : (
                   <h2 className="text-xl font-bold inline-flex items-center">
-                    {profile?.display_name || 'Anonymous'}
+                    {getPublicName(profile)}
                     {profile?.id && <MiniFounderGem profileId={profile.id} />}
                   </h2>
                 )}

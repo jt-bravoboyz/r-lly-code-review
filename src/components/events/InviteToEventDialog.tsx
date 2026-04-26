@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { getPublicName } from '@/lib/identity';
 import { PUBLIC_APP_URL } from '@/lib/appUrl';
 import { UserPlus, Users, Copy, Share2, Check, Link2, MessageSquare, Send, Phone, History, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -452,7 +453,7 @@ export function InviteToEventDialog({
                         </Avatar>
                         <div>
                           <p className="text-sm font-medium">
-                            {(invite as any).invited_profile?.display_name || 'Unknown'}
+                            {getPublicName((invite as any).invited_profile)}
                           </p>
                           <p className="text-xs text-muted-foreground">
                             {format(new Date(invite.invited_at), 'MMM d, h:mm a')}

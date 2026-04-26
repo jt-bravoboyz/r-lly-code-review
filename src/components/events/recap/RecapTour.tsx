@@ -161,10 +161,17 @@ export function RecapTour({
               {galleryPhotos.slice(0, 6).map((photo, i) => (
                 <div
                   key={photo.id}
-                  className="aspect-square rounded-xl overflow-hidden ring-1 ring-white/10"
+                  className="aspect-square rounded-xl overflow-hidden ring-1 ring-white/10 bg-gradient-to-br from-primary/40 to-primary/10"
                   style={{ animationDelay: `${i * 100}ms` }}
                 >
-                  <img src={photo.url} alt="" className="w-full h-full object-cover animate-fade-in" />
+                  <img
+                    src={photo.url}
+                    alt=""
+                    className="w-full h-full object-cover animate-fade-in"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
                 </div>
               ))}
             </div>

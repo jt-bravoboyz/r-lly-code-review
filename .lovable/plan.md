@@ -1,67 +1,100 @@
-## Security Hardening: Realtime Channels & Profiles Finding
+# Master Remediation Plan — R@lly Audit Fixes
 
-### Background
+Three-phase rollout addressing the 2 Fail and 4 Polish items from the audit.
 
-Two findings were raised. After investigation:
+---
 
-**1. `realtime_missing_channel_authorization` (error)** — Partially valid.
-The app uses two distinct Realtime patterns:
-- **`postgres_changes` subscriptions** (notifications, event_attendees, rides, chat messages, etc.). Payloads from these are *already* filtered by RLS on the underlying tables (`messages`, `notifications`, `event_attendees`, etc.). A user subscribing to `notifications-realtime` only receives rows they could `SELECT` directly. This part of the finding overstates the risk.
-- **Broadcast channels** (currently only `typing_indicator:chat-<id>`). These DO flow through `realtime.messages` and need explicit policies. The existing policy allows authenticated users to write to ANY `typing_indicator:%` topic — including chats they aren't members of — which leaks "user is typing" presence to outsiders.
+## Phase 1 — Database & Backend (Logic Layer)
 
-**2. `profiles_no_friend_visibility` (warn)** — Already correct, no action needed. The finding's own description concludes "No action needed here" because PII columns are owner-restricted and cross-table joins go through `SECURITY DEFINER` functions that scope access correctly.
+**Single SQL migration** containing:
 
-### Plan
+### 1A. Double-Booking Guard (`ride_passengers`)
+- New `BEFORE INSERT` trigger `prevent_duplicate_ride_request()`.
+- Logic: For the incoming `passenger_profile_id`, look up the `event_id` of the target ride. Reject if the same passenger already has a row joined to a ride for the same event with status in (`pending`, `accepted`).
+- Returns clear error: `"You already have an active ride request for this R@lly"` so the UI can surface it as a toast.
 
-**A. Tighten the `typing_indicator` broadcast policy**
-Replace the broad `typing_indicator:%` policy on `realtime.messages` with one that only allows authenticated users to send/receive on `typing_indicator:chat-<chatId>` topics where they are a verified `chat_participants` member (reusing the existing `is_chat_member()` SECURITY DEFINER function).
+### 1B. Archive Deep-Link Fix (`auto_complete_stale_rallies`)
+- Update the function so the `data` JSONB written into `notifications` includes `'url': '/events/' || v_event.id`.
+- All other behavior unchanged.
 
-**B. Add a deny-by-default posture for any future broadcast topics**
-The existing `realtime.messages` policies are already deny-by-default (no policy = no access). Postgres-changes traffic does not pass through `realtime.messages`, so no policy work is required there — RLS on the source tables (already in place) is the security boundary.
+### 1C. Admin Analytics View (`admin_invite_history_view`)
+- New view selecting from `invite_history` with **no** `hidden_at` filter.
+- Restrict via RLS / grants so only `has_role(auth.uid(), 'admin')` can SELECT.
+- Used by admin dashboard hooks instead of the table directly so soft-deleted rows still show in growth stats.
 
-**C. Resolve both findings in the scanner**
-- Mark `realtime_missing_channel_authorization` as fixed with an explanation that postgres_changes payloads are RLS-filtered and the broadcast policy was tightened to chat-membership.
-- Mark `profiles_no_friend_visibility` as fixed (per the scanner's own conclusion, no action needed).
+---
 
-### Technical Changes
+## Phase 2 — Global UI Infrastructure (Resilience Layer)
 
-One SQL migration:
+### 2A. Connection Status Banner
+- New file: `src/components/layout/ConnectionStatusBanner.tsx`.
+- Listens to `window` `online` / `offline` events and Supabase realtime channel state.
+- When offline: fixed top banner, R@lly-orange, copy "Reconnecting… Hold tight." with a subtle pulse.
+- When recovered: brief green "Back online" toast then auto-hide.
+- Mount once in `src/App.tsx` above the router so it overlays all routes.
 
+### 2B. Identity Leak Sweep
+- Replace hardcoded `'Anonymous'`, `'Unknown'`, `'Unknown User'`, and bare `'User'` fallbacks with `getPublicName(profile)` from `src/lib/identity.ts`.
+- Files in scope (from audit, ~30 occurrences): `Index.tsx`, `EventPhotoFeed.tsx`, ride/DD components, recap components, notification renderers, chat sender labels, friend lists.
+- Where only an ID is known and no profile is loaded, fall back to `"A R@llier"` (brand-voice fallback) instead of `"Unknown"`.
+
+---
+
+## Phase 3 — Component Polish (Vibe Layer)
+
+### 3A. Image Resilience
+- Add `onError` to raw `<img>` tags in:
+  - `EventPhotoFeed.tsx`
+  - Recap timeline components (hero, grid tiles, attendee avatars where raw)
+- On error: hide the `<img>` and reveal a sibling div with a R@lly-orange → magenta gradient placeholder so the layout never collapses to a broken-icon.
+- Lightweight pattern using a single `useState('loaded' | 'error')` per image, no new dependency.
+
+---
+
+## Technical Notes
+
+**Trigger SQL sketch (1A):**
 ```sql
--- Drop the old overly-permissive typing indicator policies
-DROP POLICY IF EXISTS "<existing typing policies>" ON realtime.messages;
-
--- Allow only chat members to broadcast/receive on their chat's typing topic
-CREATE POLICY "Chat members can use typing_indicator broadcast"
-ON realtime.messages
-FOR SELECT TO authenticated
-USING (
-  realtime.topic() LIKE 'typing_indicator:chat-%'
-  AND public.is_chat_member(
-    substring(realtime.topic() from 'typing_indicator:chat-(.+)')::uuid
-  )
-);
-
-CREATE POLICY "Chat members can send typing_indicator broadcast"
-ON realtime.messages
-FOR INSERT TO authenticated
-WITH CHECK (
-  realtime.topic() LIKE 'typing_indicator:chat-%'
-  AND public.is_chat_member(
-    substring(realtime.topic() from 'typing_indicator:chat-(.+)')::uuid
-  )
-);
+CREATE OR REPLACE FUNCTION public.prevent_duplicate_ride_request()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE v_event_id uuid;
+BEGIN
+  SELECT event_id INTO v_event_id FROM rides WHERE id = NEW.ride_id;
+  IF EXISTS (
+    SELECT 1 FROM ride_passengers rp
+    JOIN rides r ON r.id = rp.ride_id
+    WHERE rp.passenger_profile_id = NEW.passenger_profile_id
+      AND r.event_id = v_event_id
+      AND rp.status IN ('pending','accepted')
+  ) THEN
+    RAISE EXCEPTION 'You already have an active ride request for this R@lly'
+      USING ERRCODE = 'check_violation';
+  END IF;
+  RETURN NEW;
+END $$;
 ```
 
-The migration will first inspect existing `realtime.messages` policies (via `pg_policies`) and drop only the prior typing-indicator ones.
+**Admin view (1C):**
+```sql
+CREATE OR REPLACE VIEW public.admin_invite_history_view AS
+SELECT * FROM public.invite_history;
+REVOKE ALL ON public.admin_invite_history_view FROM anon, authenticated;
+GRANT SELECT ON public.admin_invite_history_view TO authenticated;
+-- enforced by has_role check in hook + future RLS once view-policies are in place
+```
 
-### Files Touched
+**Banner placement (2A):** mounted inside `App.tsx` outside `<BrowserRouter>` children so it persists across route changes.
 
-- One new SQL migration under `supabase/migrations/`.
-- No app code changes — `ChatView.tsx` already builds the topic as `typing_indicator:chat-${chatId}`.
+---
 
-### What's Out of Scope
+## Files Touched
 
-- No changes to the `profiles` table or its RLS (finding #2 is already correctly resolved).
-- No changes to `postgres_changes` channels — those rely on table-level RLS which is already in place.
-- No new soft-delete / chat / invite work (those were completed in prior plans).
+- `supabase/migrations/<new>.sql` (Phase 1, all three SQL items)
+- `src/components/layout/ConnectionStatusBanner.tsx` (new)
+- `src/App.tsx` (mount banner)
+- `src/lib/identity.ts` (verify `getPublicName` handles all fallback cases; minor tweak if needed)
+- ~30 component files across `src/` for identity sweep
+- `src/components/events/EventPhotoFeed.tsx` and recap components for `onError` handlers
+- `src/hooks/useAdminInviteHistory.ts` (or equivalent) to read from `admin_invite_history_view`
+
+No breaking changes to existing flows; all additions are additive or graceful fallbacks.

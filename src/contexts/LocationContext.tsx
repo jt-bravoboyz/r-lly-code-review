@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
+import { getPublicName } from '@/lib/identity';
 import { Capacitor } from '@capacitor/core';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -494,7 +495,7 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
             const next = new Map(prev);
             next.set(data.profile_id, {
               profileId: data.profile_id,
-              displayName: profileData?.display_name || 'Unknown',
+              displayName: getPublicName(profileData),
               avatarUrl: profileData?.avatar_url,
               lat: data.current_lat,
               lng: data.current_lng,
@@ -528,7 +529,7 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
             if (attendee.profile_id !== profile?.id) {
               newLocations.set(attendee.profile_id, {
                 profileId: attendee.profile_id,
-                displayName: attendee.profile?.display_name || 'Unknown',
+                displayName: getPublicName(attendee.profile),
                 avatarUrl: attendee.profile?.avatar_url,
                 lat: attendee.current_lat,
                 lng: attendee.current_lng,

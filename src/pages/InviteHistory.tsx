@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { getPublicName } from '@/lib/identity';
 import { format } from 'date-fns';
 import { Calendar, MapPin, Check, X, Clock, ChevronRight, Users, History, Trash2 } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
@@ -134,7 +135,7 @@ export default function InviteHistory() {
             </Avatar>
             <div>
               <p className="font-medium">
-                {entry.profile?.display_name || entry.invited_name || 'Unknown'}
+                {getPublicName(entry.profile) !== 'R@lly Member' ? getPublicName(entry.profile) : (entry.invited_name || 'A R@llier')}
               </p>
               <div className="flex items-center gap-2">
                 {entry.invited_phone && (

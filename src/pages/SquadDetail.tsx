@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
+import { getPublicName } from '@/lib/identity';
 import { useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Camera, MessageCircle, UserPlus, Zap, Trash2, Crown, Calendar, MapPin, Users, RefreshCw, Plus, Image } from 'lucide-react';
@@ -528,7 +529,7 @@ export default function SquadDetail() {
                             onClick={() => member.profile?.id && openProfile(member.profile.id)}
                             className="hover:underline text-left"
                           >
-                            {member.profile?.display_name || 'Unknown'}
+                            {getPublicName(member.profile)}
                           </button>
                           {member.isOwner && (
                             <Badge variant="secondary" className="gap-1 text-xs">
