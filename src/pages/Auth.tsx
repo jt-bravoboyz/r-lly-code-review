@@ -244,6 +244,12 @@ export default function Auth() {
           throw new Error(joinResult.error);
         }
 
+        // Track invite-code redemption so admin "Invite copies" reflects code-based joins.
+        trackEvent('invite_code_redeemed', {
+          event_id: eventData.id,
+          invite_code: pendingCode,
+          source: 'auth_pending_code',
+        });
         // Invitees auto-join as attending
         toast.success("You're in! 🎉", {
           description: `Welcome to ${eventData.title}`,
