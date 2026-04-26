@@ -1,15 +1,27 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
-import { Calendar, MapPin, Check, X, Clock, ChevronRight, Users, History } from 'lucide-react';
+import { Calendar, MapPin, Check, X, Clock, ChevronRight, Users, History, Trash2 } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { toast } from 'sonner';
 import { usePastEventInvites, PastEventInvite } from '@/hooks/usePastEventInvites';
-import { useInviteHistory, InviteHistoryEntry } from '@/hooks/useInviteHistory';
+import { useInviteHistory, InviteHistoryEntry, useClearInviteHistory } from '@/hooks/useInviteHistory';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 
