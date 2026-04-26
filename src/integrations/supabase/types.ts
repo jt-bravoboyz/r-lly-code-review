@@ -3202,6 +3202,96 @@ export type Database = {
       }
     }
     Views: {
+      admin_invite_history_view: {
+        Row: {
+          hidden_at: string | null
+          id: string | null
+          invite_count: number | null
+          invited_name: string | null
+          invited_phone: string | null
+          invited_profile_id: string | null
+          inviter_id: string | null
+          last_invited_at: string | null
+        }
+        Insert: {
+          hidden_at?: string | null
+          id?: string | null
+          invite_count?: number | null
+          invited_name?: string | null
+          invited_phone?: string | null
+          invited_profile_id?: string | null
+          inviter_id?: string | null
+          last_invited_at?: string | null
+        }
+        Update: {
+          hidden_at?: string | null
+          id?: string | null
+          invite_count?: number | null
+          invited_name?: string | null
+          invited_phone?: string | null
+          invited_profile_id?: string | null
+          inviter_id?: string | null
+          last_invited_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invite_history_invited_profile_id_fkey"
+            columns: ["invited_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invite_history_invited_profile_id_fkey"
+            columns: ["invited_profile_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invite_history_invited_profile_id_fkey"
+            columns: ["invited_profile_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invite_history_invited_profile_id_fkey"
+            columns: ["invited_profile_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles_with_connection"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invite_history_inviter_id_fkey"
+            columns: ["inviter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invite_history_inviter_id_fkey"
+            columns: ["inviter_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invite_history_inviter_id_fkey"
+            columns: ["inviter_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invite_history_inviter_id_fkey"
+            columns: ["inviter_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles_with_connection"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       analytics_funnel_summary: {
         Row: {
           day: string | null
