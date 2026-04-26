@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { getPublicName } from '@/lib/identity';
 import { MiniFounderGem } from '@/components/badges/MiniFounderGem';
 import { PUBLIC_APP_URL } from '@/lib/appUrl';
 import { Input } from '@/components/ui/input';

@@ -1,4 +1,5 @@
 import React from 'react';
+import { getPrivateName } from '@/lib/identity';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Star, MessageSquare } from 'lucide-react';
 

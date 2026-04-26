@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { getPublicName } from '@/lib/identity';
 import { format } from 'date-fns';
 import { Calendar, MapPin, Check, X, Clock, ChevronRight, Users, History, Trash2 } from 'lucide-react';
 import { Header } from '@/components/layout/Header';

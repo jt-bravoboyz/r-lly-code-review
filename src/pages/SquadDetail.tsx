@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
+import { getPublicName } from '@/lib/identity';
 import { useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Camera, MessageCircle, UserPlus, Zap, Trash2, Crown, Calendar, MapPin, Users, RefreshCw, Plus, Image } from 'lucide-react';

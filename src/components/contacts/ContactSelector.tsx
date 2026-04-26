@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { getPublicName } from '@/lib/identity';
 import { Search, User, Phone, UserPlus, Check, Clock } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';

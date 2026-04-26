@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { getPublicName } from '@/lib/identity';
 import { PUBLIC_APP_URL } from '@/lib/appUrl';
 import { Mail, MessageSquare, Copy, Check, Send, UserPlus, Search, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';

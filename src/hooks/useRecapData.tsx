@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { getPublicName } from '@/lib/identity';
 import { supabase } from '@/integrations/supabase/client';
 import { useRogueAlerts } from '@/hooks/useRogueAlerts';
 import { useGalleryPhotos } from '@/hooks/useRallyMedia';

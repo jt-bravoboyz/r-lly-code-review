@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { getPublicName } from '@/lib/identity';
 import { Settings, Pencil, Trash2, Crown, Camera } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
