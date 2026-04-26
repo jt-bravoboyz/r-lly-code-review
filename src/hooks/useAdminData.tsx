@@ -111,11 +111,14 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
 
       // Real invite signals — many invite paths don't fire trackEvent('invite_link_copied'),
       // so K-Factor/viral coefficient must aggregate every channel.
+      // Each table is selected with its own timestamp column so we can date-window them
+      // alongside the analytics-event signal (otherwise lifetime invites get divided by
+      // today's R@lly count → ghost K-Factor like 7.00x on a single new R@lly).
       const [{ data: inviteHistoryRows }, { data: phoneInviteRows }, { data: eventInviteRows }] =
         await Promise.all([
-          supabase.from('invite_history').select('inviter_id, invite_count').range(0, 9999),
-          supabase.from('phone_invites').select('invited_by, event_id').range(0, 9999),
-          supabase.from('event_invites').select('invited_by, event_id').range(0, 9999),
+          supabase.from('invite_history').select('inviter_id, invite_count, last_invited_at').range(0, 9999),
+          supabase.from('phone_invites').select('invited_by, event_id, invited_at').range(0, 9999),
+          supabase.from('event_invites').select('invited_by, event_id, invited_at').range(0, 9999),
         ]);
 
       // Two parallel datasets:
@@ -214,22 +217,36 @@ export function useAdminAnalytics(filterAdminData = false, datePreset: DatePrese
         ? Math.min(100, (safetyConfirmed / goingHome) * 100)
         : 0;
 
-      // === REAL INVITE AGGREGATION ===
-      // Sum every invite channel per host profile (not user_id, since the invite tables key by profile_id).
-      // Also strip admin profiles when filterAdminData is on so partner-facing K-Factor is clean.
+      // === REAL INVITE AGGREGATION (date-windowed) ===
+      // Sum every invite channel per host profile. When a date preset is active, we only
+      // count invites whose own timestamp falls inside the window — otherwise lifetime
+      // invites get divided by today's R@lly count and the K-Factor goes nuclear (the
+      // "7.00x ghost" with 0 verified attendees).
+      const inWindow = (ts: string | null | undefined) =>
+        !dateCutoff || (!!ts && new Date(ts).getTime() >= dateCutoff.getTime());
+
       const invitesByProfile: Record<string, number> = {};
       const addInvite = (profileId: string | null | undefined, n = 1) => {
         if (!profileId) return;
         if (filterAdminData && adminProfileIds.has(profileId)) return;
         invitesByProfile[profileId] = (invitesByProfile[profileId] || 0) + n;
       };
-      (inviteHistoryRows || []).forEach(r => addInvite(r.inviter_id as string, (r as any).invite_count || 1));
-      (phoneInviteRows || []).forEach(r => addInvite(r.invited_by as string, 1));
-      (eventInviteRows || []).forEach(r => addInvite(r.invited_by as string, 1));
+      (inviteHistoryRows || []).forEach(r => {
+        if (!inWindow((r as any).last_invited_at)) return;
+        addInvite(r.inviter_id as string, (r as any).invite_count || 1);
+      });
+      (phoneInviteRows || []).forEach(r => {
+        if (!inWindow((r as any).invited_at)) return;
+        addInvite(r.invited_by as string, 1);
+      });
+      (eventInviteRows || []).forEach(r => {
+        if (!inWindow((r as any).invited_at)) return;
+        addInvite(r.invited_by as string, 1);
+      });
 
       // Hamilton attribution: credit analytics-only invite signals back to the
-      // host of the rally being shared. This makes the global K-Factor reconcile
-      // with the sum of per-host impact in the Growth Narrative (no orphan invites).
+      // host of the rally being shared. `events` is already date-windowed above,
+      // so this naturally respects the active preset.
       const eventCreatorById: Record<string, string> = {};
       (rallyEvents || []).forEach(e => { eventCreatorById[e.id] = e.creator_id; });
       events
