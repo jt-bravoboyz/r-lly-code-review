@@ -54,7 +54,6 @@ export function InviteToEventDialog({
   const [copiedLink, setCopiedLink] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [invitingFriendId, setInvitingFriendId] = useState<string | null>(null);
   const [invitedFriendIds, setInvitedFriendIds] = useState<Set<string>>(new Set());
   const [invitingSquads, setInvitingSquads] = useState<Set<string>>(new Set());
   const [invitedSquads, setInvitedSquads] = useState<Set<string>>(new Set());
