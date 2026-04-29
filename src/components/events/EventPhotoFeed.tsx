@@ -462,16 +462,18 @@ export function EventPhotoFeed({ eventId, isHost }: EventPhotoFeedProps) {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <button
-                onClick={handleDownloadCurrent}
-                disabled={downloadingViewer}
-                className="p-2 rounded-full bg-white/15 backdrop-blur-md hover:bg-white/25 transition-colors disabled:opacity-60"
-                aria-label="Save photo"
-              >
-                {downloadingViewer
-                  ? <Loader2 className="h-4 w-4 text-primary animate-spin" />
-                  : <Download className="h-4 w-4 text-primary" />}
-              </button>
+              {photos[viewerIndex].type !== 'video' && (
+                <button
+                  onClick={handleDownloadCurrent}
+                  disabled={downloadingViewer}
+                  className="p-2 rounded-full bg-white/15 backdrop-blur-md hover:bg-white/25 transition-colors disabled:opacity-60"
+                  aria-label="Save photo"
+                >
+                  {downloadingViewer
+                    ? <Loader2 className="h-4 w-4 text-primary animate-spin" />
+                    : <Download className="h-4 w-4 text-primary" />}
+                </button>
+              )}
               {canDelete(photos[viewerIndex]) && (
                 <button
                   onClick={() => handleDelete(photos[viewerIndex].id)}
@@ -489,13 +491,24 @@ export function EventPhotoFeed({ eventId, isHost }: EventPhotoFeedProps) {
             </div>
           </div>
 
-          {/* Image */}
+          {/* Media */}
           <div className="flex-1 flex items-center justify-center px-4 overflow-hidden">
-            <img
-              src={photos[viewerIndex].url}
-              alt=""
-              className="max-w-full max-h-full object-contain rounded-lg"
-            />
+            {photos[viewerIndex].type === 'video' ? (
+              <video
+                key={photos[viewerIndex].id}
+                src={photos[viewerIndex].url}
+                controls
+                autoPlay
+                playsInline
+                className="max-w-full max-h-full rounded-lg"
+              />
+            ) : (
+              <img
+                src={photos[viewerIndex].url}
+                alt=""
+                className="max-w-full max-h-full object-contain rounded-lg"
+              />
+            )}
           </div>
 
           {/* Dot indicators */}
