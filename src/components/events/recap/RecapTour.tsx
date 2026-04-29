@@ -3,10 +3,14 @@ import { createPortal } from 'react-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useConfetti } from '@/hooks/useConfetti';
 import { cn } from '@/lib/utils';
+import { RecapMediaTile, type RecapMediaItem } from './RecapMediaTile';
+import { getRecapCloser } from './recapClosers';
 
 interface RecapTourProps {
+  eventId: string;
   eventTitle: string;
-  galleryPhotos: Array<{ id: string; url: string }>;
+  galleryPhotos: RecapMediaItem[];
+  heroVideo?: RecapMediaItem | null;
   rogueTimeline: Array<{
     id: string;
     displayName: string;
@@ -22,7 +26,7 @@ interface RecapTourProps {
     winnerName: string;
     winnerAvatar: string | null;
   }>;
-  stats: { photoCount: number; rogueCount: number; reactionCount: number };
+  stats: { photoCount: number; videoCount?: number; rogueCount: number; reactionCount: number };
   attendeeCount: number;
   ddCount: number;
   onComplete: () => void;
@@ -31,15 +35,18 @@ interface RecapTourProps {
 const CALLOUTS = [
   'Mission Complete.',
   'Your Night. Captured.',
+  'The Reel Just Dropped.',
   'Best Moment Locked.',
   'Chaos. Documented.',
   'Squad Stars Identified.',
-  'The Horse Is Home.',
+  'Final Frame.',
 ];
 
 export function RecapTour({
+  eventId,
   eventTitle,
   galleryPhotos,
+  heroVideo,
   rogueTimeline,
   awards,
   stats,
@@ -50,10 +57,12 @@ export function RecapTour({
   const [step, setStep] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const { fireRallyConfetti } = useConfetti();
+  const closer = getRecapCloser(eventId);
 
   // Determine which steps exist based on available data
-  const steps: Array<'title' | 'gallery' | 'bestPhoto' | 'rogue' | 'stars' | 'finale'> = ['title'];
+  const steps: Array<'title' | 'gallery' | 'heroVideo' | 'bestPhoto' | 'rogue' | 'stars' | 'finale'> = ['title'];
   if (galleryPhotos.length > 0) steps.push('gallery');
+  if (heroVideo) steps.push('heroVideo');
   if (galleryPhotos.length > 0) steps.push('bestPhoto');
   if (rogueTimeline.length > 0) steps.push('rogue');
   if (awards.length > 0) steps.push('stars');
