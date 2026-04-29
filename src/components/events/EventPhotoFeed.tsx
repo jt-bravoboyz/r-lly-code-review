@@ -282,12 +282,12 @@ export function EventPhotoFeed({ eventId, isHost }: EventPhotoFeedProps) {
           disabled={uploading}
         >
           {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
-          Add Photo
+          Add Photo or Video
         </Button>
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/jpeg,image/png,image/webp,image/heic"
+          accept={ACCEPT_ATTR}
           multiple
           className="hidden"
           onChange={handleUpload}
