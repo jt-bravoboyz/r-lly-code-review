@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { getPublicName } from '@/lib/identity';
-import { Camera, ImagePlus, X, Loader2, Trash2, Download, Check, CheckCircle2 } from 'lucide-react';
+import { Camera, ImagePlus, X, Loader2, Trash2, Download, Check, CheckCircle2, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useGalleryPhotos, useUploadRallyMedia, useDeleteRallyMedia, type RallyMedia } from '@/hooks/useRallyMedia';
@@ -15,8 +15,13 @@ import { ensurePhotoPermission } from './PhotoPermissionDialog';
 import { useHaptics } from '@/hooks/useHaptics';
 import { usePublicProfile } from '@/contexts/PublicProfileContext';
 
-const MAX_PHOTO_SIZE = 10 * 1024 * 1024;
+const MAX_PHOTOS_PER_EVENT = 50;
+const MAX_VIDEOS_PER_EVENT = 5;
+const MAX_PHOTO_SIZE = 10 * 1024 * 1024;       // 10MB
+const MAX_VIDEO_SIZE = 500 * 1024 * 1024;      // 500MB
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic'];
+const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/quicktime', 'video/webm'];
+const ACCEPT_ATTR = [...ALLOWED_IMAGE_TYPES, ...ALLOWED_VIDEO_TYPES].join(',');
 
 interface EventPhotoFeedProps {
   eventId: string;
@@ -86,32 +91,81 @@ export function EventPhotoFeed({ eventId, isHost }: EventPhotoFeedProps) {
     const files = Array.from(e.target.files);
     setUploading(true);
 
-    let successCount = 0;
+    const existingPhotos = photos.filter(p => p.type === 'photo').length;
+    const existingVideos = photos.filter(p => p.type === 'video').length;
+    let photosQueued = 0;
+    let videosQueued = 0;
+    let photoSuccess = 0;
+    let videoSuccess = 0;
+
     for (const file of files) {
-      if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
-        toast.error(`${file.name}: unsupported format`);
-        continue;
-      }
-      if (file.size > MAX_PHOTO_SIZE) {
-        toast.error(`${file.name}: too large (max 10MB)`);
-        continue;
-      }
-      try {
-        await uploadMedia.mutateAsync({
-          eventId,
-          profileId: profile.id,
-          file,
-          type: 'photo',
-          orderIndex: photos.length + successCount,
-          isFeatured: false,
-        });
-        successCount++;
-      } catch {
-        toast.error(`Failed to upload ${file.name}`);
+      const isVideo = file.type.startsWith('video/');
+
+      if (isVideo) {
+        if (!ALLOWED_VIDEO_TYPES.includes(file.type)) {
+          toast.error(`${file.name}: unsupported video format`);
+          continue;
+        }
+        if (existingVideos + videosQueued >= MAX_VIDEOS_PER_EVENT) {
+          toast.error(`Max ${MAX_VIDEOS_PER_EVENT} videos per R@lly. Delete one to add more.`);
+          continue;
+        }
+        if (file.size > MAX_VIDEO_SIZE) {
+          toast.error(`${file.name}: too large (max 500MB)`);
+          continue;
+        }
+        try {
+          await uploadMedia.mutateAsync({
+            eventId,
+            profileId: profile.id,
+            file,
+            type: 'video',
+            orderIndex: photos.length + photosQueued + videosQueued,
+            isFeatured: false,
+          });
+          videosQueued++;
+          videoSuccess++;
+        } catch {
+          toast.error(`Failed to upload ${file.name}`);
+        }
+      } else {
+        if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+          toast.error(`${file.name}: unsupported format`);
+          continue;
+        }
+        if (existingPhotos + photosQueued >= MAX_PHOTOS_PER_EVENT) {
+          toast.error(`Max ${MAX_PHOTOS_PER_EVENT} photos per R@lly. Delete one to add more.`);
+          continue;
+        }
+        if (file.size > MAX_PHOTO_SIZE) {
+          toast.error(`${file.name}: too large (max 10MB)`);
+          continue;
+        }
+        try {
+          await uploadMedia.mutateAsync({
+            eventId,
+            profileId: profile.id,
+            file,
+            type: 'photo',
+            orderIndex: photos.length + photosQueued + videosQueued,
+            isFeatured: false,
+          });
+          photosQueued++;
+          photoSuccess++;
+        } catch {
+          toast.error(`Failed to upload ${file.name}`);
+        }
       }
     }
 
-    if (successCount > 0) toast.success(`${successCount} photo${successCount > 1 ? 's' : ''} added 📸`);
+    if (photoSuccess > 0 && videoSuccess > 0) {
+      toast.success(`${photoSuccess + videoSuccess} added 🎬`);
+    } else if (videoSuccess > 0) {
+      toast.success(`${videoSuccess} video${videoSuccess > 1 ? 's' : ''} added 🎥`);
+    } else if (photoSuccess > 0) {
+      toast.success(`${photoSuccess} photo${photoSuccess > 1 ? 's' : ''} added 📸`);
+    }
+
     setUploading(false);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
@@ -119,10 +173,10 @@ export function EventPhotoFeed({ eventId, isHost }: EventPhotoFeedProps) {
   const handleDelete = async (mediaId: string) => {
     try {
       await deleteMedia.mutateAsync({ mediaId, eventId });
-      toast.success('Photo removed');
+      toast.success('Removed');
       if (viewerIndex !== null) setViewerIndex(null);
     } catch {
-      toast.error('Failed to remove photo');
+      toast.error('Failed to remove');
     }
   };
 
@@ -169,7 +223,7 @@ export function EventPhotoFeed({ eventId, isHost }: EventPhotoFeedProps) {
   const handleBatchSave = async () => {
     if (batchSaving || selectedIds.size === 0) return;
     const items = photos
-      .filter(p => selectedIds.has(p.id))
+      .filter(p => selectedIds.has(p.id) && p.type === 'photo')
       .map(p => ({ url: p.url, id: p.id, eventId }));
     if (items.length === 0) return;
 
@@ -228,12 +282,12 @@ export function EventPhotoFeed({ eventId, isHost }: EventPhotoFeedProps) {
           disabled={uploading}
         >
           {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
-          Add Photo
+          Add Photo or Video
         </Button>
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/jpeg,image/png,image/webp,image/heic"
+          accept={ACCEPT_ATTR}
           multiple
           className="hidden"
           onChange={handleUpload}
@@ -292,27 +346,49 @@ export function EventPhotoFeed({ eventId, isHost }: EventPhotoFeedProps) {
         {photos.map((photo, idx) => {
           const uploaderProfile = profiles[photo.created_by];
           const isSelected = selectedIds.has(photo.id);
+          const isVideo = photo.type === 'video';
           return (
             <div
               key={photo.id}
-              className="relative aspect-square cursor-pointer overflow-hidden group"
+              className="relative aspect-square cursor-pointer overflow-hidden group bg-muted"
               onClick={() => {
-                if (selectMode) toggleSelected(photo.id);
+                // Videos always open the viewer (not selectable for batch save)
+                if (selectMode && !isVideo) toggleSelected(photo.id);
                 else setViewerIndex(idx);
               }}
               style={{ animationDelay: `${idx * 50}ms` }}
             >
-              <img
-                src={photo.url}
-                alt=""
-                className={`w-full h-full object-cover transition-all duration-300 ${
-                  selectMode && isSelected ? 'scale-95 brightness-75' : 'group-hover:scale-105 group-active:scale-95'
-                }`}
-                loading="lazy"
-              />
+              {isVideo ? (
+                <>
+                  <video
+                    src={photo.url}
+                    muted
+                    playsInline
+                    preload="metadata"
+                    className={`w-full h-full object-cover transition-all duration-300 ${
+                      selectMode && isSelected ? 'scale-95 brightness-75' : 'group-hover:scale-105 group-active:scale-95'
+                    }`}
+                  />
+                  {/* Play badge */}
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div className="h-9 w-9 rounded-full bg-black/55 backdrop-blur-sm flex items-center justify-center">
+                      <Play className="h-4 w-4 text-white fill-white ml-0.5" />
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <img
+                  src={photo.url}
+                  alt=""
+                  className={`w-full h-full object-cover transition-all duration-300 ${
+                    selectMode && isSelected ? 'scale-95 brightness-75' : 'group-hover:scale-105 group-active:scale-95'
+                  }`}
+                  loading="lazy"
+                />
+              )}
 
-              {/* Selection checkbox (visible in select mode) */}
-              {selectMode && (
+              {/* Selection checkbox (visible in select mode, photos only) */}
+              {selectMode && !isVideo && (
                 <div className="absolute top-1.5 right-1.5 z-10">
                   <div
                     className={`h-6 w-6 rounded-full flex items-center justify-center border-2 transition-all ${
@@ -350,7 +426,7 @@ export function EventPhotoFeed({ eventId, isHost }: EventPhotoFeedProps) {
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/jpeg,image/png,image/webp,image/heic"
+        accept={ACCEPT_ATTR}
         multiple
         className="hidden"
         onChange={handleUpload}
@@ -386,16 +462,18 @@ export function EventPhotoFeed({ eventId, isHost }: EventPhotoFeedProps) {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <button
-                onClick={handleDownloadCurrent}
-                disabled={downloadingViewer}
-                className="p-2 rounded-full bg-white/15 backdrop-blur-md hover:bg-white/25 transition-colors disabled:opacity-60"
-                aria-label="Save photo"
-              >
-                {downloadingViewer
-                  ? <Loader2 className="h-4 w-4 text-primary animate-spin" />
-                  : <Download className="h-4 w-4 text-primary" />}
-              </button>
+              {photos[viewerIndex].type !== 'video' && (
+                <button
+                  onClick={handleDownloadCurrent}
+                  disabled={downloadingViewer}
+                  className="p-2 rounded-full bg-white/15 backdrop-blur-md hover:bg-white/25 transition-colors disabled:opacity-60"
+                  aria-label="Save photo"
+                >
+                  {downloadingViewer
+                    ? <Loader2 className="h-4 w-4 text-primary animate-spin" />
+                    : <Download className="h-4 w-4 text-primary" />}
+                </button>
+              )}
               {canDelete(photos[viewerIndex]) && (
                 <button
                   onClick={() => handleDelete(photos[viewerIndex].id)}
@@ -413,13 +491,24 @@ export function EventPhotoFeed({ eventId, isHost }: EventPhotoFeedProps) {
             </div>
           </div>
 
-          {/* Image */}
+          {/* Media */}
           <div className="flex-1 flex items-center justify-center px-4 overflow-hidden">
-            <img
-              src={photos[viewerIndex].url}
-              alt=""
-              className="max-w-full max-h-full object-contain rounded-lg"
-            />
+            {photos[viewerIndex].type === 'video' ? (
+              <video
+                key={photos[viewerIndex].id}
+                src={photos[viewerIndex].url}
+                controls
+                autoPlay
+                playsInline
+                className="max-w-full max-h-full rounded-lg"
+              />
+            ) : (
+              <img
+                src={photos[viewerIndex].url}
+                alt=""
+                className="max-w-full max-h-full object-contain rounded-lg"
+              />
+            )}
           </div>
 
           {/* Dot indicators */}

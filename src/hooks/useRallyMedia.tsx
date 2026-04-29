@@ -52,7 +52,7 @@ export function useFeaturedMedia(eventId: string | undefined) {
   });
 }
 
-/** Only gallery (non-featured) photos */
+/** Gallery (non-featured) media — photos AND videos */
 export function useGalleryPhotos(eventId: string | undefined) {
   return useQuery({
     queryKey: ['rally-media-gallery', eventId],
@@ -63,7 +63,6 @@ export function useGalleryPhotos(eventId: string | undefined) {
         .select('*')
         .eq('event_id', eventId)
         .eq('is_featured', false)
-        .eq('type', 'photo')
         .order('created_at', { ascending: false });
       if (error) throw error;
       return (data || []) as unknown as RallyMedia[];
