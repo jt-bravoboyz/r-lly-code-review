@@ -1,78 +1,65 @@
-# Invite Dialog "Hamilton" Rework
+# Bulk Invite Upgrade — On R@lly Tab
 
-Fully rework `src/components/events/InviteToEventDialog.tsx` into a cleaner, on-brand 3-tab invite flow with the "Hamilton" refinements: a premium share-link header, segmented-control pill tabs, grouped friend list, SMS preview, soft "Invited" transitions, and an Influence footer badge.
+Layer multi-select bulk-invite onto the existing Hamilton invite dialog. Header card, SMS preview, Squads tab, and Text tab stay exactly as-is. Only the **On R@lly** tab gets richer behavior.
 
-## Final Layout
+## What Changes
 
 ```text
 ┌────────────────────────────────────────────┐
-│  Invite to R@lly                           │
+│  [Premium Header Card — unchanged]         │
 ├────────────────────────────────────────────┤
-│  ╭────────────────────────────────╮        │  ← premium tinted header
-│  │ INVITE CODE  AB12X4   [Copy✓][Share] │  │     (gradient + blur)
-│  ╰────────────────────────────────╯        │
-├────────────────────────────────────────────┤
-│  ⟪ On R@lly │ Squads │ Text ⟫  ← pill tabs│
+│  ⟪ On R@lly │ Squads │ Text ⟫              │
 ├────────────────────────────────────────────┤
 │  Search friends…                           │
-│  ─ Suggested              3                │  ← tabular-nums counts
-│    [avatar] Jamie     [Invite]             │
-│  ─ All Friends           14                │
-│    [avatar] Casey     [✓ Invited]          │
+│  ─ Suggested        3   [Select all]       │  ← new shortcut
+│    ◉ [avatar] Jamie       Squad Mate       │  ← tap row toggles select
+│    ○ [avatar] Drew        Your Referral    │
+│  ─ All Friends     14                      │
+│    ◉ [avatar] Casey       R@lly Friend     │
+│  …                                         │
 ├────────────────────────────────────────────┤
-│  History  ●                  ✦ Influence   │  ← top-tier badge
+│  [ ✦ Invite Selected (4) ]  ← floating CTA │
+├────────────────────────────────────────────┤
+│  History  ●                  ✦ Influence   │
 └────────────────────────────────────────────┘
 ```
 
-## Refinement-by-Refinement
+## Behavior
 
-### Premium Header Card
-- Replaces the old "Link" tab. Gradient `from-primary/[0.08] via-primary/[0.04] to-transparent`, `backdrop-blur-xl`, primary-tinted border.
-- Shows compact Invite Code (tabular-nums) + side-by-side **Copy** / **Share** buttons.
-- **Copy** button transitions to filled primary background with a check icon for ~1.8s on success (immediate visual feedback).
+### Multi-select rows
+- Each friend row becomes tap-to-toggle. A circular checkbox indicator on the **left** (empty ring → filled primary disc with `Check`) replaces the per-row Invite button.
+- Selected row gets a subtle `bg-primary/[0.06] ring-1 ring-primary/30` treatment + `transition-all duration-200`.
+- Already-attending/invited friends stay filtered out (existing logic). Friends already invited *this session* (in `invitedFriendIds`) render disabled with a muted "Invited" pill instead of the checkbox.
 
-### Segmented Pill Tabs
-- `TabsList` uses `rounded-full bg-muted/70 p-1`; each `TabsTrigger` is `rounded-full` and lifts to `bg-background shadow-sm` when active — matching the Admin Dashboard pill aesthetic.
-- 3 tabs only: **On R@lly**, **Squads**, **Text**.
+### Select All shortcut
+- A small ghost "Select all" / "Clear" button sits next to the **Suggested** count.
+- Toggles the entire Suggested group in/out of `selectedFriendIds` in one tap.
+- Hidden when Suggested is empty.
 
-### On R@lly Tab (default)
-- Search input at top.
-- Pulls from `useRallyFriends()`.
-- Two grouped sections, each with a small uppercase label + tabular-nums count:
-  - **Suggested** — friends in `useInviteHistory()` recent 8 OR flagged `isReferral` (most likely re-invites).
-  - **All Friends** — everyone else.
-- Friend rows: avatar + name + small subtitle ("R@lly Friend" / "Squad Mate") + Invite button.
-- Filtered by search query; excludes already-invited/attending via the existing `alreadyInvitedOrAttending` Set.
+### Floating bulk action button
+- Anchored at the bottom of the On R@lly tab (above the dialog footer), inside the tab content so it doesn't disrupt other tabs.
+- Visible only when `selectedFriendIds.size > 0`. Slides in with `animate-fade-in`.
+- Label: `Invite Selected ({n})` with `tabular-nums` and a `Send` icon.
+- States: `Invite Selected (4) → Sending… → ✓ Invited 4 friends` (single transition, no layout shift). Uses primary fill, full width, `rounded-full`.
 
-### Squads Tab
-- Same data + flow as today, restyled to `rounded-xl` cards with `transition-all duration-300` and `tabular-nums` counts.
+### Bulk transition / single success animation
+- On click: `setIsBulkInviting(true)` → one `createInvites.mutateAsync({ profileIds: [...selected] })` call → record each in invite history.
+- On success: trigger a `bulkBurst` flag for ~1.4s that:
+  - Adds `animate-scale-in` + `Sparkles` icon flash to the bulk button.
+  - Adds `animate-fade-out` to all newly-invited rows simultaneously, then they collapse out (single visual "whoosh") as those IDs move into `invitedFriendIds` and the filter removes them.
+- Selection is cleared. Toast: `Invited {n} friends to the R@lly`.
 
-### Text Invite Tab
-- **SMS Preview box** — muted rounded card showing the exact pre-filled SMS body (`"You're in. {eventTitle} — Tap to join the crew: {shareLink}"`).
-- `PhoneInviteInput` for typing a number directly.
-- Compact `ContactSyncButton` card to pull the phone book.
-- "Recently Texted" list (last 5 from `phoneInvites`) for at-a-glance audit.
-
-### Soft "Invited" State Transition
-- Buttons use `transition-all duration-300`.
-- Local `invitedFriendIds` / `invitingFriendId` state drives an instant swap: `Send → Sending… → ✓ Invited` (ghost button, primary text). No layout shift.
-- Squad cards likewise fade their action button into a `Check`-prefixed badge.
-
-### Influence Footer Badge
-- Footer row holds the **Invite History** ghost button (replaces the dead History tab → routes to `/invite-history`) on the left.
-- On the right, when `useInviteHistory().length >= 10`, a small outlined `✦ Influence` badge appears in primary tint with a `Crown` icon.
+### Economy preserved
+- The premium header card and SMS preview render exactly as today — no resizing, no extra chrome.
+- The On R@lly scroll list height shrinks by ~52px to make room for the floating CTA only when something is selected (uses conditional `pb-14` instead of restructuring layout).
+- Single-row "Invite" button is removed from the friends tab in favor of the cleaner select-and-bulk pattern. Squads tab keeps its per-card Invite button.
 
 ## File To Edit
 
-- `src/components/events/InviteToEventDialog.tsx` — full rewrite of the component body. No prop signature changes, so all call sites continue to work untouched.
+- `src/components/events/InviteToEventDialog.tsx` — additive: new state (`selectedFriendIds`, `isBulkInviting`, `bulkBurst`), new `toggleSelect`, `selectAllSuggested`, `handleBulkInvite` handlers, refactored `renderFriendRow`, new floating CTA inside the friends `TabsContent`. No prop changes, no new files, no DB changes.
 
-## Data / Hook Sources (all already exist)
+## Implementation Notes
 
-- `useRallyFriends()` — On R@lly list.
-- `useInviteHistory()` — Suggested grouping + Influence badge threshold.
-- `useAllMySquads()` — Squads tab.
-- `useEventInvites()` / `useEventPhoneInvites()` — already-invited filtering.
-- `useCreateEventInvites()` / `useCreatePhoneInvite()` / `openSMSInvite()` — sending.
-- `useRecordInvite()` — history tracking.
-
-No DB / RLS / migration changes. No new hooks. No prop changes.
+- Use existing `createInvites.mutateAsync({ eventId, profileIds, eventTitle })` — it already accepts an array, so bulk is a single network call.
+- `recordInvite` runs in a `Promise.all` for the selected set after the bulk mutate resolves.
+- Errors that include `already been invited` are merged into `invitedFriendIds` silently so the UI stays consistent.

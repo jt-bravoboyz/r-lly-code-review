@@ -58,6 +58,10 @@ export function InviteToEventDialog({
   const [invitedFriendIds, setInvitedFriendIds] = useState<Set<string>>(new Set());
   const [invitingSquads, setInvitingSquads] = useState<Set<string>>(new Set());
   const [invitedSquads, setInvitedSquads] = useState<Set<string>>(new Set());
+  const [selectedFriendIds, setSelectedFriendIds] = useState<Set<string>>(new Set());
+  const [isBulkInviting, setIsBulkInviting] = useState(false);
+  const [bulkBurst, setBulkBurst] = useState(false);
+  const [fadingOutIds, setFadingOutIds] = useState<Set<string>>(new Set());
 
   const navigate = useNavigate();
   const { profile } = useAuth();
