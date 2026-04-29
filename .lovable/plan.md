@@ -1,47 +1,70 @@
-## Hamilton Pass — Completion Pass
+# Add Video Upload to R@lly Photo Section
 
-The bulk of the plan landed in the previous loop, but four loose ends remain. This pass closes them so the build is green and every section of the original plan is honored.
+## Context
 
-### 1. Fix the build (critical)
+The R@lly media system already supports videos at the schema/storage layer:
+- `rally_media.type` accepts `'photo' | 'video'`
+- The `rally-media` storage bucket is public with no MIME restriction
+- `useUploadRallyMedia` already accepts `type: 'video'`
+- Hero carousel already renders videos (featured)
 
-`src/pages/AdminDashboard.tsx` still imports `KFactorCard` from a file that has been deleted, breaking the whole admin route.
+The only gap: the **gallery feed inside an event** (`EventPhotoFeed.tsx`) is hard-coded to images only — `useGalleryPhotos` filters `type='photo'`, the file picker accepts only image MIMEs, and the grid/viewer use `<img>` exclusively.
 
-- Remove the `KFactorCard` import line at the top of `AdminDashboard.tsx`.
-- (No JSX usage remains — only the dangling import.)
+**New caps per event (raised from prior 10+1 rule):**
+- **50 photos**
+- **5 videos**
+- **500MB per video** (unchanged)
+- **10MB per photo** (unchanged)
 
-### 2. Wire `livePaidNowCount` through to the Commercial hero
+Caps are enforced client-side, consistent with the existing photo-cap pattern.
 
-`useAdminData` already computes `livePaidNowCount`, and `CommercialDashboard` already accepts the prop, but `AdminDashboard.renderCommercial` doesn't pass it. The pulsing "Live Now" chip on Revenue Potential never lights up.
+## Changes
 
-- In the `<CommercialDashboard …/>` call inside `renderCommercial`, add `livePaidNowCount={data.summary.livePaidNowCount ?? 0}` (and `revenuePotential` / `avgTicket` if present on `data.commercial` for full ROI accuracy — falls back to derived if absent).
+### 1. `src/hooks/useRallyMedia.tsx`
+- Repurpose `useGalleryPhotos` → return **all non-featured media** (photos + videos). Remove the `.eq('type', 'photo')` filter.
+- Sort by `created_at desc` so newest leads.
 
-### 3. Finish the GrowthMetrics echo removal
+### 2. `src/components/events/EventPhotoFeed.tsx`
 
-Plan §4 says: remove `GrowthMetrics.topHosts` block (echoes `GrowthNarrative.topViralHosts`). The render block is gone, but the prop/interface still expects `topHosts`, which keeps the data flowing and tempts re-introduction.
+**File picker `accept`** (both `<input>` instances):
+`image/jpeg,image/png,image/webp,image/heic,video/mp4,video/quicktime,video/webm`
 
-- In `src/components/admin/GrowthMetrics.tsx`, drop `topHosts` from the `growth` prop interface. The component is now strictly a Crew Recurrence card — anything else is the narrative's job.
-- Confirm no callers pass `topHosts` and the field on `data.growth` from the hook can stay (other consumers may use it; only the prop surface narrows).
+**Constants at top of file:**
+```ts
+const MAX_PHOTOS_PER_EVENT = 50;
+const MAX_VIDEOS_PER_EVENT = 5;
+const MAX_PHOTO_SIZE = 10 * 1024 * 1024;   // 10MB
+const MAX_VIDEO_SIZE = 500 * 1024 * 1024;  // 500MB
+```
 
-### 4. RetentionCohorts — sparkline overlays
+**Upload handler `handleUpload` — enforce both caps:**
+- Compute `existingPhotos = photos.filter(p => p.type === 'photo').length` and `existingVideos = photos.filter(p => p.type === 'video').length`.
+- Walk selected files in order, tracking `photosQueued` and `videosQueued`.
+- For each file:
+  - Detect type via `file.type.startsWith('video/')`.
+  - **Video path**: if `existingVideos + videosQueued >= 5` → toast `"Max 5 videos per R@lly. Delete one to add more."` and skip. Else size-check (500MB), increment `videosQueued`, upload with `type: 'video'`.
+  - **Photo path**: if `existingPhotos + photosQueued >= 50` → toast `"Max 50 photos per R@lly. Delete one to add more."` and skip. Else size-check (10MB), increment `photosQueued`, upload with `type: 'photo'`.
+- Type-aware success toast: `"Video added 🎥"` / `"3 photos added 📸"` / mixed `"5 added"`.
 
-Plan §3 calls for 4-week trend sparklines as a row background on `RetentionCohorts`. Currently the file has no SVG/sparkline at all.
+**Grid tile**: if item is a video, render `<video src={url} muted playsInline preload="metadata" />` plus a small play-icon overlay badge. Keep aspect-square crop.
 
-- Extend `src/components/admin/RetentionCohorts.tsx`: for each cohort row, render a faint absolute-positioned SVG polyline behind the bars built from that row's `returnRates` (filter nulls, normalize 0–100%). Use `stroke="hsl(var(--primary))"`, `stroke-opacity={0.18}`, `fill="none"`, `stroke-width={1.5}`. Position it `inset-0` inside the row container with `pointer-events-none` so the existing bars stay interactive and on top.
-- No new file. No prop changes — uses existing `returnRates` array.
+**Fullscreen viewer**: if current item is a video, render `<video controls autoPlay playsInline className="max-w-full max-h-full">` instead of `<img>`. Download/delete controls remain.
 
-### 5. Quick verification
+**Empty state CTA**: "Add Photo" → "Add Photo or Video".
 
-After the four edits:
-- `/admin` loads (build green).
-- Commercial → Revenue: pulsing green Live Now chip appears when any paid R@lly is currently live.
-- Partner → Hosts: only `GrowthNarrative` lists top hosts; `GrowthMetrics` shows just Crew Recurrence.
-- Partner → Retention: each cohort row shows a faint orange trend line behind its bars.
+**Batch select**: photos only — clicking a video tile in select mode falls through to opening the viewer. Bulk save of videos is out of scope.
 
-### Files
+### 3. No DB / storage / RLS changes
+Schema and bucket already support videos. Both caps enforced client-side, same pattern as the existing photo cap.
 
-**Modified:**
-- `src/pages/AdminDashboard.tsx` — remove dead import, pass `livePaidNowCount`.
-- `src/components/admin/GrowthMetrics.tsx` — narrow prop interface.
-- `src/components/admin/RetentionCohorts.tsx` — add per-row sparkline overlay.
+### 4. Update memory
+After ship, update `mem://features/rally-media-system` to reflect new caps (50 photos + 5 videos, 500MB/video).
 
-**No deletions, no new files.**
+## Out of Scope
+- Server-side cap enforcement (matches existing pattern).
+- Video thumbnail generation, compression, or transcoding.
+- Bulk camera-roll save of videos.
+
+## Files Touched
+- `src/hooks/useRallyMedia.tsx` (drop photo-only filter on gallery query)
+- `src/components/events/EventPhotoFeed.tsx` (mime accept, dual cap guard, video tile, video viewer, copy)
