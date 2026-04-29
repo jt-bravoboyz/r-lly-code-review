@@ -362,6 +362,19 @@ export function EventPhotoFeed({ eventId, isHost, eventStatus, eventUpdatedAt }:
 
   return (
     <div className="space-y-3">
+      {/* 24h After-Party Upload banner / Bundle locked state */}
+      {eventStatus === 'completed' && (
+        uploadWindow.canUpload && uploadWindow.msLeft != null ? (
+          <div className="rounded-xl border border-primary/30 bg-gradient-to-r from-primary/10 to-primary/5 px-3 py-2.5 text-xs font-montserrat">
+            🎬 <span className="font-bold">The night's not over.</span> Drop your shots & clips for the final cut — <span className="font-semibold text-primary">{formatCountdown(uploadWindow.msLeft)} left</span>.
+          </div>
+        ) : (
+          <div className="rounded-xl border border-border/40 bg-muted/40 px-3 py-2.5 text-xs font-montserrat text-muted-foreground text-center">
+            🔒 Bundle locked — the 24h after-party upload window has closed.
+          </div>
+        )
+      )}
+
       {/* Header — switches to Select toolbar when in select mode */}
       {selectMode ? (
         <div className="flex items-center justify-between gap-2">
@@ -391,16 +404,18 @@ export function EventPhotoFeed({ eventId, isHost, eventStatus, eventUpdatedAt }:
                 Select
               </Button>
             )}
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1.5"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploading}
-            >
-              {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ImagePlus className="h-3.5 w-3.5" />}
-              {uploading ? 'Uploading…' : 'Add'}
-            </Button>
+            {uploadWindow.canUpload && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+              >
+                {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ImagePlus className="h-3.5 w-3.5" />}
+                {uploading ? 'Uploading…' : 'Add'}
+              </Button>
+            )}
           </div>
         </div>
       )}
