@@ -167,26 +167,43 @@ export function RecapTour({
         {currentStep === 'gallery' && galleryPhotos.length > 0 && (
           <div className="space-y-4">
             <div className="grid grid-cols-3 gap-2">
-              {galleryPhotos.slice(0, 6).map((photo, i) => (
+              {galleryPhotos.slice(0, 6).map((media, i) => (
                 <div
-                  key={photo.id}
-                  className="aspect-square rounded-xl overflow-hidden ring-1 ring-white/10 bg-gradient-to-br from-primary/40 to-primary/10"
+                  key={media.id}
+                  className="rounded-xl overflow-hidden ring-1 ring-white/10 animate-fade-in"
                   style={{ animationDelay: `${i * 100}ms` }}
                 >
-                  <img
-                    src={photo.url}
-                    alt=""
-                    className="w-full h-full object-cover animate-fade-in"
-                    onError={(e) => {
-                      (e.currentTarget as HTMLImageElement).style.display = 'none';
-                    }}
-                  />
+                  <RecapMediaTile media={media} />
                 </div>
               ))}
             </div>
             <p className="text-center text-white/60 text-sm font-montserrat">
-              📸 {stats.photoCount} moments captured
+              📸 {stats.photoCount} photos
+              {stats.videoCount ? ` · 🎞️ ${stats.videoCount} clip${stats.videoCount === 1 ? '' : 's'}` : ''}
             </p>
+          </div>
+        )}
+
+        {/* Step 2.5: Hero Video */}
+        {currentStep === 'heroVideo' && heroVideo && (
+          <div className="space-y-4">
+            <div className="relative">
+              <video
+                src={heroVideo.url}
+                poster={heroVideo.thumbnail_url || undefined}
+                autoPlay
+                muted
+                loop
+                playsInline
+                className="w-full aspect-[4/5] object-cover rounded-2xl ring-2 ring-primary/40 shadow-2xl bg-black"
+              />
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+              <div className="absolute bottom-4 left-4 right-4">
+                <p className="text-primary text-xs uppercase tracking-[0.2em] font-montserrat font-bold">
+                  🎞️ Final Frame — The reel just dropped
+                </p>
+              </div>
+            </div>
           </div>
         )}
 
@@ -194,12 +211,24 @@ export function RecapTour({
         {currentStep === 'bestPhoto' && heroPhoto && (
           <div className="space-y-4">
             <div className="relative">
-              <img
-                src={heroPhoto.url}
-                alt="Shot of the Night"
-                className="w-full aspect-[4/5] object-cover rounded-2xl ring-2 ring-primary/40 shadow-2xl"
-              />
-              <div className="absolute inset-0 rounded-2xl bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+              {heroPhoto.type === 'video' ? (
+                <video
+                  src={heroPhoto.url}
+                  poster={heroPhoto.thumbnail_url || undefined}
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  className="w-full aspect-[4/5] object-cover rounded-2xl ring-2 ring-primary/40 shadow-2xl bg-black"
+                />
+              ) : (
+                <img
+                  src={heroPhoto.url}
+                  alt="Shot of the Night"
+                  className="w-full aspect-[4/5] object-cover rounded-2xl ring-2 ring-primary/40 shadow-2xl"
+                />
+              )}
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
               <div className="absolute bottom-4 left-4 right-4">
                 <p className="text-primary text-xs uppercase tracking-[0.2em] font-montserrat font-bold">
                   ⭐ Shot of the Night
