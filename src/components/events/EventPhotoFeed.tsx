@@ -346,27 +346,49 @@ export function EventPhotoFeed({ eventId, isHost }: EventPhotoFeedProps) {
         {photos.map((photo, idx) => {
           const uploaderProfile = profiles[photo.created_by];
           const isSelected = selectedIds.has(photo.id);
+          const isVideo = photo.type === 'video';
           return (
             <div
               key={photo.id}
-              className="relative aspect-square cursor-pointer overflow-hidden group"
+              className="relative aspect-square cursor-pointer overflow-hidden group bg-muted"
               onClick={() => {
-                if (selectMode) toggleSelected(photo.id);
+                // Videos always open the viewer (not selectable for batch save)
+                if (selectMode && !isVideo) toggleSelected(photo.id);
                 else setViewerIndex(idx);
               }}
               style={{ animationDelay: `${idx * 50}ms` }}
             >
-              <img
-                src={photo.url}
-                alt=""
-                className={`w-full h-full object-cover transition-all duration-300 ${
-                  selectMode && isSelected ? 'scale-95 brightness-75' : 'group-hover:scale-105 group-active:scale-95'
-                }`}
-                loading="lazy"
-              />
+              {isVideo ? (
+                <>
+                  <video
+                    src={photo.url}
+                    muted
+                    playsInline
+                    preload="metadata"
+                    className={`w-full h-full object-cover transition-all duration-300 ${
+                      selectMode && isSelected ? 'scale-95 brightness-75' : 'group-hover:scale-105 group-active:scale-95'
+                    }`}
+                  />
+                  {/* Play badge */}
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div className="h-9 w-9 rounded-full bg-black/55 backdrop-blur-sm flex items-center justify-center">
+                      <Play className="h-4 w-4 text-white fill-white ml-0.5" />
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <img
+                  src={photo.url}
+                  alt=""
+                  className={`w-full h-full object-cover transition-all duration-300 ${
+                    selectMode && isSelected ? 'scale-95 brightness-75' : 'group-hover:scale-105 group-active:scale-95'
+                  }`}
+                  loading="lazy"
+                />
+              )}
 
-              {/* Selection checkbox (visible in select mode) */}
-              {selectMode && (
+              {/* Selection checkbox (visible in select mode, photos only) */}
+              {selectMode && !isVideo && (
                 <div className="absolute top-1.5 right-1.5 z-10">
                   <div
                     className={`h-6 w-6 rounded-full flex items-center justify-center border-2 transition-all ${
@@ -404,7 +426,7 @@ export function EventPhotoFeed({ eventId, isHost }: EventPhotoFeedProps) {
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/jpeg,image/png,image/webp,image/heic"
+        accept={ACCEPT_ATTR}
         multiple
         className="hidden"
         onChange={handleUpload}
