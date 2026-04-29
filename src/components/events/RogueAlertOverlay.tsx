@@ -15,6 +15,8 @@ interface RogueAlertOverlayProps {
   reactionCounts: Record<string, number>;
   onReact: (emoji: string) => void;
   onDismiss: () => void;
+  /** When >1, indicates more rogue alerts are stacked behind this one. */
+  queueCount?: number;
 }
 
 const REACTION_EMOJIS = ['🤮', '😍', '🍆'];
