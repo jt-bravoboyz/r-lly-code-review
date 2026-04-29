@@ -350,6 +350,7 @@ export default function SquadDetail() {
     <div className="min-h-[100dvh] bg-gradient-to-b from-background to-muted pb-24">
       {/* Header */}
       <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-md border-b">
+        <div className="h-safe-top" />
         <div className="flex items-center gap-3 p-4">
           <Button variant="ghost" size="icon" onClick={() => navigate('/squads')}>
             <ArrowLeft className="h-5 w-5" />

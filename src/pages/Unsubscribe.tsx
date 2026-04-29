@@ -74,7 +74,7 @@ export default function Unsubscribe() {
   };
 
   return (
-    <main className="min-h-[100dvh] flex items-center justify-center bg-background p-6">
+    <main className="min-h-[100dvh] flex items-center justify-center bg-background p-6 safe-top safe-bottom safe-x">
       <Card className="w-full max-w-md p-8 text-center space-y-6">
         <div className="flex justify-center">
           <img src="/logo.svg" alt="R@lly" className="w-16 h-16 rounded-full" />

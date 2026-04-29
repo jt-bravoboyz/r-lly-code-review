@@ -100,6 +100,7 @@ export default function AdminDashboard() {
     >
       {/* Glass header */}
       <header className="border-b border-border/40 bg-card/70 backdrop-blur-xl sticky top-0 z-50">
+        <div className="h-safe-top" />
         <div className="container flex items-center gap-3 py-3 sm:py-4">
           <Shield className="h-5 w-5 sm:h-6 sm:w-6 text-primary shrink-0" />
           <h1 className="text-base sm:text-xl font-bold font-montserrat tracking-tight">R@lly Admin</h1>
