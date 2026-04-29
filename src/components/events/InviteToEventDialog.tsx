@@ -54,10 +54,13 @@ export function InviteToEventDialog({
   const [copiedLink, setCopiedLink] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [invitingFriendId, setInvitingFriendId] = useState<string | null>(null);
   const [invitedFriendIds, setInvitedFriendIds] = useState<Set<string>>(new Set());
   const [invitingSquads, setInvitingSquads] = useState<Set<string>>(new Set());
   const [invitedSquads, setInvitedSquads] = useState<Set<string>>(new Set());
+  const [selectedFriendIds, setSelectedFriendIds] = useState<Set<string>>(new Set());
+  const [isBulkInviting, setIsBulkInviting] = useState(false);
+  const [bulkBurst, setBulkBurst] = useState(false);
+  const [fadingOutIds, setFadingOutIds] = useState<Set<string>>(new Set());
 
   const navigate = useNavigate();
   const { profile } = useAuth();
@@ -147,32 +150,6 @@ export function InviteToEventDialog({
     }
   };
 
-  const handleInviteFriend = async (friend: RallyFriend) => {
-    setInvitingFriendId(friend.id);
-    try {
-      await createInvites.mutateAsync({
-        eventId,
-        profileIds: [friend.id],
-        eventTitle,
-      });
-      await recordInvite.mutateAsync({
-        profileId: friend.id,
-        name: friend.display_name || undefined,
-      });
-      setInvitedFriendIds((prev) => new Set([...prev, friend.id]));
-      toast.success(`Invited ${friend.display_name || 'friend'}!`);
-    } catch (err: any) {
-      if (err.message?.includes('already been invited')) {
-        setInvitedFriendIds((prev) => new Set([...prev, friend.id]));
-        toast.info('Already invited');
-      } else {
-        toast.error(err.message || 'Failed to invite');
-      }
-    } finally {
-      setInvitingFriendId(null);
-    }
-  };
-
   const handleInviteSquad = async (squad: Squad) => {
     const profilesToInvite: string[] = [];
     if (
@@ -258,55 +235,141 @@ export function InviteToEventDialog({
     }
   };
 
+  const toggleSelectFriend = (id: string) => {
+    if (invitedFriendIds.has(id) || isBulkInviting) return;
+    setSelectedFriendIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const allSuggestedSelected =
+    suggestedFriends.length > 0 &&
+    suggestedFriends.every((f) => selectedFriendIds.has(f.id) || invitedFriendIds.has(f.id));
+
+  const toggleSelectAllSuggested = () => {
+    setSelectedFriendIds((prev) => {
+      const next = new Set(prev);
+      if (allSuggestedSelected) {
+        suggestedFriends.forEach((f) => next.delete(f.id));
+      } else {
+        suggestedFriends.forEach((f) => {
+          if (!invitedFriendIds.has(f.id)) next.add(f.id);
+        });
+      }
+      return next;
+    });
+  };
+
+  const handleBulkInvite = async () => {
+    const ids = Array.from(selectedFriendIds);
+    if (ids.length === 0) return;
+    setIsBulkInviting(true);
+    setFadingOutIds(new Set(ids));
+    try {
+      await createInvites.mutateAsync({ eventId, profileIds: ids, eventTitle });
+      const friendMap = new Map((friends || []).map((f) => [f.id, f]));
+      await Promise.all(
+        ids.map((id) =>
+          recordInvite.mutateAsync({
+            profileId: id,
+            name: friendMap.get(id)?.display_name || undefined,
+          })
+        )
+      );
+      setBulkBurst(true);
+      setTimeout(() => {
+        setInvitedFriendIds((prev) => {
+          const next = new Set(prev);
+          ids.forEach((id) => next.add(id));
+          return next;
+        });
+        setSelectedFriendIds(new Set());
+        setFadingOutIds(new Set());
+        setBulkBurst(false);
+      }, 350);
+      toast.success(`Invited ${ids.length} friend${ids.length === 1 ? '' : 's'} to the R@lly`);
+    } catch (err: any) {
+      if (err.message?.includes('already been invited')) {
+        setInvitedFriendIds((prev) => {
+          const next = new Set(prev);
+          ids.forEach((id) => next.add(id));
+          return next;
+        });
+        setSelectedFriendIds(new Set());
+        setFadingOutIds(new Set());
+        toast.info('Some were already invited');
+      } else {
+        setFadingOutIds(new Set());
+        toast.error(err.message || 'Failed to send invites');
+      }
+    } finally {
+      setIsBulkInviting(false);
+    }
+  };
+
   const renderFriendRow = (f: RallyFriend) => {
     const isInvited = invitedFriendIds.has(f.id);
-    const isSending = invitingFriendId === f.id;
+    const isSelected = selectedFriendIds.has(f.id);
+    const isFading = fadingOutIds.has(f.id);
     return (
-      <div
+      <button
         key={f.id}
-        className="flex items-center justify-between p-3 rounded-xl border bg-card hover:bg-accent/40 transition-all duration-300"
+        type="button"
+        onClick={() => toggleSelectFriend(f.id)}
+        disabled={isInvited || isBulkInviting}
+        className={cn(
+          'w-full flex items-center gap-3 p-3 rounded-xl border bg-card text-left transition-all duration-200',
+          isSelected && 'bg-primary/[0.06] ring-1 ring-primary/30 border-primary/30',
+          !isSelected && !isInvited && 'hover:bg-accent/40',
+          isInvited && 'opacity-60',
+          isFading && 'animate-fade-out'
+        )}
       >
-        <div className="flex items-center gap-3 min-w-0">
-          <Avatar className="h-10 w-10 shrink-0">
-            <AvatarImage src={f.avatar_url || undefined} />
-            <AvatarFallback className="bg-primary/15 text-primary text-sm">
-              {(f.display_name || '?').charAt(0).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-          <div className="min-w-0">
-            <p className="font-medium text-sm truncate">
-              {f.display_name || 'R@lly Friend'}
-            </p>
-            <p className="text-xs text-muted-foreground truncate">
-              {f.isSquadMate ? 'Squad Mate' : f.isReferral ? 'Your Referral' : 'R@lly Friend'}
-            </p>
-          </div>
-        </div>
-        <Button
-          size="sm"
-          variant={isInvited ? 'ghost' : 'outline'}
-          onClick={() => !isInvited && handleInviteFriend(f)}
-          disabled={isSending || isInvited}
+        {/* Checkbox indicator */}
+        <div
           className={cn(
-            'gap-1 transition-all duration-300 shrink-0',
-            isInvited && 'text-primary hover:text-primary'
+            'h-5 w-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all duration-200',
+            isSelected
+              ? 'bg-primary border-primary'
+              : isInvited
+              ? 'bg-muted border-muted-foreground/30'
+              : 'border-muted-foreground/40'
           )}
         >
-          {isInvited ? (
-            <>
-              <Check className="h-3 w-3" />
-              Invited
-            </>
-          ) : isSending ? (
-            'Sending…'
-          ) : (
-            <>
-              <Send className="h-3 w-3" />
-              Invite
-            </>
+          {(isSelected || isInvited) && (
+            <Check
+              className={cn(
+                'h-3 w-3',
+                isSelected ? 'text-primary-foreground' : 'text-muted-foreground'
+              )}
+            />
           )}
-        </Button>
-      </div>
+        </div>
+
+        <Avatar className="h-10 w-10 shrink-0">
+          <AvatarImage src={f.avatar_url || undefined} />
+          <AvatarFallback className="bg-primary/15 text-primary text-sm">
+            {(f.display_name || '?').charAt(0).toUpperCase()}
+          </AvatarFallback>
+        </Avatar>
+        <div className="min-w-0 flex-1">
+          <p className="font-medium text-sm truncate">
+            {f.display_name || 'R@lly Friend'}
+          </p>
+          <p className="text-xs text-muted-foreground truncate">
+            {f.isSquadMate ? 'Squad Mate' : f.isReferral ? 'Your Referral' : 'R@lly Friend'}
+          </p>
+        </div>
+
+        {isInvited && (
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground shrink-0">
+            Invited
+          </span>
+        )}
+      </button>
     );
   };
 
@@ -401,48 +464,90 @@ export function InviteToEventDialog({
               />
             </div>
 
-            <ScrollArea className="h-[280px] pr-3">
-              {visibleFriends.length === 0 ? (
-                <div className="text-center py-10 space-y-2">
-                  <Sparkles className="h-10 w-10 mx-auto text-muted-foreground/50" />
-                  <p className="font-medium text-sm">
-                    {searchQuery ? 'No friends match' : 'No friends to invite'}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Use Text or Share to bring more people in
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {suggestedFriends.length > 0 && (
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between px-1">
-                        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                          Suggested
-                        </p>
-                        <span className="text-[10px] font-semibold tabular-nums text-muted-foreground">
-                          {suggestedFriends.length}
-                        </span>
+            <div className="relative flex-1 min-h-0">
+              <ScrollArea className={cn('h-[280px] pr-3', selectedFriendIds.size > 0 && 'pb-14')}>
+                {visibleFriends.length === 0 ? (
+                  <div className="text-center py-10 space-y-2">
+                    <Sparkles className="h-10 w-10 mx-auto text-muted-foreground/50" />
+                    <p className="font-medium text-sm">
+                      {searchQuery ? 'No friends match' : 'No friends to invite'}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Use Text or Share to bring more people in
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {suggestedFriends.length > 0 && (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between px-1">
+                          <div className="flex items-center gap-2">
+                            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                              Suggested
+                            </p>
+                            <span className="text-[10px] font-semibold tabular-nums text-muted-foreground">
+                              {suggestedFriends.length}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={toggleSelectAllSuggested}
+                            disabled={isBulkInviting}
+                            className="text-[10px] font-semibold uppercase tracking-wider text-primary hover:text-primary/80 transition-colors"
+                          >
+                            {allSuggestedSelected ? 'Clear' : 'Select all'}
+                          </button>
+                        </div>
+                        <div className="space-y-2">{suggestedFriends.map(renderFriendRow)}</div>
                       </div>
-                      <div className="space-y-2">{suggestedFriends.map(renderFriendRow)}</div>
-                    </div>
-                  )}
-                  {otherFriends.length > 0 && (
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between px-1">
-                        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                          All Friends
-                        </p>
-                        <span className="text-[10px] font-semibold tabular-nums text-muted-foreground">
-                          {otherFriends.length}
-                        </span>
+                    )}
+                    {otherFriends.length > 0 && (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between px-1">
+                          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                            All Friends
+                          </p>
+                          <span className="text-[10px] font-semibold tabular-nums text-muted-foreground">
+                            {otherFriends.length}
+                          </span>
+                        </div>
+                        <div className="space-y-2">{otherFriends.map(renderFriendRow)}</div>
                       </div>
-                      <div className="space-y-2">{otherFriends.map(renderFriendRow)}</div>
-                    </div>
-                  )}
+                    )}
+                  </div>
+                )}
+              </ScrollArea>
+
+              {/* Floating Bulk Action */}
+              {selectedFriendIds.size > 0 && (
+                <div className="absolute bottom-0 left-0 right-2 animate-fade-in">
+                  <div className="bg-gradient-to-t from-background via-background to-transparent pt-4 pb-1">
+                    <Button
+                      onClick={handleBulkInvite}
+                      disabled={isBulkInviting}
+                      className={cn(
+                        'w-full rounded-full gap-2 bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all duration-300',
+                        bulkBurst && 'animate-scale-in'
+                      )}
+                    >
+                      {bulkBurst ? (
+                        <>
+                          <Sparkles className="h-4 w-4" />
+                          Invited {selectedFriendIds.size} <span className="tabular-nums">friend{selectedFriendIds.size === 1 ? '' : 's'}</span>
+                        </>
+                      ) : isBulkInviting ? (
+                        <>Sending…</>
+                      ) : (
+                        <>
+                          <Send className="h-4 w-4" />
+                          Invite Selected (<span className="tabular-nums">{selectedFriendIds.size}</span>)
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 </div>
               )}
-            </ScrollArea>
+            </div>
           </TabsContent>
 
           {/* Squads */}
