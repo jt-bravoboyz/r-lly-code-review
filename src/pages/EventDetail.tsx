@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { getPublicName } from '@/lib/identity';
 import { PUBLIC_APP_URL } from '@/lib/appUrl';
-import { useParams, Navigate, Link, useNavigate } from 'react-router-dom';
+import { useParams, Navigate, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { getEventTypeLabel, getEventTypeEmoji, getEventTypeVibe } from '@/lib/eventTypes';
 import { trackEvent } from '@/lib/analytics';
@@ -66,6 +66,7 @@ import { RallyCompleteOverlay } from '@/components/events/RallyCompleteOverlay';
 import { EventPhotoFeed } from '@/components/events/EventPhotoFeed';
 import { GoingRogueButton } from '@/components/events/GoingRogueButton';
 import { RogueAlertOverlay } from '@/components/events/RogueAlertOverlay';
+import { RogueAutoPoll } from '@/components/events/RogueAutoPoll';
 import { useRogueAlerts } from '@/hooks/useRogueAlerts';
 import { RallyRecapScreen } from '@/components/events/RallyRecapScreen';
 import { useMyRallyHomePrompt } from '@/hooks/useRallyHomePrompt';
@@ -1313,10 +1314,11 @@ export default function EventDetail() {
         inviteCode={event.invite_code}
       />
 
-      {/* Rogue Alert Overlay - Realtime */}
+      {/* Rogue Alert Overlay - Realtime + queue */}
       {latestAlert && (
         <RogueAlertOverlay
           alert={latestAlert}
+          queueCount={pendingCount}
           reactionCounts={
             reactions
               .filter(r => r.rogue_alert_id === latestAlert.id)
