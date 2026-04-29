@@ -14,6 +14,7 @@ import { downloadPhoto, downloadPhotosBatch } from '@/lib/downloadMedia';
 import { ensurePhotoPermission } from './PhotoPermissionDialog';
 import { useHaptics } from '@/hooks/useHaptics';
 import { usePublicProfile } from '@/contexts/PublicProfileContext';
+import { extractVideoThumbnail } from '@/lib/videoThumbnail';
 
 const MAX_PHOTOS_PER_EVENT = 50;
 const MAX_VIDEOS_PER_EVENT = 5;
@@ -376,23 +377,34 @@ export function EventPhotoFeed({ eventId, isHost }: EventPhotoFeedProps) {
                 </div>
               ) : isVideo ? (
                 <>
-                  <video
-                    src={photo.url}
-                    muted
-                    playsInline
-                    preload="metadata"
-                    onError={() => {
-                      setErroredVideoIds((prev) => {
-                        if (prev.has(photo.id)) return prev;
-                        const next = new Set(prev);
-                        next.add(photo.id);
-                        return next;
-                      });
-                    }}
-                    className={`w-full h-full object-cover transition-all duration-300 ${
-                      selectMode && isSelected ? 'scale-95 brightness-75' : 'group-hover:scale-105 group-active:scale-95'
-                    }`}
-                  />
+                  {photo.thumbnail_url ? (
+                    <img
+                      src={photo.thumbnail_url}
+                      alt=""
+                      loading="lazy"
+                      className={`w-full h-full object-cover transition-all duration-300 ${
+                        selectMode && isSelected ? 'scale-95 brightness-75' : 'group-hover:scale-105 group-active:scale-95'
+                      }`}
+                    />
+                  ) : (
+                    <video
+                      src={photo.url}
+                      muted
+                      playsInline
+                      preload="metadata"
+                      onError={() => {
+                        setErroredVideoIds((prev) => {
+                          if (prev.has(photo.id)) return prev;
+                          const next = new Set(prev);
+                          next.add(photo.id);
+                          return next;
+                        });
+                      }}
+                      className={`w-full h-full object-cover transition-all duration-300 ${
+                        selectMode && isSelected ? 'scale-95 brightness-75' : 'group-hover:scale-105 group-active:scale-95'
+                      }`}
+                    />
+                  )}
                   {/* Play badge */}
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                     <div className="h-9 w-9 rounded-full bg-black/55 backdrop-blur-sm flex items-center justify-center">
