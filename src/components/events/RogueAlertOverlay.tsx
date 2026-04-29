@@ -62,6 +62,11 @@ export function RogueAlertOverlay({ alert, reactionCounts, onReact, onDismiss, q
           <p className="text-xs font-bold uppercase tracking-widest text-primary font-montserrat">
             🔥 ROGUE ALERT 🔥
           </p>
+          {queueCount > 1 && (
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-primary/70 font-montserrat">
+              {queueCount} stacked — catch up
+            </p>
+          )}
           <Avatar className="h-16 w-16 mx-auto ring-2 ring-primary/50">
             <AvatarImage src={alert.profile?.avatar_url || undefined} />
             <AvatarFallback className="text-xl">
