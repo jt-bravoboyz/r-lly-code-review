@@ -94,31 +94,49 @@ Deno.serve(async (req) => {
       });
     }
 
-    // 2) Download
-    const { data: blob, error: dlErr } = await admin.storage.from(BUCKET).download(oldPath);
-    if (dlErr || !blob) {
+    // 2 + 3) Stream-copy via storage REST: download body and pipe straight to upload
+    // This avoids buffering the full file in memory (which trips WORKER_RESOURCE_LIMIT for big videos).
+    const newPath = oldPath.replace(/\.[^.]+$/, '.mp4');
+
+    const dlRes = await fetch(
+      `${SUPABASE_URL}/storage/v1/object/${BUCKET}/${oldPath}`,
+      {
+        headers: {
+          Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+          apikey: SUPABASE_SERVICE_ROLE_KEY,
+        },
+      },
+    );
+    if (!dlRes.ok || !dlRes.body) {
       await admin.from('rally_media').update({ processing: false }).eq('id', media.id);
       return new Response(
-        JSON.stringify({ error: 'Download failed', detail: dlErr?.message }),
+        JSON.stringify({ error: 'Download failed', status: dlRes.status }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
     }
 
-    const bytes = new Uint8Array(await blob.arrayBuffer());
+    const upRes = await fetch(
+      `${SUPABASE_URL}/storage/v1/object/${BUCKET}/${newPath}`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+          apikey: SUPABASE_SERVICE_ROLE_KEY,
+          'Content-Type': 'video/mp4',
+          'x-upsert': 'true',
+          'Cache-Control': 'max-age=3600',
+        },
+        body: dlRes.body,
+        // @ts-ignore - Deno fetch supports duplex for streaming bodies
+        duplex: 'half',
+      },
+    );
 
-    // 3) Re-upload as .mp4 with video/mp4 content-type
-    const newPath = oldPath.replace(/\.[^.]+$/, '.mp4');
-    const { error: upErr } = await admin.storage
-      .from(BUCKET)
-      .upload(newPath, bytes, {
-        contentType: 'video/mp4',
-        upsert: true,
-      });
-
-    if (upErr) {
+    if (!upRes.ok) {
+      const detail = await upRes.text().catch(() => '');
       await admin.from('rally_media').update({ processing: false }).eq('id', media.id);
       return new Response(
-        JSON.stringify({ error: 'Upload failed', detail: upErr.message }),
+        JSON.stringify({ error: 'Upload failed', status: upRes.status, detail }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
     }
