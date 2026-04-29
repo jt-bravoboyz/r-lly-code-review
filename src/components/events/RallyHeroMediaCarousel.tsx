@@ -169,8 +169,20 @@ export function RallyHeroMediaCarousel({ eventId, canManage = false }: RallyHero
                   {item.type === 'video' ? (
                     <video
                       ref={(el) => {
-                        if (el) heroVideoRefs.current[item.id] = el;
-                        else delete heroVideoRefs.current[item.id];
+                        if (el) {
+                          heroVideoRefs.current[item.id] = el;
+                          el.muted = true;
+                          el.defaultMuted = true;
+                          el.setAttribute('muted', '');
+                          el.setAttribute('playsinline', '');
+                          el.setAttribute('webkit-playsinline', '');
+                          const tryPlay = () => { el.play().catch(() => {}); };
+                          tryPlay();
+                          el.addEventListener('loadedmetadata', tryPlay, { once: true });
+                          el.addEventListener('canplay', tryPlay, { once: true });
+                        } else {
+                          delete heroVideoRefs.current[item.id];
+                        }
                       }}
                       src={item.url}
                       poster={(item as any).thumbnail_url || undefined}
@@ -180,6 +192,8 @@ export function RallyHeroMediaCarousel({ eventId, canManage = false }: RallyHero
                       muted
                       playsInline
                       preload="auto"
+                      controls={false}
+                      disablePictureInPicture
                     />
                   ) : (
                     <img
