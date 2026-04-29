@@ -491,48 +491,90 @@ export function InviteToEventDialog({
               />
             </div>
 
-            <ScrollArea className="h-[280px] pr-3">
-              {visibleFriends.length === 0 ? (
-                <div className="text-center py-10 space-y-2">
-                  <Sparkles className="h-10 w-10 mx-auto text-muted-foreground/50" />
-                  <p className="font-medium text-sm">
-                    {searchQuery ? 'No friends match' : 'No friends to invite'}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Use Text or Share to bring more people in
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {suggestedFriends.length > 0 && (
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between px-1">
-                        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                          Suggested
-                        </p>
-                        <span className="text-[10px] font-semibold tabular-nums text-muted-foreground">
-                          {suggestedFriends.length}
-                        </span>
+            <div className="relative flex-1 min-h-0">
+              <ScrollArea className={cn('h-[280px] pr-3', selectedFriendIds.size > 0 && 'pb-14')}>
+                {visibleFriends.length === 0 ? (
+                  <div className="text-center py-10 space-y-2">
+                    <Sparkles className="h-10 w-10 mx-auto text-muted-foreground/50" />
+                    <p className="font-medium text-sm">
+                      {searchQuery ? 'No friends match' : 'No friends to invite'}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Use Text or Share to bring more people in
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {suggestedFriends.length > 0 && (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between px-1">
+                          <div className="flex items-center gap-2">
+                            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                              Suggested
+                            </p>
+                            <span className="text-[10px] font-semibold tabular-nums text-muted-foreground">
+                              {suggestedFriends.length}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={toggleSelectAllSuggested}
+                            disabled={isBulkInviting}
+                            className="text-[10px] font-semibold uppercase tracking-wider text-primary hover:text-primary/80 transition-colors"
+                          >
+                            {allSuggestedSelected ? 'Clear' : 'Select all'}
+                          </button>
+                        </div>
+                        <div className="space-y-2">{suggestedFriends.map(renderFriendRow)}</div>
                       </div>
-                      <div className="space-y-2">{suggestedFriends.map(renderFriendRow)}</div>
-                    </div>
-                  )}
-                  {otherFriends.length > 0 && (
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between px-1">
-                        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                          All Friends
-                        </p>
-                        <span className="text-[10px] font-semibold tabular-nums text-muted-foreground">
-                          {otherFriends.length}
-                        </span>
+                    )}
+                    {otherFriends.length > 0 && (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between px-1">
+                          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                            All Friends
+                          </p>
+                          <span className="text-[10px] font-semibold tabular-nums text-muted-foreground">
+                            {otherFriends.length}
+                          </span>
+                        </div>
+                        <div className="space-y-2">{otherFriends.map(renderFriendRow)}</div>
                       </div>
-                      <div className="space-y-2">{otherFriends.map(renderFriendRow)}</div>
-                    </div>
-                  )}
+                    )}
+                  </div>
+                )}
+              </ScrollArea>
+
+              {/* Floating Bulk Action */}
+              {selectedFriendIds.size > 0 && (
+                <div className="absolute bottom-0 left-0 right-2 animate-fade-in">
+                  <div className="bg-gradient-to-t from-background via-background to-transparent pt-4 pb-1">
+                    <Button
+                      onClick={handleBulkInvite}
+                      disabled={isBulkInviting}
+                      className={cn(
+                        'w-full rounded-full gap-2 bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all duration-300',
+                        bulkBurst && 'animate-scale-in'
+                      )}
+                    >
+                      {bulkBurst ? (
+                        <>
+                          <Sparkles className="h-4 w-4" />
+                          Invited {selectedFriendIds.size} <span className="tabular-nums">friend{selectedFriendIds.size === 1 ? '' : 's'}</span>
+                        </>
+                      ) : isBulkInviting ? (
+                        <>Sending…</>
+                      ) : (
+                        <>
+                          <Send className="h-4 w-4" />
+                          Invite Selected (<span className="tabular-nums">{selectedFriendIds.size}</span>)
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 </div>
               )}
-            </ScrollArea>
+            </div>
           </TabsContent>
 
           {/* Squads */}
