@@ -1,32 +1,62 @@
-## Add Taniya Boatwright to Joey's Backyard Bash
+## Fix: Videos must play on both iPhone AND Android
 
-**Note on spelling:** The only matching profile in the database is **Taniya Boatwright** (not "Tania"). Assuming this is the same person.
+### What's actually happening
 
-### Match details
-- **Event:** Joey's Backyard Bash (host: Nick Haddad, starts Apr 28 2026 10pm ET)
-  - `event_id`: `b0738257-5895-4ed1-b535-09f35a9def14`
-- **Attendee:** Taniya Boatwright
-  - `profile_id`: `c1a80185-2b43-414b-a80c-32ffb54ea30c`
-- **Current status:** Not currently on the rally (no `event_attendees` row).
+In the database for **Joey's Backyard Bash**:
+- Storage bucket is **public** ✓
+- Storage RLS allows **all event members to read AND upload** rally media ✓
+- The video that was uploaded is a **`.mov` (QuickTime)** file from an iPhone
 
-### Action
-Run a one-row insert into `event_attendees`:
+**Root cause:** `.mov` plays fine on Apple devices but Android Chrome silently fails to render it in a `<video>` tag — even though the file downloads. That's why Taniya (or anyone on Android) can't see the video Joey uploaded.
 
-```sql
-INSERT INTO event_attendees (event_id, profile_id, status, joined_at)
-VALUES (
-  'b0738257-5895-4ed1-b535-09f35a9def14',
-  'c1a80185-2b43-414b-a80c-32ffb54ea30c',
-  'attending',
-  now()
-);
-```
+iPhones record H.264 video inside a `.mov` container. The codec is universal; only the container is the problem.
 
-Status `attending` skips the host approval queue and adds her directly as a confirmed attendee (same as if Nick had accepted her join request). She'll appear in the attendee list, get access to the event chat, ride coordination, and the photo/video feed.
+### Plan — make videos work on iPhone AND Android
 
-### Files
-No app code changes — this is a one-shot data action via a migration.
+**1. Server-side transcode `.mov` → `.mp4` on upload (Edge Function with ffmpeg)**
 
-### Confirm before I run
-1. Is **Taniya Boatwright** the right person? (Spelling in profile is *Taniya*, not Tania.)
-2. Should she go in as **`attending`** (direct add) or **`pending`** (Nick has to approve in-app)?
+Create a new edge function `transcode-video` that:
+- Accepts the uploaded file path in the `rally-media` bucket
+- Downloads the file from storage
+- Uses ffmpeg WASM to **rewrap** (`-c copy`) the H.264 stream from `.mov` into `.mp4` — no re-encoding, ~5-15 sec for a typical phone clip, no quality loss
+- Uploads the `.mp4` back to storage at the same path with `.mp4` extension
+- Updates the `rally_media` row's `url` and deletes the original `.mov`
+
+Upload flow in `src/hooks/useRallyMedia.tsx` becomes:
+1. Upload file to storage as today
+2. Insert `rally_media` row with `type: 'video'`, `url: <original mov url>`, plus a new `processing: true` flag
+3. Fire-and-forget call to `transcode-video` edge function
+4. Edge function swaps the URL to `.mp4` when done; realtime subscription auto-refreshes the gallery
+
+**2. Add `processing` state to the gallery UI**
+
+In `src/components/events/EventPhotoFeed.tsx`:
+- If `processing === true`, show a "Processing… (playable in ~30s)" placeholder on the tile instead of the broken `<video>`
+- Realtime subscription already invalidates the query, so once the URL updates, the tile becomes a real video
+
+**3. Add a graceful fallback for the existing broken `.mov` already in the DB**
+
+For the one video already uploaded (Joey's `f9924377-...mov`):
+- Trigger a one-time backfill of the `transcode-video` function for any existing `.mov` rows
+- Until backfill completes, the tile shows "Tap to download" with a direct link to the public URL (works on every device)
+
+**4. Migration: add `processing` column**
+
+Add `processing boolean default false` to `rally_media` so the UI knows when to show the placeholder.
+
+**5. Confirm everyone can already upload**
+
+Already verified — the RLS policy `Event members can upload rally media` covers any attendee (not just hosts). Taniya, Joey, and all Backyard Bash attendees can upload videos right now. No DB changes needed for permissions.
+
+### Files & changes
+
+- **New:** `supabase/functions/transcode-video/index.ts` — ffmpeg-based remux `.mov` → `.mp4`
+- **Migration:** add `processing` column to `rally_media`
+- **Edit:** `src/hooks/useRallyMedia.tsx` — invoke transcode after upload, set `processing: true` for `.mov`
+- **Edit:** `src/components/events/EventPhotoFeed.tsx` — render `processing` placeholder + `onError` fallback with "Tap to download" link
+- **One-time:** Backfill — re-trigger transcode for existing `.mov` rows so Joey's video becomes playable for Taniya
+
+### Trade-offs to know
+- ffmpeg WASM in an edge function adds ~30MB cold-start. First transcode will be a few seconds slower than subsequent ones.
+- Remuxing (not re-encoding) keeps quality 1:1 and runs fast — typically 5-15 sec for a 1-minute clip.
+- `.webm` and `.mp4` uploads skip transcoding entirely and appear instantly.
