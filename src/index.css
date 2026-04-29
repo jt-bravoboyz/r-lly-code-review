@@ -1960,19 +1960,6 @@
   animation: badge-active-ring 2.5s ease-in-out infinite;
 }
 
-/* Bronze / Silver / Gold polished-metal glint */
-@keyframes badge-medal-glint {
-  0% { background-position: -150% center; opacity: 0; }
-  10% { opacity: 1; }
-  60% { opacity: 1; }
-  100% { background-position: 150% center; opacity: 0; }
-}
-
-.animate-badge-medal-glint {
-  background-size: 250% 100%;
-  animation: badge-medal-glint 3.5s ease-in-out infinite;
-}
-
 /* Tier-specific animation overrides */
 @keyframes badge-heartbeat {
   0%, 100% { transform: scale(1); }

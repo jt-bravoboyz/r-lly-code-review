@@ -1,47 +1,65 @@
-# Military-Grade Bronze · Silver · Gold Medal Redesign
+# Bulk Invite Upgrade — On R@lly Tab
 
-Rework the Bronze, Silver, and Gold tier badges in `src/components/badges/TierBadgeIcon.tsx` so they read like real military medals — circular medallions with a fluted sunburst rim, embossed laurel + star center, and a hanging suspension ribbon — finished with a brighter, faster polished-metal shimmer that glints across the surface like light catching real metal.
+Layer multi-select bulk-invite onto the existing Hamilton invite dialog. Header card, SMS preview, Squads tab, and Text tab stay exactly as-is. Only the **On R@lly** tab gets richer behavior.
 
-## Visual Anatomy (each medal)
+## What Changes
 
 ```text
-       ┌────┐        ← suspension ribbon (vertical stripes)
-      ┌┘    └┐
-   ┌──┴──────┴──┐    ← fluted sunburst outer rim
-   │  ╭─────╮  │
-   │  │ ★   │  │    ← inner medallion: laurel wreath + embossed star
-   │  ╰─────╯  │
-   └────────────┘
+┌────────────────────────────────────────────┐
+│  [Premium Header Card — unchanged]         │
+├────────────────────────────────────────────┤
+│  ⟪ On R@lly │ Squads │ Text ⟫              │
+├────────────────────────────────────────────┤
+│  Search friends…                           │
+│  ─ Suggested        3   [Select all]       │  ← new shortcut
+│    ◉ [avatar] Jamie       Squad Mate       │  ← tap row toggles select
+│    ○ [avatar] Drew        Your Referral    │
+│  ─ All Friends     14                      │
+│    ◉ [avatar] Casey       R@lly Friend     │
+│  …                                         │
+├────────────────────────────────────────────┤
+│  [ ✦ Invite Selected (4) ]  ← floating CTA │
+├────────────────────────────────────────────┤
+│  History  ●                  ✦ Influence   │
+└────────────────────────────────────────────┘
 ```
 
-- **Suspension ribbon** at the top: tier-themed colors (Bronze = brown/orange, Silver = slate, Gold = crimson — classic Olympic/military convention) with subtle vertical stripes.
-- **Fluted rim**: outer ring with 12 small triangular ticks at clock positions for the "stamped sunburst" feel.
-- **Inner medallion**: rich radial gradient (light highlight at upper-left → deep shadow at lower-right) that sells the metallic curvature.
-- **Laurel wreath**: two curved branches with leaf clusters framing the star.
-- **Embossed 5-point star** centered with a soft inner highlight + dark hairline stroke.
-- **Specular highlight**: soft white ellipse top-left of the medallion to mimic a real light source.
+## Behavior
 
-## Metallic Color Stops
+### Multi-select rows
+- Each friend row becomes tap-to-toggle. A circular checkbox indicator on the **left** (empty ring → filled primary disc with `Check`) replaces the per-row Invite button.
+- Selected row gets a subtle `bg-primary/[0.06] ring-1 ring-primary/30` treatment + `transition-all duration-200`.
+- Already-attending/invited friends stay filtered out (existing logic). Friends already invited *this session* (in `invitedFriendIds`) render disabled with a muted "Invited" pill instead of the checkbox.
 
-- **Bronze** — `#FFD8A8 → #E08A4E → #A85024 → #6B2E14 → #3A1808` with brown ribbon.
-- **Silver** — `#FFFFFF → #E8EEF5 → #9AA4B8 → #5A6478 → #2C3340` with slate ribbon.
-- **Gold** — `#FFF6C4 → #FFD24A → #D9871A → #8A4E08 → #3F2304` with crimson ribbon.
+### Select All shortcut
+- A small ghost "Select all" / "Clear" button sits next to the **Suggested** count.
+- Toggles the entire Suggested group in/out of `selectedFriendIds` in one tap.
+- Hidden when Suggested is empty.
 
-These deeper shadow stops are what makes them read as struck metal instead of flat colored discs.
+### Floating bulk action button
+- Anchored at the bottom of the On R@lly tab (above the dialog footer), inside the tab content so it doesn't disrupt other tabs.
+- Visible only when `selectedFriendIds.size > 0`. Slides in with `animate-fade-in`.
+- Label: `Invite Selected ({n})` with `tabular-nums` and a `Send` icon.
+- States: `Invite Selected (4) → Sending… → ✓ Invited 4 friends` (single transition, no layout shift). Uses primary fill, full width, `rounded-full`.
 
-## Shimmer Upgrade
+### Bulk transition / single success animation
+- On click: `setIsBulkInviting(true)` → one `createInvites.mutateAsync({ profileIds: [...selected] })` call → record each in invite history.
+- On success: trigger a `bulkBurst` flag for ~1.4s that:
+  - Adds `animate-scale-in` + `Sparkles` icon flash to the bulk button.
+  - Adds `animate-fade-out` to all newly-invited rows simultaneously, then they collapse out (single visual "whoosh") as those IDs move into `invitedFriendIds` and the filter removes them.
+- Selection is cleared. Toast: `Invited {n} friends to the R@lly`.
 
-Today every tier shares one slow `animate-badge-shimmer` (5s linear sweep at 25% opacity). For the metal medals we add a second, brighter, faster sweep on top — only for `bronze`, `silver`, `gold` — so the highlight visibly glints across the polished surface.
+### Economy preserved
+- The premium header card and SMS preview render exactly as today — no resizing, no extra chrome.
+- The On R@lly scroll list height shrinks by ~52px to make room for the floating CTA only when something is selected (uses conditional `pb-14` instead of restructuring layout).
+- Single-row "Invite" button is removed from the friends tab in favor of the cleaner select-and-bulk pattern. Squads tab keeps its per-card Invite button.
 
-- New keyframe `badge-medal-glint` in `src/index.css`: a 3.5s diagonal sweep with a tighter, brighter band (`rgba(255,255,255,0.55)` peak, `screen` blend mode for hot highlight).
-- New utility class `.animate-badge-medal-glint`.
-- In `TierBadgeIcon.tsx`, render an additional shimmer layer when `tierKey` is bronze/silver/gold — placed above the existing one with `mix-blend-mode: screen` so it brightens the metal instead of overlaying flatly.
+## File To Edit
 
-The existing shimmer stays for all other tiers untouched.
+- `src/components/events/InviteToEventDialog.tsx` — additive: new state (`selectedFriendIds`, `isBulkInviting`, `bulkBurst`), new `toggleSelect`, `selectAllSuggested`, `handleBulkInvite` handlers, refactored `renderFriendRow`, new floating CTA inside the friends `TabsContent`. No prop changes, no new files, no DB changes.
 
-## Files To Edit
+## Implementation Notes
 
-- `src/components/badges/TierBadgeIcon.tsx` — rewrite the three emblem SVG strings (bronze, silver, gold); add the second medal-glint layer for those three tiers.
-- `src/index.css` — add `@keyframes badge-medal-glint` + `.animate-badge-medal-glint` next to the existing badge animations.
-
-No new dependencies. No props or API changes. All other tiers (emerald → dark_matter) are untouched.
+- Use existing `createInvites.mutateAsync({ eventId, profileIds, eventTitle })` — it already accepts an array, so bulk is a single network call.
+- `recordInvite` runs in a `Promise.all` for the selected set after the bulk mutate resolves.
+- Errors that include `already been invited` are merged into `invitedFriendIds` silently so the UI stays consistent.
