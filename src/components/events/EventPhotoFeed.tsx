@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { getPublicName } from '@/lib/identity';
-import { Camera, ImagePlus, X, Loader2, Trash2, Download, Check, CheckCircle2, Play } from 'lucide-react';
+import { Camera, ImagePlus, X, Loader2, Trash2, Download, Check, CheckCircle2, Play, FileVideo, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useGalleryPhotos, useUploadRallyMedia, useDeleteRallyMedia, type RallyMedia } from '@/hooks/useRallyMedia';
@@ -43,6 +43,8 @@ export function EventPhotoFeed({ eventId, isHost }: EventPhotoFeedProps) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [batchSaving, setBatchSaving] = useState(false);
   const [profiles, setProfiles] = useState<Record<string, { display_name: string; avatar_url: string | null }>>({});
+  // Track videos that fail to play in the browser (e.g. legacy .mov on Android)
+  const [erroredVideoIds, setErroredVideoIds] = useState<Set<string>>(new Set());
   const { triggerHaptic } = useHaptics();
 
   const photos = galleryMedia || [];
@@ -347,24 +349,46 @@ export function EventPhotoFeed({ eventId, isHost }: EventPhotoFeedProps) {
           const uploaderProfile = profiles[photo.created_by];
           const isSelected = selectedIds.has(photo.id);
           const isVideo = photo.type === 'video';
+          const isProcessing = isVideo && photo.processing === true;
+          const isVideoBroken = isVideo && erroredVideoIds.has(photo.id);
           return (
             <div
               key={photo.id}
               className="relative aspect-square cursor-pointer overflow-hidden group bg-muted"
               onClick={() => {
+                // Don't open viewer while processing
+                if (isProcessing) return;
                 // Videos always open the viewer (not selectable for batch save)
                 if (selectMode && !isVideo) toggleSelected(photo.id);
                 else setViewerIndex(idx);
               }}
               style={{ animationDelay: `${idx * 50}ms` }}
             >
-              {isVideo ? (
+              {isProcessing ? (
+                <div className="w-full h-full flex flex-col items-center justify-center gap-1.5 bg-muted text-muted-foreground p-2">
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <span className="text-[9px] font-medium text-center leading-tight">Processing video…</span>
+                </div>
+              ) : isVideoBroken ? (
+                <div className="w-full h-full flex flex-col items-center justify-center gap-1.5 bg-muted text-muted-foreground p-2">
+                  <FileVideo className="h-5 w-5" />
+                  <span className="text-[9px] font-medium text-center leading-tight">Tap to open</span>
+                </div>
+              ) : isVideo ? (
                 <>
                   <video
                     src={photo.url}
                     muted
                     playsInline
                     preload="metadata"
+                    onError={() => {
+                      setErroredVideoIds((prev) => {
+                        if (prev.has(photo.id)) return prev;
+                        const next = new Set(prev);
+                        next.add(photo.id);
+                        return next;
+                      });
+                    }}
                     className={`w-full h-full object-cover transition-all duration-300 ${
                       selectMode && isSelected ? 'scale-95 brightness-75' : 'group-hover:scale-105 group-active:scale-95'
                     }`}
@@ -494,14 +518,45 @@ export function EventPhotoFeed({ eventId, isHost }: EventPhotoFeedProps) {
           {/* Media */}
           <div className="flex-1 flex items-center justify-center px-4 overflow-hidden">
             {photos[viewerIndex].type === 'video' ? (
-              <video
-                key={photos[viewerIndex].id}
-                src={photos[viewerIndex].url}
-                controls
-                autoPlay
-                playsInline
-                className="max-w-full max-h-full rounded-lg"
-              />
+              erroredVideoIds.has(photos[viewerIndex].id) ? (
+                <div className="flex flex-col items-center justify-center gap-4 text-white text-center px-6">
+                  <div className="h-16 w-16 rounded-full bg-white/10 flex items-center justify-center">
+                    <FileVideo className="h-8 w-8 text-white/80" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold">This video can't preview here</p>
+                    <p className="text-xs text-white/60">
+                      Open it in a new tab to watch or download.
+                    </p>
+                  </div>
+                  <a
+                    href={photos[viewerIndex].url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-primary text-primary-foreground text-sm font-medium"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    Open video
+                  </a>
+                </div>
+              ) : (
+                <video
+                  key={photos[viewerIndex].id}
+                  src={photos[viewerIndex].url}
+                  controls
+                  autoPlay
+                  playsInline
+                  onError={() => {
+                    setErroredVideoIds((prev) => {
+                      if (prev.has(photos[viewerIndex].id)) return prev;
+                      const next = new Set(prev);
+                      next.add(photos[viewerIndex].id);
+                      return next;
+                    });
+                  }}
+                  className="max-w-full max-h-full rounded-lg"
+                />
+              )
             ) : (
               <img
                 src={photos[viewerIndex].url}

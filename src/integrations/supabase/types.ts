@@ -1795,6 +1795,7 @@ export type Database = {
           id: string
           is_featured: boolean
           order_index: number
+          processing: boolean
           thumbnail_url: string | null
           type: string
           url: string
@@ -1806,6 +1807,7 @@ export type Database = {
           id?: string
           is_featured?: boolean
           order_index?: number
+          processing?: boolean
           thumbnail_url?: string | null
           type: string
           url: string
@@ -1817,6 +1819,7 @@ export type Database = {
           id?: string
           is_featured?: boolean
           order_index?: number
+          processing?: boolean
           thumbnail_url?: string | null
           type?: string
           url?: string
