@@ -120,6 +120,9 @@ export default function EventDetail() {
   const [showLocationSharingModal, setShowLocationSharingModal] = useState(false);
   const afterRallyTriggeredRef = useRef(false);
   const hasTrackedViewRef = useRef(false);
+  const afterRallyAskedRef = useRef(false);
+  const rallyHomeAskedRef = useRef(false);
+  const autoOptInFiredRef = useRef(false);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [showRallyComplete, setShowRallyComplete] = useState(false);
