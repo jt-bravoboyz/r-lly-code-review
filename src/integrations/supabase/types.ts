@@ -2480,6 +2480,66 @@ export type Database = {
           },
         ]
       }
+      rogue_polls: {
+        Row: {
+          choice: string
+          created_at: string
+          id: string
+          profile_id: string
+          rogue_alert_id: string
+        }
+        Insert: {
+          choice: string
+          created_at?: string
+          id?: string
+          profile_id: string
+          rogue_alert_id: string
+        }
+        Update: {
+          choice?: string
+          created_at?: string
+          id?: string
+          profile_id?: string
+          rogue_alert_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rogue_polls_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rogue_polls_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rogue_polls_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rogue_polls_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles_with_connection"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rogue_polls_rogue_alert_id_fkey"
+            columns: ["rogue_alert_id"]
+            isOneToOne: false
+            referencedRelation: "rogue_alerts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rogue_reactions: {
         Row: {
           created_at: string
