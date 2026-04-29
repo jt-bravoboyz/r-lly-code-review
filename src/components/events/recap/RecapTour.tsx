@@ -313,11 +313,11 @@ export function RecapTour({
           <div className="text-center space-y-6">
             <div className="space-y-2">
               <div className="w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-primary/80 to-primary/40 flex items-center justify-center ring-4 ring-primary/20">
-                <span className="text-2xl">🐴</span>
+                <span className="text-2xl">{closer.emoji}</span>
               </div>
-              <p className="text-white font-bold font-montserrat text-lg">Mission Accomplished.</p>
+              <p className="text-white font-bold font-montserrat text-lg">{closer.title}</p>
               <p className="text-white/30 text-xs font-montserrat uppercase tracking-widest">
-                The horse is back in the stable
+                {closer.subtitle}
               </p>
             </div>
 
