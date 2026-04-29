@@ -1018,8 +1018,11 @@ export default function EventDetail() {
             )}
           </TabsContent>
 
-          <TabsContent value="photos" className="mt-4">
-            <EventPhotoFeed eventId={event.id} isHost={canManage} />
+          <TabsContent value="photos" className="mt-4 space-y-4">
+            {rogueAlerts && rogueAlerts.length > 0 && (
+              <RogueAutoPoll eventId={event.id} alerts={rogueAlerts as any} reactions={reactions as any} />
+            )}
+            <EventPhotoFeed eventId={event.id} isHost={canManage} eventStatus={event.status as any} eventUpdatedAt={event.updated_at as any} />
           </TabsContent>
 
           <TabsContent value="chat" className="mt-4">
