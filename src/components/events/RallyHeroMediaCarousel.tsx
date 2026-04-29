@@ -31,6 +31,20 @@ export function RallyHeroMediaCarousel({ eventId, canManage = false }: RallyHero
   const [api, setApi] = useState<CarouselApi>();
   const [editOpen, setEditOpen] = useState(false);
   const { triggerHaptic } = useHaptics();
+  const heroVideoRefs = useRef<Record<string, HTMLVideoElement>>({});
+
+  // Pause hero videos when tab is hidden; resume on return.
+  useEffect(() => {
+    const onVisibility = () => {
+      const hidden = document.hidden;
+      Object.values(heroVideoRefs.current).forEach((v) => {
+        if (hidden) v.pause();
+        else v.play().catch(() => {});
+      });
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
+  }, []);
 
   // Sort: videos first, then photos by order_index
   const sorted = useMemo(() => {
