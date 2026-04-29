@@ -46,6 +46,25 @@ export function RallyHeroMediaCarousel({ eventId, canManage = false }: RallyHero
     return () => document.removeEventListener('visibilitychange', onVisibility);
   }, []);
 
+  // Escape hatch for iOS Low Power Mode / strict autoplay policies:
+  // on the first user gesture anywhere, force-play any hero videos.
+  useEffect(() => {
+    const kick = () => {
+      Object.values(heroVideoRefs.current).forEach((v) => {
+        v.muted = true;
+        v.play().catch(() => {});
+      });
+      window.removeEventListener('touchstart', kick);
+      window.removeEventListener('pointerdown', kick);
+    };
+    window.addEventListener('touchstart', kick, { passive: true, once: false });
+    window.addEventListener('pointerdown', kick, { passive: true, once: false });
+    return () => {
+      window.removeEventListener('touchstart', kick);
+      window.removeEventListener('pointerdown', kick);
+    };
+  }, []);
+
   // Sort: videos first, then photos by order_index
   const sorted = useMemo(() => {
     if (!media || media.length === 0) return [];
@@ -169,8 +188,20 @@ export function RallyHeroMediaCarousel({ eventId, canManage = false }: RallyHero
                   {item.type === 'video' ? (
                     <video
                       ref={(el) => {
-                        if (el) heroVideoRefs.current[item.id] = el;
-                        else delete heroVideoRefs.current[item.id];
+                        if (el) {
+                          heroVideoRefs.current[item.id] = el;
+                          el.muted = true;
+                          el.defaultMuted = true;
+                          el.setAttribute('muted', '');
+                          el.setAttribute('playsinline', '');
+                          el.setAttribute('webkit-playsinline', '');
+                          const tryPlay = () => { el.play().catch(() => {}); };
+                          tryPlay();
+                          el.addEventListener('loadedmetadata', tryPlay, { once: true });
+                          el.addEventListener('canplay', tryPlay, { once: true });
+                        } else {
+                          delete heroVideoRefs.current[item.id];
+                        }
                       }}
                       src={item.url}
                       poster={(item as any).thumbnail_url || undefined}
@@ -180,6 +211,8 @@ export function RallyHeroMediaCarousel({ eventId, canManage = false }: RallyHero
                       muted
                       playsInline
                       preload="auto"
+                      controls={false}
+                      disablePictureInPicture
                     />
                   ) : (
                     <img

@@ -1,35 +1,27 @@
-## Goal
+## Why hero video isn't autoplaying on your phone
 
-When the event page opens and the hero carousel slide is a video, it should **autoplay, loop, and stay muted** with **no play-button overlay** — just the video running silently behind the carousel UI. Photos and the fullscreen viewer behavior stay unchanged.
+The current `<video>` already has `muted autoPlay playsInline preload="auto"`, which is the textbook setup. On iOS Safari / iOS PWA, autoplay still fails in three real-world cases:
 
-## Where it lives
+1. **React's `muted` prop alone isn't reliable for autoplay on Safari.** The `muted` attribute must exist on the DOM element *before* `play()` is called. React sometimes flushes the property after the autoplay attempt, and Safari then blocks it.
+2. **Carousel re-renders** can re-mount the `<video>`, and the auto-play attempt happens before metadata loads. If the first `play()` rejects, nothing retries.
+3. **Low Power Mode** on iPhone blocks autoplay categorically. Nothing in code can override this — but we can recover the moment the user touches anywhere on the page.
 
-`src/components/events/RallyHeroMediaCarousel.tsx` — the video branch inside `CarouselItem` (currently lines ~155–168). That branch renders a `<video>` with `preload="metadata"` only, then layers a dark scrim plus a circular Play button on top.
+## Fix
 
-## Changes
+Single file: `src/components/events/RallyHeroMediaCarousel.tsx`, hero video branch (lines 169–183).
 
-1. **Make the hero video auto-play on loop, silent, inline.**
-   - Add `autoPlay`, `loop`, and keep `muted playsInline`.
-   - Add `preload="auto"` so the first frame paints immediately instead of staying black.
-   - Add `poster={item.thumbnail_url || undefined}` if available on the media row, so the first paint is never blank on slow networks (safe fallback to undefined if the field isn't present).
+**Inside the `ref` callback**, when the element mounts:
+- Imperatively set `el.muted = true`, `el.defaultMuted = true`, and `el.setAttribute('muted', '')` so Safari sees the muted state synchronously before any play attempt.
+- Add `webkit-playsinline` and `playsinline` attributes (older iOS still checks the lowercase/vendor form).
+- Call `el.play().catch(() => {})` immediately, then again on `loadedmetadata` and `canplay` (one-shot listeners). This covers the race where the first attempt fires before the source is ready.
 
-2. **Remove the Play button overlay and dark scrim** from the carousel slide. The video itself is now the visual.
-   - Drop the `<div className="absolute inset-0 ... bg-black/20">…<Play /></div>` block from the video branch.
-   - Tap on the slide still opens the fullscreen viewer (existing `onClick={() => openViewer(...)}` on `CarouselItem` is unchanged), and the fullscreen viewer keeps its native `controls` for playback control.
+**On the JSX**, add `controls={false}` and `disablePictureInPicture` so iOS doesn't surface its own UI overlay on the slide.
 
-3. **Pause/resume on visibility (small polish).**
-   - Add a `ref` on the inline hero `<video>` and a small effect that calls `pause()` when `document.hidden` and `play().catch(() => {})` when visible again. Prevents the video from continuing to decode in the background and recovers cleanly when the user returns to the tab.
+**Add a one-time global gesture recovery** at component mount (effect that runs once): on the first `touchstart`/`pointerdown` anywhere in the document, walk every entry in `heroVideoRefs.current` and call `play().catch(() => {})`, then remove the listener. This is the standard escape hatch for Low Power Mode and aggressive autoplay policies — the moment the user touches the screen, the video kicks in.
 
-4. **Leave the edit sheet's tiny preview thumbnail alone** (the Play icon there is correct UX for a manage list).
+Existing visibility pause/resume logic stays.
 
 ## Out of scope
 
-- Recap "Hero Video" step — already autoplays/loops; not touched.
-- Upload, ordering, or storage logic.
-- Audio: hero stays muted (browsers block autoplay with sound; muted is required).
-
-## Technical notes
-
-- The `<video>` attribute set required for reliable mobile autoplay across iOS Safari / Android Chrome / PWA: `autoPlay muted loop playsInline preload="auto"`. All four are needed; missing `playsInline` causes iOS to force fullscreen, missing `muted` blocks autoplay entirely.
-- Keep `object-cover` and the existing `aspect-[16/9]` wrapper — no layout change.
-- Pagination dots, index indicator, and edit button overlays remain on top of the video (they're siblings, not children of the slide).
+- No layout, no audio, no upload changes.
+- Recap "Hero Video" step is unrelated and untouched.
