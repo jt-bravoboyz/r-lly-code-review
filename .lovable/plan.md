@@ -1,82 +1,58 @@
-## What's wrong
+## Problem
 
-On iPhone — both in Safari and when added to the Home Screen — the very top of some screens slides under the notch / status bar. A few screens do it right (Home, Events, Notifications, Profile all use a tiny `env(safe-area-inset-top)` spacer in their headers), but several do not. The result: the top of the page (page title, back button, logo) gets clipped or hidden behind the iPhone status bar.
+On the Admin Dashboard at iPhone widths (~360–390px), the sticky header tries to fit four things on one row:
 
-The root cause is two-fold:
-1. The app declares `apple-mobile-web-app-status-bar-style = black-translucent` and `viewport-fit=cover`. That tells iOS Safari "let our content draw under the status bar" — which is correct for a premium look — but every top-level screen then has to push its own content down using the iOS-provided "safe area" inset.
-2. Several pages were never given that spacer, and there is no shared utility for it, so future pages will keep making the same mistake.
+1. Shield icon
+2. "R@lly Admin" title
+3. "Return to App" pill (icon-only on mobile, but still takes space + gap)
+4. The segmented `partner | technical | commercial` pill
 
-## What we'll fix
+The segmented pill is pushed right with `ml-auto`, and `commercial` (the longest label) overflows past the right edge of the viewport, getting visually cut off by the screen / safe-area inset.
 
-Add a single, reusable safe-area system, then apply it to every screen that's missing it.
+## Fix
 
-### 1. Create reusable safe-area utilities
+Restructure the header in `src/pages/AdminDashboard.tsx` so the segmented view-mode pill drops to its own full-width row on small screens, and stays inline on `sm:` and up.
 
-In `src/index.css`, add small helper classes that any component can use:
+### Changes (single file: `src/pages/AdminDashboard.tsx`, header block ~lines 102–141)
 
-- `.safe-top` — adds top padding equal to the iPhone status-bar / notch height
-- `.safe-bottom` — adds bottom padding equal to the iPhone home-indicator height
-- `.safe-x` — adds left/right padding for landscape notch on iPhone
-- `.h-safe-top` — a fixed-height spacer element (so sticky headers can keep their colored bar visible all the way up to the very top of the screen, like the existing `<div style={{ height: 'env(safe-area-inset-top, 1.5rem) }}>` trick)
+1. **Row 1 (title row)** — Shield + "R@lly Admin" + "Return to App" only. Remove `ml-auto` from the segmented pill's row by extracting it.
+2. **Row 2 (mobile only)** — The segmented `partner / technical / commercial` pill, rendered full-width, horizontally scrollable as a safety net (`overflow-x-auto`, `no-scrollbar`), and inline-flex so it doesn't stretch the buttons.
+3. **Row 2 desktop behavior** — On `sm:` breakpoints and up, the segmented pill rejoins the title row via responsive classes (`sm:absolute sm:right-4 sm:top-1/2 sm:-translate-y-1/2` on a wrapper, OR simpler: render it twice with `sm:hidden` and `hidden sm:flex`). Prefer the simpler "render once, change parent layout" approach using flex-wrap:
+   - Use `flex flex-wrap items-center gap-3` on the row container.
+   - Give the pill `w-full sm:w-auto sm:ml-auto`.
+   - This lets it wrap to its own line on mobile without duplication.
+4. **Date filter row** — Already on its own row (line 138); keep as-is.
+5. Keep all existing classes for indicator animation, glass blur, `h-safe-top` spacer, and the active-pill sliding indicator (no logic changes — `toggleRefs` and `indicator` still work because the buttons re-mount in the same DOM order).
 
-In `tailwind.config.ts`, expose the same values as `pt-safe`, `pb-safe`, `px-safe` so they're discoverable.
+### Technical detail
 
-### 2. Patch the screens that are currently clipping
+```tsx
+<div className="container py-3 sm:py-4 flex flex-wrap items-center gap-3">
+  <Shield ... />
+  <h1 ...>R@lly Admin</h1>
+  <Link to="/" ...>...</Link>
 
-The following screens render right up against the very top edge with no inset — fix each one:
-
-- `src/pages/Auth.tsx` — splash/sign-in page. The "R@LLY" wordmark currently uses `pt-12`, which is not enough on devices with a notch. Add `safe-top` to the outer container.
-- `src/pages/ReturningAuth.tsx` — same treatment.
-- `src/components/Onboarding.tsx` — the 3-slide intro. Add `safe-top` (and `safe-bottom` so the "Skip / Next" buttons clear the home indicator).
-- `src/pages/AdminDashboard.tsx` — the sticky glass admin header. Insert the `<div className="h-safe-top" />` spacer at the top of the header so the glass bar extends behind the status bar instead of starting under it.
-- `src/pages/SquadDetail.tsx` — same pattern: sticky header, missing spacer, back button currently sits half-under the notch.
-- `src/pages/Unsubscribe.tsx` — center-aligned card that can hit the top edge on small phones; add `safe-top` to the `<main>`.
-- `src/pages/JoinRally.tsx` — already uses `paddingTop: env(safe-area-inset-top)` but only on the floating top bar; double-check the main hero section gets the spacer too on small phones.
-
-### 3. Verify the screens that are already correct
-
-These are already using the spacer — we'll just make sure they switch to the new utility class for consistency, no behavior change:
-
-- `src/pages/Index.tsx`, `src/pages/Events.tsx`, `src/pages/Notifications.tsx` (inline headers)
-- `src/components/layout/Header.tsx` (shared header used by Profile, Squads, Chat, Settings, Achievements, Legal, Documentation, JoinSquad, InviteHistory)
-- `src/components/layout/BottomNav.tsx` (already pads bottom for the home indicator — leave as is)
-
-### 4. Bottom-edge audit (home indicator)
-
-While we're in there, confirm every page that has a fixed bottom action bar (Profile edit save bar, EventDetail action bar, JoinRally CTA, etc.) respects `env(safe-area-inset-bottom)` so buttons aren't half-hidden behind the iPhone home indicator. Add `safe-bottom` where missing.
-
-### 5. Manual QA
-
-After the changes, verify on the preview at iPhone-class viewports (375x812 and 390x844) and Android-class (360x800):
-
-```text
-+------------------+   <- status bar / notch
-|     SAFE TOP     |   (added padding, content never enters this band)
-+------------------+
-|                  |
-|   page content   |
-|                  |
-+------------------+
-|    SAFE BOTTOM   |   (home indicator, content never enters this band)
-+------------------+
+  {/* Segmented pill: full width on mobile, right-aligned on sm+ */}
+  <div className="order-3 sm:order-none w-full sm:w-auto sm:ml-auto
+                  flex sm:inline-flex items-center justify-center
+                  gap-1 rounded-full border border-border/50 bg-muted/40 p-1 backdrop-blur-sm
+                  relative overflow-x-auto no-scrollbar">
+    {/* sliding indicator + buttons unchanged */}
+  </div>
+</div>
 ```
 
-Every screen listed above should show its title / logo / back button fully visible, no overlap with the iOS status bar or home indicator.
+Recompute the sliding indicator on resize is already handled by the existing `toggleRefs` measurement effect, so wrapping does not break the active-tab highlight.
+
+### Verification
+
+- 360×722 (current viewport): all three tabs — including "commercial" — fully visible, pill sits below the title row.
+- 390×844 (iPhone 14): same.
+- ≥640px (`sm:`): pill returns to the right side of the title row, matching current desktop look.
+- Status-bar safe area still respected by the existing `<div className="h-safe-top" />` spacer.
 
 ## Files changed
 
-- `src/index.css` — add `.safe-top`, `.safe-bottom`, `.safe-x`, `.h-safe-top` utilities
-- `tailwind.config.ts` — register `pt-safe`, `pb-safe`, `px-safe` aliases
-- `src/pages/Auth.tsx` — add `safe-top`
-- `src/pages/ReturningAuth.tsx` — add `safe-top`
-- `src/components/Onboarding.tsx` — add `safe-top` + `safe-bottom`
-- `src/pages/AdminDashboard.tsx` — add `h-safe-top` spacer in sticky header
-- `src/pages/SquadDetail.tsx` — add `h-safe-top` spacer in sticky header
-- `src/pages/Unsubscribe.tsx` — add `safe-top` to outer `<main>`
-- `src/pages/JoinRally.tsx` — verify hero section gets safe-top on small phones
-- Audit pass on EventDetail / Profile fixed bottom bars for `safe-bottom`
+- `src/pages/AdminDashboard.tsx` — header block only.
 
-## What stays the same
-
-- The `viewport-fit=cover` and `apple-mobile-web-app-status-bar-style = black-translucent` settings stay — they give the app the edge-to-edge premium look you have today. We're just making sure nothing important draws into that protected band.
-- No design changes, no color changes, no copy changes. Pure layout safety.
+No memory updates required; this is consistent with the existing `mem://style/cross-platform-hardening` and `mem://style/mobile-responsiveness-patterns` rules (shrink-0, overflow control, safe areas).

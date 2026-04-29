@@ -101,20 +101,20 @@ export default function AdminDashboard() {
       {/* Glass header */}
       <header className="border-b border-border/40 bg-card/70 backdrop-blur-xl sticky top-0 z-50">
         <div className="h-safe-top" />
-        <div className="container flex items-center gap-3 py-3 sm:py-4">
+        <div className="container flex flex-wrap items-center gap-3 py-3 sm:py-4">
           <Shield className="h-5 w-5 sm:h-6 sm:w-6 text-primary shrink-0" />
           <h1 className="text-base sm:text-xl font-bold font-montserrat tracking-tight">R@lly Admin</h1>
 
           <Link
             to="/"
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 transition-colors"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 transition-colors shrink-0"
           >
             <Home className="h-4 w-4" />
             <span className="hidden sm:inline">Return to App</span>
           </Link>
 
-          {/* Top-level segmented pill */}
-          <div className="ml-auto relative flex items-center gap-1 rounded-full border border-border/50 bg-muted/40 p-1 backdrop-blur-sm">
+          {/* Top-level segmented pill — wraps to its own row on mobile */}
+          <div className="order-last w-full sm:order-none sm:w-auto sm:ml-auto relative flex sm:inline-flex items-center justify-center gap-1 rounded-full border border-border/50 bg-muted/40 p-1 backdrop-blur-sm overflow-x-auto no-scrollbar">
             <div
               className="absolute top-1 bottom-1 rounded-full bg-primary shadow-sm transition-all duration-300 ease-out"
               style={{ left: indicator.left, width: indicator.width }}
