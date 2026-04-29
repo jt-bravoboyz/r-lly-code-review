@@ -89,6 +89,51 @@ export function EventPhotoFeed({ eventId, isHost }: EventPhotoFeedProps) {
     return () => { supabase.removeChannel(channel); };
   }, [eventId, queryClient]);
 
+  // Opportunistic thumbnail backfill: for the user's OWN legacy videos that
+  // never got a thumbnail, generate one in the background and patch the row.
+  const backfillAttemptedRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (!profile?.id) return;
+    const targets = photos.filter(
+      (p) =>
+        p.type === 'video' &&
+        !p.thumbnail_url &&
+        p.created_by === profile.id &&
+        !backfillAttemptedRef.current.has(p.id)
+    );
+    if (!targets.length) return;
+
+    let cancelled = false;
+    (async () => {
+      for (const media of targets) {
+        if (cancelled) return;
+        backfillAttemptedRef.current.add(media.id);
+        try {
+          const res = await fetch(media.url);
+          if (!res.ok) continue;
+          const blob = await res.blob();
+          const thumb = await extractVideoThumbnail(blob);
+          if (!thumb || cancelled) continue;
+          const thumbPath = `${eventId}/${media.id}_thumb.jpg`;
+          const { error: upErr } = await supabase.storage
+            .from('rally-media')
+            .upload(thumbPath, thumb, { upsert: true, contentType: 'image/jpeg' });
+          if (upErr) continue;
+          const publicUrl = supabase.storage.from('rally-media').getPublicUrl(thumbPath).data.publicUrl;
+          await supabase
+            .from('rally_media' as any)
+            .update({ thumbnail_url: publicUrl })
+            .eq('id', media.id);
+          queryClient.invalidateQueries({ queryKey: ['rally-media-gallery', eventId] });
+        } catch (err) {
+          console.warn('[rally-media] backfill failed', media.id, err);
+        }
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [photos, profile?.id, eventId, queryClient]);
+
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!profile || !e.target.files?.length) return;
     const files = Array.from(e.target.files);
