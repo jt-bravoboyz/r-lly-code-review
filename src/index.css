@@ -1991,3 +1991,18 @@
 .animate-badge-void {
   animation: badge-void-pulse 3s ease-in-out infinite;
 }
+
+/* ========================================================================
+   Safe area utilities — keep content out from under the iPhone notch /
+   status bar / home indicator. Works in iOS Safari, PWAs (when added to
+   home screen with viewport-fit=cover), and Android Chrome.
+   ======================================================================== */
+.safe-top    { padding-top: max(env(safe-area-inset-top), 1rem); }
+.safe-bottom { padding-bottom: max(env(safe-area-inset-bottom), 1rem); }
+.safe-x {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+/* Fixed-height spacer for sticky/transparent headers — extends the colored
+   bar all the way up behind the status bar. */
+.h-safe-top { height: env(safe-area-inset-top, 1.5rem); }

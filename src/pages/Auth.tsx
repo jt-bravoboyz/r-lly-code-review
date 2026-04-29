@@ -502,7 +502,7 @@ export default function Auth() {
 
   return (
     <div 
-      className="min-h-[100dvh] flex flex-col relative overflow-hidden"
+      className="min-h-[100dvh] flex flex-col relative overflow-hidden safe-top safe-bottom"
       style={{ backgroundColor: "#121212" }}
     >
       {/* Radial gradient glow */}
@@ -526,7 +526,7 @@ export default function Auth() {
       </div>
 
       {/* Header with Logo and Tagline */}
-      <div className="pt-12 pb-6 px-8 text-center relative z-10">
+      <div className="pt-6 pb-6 px-8 text-center relative z-10">
         {/* R@LLY Wordmark */}
         <h1
           className={`font-montserrat font-extrabold text-5xl tracking-tight transition-all duration-500 ${

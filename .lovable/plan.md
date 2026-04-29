@@ -1,62 +1,82 @@
-## Fix: Videos must play on both iPhone AND Android
+## What's wrong
 
-### What's actually happening
+On iPhone — both in Safari and when added to the Home Screen — the very top of some screens slides under the notch / status bar. A few screens do it right (Home, Events, Notifications, Profile all use a tiny `env(safe-area-inset-top)` spacer in their headers), but several do not. The result: the top of the page (page title, back button, logo) gets clipped or hidden behind the iPhone status bar.
 
-In the database for **Joey's Backyard Bash**:
-- Storage bucket is **public** ✓
-- Storage RLS allows **all event members to read AND upload** rally media ✓
-- The video that was uploaded is a **`.mov` (QuickTime)** file from an iPhone
+The root cause is two-fold:
+1. The app declares `apple-mobile-web-app-status-bar-style = black-translucent` and `viewport-fit=cover`. That tells iOS Safari "let our content draw under the status bar" — which is correct for a premium look — but every top-level screen then has to push its own content down using the iOS-provided "safe area" inset.
+2. Several pages were never given that spacer, and there is no shared utility for it, so future pages will keep making the same mistake.
 
-**Root cause:** `.mov` plays fine on Apple devices but Android Chrome silently fails to render it in a `<video>` tag — even though the file downloads. That's why Taniya (or anyone on Android) can't see the video Joey uploaded.
+## What we'll fix
 
-iPhones record H.264 video inside a `.mov` container. The codec is universal; only the container is the problem.
+Add a single, reusable safe-area system, then apply it to every screen that's missing it.
 
-### Plan — make videos work on iPhone AND Android
+### 1. Create reusable safe-area utilities
 
-**1. Server-side transcode `.mov` → `.mp4` on upload (Edge Function with ffmpeg)**
+In `src/index.css`, add small helper classes that any component can use:
 
-Create a new edge function `transcode-video` that:
-- Accepts the uploaded file path in the `rally-media` bucket
-- Downloads the file from storage
-- Uses ffmpeg WASM to **rewrap** (`-c copy`) the H.264 stream from `.mov` into `.mp4` — no re-encoding, ~5-15 sec for a typical phone clip, no quality loss
-- Uploads the `.mp4` back to storage at the same path with `.mp4` extension
-- Updates the `rally_media` row's `url` and deletes the original `.mov`
+- `.safe-top` — adds top padding equal to the iPhone status-bar / notch height
+- `.safe-bottom` — adds bottom padding equal to the iPhone home-indicator height
+- `.safe-x` — adds left/right padding for landscape notch on iPhone
+- `.h-safe-top` — a fixed-height spacer element (so sticky headers can keep their colored bar visible all the way up to the very top of the screen, like the existing `<div style={{ height: 'env(safe-area-inset-top, 1.5rem) }}>` trick)
 
-Upload flow in `src/hooks/useRallyMedia.tsx` becomes:
-1. Upload file to storage as today
-2. Insert `rally_media` row with `type: 'video'`, `url: <original mov url>`, plus a new `processing: true` flag
-3. Fire-and-forget call to `transcode-video` edge function
-4. Edge function swaps the URL to `.mp4` when done; realtime subscription auto-refreshes the gallery
+In `tailwind.config.ts`, expose the same values as `pt-safe`, `pb-safe`, `px-safe` so they're discoverable.
 
-**2. Add `processing` state to the gallery UI**
+### 2. Patch the screens that are currently clipping
 
-In `src/components/events/EventPhotoFeed.tsx`:
-- If `processing === true`, show a "Processing… (playable in ~30s)" placeholder on the tile instead of the broken `<video>`
-- Realtime subscription already invalidates the query, so once the URL updates, the tile becomes a real video
+The following screens render right up against the very top edge with no inset — fix each one:
 
-**3. Add a graceful fallback for the existing broken `.mov` already in the DB**
+- `src/pages/Auth.tsx` — splash/sign-in page. The "R@LLY" wordmark currently uses `pt-12`, which is not enough on devices with a notch. Add `safe-top` to the outer container.
+- `src/pages/ReturningAuth.tsx` — same treatment.
+- `src/components/Onboarding.tsx` — the 3-slide intro. Add `safe-top` (and `safe-bottom` so the "Skip / Next" buttons clear the home indicator).
+- `src/pages/AdminDashboard.tsx` — the sticky glass admin header. Insert the `<div className="h-safe-top" />` spacer at the top of the header so the glass bar extends behind the status bar instead of starting under it.
+- `src/pages/SquadDetail.tsx` — same pattern: sticky header, missing spacer, back button currently sits half-under the notch.
+- `src/pages/Unsubscribe.tsx` — center-aligned card that can hit the top edge on small phones; add `safe-top` to the `<main>`.
+- `src/pages/JoinRally.tsx` — already uses `paddingTop: env(safe-area-inset-top)` but only on the floating top bar; double-check the main hero section gets the spacer too on small phones.
 
-For the one video already uploaded (Joey's `f9924377-...mov`):
-- Trigger a one-time backfill of the `transcode-video` function for any existing `.mov` rows
-- Until backfill completes, the tile shows "Tap to download" with a direct link to the public URL (works on every device)
+### 3. Verify the screens that are already correct
 
-**4. Migration: add `processing` column**
+These are already using the spacer — we'll just make sure they switch to the new utility class for consistency, no behavior change:
 
-Add `processing boolean default false` to `rally_media` so the UI knows when to show the placeholder.
+- `src/pages/Index.tsx`, `src/pages/Events.tsx`, `src/pages/Notifications.tsx` (inline headers)
+- `src/components/layout/Header.tsx` (shared header used by Profile, Squads, Chat, Settings, Achievements, Legal, Documentation, JoinSquad, InviteHistory)
+- `src/components/layout/BottomNav.tsx` (already pads bottom for the home indicator — leave as is)
 
-**5. Confirm everyone can already upload**
+### 4. Bottom-edge audit (home indicator)
 
-Already verified — the RLS policy `Event members can upload rally media` covers any attendee (not just hosts). Taniya, Joey, and all Backyard Bash attendees can upload videos right now. No DB changes needed for permissions.
+While we're in there, confirm every page that has a fixed bottom action bar (Profile edit save bar, EventDetail action bar, JoinRally CTA, etc.) respects `env(safe-area-inset-bottom)` so buttons aren't half-hidden behind the iPhone home indicator. Add `safe-bottom` where missing.
 
-### Files & changes
+### 5. Manual QA
 
-- **New:** `supabase/functions/transcode-video/index.ts` — ffmpeg-based remux `.mov` → `.mp4`
-- **Migration:** add `processing` column to `rally_media`
-- **Edit:** `src/hooks/useRallyMedia.tsx` — invoke transcode after upload, set `processing: true` for `.mov`
-- **Edit:** `src/components/events/EventPhotoFeed.tsx` — render `processing` placeholder + `onError` fallback with "Tap to download" link
-- **One-time:** Backfill — re-trigger transcode for existing `.mov` rows so Joey's video becomes playable for Taniya
+After the changes, verify on the preview at iPhone-class viewports (375x812 and 390x844) and Android-class (360x800):
 
-### Trade-offs to know
-- ffmpeg WASM in an edge function adds ~30MB cold-start. First transcode will be a few seconds slower than subsequent ones.
-- Remuxing (not re-encoding) keeps quality 1:1 and runs fast — typically 5-15 sec for a 1-minute clip.
-- `.webm` and `.mp4` uploads skip transcoding entirely and appear instantly.
+```text
++------------------+   <- status bar / notch
+|     SAFE TOP     |   (added padding, content never enters this band)
++------------------+
+|                  |
+|   page content   |
+|                  |
++------------------+
+|    SAFE BOTTOM   |   (home indicator, content never enters this band)
++------------------+
+```
+
+Every screen listed above should show its title / logo / back button fully visible, no overlap with the iOS status bar or home indicator.
+
+## Files changed
+
+- `src/index.css` — add `.safe-top`, `.safe-bottom`, `.safe-x`, `.h-safe-top` utilities
+- `tailwind.config.ts` — register `pt-safe`, `pb-safe`, `px-safe` aliases
+- `src/pages/Auth.tsx` — add `safe-top`
+- `src/pages/ReturningAuth.tsx` — add `safe-top`
+- `src/components/Onboarding.tsx` — add `safe-top` + `safe-bottom`
+- `src/pages/AdminDashboard.tsx` — add `h-safe-top` spacer in sticky header
+- `src/pages/SquadDetail.tsx` — add `h-safe-top` spacer in sticky header
+- `src/pages/Unsubscribe.tsx` — add `safe-top` to outer `<main>`
+- `src/pages/JoinRally.tsx` — verify hero section gets safe-top on small phones
+- Audit pass on EventDetail / Profile fixed bottom bars for `safe-bottom`
+
+## What stays the same
+
+- The `viewport-fit=cover` and `apple-mobile-web-app-status-bar-style = black-translucent` settings stay — they give the app the edge-to-edge premium look you have today. We're just making sure nothing important draws into that protected band.
+- No design changes, no color changes, no copy changes. Pure layout safety.

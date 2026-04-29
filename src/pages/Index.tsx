@@ -280,7 +280,7 @@ function LandingScreen() {
 
   return (
     <div 
-      className="min-h-[100dvh] flex flex-col relative overflow-hidden"
+      className="min-h-[100dvh] flex flex-col relative overflow-hidden safe-top safe-bottom"
       style={{ backgroundColor: "#121212" }}
     >
       {/* Radial gradient glow */}

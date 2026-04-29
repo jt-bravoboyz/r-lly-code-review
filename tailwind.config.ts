@@ -75,6 +75,14 @@ export default {
       },
       height: {
         '13': '3.25rem',
+        'safe-top': 'env(safe-area-inset-top, 1.5rem)',
+        'safe-bottom': 'env(safe-area-inset-bottom, 0px)',
+      },
+      padding: {
+        'safe-top': 'max(env(safe-area-inset-top), 1rem)',
+        'safe-bottom': 'max(env(safe-area-inset-bottom), 1rem)',
+        'safe-left': 'env(safe-area-inset-left)',
+        'safe-right': 'env(safe-area-inset-right)',
       },
       letterSpacing: {
         tighter: '-0.05em',
