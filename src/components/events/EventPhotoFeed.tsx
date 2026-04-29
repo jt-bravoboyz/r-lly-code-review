@@ -471,7 +471,7 @@ export function EventPhotoFeed({ eventId, isHost }: EventPhotoFeedProps) {
       {/* Fullscreen Viewer Portal */}
       {viewerIndex !== null && photos[viewerIndex] && createPortal(
         <div
-          className="fixed inset-0 bg-black/95 z-[99999] flex flex-col"
+          className="fixed inset-0 bg-black/95 z-[99999] flex flex-col safe-top safe-bottom"
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
         >
@@ -580,7 +580,7 @@ export function EventPhotoFeed({ eventId, isHost }: EventPhotoFeedProps) {
 
           {/* Dot indicators */}
           {photos.length > 1 && (
-            <div className="flex items-center justify-center gap-1.5 pb-8 pt-4">
+            <div className="flex items-center justify-center gap-1.5 pb-4 pt-4">
               {photos.map((_, i) => (
                 <button
                   key={i}
