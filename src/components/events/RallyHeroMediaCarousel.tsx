@@ -46,6 +46,25 @@ export function RallyHeroMediaCarousel({ eventId, canManage = false }: RallyHero
     return () => document.removeEventListener('visibilitychange', onVisibility);
   }, []);
 
+  // Escape hatch for iOS Low Power Mode / strict autoplay policies:
+  // on the first user gesture anywhere, force-play any hero videos.
+  useEffect(() => {
+    const kick = () => {
+      Object.values(heroVideoRefs.current).forEach((v) => {
+        v.muted = true;
+        v.play().catch(() => {});
+      });
+      window.removeEventListener('touchstart', kick);
+      window.removeEventListener('pointerdown', kick);
+    };
+    window.addEventListener('touchstart', kick, { passive: true, once: false });
+    window.addEventListener('pointerdown', kick, { passive: true, once: false });
+    return () => {
+      window.removeEventListener('touchstart', kick);
+      window.removeEventListener('pointerdown', kick);
+    };
+  }, []);
+
   // Sort: videos first, then photos by order_index
   const sorted = useMemo(() => {
     if (!media || media.length === 0) return [];
