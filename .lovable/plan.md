@@ -1,65 +1,51 @@
-# Bulk Invite Upgrade — On R@lly Tab
+# Founder 25 Mini Medal — Visual Upgrade
 
-Layer multi-select bulk-invite onto the existing Hamilton invite dialog. Header card, SMS preview, Squads tab, and Text tab stay exactly as-is. Only the **On R@lly** tab gets richer behavior.
+Replace the flat purple polygon currently rendered next to Founding 25 members (`MiniFounderGem`) with a proper miniature **military-style ribbon medal**: a metallic purple coin suspended from a short ribbon, with a 5-point star, rim highlights, top specular, and a slow shimmer sweep — matching the same medal language we just shipped for Bronze/Silver/Gold activity badges.
 
-## What Changes
+## Where it appears
+
+- `src/components/badges/MiniFounderGem.tsx` — the only file changed.
+- Used inline next to display names across chat, profile sheets, attendee lists, etc. (callers don't change.)
+
+## Visual design
 
 ```text
-┌────────────────────────────────────────────┐
-│  [Premium Header Card — unchanged]         │
-├────────────────────────────────────────────┤
-│  ⟪ On R@lly │ Squads │ Text ⟫              │
-├────────────────────────────────────────────┤
-│  Search friends…                           │
-│  ─ Suggested        3   [Select all]       │  ← new shortcut
-│    ◉ [avatar] Jamie       Squad Mate       │  ← tap row toggles select
-│    ○ [avatar] Drew        Your Referral    │
-│  ─ All Friends     14                      │
-│    ◉ [avatar] Casey       R@lly Friend     │
-│  …                                         │
-├────────────────────────────────────────────┤
-│  [ ✦ Invite Selected (4) ]  ← floating CTA │
-├────────────────────────────────────────────┤
-│  History  ●                  ✦ Influence   │
-└────────────────────────────────────────────┘
+   ▙▖▜▖   ← purple ribbon (vertical stripes, dark center)
+   ▙▖▜▖
+   ▙▖▜▖
+   ◯◯◯    ← metallic purple coin with rim
+  ◯ ★ ◯   ← engraved star, top specular, shimmer sweep
+   ◯◯◯
 ```
 
-## Behavior
+Specifically:
 
-### Multi-select rows
-- Each friend row becomes tap-to-toggle. A circular checkbox indicator on the **left** (empty ring → filled primary disc with `Check`) replaces the per-row Invite button.
-- Selected row gets a subtle `bg-primary/[0.06] ring-1 ring-primary/30` treatment + `transition-all duration-200`.
-- Already-attending/invited friends stay filtered out (existing logic). Friends already invited *this session* (in `invitedFriendIds`) render disabled with a muted "Invited" pill instead of the checkbox.
+- **Ribbon** — short trapezoidal ribbon at top using a horizontal `linearGradient` (light purple → dark purple → light purple) to read as folded fabric. A darker sliver underneath to anchor the coin.
+- **Coin** — circle with a `linearGradient` rim (light top-left → deep purple bottom-right) and a `radialGradient` face (highlight at 35%/30%, deep core at edges) for a struck-metal look.
+- **Engraved ring** — thin dark stroke + offset light stroke inside the rim for a debossed feel.
+- **5-point star** — white-to-lavender gradient with a soft Gaussian blur "glow", centered on the coin.
+- **Top specular** — translucent white ellipse near the top-left of the coin (fixed light source).
+- **Shimmer sweep** — angled white rectangle, `clipPath`'d to the coin, animating left → right every ~4.2s with fade in/out.
+- **Drop shadow + purple ambient glow** via CSS `filter: drop-shadow()` on the SVG.
 
-### Select All shortcut
-- A small ghost "Select all" / "Clear" button sits next to the **Suggested** count.
-- Toggles the entire Suggested group in/out of `selectedFriendIds` in one tap.
-- Hidden when Suggested is empty.
+Tone stays in the existing R@lly purple family (`#9B4DCA` / `#5A1F8C` / `#E0B8FF`) to remain consistent with the larger `FounderBadgeCard`.
 
-### Floating bulk action button
-- Anchored at the bottom of the On R@lly tab (above the dialog footer), inside the tab content so it doesn't disrupt other tabs.
-- Visible only when `selectedFriendIds.size > 0`. Slides in with `animate-fade-in`.
-- Label: `Invite Selected ({n})` with `tabular-nums` and a `Send` icon.
-- States: `Invite Selected (4) → Sending… → ✓ Invited 4 friends` (single transition, no layout shift). Uses primary fill, full width, `rounded-full`.
+## Sizing & layout
 
-### Bulk transition / single success animation
-- On click: `setIsBulkInviting(true)` → one `createInvites.mutateAsync({ profileIds: [...selected] })` call → record each in invite history.
-- On success: trigger a `bulkBurst` flag for ~1.4s that:
-  - Adds `animate-scale-in` + `Sparkles` icon flash to the bulk button.
-  - Adds `animate-fade-out` to all newly-invited rows simultaneously, then they collapse out (single visual "whoosh") as those IDs move into `invitedFriendIds` and the filter removes them.
-- Selection is cleared. Toast: `Invited {n} friends to the R@lly`.
+- Bumps the SVG from `16x16` to `18x22` to fit the ribbon above the coin while keeping the inline footprint tight.
+- `align-middle` + `inline-flex` so it sits cleanly next to text without shifting line height.
+- Default `className` preserved when none is passed; existing callers continue to work unchanged.
 
-### Economy preserved
-- The premium header card and SMS preview render exactly as today — no resizing, no extra chrome.
-- The On R@lly scroll list height shrinks by ~52px to make room for the floating CTA only when something is selected (uses conditional `pb-14` instead of restructuring layout).
-- Single-row "Invite" button is removed from the friends tab in favor of the cleaner select-and-bulk pattern. Squads tab keeps its per-card Invite button.
+## Animation
 
-## File To Edit
+- Single `@keyframes miniFounderShimmer` sweep on a clipped rect — lightweight, runs in CSS only.
+- Removes the previous `animate-mini-founder-glow` class dependency in favor of an SVG-local shimmer + filter glow, so the effect is self-contained and predictable.
 
-- `src/components/events/InviteToEventDialog.tsx` — additive: new state (`selectedFriendIds`, `isBulkInviting`, `bulkBurst`), new `toggleSelect`, `selectAllSuggested`, `handleBulkInvite` handlers, refactored `renderFriendRow`, new floating CTA inside the friends `TabsContent`. No prop changes, no new files, no DB changes.
+## Out of scope
 
-## Implementation Notes
+- No changes to `FounderBadgeCard`, `useFounderIds`, or any caller.
+- No new assets, no new tokens, no DB changes.
 
-- Use existing `createInvites.mutateAsync({ eventId, profileIds, eventTitle })` — it already accepts an array, so bulk is a single network call.
-- `recordInvite` runs in a `Promise.all` for the selected set after the bulk mutate resolves.
-- Errors that include `already been invited` are merged into `invitedFriendIds` silently so the UI stays consistent.
+## Files modified
+
+- `src/components/badges/MiniFounderGem.tsx` (full rewrite, ~120 lines)
