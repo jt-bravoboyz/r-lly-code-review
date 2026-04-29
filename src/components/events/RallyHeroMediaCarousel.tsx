@@ -153,20 +153,20 @@ export function RallyHeroMediaCarousel({ eventId, canManage = false }: RallyHero
               >
                 <div className="relative aspect-[16/9] w-full overflow-hidden rounded-xl bg-muted">
                   {item.type === 'video' ? (
-                    <>
-                      <video
-                        src={item.url}
-                        className="w-full h-full object-cover"
-                        preload="metadata"
-                        muted
-                        playsInline
-                      />
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-                        <div className="w-14 h-14 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center">
-                          <Play className="h-7 w-7 text-white ml-0.5" fill="white" />
-                        </div>
-                      </div>
-                    </>
+                    <video
+                      ref={(el) => {
+                        if (el) heroVideoRefs.current[item.id] = el;
+                        else delete heroVideoRefs.current[item.id];
+                      }}
+                      src={item.url}
+                      poster={(item as any).thumbnail_url || undefined}
+                      className="w-full h-full object-cover"
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      preload="auto"
+                    />
                   ) : (
                     <img
                       src={item.url}
