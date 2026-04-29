@@ -1,70 +1,32 @@
-# Add Video Upload to R@lly Photo Section
+## Add Taniya Boatwright to Joey's Backyard Bash
 
-## Context
+**Note on spelling:** The only matching profile in the database is **Taniya Boatwright** (not "Tania"). Assuming this is the same person.
 
-The R@lly media system already supports videos at the schema/storage layer:
-- `rally_media.type` accepts `'photo' | 'video'`
-- The `rally-media` storage bucket is public with no MIME restriction
-- `useUploadRallyMedia` already accepts `type: 'video'`
-- Hero carousel already renders videos (featured)
+### Match details
+- **Event:** Joey's Backyard Bash (host: Nick Haddad, starts Apr 28 2026 10pm ET)
+  - `event_id`: `b0738257-5895-4ed1-b535-09f35a9def14`
+- **Attendee:** Taniya Boatwright
+  - `profile_id`: `c1a80185-2b43-414b-a80c-32ffb54ea30c`
+- **Current status:** Not currently on the rally (no `event_attendees` row).
 
-The only gap: the **gallery feed inside an event** (`EventPhotoFeed.tsx`) is hard-coded to images only — `useGalleryPhotos` filters `type='photo'`, the file picker accepts only image MIMEs, and the grid/viewer use `<img>` exclusively.
+### Action
+Run a one-row insert into `event_attendees`:
 
-**New caps per event (raised from prior 10+1 rule):**
-- **50 photos**
-- **5 videos**
-- **500MB per video** (unchanged)
-- **10MB per photo** (unchanged)
-
-Caps are enforced client-side, consistent with the existing photo-cap pattern.
-
-## Changes
-
-### 1. `src/hooks/useRallyMedia.tsx`
-- Repurpose `useGalleryPhotos` → return **all non-featured media** (photos + videos). Remove the `.eq('type', 'photo')` filter.
-- Sort by `created_at desc` so newest leads.
-
-### 2. `src/components/events/EventPhotoFeed.tsx`
-
-**File picker `accept`** (both `<input>` instances):
-`image/jpeg,image/png,image/webp,image/heic,video/mp4,video/quicktime,video/webm`
-
-**Constants at top of file:**
-```ts
-const MAX_PHOTOS_PER_EVENT = 50;
-const MAX_VIDEOS_PER_EVENT = 5;
-const MAX_PHOTO_SIZE = 10 * 1024 * 1024;   // 10MB
-const MAX_VIDEO_SIZE = 500 * 1024 * 1024;  // 500MB
+```sql
+INSERT INTO event_attendees (event_id, profile_id, status, joined_at)
+VALUES (
+  'b0738257-5895-4ed1-b535-09f35a9def14',
+  'c1a80185-2b43-414b-a80c-32ffb54ea30c',
+  'attending',
+  now()
+);
 ```
 
-**Upload handler `handleUpload` — enforce both caps:**
-- Compute `existingPhotos = photos.filter(p => p.type === 'photo').length` and `existingVideos = photos.filter(p => p.type === 'video').length`.
-- Walk selected files in order, tracking `photosQueued` and `videosQueued`.
-- For each file:
-  - Detect type via `file.type.startsWith('video/')`.
-  - **Video path**: if `existingVideos + videosQueued >= 5` → toast `"Max 5 videos per R@lly. Delete one to add more."` and skip. Else size-check (500MB), increment `videosQueued`, upload with `type: 'video'`.
-  - **Photo path**: if `existingPhotos + photosQueued >= 50` → toast `"Max 50 photos per R@lly. Delete one to add more."` and skip. Else size-check (10MB), increment `photosQueued`, upload with `type: 'photo'`.
-- Type-aware success toast: `"Video added 🎥"` / `"3 photos added 📸"` / mixed `"5 added"`.
+Status `attending` skips the host approval queue and adds her directly as a confirmed attendee (same as if Nick had accepted her join request). She'll appear in the attendee list, get access to the event chat, ride coordination, and the photo/video feed.
 
-**Grid tile**: if item is a video, render `<video src={url} muted playsInline preload="metadata" />` plus a small play-icon overlay badge. Keep aspect-square crop.
+### Files
+No app code changes — this is a one-shot data action via a migration.
 
-**Fullscreen viewer**: if current item is a video, render `<video controls autoPlay playsInline className="max-w-full max-h-full">` instead of `<img>`. Download/delete controls remain.
-
-**Empty state CTA**: "Add Photo" → "Add Photo or Video".
-
-**Batch select**: photos only — clicking a video tile in select mode falls through to opening the viewer. Bulk save of videos is out of scope.
-
-### 3. No DB / storage / RLS changes
-Schema and bucket already support videos. Both caps enforced client-side, same pattern as the existing photo cap.
-
-### 4. Update memory
-After ship, update `mem://features/rally-media-system` to reflect new caps (50 photos + 5 videos, 500MB/video).
-
-## Out of Scope
-- Server-side cap enforcement (matches existing pattern).
-- Video thumbnail generation, compression, or transcoding.
-- Bulk camera-roll save of videos.
-
-## Files Touched
-- `src/hooks/useRallyMedia.tsx` (drop photo-only filter on gallery query)
-- `src/components/events/EventPhotoFeed.tsx` (mime accept, dual cap guard, video tile, video viewer, copy)
+### Confirm before I run
+1. Is **Taniya Boatwright** the right person? (Spelling in profile is *Taniya*, not Tania.)
+2. Should she go in as **`attending`** (direct add) or **`pending`** (Nick has to approve in-app)?
