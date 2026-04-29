@@ -15,11 +15,13 @@ interface RogueAlertOverlayProps {
   reactionCounts: Record<string, number>;
   onReact: (emoji: string) => void;
   onDismiss: () => void;
+  /** When >1, indicates more rogue alerts are stacked behind this one. */
+  queueCount?: number;
 }
 
 const REACTION_EMOJIS = ['🤮', '😍', '🍆'];
 
-export function RogueAlertOverlay({ alert, reactionCounts, onReact, onDismiss }: RogueAlertOverlayProps) {
+export function RogueAlertOverlay({ alert, reactionCounts, onReact, onDismiss, queueCount = 1 }: RogueAlertOverlayProps) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -60,6 +62,11 @@ export function RogueAlertOverlay({ alert, reactionCounts, onReact, onDismiss }:
           <p className="text-xs font-bold uppercase tracking-widest text-primary font-montserrat">
             🔥 ROGUE ALERT 🔥
           </p>
+          {queueCount > 1 && (
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-primary/70 font-montserrat">
+              {queueCount} stacked — catch up
+            </p>
+          )}
           <Avatar className="h-16 w-16 mx-auto ring-2 ring-primary/50">
             <AvatarImage src={alert.profile?.avatar_url || undefined} />
             <AvatarFallback className="text-xl">

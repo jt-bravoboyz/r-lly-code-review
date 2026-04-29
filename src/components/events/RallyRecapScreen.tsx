@@ -15,7 +15,7 @@ interface RallyRecapScreenProps {
 const TOUR_KEY_PREFIX = 'rally_recap_toured_';
 
 export function RallyRecapScreen({ eventId, eventTitle, eventType, attendeeCount, ddCount }: RallyRecapScreenProps) {
-  const { rogueTimeline, galleryPhotos, awards, stats, isLoading } = useRecapData(eventId);
+  const { rogueTimeline, galleryPhotos, heroVideo, awards, stats, isLoading } = useRecapData(eventId);
 
   const [hasSeenTour, setHasSeenTour] = useState(() => {
     return localStorage.getItem(`${TOUR_KEY_PREFIX}${eventId}`) === 'true';
@@ -46,8 +46,10 @@ export function RallyRecapScreen({ eventId, eventTitle, eventType, attendeeCount
       {/* Tour overlay */}
       {showTour && (
         <RecapTour
+          eventId={eventId}
           eventTitle={eventTitle}
           galleryPhotos={galleryPhotos}
+          heroVideo={heroVideo}
           rogueTimeline={rogueTimeline}
           awards={awards}
           stats={stats}

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { getPublicName } from '@/lib/identity';
 import { PUBLIC_APP_URL } from '@/lib/appUrl';
-import { useParams, Navigate, Link, useNavigate } from 'react-router-dom';
+import { useParams, Navigate, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { getEventTypeLabel, getEventTypeEmoji, getEventTypeVibe } from '@/lib/eventTypes';
 import { trackEvent } from '@/lib/analytics';
@@ -66,6 +66,7 @@ import { RallyCompleteOverlay } from '@/components/events/RallyCompleteOverlay';
 import { EventPhotoFeed } from '@/components/events/EventPhotoFeed';
 import { GoingRogueButton } from '@/components/events/GoingRogueButton';
 import { RogueAlertOverlay } from '@/components/events/RogueAlertOverlay';
+import { RogueAutoPoll } from '@/components/events/RogueAutoPoll';
 import { useRogueAlerts } from '@/hooks/useRogueAlerts';
 import { RallyRecapScreen } from '@/components/events/RallyRecapScreen';
 import { useMyRallyHomePrompt } from '@/hooks/useRallyHomePrompt';
@@ -98,7 +99,7 @@ export default function EventDetail() {
   const { data: eventDDs } = useEventDDs(id);
   const { data: cohosts } = useCohosts(id);
   useBarHopStopsRealtime(id); // Real-time updates for bar hop stops
-  const { latestAlert, dismissAlert, goRogue, submitReaction, reactions, hasGoneRogue } = useRogueAlerts(id);
+  const { latestAlert, dismissAlert, goRogue, submitReaction, reactions, hasGoneRogue, alerts: rogueAlerts, pendingCount, showAlertById } = useRogueAlerts(id);
   const joinEvent = useJoinEvent();
   const leaveEvent = useLeaveEvent();
   const updateEvent = useUpdateEvent();
@@ -125,6 +126,19 @@ export default function EventDetail() {
   const autoOptInFiredRef = useRef(false);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Deep-link rogue alert from a notification: ?rogue=<id>
+  useEffect(() => {
+    const rogueId = searchParams.get('rogue');
+    if (!rogueId || !id) return;
+    showAlertById(rogueId);
+    // Clear the param so refresh doesn't re-pop
+    const next = new URLSearchParams(searchParams);
+    next.delete('rogue');
+    setSearchParams(next, { replace: true });
+  }, [searchParams, id, showAlertById, setSearchParams]);
+
   const [showRallyComplete, setShowRallyComplete] = useState(false);
   const [showTransportSelector, setShowTransportSelector] = useState(false);
   const [showPaymentGate, setShowPaymentGate] = useState(false);
@@ -1004,8 +1018,11 @@ export default function EventDetail() {
             )}
           </TabsContent>
 
-          <TabsContent value="photos" className="mt-4">
-            <EventPhotoFeed eventId={event.id} isHost={canManage} />
+          <TabsContent value="photos" className="mt-4 space-y-4">
+            {rogueAlerts && rogueAlerts.length > 0 && (
+              <RogueAutoPoll eventId={event.id} alerts={rogueAlerts as any} reactions={reactions as any} />
+            )}
+            <EventPhotoFeed eventId={event.id} isHost={canManage} eventStatus={event.status as any} eventUpdatedAt={event.updated_at as any} />
           </TabsContent>
 
           <TabsContent value="chat" className="mt-4">
@@ -1313,10 +1330,11 @@ export default function EventDetail() {
         inviteCode={event.invite_code}
       />
 
-      {/* Rogue Alert Overlay - Realtime */}
+      {/* Rogue Alert Overlay - Realtime + queue */}
       {latestAlert && (
         <RogueAlertOverlay
           alert={latestAlert}
+          queueCount={pendingCount}
           reactionCounts={
             reactions
               .filter(r => r.rogue_alert_id === latestAlert.id)

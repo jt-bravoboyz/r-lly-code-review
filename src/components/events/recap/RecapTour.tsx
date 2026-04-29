@@ -3,10 +3,14 @@ import { createPortal } from 'react-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useConfetti } from '@/hooks/useConfetti';
 import { cn } from '@/lib/utils';
+import { RecapMediaTile, type RecapMediaItem } from './RecapMediaTile';
+import { getRecapCloser } from './recapClosers';
 
 interface RecapTourProps {
+  eventId: string;
   eventTitle: string;
-  galleryPhotos: Array<{ id: string; url: string }>;
+  galleryPhotos: RecapMediaItem[];
+  heroVideo?: RecapMediaItem | null;
   rogueTimeline: Array<{
     id: string;
     displayName: string;
@@ -22,7 +26,7 @@ interface RecapTourProps {
     winnerName: string;
     winnerAvatar: string | null;
   }>;
-  stats: { photoCount: number; rogueCount: number; reactionCount: number };
+  stats: { photoCount: number; videoCount?: number; rogueCount: number; reactionCount: number };
   attendeeCount: number;
   ddCount: number;
   onComplete: () => void;
@@ -31,15 +35,18 @@ interface RecapTourProps {
 const CALLOUTS = [
   'Mission Complete.',
   'Your Night. Captured.',
+  'The Reel Just Dropped.',
   'Best Moment Locked.',
   'Chaos. Documented.',
   'Squad Stars Identified.',
-  'The Horse Is Home.',
+  'Final Frame.',
 ];
 
 export function RecapTour({
+  eventId,
   eventTitle,
   galleryPhotos,
+  heroVideo,
   rogueTimeline,
   awards,
   stats,
@@ -50,10 +57,12 @@ export function RecapTour({
   const [step, setStep] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const { fireRallyConfetti } = useConfetti();
+  const closer = getRecapCloser(eventId);
 
   // Determine which steps exist based on available data
-  const steps: Array<'title' | 'gallery' | 'bestPhoto' | 'rogue' | 'stars' | 'finale'> = ['title'];
+  const steps: Array<'title' | 'gallery' | 'heroVideo' | 'bestPhoto' | 'rogue' | 'stars' | 'finale'> = ['title'];
   if (galleryPhotos.length > 0) steps.push('gallery');
+  if (heroVideo) steps.push('heroVideo');
   if (galleryPhotos.length > 0) steps.push('bestPhoto');
   if (rogueTimeline.length > 0) steps.push('rogue');
   if (awards.length > 0) steps.push('stars');
@@ -158,26 +167,43 @@ export function RecapTour({
         {currentStep === 'gallery' && galleryPhotos.length > 0 && (
           <div className="space-y-4">
             <div className="grid grid-cols-3 gap-2">
-              {galleryPhotos.slice(0, 6).map((photo, i) => (
+              {galleryPhotos.slice(0, 6).map((media, i) => (
                 <div
-                  key={photo.id}
-                  className="aspect-square rounded-xl overflow-hidden ring-1 ring-white/10 bg-gradient-to-br from-primary/40 to-primary/10"
+                  key={media.id}
+                  className="rounded-xl overflow-hidden ring-1 ring-white/10 animate-fade-in"
                   style={{ animationDelay: `${i * 100}ms` }}
                 >
-                  <img
-                    src={photo.url}
-                    alt=""
-                    className="w-full h-full object-cover animate-fade-in"
-                    onError={(e) => {
-                      (e.currentTarget as HTMLImageElement).style.display = 'none';
-                    }}
-                  />
+                  <RecapMediaTile media={media} />
                 </div>
               ))}
             </div>
             <p className="text-center text-white/60 text-sm font-montserrat">
-              📸 {stats.photoCount} moments captured
+              📸 {stats.photoCount} photos
+              {stats.videoCount ? ` · 🎞️ ${stats.videoCount} clip${stats.videoCount === 1 ? '' : 's'}` : ''}
             </p>
+          </div>
+        )}
+
+        {/* Step 2.5: Hero Video */}
+        {currentStep === 'heroVideo' && heroVideo && (
+          <div className="space-y-4">
+            <div className="relative">
+              <video
+                src={heroVideo.url}
+                poster={heroVideo.thumbnail_url || undefined}
+                autoPlay
+                muted
+                loop
+                playsInline
+                className="w-full aspect-[4/5] object-cover rounded-2xl ring-2 ring-primary/40 shadow-2xl bg-black"
+              />
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+              <div className="absolute bottom-4 left-4 right-4">
+                <p className="text-primary text-xs uppercase tracking-[0.2em] font-montserrat font-bold">
+                  🎞️ Final Frame — The reel just dropped
+                </p>
+              </div>
+            </div>
           </div>
         )}
 
@@ -185,12 +211,24 @@ export function RecapTour({
         {currentStep === 'bestPhoto' && heroPhoto && (
           <div className="space-y-4">
             <div className="relative">
-              <img
-                src={heroPhoto.url}
-                alt="Shot of the Night"
-                className="w-full aspect-[4/5] object-cover rounded-2xl ring-2 ring-primary/40 shadow-2xl"
-              />
-              <div className="absolute inset-0 rounded-2xl bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+              {heroPhoto.type === 'video' ? (
+                <video
+                  src={heroPhoto.url}
+                  poster={heroPhoto.thumbnail_url || undefined}
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  className="w-full aspect-[4/5] object-cover rounded-2xl ring-2 ring-primary/40 shadow-2xl bg-black"
+                />
+              ) : (
+                <img
+                  src={heroPhoto.url}
+                  alt="Shot of the Night"
+                  className="w-full aspect-[4/5] object-cover rounded-2xl ring-2 ring-primary/40 shadow-2xl"
+                />
+              )}
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
               <div className="absolute bottom-4 left-4 right-4">
                 <p className="text-primary text-xs uppercase tracking-[0.2em] font-montserrat font-bold">
                   ⭐ Shot of the Night
@@ -275,11 +313,11 @@ export function RecapTour({
           <div className="text-center space-y-6">
             <div className="space-y-2">
               <div className="w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-primary/80 to-primary/40 flex items-center justify-center ring-4 ring-primary/20">
-                <span className="text-2xl">🐴</span>
+                <span className="text-2xl">{closer.emoji}</span>
               </div>
-              <p className="text-white font-bold font-montserrat text-lg">Mission Accomplished.</p>
+              <p className="text-white font-bold font-montserrat text-lg">{closer.title}</p>
               <p className="text-white/30 text-xs font-montserrat uppercase tracking-widest">
-                The horse is back in the stable
+                {closer.subtitle}
               </p>
             </div>
 

@@ -27,9 +27,11 @@ const ACCEPT_ATTR = [...ALLOWED_IMAGE_TYPES, ...ALLOWED_VIDEO_TYPES].join(',');
 interface EventPhotoFeedProps {
   eventId: string;
   isHost: boolean;
+  eventStatus?: string | null;
+  eventUpdatedAt?: string | null;
 }
 
-export function EventPhotoFeed({ eventId, isHost }: EventPhotoFeedProps) {
+export function EventPhotoFeed({ eventId, isHost, eventStatus, eventUpdatedAt }: EventPhotoFeedProps) {
   const { profile } = useAuth();
   const { openProfile } = usePublicProfile();
   const { data: galleryMedia, isLoading } = useGalleryPhotos(eventId);
@@ -47,6 +49,20 @@ export function EventPhotoFeed({ eventId, isHost }: EventPhotoFeedProps) {
   // Track videos that fail to play in the browser (e.g. legacy .mov on Android)
   const [erroredVideoIds, setErroredVideoIds] = useState<Set<string>>(new Set());
   const { triggerHaptic } = useHaptics();
+
+  // 24h after-party upload window
+  const uploadWindow = (() => {
+    if (eventStatus !== 'completed') return { canUpload: true, msLeft: null as number | null };
+    if (!eventUpdatedAt) return { canUpload: false, msLeft: 0 };
+    const endsAt = new Date(eventUpdatedAt).getTime() + 24 * 60 * 60 * 1000;
+    const msLeft = endsAt - Date.now();
+    return { canUpload: msLeft > 0, msLeft };
+  })();
+  const formatCountdown = (ms: number) => {
+    const h = Math.floor(ms / 3600000);
+    const m = Math.floor((ms % 3600000) / 60000);
+    return `${h}h ${m}m`;
+  };
 
   const photos = galleryMedia || [];
 
@@ -346,6 +362,19 @@ export function EventPhotoFeed({ eventId, isHost }: EventPhotoFeedProps) {
 
   return (
     <div className="space-y-3">
+      {/* 24h After-Party Upload banner / Bundle locked state */}
+      {eventStatus === 'completed' && (
+        uploadWindow.canUpload && uploadWindow.msLeft != null ? (
+          <div className="rounded-xl border border-primary/30 bg-gradient-to-r from-primary/10 to-primary/5 px-3 py-2.5 text-xs font-montserrat">
+            🎬 <span className="font-bold">The night's not over.</span> Drop your shots & clips for the final cut — <span className="font-semibold text-primary">{formatCountdown(uploadWindow.msLeft)} left</span>.
+          </div>
+        ) : (
+          <div className="rounded-xl border border-border/40 bg-muted/40 px-3 py-2.5 text-xs font-montserrat text-muted-foreground text-center">
+            🔒 Bundle locked — the 24h after-party upload window has closed.
+          </div>
+        )
+      )}
+
       {/* Header — switches to Select toolbar when in select mode */}
       {selectMode ? (
         <div className="flex items-center justify-between gap-2">
@@ -375,16 +404,18 @@ export function EventPhotoFeed({ eventId, isHost }: EventPhotoFeedProps) {
                 Select
               </Button>
             )}
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1.5"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploading}
-            >
-              {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ImagePlus className="h-3.5 w-3.5" />}
-              {uploading ? 'Uploading…' : 'Add'}
-            </Button>
+            {uploadWindow.canUpload && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+              >
+                {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ImagePlus className="h-3.5 w-3.5" />}
+                {uploading ? 'Uploading…' : 'Add'}
+              </Button>
+            )}
           </div>
         </div>
       )}

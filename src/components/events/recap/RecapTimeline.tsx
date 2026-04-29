@@ -1,17 +1,22 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Camera, Share2, ShieldCheck } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { PUBLIC_APP_URL } from '@/lib/appUrl';
 import { cn } from '@/lib/utils';
+import { RecapMediaTile, type RecapMediaItem } from './RecapMediaTile';
+import { getRecapCloser } from './recapClosers';
+import { useRogueAlerts } from '@/hooks/useRogueAlerts';
+
+const REACTION_EMOJIS = ['🤮', '😍', '🍆'];
 
 interface RecapTimelineProps {
   eventId: string;
   eventTitle: string;
   attendeeCount: number;
   ddCount: number;
-  galleryPhotos: Array<{ id: string; url: string }>;
+  galleryPhotos: RecapMediaItem[];
   rogueTimeline: Array<{
     id: string;
     displayName: string;
@@ -27,7 +32,7 @@ interface RecapTimelineProps {
     winnerName: string;
     winnerAvatar: string | null;
   }>;
-  stats: { photoCount: number; rogueCount: number; reactionCount: number };
+  stats: { photoCount: number; videoCount?: number; rogueCount: number; reactionCount: number };
 }
 
 export function RecapTimeline({
@@ -41,10 +46,15 @@ export function RecapTimeline({
   stats,
 }: RecapTimelineProps) {
   const [showAllPhotos, setShowAllPhotos] = useState(false);
+  const closer = useMemo(() => getRecapCloser(eventId), [eventId]);
+  const { submitReaction } = useRogueAlerts(eventId);
+
   const displayPhotos = showAllPhotos ? galleryPhotos : galleryPhotos.slice(0, 6);
+  const hero = galleryPhotos[0];
+  const videoCount = stats.videoCount ?? 0;
 
   const handleShare = async () => {
-    const text = `🐴 Mission Accomplished.\n\n"${eventTitle}" R@lly Recap:\n📸 ${stats.photoCount} Photos | 🔥 ${stats.rogueCount} Rogues | 💬 ${stats.reactionCount} Reactions\n\n100% SECURED. THE HORSE IS BACK IN THE STABLE.\n\nPowered by R@lly`;
+    const text = `${closer.emoji} ${closer.title}\n\n"${eventTitle}" R@lly Recap:\n📸 ${stats.photoCount} Photos${videoCount ? ` · 🎞️ ${videoCount} Clips` : ''} | 🔥 ${stats.rogueCount} Rogues | 💬 ${stats.reactionCount} Reactions\n\n${closer.share.toUpperCase()}\n\nPowered by R@lly`;
     if (navigator.share) {
       try {
         await navigator.share({ title: `${eventTitle} — R@lly Recap`, text, url: `${PUBLIC_APP_URL}/events/${eventId}` });
@@ -55,14 +65,24 @@ export function RecapTimeline({
     }
   };
 
+  const handleReact = (alertId: string, emoji: string) => {
+    submitReaction.mutate({ alertId, emoji });
+  };
+
   return (
     <div className="space-y-8 pb-8">
       {/* Title */}
       <section className="text-center space-y-3 pt-2">
         <p className="text-xs uppercase tracking-[0.2em] text-primary/70 font-montserrat font-bold">R@lly Recap</p>
         <h2 className="text-2xl font-bold text-foreground font-montserrat">{eventTitle}</h2>
-        <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
+        <div className="flex items-center justify-center gap-3 text-sm text-muted-foreground flex-wrap">
           <span>📸 {stats.photoCount}</span>
+          {videoCount > 0 && (
+            <>
+              <span className="text-border">|</span>
+              <span>🎞️ {videoCount}</span>
+            </>
+          )}
           <span className="text-border">|</span>
           <span>🔥 {stats.rogueCount}</span>
           <span className="text-border">|</span>
@@ -70,26 +90,36 @@ export function RecapTimeline({
         </div>
       </section>
 
-      {/* Hero Photo */}
-      {galleryPhotos.length > 0 && (
+      {/* Hero Media (photo or video) */}
+      {hero && (
         <section>
           <div className="relative">
-            <img
-              src={galleryPhotos[0].url}
-              alt="Shot of the Night"
-              className="w-full aspect-[4/5] object-cover rounded-2xl ring-2 ring-primary/30 shadow-lg"
-            />
-            <div className="absolute inset-0 rounded-2xl bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+            {hero.type === 'video' ? (
+              <video
+                src={hero.url}
+                poster={hero.thumbnail_url || undefined}
+                controls
+                playsInline
+                className="w-full aspect-[4/5] object-cover rounded-2xl ring-2 ring-primary/30 shadow-lg bg-black"
+              />
+            ) : (
+              <img
+                src={hero.url}
+                alt="Shot of the Night"
+                className="w-full aspect-[4/5] object-cover rounded-2xl ring-2 ring-primary/30 shadow-lg"
+              />
+            )}
+            <div className="absolute inset-0 rounded-2xl bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
             <div className="absolute bottom-4 left-4">
               <span className="bg-primary/90 text-primary-foreground text-xs font-bold px-3 py-1.5 rounded-full font-montserrat">
-                ⭐ Shot of the Night
+                {hero.type === 'video' ? '🎞️ Final Frame' : '⭐ Shot of the Night'}
               </span>
             </div>
           </div>
         </section>
       )}
 
-      {/* Photo Bundle */}
+      {/* Photo + Video Bundle */}
       {galleryPhotos.length > 1 && (
         <section className="space-y-3">
           <div className="flex items-center gap-2">
@@ -98,16 +128,13 @@ export function RecapTimeline({
               Photo Bundle
             </h3>
           </div>
-          <div className="columns-2 gap-2.5 space-y-2.5">
-            {displayPhotos.slice(1).map((photo) => (
-              <div key={photo.id} className="break-inside-avoid">
-                <img
-                  src={photo.url}
-                  alt=""
-                  className="w-full rounded-xl object-cover ring-1 ring-border/30"
-                  loading="lazy"
-                />
-              </div>
+          <div className="grid grid-cols-3 gap-2">
+            {displayPhotos.slice(1).map((media) => (
+              <RecapMediaTile
+                key={media.id}
+                media={media}
+                className="rounded-xl ring-1 ring-border/30"
+              />
             ))}
           </div>
           {galleryPhotos.length > 7 && !showAllPhotos && (
@@ -117,13 +144,13 @@ export function RecapTimeline({
               className="w-full font-montserrat text-xs"
               onClick={() => setShowAllPhotos(true)}
             >
-              View All ({galleryPhotos.length} photos)
+              View All ({galleryPhotos.length} items)
             </Button>
           )}
         </section>
       )}
 
-      {/* Rogue Timeline */}
+      {/* Rogue Timeline — with inline tap-to-react */}
       {rogueTimeline.length > 0 && (
         <section className="rounded-2xl bg-[#0e0e1a] px-4 py-6 space-y-4">
           <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-primary/80 font-montserrat">
@@ -133,7 +160,7 @@ export function RecapTimeline({
             <div
               key={moment.id}
               className={cn(
-                'bg-white/[0.03] border border-white/[0.06] rounded-xl p-4 space-y-2',
+                'bg-white/[0.03] border border-white/[0.06] rounded-xl p-4 space-y-3',
                 'animate-fade-in'
               )}
               style={{ animationDelay: `${i * 100}ms` }}
@@ -153,15 +180,26 @@ export function RecapTimeline({
                   <p className="text-white/60 text-sm italic">"{moment.finalWords}"</p>
                 </div>
               )}
-              {Object.keys(moment.reactionCounts).length > 0 && (
-                <div className="flex gap-2 ml-11">
-                  {Object.entries(moment.reactionCounts).map(([emoji, count]) => (
-                    <span key={emoji} className="bg-white/[0.06] rounded-full px-2.5 py-0.5 text-xs text-white/50">
-                      {emoji} {count}
-                    </span>
-                  ))}
-                </div>
-              )}
+              {/* Inline reaction bar — late reactions still count */}
+              <div className="flex gap-2 ml-11 flex-wrap">
+                {REACTION_EMOJIS.map((emoji) => {
+                  const count = moment.reactionCounts[emoji] || 0;
+                  return (
+                    <button
+                      key={emoji}
+                      onClick={() => handleReact(moment.id, emoji)}
+                      className={cn(
+                        'inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs',
+                        'bg-white/[0.06] hover:bg-primary/20 border border-white/[0.06] hover:border-primary/40',
+                        'text-white/70 hover:text-white transition-all active:scale-95'
+                      )}
+                    >
+                      <span>{emoji}</span>
+                      {count > 0 && <span className="text-white/50">{count}</span>}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           ))}
         </section>
@@ -195,15 +233,15 @@ export function RecapTimeline({
         </section>
       )}
 
-      {/* Safe & Sound Finale */}
+      {/* Closer */}
       <section className="rounded-2xl bg-card/40 border border-border/30 p-6 space-y-4 text-center">
         <div className="mx-auto w-16 h-16 rounded-full bg-gradient-to-br from-primary/80 to-primary/50 flex items-center justify-center shadow-lg ring-4 ring-primary/20">
           <ShieldCheck className="h-8 w-8 text-primary-foreground" />
         </div>
         <div className="space-y-1">
-          <p className="text-lg font-bold font-montserrat text-primary">🐴 Mission Accomplished.</p>
+          <p className="text-lg font-bold font-montserrat text-primary">{closer.emoji} {closer.title}</p>
           <p className="text-xs font-bold text-foreground font-montserrat uppercase tracking-wide">
-            100% Secured. The horse is back in the stable.
+            {closer.subtitle}
           </p>
           <p className="text-[11px] text-muted-foreground">
             {attendeeCount} confirmed · {ddCount} DDs deployed
