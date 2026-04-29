@@ -21,7 +21,7 @@ interface RogueAlertOverlayProps {
 
 const REACTION_EMOJIS = ['🤮', '😍', '🍆'];
 
-export function RogueAlertOverlay({ alert, reactionCounts, onReact, onDismiss }: RogueAlertOverlayProps) {
+export function RogueAlertOverlay({ alert, reactionCounts, onReact, onDismiss, queueCount = 1 }: RogueAlertOverlayProps) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
