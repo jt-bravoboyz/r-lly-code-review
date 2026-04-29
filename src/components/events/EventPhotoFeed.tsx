@@ -50,6 +50,20 @@ export function EventPhotoFeed({ eventId, isHost, eventStatus, eventUpdatedAt }:
   const [erroredVideoIds, setErroredVideoIds] = useState<Set<string>>(new Set());
   const { triggerHaptic } = useHaptics();
 
+  // 24h after-party upload window
+  const uploadWindow = (() => {
+    if (eventStatus !== 'completed') return { canUpload: true, msLeft: null as number | null };
+    if (!eventUpdatedAt) return { canUpload: false, msLeft: 0 };
+    const endsAt = new Date(eventUpdatedAt).getTime() + 24 * 60 * 60 * 1000;
+    const msLeft = endsAt - Date.now();
+    return { canUpload: msLeft > 0, msLeft };
+  })();
+  const formatCountdown = (ms: number) => {
+    const h = Math.floor(ms / 3600000);
+    const m = Math.floor((ms % 3600000) / 60000);
+    return `${h}h ${m}m`;
+  };
+
   const photos = galleryMedia || [];
 
   // Fetch uploader profiles
