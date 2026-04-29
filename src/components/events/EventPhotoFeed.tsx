@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { getPublicName } from '@/lib/identity';
-import { Camera, ImagePlus, X, Loader2, Trash2, Download, Check, CheckCircle2 } from 'lucide-react';
+import { Camera, ImagePlus, X, Loader2, Trash2, Download, Check, CheckCircle2, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useGalleryPhotos, useUploadRallyMedia, useDeleteRallyMedia, type RallyMedia } from '@/hooks/useRallyMedia';
@@ -15,8 +15,13 @@ import { ensurePhotoPermission } from './PhotoPermissionDialog';
 import { useHaptics } from '@/hooks/useHaptics';
 import { usePublicProfile } from '@/contexts/PublicProfileContext';
 
-const MAX_PHOTO_SIZE = 10 * 1024 * 1024;
+const MAX_PHOTOS_PER_EVENT = 50;
+const MAX_VIDEOS_PER_EVENT = 5;
+const MAX_PHOTO_SIZE = 10 * 1024 * 1024;       // 10MB
+const MAX_VIDEO_SIZE = 500 * 1024 * 1024;      // 500MB
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic'];
+const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/quicktime', 'video/webm'];
+const ACCEPT_ATTR = [...ALLOWED_IMAGE_TYPES, ...ALLOWED_VIDEO_TYPES].join(',');
 
 interface EventPhotoFeedProps {
   eventId: string;
