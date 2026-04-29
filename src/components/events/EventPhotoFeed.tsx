@@ -14,6 +14,7 @@ import { downloadPhoto, downloadPhotosBatch } from '@/lib/downloadMedia';
 import { ensurePhotoPermission } from './PhotoPermissionDialog';
 import { useHaptics } from '@/hooks/useHaptics';
 import { usePublicProfile } from '@/contexts/PublicProfileContext';
+import { extractVideoThumbnail } from '@/lib/videoThumbnail';
 
 const MAX_PHOTOS_PER_EVENT = 50;
 const MAX_VIDEOS_PER_EVENT = 5;
@@ -87,6 +88,51 @@ export function EventPhotoFeed({ eventId, isHost }: EventPhotoFeedProps) {
 
     return () => { supabase.removeChannel(channel); };
   }, [eventId, queryClient]);
+
+  // Opportunistic thumbnail backfill: for the user's OWN legacy videos that
+  // never got a thumbnail, generate one in the background and patch the row.
+  const backfillAttemptedRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (!profile?.id) return;
+    const targets = photos.filter(
+      (p) =>
+        p.type === 'video' &&
+        !p.thumbnail_url &&
+        p.created_by === profile.id &&
+        !backfillAttemptedRef.current.has(p.id)
+    );
+    if (!targets.length) return;
+
+    let cancelled = false;
+    (async () => {
+      for (const media of targets) {
+        if (cancelled) return;
+        backfillAttemptedRef.current.add(media.id);
+        try {
+          const res = await fetch(media.url);
+          if (!res.ok) continue;
+          const blob = await res.blob();
+          const thumb = await extractVideoThumbnail(blob);
+          if (!thumb || cancelled) continue;
+          const thumbPath = `${eventId}/${media.id}_thumb.jpg`;
+          const { error: upErr } = await supabase.storage
+            .from('rally-media')
+            .upload(thumbPath, thumb, { upsert: true, contentType: 'image/jpeg' });
+          if (upErr) continue;
+          const publicUrl = supabase.storage.from('rally-media').getPublicUrl(thumbPath).data.publicUrl;
+          await supabase
+            .from('rally_media' as any)
+            .update({ thumbnail_url: publicUrl })
+            .eq('id', media.id);
+          queryClient.invalidateQueries({ queryKey: ['rally-media-gallery', eventId] });
+        } catch (err) {
+          console.warn('[rally-media] backfill failed', media.id, err);
+        }
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [photos, profile?.id, eventId, queryClient]);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!profile || !e.target.files?.length) return;
@@ -376,23 +422,34 @@ export function EventPhotoFeed({ eventId, isHost }: EventPhotoFeedProps) {
                 </div>
               ) : isVideo ? (
                 <>
-                  <video
-                    src={photo.url}
-                    muted
-                    playsInline
-                    preload="metadata"
-                    onError={() => {
-                      setErroredVideoIds((prev) => {
-                        if (prev.has(photo.id)) return prev;
-                        const next = new Set(prev);
-                        next.add(photo.id);
-                        return next;
-                      });
-                    }}
-                    className={`w-full h-full object-cover transition-all duration-300 ${
-                      selectMode && isSelected ? 'scale-95 brightness-75' : 'group-hover:scale-105 group-active:scale-95'
-                    }`}
-                  />
+                  {photo.thumbnail_url ? (
+                    <img
+                      src={photo.thumbnail_url}
+                      alt=""
+                      loading="lazy"
+                      className={`w-full h-full object-cover transition-all duration-300 ${
+                        selectMode && isSelected ? 'scale-95 brightness-75' : 'group-hover:scale-105 group-active:scale-95'
+                      }`}
+                    />
+                  ) : (
+                    <video
+                      src={photo.url}
+                      muted
+                      playsInline
+                      preload="metadata"
+                      onError={() => {
+                        setErroredVideoIds((prev) => {
+                          if (prev.has(photo.id)) return prev;
+                          const next = new Set(prev);
+                          next.add(photo.id);
+                          return next;
+                        });
+                      }}
+                      className={`w-full h-full object-cover transition-all duration-300 ${
+                        selectMode && isSelected ? 'scale-95 brightness-75' : 'group-hover:scale-105 group-active:scale-95'
+                      }`}
+                    />
+                  )}
                   {/* Play badge */}
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                     <div className="h-9 w-9 rounded-full bg-black/55 backdrop-blur-sm flex items-center justify-center">
@@ -459,7 +516,7 @@ export function EventPhotoFeed({ eventId, isHost }: EventPhotoFeedProps) {
       {/* Fullscreen Viewer Portal */}
       {viewerIndex !== null && photos[viewerIndex] && createPortal(
         <div
-          className="fixed inset-0 bg-black/95 z-[99999] flex flex-col"
+          className="fixed inset-0 bg-black/95 z-[99999] flex flex-col safe-top safe-bottom"
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
         >
@@ -568,7 +625,7 @@ export function EventPhotoFeed({ eventId, isHost }: EventPhotoFeedProps) {
 
           {/* Dot indicators */}
           {photos.length > 1 && (
-            <div className="flex items-center justify-center gap-1.5 pb-8 pt-4">
+            <div className="flex items-center justify-center gap-1.5 pb-4 pt-4">
               {photos.map((_, i) => (
                 <button
                   key={i}

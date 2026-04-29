@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { extractVideoThumbnail } from '@/lib/videoThumbnail';
 
 export interface RallyMedia {
   id: string;
@@ -94,7 +95,28 @@ export function useUploadRallyMedia() {
       onUploadProgress?: (progress: { loaded: number; total: number }) => void;
     }) => {
       const ext = file.name.split('.').pop() || (type === 'video' ? 'mp4' : 'jpg');
-      const filePath = `${eventId}/${crypto.randomUUID()}.${ext}`;
+      const baseId = crypto.randomUUID();
+      const filePath = `${eventId}/${baseId}.${ext}`;
+
+      // For videos, extract a thumbnail BEFORE uploading the heavy file so the
+      // user's tap-to-pick gesture is still active (helps iOS Safari decode).
+      let thumbnailUrl: string | null = null;
+      if (type === 'video') {
+        try {
+          const thumbBlob = await extractVideoThumbnail(file);
+          if (thumbBlob) {
+            const thumbPath = `${eventId}/${baseId}_thumb.jpg`;
+            const { error: thumbErr } = await supabase.storage
+              .from('rally-media')
+              .upload(thumbPath, thumbBlob, { upsert: false, contentType: 'image/jpeg' });
+            if (!thumbErr) {
+              thumbnailUrl = supabase.storage.from('rally-media').getPublicUrl(thumbPath).data.publicUrl;
+            }
+          }
+        } catch (err) {
+          console.warn('[rally-media] thumbnail extraction failed', err);
+        }
+      }
 
       const { error: uploadError } = await supabase.storage
         .from('rally-media')
@@ -118,6 +140,7 @@ export function useUploadRallyMedia() {
           event_id: eventId,
           type,
           url: urlData.publicUrl,
+          thumbnail_url: thumbnailUrl,
           order_index: orderIndex,
           created_by: profileId,
           is_featured: isFeatured,
