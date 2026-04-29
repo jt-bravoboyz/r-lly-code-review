@@ -30,13 +30,15 @@ export function MiniFounderGem({ profileId, className }: MiniFounderGemProps) {
         className="mini-founder-medal"
       >
         <defs>
-          {/* Ribbon: horizontal purple stripes with a darker center */}
+          {/* Ribbon: R@lly Orange military-style ribbon with a deep center stripe for contrast against the purple coin */}
           <linearGradient id="mfgRibbon" x1="0" y1="0" x2="18" y2="0" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stopColor="#5A1F8C" />
-            <stop offset="35%" stopColor="#9B4DCA" />
-            <stop offset="50%" stopColor="#3E1466" />
-            <stop offset="65%" stopColor="#9B4DCA" />
-            <stop offset="100%" stopColor="#5A1F8C" />
+            <stop offset="0%" stopColor="#A33F00" />
+            <stop offset="20%" stopColor="#F47A19" />
+            <stop offset="40%" stopColor="#FFB066" />
+            <stop offset="50%" stopColor="#7A2A00" />
+            <stop offset="60%" stopColor="#FFB066" />
+            <stop offset="80%" stopColor="#F47A19" />
+            <stop offset="100%" stopColor="#A33F00" />
           </linearGradient>
 
           {/* Coin face: radial metallic purple */}
