@@ -151,32 +151,6 @@ export function InviteToEventDialog({
     }
   };
 
-  const handleInviteFriend = async (friend: RallyFriend) => {
-    setInvitingFriendId(friend.id);
-    try {
-      await createInvites.mutateAsync({
-        eventId,
-        profileIds: [friend.id],
-        eventTitle,
-      });
-      await recordInvite.mutateAsync({
-        profileId: friend.id,
-        name: friend.display_name || undefined,
-      });
-      setInvitedFriendIds((prev) => new Set([...prev, friend.id]));
-      toast.success(`Invited ${friend.display_name || 'friend'}!`);
-    } catch (err: any) {
-      if (err.message?.includes('already been invited')) {
-        setInvitedFriendIds((prev) => new Set([...prev, friend.id]));
-        toast.info('Already invited');
-      } else {
-        toast.error(err.message || 'Failed to invite');
-      }
-    } finally {
-      setInvitingFriendId(null);
-    }
-  };
-
   const handleInviteSquad = async (squad: Squad) => {
     const profilesToInvite: string[] = [];
     if (
