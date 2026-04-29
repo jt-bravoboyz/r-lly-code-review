@@ -223,7 +223,7 @@ export function EventPhotoFeed({ eventId, isHost }: EventPhotoFeedProps) {
   const handleBatchSave = async () => {
     if (batchSaving || selectedIds.size === 0) return;
     const items = photos
-      .filter(p => selectedIds.has(p.id))
+      .filter(p => selectedIds.has(p.id) && p.type === 'photo')
       .map(p => ({ url: p.url, id: p.id, eventId }));
     if (items.length === 0) return;
 
