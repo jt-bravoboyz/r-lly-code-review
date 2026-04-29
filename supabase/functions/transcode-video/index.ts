@@ -1,20 +1,20 @@
-// Edge function: transcode iPhone .mov files to .mp4 so they play on Android.
-// Strategy: stream-copy remux (no re-encode) — fast, lossless, low memory.
+// Edge function: convert iPhone .mov files so they play on Android.
+//
+// Strategy: Edge runtime cannot run ffmpeg. iPhone .mov files are H.264/AAC
+// in a QuickTime container — which is binary-compatible enough with MP4 that
+// Android Chrome will play them when served with `Content-Type: video/mp4`
+// and a `.mp4` extension. So we re-upload the same bytes to a `.mp4` path
+// with the correct content-type, update the DB row, and remove the old file.
 //
 // Flow:
-// 1) Accept { media_id } from client (after they've inserted the row with processing=true)
-// 2) Download the .mov from the rally-media bucket using service-role
-// 3) Run ffmpeg-wasm with `-c copy -movflags +faststart -f mp4` to remux container
-// 4) Upload the resulting .mp4 to the same path (with .mp4 extension)
-// 5) Update rally_media row: url -> new mp4 url, processing -> false
-// 6) Delete the original .mov object (best-effort)
+// 1) Accept { media_id }
+// 2) Download .mov from rally-media bucket (service role)
+// 3) Re-upload identical bytes to <same-path>.mp4 with content-type video/mp4
+// 4) Update rally_media.url -> new mp4 url, processing -> false
+// 5) Delete original .mov (best-effort)
 
 // @ts-ignore - npm specifier resolved at runtime
 import { createClient } from 'npm:@supabase/supabase-js@2.45.0';
-// @ts-ignore - npm specifier resolved at runtime
-import { FFmpeg } from 'npm:@ffmpeg/ffmpeg@0.12.10';
-// @ts-ignore - npm specifier resolved at runtime
-import { fetchFile } from 'npm:@ffmpeg/util@0.12.1';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -27,16 +27,6 @@ const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const BUCKET = 'rally-media';
 
-// Lazily init ffmpeg per cold-start
-let ffmpegInstance: any = null;
-async function getFfmpeg() {
-  if (ffmpegInstance) return ffmpegInstance;
-  const ff = new FFmpeg();
-  await ff.load();
-  ffmpegInstance = ff;
-  return ff;
-}
-
 interface RequestBody {
   media_id: string;
 }
@@ -46,6 +36,8 @@ Deno.serve(async (req) => {
     return new Response('ok', { headers: corsHeaders });
   }
 
+  let mediaId: string | undefined;
+
   try {
     const body = (await req.json()) as RequestBody;
     if (!body?.media_id || typeof body.media_id !== 'string') {
@@ -54,14 +46,15 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+    mediaId = body.media_id;
 
     const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
     // 1) Fetch the media row
     const { data: media, error: mediaErr } = await admin
       .from('rally_media')
-      .select('id, url, type, processing, event_id')
-      .eq('id', body.media_id)
+      .select('id, url, type')
+      .eq('id', mediaId)
       .single();
 
     if (mediaErr || !media) {
@@ -72,6 +65,7 @@ Deno.serve(async (req) => {
     }
 
     if (media.type !== 'video') {
+      await admin.from('rally_media').update({ processing: false }).eq('id', media.id);
       return new Response(JSON.stringify({ skipped: 'not a video' }), {
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -79,10 +73,10 @@ Deno.serve(async (req) => {
     }
 
     // Derive storage path from public URL
-    // URL pattern: <SUPABASE_URL>/storage/v1/object/public/rally-media/<event_id>/<uuid>.<ext>
     const marker = `/storage/v1/object/public/${BUCKET}/`;
     const idx = media.url.indexOf(marker);
     if (idx === -1) {
+      await admin.from('rally_media').update({ processing: false }).eq('id', media.id);
       return new Response(JSON.stringify({ error: 'Cannot parse storage path from url' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -91,61 +85,38 @@ Deno.serve(async (req) => {
     const oldPath = media.url.substring(idx + marker.length);
     const ext = (oldPath.split('.').pop() || '').toLowerCase();
 
-    // Already mp4/webm — nothing to do, just clear processing flag
+    // Already mp4/webm — nothing to do
     if (ext === 'mp4' || ext === 'webm') {
-      await admin
-        .from('rally_media')
-        .update({ processing: false })
-        .eq('id', media.id);
+      await admin.from('rally_media').update({ processing: false }).eq('id', media.id);
       return new Response(JSON.stringify({ skipped: 'already playable', ext }), {
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // 2) Download the .mov
+    // 2) Download
     const { data: blob, error: dlErr } = await admin.storage.from(BUCKET).download(oldPath);
     if (dlErr || !blob) {
+      await admin.from('rally_media').update({ processing: false }).eq('id', media.id);
       return new Response(
         JSON.stringify({ error: 'Download failed', detail: dlErr?.message }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       );
     }
 
-    // 3) Remux with ffmpeg-wasm (stream copy, no re-encode)
-    const ff = await getFfmpeg();
-    const inputName = `input.${ext}`;
-    const outputName = 'output.mp4';
+    const bytes = new Uint8Array(await blob.arrayBuffer());
 
-    const inputBytes = new Uint8Array(await blob.arrayBuffer());
-    await ff.writeFile(inputName, inputBytes);
-
-    // -c copy = stream copy (no re-encode, near-instant)
-    // -movflags +faststart = web-friendly (moov atom at front)
-    // -f mp4 = force mp4 container
-    await ff.exec(['-i', inputName, '-c', 'copy', '-movflags', '+faststart', '-f', 'mp4', outputName]);
-
-    const outputData = await ff.readFile(outputName);
-    const mp4Bytes = outputData instanceof Uint8Array ? outputData : new Uint8Array(outputData);
-
-    // Cleanup ffmpeg FS
-    try {
-      await ff.deleteFile(inputName);
-      await ff.deleteFile(outputName);
-    } catch (_) {
-      // ignore
-    }
-
-    // 4) Upload mp4 to same path with .mp4 extension
+    // 3) Re-upload as .mp4 with video/mp4 content-type
     const newPath = oldPath.replace(/\.[^.]+$/, '.mp4');
     const { error: upErr } = await admin.storage
       .from(BUCKET)
-      .upload(newPath, mp4Bytes, {
+      .upload(newPath, bytes, {
         contentType: 'video/mp4',
         upsert: true,
       });
 
     if (upErr) {
+      await admin.from('rally_media').update({ processing: false }).eq('id', media.id);
       return new Response(
         JSON.stringify({ error: 'Upload failed', detail: upErr.message }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
@@ -155,7 +126,7 @@ Deno.serve(async (req) => {
     const { data: urlData } = admin.storage.from(BUCKET).getPublicUrl(newPath);
     const newUrl = urlData.publicUrl;
 
-    // 5) Update the media row
+    // 4) Update DB row
     const { error: updErr } = await admin
       .from('rally_media')
       .update({ url: newUrl, processing: false })
@@ -168,7 +139,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // 6) Delete original (best-effort, only if path actually changed)
+    // 5) Best-effort delete original
     if (newPath !== oldPath) {
       await admin.storage.from(BUCKET).remove([oldPath]).catch(() => {});
     }
@@ -181,18 +152,13 @@ Deno.serve(async (req) => {
     const msg = e instanceof Error ? e.message : String(e);
     console.error('transcode-video error:', msg);
 
-    // Best-effort: if we know the media_id, clear processing flag so UI doesn't get stuck
-    try {
-      const body = await req.clone().json().catch(() => ({}));
-      if (body?.media_id) {
+    if (mediaId) {
+      try {
         const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-        await admin
-          .from('rally_media')
-          .update({ processing: false })
-          .eq('id', body.media_id);
+        await admin.from('rally_media').update({ processing: false }).eq('id', mediaId);
+      } catch (_) {
+        // ignore
       }
-    } catch (_) {
-      // ignore
     }
 
     return new Response(JSON.stringify({ error: msg }), {
