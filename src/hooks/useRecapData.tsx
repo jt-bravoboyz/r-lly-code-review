@@ -1,4 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
+import { useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getPublicName } from '@/lib/identity';
 import { supabase } from '@/integrations/supabase/client';
 import { useRogueAlerts } from '@/hooks/useRogueAlerts';
@@ -15,6 +16,27 @@ interface Award {
 export function useRecapData(eventId: string | undefined) {
   const { alerts, reactions } = useRogueAlerts(eventId);
   const { data: galleryPhotos = [], isLoading: photosLoading } = useGalleryPhotos(eventId);
+  const queryClient = useQueryClient();
+
+  // Recap auto-refresh: keep the gallery in sync when late-night drops land
+  // (24h after-party uploads). Independent of the photo feed being mounted.
+  useEffect(() => {
+    if (!eventId) return;
+    const channel = supabase
+      .channel(`recap-media-${eventId}`)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'rally_media',
+        filter: `event_id=eq.${eventId}`,
+      }, () => {
+        queryClient.invalidateQueries({ queryKey: ['rally-media', eventId] });
+        queryClient.invalidateQueries({ queryKey: ['rally-media-gallery', eventId] });
+        queryClient.invalidateQueries({ queryKey: ['rally-media-featured', eventId] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [eventId, queryClient]);
 
   // Compute rogue timeline with reaction counts
   const rogueTimeline = alerts.map(alert => {
