@@ -98,7 +98,7 @@ export default function EventDetail() {
   const { data: eventDDs } = useEventDDs(id);
   const { data: cohosts } = useCohosts(id);
   useBarHopStopsRealtime(id); // Real-time updates for bar hop stops
-  const { latestAlert, dismissAlert, goRogue, submitReaction, reactions, hasGoneRogue } = useRogueAlerts(id);
+  const { latestAlert, dismissAlert, goRogue, submitReaction, reactions, hasGoneRogue, alerts: rogueAlerts, pendingCount, showAlertById } = useRogueAlerts(id);
   const joinEvent = useJoinEvent();
   const leaveEvent = useLeaveEvent();
   const updateEvent = useUpdateEvent();
