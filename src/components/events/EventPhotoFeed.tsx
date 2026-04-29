@@ -173,10 +173,10 @@ export function EventPhotoFeed({ eventId, isHost }: EventPhotoFeedProps) {
   const handleDelete = async (mediaId: string) => {
     try {
       await deleteMedia.mutateAsync({ mediaId, eventId });
-      toast.success('Photo removed');
+      toast.success('Removed');
       if (viewerIndex !== null) setViewerIndex(null);
     } catch {
-      toast.error('Failed to remove photo');
+      toast.error('Failed to remove');
     }
   };
 
