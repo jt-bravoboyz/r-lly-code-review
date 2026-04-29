@@ -253,31 +253,52 @@ export default function EventDetail() {
   // Dialog shows on NORMAL screen - user must opt-in to see purple theme
   // Always show if user hasn't opted in yet (no sessionStorage blocking)
   useEffect(() => {
-    if (isAfterRally && (isAttending || isCreator) && myAttendee?.after_rally_opted_in !== true) {
-      // Skip re-prompt if user already confirmed "not participating" during planning
-      if (myAttendee?.not_participating_rally_home_confirmed === true) return;
-      // Auto-opt-in if user already has a ride plan (DD or rider) — plan carries over
-      if (myAttendee?.is_dd === true || myAttendee?.needs_ride === true) {
-        // Silently opt them in without showing the dialog
-        supabase
-          .from('event_attendees')
-          .update({ after_rally_opted_in: true } as any)
-          .eq('event_id', id!)
-          .eq('profile_id', profile?.id!)
-          .then(() => {
-            refetchMyAttendee();
-          });
-        return;
+    if (!isAfterRally || !(isAttending || isCreator)) return;
+
+    // Reset guards if the user fully opted in (e.g. rejoined)
+    if (myAttendee?.after_rally_opted_in === true) {
+      afterRallyAskedRef.current = false;
+      rallyHomeAskedRef.current = false;
+      if (typeof window !== 'undefined' && id) {
+        sessionStorage.removeItem(`after_rally_asked_${id}`);
+        sessionStorage.removeItem(`rally_home_asked_${id}`);
       }
-      // Only set once per page load to avoid infinite re-triggers
-      setShowAfterRallyOptIn(true);
+      return;
     }
-  }, [isAfterRally, isAttending, isCreator, myAttendee?.after_rally_opted_in, myAttendee?.not_participating_rally_home_confirmed, myAttendee?.is_dd, myAttendee?.needs_ride]);
+
+    // Skip re-prompt if user already declined ("not participating")
+    if (myAttendee?.not_participating_rally_home_confirmed === true) return;
+    // Skip if user explicitly answered the opt-in (true OR false). Only auto-open
+    // for users who never answered (null/undefined).
+    if (myAttendee?.after_rally_opted_in === false) return;
+    // Per-session per-event guard — prevents background refetches from re-firing
+    if (afterRallyAskedRef.current) return;
+
+    // Auto-opt-in if user already has a ride plan (DD or rider) — plan carries over.
+    // Only fire once per mount to avoid update loops.
+    if ((myAttendee?.is_dd === true || myAttendee?.needs_ride === true) && !autoOptInFiredRef.current) {
+      autoOptInFiredRef.current = true;
+      supabase
+        .from('event_attendees')
+        .update({ after_rally_opted_in: true } as any)
+        .eq('event_id', id!)
+        .eq('profile_id', profile?.id!)
+        .then(() => { refetchMyAttendee(); });
+      return;
+    }
+    if (myAttendee?.is_dd === true || myAttendee?.needs_ride === true) return;
+
+    afterRallyAskedRef.current = true;
+    if (typeof window !== 'undefined' && id) {
+      sessionStorage.setItem(`after_rally_asked_${id}`, '1');
+    }
+    setShowAfterRallyOptIn(true);
+  }, [isAfterRally, isAttending, isCreator, id, profile?.id, myAttendee?.after_rally_opted_in, myAttendee?.not_participating_rally_home_confirmed, myAttendee?.is_dd, myAttendee?.needs_ride, refetchMyAttendee]);
 
   // Trigger the rainbow transition ONLY when user opts in (not on event status change)
   // This creates the dramatic visual effect after they click "I'm In!"
   const showAfterRallyTheme = isAfterRally && myAttendee?.after_rally_opted_in === true;
-  
+
   useEffect(() => {
     if (showAfterRallyTheme) {
       const transitionKey = `after_rally_transition_${id}`;
@@ -295,9 +316,14 @@ export default function EventDetail() {
   // Handler for when user declines After R@lly and wants to head home
   const handleHeadHomeFromAfterRally = () => {
     setShowAfterRallyOptIn(false);
-    // Open the R@lly Home dialog to help them get home safely
-    setShowRallyHomeDialog(true);
-    // Refetch attendee status
+    // Per-session guard so refetches don't re-open this dialog
+    if (!rallyHomeAskedRef.current) {
+      rallyHomeAskedRef.current = true;
+      if (typeof window !== 'undefined' && id) {
+        sessionStorage.setItem(`rally_home_asked_${id}`, '1');
+      }
+      setShowRallyHomeDialog(true);
+    }
     refetchMyAttendee();
   };
 
