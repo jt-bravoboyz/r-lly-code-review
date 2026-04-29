@@ -126,6 +126,19 @@ export default function EventDetail() {
   const autoOptInFiredRef = useRef(false);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Deep-link rogue alert from a notification: ?rogue=<id>
+  useEffect(() => {
+    const rogueId = searchParams.get('rogue');
+    if (!rogueId || !id) return;
+    showAlertById(rogueId);
+    // Clear the param so refresh doesn't re-pop
+    const next = new URLSearchParams(searchParams);
+    next.delete('rogue');
+    setSearchParams(next, { replace: true });
+  }, [searchParams, id, showAlertById, setSearchParams]);
+
   const [showRallyComplete, setShowRallyComplete] = useState(false);
   const [showTransportSelector, setShowTransportSelector] = useState(false);
   const [showPaymentGate, setShowPaymentGate] = useState(false);
