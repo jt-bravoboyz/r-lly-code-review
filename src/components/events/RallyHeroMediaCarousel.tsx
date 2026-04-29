@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Play, X, Pencil, Trash2, GripVertical, ArrowUp, ArrowDown, Download } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
@@ -31,6 +31,20 @@ export function RallyHeroMediaCarousel({ eventId, canManage = false }: RallyHero
   const [api, setApi] = useState<CarouselApi>();
   const [editOpen, setEditOpen] = useState(false);
   const { triggerHaptic } = useHaptics();
+  const heroVideoRefs = useRef<Record<string, HTMLVideoElement>>({});
+
+  // Pause hero videos when tab is hidden; resume on return.
+  useEffect(() => {
+    const onVisibility = () => {
+      const hidden = document.hidden;
+      Object.values(heroVideoRefs.current).forEach((v) => {
+        if (hidden) v.pause();
+        else v.play().catch(() => {});
+      });
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
+  }, []);
 
   // Sort: videos first, then photos by order_index
   const sorted = useMemo(() => {
@@ -153,20 +167,20 @@ export function RallyHeroMediaCarousel({ eventId, canManage = false }: RallyHero
               >
                 <div className="relative aspect-[16/9] w-full overflow-hidden rounded-xl bg-muted">
                   {item.type === 'video' ? (
-                    <>
-                      <video
-                        src={item.url}
-                        className="w-full h-full object-cover"
-                        preload="metadata"
-                        muted
-                        playsInline
-                      />
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-                        <div className="w-14 h-14 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center">
-                          <Play className="h-7 w-7 text-white ml-0.5" fill="white" />
-                        </div>
-                      </div>
-                    </>
+                    <video
+                      ref={(el) => {
+                        if (el) heroVideoRefs.current[item.id] = el;
+                        else delete heroVideoRefs.current[item.id];
+                      }}
+                      src={item.url}
+                      poster={(item as any).thumbnail_url || undefined}
+                      className="w-full h-full object-cover"
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      preload="auto"
+                    />
                   ) : (
                     <img
                       src={item.url}
