@@ -11,6 +11,7 @@ export interface RallyMedia {
   created_by: string;
   created_at: string;
   is_featured: boolean;
+  processing?: boolean;
 }
 
 /** All media for an event */
@@ -104,6 +105,13 @@ export function useUploadRallyMedia() {
         .from('rally-media')
         .getPublicUrl(filePath);
 
+      // iPhone .mov files don't play on Android. Mark them for server-side
+      // remux to .mp4 (no re-encode, fast & lossless).
+      const lowerExt = ext.toLowerCase();
+      const needsTranscode =
+        type === 'video' &&
+        (lowerExt === 'mov' || file.type === 'video/quicktime');
+
       const { data, error } = await supabase
         .from('rally_media' as any)
         .insert({
@@ -113,11 +121,24 @@ export function useUploadRallyMedia() {
           order_index: orderIndex,
           created_by: profileId,
           is_featured: isFeatured,
+          processing: needsTranscode,
         })
         .select()
         .single();
 
       if (error) throw error;
+
+      // Fire-and-forget: kick off remux. UI will refresh via realtime when done.
+      if (needsTranscode && data) {
+        const mediaId = (data as any).id;
+        supabase.functions
+          .invoke('transcode-video', { body: { media_id: mediaId } })
+          .catch((err) => {
+            // Non-fatal — the row will stay in processing=true; we surface an error eventually
+            console.warn('[transcode-video] invoke failed', err);
+          });
+      }
+
       return data as unknown as RallyMedia;
     },
     onSuccess: (_, vars) => {
