@@ -154,15 +154,24 @@ export function useRecapData(eventId: string | undefined) {
 
   // Stats
   const totalReactions = reactions.length;
+  const photoCount = galleryPhotos.filter(m => m.type === 'photo').length;
+  const videoCount = galleryPhotos.filter(m => m.type === 'video').length;
   const stats = {
-    photoCount: galleryPhotos.length,
+    photoCount,
+    videoCount,
     rogueCount: rogueTimeline.length,
     reactionCount: totalReactions,
   };
 
+  // Earliest video becomes the hero clip in the recap tour
+  const heroVideo = [...galleryPhotos]
+    .filter(m => m.type === 'video')
+    .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())[0] || null;
+
   return {
     rogueTimeline,
     galleryPhotos,
+    heroVideo,
     awards,
     stats,
     isLoading: photosLoading,
