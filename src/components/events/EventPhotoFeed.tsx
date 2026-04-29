@@ -27,9 +27,11 @@ const ACCEPT_ATTR = [...ALLOWED_IMAGE_TYPES, ...ALLOWED_VIDEO_TYPES].join(',');
 interface EventPhotoFeedProps {
   eventId: string;
   isHost: boolean;
+  eventStatus?: string | null;
+  eventUpdatedAt?: string | null;
 }
 
-export function EventPhotoFeed({ eventId, isHost }: EventPhotoFeedProps) {
+export function EventPhotoFeed({ eventId, isHost, eventStatus, eventUpdatedAt }: EventPhotoFeedProps) {
   const { profile } = useAuth();
   const { openProfile } = usePublicProfile();
   const { data: galleryMedia, isLoading } = useGalleryPhotos(eventId);
