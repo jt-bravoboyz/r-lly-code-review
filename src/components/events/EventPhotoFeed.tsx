@@ -91,32 +91,81 @@ export function EventPhotoFeed({ eventId, isHost }: EventPhotoFeedProps) {
     const files = Array.from(e.target.files);
     setUploading(true);
 
-    let successCount = 0;
+    const existingPhotos = photos.filter(p => p.type === 'photo').length;
+    const existingVideos = photos.filter(p => p.type === 'video').length;
+    let photosQueued = 0;
+    let videosQueued = 0;
+    let photoSuccess = 0;
+    let videoSuccess = 0;
+
     for (const file of files) {
-      if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
-        toast.error(`${file.name}: unsupported format`);
-        continue;
-      }
-      if (file.size > MAX_PHOTO_SIZE) {
-        toast.error(`${file.name}: too large (max 10MB)`);
-        continue;
-      }
-      try {
-        await uploadMedia.mutateAsync({
-          eventId,
-          profileId: profile.id,
-          file,
-          type: 'photo',
-          orderIndex: photos.length + successCount,
-          isFeatured: false,
-        });
-        successCount++;
-      } catch {
-        toast.error(`Failed to upload ${file.name}`);
+      const isVideo = file.type.startsWith('video/');
+
+      if (isVideo) {
+        if (!ALLOWED_VIDEO_TYPES.includes(file.type)) {
+          toast.error(`${file.name}: unsupported video format`);
+          continue;
+        }
+        if (existingVideos + videosQueued >= MAX_VIDEOS_PER_EVENT) {
+          toast.error(`Max ${MAX_VIDEOS_PER_EVENT} videos per R@lly. Delete one to add more.`);
+          continue;
+        }
+        if (file.size > MAX_VIDEO_SIZE) {
+          toast.error(`${file.name}: too large (max 500MB)`);
+          continue;
+        }
+        try {
+          await uploadMedia.mutateAsync({
+            eventId,
+            profileId: profile.id,
+            file,
+            type: 'video',
+            orderIndex: photos.length + photosQueued + videosQueued,
+            isFeatured: false,
+          });
+          videosQueued++;
+          videoSuccess++;
+        } catch {
+          toast.error(`Failed to upload ${file.name}`);
+        }
+      } else {
+        if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+          toast.error(`${file.name}: unsupported format`);
+          continue;
+        }
+        if (existingPhotos + photosQueued >= MAX_PHOTOS_PER_EVENT) {
+          toast.error(`Max ${MAX_PHOTOS_PER_EVENT} photos per R@lly. Delete one to add more.`);
+          continue;
+        }
+        if (file.size > MAX_PHOTO_SIZE) {
+          toast.error(`${file.name}: too large (max 10MB)`);
+          continue;
+        }
+        try {
+          await uploadMedia.mutateAsync({
+            eventId,
+            profileId: profile.id,
+            file,
+            type: 'photo',
+            orderIndex: photos.length + photosQueued + videosQueued,
+            isFeatured: false,
+          });
+          photosQueued++;
+          photoSuccess++;
+        } catch {
+          toast.error(`Failed to upload ${file.name}`);
+        }
       }
     }
 
-    if (successCount > 0) toast.success(`${successCount} photo${successCount > 1 ? 's' : ''} added 📸`);
+    if (photoSuccess > 0 && videoSuccess > 0) {
+      toast.success(`${photoSuccess + videoSuccess} added 🎬`);
+    } else if (videoSuccess > 0) {
+      toast.success(`${videoSuccess} video${videoSuccess > 1 ? 's' : ''} added 🎥`);
+    } else if (photoSuccess > 0) {
+      toast.success(`${photoSuccess} photo${photoSuccess > 1 ? 's' : ''} added 📸`);
+    }
+
     setUploading(false);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
