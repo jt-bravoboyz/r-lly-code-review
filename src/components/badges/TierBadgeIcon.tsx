@@ -491,6 +491,22 @@ export function TierBadgeIcon({
         />
       </div>
 
+      {/* Polished-metal glint — Bronze / Silver / Gold only */}
+      {(tierKey === 'bronze' || tierKey === 'silver' || tierKey === 'gold') && (
+        <div
+          className="absolute inset-0 overflow-hidden rounded-full pointer-events-none z-20"
+          style={{ mixBlendMode: 'screen' }}
+        >
+          <div
+            className="absolute inset-0 animate-badge-medal-glint"
+            style={{
+              background: `linear-gradient(115deg, transparent 38%, rgba(255,255,255,0.55) 50%, transparent 62%)`,
+              backgroundSize: '250% 100%',
+            }}
+          />
+        </div>
+      )}
+
       {/* Main emblem */}
       <div
         className={cn(
