@@ -223,6 +223,11 @@ export default function EventDetail() {
   // Reset the one-shot guard when the event changes
   useEffect(() => {
     joinFlowFiredRef.current = false;
+    autoOptInFiredRef.current = false;
+    if (typeof window !== 'undefined' && id) {
+      afterRallyAskedRef.current = sessionStorage.getItem(`after_rally_asked_${id}`) === '1';
+      rallyHomeAskedRef.current = sessionStorage.getItem(`rally_home_asked_${id}`) === '1';
+    }
   }, [id]);
 
   useEffect(() => {
