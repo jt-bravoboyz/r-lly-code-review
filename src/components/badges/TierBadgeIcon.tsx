@@ -21,46 +21,176 @@ const TIER_STYLES: Record<string, { glow: string; ring: string; core: string }> 
 const TIER_EMBLEMS: Record<string, (colors: { glow: string; ring: string; core: string }) => string> = {
   bronze: (c) => `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
     <defs>
-      <linearGradient id="bg-bronze" x1="0" y1="0" x2="64" y2="64">
-        <stop offset="0%" stop-color="#B95B39"/>
-        <stop offset="50%" stop-color="#99412F"/>
-        <stop offset="100%" stop-color="#FFA14F"/>
+      <radialGradient id="bg-bronze" cx="40%" cy="35%" r="70%">
+        <stop offset="0%" stop-color="#FFD8A8"/>
+        <stop offset="25%" stop-color="#E08A4E"/>
+        <stop offset="55%" stop-color="#A85024"/>
+        <stop offset="80%" stop-color="#6B2E14"/>
+        <stop offset="100%" stop-color="#3A1808"/>
+      </radialGradient>
+      <linearGradient id="ribbon-bronze" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#7A2E1A"/>
+        <stop offset="50%" stop-color="#C44A26"/>
+        <stop offset="100%" stop-color="#7A2E1A"/>
+      </linearGradient>
+      <linearGradient id="rim-bronze" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#FFE0B0"/>
+        <stop offset="40%" stop-color="#B26032"/>
+        <stop offset="60%" stop-color="#7A3818"/>
+        <stop offset="100%" stop-color="#FFD08A"/>
       </linearGradient>
     </defs>
-    <path d="M32 4L8 16V36C8 48 18 58 32 62C46 58 56 48 56 36V16L32 4Z" fill="url(#bg-bronze)"/>
-    <path d="M32 10L14 19V35C14 44 21 53 32 56C43 53 50 44 50 35V19L32 10Z" fill="none" stroke="white" stroke-width="0.8" opacity="0.3"/>
-    <path d="M32 18L35 26H43L36.5 31L39 39L32 34L25 39L27.5 31L21 26H29L32 18Z" fill="white" opacity="0.85"/>
+    <path d="M22 2L26 12H38L42 2L36 6H28L22 2Z" fill="url(#ribbon-bronze)"/>
+    <path d="M27 4V12M37 4V12M32 5V12" stroke="#3A1808" stroke-width="0.4" opacity="0.5"/>
+    <circle cx="32" cy="36" r="24" fill="url(#rim-bronze)"/>
+    <g opacity="0.55" fill="#3A1808">
+      <path d="M32 12L33 18H31L32 12Z"/>
+      <path d="M44 15L42 20L41 19L44 15Z"/>
+      <path d="M52 22L48 25L47 24L52 22Z"/>
+      <path d="M55 33L50 33V32L55 33Z"/>
+      <path d="M52 45L48 42L48 41L52 45Z"/>
+      <path d="M44 53L42 49L43 48L44 53Z"/>
+      <path d="M32 56L31 50H33L32 56Z"/>
+      <path d="M20 53L22 49L21 48L20 53Z"/>
+      <path d="M12 45L16 42L16 41L12 45Z"/>
+      <path d="M9 33L14 33V32L9 33Z"/>
+      <path d="M12 22L16 25L17 24L12 22Z"/>
+      <path d="M20 15L22 20L23 19L20 15Z"/>
+    </g>
+    <circle cx="32" cy="36" r="19" fill="url(#bg-bronze)"/>
+    <circle cx="32" cy="36" r="19" stroke="#3A1808" stroke-width="0.6" opacity="0.6"/>
+    <circle cx="32" cy="36" r="16" fill="none" stroke="#FFD8A8" stroke-width="0.4" opacity="0.45"/>
+    <ellipse cx="25" cy="29" rx="9" ry="5" fill="#FFE8C4" opacity="0.35"/>
+    <path d="M18 36C18 30 20 25 24 22" stroke="#3A1808" stroke-width="0.6" opacity="0.55" fill="none"/>
+    <path d="M46 36C46 30 44 25 40 22" stroke="#3A1808" stroke-width="0.6" opacity="0.55" fill="none"/>
+    <path d="M18 36C18 42 20 47 24 50" stroke="#3A1808" stroke-width="0.6" opacity="0.55" fill="none"/>
+    <path d="M46 36C46 42 44 47 40 50" stroke="#3A1808" stroke-width="0.6" opacity="0.55" fill="none"/>
+    <g fill="#3A1808" opacity="0.55">
+      <ellipse cx="19" cy="32" rx="1.2" ry="2" transform="rotate(-30 19 32)"/>
+      <ellipse cx="20" cy="40" rx="1.2" ry="2" transform="rotate(30 20 40)"/>
+      <ellipse cx="22" cy="46" rx="1.2" ry="2" transform="rotate(50 22 46)"/>
+      <ellipse cx="45" cy="32" rx="1.2" ry="2" transform="rotate(30 45 32)"/>
+      <ellipse cx="44" cy="40" rx="1.2" ry="2" transform="rotate(-30 44 40)"/>
+      <ellipse cx="42" cy="46" rx="1.2" ry="2" transform="rotate(-50 42 46)"/>
+    </g>
+    <path d="M32 27L34 33H40L35 36.5L37 42L32 38.5L27 42L29 36.5L24 33H30L32 27Z" fill="#FFE8C4" opacity="0.95"/>
+    <path d="M32 27L34 33H40L35 36.5L37 42L32 38.5L27 42L29 36.5L24 33H30L32 27Z" stroke="#3A1808" stroke-width="0.3" opacity="0.6" fill="none"/>
   </svg>`,
 
   silver: (c) => `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
     <defs>
-      <linearGradient id="bg-silver" x1="0" y1="0" x2="64" y2="64">
-        <stop offset="0%" stop-color="#8890A6"/>
-        <stop offset="40%" stop-color="#D7EDF0"/>
-        <stop offset="70%" stop-color="#6E7796"/>
-        <stop offset="100%" stop-color="#C4E2FF"/>
+      <radialGradient id="bg-silver" cx="40%" cy="35%" r="70%">
+        <stop offset="0%" stop-color="#FFFFFF"/>
+        <stop offset="25%" stop-color="#E8EEF5"/>
+        <stop offset="55%" stop-color="#9AA4B8"/>
+        <stop offset="80%" stop-color="#5A6478"/>
+        <stop offset="100%" stop-color="#2C3340"/>
+      </radialGradient>
+      <linearGradient id="ribbon-silver" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#3A4255"/>
+        <stop offset="50%" stop-color="#7A8499"/>
+        <stop offset="100%" stop-color="#3A4255"/>
+      </linearGradient>
+      <linearGradient id="rim-silver" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#FFFFFF"/>
+        <stop offset="40%" stop-color="#A8B2C4"/>
+        <stop offset="60%" stop-color="#5A6478"/>
+        <stop offset="100%" stop-color="#F0F4FA"/>
       </linearGradient>
     </defs>
-    <path d="M32 4L8 16V36C8 48 18 58 32 62C46 58 56 48 56 36V16L32 4Z" fill="url(#bg-silver)"/>
-    <path d="M32 10L14 19V35C14 44 21 53 32 56C43 53 50 44 50 35V19L32 10Z" fill="none" stroke="white" stroke-width="0.8" opacity="0.35"/>
-    <path d="M24 16L32 12L40 16" stroke="white" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
-    <path d="M32 18L35.5 27H45L37.5 32.5L40 41L32 35.5L24 41L26.5 32.5L19 27H28.5L32 18Z" fill="white" opacity="0.9"/>
+    <path d="M22 2L26 12H38L42 2L36 6H28L22 2Z" fill="url(#ribbon-silver)"/>
+    <path d="M27 4V12M37 4V12M32 5V12" stroke="#1A1F2A" stroke-width="0.4" opacity="0.5"/>
+    <circle cx="32" cy="36" r="24" fill="url(#rim-silver)"/>
+    <g opacity="0.5" fill="#1A1F2A">
+      <path d="M32 12L33 18H31L32 12Z"/>
+      <path d="M44 15L42 20L41 19L44 15Z"/>
+      <path d="M52 22L48 25L47 24L52 22Z"/>
+      <path d="M55 33L50 33V32L55 33Z"/>
+      <path d="M52 45L48 42L48 41L52 45Z"/>
+      <path d="M44 53L42 49L43 48L44 53Z"/>
+      <path d="M32 56L31 50H33L32 56Z"/>
+      <path d="M20 53L22 49L21 48L20 53Z"/>
+      <path d="M12 45L16 42L16 41L12 45Z"/>
+      <path d="M9 33L14 33V32L9 33Z"/>
+      <path d="M12 22L16 25L17 24L12 22Z"/>
+      <path d="M20 15L22 20L23 19L20 15Z"/>
+    </g>
+    <circle cx="32" cy="36" r="19" fill="url(#bg-silver)"/>
+    <circle cx="32" cy="36" r="19" stroke="#1A1F2A" stroke-width="0.6" opacity="0.55"/>
+    <circle cx="32" cy="36" r="16" fill="none" stroke="#FFFFFF" stroke-width="0.4" opacity="0.5"/>
+    <ellipse cx="25" cy="29" rx="9" ry="5" fill="#FFFFFF" opacity="0.45"/>
+    <path d="M18 36C18 30 20 25 24 22" stroke="#1A1F2A" stroke-width="0.6" opacity="0.5" fill="none"/>
+    <path d="M46 36C46 30 44 25 40 22" stroke="#1A1F2A" stroke-width="0.6" opacity="0.5" fill="none"/>
+    <path d="M18 36C18 42 20 47 24 50" stroke="#1A1F2A" stroke-width="0.6" opacity="0.5" fill="none"/>
+    <path d="M46 36C46 42 44 47 40 50" stroke="#1A1F2A" stroke-width="0.6" opacity="0.5" fill="none"/>
+    <g fill="#1A1F2A" opacity="0.5">
+      <ellipse cx="19" cy="32" rx="1.2" ry="2" transform="rotate(-30 19 32)"/>
+      <ellipse cx="20" cy="40" rx="1.2" ry="2" transform="rotate(30 20 40)"/>
+      <ellipse cx="22" cy="46" rx="1.2" ry="2" transform="rotate(50 22 46)"/>
+      <ellipse cx="45" cy="32" rx="1.2" ry="2" transform="rotate(30 45 32)"/>
+      <ellipse cx="44" cy="40" rx="1.2" ry="2" transform="rotate(-30 44 40)"/>
+      <ellipse cx="42" cy="46" rx="1.2" ry="2" transform="rotate(-50 42 46)"/>
+    </g>
+    <path d="M32 27L34 33H40L35 36.5L37 42L32 38.5L27 42L29 36.5L24 33H30L32 27Z" fill="#FFFFFF" opacity="0.95"/>
+    <path d="M32 27L34 33H40L35 36.5L37 42L32 38.5L27 42L29 36.5L24 33H30L32 27Z" stroke="#1A1F2A" stroke-width="0.3" opacity="0.55" fill="none"/>
   </svg>`,
 
   gold: (c) => `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
     <defs>
-      <linearGradient id="bg-gold" x1="0" y1="0" x2="64" y2="64">
-        <stop offset="0%" stop-color="#FFC64F"/>
-        <stop offset="40%" stop-color="#E06919"/>
-        <stop offset="70%" stop-color="#FFC640"/>
-        <stop offset="100%" stop-color="#FFA02B"/>
+      <radialGradient id="bg-gold" cx="40%" cy="35%" r="70%">
+        <stop offset="0%" stop-color="#FFF6C4"/>
+        <stop offset="25%" stop-color="#FFD24A"/>
+        <stop offset="55%" stop-color="#D9871A"/>
+        <stop offset="80%" stop-color="#8A4E08"/>
+        <stop offset="100%" stop-color="#3F2304"/>
+      </radialGradient>
+      <linearGradient id="ribbon-gold" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#7A1A1A"/>
+        <stop offset="50%" stop-color="#C42626"/>
+        <stop offset="100%" stop-color="#7A1A1A"/>
+      </linearGradient>
+      <linearGradient id="rim-gold" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#FFF4B8"/>
+        <stop offset="40%" stop-color="#E0A828"/>
+        <stop offset="60%" stop-color="#8A5A10"/>
+        <stop offset="100%" stop-color="#FFE890"/>
       </linearGradient>
     </defs>
-    <path d="M32 4L8 16V36C8 48 18 58 32 62C46 58 56 48 56 36V16L32 4Z" fill="url(#bg-gold)"/>
-    <path d="M32 8L12 18V36C12 46 20 55 32 58C44 55 52 46 52 36V18L32 8Z" fill="none" stroke="white" stroke-width="1" opacity="0.25"/>
-    <circle cx="32" cy="14" r="3" fill="white" opacity="0.8"/>
-    <path d="M22 14L26 18H38L42 14" stroke="white" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
-    <path d="M32 20L36 29H46L38 34.5L41 43L32 37L23 43L26 34.5L18 29H28L32 20Z" fill="white" opacity="0.9"/>
+    <path d="M22 2L26 12H38L42 2L36 6H28L22 2Z" fill="url(#ribbon-gold)"/>
+    <path d="M27 4V12M37 4V12M32 5V12" stroke="#3F0808" stroke-width="0.4" opacity="0.5"/>
+    <circle cx="32" cy="36" r="24" fill="url(#rim-gold)"/>
+    <g opacity="0.55" fill="#3F2304">
+      <path d="M32 12L33 18H31L32 12Z"/>
+      <path d="M44 15L42 20L41 19L44 15Z"/>
+      <path d="M52 22L48 25L47 24L52 22Z"/>
+      <path d="M55 33L50 33V32L55 33Z"/>
+      <path d="M52 45L48 42L48 41L52 45Z"/>
+      <path d="M44 53L42 49L43 48L44 53Z"/>
+      <path d="M32 56L31 50H33L32 56Z"/>
+      <path d="M20 53L22 49L21 48L20 53Z"/>
+      <path d="M12 45L16 42L16 41L12 45Z"/>
+      <path d="M9 33L14 33V32L9 33Z"/>
+      <path d="M12 22L16 25L17 24L12 22Z"/>
+      <path d="M20 15L22 20L23 19L20 15Z"/>
+    </g>
+    <circle cx="32" cy="36" r="19" fill="url(#bg-gold)"/>
+    <circle cx="32" cy="36" r="19" stroke="#3F2304" stroke-width="0.6" opacity="0.6"/>
+    <circle cx="32" cy="36" r="16" fill="none" stroke="#FFF6C4" stroke-width="0.4" opacity="0.5"/>
+    <ellipse cx="25" cy="29" rx="9" ry="5" fill="#FFF6C4" opacity="0.5"/>
+    <path d="M18 36C18 30 20 25 24 22" stroke="#3F2304" stroke-width="0.6" opacity="0.55" fill="none"/>
+    <path d="M46 36C46 30 44 25 40 22" stroke="#3F2304" stroke-width="0.6" opacity="0.55" fill="none"/>
+    <path d="M18 36C18 42 20 47 24 50" stroke="#3F2304" stroke-width="0.6" opacity="0.55" fill="none"/>
+    <path d="M46 36C46 42 44 47 40 50" stroke="#3F2304" stroke-width="0.6" opacity="0.55" fill="none"/>
+    <g fill="#3F2304" opacity="0.55">
+      <ellipse cx="19" cy="32" rx="1.2" ry="2" transform="rotate(-30 19 32)"/>
+      <ellipse cx="20" cy="40" rx="1.2" ry="2" transform="rotate(30 20 40)"/>
+      <ellipse cx="22" cy="46" rx="1.2" ry="2" transform="rotate(50 22 46)"/>
+      <ellipse cx="45" cy="32" rx="1.2" ry="2" transform="rotate(30 45 32)"/>
+      <ellipse cx="44" cy="40" rx="1.2" ry="2" transform="rotate(-30 44 40)"/>
+      <ellipse cx="42" cy="46" rx="1.2" ry="2" transform="rotate(-50 42 46)"/>
+    </g>
+    <path d="M32 27L34 33H40L35 36.5L37 42L32 38.5L27 42L29 36.5L24 33H30L32 27Z" fill="#FFF6C4" opacity="0.98"/>
+    <path d="M32 27L34 33H40L35 36.5L37 42L32 38.5L27 42L29 36.5L24 33H30L32 27Z" stroke="#3F2304" stroke-width="0.3" opacity="0.6" fill="none"/>
   </svg>`,
 
   emerald: (c) => `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -360,6 +490,22 @@ export function TierBadgeIcon({
           }}
         />
       </div>
+
+      {/* Polished-metal glint — Bronze / Silver / Gold only */}
+      {(tierKey === 'bronze' || tierKey === 'silver' || tierKey === 'gold') && (
+        <div
+          className="absolute inset-0 overflow-hidden rounded-full pointer-events-none z-20"
+          style={{ mixBlendMode: 'screen' }}
+        >
+          <div
+            className="absolute inset-0 animate-badge-medal-glint"
+            style={{
+              background: `linear-gradient(115deg, transparent 38%, rgba(255,255,255,0.55) 50%, transparent 62%)`,
+              backgroundSize: '250% 100%',
+            }}
+          />
+        </div>
+      )}
 
       {/* Main emblem */}
       <div
