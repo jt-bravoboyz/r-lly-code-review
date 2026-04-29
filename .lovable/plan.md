@@ -1,70 +1,78 @@
-## Three issues, one plan
+# Invite Dialog "Hamilton" Rework
 
-### Issue 1 — Safety opt-in repeats
+Fully rework `src/components/events/InviteToEventDialog.tsx` into a cleaner, on-brand 3-tab invite flow with the "Hamilton" refinements: a premium share-link header, segmented-control pill tabs, grouped friend list, SMS preview, soft "Invited" transitions, and an Influence footer badge.
 
-`src/pages/EventDetail.tsx` (line 247–267) re-opens `AfterRallyOptInDialog` whenever `myAttendee?.after_rally_opted_in !== true`. When a user picks **"I'm Heading Home"**, the column is set to `false` (not `true`), so the gate stays open and any React Query refetch (window focus, realtime invalidation, navigation back) re-fires `setShowAfterRallyOptIn(true)`. Same pattern affects `showRallyHomeDialog`.
+## Final Layout
 
-### Issue 2 — Videos have no thumbnail on the Photos tab
+```text
+┌────────────────────────────────────────────┐
+│  Invite to R@lly                           │
+├────────────────────────────────────────────┤
+│  ╭────────────────────────────────╮        │  ← premium tinted header
+│  │ INVITE CODE  AB12X4   [Copy✓][Share] │  │     (gradient + blur)
+│  ╰────────────────────────────────╯        │
+├────────────────────────────────────────────┤
+│  ⟪ On R@lly │ Squads │ Text ⟫  ← pill tabs│
+├────────────────────────────────────────────┤
+│  Search friends…                           │
+│  ─ Suggested              3                │  ← tabular-nums counts
+│    [avatar] Jamie     [Invite]             │
+│  ─ All Friends           14                │
+│    [avatar] Casey     [✓ Invited]          │
+├────────────────────────────────────────────┤
+│  History  ●                  ✦ Influence   │  ← top-tier badge
+└────────────────────────────────────────────┘
+```
 
-`EventPhotoFeed` renders each grid tile as `<video preload="metadata">`. iOS Safari and many mobile Chrome builds do not decode a frame for inline display, so tiles show black or fall to the broken-state fallback. The `rally_media.thumbnail_url` column already exists but nothing populates or reads it.
+## Refinement-by-Refinement
 
-### Issue 3 — Fullscreen photo/video viewer is cut off on iPhone
+### Premium Header Card
+- Replaces the old "Link" tab. Gradient `from-primary/[0.08] via-primary/[0.04] to-transparent`, `backdrop-blur-xl`, primary-tinted border.
+- Shows compact Invite Code (tabular-nums) + side-by-side **Copy** / **Share** buttons.
+- **Copy** button transitions to filled primary background with a check icon for ~1.8s on success (immediate visual feedback).
 
-The viewer portal (`EventPhotoFeed.tsx` lines 460–585) uses `fixed inset-0` with no safe-area padding. The header (avatar, close, download, delete buttons) is clipped under the iPhone notch / status bar, and the dot indicators sit under the home indicator on devices with a bottom inset.
+### Segmented Pill Tabs
+- `TabsList` uses `rounded-full bg-muted/70 p-1`; each `TabsTrigger` is `rounded-full` and lifts to `bg-background shadow-sm` when active — matching the Admin Dashboard pill aesthetic.
+- 3 tabs only: **On R@lly**, **Squads**, **Text**.
 
----
+### On R@lly Tab (default)
+- Search input at top.
+- Pulls from `useRallyFriends()`.
+- Two grouped sections, each with a small uppercase label + tabular-nums count:
+  - **Suggested** — friends in `useInviteHistory()` recent 8 OR flagged `isReferral` (most likely re-invites).
+  - **All Friends** — everyone else.
+- Friend rows: avatar + name + small subtitle ("R@lly Friend" / "Squad Mate") + Invite button.
+- Filtered by search query; excludes already-invited/attending via the existing `alreadyInvitedOrAttending` Set.
 
-## Fix
+### Squads Tab
+- Same data + flow as today, restyled to `rounded-xl` cards with `transition-all duration-300` and `tabular-nums` counts.
 
-### A. Stop the safety dialog from re-firing (`src/pages/EventDetail.tsx`)
+### Text Invite Tab
+- **SMS Preview box** — muted rounded card showing the exact pre-filled SMS body (`"You're in. {eventTitle} — Tap to join the crew: {shareLink}"`).
+- `PhoneInviteInput` for typing a number directly.
+- Compact `ContactSyncButton` card to pull the phone book.
+- "Recently Texted" list (last 5 from `phoneInvites`) for at-a-glance audit.
 
-1. Add `const afterRallyAskedRef = useRef(false);` and `const rallyHomeAskedRef = useRef(false);` seeded from `sessionStorage` keys `after_rally_asked_${id}` and `rally_home_asked_${id}`.
-2. Tighten the opt-in effect (line 247): only auto-open when `after_rally_opted_in === null` (truly never answered) AND `not_participating_rally_home_confirmed !== true` AND `afterRallyAskedRef.current === false`. On open, set the ref + sessionStorage.
-3. Same guard for `setShowRallyHomeDialog(true)` inside `handleHeadHomeFromAfterRally`.
-4. Wrap the silent auto-opt-in update (lines 252–262) in a `autoOptInFiredRef` so it only fires once per mount per event.
-5. Clear both guards when `after_rally_opted_in === true` (rejoin case).
+### Soft "Invited" State Transition
+- Buttons use `transition-all duration-300`.
+- Local `invitedFriendIds` / `invitingFriendId` state drives an instant swap: `Send → Sending… → ✓ Invited` (ghost button, primary text). No layout shift.
+- Squad cards likewise fade their action button into a `Check`-prefixed badge.
 
-Mirrors `mem://features/event-join-flow-stability`.
+### Influence Footer Badge
+- Footer row holds the **Invite History** ghost button (replaces the dead History tab → routes to `/invite-history`) on the left.
+- On the right, when `useInviteHistory().length >= 10`, a small outlined `✦ Influence` badge appears in primary tint with a `Crown` icon.
 
-### B. Generate video thumbnails at upload time
+## File To Edit
 
-1. **New helper `src/lib/videoThumbnail.ts`** — `extractVideoThumbnail(file: File): Promise<Blob | null>`:
-   - Off-screen `<video muted playsInline preload='metadata'>`, src = `URL.createObjectURL(file)`.
-   - On `loadeddata`, seek to `min(0.1, duration / 4)`, on `seeked` draw to a canvas at max-width 1280px, export as JPEG quality 0.78.
-   - 6s timeout, try/catch, always resolves (`null` on failure).
-2. **Update `useUploadRallyMedia` (`src/hooks/useRallyMedia.tsx`):**
-   - For `type === 'video'`, call `extractVideoThumbnail(file)` first.
-   - If a blob comes back, upload to `${eventId}/${uuid}_thumb.jpg` and pass the public URL into the row's `thumbnail_url`.
-3. **Update `EventPhotoFeed.tsx` grid (lines 377–402):**
-   - When `photo.thumbnail_url` exists, render an `<img src={photo.thumbnail_url}>` with the existing play-badge overlay.
-   - Fallback to the current `<video>` element only when `thumbnail_url` is null.
-4. **Opportunistic backfill for legacy videos:**
-   - In `EventPhotoFeed`, a `useEffect` walks `photos.filter(p => p.type==='video' && !p.thumbnail_url && p.created_by === profile?.id)`, fetches the video bytes, runs the extractor, uploads, and updates the row. Only runs for the user's own uploads to avoid permission/spam issues.
+- `src/components/events/InviteToEventDialog.tsx` — full rewrite of the component body. No prop signature changes, so all call sites continue to work untouched.
 
-`rally-media` storage policies already cover the `${eventId}/...` prefix (per `mem://security/storage-and-pii-policy-hardening`), so no migration needed.
+## Data / Hook Sources (all already exist)
 
-### C. Safe-area padding for the fullscreen viewer (`EventPhotoFeed.tsx`)
+- `useRallyFriends()` — On R@lly list.
+- `useInviteHistory()` — Suggested grouping + Influence badge threshold.
+- `useAllMySquads()` — Squads tab.
+- `useEventInvites()` / `useEventPhoneInvites()` — already-invited filtering.
+- `useCreateEventInvites()` / `useCreatePhoneInvite()` / `openSMSInvite()` — sending.
+- `useRecordInvite()` — history tracking.
 
-1. Change the portal root (line 462) from `fixed inset-0 bg-black/95 z-[99999] flex flex-col` to also include `safe-top safe-bottom` (utilities defined globally per `mem://style/cross-platform-hardening`). On iPhone the inset pushes both the header bar and dot indicators into the visible area; on Android safe-area insets are 0 so the layout is unchanged.
-2. Adjust the header bar (line 467) so the close / download / delete buttons remain finger-reachable: keep `p-4`, but increase tap targets are already 44px (no change).
-3. Reduce the bottom dot-indicator's `pb-8` to `pb-4` so the combined `safe-bottom` + `pb-4` still hits the same total visual padding on devices without a bottom inset (≈1.5rem fallback in the safe utility) and avoids a large gap on iPhone.
-4. The `<video controls>` element keeps `max-w-full max-h-full` inside the flex container, which now respects the inset, so playback controls are no longer obscured by iOS Safari's bottom URL bar overlap.
-
-### Verification
-
-- After R@lly: choose "I'm Heading Home" → R@lly Home flow runs → navigate away and back → no re-prompt.
-- Window blur/focus mid-event → no re-prompt.
-- Upload a `.mov` from iPhone Safari → grid tile shows still frame within ~1s, plays in viewer.
-- Upload `.mp4` from Android → same.
-- Open the fullscreen viewer on iPhone → close button and uploader avatar visible below the notch; dot indicators visible above the home indicator. Open same viewer on Android — identical look (no extra padding).
-- Legacy videos: on next visit by the uploader, thumbnail backfills silently and propagates to all viewers.
-
-## Files changed
-
-- `src/pages/EventDetail.tsx`
-- `src/lib/videoThumbnail.ts` (new)
-- `src/hooks/useRallyMedia.tsx`
-- `src/components/events/EventPhotoFeed.tsx`
-- Memory: append a note to `mem://features/safety-opt-in-and-end-flow` about per-session `askedRef` guards, and add a small entry to `mem://features/rally-media-system` about client-extracted thumbnails + safe-area viewer.
-
-No DB migrations required.
+No DB / RLS / migration changes. No new hooks. No prop changes.
