@@ -216,7 +216,7 @@ export default function EventDetail() {
   const isScheduled = event?.status === 'scheduled' || !event?.status;
   const isLive = event?.status === 'live';
   const isAfterRallyRaw = event?.status === 'after_rally';
-  const isCompleted = event?.status === 'completed';
+  const isCompletedRaw = event?.status === 'completed';
 
   // Stealth After R@lly: hide the whole After R@lly experience from anyone the host didn't pick.
   const afterRallyStealth = (event as any)?.after_rally_stealth === true;
@@ -225,8 +225,10 @@ export default function EventDetail() {
     || isCreator
     || isCohost
     || (!!activeProfile?.id && afterRallyInvitedIds.includes(activeProfile.id));
-  // Effective After R@lly flag used for ALL UI gating below. Excluded users see the R@lly as completed.
+  // For excluded users, the R@lly looks finished — they see the recap, no After R@lly UI.
+  const isStealthExcluded = isAfterRallyRaw && !isAfterRallyInvited;
   const isAfterRally = isAfterRallyRaw && isAfterRallyInvited;
+  const isCompleted = isCompletedRaw || isStealthExcluded;
   
   const hasTransportModeForEvent = Boolean(myAttendee?.arrival_transport_mode);
   const hasCompletedJoinFlow = hasTransportModeForEvent && Boolean(myAttendee?.location_prompt_shown);
