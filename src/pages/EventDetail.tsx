@@ -215,8 +215,20 @@ export default function EventDetail() {
   const isLiveEvent = event ? new Date(event.start_time) <= new Date() : false;
   const isScheduled = event?.status === 'scheduled' || !event?.status;
   const isLive = event?.status === 'live';
-  const isAfterRally = event?.status === 'after_rally';
-  const isCompleted = event?.status === 'completed';
+  const isAfterRallyRaw = event?.status === 'after_rally';
+  const isCompletedRaw = event?.status === 'completed';
+
+  // Stealth After R@lly: hide the whole After R@lly experience from anyone the host didn't pick.
+  const afterRallyStealth = (event as any)?.after_rally_stealth === true;
+  const afterRallyInvitedIds: string[] = ((event as any)?.after_rally_invited_ids ?? []) as string[];
+  const isAfterRallyInvited = !afterRallyStealth
+    || isCreator
+    || isCohost
+    || (!!activeProfile?.id && afterRallyInvitedIds.includes(activeProfile.id));
+  // For excluded users, the R@lly looks finished — they see the recap, no After R@lly UI.
+  const isStealthExcluded = isAfterRallyRaw && !isAfterRallyInvited;
+  const isAfterRally = isAfterRallyRaw && isAfterRallyInvited;
+  const isCompleted = isCompletedRaw || isStealthExcluded;
   
   const hasTransportModeForEvent = Boolean(myAttendee?.arrival_transport_mode);
   const hasCompletedJoinFlow = hasTransportModeForEvent && Boolean(myAttendee?.location_prompt_shown);

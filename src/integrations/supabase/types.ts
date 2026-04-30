@@ -900,9 +900,11 @@ export type Database = {
       }
       events: {
         Row: {
+          after_rally_invited_ids: string[]
           after_rally_location_lat: number | null
           after_rally_location_lng: number | null
           after_rally_location_name: string | null
+          after_rally_stealth: boolean
           cover_charge: number | null
           created_at: string | null
           creator_id: string
@@ -925,9 +927,11 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          after_rally_invited_ids?: string[]
           after_rally_location_lat?: number | null
           after_rally_location_lng?: number | null
           after_rally_location_name?: string | null
+          after_rally_stealth?: boolean
           cover_charge?: number | null
           created_at?: string | null
           creator_id: string
@@ -950,9 +954,11 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          after_rally_invited_ids?: string[]
           after_rally_location_lat?: number | null
           after_rally_location_lng?: number | null
           after_rally_location_name?: string | null
+          after_rally_stealth?: boolean
           cover_charge?: number | null
           created_at?: string | null
           creator_id?: string
@@ -3822,6 +3828,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_after_rally_invited: {
+        Args: { _event_id: string; _profile_id: string }
+        Returns: boolean
+      }
       is_attendee_rally_home_undecided: {
         Args: { p_event_id: string; p_profile_id: string }
         Returns: boolean
@@ -3972,9 +3982,11 @@ export type Database = {
       transition_event_status: {
         Args: { p_event_id: string; p_new_status: string }
         Returns: {
+          after_rally_invited_ids: string[]
           after_rally_location_lat: number | null
           after_rally_location_lng: number | null
           after_rally_location_name: string | null
+          after_rally_stealth: boolean
           cover_charge: number | null
           created_at: string | null
           creator_id: string
