@@ -253,16 +253,17 @@ export function EventPhotoFeed({ eventId, isHost, eventStatus, eventUpdatedAt }:
     if (viewerIndex === null || downloadingViewer) return;
     const photo = photos[viewerIndex];
     if (!photo) return;
+    const isVideoItem = photo.type === 'video';
     setDownloadingViewer(true);
     try {
       const ok = await ensurePhotoPermission();
       if (!ok) { setDownloadingViewer(false); return; }
       await downloadPhoto({ url: photo.url, id: photo.id, eventId });
       triggerHaptic('light');
-      toast.success('Photo saved! 📸');
+      toast.success(isVideoItem ? 'Video saved! 🎥' : 'Photo saved! 📸');
     } catch {
       triggerHaptic('error');
-      toast.error('Could not save photo');
+      toast.error(isVideoItem ? 'Could not save video' : 'Could not save photo');
     } finally {
       setDownloadingViewer(false);
     }
@@ -464,7 +465,10 @@ export function EventPhotoFeed({ eventId, isHost, eventStatus, eventUpdatedAt }:
                     />
                   ) : (
                     <video
-                      src={photo.url}
+                      // #t=0.001 forces iOS Safari & Android Chrome to seek to
+                      // the first frame so the tile shows a still cover photo
+                      // instead of a black box while we wait for a real thumb.
+                      src={`${photo.url}#t=0.001`}
                       muted
                       playsInline
                       preload="metadata"
@@ -574,18 +578,19 @@ export function EventPhotoFeed({ eventId, isHost, eventStatus, eventUpdatedAt }:
               </div>
             </div>
             <div className="flex items-center gap-2">
-              {photos[viewerIndex].type !== 'video' && (
-                <button
-                  onClick={handleDownloadCurrent}
-                  disabled={downloadingViewer}
-                  className="p-2 rounded-full bg-white/15 backdrop-blur-md hover:bg-white/25 transition-colors disabled:opacity-60"
-                  aria-label="Save photo"
-                >
-                  {downloadingViewer
-                    ? <Loader2 className="h-4 w-4 text-primary animate-spin" />
-                    : <Download className="h-4 w-4 text-primary" />}
-                </button>
-              )}
+              {/* Save works for both photos AND videos. On native, downloadPhoto routes
+                  through the share-sheet so iOS/Android offer "Save Video" / "Save Image". */}
+              <button
+                onClick={handleDownloadCurrent}
+                disabled={downloadingViewer}
+                className="p-2 rounded-full bg-white/15 backdrop-blur-md hover:bg-white/25 transition-colors disabled:opacity-60"
+                aria-label={photos[viewerIndex].type === 'video' ? 'Save video' : 'Save photo'}
+              >
+                {downloadingViewer
+                  ? <Loader2 className="h-4 w-4 text-primary animate-spin" />
+                  : <Download className="h-4 w-4 text-primary" />}
+              </button>
+
               {canDelete(photos[viewerIndex]) && (
                 <button
                   onClick={() => handleDelete(photos[viewerIndex].id)}
