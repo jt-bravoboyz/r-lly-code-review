@@ -3665,6 +3665,7 @@ export type Database = {
         Args: { p_profile_a: string; p_profile_b: string }
         Returns: boolean
       }
+      auto_archive_stale_after_rallies: { Args: never; Returns: number }
       auto_complete_stale_rallies: {
         Args: never
         Returns: {

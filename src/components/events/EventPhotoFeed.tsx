@@ -50,12 +50,18 @@ export function EventPhotoFeed({ eventId, isHost, eventStatus, eventUpdatedAt }:
   const [erroredVideoIds, setErroredVideoIds] = useState<Set<string>>(new Set());
   const { triggerHaptic } = useHaptics();
 
-  // 24h after-party upload window
+  // 24h after-party upload window — re-tick every 60s for live countdown
+  const [nowTick, setNowTick] = useState(() => Date.now());
+  useEffect(() => {
+    if (eventStatus !== 'completed') return;
+    const id = setInterval(() => setNowTick(Date.now()), 60_000);
+    return () => clearInterval(id);
+  }, [eventStatus]);
   const uploadWindow = (() => {
     if (eventStatus !== 'completed') return { canUpload: true, msLeft: null as number | null };
     if (!eventUpdatedAt) return { canUpload: false, msLeft: 0 };
     const endsAt = new Date(eventUpdatedAt).getTime() + 24 * 60 * 60 * 1000;
-    const msLeft = endsAt - Date.now();
+    const msLeft = endsAt - nowTick;
     return { canUpload: msLeft > 0, msLeft };
   })();
   const formatCountdown = (ms: number) => {
@@ -465,13 +471,17 @@ export function EventPhotoFeed({ eventId, isHost, eventStatus, eventUpdatedAt }:
                     />
                   ) : (
                     <video
-                      // #t=0.001 forces iOS Safari & Android Chrome to seek to
-                      // the first frame so the tile shows a still cover photo
-                      // instead of a black box while we wait for a real thumb.
+                      // poster + #t=0.001 + seek-on-metadata trio: paints the
+                      // first video frame as a still cover photo on iOS Safari
+                      // and Android Chrome instead of showing a black box.
+                      poster={`${photo.url}#t=0.001`}
                       src={`${photo.url}#t=0.001`}
                       muted
                       playsInline
                       preload="metadata"
+                      onLoadedMetadata={(e) => {
+                        try { e.currentTarget.currentTime = 0.001; } catch {}
+                      }}
                       onError={() => {
                         setErroredVideoIds((prev) => {
                           if (prev.has(photo.id)) return prev;
