@@ -111,56 +111,9 @@ export function EventPhotoFeed({ eventId, isHost, eventStatus, eventUpdatedAt }:
     return () => { supabase.removeChannel(channel); };
   }, [eventId, queryClient]);
 
-  // Opportunistic thumbnail backfill: for ANY shared video missing a thumbnail,
-  // generate one in the background and patch the row via SECURITY DEFINER RPC
-  // so non-host members can fix legacy uploads too. Only run a few at a time
-  // to avoid hammering the network on big galleries.
-  const backfillAttemptedRef = useRef<Set<string>>(new Set());
-  useEffect(() => {
-    if (!profile?.id) return;
-    const targets = photos.filter(
-      (p) =>
-        p.type === 'video' &&
-        !p.thumbnail_url &&
-        !backfillAttemptedRef.current.has(p.id)
-    ).slice(0, 3); // throttle: up to 3 per render pass
-    if (!targets.length) return;
-
-    let cancelled = false;
-    (async () => {
-      for (const media of targets) {
-        if (cancelled) return;
-        backfillAttemptedRef.current.add(media.id);
-        try {
-          const res = await fetch(media.url);
-          if (!res.ok) continue;
-          const blob = await res.blob();
-          const thumb = await extractVideoThumbnail(blob);
-          if (!thumb || cancelled) continue;
-          const thumbPath = `${eventId}/${media.id}_thumb.jpg`;
-          const { error: upErr } = await supabase.storage
-            .from('rally-media')
-            .upload(thumbPath, thumb, { upsert: true, contentType: 'image/jpeg' });
-          if (upErr) continue;
-          const publicUrl = supabase.storage.from('rally-media').getPublicUrl(thumbPath).data.publicUrl;
-          // Use SECURITY DEFINER RPC so non-host event members can patch the row
-          const { error: rpcErr } = await supabase.rpc(
-            'set_rally_media_thumbnail' as any,
-            { p_media_id: media.id, p_thumbnail_url: publicUrl }
-          );
-          if (rpcErr) {
-            console.warn('[rally-media] thumbnail RPC failed', media.id, rpcErr);
-            continue;
-          }
-          queryClient.invalidateQueries({ queryKey: ['rally-media-gallery', eventId] });
-        } catch (err) {
-          console.warn('[rally-media] backfill failed', media.id, err);
-        }
-      }
-    })();
-
-    return () => { cancelled = true; };
-  }, [photos, profile?.id, eventId, queryClient]);
+  // Opportunistic thumbnail backfill — shared with the Recap screen so
+  // legacy/mobile-uploaded videos heal the same way everywhere.
+  useVideoThumbnailBackfill(eventId, photos);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!profile || !e.target.files?.length) return;
