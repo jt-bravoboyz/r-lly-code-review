@@ -112,18 +112,28 @@ export function useEvent(eventId: string | undefined) {
     queryFn: async () => {
       if (!eventId) return null;
       
-      // Fetch event with creator
-      const { data: eventData, error: eventError } = await supabase
-        .from('events')
-        .select(`
-          *,
-          creator:profiles!events_creator_id_fkey(id, display_name, avatar_url),
-          stops:barhop_stops(*)
-        `)
-        .eq('id', eventId)
-        .single();
-      
+      // Read the event through the safe RPC so After R@lly fields are masked
+      // for non-invited viewers (status downgraded, location nulled).
+      const { data: safeRows, error: eventError } = await supabase
+        .rpc('get_event_safe' as any, { p_event_id: eventId });
+
       if (eventError) throw eventError;
+      const safeEvent = (safeRows as any[] | null)?.[0];
+      if (!safeEvent) return null;
+
+      // Fetch creator profile and bar-hop stops in parallel.
+      const [{ data: creatorRow }, { data: stops }] = await Promise.all([
+        safeEvent.creator_id
+          ? supabase.from('safe_profiles').select('id, display_name, avatar_url').eq('id', safeEvent.creator_id).maybeSingle()
+          : Promise.resolve({ data: null as any }),
+        supabase.from('barhop_stops').select('*').eq('event_id', eventId),
+      ]);
+
+      const eventData: any = {
+        ...safeEvent,
+        creator: creatorRow || null,
+        stops: stops || [],
+      };
       
       // Fetch attendees separately with profiles
       const { data: attendeesData, error: attendeesError } = await supabase
