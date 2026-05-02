@@ -3771,6 +3771,42 @@ export type Database = {
           title: string
         }[]
       }
+      get_event_safe: {
+        Args: { p_event_id: string }
+        Returns: {
+          after_rally_invited_ids: string[]
+          after_rally_location_lat: number | null
+          after_rally_location_lng: number | null
+          after_rally_location_name: string | null
+          after_rally_stealth: boolean
+          cover_charge: number | null
+          created_at: string | null
+          creator_id: string
+          description: string | null
+          end_time: string | null
+          event_type: string
+          id: string
+          image_url: string | null
+          invite_code: string | null
+          is_barhop: boolean | null
+          is_quick_rally: boolean | null
+          location_lat: number | null
+          location_lng: number | null
+          location_name: string | null
+          max_attendees: number | null
+          split_check: boolean | null
+          start_time: string
+          status: string | null
+          title: string
+          updated_at: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "events"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       get_profile_access_summary: {
         Args: { p_days?: number; p_profile_id: string }
         Returns: {
@@ -3866,6 +3902,42 @@ export type Database = {
       join_squad_by_invite_code: {
         Args: { p_invite_code: string }
         Returns: Json
+      }
+      list_events_safe: {
+        Args: never
+        Returns: {
+          after_rally_invited_ids: string[]
+          after_rally_location_lat: number | null
+          after_rally_location_lng: number | null
+          after_rally_location_name: string | null
+          after_rally_stealth: boolean
+          cover_charge: number | null
+          created_at: string | null
+          creator_id: string
+          description: string | null
+          end_time: string | null
+          event_type: string
+          id: string
+          image_url: string | null
+          invite_code: string | null
+          is_barhop: boolean | null
+          is_quick_rally: boolean | null
+          location_lat: number | null
+          location_lng: number | null
+          location_name: string | null
+          max_attendees: number | null
+          split_check: boolean | null
+          start_time: string
+          status: string | null
+          title: string
+          updated_at: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "events"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       log_profile_access: {
         Args: { p_accessed_fields?: string[]; p_accessed_profile_id: string }
