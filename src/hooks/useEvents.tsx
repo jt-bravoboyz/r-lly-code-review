@@ -26,8 +26,8 @@ export function useEvents() {
 
       // Enrich with creator profile and attendee counts (separate queries to
       // keep the RPC return shape simple and re-usable).
-      const creatorIds = [...new Set(upcoming.map((e: any) => e.creator_id).filter(Boolean))];
-      const eventIds = upcoming.map((e: any) => e.id);
+      const creatorIds: string[] = Array.from(new Set(upcoming.map((e: any) => e.creator_id).filter(Boolean)));
+      const eventIds: string[] = upcoming.map((e: any) => e.id);
 
       const [{ data: creators }, { data: attendeeRows }] = await Promise.all([
         creatorIds.length
