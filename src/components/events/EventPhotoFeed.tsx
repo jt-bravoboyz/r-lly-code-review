@@ -488,6 +488,26 @@ export function EventPhotoFeed({ eventId, isHost, eventStatus, eventUpdatedAt }:
                         selectMode && isSelected ? 'scale-95 brightness-75' : 'group-hover:scale-105 group-active:scale-95'
                       }`}
                     />
+                  ) : forcedPosterIds.has(photo.id) ? (
+                    // Watchdog tripped: <video> never decoded metadata. Paint
+                    // the derived `_thumb.jpg` backfill image instead so the
+                    // tile is never blank.
+                    <img
+                      src={deriveThumbUrl(photo.url) || ''}
+                      alt=""
+                      loading="lazy"
+                      onError={() => {
+                        setErroredVideoIds((prev) => {
+                          if (prev.has(photo.id)) return prev;
+                          const next = new Set(prev);
+                          next.add(photo.id);
+                          return next;
+                        });
+                      }}
+                      className={`w-full h-full object-cover transition-all duration-300 ${
+                        selectMode && isSelected ? 'scale-95 brightness-75' : 'group-hover:scale-105 group-active:scale-95'
+                      }`}
+                    />
                   ) : (
                     <video
                       // poster + #t=0.001 + seek-on-metadata trio: paints the
@@ -498,11 +518,33 @@ export function EventPhotoFeed({ eventId, isHost, eventStatus, eventUpdatedAt }:
                       muted
                       playsInline
                       preload="metadata"
+                      ref={(el) => {
+                        if (!el) return;
+                        // 1s readyState watchdog — if the browser still hasn't
+                        // loaded any metadata, swap to the derived thumb URL.
+                        const timer = window.setTimeout(() => {
+                          if (el.readyState === 0) {
+                            setForcedPosterIds((prev) => {
+                              if (prev.has(photo.id)) return prev;
+                              const next = new Set(prev);
+                              next.add(photo.id);
+                              return next;
+                            });
+                          }
+                        }, 1000);
+                        // Best-effort cleanup — element will be GC'd on unmount
+                        el.addEventListener(
+                          'loadedmetadata',
+                          () => window.clearTimeout(timer),
+                          { once: true }
+                        );
+                      }}
                       onLoadedMetadata={(e) => {
                         try { e.currentTarget.currentTime = 0.001; } catch {}
                       }}
                       onError={() => {
-                        setErroredVideoIds((prev) => {
+                        // Try the image fallback first before declaring broken
+                        setForcedPosterIds((prev) => {
                           if (prev.has(photo.id)) return prev;
                           const next = new Set(prev);
                           next.add(photo.id);
