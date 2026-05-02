@@ -1,40 +1,29 @@
-## Plan: Guarantee video grid thumbnails paint
+## Fix: Past R@llies redirect to /events
 
-I’ll make a focused change in `EventPhotoFeed.tsx` to stop blank video tiles when browser metadata loading never starts.
+### Root cause (confirmed against the live DB)
 
-### What will change
-
-1. **Track poster fallbacks per video**
-   - Add local state for videos that need a forced image poster fallback.
-   - This avoids marking the video as broken; it simply swaps the visible cover art source.
-
-2. **Derive a `thumb.jpg` backfill URL from the video URL**
-   - If `thumbnail_url` already exists, keep using it as the primary grid image.
-   - If `thumbnail_url` is missing, derive the expected backfill image URL next to the video file:
-     - `.../video.mp4` → `.../video_thumb.jpg`
-     - `.../video.mov` → `.../video_thumb.jpg`
-   - This matches the existing upload/backfill naming convention in the media code (`${baseId}_thumb.jpg`).
-
-3. **Add the 1-second readyState watchdog**
-   - For fallback `<video>` tiles, attach a ref callback.
-   - After 1 second, check `video.readyState`.
-   - If it is still `0`, switch that tile to the derived `thumb.jpg` URL so the tile paints a real image instead of a blank video poster.
-   - Clear timers safely when the element unmounts/re-renders.
-
-4. **Render the forced fallback as an image**
-   - Once the watchdog fires, render `<img src={derivedThumbUrl}>` for that video tile.
-   - Keep the play badge overlay so it still reads as a video.
-   - If the derived thumb fails to load, fall back to the existing “Tap to open” broken-video treatment.
-
-### Technical detail
-
-The grid path will become:
+`get_event_safe(uuid)` and `list_events_safe()` are declared `RETURNS SETOF events`, but their `SELECT` lists the columns in the wrong order. PostgreSQL maps `SETOF events` rows **positionally**, not by name. The `events` table order is:
 
 ```text
-video tile
-├─ thumbnail_url exists -> <img src={thumbnail_url} />
-├─ watchdog forced fallback -> <img src={derived *_thumb.jpg URL} />
-└─ otherwise -> <video poster="video#t=0.001" src="video#t=0.001" preload="metadata" />
+id, creator_id, title, description, event_type, image_url, start_time,
+end_time, location_name, location_lat, location_lng, is_barhop,
+max_attendees, created_at, updated_at, invite_code, is_quick_rally,
+status, after_rally_location_name, after_rally_location_lat,
+after_rally_location_lng, cover_charge, split_check,
+after_rally_stealth, after_rally_invited_ids
 ```
 
-This is only a client/UI fallback. It won’t change upload behavior, database rows, event privacy, or parent R@lly media visibility.
+The current RPCs select in a different order — so `start_time` (timestamptz) lands in the `is_barhop` (boolean) slot, the function errors, returns zero rows, and `useEvent` returns `null`. `EventDetail` then falls into `if (!event) return <Navigate to="/events" />` — which is exactly what's happening when the user opens any past R@lly. That redirect also causes the render-loop warning and the React Router `Navigate` ref warning.
+
+### Fix
+
+**1. Migration** — `CREATE OR REPLACE` both functions with the SELECT columns in the exact positional order of the `events` table above. Keep all the existing stealth-mask `CASE` expressions (status downgrade to `completed`, null After R@lly location, empty invite list for non-invited viewers) — just move them into the correct slots.
+
+**2. No client changes required** — `useEvents` and `useEvent` already call these RPCs. Once the function returns properly shaped rows, EventDetail renders past R@llies again and the redirect loop stops on its own.
+
+### Verification
+
+- `select start_time from get_event_safe('<past event id>')` returns a real timestamp instead of erroring.
+- Tapping a past R@lly from the Past R@llies feed loads the detail page (no redirect).
+- Stealth: a non-invited viewer still sees `status='completed'` and null After R@lly location/invite list.
+- Video grid posters (`#t=0.001` fix) and 24h Final Cut window are unaffected.
