@@ -10,38 +10,47 @@ export function useEvents() {
   return useQuery({
     queryKey: ['events'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      let viewerProfileId: string | null = null;
-      if (user) {
-        const { data: prof } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('user_id', user.id)
-          .maybeSingle();
-        viewerProfileId = prof?.id ?? null;
-      }
+      // Read events through the safe RPC. For stealth After R@lly events,
+      // the RPC blanks out the After R@lly location/invite list and downgrades
+      // status to 'completed' for non-invited viewers — so the parent R@lly row
+      // stays visible to the original crew but the After R@lly stays private.
+      const { data: safeRows, error } = await supabase
+        .rpc('list_events_safe' as any);
 
-      const { data, error } = await supabase
-        .from('events')
-        .select(`
-          *,
-          creator:profiles!events_creator_id_fkey(id, display_name, avatar_url),
-          attendees:event_attendees(count)
-        `)
-        .gte('start_time', new Date().toISOString())
-        .not('status', 'eq', 'completed') // Exclude completed events
-        .order('start_time', { ascending: true });
-      
       if (error) throw error;
-      // Defense-in-depth: hide stealth After R@lly events from non-invited users.
-      // RLS already enforces this server-side; this guards any cached/stale data.
-      return (data || []).filter((e: any) => {
-        if (!e?.after_rally_stealth || e?.status !== 'after_rally') return true;
-        if (!viewerProfileId) return false;
-        if (e.creator?.id === viewerProfileId) return true;
-        const invited: string[] = e.after_rally_invited_ids || [];
-        return invited.includes(viewerProfileId);
+
+      const nowIso = new Date().toISOString();
+      const upcoming = (safeRows || []).filter((e: any) =>
+        e?.start_time >= nowIso && e?.status !== 'completed'
+      );
+
+      // Enrich with creator profile and attendee counts (separate queries to
+      // keep the RPC return shape simple and re-usable).
+      const creatorIds = [...new Set(upcoming.map((e: any) => e.creator_id).filter(Boolean))];
+      const eventIds = upcoming.map((e: any) => e.id);
+
+      const [{ data: creators }, { data: attendeeRows }] = await Promise.all([
+        creatorIds.length
+          ? supabase.from('safe_profiles').select('id, display_name, avatar_url').in('id', creatorIds)
+          : Promise.resolve({ data: [] as any[] }),
+        eventIds.length
+          ? supabase.from('event_attendees').select('event_id').in('event_id', eventIds)
+          : Promise.resolve({ data: [] as any[] }),
+      ]);
+
+      const creatorMap = new Map((creators || []).map((c: any) => [c.id, c]));
+      const countMap = new Map<string, number>();
+      (attendeeRows || []).forEach((a: any) => {
+        countMap.set(a.event_id, (countMap.get(a.event_id) || 0) + 1);
       });
+
+      return upcoming
+        .map((e: any) => ({
+          ...e,
+          creator: creatorMap.get(e.creator_id) || null,
+          attendees: [{ count: countMap.get(e.id) || 0 }],
+        }))
+        .sort((a: any, b: any) => a.start_time.localeCompare(b.start_time));
     }
   });
 }
