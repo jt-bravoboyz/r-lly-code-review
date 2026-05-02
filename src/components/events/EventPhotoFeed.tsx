@@ -14,7 +14,6 @@ import { downloadPhoto, downloadPhotosBatch } from '@/lib/downloadMedia';
 import { ensurePhotoPermission } from './PhotoPermissionDialog';
 import { useHaptics } from '@/hooks/useHaptics';
 import { usePublicProfile } from '@/contexts/PublicProfileContext';
-import { extractVideoThumbnail } from '@/lib/videoThumbnail';
 import { useVideoThumbnailBackfill } from '@/hooks/useVideoThumbnailBackfill';
 
 const MAX_PHOTOS_PER_EVENT = 50;
