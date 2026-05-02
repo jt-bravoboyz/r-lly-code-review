@@ -48,26 +48,7 @@ export function EventPhotoFeed({ eventId, isHost, eventStatus, eventUpdatedAt }:
   const [profiles, setProfiles] = useState<Record<string, { display_name: string; avatar_url: string | null }>>({});
   // Track videos that fail to play in the browser (e.g. legacy .mov on Android)
   const [erroredVideoIds, setErroredVideoIds] = useState<Set<string>>(new Set());
-  // Videos whose <video> element never advanced past readyState 0 within 1s —
-  // we swap in the derived `_thumb.jpg` backfill URL so the tile paints an image.
-  const [forcedPosterIds, setForcedPosterIds] = useState<Set<string>>(new Set());
   const { triggerHaptic } = useHaptics();
-
-  // Given a video URL like `.../<eventId>/<id>.mp4`, derive the matching
-  // `_thumb.jpg` path used by the upload + backfill paths in useRallyMedia.
-  const deriveThumbUrl = (videoUrl: string): string | null => {
-    try {
-      const u = new URL(videoUrl);
-      // Strip query/hash, replace extension with `_thumb.jpg`
-      const path = u.pathname.replace(/\.[a-zA-Z0-9]{2,5}$/, '_thumb.jpg');
-      u.pathname = path;
-      u.search = '';
-      u.hash = '';
-      return u.toString();
-    } catch {
-      return null;
-    }
-  };
 
   // 24h after-party upload window — re-tick every 60s for live countdown
   const [nowTick, setNowTick] = useState(() => Date.now());
