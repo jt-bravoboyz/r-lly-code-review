@@ -1,29 +1,33 @@
-## Fix: Past R@llies redirect to /events
+Plan: Fix Mobile Video Thumbnails for Good
 
-### Root cause (confirmed against the live DB)
+The screenshots and current network data show the videos still have `thumbnail_url: null`, and the derived `_thumb.jpg` fallback URLs return storage errors. That means the current UI fallback has no real image to paint on the phone, so iOS keeps showing the pale blank video tile with only the play icon.
 
-`get_event_safe(uuid)` and `list_events_safe()` are declared `RETURNS SETOF events`, but their `SELECT` lists the columns in the wrong order. PostgreSQL maps `SETOF events` rows **positionally**, not by name. The `events` table order is:
+1. Make EventPhotoFeed use a real poster source first
+- Add a shared `getVideoPosterUrl(media)` helper in `EventPhotoFeed.tsx`.
+- Prefer `media.thumbnail_url` when present.
+- Fall back to the expected sibling `_thumb.jpg` URL only when `thumbnail_url` is missing.
+- Use that URL as an `<img>` tile before trying the `<video>` element, so mobile Safari does not need to decode video metadata just to display the grid.
+- Keep the play badge overlay and viewer behavior unchanged.
 
-```text
-id, creator_id, title, description, event_type, image_url, start_time,
-end_time, location_name, location_lat, location_lng, is_barhop,
-max_attendees, created_at, updated_at, invite_code, is_quick_rally,
-status, after_rally_location_name, after_rally_location_lat,
-after_rally_location_lng, cover_charge, split_check,
-after_rally_stealth, after_rally_invited_ids
-```
+2. Fix the current fallback bug in EventPhotoFeed
+- The existing derived thumbnail logic uses the video file basename (`.../video_uuid_thumb.jpg`).
+- The browser backfill code currently uploads using the database media id (`.../media_id_thumb.jpg`).
+- I will align this so any newly generated fallback thumbnail is stored at the same basename-derived path the UI expects, and also writes that URL into `rally_media.thumbnail_url`.
 
-The current RPCs select in a different order — so `start_time` (timestamptz) lands in the `is_barhop` (boolean) slot, the function errors, returns zero rows, and `useEvent` returns `null`. `EventDetail` then falls into `if (!event) return <Navigate to="/events" />` — which is exactly what's happening when the user opens any past R@lly. That redirect also causes the render-loop warning and the React Router `Navigate` ref warning.
+3. Add a backend thumbnail guarantee for legacy videos
+- Update the existing `transcode-video` backend function so when it processes or checks a video it also ensures a `thumbnail_url` exists.
+- Because the backend cannot decode video frames without ffmpeg, it will attempt the existing sibling `_thumb.jpg` storage path first and write it into the database if the file exists.
+- This makes already-uploaded thumbnails discoverable by the UI instead of relying on mobile video metadata.
 
-### Fix
+4. Backfill rows that already have thumbnails in storage but null database fields
+- Add a safe migration/function pass that updates `rally_media.thumbnail_url` for video rows where the matching `_thumb.jpg` object already exists.
+- This will not invent thumbnails for videos where no thumb object exists; it only connects existing image files to the database.
 
-**1. Migration** — `CREATE OR REPLACE` both functions with the SELECT columns in the exact positional order of the `events` table above. Keep all the existing stealth-mask `CASE` expressions (status downgrade to `completed`, null After R@lly location, empty invite list for non-invited viewers) — just move them into the correct slots.
+5. Add a final UI fallback only when no image exists
+- If both `thumbnail_url` and sibling `_thumb.jpg` fail to load, keep the current neutral video tile with the play icon.
+- Avoid marking the video as broken just because the poster image failed; opening the video should still work.
 
-**2. No client changes required** — `useEvents` and `useEvent` already call these RPCs. Once the function returns properly shaped rows, EventDetail renders past R@llies again and the redirect loop stops on its own.
-
-### Verification
-
-- `select start_time from get_event_safe('<past event id>')` returns a real timestamp instead of erroring.
-- Tapping a past R@lly from the Past R@llies feed loads the detail page (no redirect).
-- Stealth: a non-invited viewer still sees `status='completed'` and null After R@lly location/invite list.
-- Video grid posters (`#t=0.001` fix) and 24h Final Cut window are unaffected.
+6. Verify on the reported event
+- Confirm the gallery query for event `681e53e8-c8e5-43c0-a1cf-04861e4f2322` returns video rows with thumbnail URLs where available.
+- Confirm `EventPhotoFeed.tsx` no longer depends on iOS `loadedmetadata`/`readyState` for the normal grid paint path.
+- Confirm full-screen playback still uses the original video URL.
