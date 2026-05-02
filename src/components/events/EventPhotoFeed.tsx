@@ -475,73 +475,18 @@ export function EventPhotoFeed({ eventId, isHost, eventStatus, eventUpdatedAt }:
                         selectMode && isSelected ? 'scale-95 brightness-75' : 'group-hover:scale-105 group-active:scale-95'
                       }`}
                     />
-                  ) : forcedPosterIds.has(photo.id) ? (
-                    // Watchdog tripped: <video> never decoded metadata. Paint
-                    // the derived `_thumb.jpg` backfill image instead so the
-                    // tile is never blank.
-                    <img
-                      src={deriveThumbUrl(photo.url) || ''}
-                      alt=""
-                      loading="lazy"
-                      onError={() => {
-                        setErroredVideoIds((prev) => {
-                          if (prev.has(photo.id)) return prev;
-                          const next = new Set(prev);
-                          next.add(photo.id);
-                          return next;
-                        });
-                      }}
-                      className={`w-full h-full object-cover transition-all duration-300 ${
-                        selectMode && isSelected ? 'scale-95 brightness-75' : 'group-hover:scale-105 group-active:scale-95'
-                      }`}
-                    />
                   ) : (
-                    <video
-                      // poster + #t=0.001 + seek-on-metadata trio: paints the
-                      // first video frame as a still cover photo on iOS Safari
-                      // and Android Chrome instead of showing a black box.
-                      poster={`${photo.url}#t=0.001`}
-                      src={`${photo.url}#t=0.001`}
-                      muted
-                      playsInline
-                      preload="metadata"
-                      ref={(el) => {
-                        if (!el) return;
-                        // 1s readyState watchdog — if the browser still hasn't
-                        // loaded any metadata, swap to the derived thumb URL.
-                        const timer = window.setTimeout(() => {
-                          if (el.readyState === 0) {
-                            setForcedPosterIds((prev) => {
-                              if (prev.has(photo.id)) return prev;
-                              const next = new Set(prev);
-                              next.add(photo.id);
-                              return next;
-                            });
-                          }
-                        }, 1000);
-                        // Best-effort cleanup — element will be GC'd on unmount
-                        el.addEventListener(
-                          'loadedmetadata',
-                          () => window.clearTimeout(timer),
-                          { once: true }
-                        );
-                      }}
-                      onLoadedMetadata={(e) => {
-                        try { e.currentTarget.currentTime = 0.001; } catch {}
-                      }}
-                      onError={() => {
-                        // Try the image fallback first before declaring broken
-                        setForcedPosterIds((prev) => {
-                          if (prev.has(photo.id)) return prev;
-                          const next = new Set(prev);
-                          next.add(photo.id);
-                          return next;
-                        });
-                      }}
-                      className={`w-full h-full object-cover transition-all duration-300 ${
+                    // No stored thumbnail yet — paint a branded placeholder
+                    // immediately so mobile never sees a blank white tile.
+                    // Background backfill effect will swap in a real frame
+                    // shortly via realtime.
+                    <div
+                      className={`w-full h-full flex items-center justify-center bg-gradient-to-br from-muted via-muted/80 to-muted/60 transition-all duration-300 ${
                         selectMode && isSelected ? 'scale-95 brightness-75' : 'group-hover:scale-105 group-active:scale-95'
                       }`}
-                    />
+                    >
+                      <FileVideo className="h-7 w-7 text-muted-foreground/60" />
+                    </div>
                   )}
                   {/* Play badge */}
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
