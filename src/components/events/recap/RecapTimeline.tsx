@@ -95,27 +95,14 @@ export function RecapTimeline({
         <section>
           <div className="relative">
             {hero.type === 'video' ? (
-              hero.thumbnail_url ? (
-                <video
-                  src={hero.url}
-                  poster={hero.thumbnail_url}
-                  controls
-                  playsInline
-                  preload="none"
-                  className="w-full aspect-[4/5] object-cover rounded-2xl ring-2 ring-primary/30 shadow-lg bg-black"
-                />
-              ) : (
-                // No thumbnail yet — show branded placeholder w/ tap-to-play.
-                // Mobile browsers won't render a poster frame on their own,
-                // so we never show a raw <video> until a thumbnail exists.
-                <video
-                  src={hero.url}
-                  controls
-                  playsInline
-                  preload="none"
-                  className="w-full aspect-[4/5] object-cover rounded-2xl ring-2 ring-primary/30 shadow-lg bg-gradient-to-br from-muted via-muted/80 to-muted/60"
-                />
-              )
+              <video
+                src={hero.url}
+                poster={hero.thumbnail_url || undefined}
+                controls
+                playsInline
+                preload="none"
+                className="w-full aspect-[4/5] object-cover rounded-2xl ring-2 ring-primary/30 shadow-lg bg-gradient-to-br from-muted via-muted/80 to-muted/60"
+              />
             ) : (
               <img
                 src={hero.url}
