@@ -48,26 +48,7 @@ export function EventPhotoFeed({ eventId, isHost, eventStatus, eventUpdatedAt }:
   const [profiles, setProfiles] = useState<Record<string, { display_name: string; avatar_url: string | null }>>({});
   // Track videos that fail to play in the browser (e.g. legacy .mov on Android)
   const [erroredVideoIds, setErroredVideoIds] = useState<Set<string>>(new Set());
-  // Videos whose <video> element never advanced past readyState 0 within 1s —
-  // we swap in the derived `_thumb.jpg` backfill URL so the tile paints an image.
-  const [forcedPosterIds, setForcedPosterIds] = useState<Set<string>>(new Set());
   const { triggerHaptic } = useHaptics();
-
-  // Given a video URL like `.../<eventId>/<id>.mp4`, derive the matching
-  // `_thumb.jpg` path used by the upload + backfill paths in useRallyMedia.
-  const deriveThumbUrl = (videoUrl: string): string | null => {
-    try {
-      const u = new URL(videoUrl);
-      // Strip query/hash, replace extension with `_thumb.jpg`
-      const path = u.pathname.replace(/\.[a-zA-Z0-9]{2,5}$/, '_thumb.jpg');
-      u.pathname = path;
-      u.search = '';
-      u.hash = '';
-      return u.toString();
-    } catch {
-      return null;
-    }
-  };
 
   // 24h after-party upload window — re-tick every 60s for live countdown
   const [nowTick, setNowTick] = useState(() => Date.now());
@@ -130,8 +111,10 @@ export function EventPhotoFeed({ eventId, isHost, eventStatus, eventUpdatedAt }:
     return () => { supabase.removeChannel(channel); };
   }, [eventId, queryClient]);
 
-  // Opportunistic thumbnail backfill: for the user's OWN legacy videos that
-  // never got a thumbnail, generate one in the background and patch the row.
+  // Opportunistic thumbnail backfill: for ANY shared video missing a thumbnail,
+  // generate one in the background and patch the row via SECURITY DEFINER RPC
+  // so non-host members can fix legacy uploads too. Only run a few at a time
+  // to avoid hammering the network on big galleries.
   const backfillAttemptedRef = useRef<Set<string>>(new Set());
   useEffect(() => {
     if (!profile?.id) return;
@@ -139,9 +122,8 @@ export function EventPhotoFeed({ eventId, isHost, eventStatus, eventUpdatedAt }:
       (p) =>
         p.type === 'video' &&
         !p.thumbnail_url &&
-        p.created_by === profile.id &&
         !backfillAttemptedRef.current.has(p.id)
-    );
+    ).slice(0, 3); // throttle: up to 3 per render pass
     if (!targets.length) return;
 
     let cancelled = false;
@@ -161,10 +143,15 @@ export function EventPhotoFeed({ eventId, isHost, eventStatus, eventUpdatedAt }:
             .upload(thumbPath, thumb, { upsert: true, contentType: 'image/jpeg' });
           if (upErr) continue;
           const publicUrl = supabase.storage.from('rally-media').getPublicUrl(thumbPath).data.publicUrl;
-          await supabase
-            .from('rally_media' as any)
-            .update({ thumbnail_url: publicUrl })
-            .eq('id', media.id);
+          // Use SECURITY DEFINER RPC so non-host event members can patch the row
+          const { error: rpcErr } = await supabase.rpc(
+            'set_rally_media_thumbnail' as any,
+            { p_media_id: media.id, p_thumbnail_url: publicUrl }
+          );
+          if (rpcErr) {
+            console.warn('[rally-media] thumbnail RPC failed', media.id, rpcErr);
+            continue;
+          }
           queryClient.invalidateQueries({ queryKey: ['rally-media-gallery', eventId] });
         } catch (err) {
           console.warn('[rally-media] backfill failed', media.id, err);
@@ -488,73 +475,18 @@ export function EventPhotoFeed({ eventId, isHost, eventStatus, eventUpdatedAt }:
                         selectMode && isSelected ? 'scale-95 brightness-75' : 'group-hover:scale-105 group-active:scale-95'
                       }`}
                     />
-                  ) : forcedPosterIds.has(photo.id) ? (
-                    // Watchdog tripped: <video> never decoded metadata. Paint
-                    // the derived `_thumb.jpg` backfill image instead so the
-                    // tile is never blank.
-                    <img
-                      src={deriveThumbUrl(photo.url) || ''}
-                      alt=""
-                      loading="lazy"
-                      onError={() => {
-                        setErroredVideoIds((prev) => {
-                          if (prev.has(photo.id)) return prev;
-                          const next = new Set(prev);
-                          next.add(photo.id);
-                          return next;
-                        });
-                      }}
-                      className={`w-full h-full object-cover transition-all duration-300 ${
-                        selectMode && isSelected ? 'scale-95 brightness-75' : 'group-hover:scale-105 group-active:scale-95'
-                      }`}
-                    />
                   ) : (
-                    <video
-                      // poster + #t=0.001 + seek-on-metadata trio: paints the
-                      // first video frame as a still cover photo on iOS Safari
-                      // and Android Chrome instead of showing a black box.
-                      poster={`${photo.url}#t=0.001`}
-                      src={`${photo.url}#t=0.001`}
-                      muted
-                      playsInline
-                      preload="metadata"
-                      ref={(el) => {
-                        if (!el) return;
-                        // 1s readyState watchdog — if the browser still hasn't
-                        // loaded any metadata, swap to the derived thumb URL.
-                        const timer = window.setTimeout(() => {
-                          if (el.readyState === 0) {
-                            setForcedPosterIds((prev) => {
-                              if (prev.has(photo.id)) return prev;
-                              const next = new Set(prev);
-                              next.add(photo.id);
-                              return next;
-                            });
-                          }
-                        }, 1000);
-                        // Best-effort cleanup — element will be GC'd on unmount
-                        el.addEventListener(
-                          'loadedmetadata',
-                          () => window.clearTimeout(timer),
-                          { once: true }
-                        );
-                      }}
-                      onLoadedMetadata={(e) => {
-                        try { e.currentTarget.currentTime = 0.001; } catch {}
-                      }}
-                      onError={() => {
-                        // Try the image fallback first before declaring broken
-                        setForcedPosterIds((prev) => {
-                          if (prev.has(photo.id)) return prev;
-                          const next = new Set(prev);
-                          next.add(photo.id);
-                          return next;
-                        });
-                      }}
-                      className={`w-full h-full object-cover transition-all duration-300 ${
+                    // No stored thumbnail yet — paint a branded placeholder
+                    // immediately so mobile never sees a blank white tile.
+                    // Background backfill effect will swap in a real frame
+                    // shortly via realtime.
+                    <div
+                      className={`w-full h-full flex items-center justify-center bg-gradient-to-br from-muted via-muted/80 to-muted/60 transition-all duration-300 ${
                         selectMode && isSelected ? 'scale-95 brightness-75' : 'group-hover:scale-105 group-active:scale-95'
                       }`}
-                    />
+                    >
+                      <FileVideo className="h-7 w-7 text-muted-foreground/60" />
+                    </div>
                   )}
                   {/* Play badge */}
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">

@@ -4048,6 +4048,10 @@ export type Database = {
           id: string
         }[]
       }
+      set_rally_media_thumbnail: {
+        Args: { p_media_id: string; p_thumbnail_url: string }
+        Returns: boolean
+      }
       set_referral: {
         Args: { p_referrer_id: string; p_user_id: string }
         Returns: undefined
