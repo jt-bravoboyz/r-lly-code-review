@@ -50,12 +50,18 @@ export function EventPhotoFeed({ eventId, isHost, eventStatus, eventUpdatedAt }:
   const [erroredVideoIds, setErroredVideoIds] = useState<Set<string>>(new Set());
   const { triggerHaptic } = useHaptics();
 
-  // 24h after-party upload window
+  // 24h after-party upload window — re-tick every 60s for live countdown
+  const [nowTick, setNowTick] = useState(() => Date.now());
+  useEffect(() => {
+    if (eventStatus !== 'completed') return;
+    const id = setInterval(() => setNowTick(Date.now()), 60_000);
+    return () => clearInterval(id);
+  }, [eventStatus]);
   const uploadWindow = (() => {
     if (eventStatus !== 'completed') return { canUpload: true, msLeft: null as number | null };
     if (!eventUpdatedAt) return { canUpload: false, msLeft: 0 };
     const endsAt = new Date(eventUpdatedAt).getTime() + 24 * 60 * 60 * 1000;
-    const msLeft = endsAt - Date.now();
+    const msLeft = endsAt - nowTick;
     return { canUpload: msLeft > 0, msLeft };
   })();
   const formatCountdown = (ms: number) => {
