@@ -364,6 +364,35 @@ Deno.serve(async (req) => {
       recipientProfileIds = attendees?.map(a => a.profile_id) || [];
     }
 
+    // ========== STEALTH AFTER R@LLY GATE ==========
+    // If the event is in stealth After R@lly mode, restrict recipients to the
+    // hand-picked invited crew (plus host + co-hosts). This prevents the entire
+    // parent R@lly attendee list from being notified about a private After R@lly.
+    if (eventId && recipientProfileIds.length > 0) {
+      const { data: stealthEvent } = await supabase
+        .from('events')
+        .select('after_rally_stealth, after_rally_invited_ids, status, creator_id')
+        .eq('id', eventId)
+        .maybeSingle();
+
+      if (stealthEvent?.after_rally_stealth === true && stealthEvent.status === 'after_rally') {
+        const { data: cohostRows } = await supabase
+          .from('event_cohosts')
+          .select('profile_id')
+          .eq('event_id', eventId);
+
+        const allowed = new Set<string>([
+          ...(stealthEvent.after_rally_invited_ids || []),
+          ...(stealthEvent.creator_id ? [stealthEvent.creator_id] : []),
+          ...((cohostRows || []).map((c: { profile_id: string }) => c.profile_id)),
+        ]);
+
+        const before = recipientProfileIds.length;
+        recipientProfileIds = recipientProfileIds.filter((id: string) => allowed.has(id));
+        console.log(`Stealth After R@lly gate: ${before} → ${recipientProfileIds.length} recipients for event ${eventId}`);
+      }
+    }
+
     // Exclude the sender if specified
     if (excludeProfileId) {
       recipientProfileIds = recipientProfileIds.filter((id: string) => id !== excludeProfileId);

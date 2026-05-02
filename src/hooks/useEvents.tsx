@@ -10,6 +10,17 @@ export function useEvents() {
   return useQuery({
     queryKey: ['events'],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      let viewerProfileId: string | null = null;
+      if (user) {
+        const { data: prof } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        viewerProfileId = prof?.id ?? null;
+      }
+
       const { data, error } = await supabase
         .from('events')
         .select(`
@@ -22,7 +33,15 @@ export function useEvents() {
         .order('start_time', { ascending: true });
       
       if (error) throw error;
-      return data;
+      // Defense-in-depth: hide stealth After R@lly events from non-invited users.
+      // RLS already enforces this server-side; this guards any cached/stale data.
+      return (data || []).filter((e: any) => {
+        if (!e?.after_rally_stealth || e?.status !== 'after_rally') return true;
+        if (!viewerProfileId) return false;
+        if (e.creator?.id === viewerProfileId) return true;
+        const invited: string[] = e.after_rally_invited_ids || [];
+        return invited.includes(viewerProfileId);
+      });
     }
   });
 }
