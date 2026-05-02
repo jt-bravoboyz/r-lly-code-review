@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { RotateCcw } from 'lucide-react';
 import { useRecapData } from '@/hooks/useRecapData';
+import { useVideoThumbnailBackfill } from '@/hooks/useVideoThumbnailBackfill';
 import { RecapTour } from './recap/RecapTour';
 import { RecapTimeline } from './recap/RecapTimeline';
 
@@ -16,6 +17,10 @@ const TOUR_KEY_PREFIX = 'rally_recap_toured_';
 
 export function RallyRecapScreen({ eventId, eventTitle, eventType, attendeeCount, ddCount }: RallyRecapScreenProps) {
   const { rogueTimeline, galleryPhotos, heroVideo, awards, stats, isLoading } = useRecapData(eventId);
+
+  // Heal blank video tiles on mobile by generating any missing thumbnails
+  // the first time anyone opens the recap on a real device.
+  useVideoThumbnailBackfill(eventId, galleryPhotos);
 
   const [hasSeenTour, setHasSeenTour] = useState(() => {
     return localStorage.getItem(`${TOUR_KEY_PREFIX}${eventId}`) === 'true';
