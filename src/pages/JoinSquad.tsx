@@ -46,18 +46,39 @@ export default function JoinSquad() {
       }
 
       try {
+        const normalizedCode = code.trim().toUpperCase();
         const { data, error: fetchError } = await supabase
-          .rpc('get_squad_invite_preview', { p_invite_code: code });
+          .rpc('get_squad_invite_preview', { p_invite_code: normalizedCode });
 
         if (fetchError) throw fetchError;
 
         if (!data || data.length === 0) {
-          setError('Invite not found or expired');
+          console.warn('[JoinSquad] preview empty for code', normalizedCode);
+          setError("We couldn't find this invite. Ask the host to send you a fresh link.");
           setIsLoading(false);
           return;
         }
 
-        const row = data[0];
+        const row: any = data[0];
+        const reason: string = row.reason || 'ok';
+        console.warn('[JoinSquad] preview reason:', reason, row);
+
+        if (reason === 'not_found') {
+          setError("We couldn't find this invite. Ask the host to send you a fresh link.");
+          setIsLoading(false);
+          return;
+        }
+        if (reason === 'expired') {
+          setError('This invite has expired. Ask the host for a new one.');
+          setIsLoading(false);
+          return;
+        }
+        if (reason === 'already_used') {
+          setError('This invite was already used. Ask the host for a new link.');
+          setIsLoading(false);
+          return;
+        }
+
         const inviteData: SquadInvite = {
           id: row.id,
           squad_id: row.squad_id,
