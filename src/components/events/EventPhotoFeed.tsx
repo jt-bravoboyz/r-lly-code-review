@@ -16,8 +16,9 @@ import { useHaptics } from '@/hooks/useHaptics';
 import { usePublicProfile } from '@/contexts/PublicProfileContext';
 import { useVideoThumbnailBackfill } from '@/hooks/useVideoThumbnailBackfill';
 
-const MAX_PHOTOS_PER_EVENT = 50;
+const MAX_PHOTOS_PER_EVENT = 500;
 const MAX_VIDEOS_PER_EVENT = 5;
+const UPLOAD_CONCURRENCY = 4;
 const MAX_PHOTO_SIZE = 10 * 1024 * 1024;       // 10MB
 const MAX_VIDEO_SIZE = 500 * 1024 * 1024;      // 500MB
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic'];
