@@ -41,6 +41,9 @@ export function EventPhotoFeed({ eventId, isHost, eventStatus, eventUpdatedAt }:
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number }>({ done: 0, total: 0 });
+  const [failedUploads, setFailedUploads] = useState<File[]>([]);
+  const [retrying, setRetrying] = useState(false);
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
   const [downloadingViewer, setDownloadingViewer] = useState(false);
   const [selectMode, setSelectMode] = useState(false);
