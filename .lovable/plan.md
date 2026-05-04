@@ -1,52 +1,41 @@
-## Diagnosis
+## Status of the three pre-flight checks
 
-Confirmed by reading the live DB and the two RPCs that back squad invites:
+**1. Drunkies upload window — clear.**
+The event row (`80e42cfb…DRUNKIES`) is still `status = 'scheduled'`. Storage RLS (`Event members can upload rally-media (24h post-event)`) allows uploads when status is `scheduled`, `live`, or `after_rally` — the 24h cutoff only kicks in once status flips to `completed`. The client-side `uploadWindow` guard in `EventPhotoFeed.tsx` also only blocks when `eventStatus === 'completed'`. **No event extension needed.** Kiree's only blocker is the 50-photo cap.
 
-- `get_squad_invite_preview(code)` and `join_squad_by_invite_code(code)` are both `SECURITY DEFINER` and only return rows where `status = 'pending' AND expires_at > now()`.
-- Inside `join_squad_by_invite_code`, **the invite row is updated to `status = 'accepted'` after the first successful join**.
-- Looking at `squad_invites` for the active squad (`b78994ed-…`), the four most recent `native-share` invites are all already `status = 'accepted'`. Only `in_app` invites tied to a specific profile are still `pending`.
+**2. Thumbnail RLS — already carved out.**
+The earlier 403 was fixed by the migration that added two policies on `storage.objects`:
+- `Event members can upload rally-media thumbnails` (INSERT)
+- `Event members can update rally-media thumbnails` (UPDATE)
+Both match `*_thumb.{jpg,jpeg,png,webp}` and require `is_event_member`. Recap thumbnails for Drunkies will write cleanly.
 
-So when Nick taps a link that someone else (or Nick himself on another device) already accepted, both the preview RPC and the join RPC return nothing → the UI shows **"Invite not found or expired"**. This is a logic bug, not RLS or an expiration bug — the `expires_at` is 7 days out and RLS is bypassed by `SECURITY DEFINER`.
+**3. Sticky progress UI — addressed below.**
 
-There is also a smaller secondary issue: when `JoinSquad.tsx` calls the join RPC and the user is already a member, it routes to `/squads/{id}`, but if the invite is `accepted` it never reaches that branch because the row is filtered out first.
+## Plan (revised)
 
-## Plan
+### A. Raise the cap
+- `src/components/events/EventPhotoFeed.tsx`: `MAX_PHOTOS_PER_EVENT` from `50` → `500`. Update the over-limit toast copy.
 
-### 1. Make share-style invites multi-use
-Update `join_squad_by_invite_code` so the row is **only** marked `accepted` for invite types that are inherently single-recipient (`in_app`, `sms`, `email` to a specific contact). For `native-share` / generic share links we keep `status = 'pending'` so multiple people can join via the same link until `expires_at`.
+### B. Parallel chunked uploads
+- Replace the strictly sequential `for` loop in `handleUpload` with a chunked runner: process **4 files in parallel** via `Promise.allSettled`, then move to the next chunk. Maintains existing per-file validation and failure tallying.
+- Track running counters in refs so a re-render mid-batch doesn't reset progress.
 
-Logic:
-```text
-if invite_type in ('in_app','sms','email') and contact_value not in (null,'native-share'):
-    set status = 'accepted'
-else:
-    leave status = 'pending'
-```
+### C. Sticky progress overlay (new)
+- While `uploading` is true, render a fixed-position pill at the bottom of the viewport (above the bottom nav, respecting `safe-area-inset-bottom`) using a Portal so it stays visible regardless of scroll position. Glass/Liquid styling per project core (`backdrop-blur-xl`, R@lly Orange accent).
+- Content: `Uploading 137 of 348…` + thin progress bar (count-based) + small spinner. Auto-dismisses on completion; replaced by the existing summary toast.
+- Z-index above `EventPhotoFeed` content but below modals (e.g. `z-50`).
 
-### 2. Show a friendlier reason instead of "Invite not found or expired"
-Update `get_squad_invite_preview` to also return rows where `status = 'accepted'` (still gated by `expires_at > now()`), and add a `reason` column the UI can use:
-- `pending` → show join card
-- `accepted` and current user is already a member → route straight to `/squads/{id}`
-- `accepted` and link is single-use → show "This invite was already used. Ask the host for a new one."
-- `expires_at <= now()` → show "This invite has expired."
+### D. Failed-upload retry
+- After the batch, keep the failed `File[]` in state and surface a small "Retry N failed" button at the top of the feed (mirrors the pattern in `RallyMediaUpload.tsx`). Same chunked runner.
 
-### 3. Tighten `JoinSquad.tsx`
-- Trim/uppercase the code from the URL before sending.
-- Handle the new `reason` field with distinct copy and CTAs (Resend request / Open Squad / Maybe Later).
-- When the join RPC returns `{error:'Already a member', squad_id}`, navigate to `/squads/{squad_id}` (already done), and also fire this branch when preview returns `accepted` + user is in `squad_members`.
-
-### 4. Backfill recent share links
-One-shot SQL inside the migration: for `squad_invites` rows where `contact_value IN ('native-share', null)` and `status = 'accepted'` and `expires_at > now()`, set `status = 'pending'` so currently broken share links start working again.
-
-### 5. Logging
-Add `console.warn` lines in `JoinSquad.tsx` around the preview + join calls including the resolved `reason`, so the next failure is debuggable from the user's browser logs.
+### E. Out of scope
+- No storage policy changes (already correct).
+- No edits to `RallyMediaUpload.tsx` / `StagedMediaPicker.tsx` (pre-event staging, different flow).
+- No DB schema changes.
 
 ## Files touched
+- `src/components/events/EventPhotoFeed.tsx` — cap bump, chunked uploads, sticky portal progress, retry button.
 
-- New migration: update both RPCs + backfill statement.
-- `src/pages/JoinSquad.tsx`: handle new `reason`, normalize code, friendlier error UI.
-
-## Out of scope
-
-- No RLS changes. RLS is not the cause; both RPCs are `SECURITY DEFINER`.
-- No changes to thumbnails or storage policies.
+## Verification
+- Smoke test: select 60+ files in preview, confirm sticky progress stays visible while scrolling the feed and the count advances in chunks of 4.
+- Confirm Recap thumbnails appear for any video Kiree includes (RLS already permits the backfill writes).
