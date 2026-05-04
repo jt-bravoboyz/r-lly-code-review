@@ -683,6 +683,33 @@ export function EventPhotoFeed({ eventId, isHost, eventStatus, eventUpdatedAt }:
         </div>,
         document.body
       )}
+
+      {/* Sticky upload progress — Portal so it stays visible while scrolling */}
+      {uploading && uploadProgress.total > 0 && createPortal(
+        <div
+          className="fixed inset-x-0 z-[9999] px-4 pointer-events-none"
+          style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 80px)' }}
+        >
+          <div className="mx-auto max-w-md pointer-events-auto rounded-2xl border border-primary/30 bg-background/80 backdrop-blur-xl shadow-2xl px-4 py-3 font-montserrat">
+            <div className="flex items-center gap-2.5 mb-2">
+              <Loader2 className="h-4 w-4 animate-spin text-primary shrink-0" />
+              <p className="text-sm font-semibold flex-1 truncate">
+                {retrying ? 'Retrying' : 'Uploading'} {uploadProgress.done} of {uploadProgress.total}…
+              </p>
+              <span className="text-xs font-bold text-primary tabular-nums">
+                {Math.round((uploadProgress.done / uploadProgress.total) * 100)}%
+              </span>
+            </div>
+            <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+              <div
+                className="h-full bg-primary transition-all duration-300 ease-out"
+                style={{ width: `${(uploadProgress.done / uploadProgress.total) * 100}%` }}
+              />
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }
