@@ -120,8 +120,9 @@ export default function JoinSquad() {
 
     setIsJoining(true);
     try {
+      const normalizedCode = (code || '').trim().toUpperCase();
       const { data, error: joinError } = await supabase
-        .rpc('join_squad_by_invite_code', { p_invite_code: code! });
+        .rpc('join_squad_by_invite_code', { p_invite_code: normalizedCode });
 
       if (joinError) throw joinError;
 
