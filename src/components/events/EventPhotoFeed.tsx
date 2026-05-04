@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { getPublicName } from '@/lib/identity';
-import { Camera, ImagePlus, X, Loader2, Trash2, Download, Check, CheckCircle2, Play, FileVideo, ExternalLink } from 'lucide-react';
+import { Camera, ImagePlus, X, Loader2, Trash2, Download, Check, CheckCircle2, Play, FileVideo, ExternalLink, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useGalleryPhotos, useUploadRallyMedia, useDeleteRallyMedia, type RallyMedia } from '@/hooks/useRallyMedia';
@@ -16,8 +16,9 @@ import { useHaptics } from '@/hooks/useHaptics';
 import { usePublicProfile } from '@/contexts/PublicProfileContext';
 import { useVideoThumbnailBackfill } from '@/hooks/useVideoThumbnailBackfill';
 
-const MAX_PHOTOS_PER_EVENT = 50;
+const MAX_PHOTOS_PER_EVENT = 500;
 const MAX_VIDEOS_PER_EVENT = 5;
+const UPLOAD_CONCURRENCY = 4;
 const MAX_PHOTO_SIZE = 10 * 1024 * 1024;       // 10MB
 const MAX_VIDEO_SIZE = 500 * 1024 * 1024;      // 500MB
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic'];
@@ -40,6 +41,9 @@ export function EventPhotoFeed({ eventId, isHost, eventStatus, eventUpdatedAt }:
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number }>({ done: 0, total: 0 });
+  const [failedUploads, setFailedUploads] = useState<File[]>([]);
+  const [retrying, setRetrying] = useState(false);
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
   const [downloadingViewer, setDownloadingViewer] = useState(false);
   const [selectMode, setSelectMode] = useState(false);
@@ -115,89 +119,123 @@ export function EventPhotoFeed({ eventId, isHost, eventStatus, eventUpdatedAt }:
   // legacy/mobile-uploaded videos heal the same way everywhere.
   useVideoThumbnailBackfill(eventId, photos);
 
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!profile || !e.target.files?.length) return;
-    const files = Array.from(e.target.files);
-    setUploading(true);
-
+  // Validate + categorize a batch of files against current caps.
+  const prepareBatch = (files: File[]) => {
     const existingPhotos = photos.filter(p => p.type === 'photo').length;
     const existingVideos = photos.filter(p => p.type === 'video').length;
-    let photosQueued = 0;
-    let videosQueued = 0;
-    let photoSuccess = 0;
-    let videoSuccess = 0;
+    const accepted: { file: File; type: 'photo' | 'video' }[] = [];
+    let photoSlot = existingPhotos;
+    let videoSlot = existingVideos;
 
     for (const file of files) {
       const isVideo = file.type.startsWith('video/');
-
       if (isVideo) {
-        if (!ALLOWED_VIDEO_TYPES.includes(file.type)) {
-          toast.error(`${file.name}: unsupported video format`);
-          continue;
-        }
-        if (existingVideos + videosQueued >= MAX_VIDEOS_PER_EVENT) {
-          toast.error(`Max ${MAX_VIDEOS_PER_EVENT} videos per R@lly. Delete one to add more.`);
-          continue;
-        }
-        if (file.size > MAX_VIDEO_SIZE) {
-          toast.error(`${file.name}: too large (max 500MB)`);
-          continue;
-        }
-        try {
-          await uploadMedia.mutateAsync({
-            eventId,
-            profileId: profile.id,
-            file,
-            type: 'video',
-            orderIndex: photos.length + photosQueued + videosQueued,
-            isFeatured: false,
-          });
-          videosQueued++;
-          videoSuccess++;
-        } catch {
-          toast.error(`Failed to upload ${file.name}`);
-        }
+        if (!ALLOWED_VIDEO_TYPES.includes(file.type)) { toast.error(`${file.name}: unsupported video format`); continue; }
+        if (videoSlot >= MAX_VIDEOS_PER_EVENT) { toast.error(`Max ${MAX_VIDEOS_PER_EVENT} videos per R@lly. Delete one to add more.`); continue; }
+        if (file.size > MAX_VIDEO_SIZE) { toast.error(`${file.name}: too large (max 500MB)`); continue; }
+        accepted.push({ file, type: 'video' });
+        videoSlot++;
       } else {
-        if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
-          toast.error(`${file.name}: unsupported format`);
-          continue;
-        }
-        if (existingPhotos + photosQueued >= MAX_PHOTOS_PER_EVENT) {
-          toast.error(`Max ${MAX_PHOTOS_PER_EVENT} photos per R@lly. Delete one to add more.`);
-          continue;
-        }
-        if (file.size > MAX_PHOTO_SIZE) {
-          toast.error(`${file.name}: too large (max 10MB)`);
-          continue;
-        }
-        try {
-          await uploadMedia.mutateAsync({
-            eventId,
-            profileId: profile.id,
-            file,
-            type: 'photo',
-            orderIndex: photos.length + photosQueued + videosQueued,
-            isFeatured: false,
-          });
-          photosQueued++;
-          photoSuccess++;
-        } catch {
-          toast.error(`Failed to upload ${file.name}`);
-        }
+        if (!ALLOWED_IMAGE_TYPES.includes(file.type)) { toast.error(`${file.name}: unsupported format`); continue; }
+        if (photoSlot >= MAX_PHOTOS_PER_EVENT) { toast.error(`Max ${MAX_PHOTOS_PER_EVENT} photos per R@lly. Delete one to add more.`); continue; }
+        if (file.size > MAX_PHOTO_SIZE) { toast.error(`${file.name}: too large (max 10MB)`); continue; }
+        accepted.push({ file, type: 'photo' });
+        photoSlot++;
       }
     }
-
-    if (photoSuccess > 0 && videoSuccess > 0) {
-      toast.success(`${photoSuccess + videoSuccess} added 🎬`);
-    } else if (videoSuccess > 0) {
-      toast.success(`${videoSuccess} video${videoSuccess > 1 ? 's' : ''} added 🎥`);
-    } else if (photoSuccess > 0) {
-      toast.success(`${photoSuccess} photo${photoSuccess > 1 ? 's' : ''} added 📸`);
-    }
-
-    setUploading(false);
-    if (fileInputRef.current) fileInputRef.current.value = '';
+    return accepted;
   };
+
+  // Run uploads in parallel chunks. Returns counts + the list of files that failed.
+  const runChunkedUploads = async (
+    queue: { file: File; type: 'photo' | 'video' }[],
+    baseOrderIndex: number,
+  ) => {
+    let done = 0;
+    let photoSuccess = 0;
+    let videoSuccess = 0;
+    const failed: File[] = [];
+    setUploadProgress({ done: 0, total: queue.length });
+
+    for (let i = 0; i < queue.length; i += UPLOAD_CONCURRENCY) {
+      const slice = queue.slice(i, i + UPLOAD_CONCURRENCY);
+      const results = await Promise.allSettled(
+        slice.map((item, j) =>
+          uploadMedia.mutateAsync({
+            eventId,
+            profileId: profile!.id,
+            file: item.file,
+            type: item.type,
+            orderIndex: baseOrderIndex + i + j,
+            isFeatured: false,
+          })
+        )
+      );
+      results.forEach((r, idx) => {
+        const item = slice[idx];
+        if (r.status === 'fulfilled') {
+          if (item.type === 'video') videoSuccess++; else photoSuccess++;
+        } else {
+          failed.push(item.file);
+        }
+        done++;
+      });
+      setUploadProgress({ done, total: queue.length });
+    }
+    return { photoSuccess, videoSuccess, failed };
+  };
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!profile || !e.target.files?.length) return;
+    const files = Array.from(e.target.files);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+
+    const queue = prepareBatch(files);
+    if (queue.length === 0) return;
+
+    setUploading(true);
+    try {
+      const { photoSuccess, videoSuccess, failed } = await runChunkedUploads(queue, photos.length);
+      setFailedUploads(failed);
+
+      const total = photoSuccess + videoSuccess;
+      if (photoSuccess > 0 && videoSuccess > 0) {
+        toast.success(`${total} added 🎬${failed.length ? ` · ${failed.length} failed` : ''}`);
+      } else if (videoSuccess > 0) {
+        toast.success(`${videoSuccess} video${videoSuccess > 1 ? 's' : ''} added 🎥${failed.length ? ` · ${failed.length} failed` : ''}`);
+      } else if (photoSuccess > 0) {
+        toast.success(`${photoSuccess} photo${photoSuccess > 1 ? 's' : ''} added 📸${failed.length ? ` · ${failed.length} failed` : ''}`);
+      } else if (failed.length > 0) {
+        toast.error(`${failed.length} upload${failed.length > 1 ? 's' : ''} failed`);
+      }
+    } finally {
+      setUploading(false);
+      setUploadProgress({ done: 0, total: 0 });
+    }
+  };
+
+  const handleRetryFailed = async () => {
+    if (!profile || failedUploads.length === 0 || retrying) return;
+    const queue = failedUploads.map(file => ({
+      file,
+      type: (file.type.startsWith('video/') ? 'video' : 'photo') as 'photo' | 'video',
+    }));
+    setRetrying(true);
+    setUploading(true);
+    try {
+      const { photoSuccess, videoSuccess, failed } = await runChunkedUploads(queue, photos.length);
+      setFailedUploads(failed);
+      const total = photoSuccess + videoSuccess;
+      if (failed.length === 0 && total > 0) toast.success(`All ${total} retried ✅`);
+      else if (total > 0) toast.warning(`${total} uploaded · ${failed.length} still failed`);
+      else toast.error(`Retry failed`);
+    } finally {
+      setRetrying(false);
+      setUploading(false);
+      setUploadProgress({ done: 0, total: 0 });
+    }
+  };
+
 
   const handleDelete = async (mediaId: string) => {
     try {
@@ -383,6 +421,19 @@ export function EventPhotoFeed({ eventId, isHost, eventStatus, eventUpdatedAt }:
               </Button>
             )}
           </div>
+        </div>
+      )}
+
+      {/* Retry failed uploads */}
+      {failedUploads.length > 0 && !uploading && (
+        <div className="rounded-xl border border-destructive/30 bg-destructive/5 px-3 py-2 flex items-center justify-between gap-2">
+          <p className="text-xs font-montserrat text-destructive">
+            {failedUploads.length} upload{failedUploads.length > 1 ? 's' : ''} failed
+          </p>
+          <Button size="sm" variant="outline" className="gap-1.5 h-8" onClick={handleRetryFailed}>
+            <RotateCcw className="h-3.5 w-3.5" />
+            Retry
+          </Button>
         </div>
       )}
 
@@ -629,6 +680,33 @@ export function EventPhotoFeed({ eventId, isHost, eventStatus, eventUpdatedAt }:
               ))}
             </div>
           )}
+        </div>,
+        document.body
+      )}
+
+      {/* Sticky upload progress — Portal so it stays visible while scrolling */}
+      {uploading && uploadProgress.total > 0 && createPortal(
+        <div
+          className="fixed inset-x-0 z-[9999] px-4 pointer-events-none"
+          style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 80px)' }}
+        >
+          <div className="mx-auto max-w-md pointer-events-auto rounded-2xl border border-primary/30 bg-background/80 backdrop-blur-xl shadow-2xl px-4 py-3 font-montserrat">
+            <div className="flex items-center gap-2.5 mb-2">
+              <Loader2 className="h-4 w-4 animate-spin text-primary shrink-0" />
+              <p className="text-sm font-semibold flex-1 truncate">
+                {retrying ? 'Retrying' : 'Uploading'} {uploadProgress.done} of {uploadProgress.total}…
+              </p>
+              <span className="text-xs font-bold text-primary tabular-nums">
+                {Math.round((uploadProgress.done / uploadProgress.total) * 100)}%
+              </span>
+            </div>
+            <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+              <div
+                className="h-full bg-primary transition-all duration-300 ease-out"
+                style={{ width: `${(uploadProgress.done / uploadProgress.total) * 100}%` }}
+              />
+            </div>
+          </div>
         </div>,
         document.body
       )}
