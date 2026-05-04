@@ -424,6 +424,19 @@ export function EventPhotoFeed({ eventId, isHost, eventStatus, eventUpdatedAt }:
         </div>
       )}
 
+      {/* Retry failed uploads */}
+      {failedUploads.length > 0 && !uploading && (
+        <div className="rounded-xl border border-destructive/30 bg-destructive/5 px-3 py-2 flex items-center justify-between gap-2">
+          <p className="text-xs font-montserrat text-destructive">
+            {failedUploads.length} upload{failedUploads.length > 1 ? 's' : ''} failed
+          </p>
+          <Button size="sm" variant="outline" className="gap-1.5 h-8" onClick={handleRetryFailed}>
+            <RotateCcw className="h-3.5 w-3.5" />
+            Retry
+          </Button>
+        </div>
+      )}
+
       {/* Photo Grid — mixed sizing for premium feel */}
       <div className="grid grid-cols-3 gap-1 rounded-xl overflow-hidden">
         {photos.map((photo, idx) => {
