@@ -3834,11 +3834,14 @@ export type Database = {
       get_squad_invite_preview: {
         Args: { p_invite_code: string }
         Returns: {
+          contact_value: string
           expires_at: string
           id: string
           invite_code: string
+          invite_type: string
           owner_avatar_url: string
           owner_display_name: string
+          reason: string
           squad_id: string
           squad_name: string
           status: string
