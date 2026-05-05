@@ -284,7 +284,10 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
       form.reset();
       navigate(`/events/${result.id}`);
     } catch (error: any) {
-      toast.error(error.message || 'Failed to create event');
+      // Insert path already toasted; only fall back for non-DB errors.
+      if (!error?.code && !/row-level security/i.test(error?.message ?? '')) {
+        toast.error(error?.message || 'Failed to create event');
+      }
     } finally {
       isSubmittingRef.current = false;
     }
