@@ -580,6 +580,7 @@ export const QuickRallyDialog = forwardRef<HTMLButtonElement, QuickRallyDialogPr
               </Button>
             </form>
           </Form>
+          </ErrorBoundary>
         </DialogContent>
       </Dialog>
     );
