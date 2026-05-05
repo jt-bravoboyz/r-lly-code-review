@@ -565,23 +565,25 @@ export const QuickRallyDialog = forwardRef<HTMLButtonElement, QuickRallyDialogPr
                     </div>
                   </div>
                 </div>
-              )}
+              </div>
 
-              <Button
-                type="submit"
-                className="w-full gradient-primary text-primary-foreground hover:opacity-90"
-                aria-busy={createEvent.isPending || createInvites.isPending || isSubmittingRef.current}
-                disabled={createEvent.isPending || createInvites.isPending || isSubmittingRef.current}
-              >
-                {createEvent.isPending || createInvites.isPending ? (
-                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Starting...</>
-                ) : (
-                  <>
-                    <Zap className="h-4 w-4 mr-2" />
-                    {selectedTime === 'now' ? 'Start Rally Now' : 'Schedule Rally'}
-                  </>
-                )}
-              </Button>
+              <DialogFooter className="px-6 py-4 border-t border-border/50 bg-background/95 backdrop-blur-md shrink-0 pb-[max(1rem,env(safe-area-inset-bottom))]">
+                <Button
+                  type="submit"
+                  className="w-full gradient-primary text-primary-foreground hover:opacity-90"
+                  aria-busy={createEvent.isPending || createInvites.isPending || isSubmittingRef.current}
+                  disabled={createEvent.isPending || createInvites.isPending || isSubmittingRef.current}
+                >
+                  {createEvent.isPending || createInvites.isPending ? (
+                    <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Starting...</>
+                  ) : (
+                    <>
+                      <Zap className="h-4 w-4 mr-2" />
+                      {selectedTime === 'now' ? 'Start Rally Now' : 'Schedule Rally'}
+                    </>
+                  )}
+                </Button>
+              </DialogFooter>
             </form>
           </Form>
           </ErrorBoundary>
