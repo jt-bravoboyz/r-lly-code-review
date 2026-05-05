@@ -292,7 +292,9 @@ export const QuickRallyDialog = forwardRef<HTMLButtonElement, QuickRallyDialogPr
         navigate(`/events/${result.id}`);
         
       } catch (error: any) {
-        toast.error(error.message || 'Failed to create R@lly');
+        if (!error?.code && !/row-level security/i.test(error?.message ?? '')) {
+          toast.error(error?.message || 'Failed to create R@lly');
+        }
       } finally {
         isSubmittingRef.current = false;
       }
