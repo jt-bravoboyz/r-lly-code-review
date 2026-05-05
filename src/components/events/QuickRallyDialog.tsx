@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { Zap, Users, Beer, Check, Clock, ChevronDown, UserPlus, Loader2 } from 'lucide-react';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
@@ -318,9 +318,9 @@ export const QuickRallyDialog = forwardRef<HTMLButtonElement, QuickRallyDialogPr
             </Button>
           )}
         </DialogTrigger>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md p-0 max-h-[85dvh] flex flex-col gap-0">
           <ErrorBoundary name="QuickRallyDialog">
-          <DialogHeader>
+          <DialogHeader className="px-6 pt-6 pb-3 shrink-0">
             <DialogTitle className="flex items-center gap-3 font-montserrat text-xl">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-yellow-400 to-primary flex items-center justify-center">
                 <Zap className="h-5 w-5 text-white" strokeWidth={2.5} fill="currentColor" />
@@ -328,9 +328,10 @@ export const QuickRallyDialog = forwardRef<HTMLButtonElement, QuickRallyDialogPr
               <span className="font-bold">Quick R@lly</span>
             </DialogTitle>
           </DialogHeader>
-          
+
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col min-h-0 flex-1">
+              <div className="flex-1 overflow-y-auto px-6 pb-4 space-y-4">
               <FormField
                 control={form.control}
                 name="title"
@@ -565,22 +566,25 @@ export const QuickRallyDialog = forwardRef<HTMLButtonElement, QuickRallyDialogPr
                   </div>
                 </div>
               )}
+              </div>
 
-              <Button
-                type="submit"
-                className="w-full gradient-primary text-primary-foreground hover:opacity-90"
-                aria-busy={createEvent.isPending || createInvites.isPending || isSubmittingRef.current}
-                disabled={createEvent.isPending || createInvites.isPending || isSubmittingRef.current}
-              >
-                {createEvent.isPending || createInvites.isPending ? (
-                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Starting...</>
-                ) : (
-                  <>
-                    <Zap className="h-4 w-4 mr-2" />
-                    {selectedTime === 'now' ? 'Start Rally Now' : 'Schedule Rally'}
-                  </>
-                )}
-              </Button>
+              <DialogFooter className="px-6 py-4 border-t border-border/50 bg-background/95 backdrop-blur-md shrink-0 pb-[max(1rem,env(safe-area-inset-bottom))]">
+                <Button
+                  type="submit"
+                  className="w-full gradient-primary text-primary-foreground hover:opacity-90"
+                  aria-busy={createEvent.isPending || createInvites.isPending || isSubmittingRef.current}
+                  disabled={createEvent.isPending || createInvites.isPending || isSubmittingRef.current}
+                >
+                  {createEvent.isPending || createInvites.isPending ? (
+                    <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Starting...</>
+                  ) : (
+                    <>
+                      <Zap className="h-4 w-4 mr-2" />
+                      {selectedTime === 'now' ? 'Start Rally Now' : 'Schedule Rally'}
+                    </>
+                  )}
+                </Button>
+              </DialogFooter>
             </form>
           </Form>
           </ErrorBoundary>
