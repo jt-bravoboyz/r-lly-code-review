@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { Zap, Users, Beer, Check, Clock, ChevronDown, UserPlus, Loader2 } from 'lucide-react';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
