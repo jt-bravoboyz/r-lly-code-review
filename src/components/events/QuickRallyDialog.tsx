@@ -319,6 +319,7 @@ export const QuickRallyDialog = forwardRef<HTMLButtonElement, QuickRallyDialogPr
           )}
         </DialogTrigger>
         <DialogContent className="max-w-md">
+          <ErrorBoundary name="QuickRallyDialog">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3 font-montserrat text-xl">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-yellow-400 to-primary flex items-center justify-center">
