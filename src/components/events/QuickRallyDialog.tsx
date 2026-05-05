@@ -565,6 +565,7 @@ export const QuickRallyDialog = forwardRef<HTMLButtonElement, QuickRallyDialogPr
                     </div>
                   </div>
                 </div>
+              )}
               </div>
 
               <DialogFooter className="px-6 py-4 border-t border-border/50 bg-background/95 backdrop-blur-md shrink-0 pb-[max(1rem,env(safe-area-inset-bottom))]">
