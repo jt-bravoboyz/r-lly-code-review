@@ -151,7 +151,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
   const isSubmittingRef = useRef(false);
 
   const onSubmit = async (data: EventFormData) => {
-    if (!profile) {
+    if (!profile?.id) {
       toast.error('You must be logged in to create an event');
       return;
     }
@@ -163,20 +163,38 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
       const startTime = new Date(data.date);
       startTime.setHours(hours, minutes, 0, 0);
 
-      const result = await createEvent.mutateAsync({
-        creator_id: profile.id,
-        title: data.title,
-        description: data.description || null,
-        event_type: data.event_type,
-        start_time: startTime.toISOString(),
-        location_name: data.location_name || null,
-        location_lat: data.location_lat || null,
-        location_lng: data.location_lng || null,
-        is_barhop: data.is_barhop,
-        max_attendees: data.max_attendees ? parseInt(data.max_attendees) : null,
-        cover_charge: data.cover_charge ? parseFloat(data.cover_charge) : 0,
-        split_check: data.split_check,
-      } as any);
+      let result;
+      try {
+        result = await createEvent.mutateAsync({
+          creator_id: profile.id,
+          title: data.title,
+          description: data.description || null,
+          event_type: data.event_type,
+          start_time: startTime.toISOString(),
+          location_name: data.location_name || null,
+          location_lat: data.location_lat || null,
+          location_lng: data.location_lng || null,
+          is_barhop: data.is_barhop,
+          max_attendees: data.max_attendees ? parseInt(data.max_attendees) : null,
+          cover_charge: data.cover_charge ? parseFloat(data.cover_charge) : 0,
+          split_check: data.split_check,
+        } as any);
+      } catch (insertErr: any) {
+        console.error('[CreateEvent] insert failed', {
+          code: insertErr?.code,
+          message: insertErr?.message,
+          details: insertErr?.details,
+          hint: insertErr?.hint,
+        });
+        if (insertErr?.code === '23505') {
+          toast.error("Looks like that R@lly already exists — give it a sec.");
+        } else if (insertErr?.code === '42501' || /row-level security/i.test(insertErr?.message ?? '')) {
+          toast.error('Permission denied. Try logging out and back in.');
+        } else {
+          toast.error(insertErr?.message || 'Could not create R@lly');
+        }
+        throw insertErr;
+      }
 
       await joinEvent.mutateAsync({ eventId: result.id, profileId: profile.id });
 
