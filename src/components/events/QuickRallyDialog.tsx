@@ -2,7 +2,8 @@ import { useState, useEffect, useMemo, useRef, forwardRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Zap, Users, Beer, Check, Clock, ChevronDown, UserPlus } from 'lucide-react';
+import { Zap, Users, Beer, Check, Clock, ChevronDown, UserPlus, Loader2 } from 'lucide-react';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -170,7 +171,7 @@ export const QuickRallyDialog = forwardRef<HTMLButtonElement, QuickRallyDialogPr
     const isSubmittingRef = useRef(false);
 
     const onSubmit = async (data: QuickRallyFormData) => {
-      if (!profile) {
+      if (!profile?.id) {
         toast.error('You must be logged in to create a rally');
         return;
       }
@@ -180,20 +181,38 @@ export const QuickRallyDialog = forwardRef<HTMLButtonElement, QuickRallyDialogPr
       try {
         // Calculate start time based on selection
         const startTime = getStartTime(selectedTime);
-        
+
         // Create rally - Chat is created automatically via database trigger
-        const result = await createEvent.mutateAsync({
-          creator_id: profile.id,
-          title: data.title,
-          description: 'Quick R@lly - Same day event',
-          event_type: data.event_type,
-          start_time: startTime.toISOString(),
-          location_name: data.location_name || 'Current Location',
-          location_lat: selectedLocationCoords?.lat || location.lat,
-          location_lng: selectedLocationCoords?.lng || location.lng,
-          is_barhop: data.is_barhop,
-          is_quick_rally: true,
-        });
+        let result;
+        try {
+          result = await createEvent.mutateAsync({
+            creator_id: profile.id,
+            title: data.title,
+            description: 'Quick R@lly - Same day event',
+            event_type: data.event_type,
+            start_time: startTime.toISOString(),
+            location_name: data.location_name || 'Current Location',
+            location_lat: selectedLocationCoords?.lat || location.lat,
+            location_lng: selectedLocationCoords?.lng || location.lng,
+            is_barhop: data.is_barhop,
+            is_quick_rally: true,
+          });
+        } catch (insertErr: any) {
+          console.error('[QuickRally] insert failed', {
+            code: insertErr?.code,
+            message: insertErr?.message,
+            details: insertErr?.details,
+            hint: insertErr?.hint,
+          });
+          if (insertErr?.code === '23505') {
+            toast.error("Looks like that R@lly already exists — give it a sec.");
+          } else if (insertErr?.code === '42501' || /row-level security/i.test(insertErr?.message ?? '')) {
+            toast.error('Permission denied. Try logging out and back in.');
+          } else {
+            toast.error(insertErr?.message || 'Could not start R@lly');
+          }
+          throw insertErr;
+        }
 
         // Auto-join the event - This triggers chat_participants sync
         await joinEvent.mutateAsync({ eventId: result.id, profileId: profile.id });
@@ -273,7 +292,9 @@ export const QuickRallyDialog = forwardRef<HTMLButtonElement, QuickRallyDialogPr
         navigate(`/events/${result.id}`);
         
       } catch (error: any) {
-        toast.error(error.message || 'Failed to create R@lly');
+        if (!error?.code && !/row-level security/i.test(error?.message ?? '')) {
+          toast.error(error?.message || 'Failed to create R@lly');
+        }
       } finally {
         isSubmittingRef.current = false;
       }
@@ -298,6 +319,7 @@ export const QuickRallyDialog = forwardRef<HTMLButtonElement, QuickRallyDialogPr
           )}
         </DialogTrigger>
         <DialogContent className="max-w-md">
+          <ErrorBoundary name="QuickRallyDialog">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3 font-montserrat text-xl">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-yellow-400 to-primary flex items-center justify-center">
@@ -547,9 +569,12 @@ export const QuickRallyDialog = forwardRef<HTMLButtonElement, QuickRallyDialogPr
               <Button
                 type="submit"
                 className="w-full gradient-primary text-primary-foreground hover:opacity-90"
+                aria-busy={createEvent.isPending || createInvites.isPending || isSubmittingRef.current}
                 disabled={createEvent.isPending || createInvites.isPending || isSubmittingRef.current}
               >
-                {createEvent.isPending || createInvites.isPending ? 'Starting...' : (
+                {createEvent.isPending || createInvites.isPending ? (
+                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Starting...</>
+                ) : (
                   <>
                     <Zap className="h-4 w-4 mr-2" />
                     {selectedTime === 'now' ? 'Start Rally Now' : 'Schedule Rally'}
@@ -558,6 +583,7 @@ export const QuickRallyDialog = forwardRef<HTMLButtonElement, QuickRallyDialogPr
               </Button>
             </form>
           </Form>
+          </ErrorBoundary>
         </DialogContent>
       </Dialog>
     );
