@@ -732,6 +732,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
         </Form>
           </div>
         </div>
+        </ErrorBoundary>
       </DialogContent>
     </Dialog>
   );
