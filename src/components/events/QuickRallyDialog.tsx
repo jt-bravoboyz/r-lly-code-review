@@ -318,9 +318,9 @@ export const QuickRallyDialog = forwardRef<HTMLButtonElement, QuickRallyDialogPr
             </Button>
           )}
         </DialogTrigger>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md p-0 max-h-[85dvh] flex flex-col gap-0">
           <ErrorBoundary name="QuickRallyDialog">
-          <DialogHeader>
+          <DialogHeader className="px-6 pt-6 pb-3 shrink-0">
             <DialogTitle className="flex items-center gap-3 font-montserrat text-xl">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-yellow-400 to-primary flex items-center justify-center">
                 <Zap className="h-5 w-5 text-white" strokeWidth={2.5} fill="currentColor" />
@@ -328,9 +328,10 @@ export const QuickRallyDialog = forwardRef<HTMLButtonElement, QuickRallyDialogPr
               <span className="font-bold">Quick R@lly</span>
             </DialogTitle>
           </DialogHeader>
-          
+
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col min-h-0 flex-1">
+              <div className="flex-1 overflow-y-auto px-6 pb-4 space-y-4">
               <FormField
                 control={form.control}
                 name="title"
