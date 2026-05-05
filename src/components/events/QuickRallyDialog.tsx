@@ -171,7 +171,7 @@ export const QuickRallyDialog = forwardRef<HTMLButtonElement, QuickRallyDialogPr
     const isSubmittingRef = useRef(false);
 
     const onSubmit = async (data: QuickRallyFormData) => {
-      if (!profile) {
+      if (!profile?.id) {
         toast.error('You must be logged in to create a rally');
         return;
       }
@@ -181,20 +181,38 @@ export const QuickRallyDialog = forwardRef<HTMLButtonElement, QuickRallyDialogPr
       try {
         // Calculate start time based on selection
         const startTime = getStartTime(selectedTime);
-        
+
         // Create rally - Chat is created automatically via database trigger
-        const result = await createEvent.mutateAsync({
-          creator_id: profile.id,
-          title: data.title,
-          description: 'Quick R@lly - Same day event',
-          event_type: data.event_type,
-          start_time: startTime.toISOString(),
-          location_name: data.location_name || 'Current Location',
-          location_lat: selectedLocationCoords?.lat || location.lat,
-          location_lng: selectedLocationCoords?.lng || location.lng,
-          is_barhop: data.is_barhop,
-          is_quick_rally: true,
-        });
+        let result;
+        try {
+          result = await createEvent.mutateAsync({
+            creator_id: profile.id,
+            title: data.title,
+            description: 'Quick R@lly - Same day event',
+            event_type: data.event_type,
+            start_time: startTime.toISOString(),
+            location_name: data.location_name || 'Current Location',
+            location_lat: selectedLocationCoords?.lat || location.lat,
+            location_lng: selectedLocationCoords?.lng || location.lng,
+            is_barhop: data.is_barhop,
+            is_quick_rally: true,
+          });
+        } catch (insertErr: any) {
+          console.error('[QuickRally] insert failed', {
+            code: insertErr?.code,
+            message: insertErr?.message,
+            details: insertErr?.details,
+            hint: insertErr?.hint,
+          });
+          if (insertErr?.code === '23505') {
+            toast.error("Looks like that R@lly already exists — give it a sec.");
+          } else if (insertErr?.code === '42501' || /row-level security/i.test(insertErr?.message ?? '')) {
+            toast.error('Permission denied. Try logging out and back in.');
+          } else {
+            toast.error(insertErr?.message || 'Could not start R@lly');
+          }
+          throw insertErr;
+        }
 
         // Auto-join the event - This triggers chat_participants sync
         await joinEvent.mutateAsync({ eventId: result.id, profileId: profile.id });
