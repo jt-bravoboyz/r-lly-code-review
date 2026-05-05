@@ -672,12 +672,13 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
             <Button 
               type="submit" 
               className="w-full gradient-primary"
+              aria-busy={createEvent.isPending || joinEvent.isPending || isUploading || isSubmittingRef.current}
               disabled={createEvent.isPending || joinEvent.isPending || isUploading || isSubmittingRef.current}
             >
               {isUploading ? (
                 <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> {uploadStatus}</>
               ) : createEvent.isPending || joinEvent.isPending ? (
-                'Creating...'
+                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Creating...</>
               ) : (
                 'Create R@lly'
               )}
