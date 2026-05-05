@@ -569,9 +569,12 @@ export const QuickRallyDialog = forwardRef<HTMLButtonElement, QuickRallyDialogPr
               <Button
                 type="submit"
                 className="w-full gradient-primary text-primary-foreground hover:opacity-90"
+                aria-busy={createEvent.isPending || createInvites.isPending || isSubmittingRef.current}
                 disabled={createEvent.isPending || createInvites.isPending || isSubmittingRef.current}
               >
-                {createEvent.isPending || createInvites.isPending ? 'Starting...' : (
+                {createEvent.isPending || createInvites.isPending ? (
+                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Starting...</>
+                ) : (
                   <>
                     <Zap className="h-4 w-4 mr-2" />
                     {selectedTime === 'now' ? 'Start Rally Now' : 'Schedule Rally'}
