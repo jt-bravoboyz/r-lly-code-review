@@ -1,41 +1,83 @@
-## Status of the three pre-flight checks
+## Emergency Stability — Event Creation
 
-**1. Drunkies upload window — clear.**
-The event row (`80e42cfb…DRUNKIES`) is still `status = 'scheduled'`. Storage RLS (`Event members can upload rally-media (24h post-event)`) allows uploads when status is `scheduled`, `live`, or `after_rally` — the 24h cutoff only kicks in once status flips to `completed`. The client-side `uploadWindow` guard in `EventPhotoFeed.tsx` also only blocks when `eventStatus === 'completed'`. **No event extension needed.** Kiree's only blocker is the 50-photo cap.
+Scoped, surgical fixes for the create flows (`CreateEventDialog`, `QuickRallyDialog`) so the Drunkies event tonight ships cleanly.
 
-**2. Thumbnail RLS — already carved out.**
-The earlier 403 was fixed by the migration that added two policies on `storage.objects`:
-- `Event members can upload rally-media thumbnails` (INSERT)
-- `Event members can update rally-media thumbnails` (UPDATE)
-Both match `*_thumb.{jpg,jpeg,png,webp}` and require `is_event_member`. Recap thumbnails for Drunkies will write cleanly.
+---
 
-**3. Sticky progress UI — addressed below.**
+### 1. Crash Protection — Error Boundary
 
-## Plan (revised)
+New `src/components/ErrorBoundary.tsx` (class component):
+- Catches render errors in subtree
+- Glass-styled fallback: "Something glitched" + small **Retry** button that resets the boundary (bumps a `resetKey`)
+- Logs full error + stack to console in dev
+- Optional `name` prop for log tagging
 
-### A. Raise the cap
-- `src/components/events/EventPhotoFeed.tsx`: `MAX_PHOTOS_PER_EVENT` from `50` → `500`. Update the over-limit toast copy.
+Wrap both create flows where they're rendered (the dialogs themselves, not their triggers) so a form crash never blanks the host page:
+- `src/components/events/CreateEventDialog.tsx` — wrap the entire `<DialogContent>` body in `<ErrorBoundary name="CreateEventDialog">`
+- `src/components/events/QuickRallyDialog.tsx` — same treatment
 
-### B. Parallel chunked uploads
-- Replace the strictly sequential `for` loop in `handleUpload` with a chunked runner: process **4 files in parallel** via `Promise.allSettled`, then move to the next chunk. Maintains existing per-file validation and failure tallying.
-- Track running counters in refs so a re-render mid-batch doesn't reset progress.
+(Outer app-wide boundary is out of scope for this emergency fix — focus is the create surface.)
 
-### C. Sticky progress overlay (new)
-- While `uploading` is true, render a fixed-position pill at the bottom of the viewport (above the bottom nav, respecting `safe-area-inset-bottom`) using a Portal so it stays visible regardless of scroll position. Glass/Liquid styling per project core (`backdrop-blur-xl`, R@lly Orange accent).
-- Content: `Uploading 137 of 348…` + thin progress bar (count-based) + small spinner. Auto-dismisses on completion; replaced by the existing summary toast.
-- Z-index above `EventPhotoFeed` content but below modals (e.g. `z-50`).
+---
 
-### D. Failed-upload retry
-- After the batch, keep the failed `File[]` in state and surface a small "Retry N failed" button at the top of the feed (mirrors the pattern in `RallyMediaUpload.tsx`). Same chunked runner.
+### 2. Permission Audit — events INSERT policy
 
-### E. Out of scope
-- No storage policy changes (already correct).
-- No edits to `RallyMediaUpload.tsx` / `StagedMediaPicker.tsx` (pre-event staging, different flow).
-- No DB schema changes.
+Confirmed against live DB:
 
-## Files touched
-- `src/components/events/EventPhotoFeed.tsx` — cap bump, chunked uploads, sticky portal progress, retry button.
+```
+Policy: "Users can create events"
+Command: INSERT
+WITH CHECK: creator_id IN (SELECT id FROM profiles WHERE user_id = auth.uid())
+```
 
-## Verification
-- Smoke test: select 60+ files in preview, confirm sticky progress stays visible while scrolling the feed and the count advances in chunks of 4.
-- Confirm Recap thumbnails appear for any video Kiree includes (RLS already permits the backfill writes).
+This is correct and **not blocked** by stealth or After R@lly logic — those are runtime UI flags, not RLS conditions. The only requirement is `creator_id` = the caller's own profile id, which both dialogs already pass (`creator_id: profile.id`). **No migration needed.**
+
+The plan adds one defensive check in the submit handler: bail with a clear toast if `profile?.id` is somehow missing before hitting the insert (prevents a cryptic RLS rejection in the unlikely auth-race case).
+
+---
+
+### 3. Loading States — double-click hardening
+
+Both dialogs already have `isSubmittingRef` + `disabled={createEvent.isPending || ...}`. Tightening:
+
+- Add a `<Loader2 className="animate-spin" />` inside the primary submit button while pending so the user *sees* it's working (currently the button just goes flat-disabled, which invites a second tap).
+- Add `aria-busy={submitting}` and keep the button disabled until the post-submit navigation begins, not just until the insert resolves.
+- Apply same treatment in `QuickRallyDialog` submit button.
+
+No new state is needed — derive `submitting` from existing `createEvent.isPending || isSubmittingRef.current || isUploading`.
+
+---
+
+### 4. Submission Validation — typed try/catch + log
+
+Wrap the `createEvent.mutateAsync({...})` call in both dialogs with a focused try/catch that:
+- Logs `error.code`, `error.message`, `error.details`, `error.hint` to console (Postgres errors from supabase-js expose all four)
+- Surfaces user-friendly toast based on common codes:
+  - `23505` (unique_violation) → "Looks like that R@lly already exists — give it a moment."
+  - `42501` / RLS reject → "Permission denied. Try logging out and back in."
+  - default → existing generic toast
+- Re-throws so the outer `finally` still resets `isSubmittingRef`
+
+Also strip the `as any` cast on the insert payload in `CreateEventDialog` line 178 — it hides type errors that would otherwise warn us when the events schema changes.
+
+---
+
+### Files touched
+
+**New**
+- `src/components/ErrorBoundary.tsx`
+
+**Edited**
+- `src/components/events/CreateEventDialog.tsx` — boundary wrap, spinner-on-submit, typed try/catch with code logging
+- `src/components/events/QuickRallyDialog.tsx` — same three changes
+
+### Out of scope
+
+- DB migrations (RLS already correct)
+- Virtualization, image compression, indexes, realtime cleanup (separate Stability & Scale plan if you want to revisit it after tonight)
+
+### Verification
+
+- Open Create dialog, intentionally throw inside the form → only the dialog body shows the Retry card; rest of the page (Events list) stays interactive
+- Spam-click the submit button → only one network insert hits `events` (check Network tab)
+- Sign out, force a stale session, then submit → console shows the exact PG error code and user sees the auth-friendly toast
