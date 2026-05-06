@@ -187,6 +187,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
           dress_code: data.dress_code_enabled && data.dress_code?.trim()
             ? data.dress_code.trim()
             : null,
+          song_recs_enabled: data.song_recs_enabled,
         } as any);
       } catch (insertErr: any) {
         console.error('[CreateEvent] insert failed', {
@@ -578,7 +579,20 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
                         placeholder="e.g. Black Tie, All White, Casual"
                         className="rally-create-input"
                       />
-                    </div>
+                </div>
+
+                {/* Song Rec's */}
+                <div className="flex items-center justify-between py-2">
+                  <div className="flex flex-col">
+                    <Label htmlFor="song-recs-toggle" className="text-sm">Song Rec's</Label>
+                    <span className="text-xs text-muted-foreground">Let friends drop song recommendations for the night</span>
+                  </div>
+                  <Switch
+                    id="song-recs-toggle"
+                    checked={form.watch('song_recs_enabled')}
+                    onCheckedChange={(v) => form.setValue('song_recs_enabled', v)}
+                  />
+                </div>
                   )}
                 </div>
 
