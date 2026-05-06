@@ -49,6 +49,8 @@ const eventSchema = z.object({
   max_attendees: z.string().optional(),
   cover_charge: z.string().optional(),
   split_check: z.boolean(),
+  dress_code_enabled: z.boolean(),
+  dress_code: z.string().max(50).optional(),
 });
 
 type EventFormData = z.infer<typeof eventSchema>;
