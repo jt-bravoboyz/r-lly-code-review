@@ -228,7 +228,11 @@ export default function EventDetail() {
   // For excluded users, the R@lly looks finished — they see the recap, no After R@lly UI.
   const isStealthExcluded = isAfterRallyRaw && !isAfterRallyInvited;
   const isAfterRally = isAfterRallyRaw && isAfterRallyInvited;
-  const isCompleted = isCompletedRaw || isStealthExcluded;
+  // Host-only preview: append ?previewRecap=1 to render the recap before the event ends.
+  const previewRecap = typeof window !== 'undefined'
+    && new URLSearchParams(window.location.search).get('previewRecap') === '1'
+    && (isCreator || isCohost);
+  const isCompleted = isCompletedRaw || isStealthExcluded || previewRecap;
   
   const hasTransportModeForEvent = Boolean(myAttendee?.arrival_transport_mode);
   const hasCompletedJoinFlow = hasTransportModeForEvent && Boolean(myAttendee?.location_prompt_shown);
