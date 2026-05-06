@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { RecapMediaTile, type RecapMediaItem } from './RecapMediaTile';
 import { getRecapCloser } from './recapClosers';
 import { useRogueAlerts } from '@/hooks/useRogueAlerts';
+import { AwardWinners } from './AwardWinners';
 
 const REACTION_EMOJIS = ['🤮', '😍', '🍆'];
 
