@@ -909,6 +909,7 @@ export type Database = {
           created_at: string | null
           creator_id: string
           description: string | null
+          dress_code: string | null
           end_time: string | null
           event_type: string
           id: string
@@ -936,6 +937,7 @@ export type Database = {
           created_at?: string | null
           creator_id: string
           description?: string | null
+          dress_code?: string | null
           end_time?: string | null
           event_type?: string
           id?: string
@@ -963,6 +965,7 @@ export type Database = {
           created_at?: string | null
           creator_id?: string
           description?: string | null
+          dress_code?: string | null
           end_time?: string | null
           event_type?: string
           id?: string
@@ -3784,6 +3787,7 @@ export type Database = {
           created_at: string | null
           creator_id: string
           description: string | null
+          dress_code: string | null
           end_time: string | null
           event_type: string
           id: string
@@ -3919,6 +3923,7 @@ export type Database = {
           created_at: string | null
           creator_id: string
           description: string | null
+          dress_code: string | null
           end_time: string | null
           event_type: string
           id: string
@@ -4071,6 +4076,7 @@ export type Database = {
           created_at: string | null
           creator_id: string
           description: string | null
+          dress_code: string | null
           end_time: string | null
           event_type: string
           id: string
