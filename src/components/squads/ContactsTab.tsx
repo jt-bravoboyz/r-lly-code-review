@@ -180,18 +180,18 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
                   const state = getFriendshipState(result.id, friendships, profile?.id);
                   return (
                     <div key={result.id} className="flex items-center justify-between gap-3 p-3 rounded-xl bg-muted/30">
-                      <div className="flex items-center gap-3 min-w-0">
+                      <ProfileTapWrapper profileId={result.id} className="flex items-center gap-3 min-w-0 flex-1">
                         <Avatar className="h-10 w-10 shrink-0">
                           <AvatarImage src={result.avatar_url || undefined} />
                           <AvatarFallback className="bg-primary/20 text-primary font-bold">
                             {result.display_name?.charAt(0)?.toUpperCase() || '?'}
                           </AvatarFallback>
                         </Avatar>
-                        <div className="min-w-0">
+                        <div className="min-w-0 text-left">
                           <p className="font-medium text-sm truncate">{result.display_name || 'R@lly Member'}</p>
                           {result.bio && <p className="text-xs text-muted-foreground line-clamp-1">{result.bio}</p>}
                         </div>
-                      </div>
+                      </ProfileTapWrapper>
                       <Button
                         size="sm"
                         className={cn(
