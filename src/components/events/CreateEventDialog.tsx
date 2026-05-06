@@ -579,6 +579,8 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
                         placeholder="e.g. Black Tie, All White, Casual"
                         className="rally-create-input"
                       />
+                    </div>
+                  )}
                 </div>
 
                 {/* Song Rec's */}
@@ -592,8 +594,6 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
                     checked={form.watch('song_recs_enabled')}
                     onCheckedChange={(v) => form.setValue('song_recs_enabled', v)}
                   />
-                </div>
-                  )}
                 </div>
 
                 {/* Staged media picker — files held locally until submit */}
