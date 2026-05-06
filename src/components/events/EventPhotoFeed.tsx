@@ -42,7 +42,7 @@ export function EventPhotoFeed({ eventId, isHost, eventStatus, eventUpdatedAt }:
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number }>({ done: 0, total: 0 });
-  const [failedUploads, setFailedUploads] = useState<File[]>([]);
+  const [failedUploads, setFailedUploads] = useState<{ file: File; type: 'photo' | 'video' }[]>([]);
   const [retrying, setRetrying] = useState(false);
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
   const [downloadingViewer, setDownloadingViewer] = useState(false);
