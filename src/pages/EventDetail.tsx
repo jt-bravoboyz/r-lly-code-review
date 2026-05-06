@@ -697,7 +697,7 @@ export default function EventDetail() {
                   <div
                     key={cohost.id}
                     className="flex items-center gap-1.5 bg-muted/50 rounded-full pl-1 pr-2.5 py-0.5 cursor-pointer"
-                    onClick={() => cohost.profile?.id && openProfile(cohost.profile.id)}
+                    onClick={() => { const id = (cohost as any).profile_id ?? cohost.profile?.id; id && openProfile(id); }}
                   >
                     <Avatar className="h-5 w-5">
                       <AvatarImage src={cohost.profile?.avatar_url || undefined} />
