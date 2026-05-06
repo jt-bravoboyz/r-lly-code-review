@@ -154,7 +154,7 @@ export function EventPhotoFeed({ eventId, isHost, eventStatus, eventUpdatedAt }:
     let done = 0;
     let photoSuccess = 0;
     let videoSuccess = 0;
-    const failed: File[] = [];
+    const failed: { file: File; type: 'photo' | 'video' }[] = [];
     setUploadProgress({ done: 0, total: queue.length });
 
     for (let i = 0; i < queue.length; i += UPLOAD_CONCURRENCY) {
@@ -176,11 +176,14 @@ export function EventPhotoFeed({ eventId, isHost, eventStatus, eventUpdatedAt }:
         if (r.status === 'fulfilled') {
           if (item.type === 'video') videoSuccess++; else photoSuccess++;
         } else {
-          failed.push(item.file);
+          failed.push(item);
         }
         done++;
       });
       setUploadProgress({ done, total: queue.length });
+    }
+    if (failed.length > 0) {
+      console.warn('[EventPhotoFeed] Failed uploads:', failed.map(f => f.file.name));
     }
     return { photoSuccess, videoSuccess, failed };
   };
