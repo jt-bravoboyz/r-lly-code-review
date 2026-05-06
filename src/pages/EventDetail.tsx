@@ -666,7 +666,7 @@ export default function EventDetail() {
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => event.creator?.id && openProfile(event.creator.id)}
+                      onClick={() => { const id = (event as any).creator_id ?? event.creator?.id; id && openProfile(id); }}
                       className="font-medium hover:underline text-left"
                     >
                       {event.creator.display_name}
