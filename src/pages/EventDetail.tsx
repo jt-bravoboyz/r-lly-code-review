@@ -47,6 +47,7 @@ import { useIsDD } from '@/hooks/useDDManagement';
 import { AddCohostDialog } from '@/components/events/AddCohostDialog';
 import { BarHopStopsMap } from '@/components/tracking/BarHopStopsMap';
 import { BarHopControls } from '@/components/events/BarHopControls';
+import { SongRecsCard } from '@/components/events/SongRecsCard';
 import { BarHopStopManager } from '@/components/events/BarHopStopManager';
 import { useEventRealtime } from '@/hooks/useEventRealtime';
 import { useBarHopStopsRealtime } from '@/hooks/useBarHopStopsRealtime';
@@ -1016,6 +1017,15 @@ export default function EventDetail() {
                   <p className="text-xl font-medium text-foreground">{(event as any).dress_code}</p>
                 </CardContent>
               </Card>
+            )}
+
+            {/* Song Rec's - opt-in collaborative module */}
+            {(event as any).song_recs_enabled && (
+              <SongRecsCard
+                eventId={event.id}
+                isParticipant={isCreator || isCohost || isAttending}
+                currentProfileId={activeProfile?.id}
+              />
             )}
 
             {/* Bar Hop Stops - Show only in After R@lly when bar hop mode is enabled */}

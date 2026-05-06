@@ -51,6 +51,7 @@ const eventSchema = z.object({
   split_check: z.boolean(),
   dress_code_enabled: z.boolean(),
   dress_code: z.string().max(50).optional(),
+  song_recs_enabled: z.boolean(),
 });
 
 type EventFormData = z.infer<typeof eventSchema>;
@@ -149,6 +150,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
       split_check: false,
       dress_code_enabled: false,
       dress_code: '',
+      song_recs_enabled: false,
     }
   });
 
@@ -185,6 +187,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
           dress_code: data.dress_code_enabled && data.dress_code?.trim()
             ? data.dress_code.trim()
             : null,
+          song_recs_enabled: data.song_recs_enabled,
         } as any);
       } catch (insertErr: any) {
         console.error('[CreateEvent] insert failed', {
@@ -578,6 +581,19 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
                       />
                     </div>
                   )}
+                </div>
+
+                {/* Song Rec's */}
+                <div className="flex items-center justify-between py-2">
+                  <div className="flex flex-col">
+                    <Label htmlFor="song-recs-toggle" className="text-sm">Song Rec's</Label>
+                    <span className="text-xs text-muted-foreground">Let friends drop song recommendations for the night</span>
+                  </div>
+                  <Switch
+                    id="song-recs-toggle"
+                    checked={form.watch('song_recs_enabled')}
+                    onCheckedChange={(v) => form.setValue('song_recs_enabled', v)}
+                  />
                 </div>
 
                 {/* Staged media picker — files held locally until submit */}
