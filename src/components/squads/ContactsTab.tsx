@@ -657,9 +657,10 @@ function SquadMemberGroup({
       <CollapsibleContent>
         <div className="pl-11 pr-3 py-2 space-y-1">
           {filteredMembers.map((member) => (
-            <div
+            <ProfileTapWrapper
               key={member.id}
-              className="flex items-center gap-3 p-2 rounded-lg"
+              profileId={member.profile_id}
+              className="flex items-center gap-3 p-2 rounded-lg w-full"
             >
               <Avatar className="h-8 w-8">
                 <AvatarImage src={member.profile?.avatar_url || undefined} />
@@ -671,7 +672,7 @@ function SquadMemberGroup({
                 {getPublicName(member.profile)}
                 <MiniFounderGem profileId={member.profile_id} />
               </span>
-            </div>
+            </ProfileTapWrapper>
           ))}
           {filteredMembers.length === 0 && (
             <p className="text-xs text-muted-foreground py-2">
