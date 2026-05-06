@@ -1,34 +1,34 @@
-# Preview the Drunkies Recap before the event
+## Confirmed Profile
 
-## Why
-The Drunkies event (`80e42cfb-…`) is still `scheduled`, so `RallyRecapScreen` doesn't render in `EventDetail.tsx` (gated by `isCompleted`). To inspect/tweak the recap UI — including the new Hall of Fame section — without flipping the event status (which would break the live experience), we add a host-only preview override.
+Whitney Houston's actual profile ID is `c47f8c5d-bf0f-448e-a95f-ab8df725cbca` (not the placeholder ID). She is not currently in `event_attendees` for the Drunkies event, which is why all 449 media items are RLS-hidden from her account.
 
-## Change
+## Action
 
-**`src/pages/EventDetail.tsx`** — extend the existing `isCompleted` derivation:
+Run one INSERT against `event_attendees`:
 
-```ts
-const previewRecap =
-  typeof window !== 'undefined' &&
-  new URLSearchParams(window.location.search).get('previewRecap') === '1' &&
-  (isCreator || isCohost);
-const isCompleted = isCompletedRaw || isStealthExcluded || previewRecap;
+```sql
+INSERT INTO event_attendees (event_id, profile_id, status)
+VALUES (
+  '80e42cfb-80df-4919-92b7-83d47a34b47b',
+  'c47f8c5d-bf0f-448e-a95f-ab8df725cbca',
+  'attending'
+);
 ```
 
-- Gated to `isCreator || isCohost` so attendees never see a fake recap.
-- Activated via URL flag — no UI clutter, no toggles, no DB change.
+Note: there's a `normalize_event_attendee_profile_id` BEFORE INSERT trigger that overwrites `profile_id` with the caller's profile. Since this insert will run as the service role (migration), the trigger's `auth.uid()` lookup returns NULL and the trigger short-circuits — `profile_id` is preserved. Verified by reading the trigger source.
+
+Side effects (all desired):
+- `add_attendee_to_chat_participants` trigger adds Whitney to the Drunkies event chat.
+- RLS on `rally_media` (`is_event_member(event_id)`) immediately starts returning all 449 media rows for her.
 
 ## Verify
-After landing the change I'll open `/events/80e42cfb-80df-4919-92b7-83d47a34b47b?previewRecap=1` in the browser at iPhone width and screenshot:
-1. The R@lly Recap header / hero
-2. The new gold-glow "R@lly-er of the Century — Kiree" featured card
-3. The Major Awards / Class Superlatives / Party Legends rows with 🍻 reactions
-4. Squad Stars + Closer
 
-You can then call out any spacing/typography adjustments before Saturday.
+After the insert, reload `/events/80e42cfb-80df-4919-92b7-83d47a34b47b?previewRecap=1` as Whitney. Expect:
+- Header counts: 📸 448 · 🎞️ 1
+- Hero "Shot of the Night" image renders
+- Photo Bundle grid + "View All (449 items)" button
+- "The Paparazzi" award → princess ryry
 
 ## Files
-- **Edit** `src/pages/EventDetail.tsx` (single 5-line patch around line 231)
 
-## Cleanup
-The flag is harmless to leave in — it's host-gated and opt-in via URL. We can keep it as a permanent recap-preview affordance for future events.
+No code changes. One data migration only.
