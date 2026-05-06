@@ -921,6 +921,7 @@ export type Database = {
           location_lng: number | null
           location_name: string | null
           max_attendees: number | null
+          song_recs_enabled: boolean
           split_check: boolean | null
           start_time: string
           status: string | null
@@ -949,6 +950,7 @@ export type Database = {
           location_lng?: number | null
           location_name?: string | null
           max_attendees?: number | null
+          song_recs_enabled?: boolean
           split_check?: boolean | null
           start_time: string
           status?: string | null
@@ -977,6 +979,7 @@ export type Database = {
           location_lng?: number | null
           location_name?: string | null
           max_attendees?: number | null
+          song_recs_enabled?: boolean
           split_check?: boolean | null
           start_time?: string
           status?: string | null
@@ -2677,6 +2680,69 @@ export type Database = {
           },
         ]
       }
+      song_recs: {
+        Row: {
+          artist: string
+          created_at: string
+          event_id: string
+          id: string
+          profile_id: string
+          song_name: string
+        }
+        Insert: {
+          artist: string
+          created_at?: string
+          event_id: string
+          id?: string
+          profile_id: string
+          song_name: string
+        }
+        Update: {
+          artist?: string
+          created_at?: string
+          event_id?: string
+          id?: string
+          profile_id?: string
+          song_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "song_recs_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "song_recs_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "song_recs_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "song_recs_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "song_recs_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles_with_connection"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       squad_invites: {
         Row: {
           contact_value: string
@@ -3799,6 +3865,7 @@ export type Database = {
           location_lng: number | null
           location_name: string | null
           max_attendees: number | null
+          song_recs_enabled: boolean
           split_check: boolean | null
           start_time: string
           status: string | null
@@ -3935,6 +4002,7 @@ export type Database = {
           location_lng: number | null
           location_name: string | null
           max_attendees: number | null
+          song_recs_enabled: boolean
           split_check: boolean | null
           start_time: string
           status: string | null
@@ -4088,6 +4156,7 @@ export type Database = {
           location_lng: number | null
           location_name: string | null
           max_attendees: number | null
+          song_recs_enabled: boolean
           split_check: boolean | null
           start_time: string
           status: string | null
