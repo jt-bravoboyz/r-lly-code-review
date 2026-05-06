@@ -1,65 +1,47 @@
 ## Goal
+Fix the "Profile not found" bug and make every attendee in the event Details > Who's Going grid open the profile quick-view sheet, with a polished loading + error experience.
 
-Anywhere a person's name or avatar appears — inside an event (R@lly) or in the Friends/Contacts surfaces (R@lly Friends, Squad Members, search results) — tapping it opens the existing global **Profile Quick View** sheet (`PublicProfileSheet`) with their info and Add/Accept Friend actions.
+## Root cause
+The `PublicProfileSheet` queries `safe_profiles` for `founder_number`, but that column only lives on `safe_profiles_with_connection`. PostgREST returns an error, the query yields no row, and the sheet falls into the generic "Profile not found" state — even when the profile exists.
 
-The Quick View sheet, `PublicProfileProvider`, `usePublicProfile()` hook, and `ProfileTapWrapper` helper are already built and mounted globally. This pass just wires the remaining surfaces.
+Separately, the attendee tiles in `EventDetail.tsx` Who's Going grid render as static `<div>`s with no tap handler, so they never open the quick-view.
 
-Note on hover: this is a mobile-first PWA, so "hover" isn't a primary input — we'll add `hover:opacity-80 cursor-pointer` styling on desktop, but the actual trigger is tap/click. If you want a true desktop hover-card with no tap, tell me and I'll layer one on top.
+## Changes
 
-## What's already wired (no change)
+1) `src/components/profile/PublicProfileSheet.tsx`
+- Switch the query source from `safe_profiles` to `safe_profiles_with_connection` (still safe public fields — no PII added).
+- Surface query errors instead of silently treating them as "not found":
+  - Track `isError` from `useQuery`, return `error` from `queryFn` (no swallow).
+  - Render distinct states: loading skeleton, error fallback, empty (truly no row), and success.
+- Replace the spinner with a Skeleton loader (avatar circle + two text lines + chip + button) so the sheet feels instant.
+- Error fallback: friendly card "Couldn't load this profile. They may have left R@lly or set their profile to private." + a clear Close button. No infinite spinner.
+- Keep contextual friend action button as-is (Add / Requested / Accept+Decline / Friends + Message). Confirm muted "Friends ✓" state remains for accepted state.
 
-- `EventDetail` attendees / host / co-hosts
-- `RideCard`, `RideRequestManager`, `IncomingRideRequests`
-- `MemberLocationCard`, `EventChat`, `ChatView`, `EventPhotoFeed`
-- `SquadDetail` member rows
-- `Notifications` friend-request rows
+2) `src/pages/EventDetail.tsx` — Who's Going grid (around lines 967–998)
+- Import `ProfileTapWrapper` from `@/components/profile/ProfileTapWrapper`.
+- Wrap each attendee tile with `ProfileTapWrapper`, using canonical ID priority: `attendee.profile_id ?? attendee.profile?.id`.
+- Make the wrapper cover the full tile (avatar + name) so the tap target is comfortable on mobile.
+- Keep the DD badge overlay absolutely positioned on the avatar so it stays pixel-perfect on the tappable tile.
+- Preserve existing layout (flex column, 12px avatar, name truncation).
 
-## What this pass adds
+3) Header avatar stack, host row, co-host chips (lines 547–712)
+- Standardize on canonical IDs: prefer `a.profile_id ?? a.profile?.id`, `event.creator_id ?? event.creator?.id`, `cohost.profile_id ?? cohost.profile?.id`.
+- Leave existing onClick `openProfile` calls; just harden the ID fallback so taps never silently no-op when the nested profile object is partial.
 
-### 1. R@lly Friends list (`src/components/squads/ContactsTab.tsx`)
-- Wrap each friend row's avatar+name block in `ProfileTapWrapper` with `friend.id`.
-- Wrap each search result row (`rallySearchResults`) avatar+name block with `result.id`.
-- Wrap each `SquadMemberGroup` member row (avatar+name) with `member.profile_id`.
-- Stop-propagation so tapping the row doesn't fire the Collapsible toggle, and the Add/Invite buttons remain independently clickable.
+4) No DB migrations. No new dependencies.
 
-### 2. Squad list cards (`src/components/squads/SquadCard.tsx`)
-- If member avatar stack is shown, wrap each mini-avatar in `ProfileTapWrapper` so tapping a face opens that profile (without navigating to the squad).
+## Verification
 
-### 3. Add People sheet (`src/components/contacts/AddPeopleSheet.tsx`)
-- Wrap any existing-R@lly-user search result rows so the user can preview before sending an invite/friend request.
+- Network: open quick-view sheet on an attendee — confirm the request hits `/rest/v1/safe_profiles_with_connection?...` and returns the row with `founder_number`. The previous failing `safe_profiles?...founder_number` request is gone.
+- Behavior:
+  - Tap a name/avatar in Who's Going → sheet opens with full data.
+  - Tap host avatar/name → sheet opens.
+  - Tap a co-host chip → sheet opens.
+  - Tap an attendee in the small header avatar stack → sheet opens.
+  - Force a bad ID (devtools) → see the "Couldn't load this profile" fallback with Close, never an infinite loader.
+- Visual: skeleton renders for ~loading window; sheet retains glass/liquid styling, 44px touch targets, DD badge stays correctly anchored on the tappable tile.
 
-### 4. Find Friend nav view (`src/components/navigation/FindFriendView.tsx`)
-- Wrap the header avatar + "Find {displayName}" title in `ProfileTapWrapper` with `member.profileId`.
-
-### 5. Tracking surfaces
-- `src/components/tracking/AttendeeMap.tsx` — popups/list rows wrap names with `ProfileTapWrapper`.
-- Any `LiveMemberTracker` / `AttendeeLocationItem` rows missing the wrapper get it.
-
-### 6. Rider Line (`src/components/rides/RiderLine.tsx`)
-- Wrap each rider row's avatar+name with `ProfileTapWrapper`.
-
-### 7. Home surface (`src/components/home/RidePlanCard.tsx`, `RallyHomeButton.tsx`)
-- Wrap driver/passenger avatars+names where present.
-
-### 8. Visual affordance
-- In `ProfileTapWrapper`, add subtle `hover:opacity-80 active:scale-[0.98] transition` so it feels tappable on both desktop hover and mobile press. No layout changes.
-
-## Out of scope (saved for later)
-
-- True desktop hover-card (tooltip-style preview without click)
-- Age block / DOB collection
-- Public Event Feed
-- Pinned media
-
-## Files touched
-
-- `src/components/profile/ProfileTapWrapper.tsx` (small style tweak)
-- `src/components/squads/ContactsTab.tsx`
-- `src/components/squads/SquadCard.tsx`
-- `src/components/contacts/AddPeopleSheet.tsx`
-- `src/components/navigation/FindFriendView.tsx`
-- `src/components/tracking/AttendeeMap.tsx`
-- `src/components/rides/RiderLine.tsx`
-- `src/components/home/RidePlanCard.tsx`, `RallyHomeButton.tsx` (only if names render)
-
-No DB / RLS / migration changes. No new dependencies.
+## Out of scope (next pass)
+- DOB capture and 18+/21+ event toggle.
+- Pinned media for hosts/co-hosts.
+- Public event feed.
