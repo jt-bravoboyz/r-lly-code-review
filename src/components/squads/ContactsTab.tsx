@@ -33,6 +33,7 @@ import { SquadSymbolBadge, getSquadIcon } from './SquadSymbolPicker';
 import { AddPeopleSheet } from '@/components/contacts/AddPeopleSheet';
 import { cn } from '@/lib/utils';
 import { getFriendshipState, useFriendships, usePublicProfileSearch, useRequestFriend, useRespondToFriendRequest } from '@/hooks/useFriendships';
+import { ProfileTapWrapper } from '@/components/profile/ProfileTapWrapper';
 import { toast } from 'sonner';
 
 interface ContactsTabProps {
@@ -179,18 +180,18 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
                   const state = getFriendshipState(result.id, friendships, profile?.id);
                   return (
                     <div key={result.id} className="flex items-center justify-between gap-3 p-3 rounded-xl bg-muted/30">
-                      <div className="flex items-center gap-3 min-w-0">
+                      <ProfileTapWrapper profileId={result.id} className="flex items-center gap-3 min-w-0 flex-1">
                         <Avatar className="h-10 w-10 shrink-0">
                           <AvatarImage src={result.avatar_url || undefined} />
                           <AvatarFallback className="bg-primary/20 text-primary font-bold">
                             {result.display_name?.charAt(0)?.toUpperCase() || '?'}
                           </AvatarFallback>
                         </Avatar>
-                        <div className="min-w-0">
+                        <div className="min-w-0 text-left">
                           <p className="font-medium text-sm truncate">{result.display_name || 'R@lly Member'}</p>
                           {result.bio && <p className="text-xs text-muted-foreground line-clamp-1">{result.bio}</p>}
                         </div>
-                      </div>
+                      </ProfileTapWrapper>
                       <Button
                         size="sm"
                         className={cn(
@@ -292,7 +293,7 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
                           key={friend.id}
                           className="flex items-center justify-between p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors"
                         >
-                          <div className="flex items-center gap-3">
+                          <ProfileTapWrapper profileId={friend.id} className="flex items-center gap-3 flex-1 min-w-0">
                             <div className="relative">
                               <Avatar className="h-10 w-10">
                                 <AvatarImage src={friend.avatar_url || undefined} />
@@ -321,7 +322,7 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
                                 </div>
                               )}
                             </div>
-                            <div>
+                            <div className="text-left">
                               <p className="font-medium text-sm inline-flex items-center">
                                 {getPublicName(friend)}
                                 <MiniFounderGem profileId={friend.id} />
@@ -333,7 +334,7 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
                                 </p>
                               )}
                             </div>
-                          </div>
+                          </ProfileTapWrapper>
                           <div className="flex gap-2">
                             {onAddToSquad && (
                               <Button
@@ -656,9 +657,10 @@ function SquadMemberGroup({
       <CollapsibleContent>
         <div className="pl-11 pr-3 py-2 space-y-1">
           {filteredMembers.map((member) => (
-            <div
+            <ProfileTapWrapper
               key={member.id}
-              className="flex items-center gap-3 p-2 rounded-lg"
+              profileId={member.profile_id}
+              className="flex items-center gap-3 p-2 rounded-lg w-full"
             >
               <Avatar className="h-8 w-8">
                 <AvatarImage src={member.profile?.avatar_url || undefined} />
@@ -670,7 +672,7 @@ function SquadMemberGroup({
                 {getPublicName(member.profile)}
                 <MiniFounderGem profileId={member.profile_id} />
               </span>
-            </div>
+            </ProfileTapWrapper>
           ))}
           {filteredMembers.length === 0 && (
             <p className="text-xs text-muted-foreground py-2">
