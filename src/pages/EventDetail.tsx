@@ -628,10 +628,7 @@ export default function EventDetail() {
             
             <div className="flex items-center gap-2">
               <Users className="h-4 w-4 text-primary" />
-              <span>
-                {attendeeCount} attending
-                {event.max_attendees && ` · ${event.max_attendees} max`}
-              </span>
+              <span>{attendeeCount} attending</span>
             </div>
           </div>
 

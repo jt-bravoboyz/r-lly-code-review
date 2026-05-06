@@ -17,7 +17,7 @@ interface EventCardProps {
     status?: string | null;
     location_name: string | null;
     is_barhop: boolean | null;
-    max_attendees: number | null;
+    
     creator?: {
       id: string;
       display_name: string | null;
