@@ -1,47 +1,75 @@
-## Goal
-Fix the "Profile not found" bug and make every attendee in the event Details > Who's Going grid open the profile quick-view sheet, with a polished loading + error experience.
+# Add Dress Code (Additive Only)
 
-## Root cause
-The `PublicProfileSheet` queries `safe_profiles` for `founder_number`, but that column only lives on `safe_profiles_with_connection`. PostgREST returns an error, the query yields no row, and the sheet falls into the generic "Profile not found" state — even when the profile exists.
+A purely additive feature — no existing fields, layouts, toggles, or "Who's Going" behavior change.
 
-Separately, the attendee tiles in `EventDetail.tsx` Who's Going grid render as static `<div>`s with no tap handler, so they never open the quick-view.
+## 1. Database
 
-## Changes
+New nullable column on `events`:
 
-1) `src/components/profile/PublicProfileSheet.tsx`
-- Switch the query source from `safe_profiles` to `safe_profiles_with_connection` (still safe public fields — no PII added).
-- Surface query errors instead of silently treating them as "not found":
-  - Track `isError` from `useQuery`, return `error` from `queryFn` (no swallow).
-  - Render distinct states: loading skeleton, error fallback, empty (truly no row), and success.
-- Replace the spinner with a Skeleton loader (avatar circle + two text lines + chip + button) so the sheet feels instant.
-- Error fallback: friendly card "Couldn't load this profile. They may have left R@lly or set their profile to private." + a clear Close button. No infinite spinner.
-- Keep contextual friend action button as-is (Add / Requested / Accept+Decline / Friends + Message). Confirm muted "Friends ✓" state remains for accepted state.
+```sql
+ALTER TABLE public.events
+  ADD COLUMN dress_code text;
+```
 
-2) `src/pages/EventDetail.tsx` — Who's Going grid (around lines 967–998)
-- Import `ProfileTapWrapper` from `@/components/profile/ProfileTapWrapper`.
-- Wrap each attendee tile with `ProfileTapWrapper`, using canonical ID priority: `attendee.profile_id ?? attendee.profile?.id`.
-- Make the wrapper cover the full tile (avatar + name) so the tap target is comfortable on mobile.
-- Keep the DD badge overlay absolutely positioned on the avatar so it stays pixel-perfect on the tappable tile.
-- Preserve existing layout (flex column, 12px avatar, name truncation).
+No RLS changes needed (existing policies cover all columns). No defaults — `null` when unset.
 
-3) Header avatar stack, host row, co-host chips (lines 547–712)
-- Standardize on canonical IDs: prefer `a.profile_id ?? a.profile?.id`, `event.creator_id ?? event.creator?.id`, `cohost.profile_id ?? cohost.profile?.id`.
-- Leave existing onClick `openProfile` calls; just harden the ID fallback so taps never silently no-op when the nested profile object is partial.
+## 2. Rally Creation — `src/components/events/CreateEventDialog.tsx`
 
-4) No DB migrations. No new dependencies.
+Inside the existing **Optional Details** `CollapsibleContent`, directly beneath the **Split Check** toggle row (line ~546), add a new toggle row + animated input — matching the Split Check row's exact styling (`flex items-center justify-between py-2`, `Label text-sm`, `Switch`).
 
-## Verification
+- Add `dress_code_enabled: z.boolean()` and `dress_code: z.string().max(50).optional()` to `eventSchema`.
+- Add to `defaultValues`: `dress_code_enabled: false`, `dress_code: ''`.
+- Toggle row: Label "Dress Code" with muted subtext "Set the vibe for the night" (small `text-xs text-muted-foreground` under the label) + `<Switch>` bound to `form.watch('dress_code_enabled')`.
+- When toggle flips OFF, also call `form.setValue('dress_code', '')` to clear.
+- Conditionally render input below the toggle wrapped in a div with `animate-accordion-down` (existing keyframe) — use the existing `<Input className="rally-create-input" maxLength={50} placeholder="e.g. Black Tie, All White, Casual" />` so focus state and glass treatment match other inputs automatically.
+- In `onSubmit`, include in `createEvent.mutateAsync` payload:
 
-- Network: open quick-view sheet on an attendee — confirm the request hits `/rest/v1/safe_profiles_with_connection?...` and returns the row with `founder_number`. The previous failing `safe_profiles?...founder_number` request is gone.
-- Behavior:
-  - Tap a name/avatar in Who's Going → sheet opens with full data.
-  - Tap host avatar/name → sheet opens.
-  - Tap a co-host chip → sheet opens.
-  - Tap an attendee in the small header avatar stack → sheet opens.
-  - Force a bad ID (devtools) → see the "Couldn't load this profile" fallback with Close, never an infinite loader.
-- Visual: skeleton renders for ~loading window; sheet retains glass/liquid styling, 44px touch targets, DD badge stays correctly anchored on the tappable tile.
+  ```ts
+  dress_code: data.dress_code_enabled && data.dress_code?.trim()
+    ? data.dress_code.trim()
+    : null,
+  ```
 
-## Out of scope (next pass)
-- DOB capture and 18+/21+ event toggle.
-- Pinned media for hosts/co-hosts.
-- Public event feed.
+## 3. Data Layer — `src/hooks/useEvents.tsx`
+
+`useEvent` already calls `get_event_safe` RPC which returns `events.*` shape — `dress_code` will flow through automatically. No code change required there. (The RPC selects by `select *` semantics; if it explicitly lists columns, we'll add `dress_code` to its return — verify on implementation.)
+
+`useEvents` (list) similarly relies on `list_events_safe` — same note.
+
+If either RPC explicitly lists columns, add a follow-up migration to include `dress_code` in their RETURNS TABLE / SELECT list.
+
+## 4. Rally Detail Page — `src/pages/EventDetail.tsx`
+
+Directly **below** the "Who's Going" `Card` (line 1002), add a conditional new `Card`:
+
+```tsx
+{event.dress_code && event.dress_code.trim() && (
+  <Card className="border-l-2 border-l-primary">
+    <CardHeader className="pb-2">
+      <div className="flex items-center gap-2">
+        <Shirt className="h-3.5 w-3.5 text-primary" />
+        <CardTitle className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+          Dress Code
+        </CardTitle>
+      </div>
+    </CardHeader>
+    <CardContent>
+      <p className="text-xl font-medium text-foreground">{event.dress_code}</p>
+    </CardContent>
+  </Card>
+)}
+```
+
+- Import `Shirt` from `lucide-react` (minimal, refined; no new deps).
+- Card inherits the global glass treatment from `src/components/ui/card.tsx` (backdrop-blur, dark glass background, shadow). Only addition: `border-l-2 border-l-primary` for the controlled R@lly Orange accent.
+- Spacing rhythm matches other detail cards because parent `TabsContent` already applies consistent gap.
+
+## 5. Acceptance
+
+1. Toggle ON → input slides in → "Black Tie" → create → DB stores `'Black Tie'`.
+2. Detail page: "Who's Going" card → directly below, glass card with orange left accent, hanger icon, "DRESS CODE" label, "Black Tie" body.
+3. Toggle OFF → input hidden, value cleared → DB stores `null` → detail page shows no dress code card, no extra spacing.
+
+## Out of scope
+
+No edits to existing toggles, no edits to "Who's Going", no new dependencies, no animation library changes.

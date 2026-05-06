@@ -49,6 +49,8 @@ const eventSchema = z.object({
   max_attendees: z.string().optional(),
   cover_charge: z.string().optional(),
   split_check: z.boolean(),
+  dress_code_enabled: z.boolean(),
+  dress_code: z.string().max(50).optional(),
 });
 
 type EventFormData = z.infer<typeof eventSchema>;
@@ -145,6 +147,8 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
       max_attendees: '',
       cover_charge: '',
       split_check: false,
+      dress_code_enabled: false,
+      dress_code: '',
     }
   });
 
@@ -178,6 +182,9 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
           max_attendees: data.max_attendees ? parseInt(data.max_attendees) : null,
           cover_charge: data.cover_charge ? parseFloat(data.cover_charge) : 0,
           split_check: data.split_check,
+          dress_code: data.dress_code_enabled && data.dress_code?.trim()
+            ? data.dress_code.trim()
+            : null,
         } as any);
       } catch (insertErr: any) {
         console.error('[CreateEvent] insert failed', {
@@ -543,6 +550,34 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
                     checked={form.watch('split_check')}
                     onCheckedChange={(v) => form.setValue('split_check', v)}
                   />
+                </div>
+
+                {/* Dress Code */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between py-2">
+                    <div className="flex flex-col">
+                      <Label htmlFor="dress-code-toggle" className="text-sm">Dress Code</Label>
+                      <span className="text-xs text-muted-foreground">Set the vibe for the night</span>
+                    </div>
+                    <Switch
+                      id="dress-code-toggle"
+                      checked={form.watch('dress_code_enabled')}
+                      onCheckedChange={(v) => {
+                        form.setValue('dress_code_enabled', v);
+                        if (!v) form.setValue('dress_code', '');
+                      }}
+                    />
+                  </div>
+                  {form.watch('dress_code_enabled') && (
+                    <div className="overflow-hidden animate-accordion-down">
+                      <Input
+                        {...form.register('dress_code')}
+                        maxLength={50}
+                        placeholder="e.g. Black Tie, All White, Casual"
+                        className="rally-create-input"
+                      />
+                    </div>
+                  )}
                 </div>
 
                 {/* Staged media picker — files held locally until submit */}

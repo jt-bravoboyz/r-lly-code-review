@@ -5,7 +5,7 @@ import { useParams, Navigate, Link, useNavigate, useSearchParams } from 'react-r
 import { useQueryClient } from '@tanstack/react-query';
 import { getEventTypeLabel, getEventTypeEmoji, getEventTypeVibe } from '@/lib/eventTypes';
 import { trackEvent } from '@/lib/analytics';
-import { ArrowLeft, Calendar, MapPin, Users, Beer, Check, X, MessageCircle, Navigation, Home, Plus, Zap, Crown, UserPlus, Car, Play, Moon, PartyPopper, Link2, CheckCircle2, Camera, Settings2 } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Users, Beer, Check, X, MessageCircle, Navigation, Home, Plus, Zap, Crown, UserPlus, Car, Play, Moon, PartyPopper, Link2, CheckCircle2, Camera, Settings2, Shirt } from 'lucide-react';
 import { format } from 'date-fns';
 import { Header } from '@/components/layout/Header';
 import { BottomNav } from '@/components/layout/BottomNav';
@@ -997,6 +997,23 @@ export default function EventDetail() {
                       );
                     })}
                   </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Dress Code - only when host set one */}
+            {(event as any).dress_code && String((event as any).dress_code).trim() && (
+              <Card className="border-l-2 border-l-primary">
+                <CardHeader className="pb-2">
+                  <div className="flex items-center gap-2">
+                    <Shirt className="h-3.5 w-3.5 text-primary" />
+                    <CardTitle className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">
+                      Dress Code
+                    </CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-xl font-medium text-foreground">{(event as any).dress_code}</p>
                 </CardContent>
               </Card>
             )}
