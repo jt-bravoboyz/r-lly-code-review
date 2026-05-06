@@ -207,6 +207,9 @@ export function RecapTimeline({
         </section>
       )}
 
+      {/* Hall of Fame — auto-renders for Drunkies recap */}
+      <AwardWinners eventId={eventId} eventTitle={eventTitle} />
+
       {/* Squad Stars */}
       {awards.length > 0 && (
         <section className="space-y-3">
