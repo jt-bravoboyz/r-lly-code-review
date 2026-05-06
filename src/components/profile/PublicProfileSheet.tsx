@@ -155,12 +155,30 @@ export function PublicProfileSheet({ profileId, open, onOpenChange }: PublicProf
         </SheetHeader>
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          <div className="space-y-4 pb-2 pt-2" aria-busy="true">
+            <div className="flex flex-col items-center text-center gap-3">
+              <Skeleton className="h-24 w-24 rounded-full" />
+              <Skeleton className="h-5 w-40" />
+              <Skeleton className="h-4 w-24" />
+            </div>
+            <Skeleton className="h-16 w-full rounded-lg" />
+            <Skeleton className="h-11 w-full rounded-md" />
+          </div>
+        ) : isError ? (
+          <div className="py-8 text-center space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Couldn't load this profile. They may have left R@lly or set their profile to private.
+            </p>
+            <Button variant="outline" onClick={() => onOpenChange(false)} className="min-h-[44px]">
+              Close
+            </Button>
           </div>
         ) : !data ? (
-          <div className="py-8 text-center text-muted-foreground">
-            <p className="text-sm">Profile not found</p>
+          <div className="py-8 text-center space-y-3">
+            <p className="text-sm text-muted-foreground">Profile not found</p>
+            <Button variant="outline" onClick={() => onOpenChange(false)} className="min-h-[44px]">
+              Close
+            </Button>
           </div>
         ) : (
           <div className="space-y-4 pb-2">
