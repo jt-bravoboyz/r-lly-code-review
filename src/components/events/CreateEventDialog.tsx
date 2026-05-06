@@ -182,6 +182,9 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
           max_attendees: data.max_attendees ? parseInt(data.max_attendees) : null,
           cover_charge: data.cover_charge ? parseFloat(data.cover_charge) : 0,
           split_check: data.split_check,
+          dress_code: data.dress_code_enabled && data.dress_code?.trim()
+            ? data.dress_code.trim()
+            : null,
         } as any);
       } catch (insertErr: any) {
         console.error('[CreateEvent] insert failed', {
