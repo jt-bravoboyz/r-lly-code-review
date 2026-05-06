@@ -46,7 +46,7 @@ const eventSchema = z.object({
   location_lat: z.number().optional(),
   location_lng: z.number().optional(),
   is_barhop: z.boolean(),
-  max_attendees: z.string().optional(),
+  
   cover_charge: z.string().optional(),
   split_check: z.boolean(),
   dress_code_enabled: z.boolean(),
@@ -145,7 +145,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
       location_lat: undefined,
       location_lng: undefined,
       is_barhop: false,
-      max_attendees: '',
+      
       cover_charge: '',
       split_check: false,
       dress_code_enabled: false,
@@ -181,7 +181,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
           location_lat: data.location_lat || null,
           location_lng: data.location_lng || null,
           is_barhop: data.is_barhop,
-          max_attendees: data.max_attendees ? parseInt(data.max_attendees) : null,
+          
           cover_charge: data.cover_charge ? parseFloat(data.cover_charge) : 0,
           split_check: data.split_check,
           dress_code: data.dress_code_enabled && data.dress_code?.trim()
@@ -505,20 +505,6 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
                       <FormLabel>Description</FormLabel>
                       <FormControl>
                         <Textarea placeholder="What's the plan?" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="max_attendees"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Max Attendees</FormLabel>
-                      <FormControl>
-                        <Input type="number" placeholder="Optional" className="rally-create-input" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
