@@ -51,6 +51,7 @@ const eventSchema = z.object({
   split_check: z.boolean(),
   dress_code_enabled: z.boolean(),
   dress_code: z.string().max(50).optional(),
+  song_recs_enabled: z.boolean(),
 });
 
 type EventFormData = z.infer<typeof eventSchema>;
@@ -149,6 +150,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
       split_check: false,
       dress_code_enabled: false,
       dress_code: '',
+      song_recs_enabled: false,
     }
   });
 
