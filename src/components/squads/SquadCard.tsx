@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ProfileTapWrapper } from '@/components/profile/ProfileTapWrapper';
 import { Trash2, Zap, UserPlus, Settings2, MessageCircle, ChevronRight } from 'lucide-react';
 import { Squad, useDeleteSquad, useUpdateSquadSymbol } from '@/hooks/useSquads';
 import { toast } from 'sonner';
