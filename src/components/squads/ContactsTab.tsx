@@ -33,6 +33,7 @@ import { SquadSymbolBadge, getSquadIcon } from './SquadSymbolPicker';
 import { AddPeopleSheet } from '@/components/contacts/AddPeopleSheet';
 import { cn } from '@/lib/utils';
 import { getFriendshipState, useFriendships, usePublicProfileSearch, useRequestFriend, useRespondToFriendRequest } from '@/hooks/useFriendships';
+import { ProfileTapWrapper } from '@/components/profile/ProfileTapWrapper';
 import { toast } from 'sonner';
 
 interface ContactsTabProps {
