@@ -51,7 +51,7 @@ export function PublicProfileSheet({ profileId, open, onOpenChange }: PublicProf
   const publicName = getPublicName(data as any);
   const initial = publicName.charAt(0).toUpperCase();
 
-  const handleFriendAction = async () => {
+  const handleFriendAction = async (response: 'accepted' | 'declined' = 'accepted') => {
     if (!profileId) return;
     try {
       if (friendState.state === 'none') {
@@ -60,9 +60,14 @@ export function PublicProfileSheet({ profileId, open, onOpenChange }: PublicProf
       } else if (friendState.state === 'pending_incoming' && friendState.friendship) {
         await respondFriend.mutateAsync({
           friendshipId: friendState.friendship.id,
-          response: 'accepted',
+          response,
         });
-        toast.success(`You and ${publicName} are now friends!`);
+        if (response === 'accepted') {
+          toast.success(`You and ${publicName} are now friends!`);
+        } else {
+          toast.success('Friend request declined');
+          onOpenChange(false);
+        }
       }
     } catch (err: any) {
       toast.error(err?.message || 'Something went wrong');
@@ -70,10 +75,24 @@ export function PublicProfileSheet({ profileId, open, onOpenChange }: PublicProf
   };
 
   const friendButton = () => {
-    if (isSelf) return null;
+    if (isSelf) {
+      return (
+        <Button
+          variant="outline"
+          className="flex-1 min-h-[44px]"
+          onClick={() => {
+            onOpenChange(false);
+            navigate('/profile');
+          }}
+        >
+          View your profile
+          <ArrowRight className="h-4 w-4 ml-2" />
+        </Button>
+      );
+    }
     if (friendState.state === 'accepted') {
       return (
-        <Button variant="secondary" disabled className="flex-1">
+        <Button variant="secondary" disabled className="flex-1 min-h-[44px]">
           <Check className="h-4 w-4 mr-2" />
           Friends
         </Button>
@@ -81,7 +100,7 @@ export function PublicProfileSheet({ profileId, open, onOpenChange }: PublicProf
     }
     if (friendState.state === 'pending_outgoing') {
       return (
-        <Button variant="outline" disabled className="flex-1">
+        <Button variant="outline" disabled className="flex-1 min-h-[44px]">
           <Clock className="h-4 w-4 mr-2" />
           Requested
         </Button>
@@ -89,14 +108,33 @@ export function PublicProfileSheet({ profileId, open, onOpenChange }: PublicProf
     }
     if (friendState.state === 'pending_incoming') {
       return (
-        <Button onClick={handleFriendAction} className="flex-1" disabled={respondFriend.isPending}>
-          <Check className="h-4 w-4 mr-2" />
-          Accept Friend
-        </Button>
+        <>
+          <Button
+            onClick={() => handleFriendAction('accepted')}
+            className="flex-1 min-h-[44px]"
+            disabled={respondFriend.isPending}
+          >
+            <Check className="h-4 w-4 mr-2" />
+            Accept
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => handleFriendAction('declined')}
+            className="flex-1 min-h-[44px]"
+            disabled={respondFriend.isPending}
+          >
+            <X className="h-4 w-4 mr-2" />
+            Decline
+          </Button>
+        </>
       );
     }
     return (
-      <Button onClick={handleFriendAction} className="flex-1" disabled={requestFriend.isPending}>
+      <Button
+        onClick={() => handleFriendAction('accepted')}
+        className="flex-1 min-h-[44px]"
+        disabled={requestFriend.isPending}
+      >
         <UserPlus className="h-4 w-4 mr-2" />
         Add Friend
       </Button>
