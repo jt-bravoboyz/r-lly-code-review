@@ -143,7 +143,10 @@ export function PublicProfileSheet({ profileId, open, onOpenChange }: PublicProf
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="rounded-t-2xl max-h-[85dvh] overflow-y-auto">
+      <SheetContent
+        side="bottom"
+        className="rounded-t-3xl max-h-[85dvh] overflow-y-auto backdrop-blur-xl bg-background/85 border-t border-border/40 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]"
+      >
         <SheetHeader className="text-left">
           <SheetTitle className="sr-only">Profile</SheetTitle>
         </SheetHeader>
