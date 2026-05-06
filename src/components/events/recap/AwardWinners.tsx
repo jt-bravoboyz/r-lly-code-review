@@ -224,7 +224,7 @@ export function AwardWinners({ eventId, eventTitle }: AwardWinnersProps) {
           R@lly Sponsored
         </p>
         <h3 className="text-base font-bold text-foreground font-montserrat">
-          🏆 Hall of Fame
+          🏆 CCU Drunkies 2026 Hall of Fame
         </h3>
       </div>
 
