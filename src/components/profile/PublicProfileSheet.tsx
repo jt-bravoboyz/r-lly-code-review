@@ -24,7 +24,7 @@ interface PublicProfileSheetProps {
 
 export function PublicProfileSheet({ profileId, open, onOpenChange }: PublicProfileSheetProps) {
   const { profile: me } = useAuth();
-  const navigate = useNavigate();
+  
   const { data: friendships = [] } = useFriendships();
   const requestFriend = useRequestFriend();
   const respondFriend = useRespondToFriendRequest();
