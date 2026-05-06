@@ -82,7 +82,7 @@ export function PublicProfileSheet({ profileId, open, onOpenChange }: PublicProf
           className="flex-1 min-h-[44px]"
           onClick={() => {
             onOpenChange(false);
-            navigate('/profile');
+            window.location.assign('/profile');
           }}
         >
           View your profile
