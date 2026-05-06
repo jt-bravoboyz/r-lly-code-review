@@ -550,7 +550,7 @@ export default function EventDetail() {
                       <Avatar
                         key={a.id}
                         className="h-6 w-6 border-2 border-background cursor-pointer"
-                        onClick={(e) => { e.stopPropagation(); a.profile?.id && openProfile(a.profile.id); }}
+                        onClick={(e) => { e.stopPropagation(); const id = (a as any).profile_id ?? a.profile?.id; id && openProfile(id); }}
                         aria-label={`View ${a.profile?.display_name || 'attendee'}'s profile`}
                       >
                         <AvatarImage src={a.profile?.avatar_url || undefined} />
