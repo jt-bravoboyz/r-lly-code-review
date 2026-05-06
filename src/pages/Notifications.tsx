@@ -85,6 +85,11 @@ export default function Notifications() {
     }
     const data = notification.data as Record<string, any> | null;
 
+    if (notification.type === 'friend_request' && data?.requester_profile_id) {
+      openProfile(data.requester_profile_id);
+      return;
+    }
+
     if (notification.type === 'rally_started' && data?.event_id) {
       navigate(`/events/${data.event_id}`);
     } else if ((notification.type === 'squad_chat_unread' || notification.type === 'rally_chat_unread' || notification.type === 'chat_unread') && data?.chat_id) {
