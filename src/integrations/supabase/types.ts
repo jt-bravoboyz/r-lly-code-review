@@ -920,7 +920,6 @@ export type Database = {
           location_lat: number | null
           location_lng: number | null
           location_name: string | null
-          max_attendees: number | null
           song_recs_enabled: boolean
           split_check: boolean | null
           start_time: string
@@ -949,7 +948,6 @@ export type Database = {
           location_lat?: number | null
           location_lng?: number | null
           location_name?: string | null
-          max_attendees?: number | null
           song_recs_enabled?: boolean
           split_check?: boolean | null
           start_time: string
@@ -978,7 +976,6 @@ export type Database = {
           location_lat?: number | null
           location_lng?: number | null
           location_name?: string | null
-          max_attendees?: number | null
           song_recs_enabled?: boolean
           split_check?: boolean | null
           start_time?: string
@@ -3864,7 +3861,6 @@ export type Database = {
           location_lat: number | null
           location_lng: number | null
           location_name: string | null
-          max_attendees: number | null
           song_recs_enabled: boolean
           split_check: boolean | null
           start_time: string
@@ -4001,7 +3997,6 @@ export type Database = {
           location_lat: number | null
           location_lng: number | null
           location_name: string | null
-          max_attendees: number | null
           song_recs_enabled: boolean
           split_check: boolean | null
           start_time: string
@@ -4155,7 +4150,6 @@ export type Database = {
           location_lat: number | null
           location_lng: number | null
           location_name: string | null
-          max_attendees: number | null
           song_recs_enabled: boolean
           split_check: boolean | null
           start_time: string
