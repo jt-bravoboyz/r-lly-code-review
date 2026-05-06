@@ -653,7 +653,7 @@ export default function EventDetail() {
               <div className="flex items-center gap-3">
                 <Avatar
                   className="cursor-pointer"
-                  onClick={() => event.creator?.id && openProfile(event.creator.id)}
+                  onClick={() => { const id = (event as any).creator_id ?? event.creator?.id; id && openProfile(id); }}
                   aria-label={`View ${event.creator.display_name || 'host'}'s profile`}
                 >
                   <AvatarImage src={event.creator.avatar_url || undefined} />
