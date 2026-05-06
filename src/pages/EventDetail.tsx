@@ -974,23 +974,26 @@ export default function EventDetail() {
                   <div className="flex flex-wrap gap-3">
                     {event.attendees.map((attendee) => {
                       const isDD = attendee.is_dd || eventDDs?.some(dd => dd.profile_id === attendee.profile?.id);
+                      const targetId = (attendee as any).profile_id ?? attendee.profile?.id;
                       return (
-                        <div key={attendee.id} className="flex flex-col items-center gap-1 relative">
-                          <Avatar className="h-12 w-12">
-                            <AvatarImage src={attendee.profile?.avatar_url || undefined} />
-                            <AvatarFallback>
-                              {attendee.profile?.display_name?.charAt(0)?.toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          {isDD && (
-                            <div className="absolute -top-1 -right-1 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
-                              <Car className="h-3 w-3 text-primary-foreground" />
-                            </div>
-                          )}
-                          <span className="text-xs text-muted-foreground truncate max-w-16">
-                            {attendee.profile?.display_name}
-                          </span>
-                        </div>
+                        <ProfileTapWrapper key={attendee.id} profileId={targetId}>
+                          <div className="flex flex-col items-center gap-1 relative">
+                            <Avatar className="h-12 w-12">
+                              <AvatarImage src={attendee.profile?.avatar_url || undefined} />
+                              <AvatarFallback>
+                                {attendee.profile?.display_name?.charAt(0)?.toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            {isDD && (
+                              <div className="absolute -top-1 -right-1 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+                                <Car className="h-3 w-3 text-primary-foreground" />
+                              </div>
+                            )}
+                            <span className="text-xs text-muted-foreground truncate max-w-16">
+                              {attendee.profile?.display_name}
+                            </span>
+                          </div>
+                        </ProfileTapWrapper>
                       );
                     })}
                   </div>
