@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { RecapMediaTile, type RecapMediaItem } from './RecapMediaTile';
 import { getRecapCloser } from './recapClosers';
 import { useRogueAlerts } from '@/hooks/useRogueAlerts';
+import { AwardWinners } from './AwardWinners';
 
 const REACTION_EMOJIS = ['🤮', '😍', '🍆'];
 
@@ -205,6 +206,9 @@ export function RecapTimeline({
           ))}
         </section>
       )}
+
+      {/* Hall of Fame — auto-renders for Drunkies recap */}
+      <AwardWinners eventId={eventId} eventTitle={eventTitle} />
 
       {/* Squad Stars */}
       {awards.length > 0 && (

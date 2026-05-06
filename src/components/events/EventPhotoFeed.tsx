@@ -42,7 +42,7 @@ export function EventPhotoFeed({ eventId, isHost, eventStatus, eventUpdatedAt }:
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number }>({ done: 0, total: 0 });
-  const [failedUploads, setFailedUploads] = useState<File[]>([]);
+  const [failedUploads, setFailedUploads] = useState<{ file: File; type: 'photo' | 'video' }[]>([]);
   const [retrying, setRetrying] = useState(false);
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
   const [downloadingViewer, setDownloadingViewer] = useState(false);
@@ -154,7 +154,7 @@ export function EventPhotoFeed({ eventId, isHost, eventStatus, eventUpdatedAt }:
     let done = 0;
     let photoSuccess = 0;
     let videoSuccess = 0;
-    const failed: File[] = [];
+    const failed: { file: File; type: 'photo' | 'video' }[] = [];
     setUploadProgress({ done: 0, total: queue.length });
 
     for (let i = 0; i < queue.length; i += UPLOAD_CONCURRENCY) {
@@ -176,11 +176,14 @@ export function EventPhotoFeed({ eventId, isHost, eventStatus, eventUpdatedAt }:
         if (r.status === 'fulfilled') {
           if (item.type === 'video') videoSuccess++; else photoSuccess++;
         } else {
-          failed.push(item.file);
+          failed.push(item);
         }
         done++;
       });
       setUploadProgress({ done, total: queue.length });
+    }
+    if (failed.length > 0) {
+      console.warn('[EventPhotoFeed] Failed uploads:', failed.map(f => f.file.name));
     }
     return { photoSuccess, videoSuccess, failed };
   };
@@ -216,10 +219,7 @@ export function EventPhotoFeed({ eventId, isHost, eventStatus, eventUpdatedAt }:
 
   const handleRetryFailed = async () => {
     if (!profile || failedUploads.length === 0 || retrying) return;
-    const queue = failedUploads.map(file => ({
-      file,
-      type: (file.type.startsWith('video/') ? 'video' : 'photo') as 'photo' | 'video',
-    }));
+    const queue = failedUploads;
     setRetrying(true);
     setUploading(true);
     try {

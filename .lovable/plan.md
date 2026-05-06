@@ -1,42 +1,67 @@
-## Quick R@lly dialog — mobile scroll fix
+# Drunkies Hall of Fame + Batch Upload
 
-The dialog content currently has no height cap, so on short viewports the form pushes the **Start R@lly** button below the visible area and there's no way to scroll to it.
+## Part 1 — Hall of Fame UI
 
-### Change (single file: `src/components/events/QuickRallyDialog.tsx`)
+### New file: `src/components/events/recap/AwardWinners.tsx`
+A self-contained, presentational component that renders the hardcoded Drunkies award roster. No DB lookups (winners are not in the system as resolvable profile IDs). Structure:
 
-Restructure `<DialogContent>` into a three-region flex column:
+- **Three categorized sections**, each as a horizontally-scrolling row (`flex overflow-x-auto snap-x snap-mandatory` with `scrollbar-hide`):
+  1. **Major Awards** — featured tier
+  2. **Class Superlatives**
+  3. **Party Legends**
+- **Card primitive** built with the existing glass tokens used elsewhere in the recap (`backdrop-blur-xl bg-card/50 border border-border/40 rounded-2xl`), 64–72vw wide on mobile, snap-aligned.
+- Each card shows: emoji, award title (small uppercase Montserrat), winner name (bold), optional subtitle (e.g. class year for superlatives).
+- **Featured card** ("R@lly-er of the Century — Kiree"): full-width, separate hero block above the Major Awards row, with R@lly Orange gold-glow treatment — gradient ring (`ring-2 ring-primary/60`), outer glow (`shadow-[0_0_40px_hsl(27_91%_53%/0.35)]`), trophy 🏆 icon, and a slow CSS shimmer overlay (translating gradient via `@keyframes shimmer` in `index.css` — single new keyframe, no Tailwind config changes).
+- **Reaction button** per card: small pill at the bottom-right with a 🍻 (Cheers) toggle. Uses `localStorage` keyed `rally_award_cheers_<eventId>_<awardKey>` to remember tap + show count (purely client-side, no DB writes — keeps scope tight for tonight). Haptic feedback via existing `useHaptics` hook.
 
-1. **DialogContent** — `max-w-md p-0 max-h-[85dvh] flex flex-col gap-0`
-   - Hard cap at `85dvh` (dynamic viewport, accounts for mobile URL bar). Falls back gracefully on browsers without `dvh`.
-2. **DialogHeader** — `px-6 pt-6 pb-3 shrink-0` (fixed at the top)
-3. **Form body** — flex-1 column with an inner scroll container:
-   ```
-   <form className="flex flex-col min-h-0 flex-1">
-     <div className="flex-1 overflow-y-auto px-6 pb-4 space-y-4">
-       {/* all existing fields */}
-     </div>
-     <DialogFooter className="px-6 py-4 border-t bg-background/95 backdrop-blur-md shrink-0">
-       <Button type="submit" ...>Start R@lly Now</Button>
-     </DialogFooter>
-   </form>
-   ```
+### Award data (hardcoded inside `AwardWinners.tsx`)
+```
+Major:   R@lly-er of the Century (Kiree, featured), GOAT (Bennie),
+         Life of the Party (Zach), Sober MVP (Martha)
+Superlatives: Senior Crush (Meg), Picasso Patty (Erin), S.E.R.V.E (Amelia),
+              Powerlift Princess (Kassi),
+              Drunkest — Senior Ryann / Junior Max / Soph Alex C / Fresh Harrisyn,
+              Highest — Senior Walker / Junior Kenzie / Soph Lis / Fresh Marley,
+              Crossed — Queen Viv / King Jake,
+              Royalty — Best Dressed Veronica / Potionmaster Mason /
+                        Heavyweight Evan / Lightweight Ella C
+Legends: Slap.com Olivia, Sofa Spooner Max McF, Just the TIP Brett,
+         Overdraft Overlord Mads, Have Fun Auntie Kayleigh,
+         Nights Get Lonely Liam, Honorary Junior Avery, Puke and R@lly Ailani,
+         Greatest Sport Ethan & Tyler, Department Ally Livvy,
+         Will they won't they Jordan & Blonde Freshman, JOMO Gab,
+         Crushes Sarah Lash & Q
+```
 
-The submit button moves out of the scrollable region into a sticky-at-bottom `DialogFooter` so it's always tappable, with a subtle top border + glass background to match the 2026 Glass/Liquid system. Existing button props (loading state, `aria-busy`, disabled logic) are preserved verbatim.
+### Mount point: `src/components/events/recap/RecapTimeline.tsx`
+Insert `<AwardWinners eventId={eventId} eventTitle={eventTitle} />` directly **above the existing "Squad Stars" section** (the auto-computed Guardian/Ghost/Paparazzi block stays as-is below it).
 
-### Why this works on every viewport
+The component itself early-returns `null` unless `eventTitle` matches `/drunk/i` — so it lights up automatically for the Drunkies recap and stays invisible for every other event. This avoids needing an event flag column or admin toggle.
 
-- `max-h-[85dvh]` caps the dialog at 85% of the *visible* viewport on mobile — no overflow off-screen.
-- The middle region (`overflow-y-auto`) absorbs any extra form length; users scroll the form, not the page behind the modal.
-- The footer is rendered outside the scroll container, so the **Start R@lly** button is permanently visible above the keyboard / safe area.
+## Part 2 — Batch Upload (verification + small polish)
 
-### Files touched
-- `src/components/events/QuickRallyDialog.tsx` (layout-only refactor — no logic changes)
+The 500-cap, parallel chunking, Portal progress pill, and "Retry failed" button are already implemented in `src/components/events/EventPhotoFeed.tsx` from the previous Stability pass:
 
-### Out of scope
-- `CreateEventDialog` already has `max-h-[90vh] overflow-y-auto` and a non-sticky submit; not requested in this fix.
-- No DB / RLS / hook changes.
+- `MAX_PHOTOS_PER_EVENT = 500` (line 19) ✓
+- `UPLOAD_CONCURRENCY = 4` via `Promise.allSettled` in `runChunkedUploads` ✓
+- Sticky portal progress pill rendered via `createPortal` (line 688) ✓
+- Retry CTA at top of feed (line 428) ✓
 
-### Verification
-- 320×568 viewport: header visible, form scrolls, **Start R@lly** button pinned to bottom border.
-- 744×553 (current preview) and 390×844: no clipping, footer stays visible.
-- Keyboard open on iOS Safari: footer stays above keyboard thanks to `dvh`.
+Two small hardenings to land in this same pass:
+
+1. **Persist failed-file types accurately on retry.** Current `handleRetryFailed` re-derives `type` from `file.type.startsWith('video/')`, which fails for HEIC photos (empty MIME on some Androids). Switch to keeping the original `{file, type}` tuple in `failedUploads` state so retried items carry the same classification as the first attempt.
+2. **Surface per-batch failure detail.** When `failed.length > 0` after a 350-file batch, also `console.warn` the failed filenames so QA can diff against camera roll. No UX change beyond the existing toast.
+
+No DB / RLS / hook signature changes.
+
+## Files
+
+- **New** `src/components/events/recap/AwardWinners.tsx`
+- **Edit** `src/components/events/recap/RecapTimeline.tsx` — import + render above Squad Stars
+- **Edit** `src/index.css` — single `@keyframes shimmer` + `.award-shimmer` utility
+- **Edit** `src/components/events/EventPhotoFeed.tsx` — retry-tuple fix + warn log
+
+## Out of scope
+- Wiring award winners to real `profile_id`s (names are free-text per the supplied list)
+- Server-side persistence of 🍻 reactions (client-only for tonight)
+- Touching `RallyRecapScreen.tsx` (timeline change is sufficient since AwardWinners renders inside the persistent timeline)
