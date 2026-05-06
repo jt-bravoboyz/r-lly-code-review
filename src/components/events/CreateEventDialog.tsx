@@ -147,6 +147,8 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
       max_attendees: '',
       cover_charge: '',
       split_check: false,
+      dress_code_enabled: false,
+      dress_code: '',
     }
   });
 
