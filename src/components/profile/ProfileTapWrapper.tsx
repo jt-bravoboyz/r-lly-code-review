@@ -53,7 +53,7 @@ export function ProfileTapWrapper({
       onKeyDown={handleKey}
       aria-label={ariaLabel || 'View profile'}
       className={cn(
-        'cursor-pointer outline-none rounded-md transition-opacity active:opacity-70 focus-visible:ring-2 focus-visible:ring-primary/60',
+        'cursor-pointer outline-none rounded-md transition hover:opacity-80 active:opacity-70 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-primary/60',
         inline ? 'inline-flex items-center' : 'inline-block',
         className,
       )}
