@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
+
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -24,7 +24,7 @@ interface PublicProfileSheetProps {
 
 export function PublicProfileSheet({ profileId, open, onOpenChange }: PublicProfileSheetProps) {
   const { profile: me } = useAuth();
-  const navigate = useNavigate();
+  
   const { data: friendships = [] } = useFriendships();
   const requestFriend = useRequestFriend();
   const respondFriend = useRespondToFriendRequest();
@@ -82,7 +82,7 @@ export function PublicProfileSheet({ profileId, open, onOpenChange }: PublicProf
           className="flex-1 min-h-[44px]"
           onClick={() => {
             onOpenChange(false);
-            navigate('/profile');
+            window.location.assign('/profile');
           }}
         >
           View your profile
