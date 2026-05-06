@@ -4,7 +4,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Star, UserPlus, Check, Clock, MessageCircle, X, ArrowRight } from 'lucide-react';
+import { Star, UserPlus, Check, Clock, MessageCircle, X, ArrowRight } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import {
@@ -29,18 +30,20 @@ export function PublicProfileSheet({ profileId, open, onOpenChange }: PublicProf
   const requestFriend = useRequestFriend();
   const respondFriend = useRespondToFriendRequest();
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ['public-profile', profileId],
     queryFn: async () => {
       if (!profileId) return null;
-      const { data: row } = await (supabase as any)
-        .from('safe_profiles')
+      const { data: row, error } = await (supabase as any)
+        .from('safe_profiles_with_connection')
         .select('id, display_name, avatar_url, bio, founding_member, founder_number, badges, reward_points')
         .eq('id', profileId)
         .maybeSingle();
+      if (error) throw error;
       return row;
     },
     enabled: !!profileId && open,
+    retry: 1,
   });
 
   const isSelf = !!me?.id && me.id === profileId;
@@ -152,12 +155,30 @@ export function PublicProfileSheet({ profileId, open, onOpenChange }: PublicProf
         </SheetHeader>
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          <div className="space-y-4 pb-2 pt-2" aria-busy="true">
+            <div className="flex flex-col items-center text-center gap-3">
+              <Skeleton className="h-24 w-24 rounded-full" />
+              <Skeleton className="h-5 w-40" />
+              <Skeleton className="h-4 w-24" />
+            </div>
+            <Skeleton className="h-16 w-full rounded-lg" />
+            <Skeleton className="h-11 w-full rounded-md" />
+          </div>
+        ) : isError ? (
+          <div className="py-8 text-center space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Couldn't load this profile. They may have left R@lly or set their profile to private.
+            </p>
+            <Button variant="outline" onClick={() => onOpenChange(false)} className="min-h-[44px]">
+              Close
+            </Button>
           </div>
         ) : !data ? (
-          <div className="py-8 text-center text-muted-foreground">
-            <p className="text-sm">Profile not found</p>
+          <div className="py-8 text-center space-y-3">
+            <p className="text-sm text-muted-foreground">Profile not found</p>
+            <Button variant="outline" onClick={() => onOpenChange(false)} className="min-h-[44px]">
+              Close
+            </Button>
           </div>
         ) : (
           <div className="space-y-4 pb-2">

@@ -77,6 +77,7 @@ import { RideshareDrawer } from '@/components/rides/RideshareDrawer';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useRenderLoopDetector } from '@/hooks/useRenderLoopDetector';
+import { ProfileTapWrapper } from '@/components/profile/ProfileTapWrapper';
 
 const VIBE_STYLES: Record<string, string> = {
   orange: "bg-orange-500/10 text-orange-600 border-orange-500/30",
@@ -549,7 +550,7 @@ export default function EventDetail() {
                       <Avatar
                         key={a.id}
                         className="h-6 w-6 border-2 border-background cursor-pointer"
-                        onClick={(e) => { e.stopPropagation(); a.profile?.id && openProfile(a.profile.id); }}
+                        onClick={(e) => { e.stopPropagation(); const id = (a as any).profile_id ?? a.profile?.id; id && openProfile(id); }}
                         aria-label={`View ${a.profile?.display_name || 'attendee'}'s profile`}
                       >
                         <AvatarImage src={a.profile?.avatar_url || undefined} />
@@ -652,7 +653,7 @@ export default function EventDetail() {
               <div className="flex items-center gap-3">
                 <Avatar
                   className="cursor-pointer"
-                  onClick={() => event.creator?.id && openProfile(event.creator.id)}
+                  onClick={() => { const id = (event as any).creator_id ?? event.creator?.id; id && openProfile(id); }}
                   aria-label={`View ${event.creator.display_name || 'host'}'s profile`}
                 >
                   <AvatarImage src={event.creator.avatar_url || undefined} />
@@ -665,7 +666,7 @@ export default function EventDetail() {
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => event.creator?.id && openProfile(event.creator.id)}
+                      onClick={() => { const id = (event as any).creator_id ?? event.creator?.id; id && openProfile(id); }}
                       className="font-medium hover:underline text-left"
                     >
                       {event.creator.display_name}
@@ -696,7 +697,7 @@ export default function EventDetail() {
                   <div
                     key={cohost.id}
                     className="flex items-center gap-1.5 bg-muted/50 rounded-full pl-1 pr-2.5 py-0.5 cursor-pointer"
-                    onClick={() => cohost.profile?.id && openProfile(cohost.profile.id)}
+                    onClick={() => { const id = (cohost as any).profile_id ?? cohost.profile?.id; id && openProfile(id); }}
                   >
                     <Avatar className="h-5 w-5">
                       <AvatarImage src={cohost.profile?.avatar_url || undefined} />
@@ -973,23 +974,26 @@ export default function EventDetail() {
                   <div className="flex flex-wrap gap-3">
                     {event.attendees.map((attendee) => {
                       const isDD = attendee.is_dd || eventDDs?.some(dd => dd.profile_id === attendee.profile?.id);
+                      const targetId = (attendee as any).profile_id ?? attendee.profile?.id;
                       return (
-                        <div key={attendee.id} className="flex flex-col items-center gap-1 relative">
-                          <Avatar className="h-12 w-12">
-                            <AvatarImage src={attendee.profile?.avatar_url || undefined} />
-                            <AvatarFallback>
-                              {attendee.profile?.display_name?.charAt(0)?.toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          {isDD && (
-                            <div className="absolute -top-1 -right-1 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
-                              <Car className="h-3 w-3 text-primary-foreground" />
-                            </div>
-                          )}
-                          <span className="text-xs text-muted-foreground truncate max-w-16">
-                            {attendee.profile?.display_name}
-                          </span>
-                        </div>
+                        <ProfileTapWrapper key={attendee.id} profileId={targetId}>
+                          <div className="flex flex-col items-center gap-1 relative">
+                            <Avatar className="h-12 w-12">
+                              <AvatarImage src={attendee.profile?.avatar_url || undefined} />
+                              <AvatarFallback>
+                                {attendee.profile?.display_name?.charAt(0)?.toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            {isDD && (
+                              <div className="absolute -top-1 -right-1 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+                                <Car className="h-3 w-3 text-primary-foreground" />
+                              </div>
+                            )}
+                            <span className="text-xs text-muted-foreground truncate max-w-16">
+                              {attendee.profile?.display_name}
+                            </span>
+                          </div>
+                        </ProfileTapWrapper>
                       );
                     })}
                   </div>
