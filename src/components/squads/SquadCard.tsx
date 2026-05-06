@@ -160,12 +160,14 @@ export function SquadCard({ squad, onQuickRally }: SquadCardProps) {
           <div className="flex items-center gap-2">
             <div className="flex -space-x-2">
               {members.slice(0, 5).map((member) => (
-                <Avatar key={member.id} className="h-8 w-8 border-2 border-card">
-                  <AvatarImage src={member.profile?.avatar_url || undefined} />
-                  <AvatarFallback className="bg-primary/20 text-primary text-xs font-bold">
-                    {member.profile?.display_name?.charAt(0)?.toUpperCase() || '?'}
-                  </AvatarFallback>
-                </Avatar>
+                <ProfileTapWrapper key={member.id} profileId={member.profile_id}>
+                  <Avatar className="h-8 w-8 border-2 border-card">
+                    <AvatarImage src={member.profile?.avatar_url || undefined} />
+                    <AvatarFallback className="bg-primary/20 text-primary text-xs font-bold">
+                      {member.profile?.display_name?.charAt(0)?.toUpperCase() || '?'}
+                    </AvatarFallback>
+                  </Avatar>
+                </ProfileTapWrapper>
               ))}
               {members.length > 5 && (
                 <div className="h-8 w-8 rounded-full bg-muted border-2 border-card flex items-center justify-center">
