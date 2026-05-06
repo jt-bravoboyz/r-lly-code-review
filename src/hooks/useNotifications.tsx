@@ -70,7 +70,7 @@ export function useNotifications() {
             toast.success(newNotif.title || 'Welcome to the Founding 25.', {
               description: newNotif.body || 'Access granted to the Canny feedback portal.',
             });
-          } else if (alertType === 'event_invite' || alertType === 'rally_started' || alertType === 'friend_request') {
+          } else if (alertType === 'event_invite' || alertType === 'rally_invite' || alertType === 'rally_started' || alertType === 'friend_request') {
             toast.info(newNotif.title, { description: newNotif.body || undefined });
           }
         }

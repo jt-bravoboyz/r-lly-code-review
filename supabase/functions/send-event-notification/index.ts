@@ -440,29 +440,37 @@ Deno.serve(async (req) => {
     }
 
     // ========== STORE NOTIFICATIONS IN DATABASE (before push) ==========
-    const notificationRecords = eligibleProfileIds.map((profileId: string) => ({
-      profile_id: profileId,
-      type,
-      title: notifTitle,
-      body: notifBody,
-      data: {
-        ...data,
-        event_id: eventId,
-        squad_id: squadId,
-        invite_code: inviteCode,
-        dedupe_key: `event-notif:${eventId ?? squadId ?? 'none'}:${type}:${profileId}`,
-      },
-      read: false,
-    }));
+    // For rally_invite: the DB trigger on event_invites owns the in-app notification
+    // (consolidated per recipient+event). Skip insert here to avoid duplicates.
+    const notificationRecords = type === 'rally_invite'
+      ? []
+      : eligibleProfileIds.map((profileId: string) => ({
+          profile_id: profileId,
+          type,
+          title: notifTitle,
+          body: notifBody,
+          data: {
+            ...data,
+            event_id: eventId,
+            squad_id: squadId,
+            invite_code: inviteCode,
+            dedupe_key: `event-notif:${eventId ?? squadId ?? 'none'}:${type}:${profileId}`,
+          },
+          read: false,
+        }));
 
-    const { error: insertError } = await supabase
-      .from('notifications')
-      .insert(notificationRecords);
+    if (notificationRecords.length > 0) {
+      const { error: insertError } = await supabase
+        .from('notifications')
+        .insert(notificationRecords);
 
-    if (insertError) {
-      console.error('Failed to insert notifications:', insertError);
+      if (insertError) {
+        console.error('Failed to insert notifications:', insertError);
+      } else {
+        console.log(`Stored ${notificationRecords.length} notifications in database`);
+      }
     } else {
-      console.log(`Stored ${notificationRecords.length} notifications in database`);
+      console.log(`Skipped notifications insert for type=${type} (handled by DB trigger)`);
     }
 
     // ========== GET PUSH SUBSCRIPTIONS ==========
