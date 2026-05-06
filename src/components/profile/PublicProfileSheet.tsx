@@ -30,18 +30,20 @@ export function PublicProfileSheet({ profileId, open, onOpenChange }: PublicProf
   const requestFriend = useRequestFriend();
   const respondFriend = useRespondToFriendRequest();
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ['public-profile', profileId],
     queryFn: async () => {
       if (!profileId) return null;
-      const { data: row } = await (supabase as any)
-        .from('safe_profiles')
+      const { data: row, error } = await (supabase as any)
+        .from('safe_profiles_with_connection')
         .select('id, display_name, avatar_url, bio, founding_member, founder_number, badges, reward_points')
         .eq('id', profileId)
         .maybeSingle();
+      if (error) throw error;
       return row;
     },
     enabled: !!profileId && open,
+    retry: 1,
   });
 
   const isSelf = !!me?.id && me.id === profileId;
