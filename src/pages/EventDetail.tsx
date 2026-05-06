@@ -1018,6 +1018,15 @@ export default function EventDetail() {
               </Card>
             )}
 
+            {/* Song Rec's - opt-in collaborative module */}
+            {(event as any).song_recs_enabled && (
+              <SongRecsCard
+                eventId={event.id}
+                isParticipant={isCreator || isCohost || isAttending}
+                currentProfileId={activeProfile?.id}
+              />
+            )}
+
             {/* Bar Hop Stops - Show only in After R@lly when bar hop mode is enabled */}
             {isAfterRally && event.is_barhop && (
               <>
