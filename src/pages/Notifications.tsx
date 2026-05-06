@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import rallyLogo from '@/assets/rally-logo.png';
 import { MiniFounderGem } from '@/components/badges/MiniFounderGem';
 import { useMarkFriendRequestNotificationsRead } from '@/hooks/useNotifications';
+import { usePublicProfile } from '@/contexts/PublicProfileContext';
 import { useRespondToFriendRequest } from '@/hooks/useFriendships';
 import { toast } from 'sonner';
 
@@ -28,6 +29,7 @@ export default function Notifications() {
   const respondToFriendRequest = useRespondToFriendRequest();
   const markFriendRequestRead = useMarkFriendRequestNotificationsRead();
   const navigate = useNavigate();
+  const { openProfile } = usePublicProfile();
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const { inviteNotifications, regularNotifications } = useMemo(() => {
@@ -84,6 +86,11 @@ export default function Notifications() {
       markRead.mutate(notification.id);
     }
     const data = notification.data as Record<string, any> | null;
+
+    if (notification.type === 'friend_request' && data?.requester_profile_id) {
+      openProfile(data.requester_profile_id);
+      return;
+    }
 
     if (notification.type === 'rally_started' && data?.event_id) {
       navigate(`/events/${data.event_id}`);

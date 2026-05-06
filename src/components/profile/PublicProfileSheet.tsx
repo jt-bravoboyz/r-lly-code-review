@@ -1,9 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Star, UserPlus, Check, Clock, MessageCircle } from 'lucide-react';
+import { Loader2, Star, UserPlus, Check, Clock, MessageCircle, X, ArrowRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import {
@@ -23,6 +24,7 @@ interface PublicProfileSheetProps {
 
 export function PublicProfileSheet({ profileId, open, onOpenChange }: PublicProfileSheetProps) {
   const { profile: me } = useAuth();
+  const navigate = useNavigate();
   const { data: friendships = [] } = useFriendships();
   const requestFriend = useRequestFriend();
   const respondFriend = useRespondToFriendRequest();
@@ -49,7 +51,7 @@ export function PublicProfileSheet({ profileId, open, onOpenChange }: PublicProf
   const publicName = getPublicName(data as any);
   const initial = publicName.charAt(0).toUpperCase();
 
-  const handleFriendAction = async () => {
+  const handleFriendAction = async (response: 'accepted' | 'declined' = 'accepted') => {
     if (!profileId) return;
     try {
       if (friendState.state === 'none') {
@@ -58,9 +60,14 @@ export function PublicProfileSheet({ profileId, open, onOpenChange }: PublicProf
       } else if (friendState.state === 'pending_incoming' && friendState.friendship) {
         await respondFriend.mutateAsync({
           friendshipId: friendState.friendship.id,
-          response: 'accepted',
+          response,
         });
-        toast.success(`You and ${publicName} are now friends!`);
+        if (response === 'accepted') {
+          toast.success(`You and ${publicName} are now friends!`);
+        } else {
+          toast.success('Friend request declined');
+          onOpenChange(false);
+        }
       }
     } catch (err: any) {
       toast.error(err?.message || 'Something went wrong');
@@ -68,10 +75,24 @@ export function PublicProfileSheet({ profileId, open, onOpenChange }: PublicProf
   };
 
   const friendButton = () => {
-    if (isSelf) return null;
+    if (isSelf) {
+      return (
+        <Button
+          variant="outline"
+          className="flex-1 min-h-[44px]"
+          onClick={() => {
+            onOpenChange(false);
+            navigate('/profile');
+          }}
+        >
+          View your profile
+          <ArrowRight className="h-4 w-4 ml-2" />
+        </Button>
+      );
+    }
     if (friendState.state === 'accepted') {
       return (
-        <Button variant="secondary" disabled className="flex-1">
+        <Button variant="secondary" disabled className="flex-1 min-h-[44px]">
           <Check className="h-4 w-4 mr-2" />
           Friends
         </Button>
@@ -79,7 +100,7 @@ export function PublicProfileSheet({ profileId, open, onOpenChange }: PublicProf
     }
     if (friendState.state === 'pending_outgoing') {
       return (
-        <Button variant="outline" disabled className="flex-1">
+        <Button variant="outline" disabled className="flex-1 min-h-[44px]">
           <Clock className="h-4 w-4 mr-2" />
           Requested
         </Button>
@@ -87,14 +108,33 @@ export function PublicProfileSheet({ profileId, open, onOpenChange }: PublicProf
     }
     if (friendState.state === 'pending_incoming') {
       return (
-        <Button onClick={handleFriendAction} className="flex-1" disabled={respondFriend.isPending}>
-          <Check className="h-4 w-4 mr-2" />
-          Accept Friend
-        </Button>
+        <>
+          <Button
+            onClick={() => handleFriendAction('accepted')}
+            className="flex-1 min-h-[44px]"
+            disabled={respondFriend.isPending}
+          >
+            <Check className="h-4 w-4 mr-2" />
+            Accept
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => handleFriendAction('declined')}
+            className="flex-1 min-h-[44px]"
+            disabled={respondFriend.isPending}
+          >
+            <X className="h-4 w-4 mr-2" />
+            Decline
+          </Button>
+        </>
       );
     }
     return (
-      <Button onClick={handleFriendAction} className="flex-1" disabled={requestFriend.isPending}>
+      <Button
+        onClick={() => handleFriendAction('accepted')}
+        className="flex-1 min-h-[44px]"
+        disabled={requestFriend.isPending}
+      >
         <UserPlus className="h-4 w-4 mr-2" />
         Add Friend
       </Button>
@@ -103,7 +143,10 @@ export function PublicProfileSheet({ profileId, open, onOpenChange }: PublicProf
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="rounded-t-2xl max-h-[85dvh] overflow-y-auto">
+      <SheetContent
+        side="bottom"
+        className="rounded-t-3xl max-h-[85dvh] overflow-y-auto backdrop-blur-xl bg-background/85 border-t border-border/40 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]"
+      >
         <SheetHeader className="text-left">
           <SheetTitle className="sr-only">Profile</SheetTitle>
         </SheetHeader>
