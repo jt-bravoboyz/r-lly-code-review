@@ -1,54 +1,107 @@
-## Dedupe Rally Invite Alerts — Surgical Fix
+# R@lly Tab → Cinematic "Classified" Placeholder
 
-Right now every rally invite produces **two** alert rows (DB trigger fires `event_invite`, edge function inserts `rally_invite`), and each new inviter creates fresh rows on top of those. Goal: one alert row per `(recipient, rally)`, updated in place as more people invite.
+The R@lly tab in the bottom nav routes to `/events` (`src/pages/Events.tsx`). That page is the only surface affected. Bottom nav, route, and label stay untouched. No other screens, hooks, or features are modified.
 
-### Root causes (confirmed in code)
+## Files
 
-1. `supabase/migrations/...notify_on_event_invite` — DB trigger on `event_invites` INSERT creates one `event_invite` notification per row, no dedupe.
-2. `supabase/functions/send-event-notification/index.ts` (called from `useCreateEventInvites`) inserts a second `rally_invite` notification row per recipient, also no dedupe.
-3. `useNotifications`, `Notifications.tsx`, and `InviteAlertCard` all treat both types as valid invite alerts.
+- **Replace** `src/pages/Events.tsx` — wipe current content, render new placeholder layout.
+- **Create** `src/components/events/RallyFeedComingSoon.tsx` — encapsulated placeholder component (keeps page file thin and isolates animations).
 
-### Fix
+Nothing else changes. Dress Code, Song Rec's, alerts dedup, EventDetail, CreateEventDialog, EventCard, hooks, etc. are not touched.
 
-**1. Database migration — single source of truth for invite alerts**
+## Layout (RallyFeedComingSoon)
 
-Replace `notify_on_event_invite()` with an upsert that consolidates by `(invited_profile_id, event_id)`:
+Full-height container (`min-h-[100dvh]`) with `BottomNav` rendered below. Dark base (uses existing `bg-background` and a layered radial overlay for cinematic depth).
 
-- Look up an existing notification where `profile_id = NEW.invited_profile_id`, `type = 'rally_invite'`, `data->>'event_id' = NEW.event_id`.
-- If none: insert ONE row with type `'rally_invite'`, title `"You're invited to {event_title}"`, body `"{Inviter Name} invited you. Tap to RSVP."`, `data` = `{ event_id, inviters: [invited_by], inviter_names: [name], responded: false }`.
-- If exists AND `data->>'responded'` is not `'true'`:
-  - Append `NEW.invited_by` to `data.inviters` (skip if already present).
-  - Append inviter name to `data.inviter_names`.
-  - Recompute `body`: 1 inviter → `"{name} invited you. Tap to RSVP."`; 2+ → `"{first_name} + {N} others invited you. Tap to RSVP."`.
-  - Update `created_at = now()` (so it bumps to top), `read = false`.
-- If exists AND `responded = true`: do nothing (don't re-fire).
+```text
+┌─────────────────────────────┐
+│ header (minimal: just brand │
+│  spacing, no actions)       │
+├─────────────────────────────┤
+│ ░ ghost card (blur, 20%)   │  ← background stack
+│ ░ ghost card (blur, 18%)   │     (pointer-events-none)
+│ ░ ghost card (blur, 15%)   │     subtle 30s vertical drift
+│ ░ ghost card (cut off)     │
+│                             │
+│   ┌───────────────────┐    │  ← centered glass module
+│   │ CLASSIFIED—TIER 02│    │     (absolute, dead center)
+│   │                   │    │
+│   │ R@LLY FEED        │    │
+│   │ Public rallies.   │    │
+│   │ Live near you.    │    │
+│   │ ─────────────     │    │
+│   │ • STAND BY        │    │
+│   │   LAUNCHING SOON  │    │
+│   └───────────────────┘    │
+│                             │
+│ [top + bottom gradient fade]│
+├─────────────────────────────┤
+│   BottomNav (unchanged)     │
+└─────────────────────────────┘
+```
 
-Add an UPDATE trigger on `event_invites`: when `status` changes to `'accepted'` or `'declined'`, set the matching notification's `data.responded = true` and `read = true`.
+### Background ghost stack
+- 4 mock cards built with the same outer shape as `EventCard` (rounded-2xl, ~h-44, glass surface) but stripped to plain divs — no imports of EventCard, no event data, no handlers.
+- Dummy text rendered inside each (Skybar Rooftop · Live Now · 247 going, etc.) so the silhouette reads as "real feed."
+- Wrapped in a div with `filter: blur(14px)`, `opacity: 0.18-0.22`, `pointer-events-none`, `select-none`, `aria-hidden`.
+- Subtle `animate-rally-drift` (new keyframe, ~30s, ±6px translateY).
+- Top and bottom `bg-gradient-to-b` overlays fade the stack into the page background.
 
-**2. Backfill existing duplicates**
+### Foreground glass card
+- `absolute inset-0 flex items-center justify-center` overlay so it sits dead center over the stack.
+- Card: `w-[82%] max-w-sm`, `rounded-3xl`, `backdrop-blur-2xl`, dark glass background (`bg-black/55 dark:bg-white/[0.04]`), 1px subtle border, layered shadow.
+- Inner R@lly Orange glow via a pseudo-ring (`box-shadow: inset 0 0 24px hsl(22 90% 52% / 0.18)`) animated with `animate-rally-breath` (3.5s ease-in-out pulse on glow opacity 0.10 → 0.28).
+- Padding `px-7 py-9`, content stacked with generous spacing.
 
-In the same migration, one-time SQL:
+### Foreground content
+1. `CLASSIFIED — TIER 02` — `text-[10px] tracking-[0.32em] uppercase text-muted-foreground/70 font-montserrat`.
+2. Headline `R@LLY FEED` — `text-4xl font-extrabold tracking-[0.08em] uppercase text-white font-montserrat`. The `@` is rendered as a span styled to match the existing brand wordmark (orange `text-primary` weight-black) — same treatment used in Index.tsx landing wordmark.
+3. Subhead `Public rallies. Live near you.` — `text-sm text-white/65 font-montserrat`, generous `mt-3`.
+4. Divider — thin `h-px bg-white/10 my-6 w-12 mx-auto` (cleaner than verbose spacing).
+5. Status block:
+   - Row: tiny blinking dot (`h-1.5 w-1.5 rounded-full bg-[#F47A19] animate-rally-blink`, 1.8s cycle) + `STAND BY` (`text-xs tracking-[0.3em] uppercase text-[#F47A19] font-bold`).
+   - Below: `LAUNCHING SOON` (`text-[11px] tracking-[0.28em] uppercase text-white/55 mt-1.5`).
 
-- For each `(profile_id, data->>'event_id')` group in `notifications` where type is in (`'rally_invite'`, `'event_invite'`): collect all distinct `invited_by` values from related `event_invites`, keep the row with the latest `created_at`, rewrite its type to `'rally_invite'`, rebuild title/body/`data.inviters`/`inviter_names`, then `DELETE` the rest.
+### Tap behavior
+- Whole content wrapper gets `pointer-events-none` except… nothing. Glass card optional shimmer: skipped to keep cinematic restraint per spec ("pick whichever feels more premium" — chosen: no shimmer, just the breathing glow).
 
-**3. Edge function — stop double-inserting**
+## Animations
 
-`supabase/functions/send-event-notification/index.ts`: when `type === 'rally_invite'`, skip the `notifications` table insert (the DB trigger now owns that) but keep all push notification delivery exactly as-is. Other types (`squad_invite`, `bar_hop_transition`, etc.) are untouched.
+Add three keyframes inline via Tailwind arbitrary classes in the component (no global CSS edits needed) using existing `tailwindcss-animate` patterns is not enough — we'll add three keyframes to `tailwind.config.ts` under existing `keyframes`/`animation` blocks (additive only, no removals):
 
-**4. Client — unify on `rally_invite`**
+- `rally-breath`: `box-shadow` opacity pulse, 3.5s ease-in-out infinite.
+- `rally-blink`: opacity 1 → 0.25 → 1, 1.8s ease-in-out infinite.
+- `rally-drift`: `translateY(0) → translateY(-6px) → 0`, 30s ease-in-out infinite.
 
-- `src/components/notifications/InviteAlertCard.tsx`: keep accepting both `rally_invite` and `event_invite` (for legacy rows that survived backfill, just in case), but render title/body straight from `notification.title` / `notification.body` (already set correctly by the trigger). No visual changes — same orange CTA, same calendar icon, same card.
-- `src/pages/Notifications.tsx`: no changes needed — `INVITE_TYPES` already includes both. Icon mapping unchanged.
-- `src/hooks/useNotifications.tsx`: toast branch for `event_invite` keeps working; add `rally_invite` to that same `else if` so re-bumped invites also toast.
+These are net-new entries; nothing existing is modified.
 
-### Out of scope (explicitly untouched)
+## What is removed from `Events.tsx`
 
-- Invite delivery: `event_invites` insert, push delivery, email — unchanged.
-- Other notification types (referrals, RSVPs, recap, friend requests, chat, Founder 25) — untouched.
-- Dress Code and Song Rec's features — untouched.
-- Card visual design — untouched.
-- `EventCard`, `EventDetail`, `CreateEventDialog` — untouched.
+The entire current implementation (event listing, filters, headers, search, hooks like `useMyEvents`/`useEvents` calls if present in that file). The page becomes:
 
-### Acceptance test mapping
+```tsx
+import { BottomNav } from '@/components/layout/BottomNav';
+import { RallyFeedComingSoon } from '@/components/events/RallyFeedComingSoon';
 
-Steps 1–4 satisfied by the upsert trigger + UPDATE trigger. Step 5 satisfied by the backfill SQL. Step 6 verified by leaving all non-invite branches alone.
+export default function Events() {
+  return (
+    <div className="min-h-[100dvh] bg-background relative overflow-hidden pb-28">
+      <RallyFeedComingSoon />
+      <BottomNav />
+    </div>
+  );
+}
+```
+
+No deletion of other files, hooks, or components — they remain available for `Index.tsx` and `EventDetail.tsx` which still use them.
+
+## Out of scope (explicitly not touched)
+
+- `BottomNav.tsx` (label, icon, route all unchanged)
+- `Index.tsx`, `EventDetail.tsx`, `CreateEventDialog.tsx`, `EventCard.tsx`
+- Dress Code, Song Rec's, alerts dedup migration, notifications hook
+- Any DB / edge function / RLS
+
+## Acceptance
+
+Tapping R@lly in bottom nav → lands on `/events` showing blurred ghost card stack, centered glass module with the exact copy hierarchy, breathing orange glow, blinking status dot, drifting background. No taps do anything. Every other tab and feature behaves identically.
