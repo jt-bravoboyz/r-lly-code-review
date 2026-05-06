@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import rallyLogo from '@/assets/rally-logo.png';
 import { MiniFounderGem } from '@/components/badges/MiniFounderGem';
 import { useMarkFriendRequestNotificationsRead } from '@/hooks/useNotifications';
+import { usePublicProfile } from '@/contexts/PublicProfileContext';
 import { useRespondToFriendRequest } from '@/hooks/useFriendships';
 import { toast } from 'sonner';
 
