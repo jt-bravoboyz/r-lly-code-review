@@ -219,10 +219,7 @@ export function EventPhotoFeed({ eventId, isHost, eventStatus, eventUpdatedAt }:
 
   const handleRetryFailed = async () => {
     if (!profile || failedUploads.length === 0 || retrying) return;
-    const queue = failedUploads.map(file => ({
-      file,
-      type: (file.type.startsWith('video/') ? 'video' : 'photo') as 'photo' | 'video',
-    }));
+    const queue = failedUploads;
     setRetrying(true);
     setUploading(true);
     try {
