@@ -53,7 +53,9 @@ export function GoingRogueButton({ onGoRogue, isPending, hasGoneRogue }: GoingRo
         onClick={() => setOpen(true)}
       >
         <Flame className="h-5 w-5 mr-2" />
-        I'm Going Rogue 🔥
+        I'm Going Rogue
+        <Flame className="h-5 w-5 ml-2 scale-x-[-1]" />
+
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
