@@ -72,24 +72,66 @@ export function RideshareDeepLinkButtons({
     eventLat !== 0 &&
     eventLng !== 0;
 
-  const buildUberUrl = () => {
-    if (!hasCoords) return 'https://m.uber.com/';
-    let url = `https://m.uber.com/ul/?action=setPickup&pickup=my_location&dropoff[latitude]=${eventLat}&dropoff[longitude]=${eventLng}`;
-    if (eventName) url += `&dropoff[nickname]=${encodeURIComponent(eventName)}`;
-    if (eventAddress) url += `&dropoff[formatted_address]=${encodeURIComponent(eventAddress)}`;
-    return url;
+  const launchWithFallback = (nativeUrl: string, storeUrl: string) => {
+    const fallbackTimer = window.setTimeout(() => {
+      window.location.href = storeUrl;
+    }, 1500);
+    const visibilityHandler = () => {
+      if (document.hidden) {
+        clearTimeout(fallbackTimer);
+        document.removeEventListener('visibilitychange', visibilityHandler);
+      }
+    };
+    document.addEventListener('visibilitychange', visibilityHandler);
+    window.location.href = nativeUrl;
   };
 
-  const buildLyftUrl = () => {
-    if (!hasCoords) return 'https://lyft.com/';
-    return `https://lyft.com/ride?id=lyft&pickup=current&destination[latitude]=${eventLat}&destination[longitude]=${eventLng}`;
+  const openUber = () => {
+    const ua = navigator.userAgent;
+    const isIOS = /iPad|iPhone|iPod/.test(ua) && !(window as any).MSStream;
+    const isAndroid = /Android/.test(ua);
+    const iosStoreUrl = 'https://apps.apple.com/app/uber/id368677368';
+    const androidStoreUrl = 'https://play.google.com/store/apps/details?id=com.ubercab';
+
+    let nativeParams = '';
+    if (hasCoords) {
+      nativeParams = `?action=setPickup&pickup=my_location&dropoff[latitude]=${eventLat}&dropoff[longitude]=${eventLng}`;
+      if (eventName) nativeParams += `&dropoff[nickname]=${encodeURIComponent(eventName)}`;
+      if (eventAddress) nativeParams += `&dropoff[formatted_address]=${encodeURIComponent(eventAddress)}`;
+    }
+
+    if (isAndroid) {
+      const intentUrl = `intent://${nativeParams}#Intent;scheme=uber;package=com.ubercab;S.browser_fallback_url=${encodeURIComponent(androidStoreUrl)};end`;
+      window.location.href = intentUrl;
+      return;
+    }
+    launchWithFallback(`uber://${nativeParams}`, isIOS ? iosStoreUrl : iosStoreUrl);
+  };
+
+  const openLyft = () => {
+    const ua = navigator.userAgent;
+    const isIOS = /iPad|iPhone|iPod/.test(ua) && !(window as any).MSStream;
+    const isAndroid = /Android/.test(ua);
+    const iosStoreUrl = 'https://apps.apple.com/app/lyft/id529379082';
+    const androidStoreUrl = 'https://play.google.com/store/apps/details?id=me.lyft.android';
+
+    const params = hasCoords
+      ? `ridetype?id=lyft&pickup=current&destination[latitude]=${eventLat}&destination[longitude]=${eventLng}`
+      : '';
+
+    if (isAndroid) {
+      const intentUrl = `intent://${params}#Intent;scheme=lyft;package=me.lyft.android;S.browser_fallback_url=${encodeURIComponent(androidStoreUrl)};end`;
+      window.location.href = intentUrl;
+      return;
+    }
+    launchWithFallback(`lyft://${params}`, isIOS ? iosStoreUrl : iosStoreUrl);
   };
 
   const handleClick = (provider: 'uber' | 'lyft') => {
     triggerButtonFeedback();
     trackEvent('rideshare_deeplink_clicked', { provider });
-    const url = provider === 'uber' ? buildUberUrl() : buildLyftUrl();
-    window.open(url, '_blank', 'noopener,noreferrer');
+    if (provider === 'uber') openUber();
+    else openLyft();
   };
 
   const buttons = [
