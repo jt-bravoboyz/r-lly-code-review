@@ -1,52 +1,48 @@
-# Add Uber + Lyft Deep Link Buttons to Rides Tab
+# Polish Uber + Lyft Buttons — Real App Icons, Glass, Breathing Glow
 
-Purely additive change. New row of two side-by-side rideshare buttons inserted at the very top of the `rides` TabsContent on the rally detail page, above the existing "Need a Ride?" section. No existing logic, styling, or components are modified.
+Surgical visual rewrite of `src/components/rides/RideshareDeepLinkButtons.tsx`. No other files touched. Placement, deep-link URLs, click behavior, haptics, and analytics are unchanged.
 
-## Files
+## Single file edit: `src/components/rides/RideshareDeepLinkButtons.tsx`
 
-### 1. NEW: `src/components/rides/RideshareDeepLinkButtons.tsx`
+### App icons (real, recognizable)
 
-A self-contained component that renders two buttons in a single horizontal row.
+Replace the small monochrome wordmark with two squircle app-icon components rendered at **40×40px**, `borderRadius: 9px` (~22% — iOS continuous corner approximation), with subtle inner highlight + drop shadow:
 
-Props:
-- `eventLat?: number | null`
-- `eventLng?: number | null`
-- `eventName?: string | null`
-- `eventAddress?: string | null`
+- **`UberAppIcon`** — `background: #000000`, white "Uber" wordmark centered (inline SVG `<text>`, Helvetica/Arial 900, white fill). Shadow: `0 2px 8px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.08)`.
+- **`LyftAppIcon`** — `background: #FF00BF` (Lyft pink), white "lyft" wordmark centered. Shadow: `0 2px 8px rgba(255,0,191,0.35), inset 0 1px 0 rgba(255,255,255,0.18)`.
 
-Behavior:
-- Renders two glass-styled buttons in a flex row with `gap-3`, each `flex-1`, height `h-14` (~56px), `rounded-xl`.
-- Glass treatment: `bg-white/55 dark:bg-black/45 backdrop-blur-xl border border-white/40 dark:border-white/10 shadow-[0_4px_16px_rgba(0,0,0,0.15)]`, with `hover:border-primary/40 hover:shadow-[0_0_0_1px_hsl(22_90%_52%/0.2),0_8px_24px_hsl(22_90%_52%/0.18)]` for the orange accent on hover/press, and `active:scale-[0.97] transition-all`.
-- Each button content: small monochrome white wordmark SVG (`h-4`) inline + label "Uber" / "Lyft" (font-semibold) + small muted subtext "Open app" (`text-[10px] text-muted-foreground`).
-- Wordmark SVGs are inline (simple `<svg>` text with white fill) — no external assets.
-- On click:
-  - Uber URL: if `eventLat && eventLng`, build `https://m.uber.com/ul/?action=setPickup&pickup=my_location&dropoff[latitude]=${lat}&dropoff[longitude]=${lng}&dropoff[nickname]=${encodeURIComponent(name)}&dropoff[formatted_address]=${encodeURIComponent(address)}` (omitting empty name/address params); else fallback `https://m.uber.com/`.
-  - Lyft URL: if coords, `https://lyft.com/ride?id=lyft&pickup=current&destination[latitude]=${lat}&destination[longitude]=${lng}`; else fallback `https://lyft.com/`.
-  - Open with `window.open(url, '_blank', 'noopener,noreferrer')`.
-  - Trigger `useHaptics().triggerButtonFeedback()` for tactile press.
-  - `trackEvent('rideshare_deeplink_clicked', { provider })`.
+Icons keep their authentic brand colors — buttons themselves stay glass.
 
-### 2. EDIT: `src/pages/EventDetail.tsx`
+### True glass buttons
 
-Add import:
-```ts
-import { RideshareDeepLinkButtons } from '@/components/rides/RideshareDeepLinkButtons';
-```
+Each button:
+- `flex-1 h-[68px] rounded-2xl flex items-center justify-center gap-3 px-4`
+- `bg-white/55 dark:bg-black/45`
+- `backdrop-blur-xl` with inline `WebkitBackdropFilter: 'blur(20px) saturate(1.4)'`
+- `border border-white/40 dark:border-white/10`
+- `active:scale-[0.98] transition-transform duration-200 ease-out`
+- `relative overflow-hidden`, `text-foreground`
 
-Insert as the first child inside `<TabsContent value="rides" ...>` (line ~1103), before the DD Request Banner block:
+### Breathing R@lly Orange glow (synced)
 
-```tsx
-<RideshareDeepLinkButtons
-  eventLat={event.location_lat}
-  eventLng={event.location_lng}
-  eventName={event.title}
-  eventAddress={event.location_name}
-/>
-```
+Inline `<style>` block defines a single keyframe `rideshare-breath` (3.6s ease-in-out infinite) animating `box-shadow` between:
+- rest: soft depth shadow + faint `hsl(22 90% 52% / 0.12)` inset ring
+- peak: stronger depth shadow + `hsl(22 90% 52% / 0.32)` inset ring + `0 0 18px hsl(22 90% 52% / 0.22)` outer halo
 
-The existing `space-y-4` on TabsContent provides the rhythm spacing to the "Need a Ride?" section below.
+Both buttons get class `.rideshare-glass-btn` with `animation-delay: 0s`, so they breathe in **perfect sync**.
+
+### Layout inside each button
+
+Horizontal: `[AppIcon] [text-block]` centered together.
+- Top text: label (`Uber` / `Lyft`) — `font-montserrat font-semibold text-[15px] text-foreground`
+- Bottom text: `Open app` — `text-[11px] text-muted-foreground`
+
+### Render
+
+The two buttons are rendered via a small mapped array `[{key:'uber',...}, {key:'lyft',...}]` inside the existing `<div className="flex gap-3 w-full">` wrapper. Existing `handleClick`, `buildUberUrl`, `buildLyftUrl`, `useHaptics`, and `trackEvent` calls are preserved verbatim.
 
 ## Out of scope
-- No changes to `RideshareDrawer`, `RequestRideDialog`, RiderLine, DD section, or any other tab.
-- No changes to other pages, hooks, edge functions, migrations, or design tokens.
-- Does not touch Dress Code, Song Rec's, alerts dedup, R@lly Feed placeholder, or Founder 25.
+
+- `src/pages/EventDetail.tsx` is not modified — placement above the DD/Need-a-Ride sections stays.
+- No changes to deep link URLs, haptics, analytics, or any other component.
+- Does not touch Dress Code, Song Rec's, alerts dedup, R@lly Feed placeholder, or any other shipped feature.

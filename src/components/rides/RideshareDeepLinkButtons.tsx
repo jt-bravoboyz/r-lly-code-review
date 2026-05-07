@@ -8,16 +8,68 @@ interface RideshareDeepLinkButtonsProps {
   eventAddress?: string | null;
 }
 
-const UberWordmark = () => (
-  <svg viewBox="0 0 60 24" className="h-3.5 w-auto" fill="currentColor" aria-hidden>
-    <text x="0" y="18" fontFamily="Arial, sans-serif" fontWeight="900" fontSize="20">Uber</text>
-  </svg>
+/** Squircle Uber app icon — black bg, white "Uber" wordmark */
+const UberAppIcon = () => (
+  <div
+    className="flex items-center justify-center shrink-0"
+    style={{
+      width: 40,
+      height: 40,
+      borderRadius: 9,
+      background: '#000000',
+      boxShadow:
+        '0 2px 8px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.08)',
+    }}
+    aria-hidden
+  >
+    <svg viewBox="0 0 56 24" width="28" height="14" aria-hidden>
+      <text
+        x="50%"
+        y="50%"
+        dominantBaseline="central"
+        textAnchor="middle"
+        fontFamily="Helvetica, Arial, sans-serif"
+        fontWeight="900"
+        fontSize="22"
+        fill="#FFFFFF"
+        letterSpacing="-0.5"
+      >
+        Uber
+      </text>
+    </svg>
+  </div>
 );
 
-const LyftWordmark = () => (
-  <svg viewBox="0 0 60 24" className="h-3.5 w-auto" fill="currentColor" aria-hidden>
-    <text x="0" y="18" fontFamily="Arial, sans-serif" fontWeight="900" fontSize="20">lyft</text>
-  </svg>
+/** Squircle Lyft app icon — Lyft pink bg, white "lyft" wordmark */
+const LyftAppIcon = () => (
+  <div
+    className="flex items-center justify-center shrink-0"
+    style={{
+      width: 40,
+      height: 40,
+      borderRadius: 9,
+      background: '#FF00BF',
+      boxShadow:
+        '0 2px 8px rgba(255,0,191,0.35), inset 0 1px 0 rgba(255,255,255,0.18)',
+    }}
+    aria-hidden
+  >
+    <svg viewBox="0 0 56 24" width="28" height="14" aria-hidden>
+      <text
+        x="50%"
+        y="50%"
+        dominantBaseline="central"
+        textAnchor="middle"
+        fontFamily="Helvetica, Arial, sans-serif"
+        fontWeight="900"
+        fontSize="22"
+        fill="#FFFFFF"
+        letterSpacing="-0.5"
+      >
+        lyft
+      </text>
+    </svg>
+  </div>
 );
 
 export function RideshareDeepLinkButtons({
@@ -36,11 +88,7 @@ export function RideshareDeepLinkButtons({
 
   const buildUberUrl = () => {
     if (!hasCoords) return 'https://m.uber.com/';
-    const params = new URLSearchParams({
-      action: 'setPickup',
-      pickup: 'my_location',
-    });
-    let url = `https://m.uber.com/ul/?${params.toString()}&dropoff[latitude]=${eventLat}&dropoff[longitude]=${eventLng}`;
+    let url = `https://m.uber.com/ul/?action=setPickup&pickup=my_location&dropoff[latitude]=${eventLat}&dropoff[longitude]=${eventLng}`;
     if (eventName) url += `&dropoff[nickname]=${encodeURIComponent(eventName)}`;
     if (eventAddress) url += `&dropoff[formatted_address]=${encodeURIComponent(eventAddress)}`;
     return url;
@@ -58,46 +106,65 @@ export function RideshareDeepLinkButtons({
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
-  const baseClass =
-    'flex-1 h-14 rounded-xl flex items-center justify-center gap-2.5 px-4 ' +
-    'bg-white/55 dark:bg-black/45 backdrop-blur-xl ' +
-    'border border-white/40 dark:border-white/10 ' +
-    'shadow-[0_4px_16px_rgba(0,0,0,0.08)] ' +
-    'hover:border-primary/40 hover:shadow-[0_0_0_1px_hsl(22_90%_52%/0.25),0_8px_24px_hsl(22_90%_52%/0.18)] ' +
-    'active:scale-[0.97] transition-all duration-200 ease-out ' +
-    'text-foreground';
+  const buttons = [
+    { key: 'uber' as const, label: 'Uber', Icon: UberAppIcon },
+    { key: 'lyft' as const, label: 'Lyft', Icon: LyftAppIcon },
+  ];
 
   return (
-    <div className="flex gap-3 w-full">
-      <button
-        type="button"
-        onClick={() => handleClick('uber')}
-        className={baseClass}
-        aria-label="Open Uber with destination pre-filled"
-      >
-        <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-foreground text-background">
-          <UberWordmark />
-        </span>
-        <span className="flex flex-col items-start leading-tight">
-          <span className="font-montserrat font-semibold text-sm">Uber</span>
-          <span className="text-[10px] text-muted-foreground">Open app</span>
-        </span>
-      </button>
+    <>
+      <style>{`
+        @keyframes rideshare-breath {
+          0%, 100% {
+            box-shadow:
+              0 8px 24px rgba(0,0,0,0.10),
+              inset 0 1px 0 rgba(255,255,255,0.18),
+              inset 0 0 0 1px hsl(22 90% 52% / 0.12),
+              0 0 0 0 hsl(22 90% 52% / 0);
+          }
+          50% {
+            box-shadow:
+              0 10px 28px rgba(0,0,0,0.14),
+              inset 0 1px 0 rgba(255,255,255,0.22),
+              inset 0 0 0 1px hsl(22 90% 52% / 0.32),
+              0 0 18px 0 hsl(22 90% 52% / 0.22);
+          }
+        }
+        .rideshare-glass-btn {
+          animation: rideshare-breath 3.6s ease-in-out infinite;
+          animation-delay: 0s;
+        }
+      `}</style>
 
-      <button
-        type="button"
-        onClick={() => handleClick('lyft')}
-        className={baseClass}
-        aria-label="Open Lyft with destination pre-filled"
-      >
-        <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-foreground text-background">
-          <LyftWordmark />
-        </span>
-        <span className="flex flex-col items-start leading-tight">
-          <span className="font-montserrat font-semibold text-sm">Lyft</span>
-          <span className="text-[10px] text-muted-foreground">Open app</span>
-        </span>
-      </button>
-    </div>
+      <div className="flex gap-3 w-full">
+        {buttons.map(({ key, label, Icon }) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => handleClick(key)}
+            aria-label={`Open ${label} with destination pre-filled`}
+            className={[
+              'rideshare-glass-btn',
+              'flex-1 h-[68px] rounded-2xl',
+              'flex items-center justify-center gap-3 px-4',
+              'bg-white/55 dark:bg-black/45',
+              'backdrop-blur-xl',
+              'border border-white/40 dark:border-white/10',
+              'active:scale-[0.98] transition-transform duration-200 ease-out',
+              'text-foreground relative overflow-hidden',
+            ].join(' ')}
+            style={{ WebkitBackdropFilter: 'blur(20px) saturate(1.4)' }}
+          >
+            <Icon />
+            <div className="flex flex-col items-start leading-tight">
+              <span className="font-montserrat font-semibold text-[15px] text-foreground">
+                {label}
+              </span>
+              <span className="text-[11px] text-muted-foreground">Open app</span>
+            </div>
+          </button>
+        ))}
+      </div>
+    </>
   );
 }
