@@ -20,15 +20,31 @@ interface TransportModeSelectorProps {
   onOpenChange: (open: boolean) => void;
   eventId: string;
   profileId: string;
+  eventLat?: number | null;
+  eventLng?: number | null;
+  eventName?: string | null;
+  eventAddress?: string | null;
   onComplete?: () => void;
   onSkip?: () => void;
 }
 
-export function TransportModeSelector({ open, onOpenChange, eventId, profileId, onComplete, onSkip }: TransportModeSelectorProps) {
+export function TransportModeSelector({ open, onOpenChange, eventId, profileId, eventLat, eventLng, eventName, eventAddress, onComplete, onSkip }: TransportModeSelectorProps) {
   const [saving, setSaving] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
+  const [showRideshareSheet, setShowRideshareSheet] = useState(false);
+
+  const finishSelection = () => {
+    toast.success('Got it! Have fun 🎉');
+    onOpenChange(false);
+    onComplete?.();
+  };
 
   const handleSelect = async (mode: string) => {
+    if (mode === 'rideshare') {
+      setSelected(mode);
+      setShowRideshareSheet(true);
+      return;
+    }
     setSelected(mode);
     setSaving(true);
     try {
@@ -39,9 +55,7 @@ export function TransportModeSelector({ open, onOpenChange, eventId, profileId, 
         .eq('profile_id', profileId);
 
       if (error) throw error;
-      toast.success('Got it! Have fun 🎉');
-      onOpenChange(false);
-      onComplete?.();
+      finishSelection();
     } catch {
       toast.error('Failed to save — try again');
     } finally {
