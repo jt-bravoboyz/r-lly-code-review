@@ -1,5 +1,7 @@
 import { useHaptics } from '@/hooks/useHaptics';
 import { trackEvent } from '@/lib/analytics';
+import uberIcon from '@/assets/uber-app-icon.png';
+import lyftIcon from '@/assets/lyft-app-icon.png';
 
 interface RideshareDeepLinkButtonsProps {
   eventLat?: number | null;
@@ -8,10 +10,10 @@ interface RideshareDeepLinkButtonsProps {
   eventAddress?: string | null;
 }
 
-/** Squircle Uber app icon — black bg, white "Uber" wordmark */
+/** Squircle Uber app icon — true black app tile */
 const UberAppIcon = () => (
   <div
-    className="flex items-center justify-center shrink-0"
+    className="shrink-0 overflow-hidden"
     style={{
       width: 40,
       height: 40,
@@ -22,28 +24,20 @@ const UberAppIcon = () => (
     }}
     aria-hidden
   >
-    <svg viewBox="0 0 56 24" width="28" height="14" aria-hidden>
-      <text
-        x="50%"
-        y="50%"
-        dominantBaseline="central"
-        textAnchor="middle"
-        fontFamily="Helvetica, Arial, sans-serif"
-        fontWeight="900"
-        fontSize="22"
-        fill="#FFFFFF"
-        letterSpacing="-0.5"
-      >
-        Uber
-      </text>
-    </svg>
+    <img
+      src={uberIcon}
+      alt=""
+      className="w-full h-full"
+      style={{ objectFit: 'cover', transform: 'scale(1.6)' }}
+      draggable={false}
+    />
   </div>
 );
 
-/** Squircle Lyft app icon — Lyft pink bg, white "lyft" wordmark */
+/** Squircle Lyft app icon — true magenta app tile */
 const LyftAppIcon = () => (
   <div
-    className="flex items-center justify-center shrink-0"
+    className="shrink-0 overflow-hidden"
     style={{
       width: 40,
       height: 40,
@@ -54,21 +48,13 @@ const LyftAppIcon = () => (
     }}
     aria-hidden
   >
-    <svg viewBox="0 0 56 24" width="28" height="14" aria-hidden>
-      <text
-        x="50%"
-        y="50%"
-        dominantBaseline="central"
-        textAnchor="middle"
-        fontFamily="Helvetica, Arial, sans-serif"
-        fontWeight="900"
-        fontSize="22"
-        fill="#FFFFFF"
-        letterSpacing="-0.5"
-      >
-        lyft
-      </text>
-    </svg>
+    <img
+      src={lyftIcon}
+      alt=""
+      className="w-full h-full"
+      style={{ objectFit: 'cover' }}
+      draggable={false}
+    />
   </div>
 );
 
