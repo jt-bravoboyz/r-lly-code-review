@@ -28,7 +28,7 @@ const UberAppIcon = () => (
       src={uberIcon}
       alt=""
       className="w-full h-full"
-      style={{ objectFit: 'cover', transform: 'scale(1.6)' }}
+      style={{ objectFit: 'contain' }}
       draggable={false}
     />
   </div>
