@@ -1118,19 +1118,17 @@ export default function EventDetail() {
               />
             )}
 
-            {/* Request a Ride Card - For attendees who need a ride */}
-            {isAttending && (
-              <div className="flex items-center justify-between p-3 rounded-lg border">
-                <div className="flex items-center gap-3">
-                  <Navigation className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <h3 className="font-bold font-montserrat text-sm">Need a Ride?</h3>
-                    <p className="text-muted-foreground text-xs">Request a safe ride to the event</p>
-                  </div>
+            {/* Request a Ride Card - Always visible */}
+            <div className="flex items-center justify-between p-3 rounded-lg border">
+              <div className="flex items-center gap-3">
+                <Navigation className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <h3 className="font-bold font-montserrat text-sm">Need a Ride?</h3>
+                  <p className="text-muted-foreground text-xs">Request a safe ride to the event</p>
                 </div>
-                <RequestRideDialog eventId={event.id} eventName={event.title} />
               </div>
-            )}
+              <RequestRideDialog eventId={event.id} eventName={event.title} />
+            </div>
 
             {/* Rider Line - unassigned riders waiting for pickup */}
             <RiderLine eventId={event.id} />
