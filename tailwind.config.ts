@@ -134,6 +134,14 @@ export default {
           "0%, 100%": { opacity: "0.3" },
           "50%": { opacity: "0.9" },
         },
+        "pin-breath": {
+          "0%, 100%": {
+            boxShadow: "0 0 0 0 hsl(27 91% 53% / 0.55), 0 0 12px 2px hsl(27 91% 53% / 0.35)",
+          },
+          "50%": {
+            boxShadow: "0 0 0 8px hsl(27 91% 53% / 0), 0 0 22px 6px hsl(27 91% 53% / 0.55)",
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -143,6 +151,7 @@ export default {
         "slide-in-right": "slide-in-right 0.3s ease-out",
         "fade-in": "fade-in 0.3s ease-out",
         "scale-in": "scale-in 0.2s ease-out",
+        "pin-breath": "pin-breath 3.5s ease-in-out infinite",
       },
     },
   },
