@@ -12,6 +12,7 @@ import { LocationSearch } from '@/components/location/LocationSearch';
 import { LocationMapPreview } from '@/components/location/LocationMapPreview';
 import { DDSetupDialog } from '@/components/rides/DDSetupDialog';
 import { LocationSharingModal } from '@/components/events/LocationSharingModal';
+import { RideshareDeepLinkButtons } from '@/components/rides/RideshareDeepLinkButtons';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -332,6 +333,22 @@ export function RidesSelectionModal({
                   <span className="font-montserrat font-bold">Become a DD</span>
                   <span className="text-xs text-muted-foreground">Drive your crew home safe</span>
                 </Button>
+              </div>
+
+              <div className="pt-4 space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 h-px bg-border/60" />
+                  <span className="text-[10px] font-semibold tracking-[0.18em] text-muted-foreground uppercase">
+                    Or grab a ride
+                  </span>
+                  <div className="flex-1 h-px bg-border/60" />
+                </div>
+                <RideshareDeepLinkButtons
+                  eventLat={eventLocationLat}
+                  eventLng={eventLocationLng}
+                  eventName={eventTitle}
+                  eventAddress={eventLocationName}
+                />
               </div>
 
               <Button
