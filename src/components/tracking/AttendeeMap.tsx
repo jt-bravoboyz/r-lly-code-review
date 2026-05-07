@@ -215,27 +215,21 @@ export function AttendeeMap({ eventId, attendees, eventLocation }: AttendeeMapPr
       }
     });
 
-    // Event location pin — orange teardrop with R@lly flag inside + beacon rings
+    // Event location pin — R@lly flag logo + concentric beacon rings
     if (eventLocation?.lat && eventLocation?.lng) {
       if (!eventMarkerRef.current) {
         const el = document.createElement('div');
         el.style.position = 'relative';
         el.style.width = '48px';
-        el.style.height = '62px';
+        el.style.height = '48px';
         el.style.pointerEvents = 'none';
-        // Rings emanate from the center of the teardrop's round head.
-        // Head center sits ~ y=20 in a 52-tall teardrop → ~24px from top in our 62px wrapper.
-        const ringStyle = 'position:absolute;top:24px;left:50%;width:48px;height:48px;border-radius:50%;border:1px solid #F47A19;box-shadow:0 0 8px rgba(244,122,25,0.5);will-change:transform,opacity;transform:translate(-50%,-50%) scale(0.5);opacity:0;animation:rally-beacon-ring 3.6s ease-out infinite;';
         el.innerHTML = `
-          <div style="${ringStyle}animation-delay:0s;"></div>
-          <div style="${ringStyle}animation-delay:1.2s;"></div>
-          <div style="${ringStyle}animation-delay:2.4s;"></div>
-          <svg viewBox="0 0 40 52" width="48" height="62" style="position:absolute;top:0;left:0;filter:drop-shadow(0 6px 8px rgba(0,0,0,0.3));" aria-hidden="true">
-            <path d="M20 1 C9.5 1 1 9.5 1 20 C1 31 11 38 20 51 C29 38 39 31 39 20 C39 9.5 30.5 1 20 1 Z" fill="#F47A19" stroke="#ffffff" stroke-width="1.2" />
-          </svg>
-          <img src="/logo.svg" alt="" draggable="false" style="position:absolute;top:24px;left:50%;width:26px;height:26px;transform:translate(-50%,-50%);filter:brightness(0) invert(1);" />
+          <div style="position:absolute;top:50%;left:50%;width:48px;height:48px;border-radius:50%;border:1px solid #F47A19;box-shadow:0 0 8px rgba(244,122,25,0.5);will-change:transform,opacity;transform:translate(-50%,-50%) scale(0.5);opacity:0;animation:rally-beacon-ring 3.6s ease-out infinite;animation-delay:0s;"></div>
+          <div style="position:absolute;top:50%;left:50%;width:48px;height:48px;border-radius:50%;border:1px solid #F47A19;box-shadow:0 0 8px rgba(244,122,25,0.5);will-change:transform,opacity;transform:translate(-50%,-50%) scale(0.5);opacity:0;animation:rally-beacon-ring 3.6s ease-out infinite;animation-delay:1.2s;"></div>
+          <div style="position:absolute;top:50%;left:50%;width:48px;height:48px;border-radius:50%;border:1px solid #F47A19;box-shadow:0 0 8px rgba(244,122,25,0.5);will-change:transform,opacity;transform:translate(-50%,-50%) scale(0.5);opacity:0;animation:rally-beacon-ring 3.6s ease-out infinite;animation-delay:2.4s;"></div>
+          <img src="/logo.svg" alt="" draggable="false" style="position:absolute;top:50%;left:50%;width:44px;height:44px;border-radius:50%;transform:translate(-50%,-50%);filter:drop-shadow(0 4px 8px rgba(0,0,0,0.35));" />
         `;
-        eventMarkerRef.current = new mapboxgl.Marker({ element: el, anchor: 'bottom' })
+        eventMarkerRef.current = new mapboxgl.Marker({ element: el, anchor: 'center' })
           .setLngLat([eventLocation.lng, eventLocation.lat])
           .addTo(map);
       } else {
