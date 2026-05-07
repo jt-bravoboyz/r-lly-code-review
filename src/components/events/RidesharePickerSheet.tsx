@@ -98,8 +98,6 @@ export function RidesharePickerSheet({
           >
             I'll figure out my own ride
           </button>
-            I'll figure out my own ride
-          </button>
         </div>
       </SheetContent>
     </Sheet>
