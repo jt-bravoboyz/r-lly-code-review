@@ -95,7 +95,7 @@ export default function EventDetail() {
   const { user, profile, loading: authLoading } = useAuth();
   const { openProfile } = usePublicProfile();
   const { data: event, isLoading } = useEvent(id);
-  const { data: rides } = useRides(id);
+  
   const { updates } = useEventRealtime(id);
   const { data: myDDRequest } = useMyDDRequest(id);
   const { data: eventDDs } = useEventDDs(id);
