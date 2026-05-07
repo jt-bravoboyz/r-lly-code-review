@@ -57,6 +57,7 @@ import { AfterRallyOptInDialog } from '@/components/events/AfterRallyOptInDialog
 import { SafetyCloseoutDialog } from '@/components/events/SafetyCloseoutDialog';
 import { EndRallyDialog } from '@/components/events/EndRallyDialog';
 import { EditEventLocationDialog } from '@/components/events/EditEventLocationDialog';
+import { EditEventTimeDialog } from '@/components/events/EditEventTimeDialog';
 import { LocationSharingModal } from '@/components/events/LocationSharingModal';
 import { SafetyChoiceModal } from '@/components/events/SafetyChoiceModal';
 import { RidesSelectionModal } from '@/components/events/RidesSelectionModal';
