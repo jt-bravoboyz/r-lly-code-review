@@ -19,7 +19,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useEvent, useJoinEvent, useLeaveEvent, useUpdateEvent } from '@/hooks/useEvents';
-import { useRides } from '@/hooks/useRides';
+
 import { useAuth } from '@/hooks/useAuth';
 import { useMyAttendeeStatus, useIsEventSafetyComplete } from '@/hooks/useSafetyStatus';
 import { useCohosts } from '@/hooks/useCohosts';
