@@ -12,6 +12,7 @@ import { LocationSearch } from '@/components/location/LocationSearch';
 import { LocationMapPreview } from '@/components/location/LocationMapPreview';
 import { DDSetupDialog } from '@/components/rides/DDSetupDialog';
 import { LocationSharingModal } from '@/components/events/LocationSharingModal';
+import { RideshareDeepLinkButtons } from '@/components/rides/RideshareDeepLinkButtons';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
