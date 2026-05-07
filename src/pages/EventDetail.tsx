@@ -611,6 +611,16 @@ export default function EventDetail() {
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4 text-primary" />
               <span>{format(new Date(event.start_time), 'EEEE, MMMM d · h:mm a')}</span>
+              {canManage && new Date(event.start_time) > new Date() && (
+                <EditEventTimeDialog
+                  eventId={event.id}
+                  eventTitle={event.title}
+                  currentStartTime={event.start_time}
+                  currentEndTime={event.end_time}
+                  attendeeProfileIds={(event.attendees ?? []).map((a: any) => a.profile?.id ?? a.profile_id).filter(Boolean)}
+                  currentProfileId={activeProfile?.id}
+                />
+              )}
             </div>
             
             <div className="flex items-center gap-2">
