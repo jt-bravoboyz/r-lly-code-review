@@ -215,16 +215,20 @@ export function AttendeeMap({ eventId, attendees, eventLocation }: AttendeeMapPr
       }
     });
 
-    // Event location pin
+    // Event location pin — R@lly flag logo + concentric beacon rings
     if (eventLocation?.lat && eventLocation?.lng) {
       if (!eventMarkerRef.current) {
         const el = document.createElement('div');
-        el.style.width = '14px';
-        el.style.height = '14px';
-        el.style.borderRadius = '50%';
-        el.style.background = 'hsl(0 0% 6%)';
-        el.style.border = '2px solid white';
-        el.style.boxShadow = '0 2px 6px rgba(0,0,0,0.35)';
+        el.style.position = 'relative';
+        el.style.width = '48px';
+        el.style.height = '48px';
+        el.style.pointerEvents = 'none';
+        el.innerHTML = `
+          <div style="position:absolute;top:50%;left:50%;width:48px;height:48px;border-radius:50%;border:1px solid #F47A19;box-shadow:0 0 8px rgba(244,122,25,0.5);will-change:transform,opacity;transform:translate(-50%,-50%) scale(0.5);opacity:0;animation:rally-beacon-ring 3.6s ease-out infinite;animation-delay:0s;"></div>
+          <div style="position:absolute;top:50%;left:50%;width:48px;height:48px;border-radius:50%;border:1px solid #F47A19;box-shadow:0 0 8px rgba(244,122,25,0.5);will-change:transform,opacity;transform:translate(-50%,-50%) scale(0.5);opacity:0;animation:rally-beacon-ring 3.6s ease-out infinite;animation-delay:1.2s;"></div>
+          <div style="position:absolute;top:50%;left:50%;width:48px;height:48px;border-radius:50%;border:1px solid #F47A19;box-shadow:0 0 8px rgba(244,122,25,0.5);will-change:transform,opacity;transform:translate(-50%,-50%) scale(0.5);opacity:0;animation:rally-beacon-ring 3.6s ease-out infinite;animation-delay:2.4s;"></div>
+          <img src="/logo.svg" alt="" draggable="false" style="position:absolute;top:50%;left:50%;width:44px;height:44px;border-radius:50%;transform:translate(-50%,-50%);filter:drop-shadow(0 4px 8px rgba(0,0,0,0.35));" />
+        `;
         eventMarkerRef.current = new mapboxgl.Marker({ element: el, anchor: 'center' })
           .setLngLat([eventLocation.lng, eventLocation.lat])
           .addTo(map);
