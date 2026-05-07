@@ -88,10 +88,10 @@ export function RidesharePickerSheet({
             className={[
               'w-full h-[44px] rounded-xl mt-1',
               'flex items-center justify-center',
-              'bg-black/[0.08] dark:bg-white/[0.10]',
+              'bg-black/[0.03] dark:bg-white/[0.04]',
               'backdrop-blur-md',
-              'border border-black/[0.12] dark:border-white/[0.15]',
-              'text-foreground/70 hover:text-foreground font-normal text-[13px]',
+              'border border-black/[0.06] dark:border-white/[0.08]',
+              'text-foreground/85 hover:text-foreground font-normal text-[13px]',
               'active:scale-[0.98] transition-all duration-200 ease-out',
             ].join(' ')}
             style={{ WebkitBackdropFilter: 'blur(10px) saturate(1.1)' }}
