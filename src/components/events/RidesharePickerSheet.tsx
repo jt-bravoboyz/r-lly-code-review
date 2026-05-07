@@ -88,9 +88,9 @@ export function RidesharePickerSheet({
             className={[
               'w-full h-[44px] rounded-xl mt-1',
               'flex items-center justify-center',
-              'bg-black/[0.03] dark:bg-white/[0.04]',
+              'bg-black/[0.015] dark:bg-white/[0.025]',
               'backdrop-blur-md',
-              'border border-black/[0.06] dark:border-white/[0.08]',
+              'border border-black/[0.04] dark:border-white/[0.05]',
               'text-foreground/85 hover:text-foreground font-normal text-[13px]',
               'active:scale-[0.98] transition-all duration-200 ease-out',
             ].join(' ')}
