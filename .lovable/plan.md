@@ -1,50 +1,69 @@
-# Rally Destination Pin — R@lly Flag Logo + Beacon Rings
+## Goal
+Let the host (or a co-host) edit the start time (and optional end time) of a planned R@lly before it begins, and notify all attendees that the time changed.
 
-## Context
+## 1. New component: `src/components/events/EditEventTimeDialog.tsx`
+Mirrors `EditEventLocationDialog`.
 
-The Track tab map (`src/components/tracking/AttendeeMap.tsx`) currently renders the rally's destination as a small black/white DOM dot (lines ~218–235). User avatar pins shipped recently and stay untouched. The R@lly flag brand mark already lives at `public/logo.svg` (referenced across the app — splash, brand placements). We'll reuse that exact asset for the destination marker.
+- Props: `eventId`, `currentStartTime: string`, `currentEndTime?: string | null`, `eventTitle: string`, `attendeeProfileIds: string[]`, `currentProfileId: string`.
+- Trigger: small `Edit2` pencil button next to the displayed date/time.
+- Body:
+  - `<input type="datetime-local">` for **Start time**, prefilled from `currentStartTime` (converted to local TZ).
+  - Optional **End time** input with "+ Add end time" toggle when none exists.
+  - Inline validation: start must be in the future; end (if set) must be after start.
+- Save handler:
+  1. `useUpdateEvent().mutateAsync({ eventId, updates: { start_time, end_time } })` — uses ISO strings. RLS already allows host/co-host updates.
+  2. Fire push + in-app notifications to attendees (see step 3).
+  3. `toast.success('🕒 Time updated — your crew was notified')` and close.
 
-## Scope (Additive Only)
+## 2. Wire into `src/pages/EventDetail.tsx`
+Around the existing date/time row (line 611-614), conditionally render the new dialog when `canManage` is true and the event is still upcoming:
 
-- Replace ONLY the destination DOM marker inside `AttendeeMap.tsx` with a logo + 3 staggered concentric pulse rings.
-- Add one CSS keyframe (`rally-beacon-ring`) to `tailwind.config.ts`.
-- No other file or feature changes.
-
-## Files
-
-### Edit: `tailwind.config.ts`
-Add a single keyframe + animation utility used only by the destination marker:
-
+```tsx
+const isUpcoming = new Date(event.start_time) > new Date();
+...
+<Calendar className="h-4 w-4 text-primary" />
+<span>{format(new Date(event.start_time), 'EEEE, MMMM d · h:mm a')}</span>
+{canManage && isUpcoming && (
+  <EditEventTimeDialog
+    eventId={event.id}
+    currentStartTime={event.start_time}
+    currentEndTime={event.end_time}
+    eventTitle={event.title}
+    attendeeProfileIds={(event.attendees ?? []).map(a => a.profile_id)}
+    currentProfileId={activeProfile?.id}
+  />
+)}
 ```
-"rally-beacon-ring": {
-  "0%":   { transform: "translate(-50%, -50%) scale(0.5)", opacity: "0"   },
-  "15%":  { opacity: "0.45" },
-  "100%": { transform: "translate(-50%, -50%) scale(3.6)", opacity: "0"   },
-},
+
+## 3. Notify attendees of the time change
+Reuse the existing `send-event-notification` Edge Function — it already supports `type: 'event_update'`, push delivery, and writing rows into the `notifications` table. **No new Edge Function needed; no schema changes.**
+
+In the dialog's save handler, after `updateEvent` succeeds:
+
+```ts
+await supabase.functions.invoke('send-event-notification', {
+  body: {
+    type: 'event_update',
+    eventId,
+    eventTitle,
+    title: `🕒 ${eventTitle} — new time`,
+    body: `Start: ${format(new Date(newStart), 'EEE MMM d · h:mm a')}`,
+    targetProfileIds: attendeeProfileIds.filter(id => id !== currentProfileId),
+    data: { kind: 'time_change', start_time: newStart, end_time: newEnd ?? null },
+  },
+});
 ```
-animation: `"rally-beacon-ring": "rally-beacon-ring 3.6s ease-out infinite"`.
 
-### Edit: `src/components/tracking/AttendeeMap.tsx`
-In the "Event location pin" block (~lines 218–235), replace the simple black-dot DOM construction with:
+This piggybacks on the existing notification pipeline used by Bar Hop transitions and ride updates, so attendees see it in the in-app notification center and (if subscribed) get a push.
 
-- Wrapper `div` ~48×48px, `position: relative`, anchored `center` via `mapboxgl.Marker({ anchor: 'center' })`.
-- 3 absolutely-positioned ring `div`s, each 48×48, `border: 1px solid #F47A19`, `border-radius: 50%`, `box-shadow: 0 0 8px rgba(244,122,25,0.5)`, `will-change: transform, opacity`, `pointer-events: none`. Each uses the `rally-beacon-ring` animation with staggered `animationDelay` of `0s`, `1.2s`, `2.4s` so a ring is always visible.
-- Center `<img src="/logo.svg">` 44×44, `border-radius: 50%`, `filter: drop-shadow(0 4px 8px rgba(0,0,0,0.35))`, no extra border/frame (the logo's orange disc IS the container).
-- Built via plain `document.createElement` + `el.innerHTML` so it integrates with the existing imperative marker code without React overhead.
+## Guardrails (surgical)
+- Only `EventDetail.tsx` and the new dialog file are touched.
+- `useUpdateEvent` is reused as-is — invalidates `['event', eventId]` and `['events']`, so the UI updates everywhere.
+- Pencil only shows for host/co-host AND while the R@lly is upcoming (hidden during live and completed events).
+- No DB migrations, no edge function changes, no other tabs/screens affected.
+- Existing ride/safety/map/chat/notification logic is untouched.
 
-Update logic:
-- Continue creating the marker once on first render and only call `setLngLat([...])` on subsequent location changes — no re-mount.
-- Tap behavior: today the dot has none; we preserve that (no click handler added).
-- Cleanup unchanged: `eventMarkerRef.current?.remove()` on unmount.
-
-## What stays exactly the same
-
-- User avatar teardrop pins, current user's breathing glow, fit-bounds logic, theme switching, realtime subscription, "Open in Maps" chip, sharing/not-sharing lists, `LiveTracking` card, every other tab/feature.
-
-## Acceptance
-
-1. Destination on Track tab is the official R@lly flag logo (`/logo.svg`).
-2. 3 staggered orange rings continuously pulse outward from its center.
-3. Distinct motion vs the user's own pin (which still breathes).
-4. Anchored at exact lat/lng, fixed pixel size at any zoom, premium in light + dark mode.
-5. No other shipped feature touched.
+## Out of scope
+- Editing recurring events.
+- Adjusting Bar Hop stop ETAs based on the new start time (can be a follow-up).
+- Letting attendees confirm the new time.
