@@ -64,6 +64,7 @@ export function TransportModeSelector({ open, onOpenChange, eventId, profileId, 
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
@@ -105,5 +106,23 @@ export function TransportModeSelector({ open, onOpenChange, eventId, profileId, 
         </Button>
       </DialogContent>
     </Dialog>
+    <RidesharePickerSheet
+      open={showRideshareSheet}
+      onOpenChange={(o) => {
+        setShowRideshareSheet(o);
+        if (!o) setSelected(null);
+      }}
+      eventId={eventId}
+      profileId={profileId}
+      eventLat={eventLat}
+      eventLng={eventLng}
+      eventName={eventName}
+      eventAddress={eventAddress}
+      onSaved={() => {
+        setShowRideshareSheet(false);
+        finishSelection();
+      }}
+    />
+    </>
   );
 }
