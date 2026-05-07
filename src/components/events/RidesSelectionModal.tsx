@@ -335,6 +335,22 @@ export function RidesSelectionModal({
                 </Button>
               </div>
 
+              <div className="pt-4 space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 h-px bg-border/60" />
+                  <span className="text-[10px] font-semibold tracking-[0.18em] text-muted-foreground uppercase">
+                    Or grab a ride
+                  </span>
+                  <div className="flex-1 h-px bg-border/60" />
+                </div>
+                <RideshareDeepLinkButtons
+                  eventLat={eventLocationLat}
+                  eventLng={eventLocationLng}
+                  eventName={eventTitle}
+                  eventAddress={eventLocationName}
+                />
+              </div>
+
               <Button
                 variant="ghost"
                 className="w-full mt-2"
