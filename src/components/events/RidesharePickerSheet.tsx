@@ -86,15 +86,15 @@ export function RidesharePickerSheet({
             type="button"
             onClick={handleSelfRide}
             className={[
-              'w-full h-[52px] rounded-2xl mt-1',
+              'w-full h-[44px] rounded-xl mt-1',
               'flex items-center justify-center',
-              'bg-white/45 dark:bg-white/[0.06]',
-              'backdrop-blur-xl',
-              'border border-white/40 dark:border-white/10',
-              'text-foreground/80 font-medium text-[14px]',
-              'active:scale-[0.98] transition-transform duration-200 ease-out',
+              'bg-white/15 dark:bg-white/[0.03]',
+              'backdrop-blur-md',
+              'border border-white/15 dark:border-white/[0.06]',
+              'text-foreground/50 hover:text-foreground/70 font-normal text-[13px]',
+              'active:scale-[0.98] transition-all duration-200 ease-out',
             ].join(' ')}
-            style={{ WebkitBackdropFilter: 'blur(18px) saturate(1.3)' }}
+            style={{ WebkitBackdropFilter: 'blur(10px) saturate(1.1)' }}
           >
             I'll figure out my own ride
           </button>
