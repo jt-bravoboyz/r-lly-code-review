@@ -137,10 +137,10 @@ export function ChatInputBar({
             onKeyDown={onKey}
             placeholder={listening ? 'Listening…' : 'Message'}
             className={cn(
-              'w-full resize-none px-4 py-2.5 rounded-2xl text-sm',
+              'w-full resize-none px-4 py-2.5 rounded-2xl text-sm scrollbar-hide',
               'bg-foreground/[0.04] dark:bg-white/[0.06] border border-border/60',
               'placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40',
-              'transition-all'
+              'transition-all [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]'
             )}
             style={{ lineHeight: '22px' }}
           />
