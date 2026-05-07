@@ -27,7 +27,6 @@ import { useMyDDRequest, useEventDDs } from '@/hooks/useDDManagement';
 import { useStartRally, useEndRally, useCompleteRally } from '@/hooks/useAfterRally';
 import { useAutoArrival } from '@/hooks/useAutoArrival';
 import { useAfterRallyTransition } from '@/hooks/useAfterRallyTransition';
-import { RideCard } from '@/components/rides/RideCard';
 import { RiderLine } from '@/components/rides/RiderLine';
 import { usePublicProfile } from '@/contexts/PublicProfileContext';
 import { CreateRideDialog } from '@/components/rides/CreateRideDialog';
