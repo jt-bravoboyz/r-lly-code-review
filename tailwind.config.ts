@@ -142,6 +142,11 @@ export default {
             boxShadow: "0 0 0 8px hsl(27 91% 53% / 0), 0 0 22px 6px hsl(27 91% 53% / 0.55)",
           },
         },
+        "rally-beacon-ring": {
+          "0%": { transform: "translate(-50%, -50%) scale(0.5)", opacity: "0" },
+          "15%": { opacity: "0.45" },
+          "100%": { transform: "translate(-50%, -50%) scale(3.6)", opacity: "0" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -152,6 +157,7 @@ export default {
         "fade-in": "fade-in 0.3s ease-out",
         "scale-in": "scale-in 0.2s ease-out",
         "pin-breath": "pin-breath 3.5s ease-in-out infinite",
+        "rally-beacon-ring": "rally-beacon-ring 3.6s ease-out infinite",
       },
     },
   },
