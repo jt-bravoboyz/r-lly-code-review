@@ -71,9 +71,6 @@ export function RidesharePickerSheet({
             <SheetTitle className="font-montserrat text-2xl font-bold text-foreground tracking-tight">
               Pick your ride.
             </SheetTitle>
-            <SheetDescription className="text-sm text-muted-foreground">
-              Your rally's pre-loaded.
-            </SheetDescription>
           </div>
 
           <div onPointerDownCapture={savePlan}>
