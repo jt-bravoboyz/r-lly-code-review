@@ -19,7 +19,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useEvent, useJoinEvent, useLeaveEvent, useUpdateEvent } from '@/hooks/useEvents';
-import { useRides } from '@/hooks/useRides';
+
 import { useAuth } from '@/hooks/useAuth';
 import { useMyAttendeeStatus, useIsEventSafetyComplete } from '@/hooks/useSafetyStatus';
 import { useCohosts } from '@/hooks/useCohosts';
@@ -27,10 +27,9 @@ import { useMyDDRequest, useEventDDs } from '@/hooks/useDDManagement';
 import { useStartRally, useEndRally, useCompleteRally } from '@/hooks/useAfterRally';
 import { useAutoArrival } from '@/hooks/useAutoArrival';
 import { useAfterRallyTransition } from '@/hooks/useAfterRallyTransition';
-import { RideCard } from '@/components/rides/RideCard';
 import { RiderLine } from '@/components/rides/RiderLine';
 import { usePublicProfile } from '@/contexts/PublicProfileContext';
-import { CreateRideDialog } from '@/components/rides/CreateRideDialog';
+
 import { RequestRideDialog } from '@/components/rides/RequestRideDialog';
 import { DDRequestBanner } from '@/components/rides/DDRequestBanner';
 import { DDVolunteerButton } from '@/components/rides/DDVolunteerButton';
@@ -96,7 +95,7 @@ export default function EventDetail() {
   const { user, profile, loading: authLoading } = useAuth();
   const { openProfile } = usePublicProfile();
   const { data: event, isLoading } = useEvent(id);
-  const { data: rides } = useRides(id);
+  
   const { updates } = useEventRealtime(id);
   const { data: myDDRequest } = useMyDDRequest(id);
   const { data: eventDDs } = useEventDDs(id);
@@ -1179,26 +1178,6 @@ export default function EventDetail() {
               </CardContent>
             </Card>
 
-            {/* Rides */}
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-lg">Rides Offered</CardTitle>
-                <CreateRideDialog eventId={event.id} />
-              </CardHeader>
-              <CardContent>
-                {rides && rides.length > 0 ? (
-                  <div className="space-y-4">
-                    {rides.map((ride) => (
-                      <RideCard key={ride.id} ride={ride} />
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-center text-muted-foreground py-4">
-                    No rides offered yet. Be the first!
-                  </p>
-                )}
-              </CardContent>
-            </Card>
           </TabsContent>
         </Tabs>}
 
