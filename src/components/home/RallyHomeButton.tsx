@@ -350,17 +350,9 @@ export function RallyHomeButton({ eventId, trigger, eventStatus, autoOpen, onAut
 
   const needsAddress = destinationType !== 'home' || !profile?.home_address;
 
-  // Show disabled state if not participating
+  // Hide entirely if not participating
   if (notParticipating) {
-    return (
-      <Button
-        disabled
-        className="bg-muted text-muted-foreground rounded-full font-montserrat h-8 text-xs px-4 cursor-default"
-      >
-        <XCircle className="h-3 w-3 mr-1" />
-        Not Participating ✓
-      </Button>
-    );
+    return null;
   }
 
   // Show "I've Arrived" button if already going home
