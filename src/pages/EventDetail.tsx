@@ -29,7 +29,7 @@ import { useAutoArrival } from '@/hooks/useAutoArrival';
 import { useAfterRallyTransition } from '@/hooks/useAfterRallyTransition';
 import { RiderLine } from '@/components/rides/RiderLine';
 import { usePublicProfile } from '@/contexts/PublicProfileContext';
-import { CreateRideDialog } from '@/components/rides/CreateRideDialog';
+
 import { RequestRideDialog } from '@/components/rides/RequestRideDialog';
 import { DDRequestBanner } from '@/components/rides/DDRequestBanner';
 import { DDVolunteerButton } from '@/components/rides/DDVolunteerButton';
