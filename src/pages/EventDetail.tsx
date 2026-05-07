@@ -1102,6 +1102,14 @@ export default function EventDetail() {
           </TabsContent>
 
           <TabsContent value="rides" className="mt-4 space-y-4">
+            {/* Quick rideshare deep links */}
+            <RideshareDeepLinkButtons
+              eventLat={event.location_lat}
+              eventLng={event.location_lng}
+              eventName={event.title}
+              eventAddress={event.location_name}
+            />
+
             {/* DD Request Banner - Show if user has a pending request */}
             {myDDRequest && profile && (
               <DDRequestBanner
