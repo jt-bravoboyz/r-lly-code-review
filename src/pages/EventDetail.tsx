@@ -75,6 +75,7 @@ import { PendingJoinRequests } from '@/components/events/PendingJoinRequests';
 import { TransportModeSelector } from '@/components/events/TransportModeSelector';
 import { PaymentGateDialog } from '@/components/events/PaymentGateDialog';
 import { RideshareDrawer } from '@/components/rides/RideshareDrawer';
+import { RideshareDeepLinkButtons } from '@/components/rides/RideshareDeepLinkButtons';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useRenderLoopDetector } from '@/hooks/useRenderLoopDetector';
