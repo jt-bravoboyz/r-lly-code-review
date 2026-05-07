@@ -5,6 +5,7 @@ import { Car, Navigation, Footprints, CircleDot, Train } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { RidesharePickerSheet } from './RidesharePickerSheet';
 
 const TRANSPORT_MODES = [
   { value: 'dd', label: 'Designated Driver', icon: Car, color: 'text-primary' },
