@@ -1314,6 +1314,10 @@ export default function EventDetail() {
           onOpenChange={setShowTransportSelector}
           eventId={event.id}
           profileId={profile.id}
+          eventLat={event.location_lat}
+          eventLng={event.location_lng}
+          eventName={event.title}
+          eventAddress={event.location_name}
           onSkip={() => {
             sessionStorage.setItem(`event-join-flow-dismissed-${event.id}`, 'true');
             setJoinFlowDismissedForSession(true);

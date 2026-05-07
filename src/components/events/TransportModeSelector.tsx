@@ -5,6 +5,7 @@ import { Car, Navigation, Footprints, CircleDot, Train } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { RidesharePickerSheet } from './RidesharePickerSheet';
 
 const TRANSPORT_MODES = [
   { value: 'dd', label: 'Designated Driver', icon: Car, color: 'text-primary' },
@@ -19,15 +20,31 @@ interface TransportModeSelectorProps {
   onOpenChange: (open: boolean) => void;
   eventId: string;
   profileId: string;
+  eventLat?: number | null;
+  eventLng?: number | null;
+  eventName?: string | null;
+  eventAddress?: string | null;
   onComplete?: () => void;
   onSkip?: () => void;
 }
 
-export function TransportModeSelector({ open, onOpenChange, eventId, profileId, onComplete, onSkip }: TransportModeSelectorProps) {
+export function TransportModeSelector({ open, onOpenChange, eventId, profileId, eventLat, eventLng, eventName, eventAddress, onComplete, onSkip }: TransportModeSelectorProps) {
   const [saving, setSaving] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
+  const [showRideshareSheet, setShowRideshareSheet] = useState(false);
+
+  const finishSelection = () => {
+    toast.success('Got it! Have fun 🎉');
+    onOpenChange(false);
+    onComplete?.();
+  };
 
   const handleSelect = async (mode: string) => {
+    if (mode === 'rideshare') {
+      setSelected(mode);
+      setShowRideshareSheet(true);
+      return;
+    }
     setSelected(mode);
     setSaving(true);
     try {
@@ -38,9 +55,7 @@ export function TransportModeSelector({ open, onOpenChange, eventId, profileId, 
         .eq('profile_id', profileId);
 
       if (error) throw error;
-      toast.success('Got it! Have fun 🎉');
-      onOpenChange(false);
-      onComplete?.();
+      finishSelection();
     } catch {
       toast.error('Failed to save — try again');
     } finally {
@@ -49,6 +64,7 @@ export function TransportModeSelector({ open, onOpenChange, eventId, profileId, 
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
@@ -90,5 +106,23 @@ export function TransportModeSelector({ open, onOpenChange, eventId, profileId, 
         </Button>
       </DialogContent>
     </Dialog>
+    <RidesharePickerSheet
+      open={showRideshareSheet}
+      onOpenChange={(o) => {
+        setShowRideshareSheet(o);
+        if (!o) setSelected(null);
+      }}
+      eventId={eventId}
+      profileId={profileId}
+      eventLat={eventLat}
+      eventLng={eventLng}
+      eventName={eventName}
+      eventAddress={eventAddress}
+      onSaved={() => {
+        setShowRideshareSheet(false);
+        finishSelection();
+      }}
+    />
+    </>
   );
 }
