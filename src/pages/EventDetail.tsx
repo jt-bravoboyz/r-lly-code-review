@@ -1179,26 +1179,6 @@ export default function EventDetail() {
               </CardContent>
             </Card>
 
-            {/* Rides */}
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-lg">Rides Offered</CardTitle>
-                <CreateRideDialog eventId={event.id} />
-              </CardHeader>
-              <CardContent>
-                {rides && rides.length > 0 ? (
-                  <div className="space-y-4">
-                    {rides.map((ride) => (
-                      <RideCard key={ride.id} ride={ride} />
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-center text-muted-foreground py-4">
-                    No rides offered yet. Be the first!
-                  </p>
-                )}
-              </CardContent>
-            </Card>
           </TabsContent>
         </Tabs>}
 
