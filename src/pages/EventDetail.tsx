@@ -28,6 +28,7 @@ import { useStartRally, useEndRally, useCompleteRally } from '@/hooks/useAfterRa
 import { useAutoArrival } from '@/hooks/useAutoArrival';
 import { useAfterRallyTransition } from '@/hooks/useAfterRallyTransition';
 import { RiderLine } from '@/components/rides/RiderLine';
+import { AddPassengerDialog } from '@/components/rides/AddPassengerDialog';
 import { usePublicProfile } from '@/contexts/PublicProfileContext';
 
 import { RequestRideDialog } from '@/components/rides/RequestRideDialog';
