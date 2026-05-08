@@ -108,27 +108,30 @@ export function RiderLine({ eventId }: RiderLineProps) {
 
         const { data: pendingPassengers } = await supabase
           .from('ride_passengers')
-          .select(`
-            id, ride_id, status, pickup_location, pickup_lat, pickup_lng, requested_at,
-            passenger:profiles!ride_passengers_passenger_id_fkey(id, display_name, avatar_url)
-          `)
+          .select('id, ride_id, status, pickup_location, pickup_lat, pickup_lng, requested_at, passenger_id')
           .in('ride_id', rideIds)
           .eq('status', 'pending');
 
-        if (pendingPassengers) {
-          const passengerIds = pendingPassengers.map((p) => (p.passenger as any)?.id).filter(Boolean);
-          const { data: riderLocations } = await supabase
-            .from('event_attendees')
-            .select('profile_id, current_lat, current_lng, share_location')
-            .eq('event_id', eventId)
-            .in('profile_id', passengerIds.length > 0 ? passengerIds : ['__none__']);
+        if (pendingPassengers && pendingPassengers.length > 0) {
+          const passengerIds = pendingPassengers.map((p) => p.passenger_id).filter(Boolean);
 
-          const locationMap = new Map(
-            (riderLocations || []).map((l) => [l.profile_id, l])
-          );
+          const [{ data: riderLocations }, { data: passengerProfiles }] = await Promise.all([
+            supabase
+              .from('event_attendees')
+              .select('profile_id, current_lat, current_lng, share_location')
+              .eq('event_id', eventId)
+              .in('profile_id', passengerIds.length > 0 ? passengerIds : ['__none__']),
+            supabase
+              .from('safe_profiles')
+              .select('id, display_name, full_name, nickname, avatar_url')
+              .in('id', passengerIds.length > 0 ? passengerIds : ['__none__']),
+          ]);
+
+          const locationMap = new Map((riderLocations || []).map((l) => [l.profile_id, l]));
+          const profileMap = new Map((passengerProfiles || []).map((p: any) => [p.id, p]));
 
           for (const p of pendingPassengers) {
-            const passenger = p.passenger as any;
+            const passenger = profileMap.get(p.passenger_id) as any;
             if (!passenger?.id || seen.has(passenger.id)) continue;
             seen.add(passenger.id);
 
@@ -157,17 +160,20 @@ export function RiderLine({ eventId }: RiderLineProps) {
       // --- Source 2: attendees who broadcast needs_ride = true ---
       const { data: broadcastRiders } = await supabase
         .from('event_attendees')
-        .select(`
-          profile_id, current_lat, current_lng, share_location,
-          ride_pickup_location, ride_pickup_lat, ride_pickup_lng, ride_requested_at,
-          profile:profiles!event_attendees_profile_id_fkey(id, display_name, avatar_url)
-        `)
+        .select('profile_id, current_lat, current_lng, share_location, ride_pickup_location, ride_pickup_lat, ride_pickup_lng, ride_requested_at')
         .eq('event_id', eventId)
         .eq('needs_ride', true);
 
-      if (broadcastRiders) {
+      if (broadcastRiders && broadcastRiders.length > 0) {
+        const broadcastIds = broadcastRiders.map((b) => b.profile_id).filter(Boolean);
+        const { data: broadcastProfiles } = await supabase
+          .from('safe_profiles')
+          .select('id, display_name, full_name, nickname, avatar_url')
+          .in('id', broadcastIds.length > 0 ? broadcastIds : ['__none__']);
+        const broadcastProfileMap = new Map((broadcastProfiles || []).map((p: any) => [p.id, p]));
+
         for (const br of broadcastRiders) {
-          const p = br.profile as any;
+          const p = broadcastProfileMap.get(br.profile_id) as any;
           if (!p?.id || seen.has(p.id)) continue;
           seen.add(p.id);
 
@@ -176,7 +182,7 @@ export function RiderLine({ eventId }: RiderLineProps) {
 
           riders.push({
             passengerId: p.id,
-            requestId: '', // no ride_passenger row yet
+            requestId: '',
             rideId: '',
             displayName: getPublicName(p as any),
             avatarUrl: p.avatar_url,
