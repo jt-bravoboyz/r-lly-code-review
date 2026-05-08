@@ -239,10 +239,16 @@ export default function EventDetail() {
   const isCompleted = isCompletedRaw || isStealthExcluded || previewRecap;
   
   const hasTransportModeForEvent = Boolean(myAttendee?.arrival_transport_mode);
-  const hasCompletedJoinFlow = hasTransportModeForEvent && Boolean(myAttendee?.location_prompt_shown);
+  const hasRidePlan =
+    myAttendee?.is_dd === true ||
+    (myAttendee?.needs_ride === true && !!myAttendee?.ride_pickup_location);
+  const hasCompletedJoinFlow =
+    hasRidePlan ||
+    (hasTransportModeForEvent && Boolean(myAttendee?.location_prompt_shown));
   const shouldAutoStartJoinFlow = isAttending &&
     !isLoadingMyAttendee &&
     !hasCompletedJoinFlow &&
+    !hasRidePlan &&
     !hasTransportModeForEvent &&
     event?.status !== 'completed' &&
     !joinFlowDismissedForSession;
