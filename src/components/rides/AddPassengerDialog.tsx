@@ -47,7 +47,7 @@ export function AddPassengerDialog({ eventId }: AddPassengerDialogProps) {
         .from('event_attendees')
         .select('profile_id, is_dd, ride_pickup_location, ride_pickup_lat, ride_pickup_lng, status')
         .eq('event_id', eventId)
-        .eq('status', 'going');
+        .neq('status', 'pending');
 
       const profileIds = (attendees || [])
         .map((a: any) => a.profile_id)
