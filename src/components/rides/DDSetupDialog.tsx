@@ -228,8 +228,10 @@ export function DDSetupDialog({
         const {
           error: ddError
         } = await supabase.from('event_attendees').update({
-          is_dd: true
-        }).eq('event_id', eventId).eq('profile_id', profile.id);
+          is_dd: true,
+          arrival_transport_mode: 'driving',
+          location_prompt_shown: true,
+        } as any).eq('event_id', eventId).eq('profile_id', profile.id);
         if (ddError) throw ddError;
       }
 

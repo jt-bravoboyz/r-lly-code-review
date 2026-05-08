@@ -29,6 +29,7 @@ import { useAutoArrival } from '@/hooks/useAutoArrival';
 import { useAfterRallyTransition } from '@/hooks/useAfterRallyTransition';
 import { RiderLine } from '@/components/rides/RiderLine';
 import { AddPassengerDialog } from '@/components/rides/AddPassengerDialog';
+import { MyPassengersList } from '@/components/rides/MyPassengersList';
 import { usePublicProfile } from '@/contexts/PublicProfileContext';
 
 import { RequestRideDialog } from '@/components/rides/RequestRideDialog';
@@ -239,10 +240,16 @@ export default function EventDetail() {
   const isCompleted = isCompletedRaw || isStealthExcluded || previewRecap;
   
   const hasTransportModeForEvent = Boolean(myAttendee?.arrival_transport_mode);
-  const hasCompletedJoinFlow = hasTransportModeForEvent && Boolean(myAttendee?.location_prompt_shown);
+  const hasRidePlan =
+    myAttendee?.is_dd === true ||
+    (myAttendee?.needs_ride === true && !!myAttendee?.ride_pickup_location);
+  const hasCompletedJoinFlow =
+    hasRidePlan ||
+    (hasTransportModeForEvent && Boolean(myAttendee?.location_prompt_shown));
   const shouldAutoStartJoinFlow = isAttending &&
     !isLoadingMyAttendee &&
     !hasCompletedJoinFlow &&
+    !hasRidePlan &&
     !hasTransportModeForEvent &&
     event?.status !== 'completed' &&
     !joinFlowDismissedForSession;
@@ -1144,6 +1151,9 @@ export default function EventDetail() {
 
             {/* Rider Line - unassigned riders waiting for pickup */}
             <RiderLine eventId={event.id} />
+
+            {/* DD: see your accepted passengers */}
+            <MyPassengersList eventId={event.id} />
 
             {/* DD: manually add any attendee as a passenger */}
             <AddPassengerDialog eventId={event.id} />
