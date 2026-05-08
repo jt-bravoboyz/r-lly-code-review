@@ -45,12 +45,19 @@ export function AddPassengerDialog({ eventId }: AddPassengerDialogProps) {
     queryFn: async () => {
       const { data: attendees } = await supabase
         .from('event_attendees')
-        .select(`
-          profile_id, is_dd, ride_pickup_location, ride_pickup_lat, ride_pickup_lng,
-          profile:profiles!event_attendees_profile_id_fkey(id, display_name, full_name, nickname, avatar_url)
-        `)
+        .select('profile_id, is_dd, ride_pickup_location, ride_pickup_lat, ride_pickup_lng, status')
         .eq('event_id', eventId)
         .eq('status', 'going');
+
+      const profileIds = (attendees || [])
+        .map((a: any) => a.profile_id)
+        .filter((id: string | null) => id && id !== profile?.id);
+
+      const { data: profiles } = await supabase
+        .from('safe_profiles')
+        .select('id, display_name, full_name, nickname, avatar_url')
+        .in('id', profileIds.length > 0 ? profileIds : ['__none__']);
+      const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]));
 
       const { data: allRides } = await supabase
         .from('rides')
@@ -69,15 +76,21 @@ export function AddPassengerDialog({ eventId }: AddPassengerDialogProps) {
       }
 
       return (attendees || [])
-        .filter((a: any) => a.profile?.id && a.profile.id !== profile?.id && !a.is_dd && !accepted.has(a.profile.id))
-        .map((a: any) => ({
-          id: a.profile.id,
-          name: getPublicName(a.profile),
-          avatarUrl: a.profile.avatar_url,
-          pickupLocation: a.ride_pickup_location,
-          pickupLat: a.ride_pickup_lat,
-          pickupLng: a.ride_pickup_lng,
-        }));
+        .filter((a: any) => {
+          const prof = profileMap.get(a.profile_id);
+          return prof && a.profile_id !== profile?.id && !a.is_dd && !accepted.has(a.profile_id);
+        })
+        .map((a: any) => {
+          const prof = profileMap.get(a.profile_id) as any;
+          return {
+            id: prof.id,
+            name: getPublicName(prof),
+            avatarUrl: prof.avatar_url,
+            pickupLocation: a.ride_pickup_location,
+            pickupLat: a.ride_pickup_lat,
+            pickupLng: a.ride_pickup_lng,
+          };
+        });
     },
     enabled: open && !!profile?.id,
   });
