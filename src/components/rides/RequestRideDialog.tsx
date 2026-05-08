@@ -131,7 +131,9 @@ export function RequestRideDialog({ eventId, rideId, driverName, trigger, eventN
             ride_pickup_location: data.pickup_location,
             ride_pickup_lat: pickupCoords?.lat || null,
             ride_pickup_lng: pickupCoords?.lng || null,
-          })
+            arrival_transport_mode: 'rider',
+            location_prompt_shown: true,
+          } as any)
           .eq('event_id', eventId)
           .eq('profile_id', profile.id);
 
