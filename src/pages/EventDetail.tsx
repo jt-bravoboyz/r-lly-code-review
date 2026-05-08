@@ -29,6 +29,7 @@ import { useAutoArrival } from '@/hooks/useAutoArrival';
 import { useAfterRallyTransition } from '@/hooks/useAfterRallyTransition';
 import { RiderLine } from '@/components/rides/RiderLine';
 import { AddPassengerDialog } from '@/components/rides/AddPassengerDialog';
+import { MyPassengersList } from '@/components/rides/MyPassengersList';
 import { usePublicProfile } from '@/contexts/PublicProfileContext';
 
 import { RequestRideDialog } from '@/components/rides/RequestRideDialog';
