@@ -28,6 +28,7 @@ import { useStartRally, useEndRally, useCompleteRally } from '@/hooks/useAfterRa
 import { useAutoArrival } from '@/hooks/useAutoArrival';
 import { useAfterRallyTransition } from '@/hooks/useAfterRallyTransition';
 import { RiderLine } from '@/components/rides/RiderLine';
+import { AddPassengerDialog } from '@/components/rides/AddPassengerDialog';
 import { usePublicProfile } from '@/contexts/PublicProfileContext';
 
 import { RequestRideDialog } from '@/components/rides/RequestRideDialog';
@@ -1143,6 +1144,9 @@ export default function EventDetail() {
 
             {/* Rider Line - unassigned riders waiting for pickup */}
             <RiderLine eventId={event.id} />
+
+            {/* DD: manually add any attendee as a passenger */}
+            <AddPassengerDialog eventId={event.id} />
 
             {/* DD Section */}
             <Card>
