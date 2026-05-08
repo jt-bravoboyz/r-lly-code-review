@@ -1145,6 +1145,9 @@ export default function EventDetail() {
             {/* Rider Line - unassigned riders waiting for pickup */}
             <RiderLine eventId={event.id} />
 
+            {/* DD: manually add any attendee as a passenger */}
+            <AddPassengerDialog eventId={event.id} />
+
             {/* DD Section */}
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
