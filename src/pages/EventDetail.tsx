@@ -909,6 +909,25 @@ export default function EventDetail() {
                 }}
               />
             )}
+            {canManage && (
+              <Card className="card-rally">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base flex items-center justify-between">
+                    <span>Split Check</span>
+                    <Button size="sm" onClick={() => setShowRequestPayment(true)}>
+                      Request Payment
+                    </Button>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <SplitCheckSettlementPanel
+                    eventId={event.id}
+                    hostProfileId={(event as any).creator_id}
+                    onOpenPayoutSetup={() => navigate('/profile')}
+                  />
+                </CardContent>
+              </Card>
+            )}
           </div>
         ) : !isSimpleMode && (isLiveEvent || isScheduled) && isAttending ? (
           <div className="rounded-xl bg-muted/40 px-4 py-3">
