@@ -1218,6 +1218,80 @@ export type Database = {
           },
         ]
       }
+      merchant_accounts: {
+        Row: {
+          country: string | null
+          created_at: string
+          email: string | null
+          fluid_pay_sub_merchant_id: string | null
+          id: string
+          last_synced_at: string | null
+          legal_name: string | null
+          payouts_enabled: boolean
+          profile_id: string
+          requirements_due: Json
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          fluid_pay_sub_merchant_id?: string | null
+          id?: string
+          last_synced_at?: string | null
+          legal_name?: string | null
+          payouts_enabled?: boolean
+          profile_id: string
+          requirements_due?: Json
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          country?: string | null
+          created_at?: string
+          email?: string | null
+          fluid_pay_sub_merchant_id?: string | null
+          id?: string
+          last_synced_at?: string | null
+          legal_name?: string | null
+          payouts_enabled?: boolean
+          profile_id?: string
+          requirements_due?: Json
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "merchant_accounts_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "merchant_accounts_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "merchant_accounts_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "safe_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "merchant_accounts_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "safe_profiles_with_connection"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       message_reactions: {
         Row: {
           created_at: string
@@ -1534,6 +1608,112 @@ export type Database = {
           },
         ]
       }
+      payments: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          currency: string
+          destination_sub_merchant_id: string | null
+          error_message: string | null
+          event_id: string | null
+          fluid_pay_transaction_id: string | null
+          host_net_cents: number
+          id: string
+          kind: string
+          metadata: Json
+          parent_payment_id: string | null
+          platform_fee_cents: number
+          profile_id: string | null
+          split_request_id: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          currency?: string
+          destination_sub_merchant_id?: string | null
+          error_message?: string | null
+          event_id?: string | null
+          fluid_pay_transaction_id?: string | null
+          host_net_cents?: number
+          id?: string
+          kind: string
+          metadata?: Json
+          parent_payment_id?: string | null
+          platform_fee_cents?: number
+          profile_id?: string | null
+          split_request_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          currency?: string
+          destination_sub_merchant_id?: string | null
+          error_message?: string | null
+          event_id?: string | null
+          fluid_pay_transaction_id?: string | null
+          host_net_cents?: number
+          id?: string
+          kind?: string
+          metadata?: Json
+          parent_payment_id?: string | null
+          platform_fee_cents?: number
+          profile_id?: string | null
+          split_request_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_parent_payment_id_fkey"
+            columns: ["parent_payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles_with_connection"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       phone_contacts: {
         Row: {
           created_at: string
@@ -1741,6 +1921,10 @@ export type Database = {
           current_lat: number | null
           current_lng: number | null
           display_name: string | null
+          fluid_pay_card_brand: string | null
+          fluid_pay_card_last4: string | null
+          fluid_pay_saved_at: string | null
+          fluid_pay_token: string | null
           founder_number: number | null
           founding_member: boolean | null
           full_name: string | null
@@ -1771,6 +1955,10 @@ export type Database = {
           current_lat?: number | null
           current_lng?: number | null
           display_name?: string | null
+          fluid_pay_card_brand?: string | null
+          fluid_pay_card_last4?: string | null
+          fluid_pay_saved_at?: string | null
+          fluid_pay_token?: string | null
           founder_number?: number | null
           founding_member?: boolean | null
           full_name?: string | null
@@ -1801,6 +1989,10 @@ export type Database = {
           current_lat?: number | null
           current_lng?: number | null
           display_name?: string | null
+          fluid_pay_card_brand?: string | null
+          fluid_pay_card_last4?: string | null
+          fluid_pay_saved_at?: string | null
+          fluid_pay_token?: string | null
           founder_number?: number | null
           founding_member?: boolean | null
           full_name?: string | null
@@ -2857,6 +3049,279 @@ export type Database = {
           },
         ]
       }
+      split_check_item_claims: {
+        Row: {
+          created_at: string
+          id: string
+          item_id: string
+          profile_id: string
+          quantity_claimed: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_id: string
+          profile_id: string
+          quantity_claimed?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_id?: string
+          profile_id?: string
+          quantity_claimed?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "split_check_item_claims_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "split_check_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "split_check_item_claims_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "split_check_item_claims_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "split_check_item_claims_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "split_check_item_claims_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles_with_connection"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      split_check_items: {
+        Row: {
+          created_at: string
+          description: string
+          edited_by_host: boolean
+          id: string
+          line_no: number
+          parsed_confidence: number | null
+          quantity: number
+          request_id: string
+          total_price_cents: number
+          unit_price_cents: number
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          edited_by_host?: boolean
+          id?: string
+          line_no: number
+          parsed_confidence?: number | null
+          quantity?: number
+          request_id: string
+          total_price_cents?: number
+          unit_price_cents?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          edited_by_host?: boolean
+          id?: string
+          line_no?: number
+          parsed_confidence?: number | null
+          quantity?: number
+          request_id?: string
+          total_price_cents?: number
+          unit_price_cents?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "split_check_items_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "split_check_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      split_check_requests: {
+        Row: {
+          created_at: string
+          event_id: string
+          host_id: string
+          id: string
+          mode: string
+          note: string | null
+          per_share_cents: number | null
+          receipt_image_url: string | null
+          status: string
+          subtotal_cents: number
+          tax_cents: number
+          tip_cents: number
+          total_cents: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          host_id: string
+          id?: string
+          mode: string
+          note?: string | null
+          per_share_cents?: number | null
+          receipt_image_url?: string | null
+          status?: string
+          subtotal_cents?: number
+          tax_cents?: number
+          tip_cents?: number
+          total_cents?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          host_id?: string
+          id?: string
+          mode?: string
+          note?: string | null
+          per_share_cents?: number | null
+          receipt_image_url?: string | null
+          status?: string
+          subtotal_cents?: number
+          tax_cents?: number
+          tip_cents?: number
+          total_cents?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "split_check_requests_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "split_check_requests_host_id_fkey"
+            columns: ["host_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "split_check_requests_host_id_fkey"
+            columns: ["host_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "split_check_requests_host_id_fkey"
+            columns: ["host_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "split_check_requests_host_id_fkey"
+            columns: ["host_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles_with_connection"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      split_check_targets: {
+        Row: {
+          created_at: string
+          id: string
+          last_nudged_at: string | null
+          payment_id: string | null
+          profile_id: string
+          request_id: string
+          share_cents: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_nudged_at?: string | null
+          payment_id?: string | null
+          profile_id: string
+          request_id: string
+          share_cents?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_nudged_at?: string | null
+          payment_id?: string | null
+          profile_id?: string
+          request_id?: string
+          share_cents?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "split_check_targets_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "split_check_targets_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "split_check_targets_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "split_check_targets_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "split_check_targets_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles_with_connection"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "split_check_targets_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "split_check_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       squad_invites: {
         Row: {
           contact_value: string
@@ -3899,6 +4364,15 @@ export type Database = {
         Args: { retention_days?: number }
         Returns: number
       }
+      compute_itemized_share: {
+        Args: { p_profile_id: string; p_request_id: string }
+        Returns: {
+          subtotal_cents: number
+          tax_cents: number
+          tip_cents: number
+          total_cents: number
+        }[]
+      }
       current_profile_id: { Args: never; Returns: string }
       delete_email: {
         Args: { message_id: number; queue_name: string }
@@ -4051,6 +4525,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      host_outstanding_balance: {
+        Args: { p_profile_id: string }
+        Returns: number
       }
       is_after_rally_invited: {
         Args: { _event_id: string; _profile_id: string }
