@@ -29,6 +29,8 @@ import { useBadgeState, useActivityBadges } from '@/hooks/useBadgeSystem';
 import { TierBadgeIcon } from '@/components/badges/TierBadgeIcon';
 import { ActivityBadgeIcon } from '@/components/badges/ActivityBadgeIcon';
 import { getBadgeMeta } from '@/lib/badges';
+import { PaymentMethodSection } from '@/components/profile/PaymentMethodSection';
+import { PayoutSettingsSection } from '@/components/profile/PayoutSettingsSection';
 
 // Helper to format phone for display
 function formatPhoneForDisplay(phone: string): string {
@@ -599,18 +601,9 @@ export default function Profile() {
           </button>
         )}
 
-        {/* Payments Placeholder */}
-        <Card className="card-rally">
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-              <CreditCard className="h-5 w-5 text-muted-foreground" />
-            </div>
-            <div>
-              <p className="font-medium">Payments</p>
-              <p className="text-xs text-muted-foreground">Founder 25: Coming Soon</p>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Payments */}
+        <PaymentMethodSection />
+        <PayoutSettingsSection />
 
         {/* Settings */}
         <Card className="card-rally">

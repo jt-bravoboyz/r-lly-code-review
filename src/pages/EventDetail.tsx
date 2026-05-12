@@ -75,7 +75,9 @@ import { RallyRecapScreen } from '@/components/events/RallyRecapScreen';
 import { useMyRallyHomePrompt } from '@/hooks/useRallyHomePrompt';
 import { PendingJoinRequests } from '@/components/events/PendingJoinRequests';
 import { TransportModeSelector } from '@/components/events/TransportModeSelector';
-import { PaymentGateDialog } from '@/components/events/PaymentGateDialog';
+import { CoverChargeDialog } from '@/components/payments/CoverChargeDialog';
+import { RequestPaymentDialog } from '@/components/events/RequestPaymentDialog';
+import { SplitCheckSettlementPanel } from '@/components/events/SplitCheckSettlementPanel';
 import { RideshareDrawer } from '@/components/rides/RideshareDrawer';
 import { RideshareDeepLinkButtons } from '@/components/rides/RideshareDeepLinkButtons';
 import { supabase } from '@/integrations/supabase/client';
@@ -147,6 +149,7 @@ export default function EventDetail() {
   const [showRallyComplete, setShowRallyComplete] = useState(false);
   const [showTransportSelector, setShowTransportSelector] = useState(false);
   const [showPaymentGate, setShowPaymentGate] = useState(false);
+  const [showRequestPayment, setShowRequestPayment] = useState(false);
   const [showRideshareDrawer, setShowRideshareDrawer] = useState(false);
   const [joinFlowDismissedForSession, setJoinFlowDismissedForSession] = useState(false);
   const [locationPromptDismissedForSession, setLocationPromptDismissedForSession] = useState(false);
@@ -1356,14 +1359,42 @@ export default function EventDetail() {
         />
       )}
 
-      {/* Payment Gate Dialog - shown for paid events before join */}
-      <PaymentGateDialog
+      {/* Cover Charge Dialog - Fluid Pay or simulated */}
+      <CoverChargeDialog
         open={showPaymentGate}
         onOpenChange={setShowPaymentGate}
-        amount={Number((event as any)?.cover_charge) || 0}
+        eventId={event.id}
         eventTitle={event.title}
-        onPaymentSuccess={handlePaymentSuccess}
+        amountCents={Math.round((Number((event as any)?.cover_charge) || 0) * 100)}
+        founderWaived={!!(profile as any)?.founder_number}
+        savedToken={(profile as any)?.fluid_pay_token ?? null}
+        savedCardLast4={(profile as any)?.fluid_pay_card_last4 ?? null}
+        savedCardBrand={(profile as any)?.fluid_pay_card_brand ?? null}
+        onPaid={(paymentId) => {
+          handlePaymentSuccess();
+          if (profile) {
+            supabase.from('event_attendees')
+              .update({ cover_payment_id: paymentId } as any)
+              .eq('event_id', event.id)
+              .eq('profile_id', profile.id)
+              .then(() => {});
+          }
+        }}
       />
+
+      {/* Split Check request dialog (host) */}
+      {canManage && profile && (
+        <RequestPaymentDialog
+          open={showRequestPayment}
+          onOpenChange={setShowRequestPayment}
+          eventId={event.id}
+          attendees={(event.attendees ?? []).map((a: any) => ({
+            id: a.id,
+            profile_id: a.profile?.id ?? a.profile_id,
+            display_name: a.profile?.display_name ?? a.display_name,
+          })).filter((a: any) => a.profile_id)}
+        />
+      )}
 
       {/* Rideshare Drawer - departure flow */}
       {profile && (
