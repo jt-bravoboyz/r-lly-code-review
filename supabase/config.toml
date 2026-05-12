@@ -23,3 +23,19 @@ project_id = "lovzfxppnxictkvymyot"
     verify_jwt = false
   [functions.handle-email-suppression]
     verify_jwt = false
+  [functions.get-fluid-pay-config]
+    verify_jwt = false
+  [functions.fluid-pay-webhook]
+    verify_jwt = false
+  [functions.process-fluid-pay]
+    verify_jwt = true
+  [functions.process-refund]
+    verify_jwt = true
+  [functions.parse-receipt]
+    verify_jwt = true
+  [functions.request-split-check]
+    verify_jwt = true
+  [functions.nudge-split-share]
+    verify_jwt = true
+  [functions.fluid-pay-onboarding]
+    verify_jwt = true
