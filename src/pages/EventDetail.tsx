@@ -148,7 +148,7 @@ export default function EventDetail() {
 
   const [showRallyComplete, setShowRallyComplete] = useState(false);
   const [showTransportSelector, setShowTransportSelector] = useState(false);
-  const [showPaymentGate, setShowPaymentGate] = useState(false);
+  const { ensurePaid, dialog: coverDialog } = useCoverChargeGate(event as any, profile as any);
   const [showRequestPayment, setShowRequestPayment] = useState(false);
   const [showRideshareDrawer, setShowRideshareDrawer] = useState(false);
   const [joinFlowDismissedForSession, setJoinFlowDismissedForSession] = useState(false);
