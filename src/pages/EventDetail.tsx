@@ -1370,28 +1370,8 @@ export default function EventDetail() {
         />
       )}
 
-      {/* Cover Charge Dialog - Fluid Pay or simulated */}
-      <CoverChargeDialog
-        open={showPaymentGate}
-        onOpenChange={setShowPaymentGate}
-        eventId={event.id}
-        eventTitle={event.title}
-        amountCents={Math.round((Number((event as any)?.cover_charge) || 0) * 100)}
-        founderWaived={!!(profile as any)?.founder_number}
-        savedToken={(profile as any)?.fluid_pay_token ?? null}
-        savedCardLast4={(profile as any)?.fluid_pay_card_last4 ?? null}
-        savedCardBrand={(profile as any)?.fluid_pay_card_brand ?? null}
-        onPaid={(paymentId) => {
-          handlePaymentSuccess();
-          if (profile) {
-            supabase.from('event_attendees')
-              .update({ cover_payment_id: paymentId } as any)
-              .eq('event_id', event.id)
-              .eq('profile_id', profile.id)
-              .then(() => {});
-          }
-        }}
-      />
+      {/* Cover Charge Dialog - rendered by useCoverChargeGate */}
+      {coverDialog}
 
       {/* Split Check request dialog (host) */}
       {canManage && profile && (
