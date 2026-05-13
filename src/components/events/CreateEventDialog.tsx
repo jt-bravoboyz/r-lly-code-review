@@ -487,7 +487,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
 
             </div>
 
-            <div ref={reviewRef}>
+            <div ref={reviewRef} className="scroll-mt-14">
             {/* Advanced options - collapsed by default */}
             <Collapsible open={optionalOpen} onOpenChange={setOptionalOpen}>
               <CollapsibleTrigger asChild>
