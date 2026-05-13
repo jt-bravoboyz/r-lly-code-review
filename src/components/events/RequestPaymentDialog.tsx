@@ -161,36 +161,76 @@ export function RequestPaymentDialog({ open, onOpenChange, eventId, attendees, o
           </TabsContent>
 
           <TabsContent value="itemized" className="space-y-3 mt-3">
-            <ReceiptUploader eventId={eventId} draftId={draftId} currentImageUrl={receiptUrl} onParsed={handleParsed} rescan={!!receiptUrl} />
-            {items.length > 0 && (
-              <div className="space-y-1.5">
-                <Label>Items</Label>
-                <div className="space-y-1.5 max-h-48 overflow-y-auto">
-                  {items.map((it, idx) => (
-                    <div key={idx} className="flex items-center gap-1.5">
-                      <span className={`h-2 w-2 rounded-full shrink-0 ${(it.confidence ?? 1) < 0.6 ? 'bg-amber-500' : 'bg-emerald-500'}`} />
-                      <Input className="flex-1" value={it.description} onChange={e => { const n=[...items]; n[idx]={...it,description:e.target.value}; setItems(n); }} />
-                      <Input type="number" className="w-14" value={it.quantity}
-                        onChange={e => { const n=[...items]; n[idx]={...it,quantity:Math.max(1,parseInt(e.target.value)||1)}; setItems(n); }} />
-                      <Input type="number" step="0.01" className="w-20" placeholder="$"
-                        value={(it.unit_price_cents/100).toString()}
-                        onChange={e => { const n=[...items]; n[idx]={...it,unit_price_cents:Math.round((parseFloat(e.target.value)||0)*100)}; setItems(n); }} />
-                      <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setItems(items.filter((_,i)=>i!==idx))}><Trash2 className="h-3 w-3" /></Button>
-                    </div>
-                  ))}
-                </div>
+            {itemizedMode === 'choose' && items.length === 0 && (
+              <div className="grid grid-cols-2 gap-3 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setItemizedMode('scan')}
+                  className="rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 p-4 flex flex-col items-start gap-2 text-left hover:bg-white/10 transition"
+                >
+                  <span className="h-9 w-9 rounded-xl flex items-center justify-center" style={{ backgroundColor: 'rgba(244,122,25,0.15)' }}>
+                    <ScanLine className="h-5 w-5" style={{ color: '#F47A19' }} />
+                  </span>
+                  <span className="text-sm font-semibold">Scan receipt.</span>
+                  <span className="text-xs text-muted-foreground">AI reads it for you.</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setItemizedMode('manual')}
+                  className="rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 p-4 flex flex-col items-start gap-2 text-left hover:bg-white/10 transition"
+                >
+                  <span className="h-9 w-9 rounded-xl flex items-center justify-center" style={{ backgroundColor: 'rgba(244,122,25,0.15)' }}>
+                    <Pencil className="h-5 w-5" style={{ color: '#F47A19' }} />
+                  </span>
+                  <span className="text-sm font-semibold">Add manually.</span>
+                  <span className="text-xs text-muted-foreground">Type items yourself.</span>
+                </button>
               </div>
             )}
-            <div className="grid grid-cols-3 gap-2">
-              <div><Label className="text-xs">Subtotal</Label><Input type="number" step="0.01" value={subtotal} onChange={e => setSubtotal(e.target.value)} /></div>
-              <div><Label className="text-xs">Tax</Label><Input type="number" step="0.01" value={tax} onChange={e => setTax(e.target.value)} /></div>
-              <div><Label className="text-xs">Tip</Label><Input type="number" step="0.01" value={tip} onChange={e => setTip(e.target.value)} /></div>
-            </div>
-            {AttendeePicker}
-            <Textarea placeholder="Note (optional)" rows={2} value={note} onChange={e => setNote(e.target.value)} />
-            <Button className="w-full" onClick={sendItemized} disabled={busy}>
-              {busy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null} Send Itemized Request
-            </Button>
+
+            {itemizedMode === 'scan' && items.length === 0 && (
+              <ScanReceiptFlow
+                eventId={eventId}
+                draftId={draftId}
+                onComplete={handleScanComplete}
+                onAddManually={() => setItemizedMode('manual')}
+              />
+            )}
+
+            {(itemizedMode === 'manual' || items.length > 0) && (
+              <>
+                <ReceiptUploader eventId={eventId} draftId={draftId} currentImageUrl={receiptUrl} onParsed={handleParsed} rescan={!!receiptUrl} />
+                {items.length > 0 && (
+                  <div className="space-y-1.5">
+                    <Label>Items</Label>
+                    <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                      {items.map((it, idx) => (
+                        <div key={idx} className="flex items-center gap-1.5">
+                          <span className={`h-2 w-2 rounded-full shrink-0 ${(it.confidence ?? 1) < 0.6 ? 'bg-amber-500' : 'bg-emerald-500'}`} />
+                          <Input className="flex-1" value={it.description} onChange={e => { const n=[...items]; n[idx]={...it,description:e.target.value}; setItems(n); }} />
+                          <Input type="number" className="w-14" value={it.quantity}
+                            onChange={e => { const n=[...items]; n[idx]={...it,quantity:Math.max(1,parseInt(e.target.value)||1)}; setItems(n); }} />
+                          <Input type="number" step="0.01" className="w-20" placeholder="$"
+                            value={(it.unit_price_cents/100).toString()}
+                            onChange={e => { const n=[...items]; n[idx]={...it,unit_price_cents:Math.round((parseFloat(e.target.value)||0)*100)}; setItems(n); }} />
+                          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setItems(items.filter((_,i)=>i!==idx))}><Trash2 className="h-3 w-3" /></Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div className="grid grid-cols-3 gap-2">
+                  <div><Label className="text-xs">Subtotal</Label><Input type="number" step="0.01" value={subtotal} onChange={e => setSubtotal(e.target.value)} /></div>
+                  <div><Label className="text-xs">Tax</Label><Input type="number" step="0.01" value={tax} onChange={e => setTax(e.target.value)} /></div>
+                  <div><Label className="text-xs">Tip</Label><Input type="number" step="0.01" value={tip} onChange={e => setTip(e.target.value)} /></div>
+                </div>
+                {AttendeePicker}
+                <Textarea placeholder="Note (optional)" rows={2} value={note} onChange={e => setNote(e.target.value)} />
+                <Button className="w-full" onClick={sendItemized} disabled={busy}>
+                  {busy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null} Send Itemized Request
+                </Button>
+              </>
+            )}
           </TabsContent>
         </Tabs>
       </DialogContent>
