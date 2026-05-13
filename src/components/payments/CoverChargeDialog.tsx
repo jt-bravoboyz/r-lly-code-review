@@ -8,6 +8,7 @@ import { FluidPayCardForm } from './FluidPayCardForm';
 import { SecurePaymentBadge } from './PoweredByFluidPay';
 import { useFluidPay } from '@/hooks/useFluidPay';
 import { toast } from 'sonner';
+import rallyFlag from '@/assets/rally-flag-flat-glyph-1024.png';
 
 interface Props {
   open: boolean;
