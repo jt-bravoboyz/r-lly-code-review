@@ -27,6 +27,7 @@ interface Item { description: string; quantity: number; unit_price_cents: number
 
 export function RequestPaymentDialog({ open, onOpenChange, eventId, attendees, onSent }: Props) {
   const [tab, setTab] = useState<'quick' | 'itemized'>('quick');
+  const [itemizedMode, setItemizedMode] = useState<'choose' | 'scan' | 'manual'>('choose');
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
