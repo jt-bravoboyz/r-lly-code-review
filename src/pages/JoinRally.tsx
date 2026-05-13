@@ -50,6 +50,7 @@ export default function JoinRally() {
   const [joinedEventId, setJoinedEventId] = useState<string | null>(null);
   const [savingSafetyChoice, setSavingSafetyChoice] = useState(false);
   const [hasMadeSafetyChoice, setHasMadeSafetyChoice] = useState(false);
+  const { ensurePaid, dialog: coverDialog } = useCoverChargeGate(event, profile);
 
   const fetchEvent = async (inviteCode: string) => {
     if (!inviteCode || inviteCode.length < 6) return;
