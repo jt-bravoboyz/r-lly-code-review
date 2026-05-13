@@ -78,6 +78,7 @@ export default function JoinRally() {
         is_barhop: eventData.is_barhop,
         is_quick_rally: eventData.is_quick_rally,
         invite_code: eventData.invite_code,
+        cover_charge: Number((eventData as any).cover_charge ?? 0),
         creator: {
           id: eventData.creator_id,
           display_name: eventData.creator_display_name,
