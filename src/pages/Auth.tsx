@@ -230,6 +230,14 @@ export default function Auth() {
 
         const joinResult = joinData as { success?: boolean; error?: string; status?: string };
 
+        if (joinResult?.status === 'payment_required') {
+          // Cover charge required — bounce them to the event page where the
+          // payment dialog will fire as soon as they tap JOIN.
+          toast.info('This R@lly has a cover charge. Pay to join.');
+          navigate(`/events/${eventData.id}`);
+          return;
+        }
+
         if (joinResult?.error) {
           if (joinResult.status === 'attending') {
             toast.info("You're already in this R@lly!");

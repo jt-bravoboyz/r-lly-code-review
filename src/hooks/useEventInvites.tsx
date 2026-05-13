@@ -174,6 +174,14 @@ export function useRespondToInvite() {
         if (joinError) throw joinError;
 
         const result = data as { success?: boolean; error?: string; status?: string };
+
+        // Cover-charge gate: server tells us payment is required. Surface it to
+        // the caller so they can route the user to the event page (where the
+        // payment dialog lives) instead of silently failing.
+        if (result?.status === 'payment_required') {
+          return { response, status: 'payment_required' as const, eventId };
+        }
+
         if (result?.error && result.status !== 'attending' && result.status !== 'pending') {
           throw new Error(result.error);
         }

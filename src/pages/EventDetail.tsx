@@ -75,7 +75,7 @@ import { RallyRecapScreen } from '@/components/events/RallyRecapScreen';
 import { useMyRallyHomePrompt } from '@/hooks/useRallyHomePrompt';
 import { PendingJoinRequests } from '@/components/events/PendingJoinRequests';
 import { TransportModeSelector } from '@/components/events/TransportModeSelector';
-import { CoverChargeDialog } from '@/components/payments/CoverChargeDialog';
+import { useCoverChargeGate } from '@/hooks/useCoverChargeGate';
 import { RequestPaymentDialog } from '@/components/events/RequestPaymentDialog';
 import { SplitCheckSettlementPanel } from '@/components/events/SplitCheckSettlementPanel';
 import { RideshareDrawer } from '@/components/rides/RideshareDrawer';
@@ -148,7 +148,7 @@ export default function EventDetail() {
 
   const [showRallyComplete, setShowRallyComplete] = useState(false);
   const [showTransportSelector, setShowTransportSelector] = useState(false);
-  const [showPaymentGate, setShowPaymentGate] = useState(false);
+  const { ensurePaid, dialog: coverDialog } = useCoverChargeGate(event as any, profile as any);
   const [showRequestPayment, setShowRequestPayment] = useState(false);
   const [showRideshareDrawer, setShowRideshareDrawer] = useState(false);
   const [joinFlowDismissedForSession, setJoinFlowDismissedForSession] = useState(false);
@@ -398,14 +398,12 @@ export default function EventDetail() {
 
   const handleJoin = async () => {
     if (!profile) return;
-    // If event has a cover charge, show payment gate first
-    if ((event as any)?.cover_charge > 0 && !showPaymentGate) {
-      setShowPaymentGate(true);
-      return;
-    }
+    // Strict gate: only fires when cover_charge > 0 and not already paid.
+    const ok = await ensurePaid();
+    if (!ok) return;
     try {
       const result = await joinEvent.mutateAsync({ eventId: event.id, profileId: profile.id });
-      
+
       // For paid events, default to signal-only mode (privacy)
       if ((event as any)?.cover_charge > 0) {
         await supabase
@@ -414,7 +412,7 @@ export default function EventDetail() {
           .eq('event_id', event.id)
           .eq('profile_id', profile.id);
       }
-      
+
       // Check if successfully joined (attending status) - show transport selector then safety choice
       if (result?.status === 'attending') {
         toast.success("You're in! 🎉");
@@ -425,12 +423,6 @@ export default function EventDetail() {
     } catch (error: any) {
       toast.error(error.message || 'Failed to join event');
     }
-  };
-
-  const handlePaymentSuccess = () => {
-    setShowPaymentGate(false);
-    // After payment, proceed with join
-    handleJoin();
   };
 
   // Handler extraction: startRally (variable assignment only)
@@ -1378,28 +1370,8 @@ export default function EventDetail() {
         />
       )}
 
-      {/* Cover Charge Dialog - Fluid Pay or simulated */}
-      <CoverChargeDialog
-        open={showPaymentGate}
-        onOpenChange={setShowPaymentGate}
-        eventId={event.id}
-        eventTitle={event.title}
-        amountCents={Math.round((Number((event as any)?.cover_charge) || 0) * 100)}
-        founderWaived={!!(profile as any)?.founder_number}
-        savedToken={(profile as any)?.fluid_pay_token ?? null}
-        savedCardLast4={(profile as any)?.fluid_pay_card_last4 ?? null}
-        savedCardBrand={(profile as any)?.fluid_pay_card_brand ?? null}
-        onPaid={(paymentId) => {
-          handlePaymentSuccess();
-          if (profile) {
-            supabase.from('event_attendees')
-              .update({ cover_payment_id: paymentId } as any)
-              .eq('event_id', event.id)
-              .eq('profile_id', profile.id)
-              .then(() => {});
-          }
-        }}
-      />
+      {/* Cover Charge Dialog - rendered by useCoverChargeGate */}
+      {coverDialog}
 
       {/* Split Check request dialog (host) */}
       {canManage && profile && (

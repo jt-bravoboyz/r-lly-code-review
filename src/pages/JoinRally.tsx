@@ -14,6 +14,7 @@ import rallyLogo from '@/assets/rally-logo.png';
 import { SafetyChoiceModal } from '@/components/events/SafetyChoiceModal';
 import { RidesSelectionModal } from '@/components/events/RidesSelectionModal';
 import { trackEvent } from '@/lib/analytics';
+import { useCoverChargeGate } from '@/hooks/useCoverChargeGate';
 
 interface EventPreview {
   id: string;
@@ -24,6 +25,7 @@ interface EventPreview {
   is_barhop: boolean;
   is_quick_rally: boolean;
   invite_code: string;
+  cover_charge: number;
   creator: {
     id: string;
     display_name: string | null;
@@ -48,6 +50,7 @@ export default function JoinRally() {
   const [joinedEventId, setJoinedEventId] = useState<string | null>(null);
   const [savingSafetyChoice, setSavingSafetyChoice] = useState(false);
   const [hasMadeSafetyChoice, setHasMadeSafetyChoice] = useState(false);
+  const { ensurePaid, dialog: coverDialog } = useCoverChargeGate(event, profile);
 
   const fetchEvent = async (inviteCode: string) => {
     if (!inviteCode || inviteCode.length < 6) return;
@@ -76,6 +79,7 @@ export default function JoinRally() {
         is_barhop: eventData.is_barhop,
         is_quick_rally: eventData.is_quick_rally,
         invite_code: eventData.invite_code,
+        cover_charge: Number((eventData as any).cover_charge ?? 0),
         creator: {
           id: eventData.creator_id,
           display_name: eventData.creator_display_name,
@@ -140,6 +144,13 @@ export default function JoinRally() {
 
     setJoining(true);
     try {
+      // Cover-charge gate: only fires when cover_charge > 0 and not already paid.
+      const ok = await ensurePaid();
+      if (!ok) {
+        setJoining(false);
+        return;
+      }
+
       const { data, error } = await supabase.rpc('request_join_event', {
         p_event_id: event.id,
         p_has_invite_code: true
@@ -435,6 +446,7 @@ export default function JoinRally() {
           eventLocationName={event.location_name || undefined}
         />
       )}
+      {coverDialog}
     </div>
   );
 }

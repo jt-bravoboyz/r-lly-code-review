@@ -4416,6 +4416,7 @@ export type Database = {
         Args: { invite_code_param: string }
         Returns: {
           attendee_count: number
+          cover_charge: number
           creator_avatar_url: string
           creator_display_name: string
           creator_id: string
