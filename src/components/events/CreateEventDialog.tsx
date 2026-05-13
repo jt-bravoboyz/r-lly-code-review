@@ -327,7 +327,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
               </p>
             </div>
 
-            <nav className="flex items-center justify-center gap-3 text-[10px] font-montserrat uppercase tracking-[0.2em] sticky top-0 z-10 py-2 bg-background/95 backdrop-blur-md -mx-6 px-6">
+            <nav className="flex items-center justify-center gap-3 text-[10px] font-montserrat uppercase tracking-[0.2em] sticky top-0 z-10 py-1.5 bg-background/95 backdrop-blur-md -mx-6 px-6 pointer-events-none">
               {(['essentials', 'details', 'review'] as const).map((section, i) => (
                 <span key={section} className="flex items-center gap-3">
                   {i > 0 && <span className="text-primary/20">·</span>}
@@ -340,7 +340,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
                       ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     }}
                     className={cn(
-                      "transition-all duration-300 cursor-pointer hover:text-primary/80",
+                      "transition-all duration-300 cursor-pointer hover:text-primary/80 pointer-events-auto",
                       activeSection === section
                         ? "text-primary font-semibold drop-shadow-[0_0_6px_hsl(27_91%_53%/0.4)]"
                         : "text-muted-foreground/50"
