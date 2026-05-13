@@ -396,7 +396,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
             />
             </div>
 
-            <div ref={detailsRef}>
+            <div ref={detailsRef} className="scroll-mt-14">
             {/* Date Picker */}
             <FormField
               control={form.control}
