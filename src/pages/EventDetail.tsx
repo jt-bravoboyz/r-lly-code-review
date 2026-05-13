@@ -398,14 +398,12 @@ export default function EventDetail() {
 
   const handleJoin = async () => {
     if (!profile) return;
-    // If event has a cover charge, show payment gate first
-    if ((event as any)?.cover_charge > 0 && !showPaymentGate) {
-      setShowPaymentGate(true);
-      return;
-    }
+    // Strict gate: only fires when cover_charge > 0 and not already paid.
+    const ok = await ensurePaid();
+    if (!ok) return;
     try {
       const result = await joinEvent.mutateAsync({ eventId: event.id, profileId: profile.id });
-      
+
       // For paid events, default to signal-only mode (privacy)
       if ((event as any)?.cover_charge > 0) {
         await supabase
@@ -414,7 +412,7 @@ export default function EventDetail() {
           .eq('event_id', event.id)
           .eq('profile_id', profile.id);
       }
-      
+
       // Check if successfully joined (attending status) - show transport selector then safety choice
       if (result?.status === 'attending') {
         toast.success("You're in! 🎉");
@@ -425,12 +423,6 @@ export default function EventDetail() {
     } catch (error: any) {
       toast.error(error.message || 'Failed to join event');
     }
-  };
-
-  const handlePaymentSuccess = () => {
-    setShowPaymentGate(false);
-    // After payment, proceed with join
-    handleJoin();
   };
 
   // Handler extraction: startRally (variable assignment only)
