@@ -8,6 +8,7 @@ import { FluidPayCardForm } from './FluidPayCardForm';
 import { SecurePaymentBadge } from './PoweredByFluidPay';
 import { useFluidPay } from '@/hooks/useFluidPay';
 import { toast } from 'sonner';
+import rallyFlag from '@/assets/rally-flag-flat-glyph-1024.png';
 
 interface Props {
   open: boolean;
@@ -106,10 +107,10 @@ export function CoverChargeDialog({
             <div className="relative overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-br from-white/[0.12] via-white/[0.06] to-white/[0.02] p-5 shadow-[inset_0_1px_0_hsl(0_0%_100%/0.15),0_10px_30px_-10px_hsl(0_0%_0%/0.4)]">
               {/* Shimmer */}
               <div className="absolute -inset-x-12 -top-12 h-32 rotate-12 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-[shimmer_2.4s_ease-out_1]" />
-              {/* Brand chip */}
+              {/* Brand flag */}
               <div className="flex items-start justify-between mb-6">
                 <div className="h-8 w-10 rounded-md bg-gradient-to-br from-amber-200/80 to-amber-500/80 shadow-inner border border-amber-300/40" />
-                <span className="text-[10px] font-bold uppercase tracking-widest text-primary/90">R@lly</span>
+                <img src={rallyFlag} alt="R@lly" className="h-6 w-6 object-contain" />
               </div>
               <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-semibold mb-1">
                 One-time entry
