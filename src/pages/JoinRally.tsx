@@ -446,6 +446,7 @@ export default function JoinRally() {
           eventLocationName={event.location_name || undefined}
         />
       )}
+      {coverDialog}
     </div>
   );
 }
