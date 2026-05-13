@@ -40,7 +40,7 @@ export function usePendingInvites() {
         .from('event_invites')
         .select(`
           *,
-          event:events(id, title, start_time, location_name, is_quick_rally, is_barhop),
+          event:events(id, title, start_time, location_name, is_quick_rally, is_barhop, cover_charge),
           inviter:profiles!event_invites_invited_by_fkey(id, display_name, avatar_url)
         `)
         .eq('invited_profile_id', profile.id)
