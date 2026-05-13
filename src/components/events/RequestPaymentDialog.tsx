@@ -47,9 +47,18 @@ export function RequestPaymentDialog({ open, onOpenChange, eventId, attendees, o
     if (!open) {
       setSelected(new Set()); setNote(''); setTotalDollars('');
       setItems([]); setSubtotal(''); setTax(''); setTip(''); setReceiptUrl(null);
-      setTab('quick');
+      setTab('quick'); setItemizedMode('choose');
     }
   }, [open]);
+
+  const handleScanComplete = (payload: ScanCompletePayload) => {
+    setItems(payload.items);
+    setSubtotal((payload.subtotal_cents / 100).toString());
+    setTax((payload.tax_cents / 100).toString());
+    setTip((payload.tip_cents / 100).toString());
+    setItemizedMode('manual'); // drop into the existing editor with the totals pre-filled
+    toast.success('Receipt scanned — pick attendees and send.');
+  };
 
   const totalCentsQuick = Math.round((parseFloat(totalDollars) || 0) * 100);
   const perShareQuick = selected.size > 0 ? Math.ceil(totalCentsQuick / selected.size) : 0;
