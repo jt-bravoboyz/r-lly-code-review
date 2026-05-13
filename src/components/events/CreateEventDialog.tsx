@@ -408,6 +408,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
                     <PopoverTrigger asChild>
                       <FormControl>
                         <Button
+                          type="button"
                           variant="outline"
                           className={cn(
                             "w-full pl-3 text-left font-normal",
@@ -423,7 +424,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
                         </Button>
                       </FormControl>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 z-50" align="start">
+                    <PopoverContent className="w-auto p-0" align="start">
                       <Calendar
                         mode="single"
                         selected={field.value}
