@@ -144,6 +144,13 @@ export default function JoinRally() {
 
     setJoining(true);
     try {
+      // Cover-charge gate: only fires when cover_charge > 0 and not already paid.
+      const ok = await ensurePaid();
+      if (!ok) {
+        setJoining(false);
+        return;
+      }
+
       const { data, error } = await supabase.rpc('request_join_event', {
         p_event_id: event.id,
         p_has_invite_code: true
