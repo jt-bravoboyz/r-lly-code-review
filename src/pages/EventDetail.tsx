@@ -75,7 +75,7 @@ import { RallyRecapScreen } from '@/components/events/RallyRecapScreen';
 import { useMyRallyHomePrompt } from '@/hooks/useRallyHomePrompt';
 import { PendingJoinRequests } from '@/components/events/PendingJoinRequests';
 import { TransportModeSelector } from '@/components/events/TransportModeSelector';
-import { CoverChargeDialog } from '@/components/payments/CoverChargeDialog';
+import { useCoverChargeGate } from '@/hooks/useCoverChargeGate';
 import { RequestPaymentDialog } from '@/components/events/RequestPaymentDialog';
 import { SplitCheckSettlementPanel } from '@/components/events/SplitCheckSettlementPanel';
 import { RideshareDrawer } from '@/components/rides/RideshareDrawer';
