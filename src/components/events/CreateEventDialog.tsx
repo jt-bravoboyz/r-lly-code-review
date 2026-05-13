@@ -404,38 +404,27 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
               render={({ field }) => (
                 <FormItem className="flex flex-col">
                   <FormLabel>Date</FormLabel>
-                  <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            "w-full pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          {field.value ? (
-                            format(field.value, "EEEE, MMMM d, yyyy")
-                          ) : (
-                            <span>Pick a date</span>
-                          )}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 z-50" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={(date) => {
-                          field.onChange(date);
-                          setDatePickerOpen(false);
+                  <FormControl>
+                    <div className="relative">
+                      <CalendarIcon className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 opacity-50 pointer-events-none" />
+                      <Input
+                        type="date"
+                        min={format(new Date(), 'yyyy-MM-dd')}
+                        value={field.value ? format(field.value, 'yyyy-MM-dd') : ''}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          if (!v) {
+                            field.onChange(undefined);
+                            return;
+                          }
+                          // Parse as local date (avoid UTC shift from new Date('YYYY-MM-DD'))
+                          const [y, m, d] = v.split('-').map(Number);
+                          field.onChange(new Date(y, m - 1, d));
                         }}
-                        disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
-                        initialFocus
+                        className="w-full pr-10"
                       />
-                    </PopoverContent>
-                  </Popover>
+                    </div>
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
