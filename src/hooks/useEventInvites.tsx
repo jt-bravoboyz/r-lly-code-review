@@ -18,6 +18,7 @@ export interface EventInvite {
     location_name: string | null;
     is_quick_rally: boolean;
     is_barhop: boolean;
+    cover_charge: number | null;
   };
   inviter?: {
     id: string;
