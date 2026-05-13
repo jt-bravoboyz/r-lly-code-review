@@ -101,7 +101,6 @@ function PendingInviteCard({ invite }: { invite: EventInvite }) {
                   )}
                   {cover > 0 && (
                     <Badge className="text-xs gap-1 bg-primary/15 text-primary border-primary/30">
-                      <DollarSign className="h-3 w-3" />
                       ${cover.toFixed(2)} cover
                     </Badge>
                   )}
