@@ -15,39 +15,58 @@ import { toast } from 'sonner';
 export function RallyInviteBanner() {
   const { state, progressToRides, cancelOnboarding } = useRallyOnboarding();
   const respondToInvite = useRespondToInvite();
+  const { profile } = useAuth();
   const { fireRallyConfetti } = useConfetti();
+  const navigate = useNavigate();
   const [isExiting, setIsExiting] = useState(false);
   const [isResponding, setIsResponding] = useState(false);
 
-  // Only show when on invite step
-  if (state.currentStep !== 'invite' || !state.invite) {
+  const invite = state.invite;
+  const event = invite?.event;
+  const inviter = invite?.inviter;
+  const cover = Number(event?.cover_charge ?? 0);
+
+  // Hook must run unconditionally — pass nulls when no invite is active.
+  const { ensurePaid, dialog: coverDialog } = useCoverChargeGate(
+    event ? { id: event.id, title: event.title, cover_charge: event.cover_charge } : null,
+    profile as any,
+  );
+
+  // Only render when on invite step
+  if (state.currentStep !== 'invite' || !invite || !event) {
     return null;
   }
-
-  const { invite } = state;
-  const event = invite.event;
-  const inviter = invite.inviter;
 
   const handleAccept = async () => {
     setIsResponding(true);
     try {
+      // Strict gate: pay cover before flipping the invite to accepted.
+      const ok = await ensurePaid();
+      if (!ok) {
+        setIsResponding(false);
+        return;
+      }
+
       await respondToInvite.mutateAsync({
         inviteId: invite.id,
         eventId: invite.event_id,
         response: 'accepted',
       });
-      
-      // Fire confetti celebration
+
       fireRallyConfetti();
-      
       toast.success("You're in! 🎉");
-      
-      // Small delay for confetti effect, then progress
+
       setTimeout(() => {
         progressToRides();
       }, 500);
     } catch (error: any) {
-      toast.error(error.message || 'Failed to join rally');
+      if (error?.code === 'cover_required') {
+        toast.error('Cover charge required — opening payment…');
+        navigate(`/events/${invite.event_id}`);
+        cancelOnboarding();
+      } else {
+        toast.error(error.message || 'Failed to join rally');
+      }
       setIsResponding(false);
     }
   };
@@ -60,7 +79,7 @@ export function RallyInviteBanner() {
         eventId: invite.event_id,
         response: 'declined',
       });
-      
+
       setIsExiting(true);
       setTimeout(() => {
         cancelOnboarding();
