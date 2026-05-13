@@ -7,12 +7,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Loader2, Trash2, ScanLine, Pencil } from 'lucide-react';
+import { Loader2, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { ReceiptUploader } from './ReceiptUploader';
-import { ScanReceiptFlow } from '@/components/payments/scan-receipt/ScanReceiptFlow';
-import type { ScanCompletePayload } from '@/components/payments/scan-receipt/scanReceiptTypes';
 
 interface Attendee { id: string; profile_id: string; display_name?: string; }
 interface Props {
@@ -27,7 +25,6 @@ interface Item { description: string; quantity: number; unit_price_cents: number
 
 export function RequestPaymentDialog({ open, onOpenChange, eventId, attendees, onSent }: Props) {
   const [tab, setTab] = useState<'quick' | 'itemized'>('quick');
-  const [itemizedMode, setItemizedMode] = useState<'choose' | 'scan' | 'manual'>('choose');
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
@@ -47,18 +44,9 @@ export function RequestPaymentDialog({ open, onOpenChange, eventId, attendees, o
     if (!open) {
       setSelected(new Set()); setNote(''); setTotalDollars('');
       setItems([]); setSubtotal(''); setTax(''); setTip(''); setReceiptUrl(null);
-      setTab('quick'); setItemizedMode('choose');
+      setTab('quick');
     }
   }, [open]);
-
-  const handleScanComplete = (payload: ScanCompletePayload) => {
-    setItems(payload.items);
-    setSubtotal((payload.subtotal_cents / 100).toString());
-    setTax((payload.tax_cents / 100).toString());
-    setTip((payload.tip_cents / 100).toString());
-    setItemizedMode('manual'); // drop into the existing editor with the totals pre-filled
-    toast.success('Receipt scanned — pick attendees and send.');
-  };
 
   const totalCentsQuick = Math.round((parseFloat(totalDollars) || 0) * 100);
   const perShareQuick = selected.size > 0 ? Math.ceil(totalCentsQuick / selected.size) : 0;
@@ -161,76 +149,36 @@ export function RequestPaymentDialog({ open, onOpenChange, eventId, attendees, o
           </TabsContent>
 
           <TabsContent value="itemized" className="space-y-3 mt-3">
-            {itemizedMode === 'choose' && items.length === 0 && (
-              <div className="grid grid-cols-2 gap-3 pt-1">
-                <button
-                  type="button"
-                  onClick={() => setItemizedMode('scan')}
-                  className="rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 p-4 flex flex-col items-start gap-2 text-left hover:bg-white/10 transition"
-                >
-                  <span className="h-9 w-9 rounded-xl flex items-center justify-center" style={{ backgroundColor: 'rgba(244,122,25,0.15)' }}>
-                    <ScanLine className="h-5 w-5" style={{ color: '#F47A19' }} />
-                  </span>
-                  <span className="text-sm font-semibold">Scan receipt.</span>
-                  <span className="text-xs text-muted-foreground">AI reads it for you.</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setItemizedMode('manual')}
-                  className="rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 p-4 flex flex-col items-start gap-2 text-left hover:bg-white/10 transition"
-                >
-                  <span className="h-9 w-9 rounded-xl flex items-center justify-center" style={{ backgroundColor: 'rgba(244,122,25,0.15)' }}>
-                    <Pencil className="h-5 w-5" style={{ color: '#F47A19' }} />
-                  </span>
-                  <span className="text-sm font-semibold">Add manually.</span>
-                  <span className="text-xs text-muted-foreground">Type items yourself.</span>
-                </button>
+            <ReceiptUploader eventId={eventId} draftId={draftId} currentImageUrl={receiptUrl} onParsed={handleParsed} rescan={!!receiptUrl} />
+            {items.length > 0 && (
+              <div className="space-y-1.5">
+                <Label>Items</Label>
+                <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                  {items.map((it, idx) => (
+                    <div key={idx} className="flex items-center gap-1.5">
+                      <span className={`h-2 w-2 rounded-full shrink-0 ${(it.confidence ?? 1) < 0.6 ? 'bg-amber-500' : 'bg-emerald-500'}`} />
+                      <Input className="flex-1" value={it.description} onChange={e => { const n=[...items]; n[idx]={...it,description:e.target.value}; setItems(n); }} />
+                      <Input type="number" className="w-14" value={it.quantity}
+                        onChange={e => { const n=[...items]; n[idx]={...it,quantity:Math.max(1,parseInt(e.target.value)||1)}; setItems(n); }} />
+                      <Input type="number" step="0.01" className="w-20" placeholder="$"
+                        value={(it.unit_price_cents/100).toString()}
+                        onChange={e => { const n=[...items]; n[idx]={...it,unit_price_cents:Math.round((parseFloat(e.target.value)||0)*100)}; setItems(n); }} />
+                      <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setItems(items.filter((_,i)=>i!==idx))}><Trash2 className="h-3 w-3" /></Button>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
-
-            {itemizedMode === 'scan' && items.length === 0 && (
-              <ScanReceiptFlow
-                eventId={eventId}
-                draftId={draftId}
-                onComplete={handleScanComplete}
-                onAddManually={() => setItemizedMode('manual')}
-              />
-            )}
-
-            {(itemizedMode === 'manual' || items.length > 0) && (
-              <>
-                <ReceiptUploader eventId={eventId} draftId={draftId} currentImageUrl={receiptUrl} onParsed={handleParsed} rescan={!!receiptUrl} />
-                {items.length > 0 && (
-                  <div className="space-y-1.5">
-                    <Label>Items</Label>
-                    <div className="space-y-1.5 max-h-48 overflow-y-auto">
-                      {items.map((it, idx) => (
-                        <div key={idx} className="flex items-center gap-1.5">
-                          <span className={`h-2 w-2 rounded-full shrink-0 ${(it.confidence ?? 1) < 0.6 ? 'bg-amber-500' : 'bg-emerald-500'}`} />
-                          <Input className="flex-1" value={it.description} onChange={e => { const n=[...items]; n[idx]={...it,description:e.target.value}; setItems(n); }} />
-                          <Input type="number" className="w-14" value={it.quantity}
-                            onChange={e => { const n=[...items]; n[idx]={...it,quantity:Math.max(1,parseInt(e.target.value)||1)}; setItems(n); }} />
-                          <Input type="number" step="0.01" className="w-20" placeholder="$"
-                            value={(it.unit_price_cents/100).toString()}
-                            onChange={e => { const n=[...items]; n[idx]={...it,unit_price_cents:Math.round((parseFloat(e.target.value)||0)*100)}; setItems(n); }} />
-                          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setItems(items.filter((_,i)=>i!==idx))}><Trash2 className="h-3 w-3" /></Button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                <div className="grid grid-cols-3 gap-2">
-                  <div><Label className="text-xs">Subtotal</Label><Input type="number" step="0.01" value={subtotal} onChange={e => setSubtotal(e.target.value)} /></div>
-                  <div><Label className="text-xs">Tax</Label><Input type="number" step="0.01" value={tax} onChange={e => setTax(e.target.value)} /></div>
-                  <div><Label className="text-xs">Tip</Label><Input type="number" step="0.01" value={tip} onChange={e => setTip(e.target.value)} /></div>
-                </div>
-                {AttendeePicker}
-                <Textarea placeholder="Note (optional)" rows={2} value={note} onChange={e => setNote(e.target.value)} />
-                <Button className="w-full" onClick={sendItemized} disabled={busy}>
-                  {busy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null} Send Itemized Request
-                </Button>
-              </>
-            )}
+            <div className="grid grid-cols-3 gap-2">
+              <div><Label className="text-xs">Subtotal</Label><Input type="number" step="0.01" value={subtotal} onChange={e => setSubtotal(e.target.value)} /></div>
+              <div><Label className="text-xs">Tax</Label><Input type="number" step="0.01" value={tax} onChange={e => setTax(e.target.value)} /></div>
+              <div><Label className="text-xs">Tip</Label><Input type="number" step="0.01" value={tip} onChange={e => setTip(e.target.value)} /></div>
+            </div>
+            {AttendeePicker}
+            <Textarea placeholder="Note (optional)" rows={2} value={note} onChange={e => setNote(e.target.value)} />
+            <Button className="w-full" onClick={sendItemized} disabled={busy}>
+              {busy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null} Send Itemized Request
+            </Button>
           </TabsContent>
         </Tabs>
       </DialogContent>
