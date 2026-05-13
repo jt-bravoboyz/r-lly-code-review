@@ -18,6 +18,7 @@ export interface EventInvite {
     location_name: string | null;
     is_quick_rally: boolean;
     is_barhop: boolean;
+    cover_charge: number | null;
   };
   inviter?: {
     id: string;
@@ -39,7 +40,7 @@ export function usePendingInvites() {
         .from('event_invites')
         .select(`
           *,
-          event:events(id, title, start_time, location_name, is_quick_rally, is_barhop),
+          event:events(id, title, start_time, location_name, is_quick_rally, is_barhop, cover_charge),
           inviter:profiles!event_invites_invited_by_fkey(id, display_name, avatar_url)
         `)
         .eq('invited_profile_id', profile.id)
@@ -175,11 +176,17 @@ export function useRespondToInvite() {
 
         const result = data as { success?: boolean; error?: string; status?: string };
 
-        // Cover-charge gate: server tells us payment is required. Surface it to
-        // the caller so they can route the user to the event page (where the
-        // payment dialog lives) instead of silently failing.
+        // Cover-charge gate: server tells us payment is required. Surface it
+        // as a friendly, throwable error so callers either gate beforehand
+        // (preferred) or catch it and route the user to a payment surface.
         if (result?.status === 'payment_required') {
-          return { response, status: 'payment_required' as const, eventId };
+          const err = new Error('A cover charge is required to join this event.') as Error & {
+            code?: string;
+            eventId?: string;
+          };
+          err.code = 'cover_required';
+          err.eventId = eventId;
+          throw err;
         }
 
         if (result?.error && result.status !== 'attending' && result.status !== 'pending') {

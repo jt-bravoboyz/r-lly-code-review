@@ -1,50 +1,72 @@
 import { useEffect, useState } from 'react';
 import { format } from 'date-fns';
-import { MapPin, Calendar, Zap, Beer, X } from 'lucide-react';
+import { MapPin, Calendar, Zap, Beer, X, DollarSign } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useRallyOnboarding } from '@/contexts/RallyOnboardingContext';
 import { useRespondToInvite } from '@/hooks/useEventInvites';
+import { useCoverChargeGate } from '@/hooks/useCoverChargeGate';
+import { useAuth } from '@/hooks/useAuth';
 import { useConfetti } from '@/hooks/useConfetti';
 import { toast } from 'sonner';
 
 export function RallyInviteBanner() {
   const { state, progressToRides, cancelOnboarding } = useRallyOnboarding();
   const respondToInvite = useRespondToInvite();
+  const { profile } = useAuth();
   const { fireRallyConfetti } = useConfetti();
+  const navigate = useNavigate();
   const [isExiting, setIsExiting] = useState(false);
   const [isResponding, setIsResponding] = useState(false);
 
-  // Only show when on invite step
-  if (state.currentStep !== 'invite' || !state.invite) {
+  const invite = state.invite;
+  const event = invite?.event;
+  const inviter = invite?.inviter;
+  const cover = Number(event?.cover_charge ?? 0);
+
+  // Hook must run unconditionally — pass nulls when no invite is active.
+  const { ensurePaid, dialog: coverDialog } = useCoverChargeGate(
+    event ? { id: event.id, title: event.title, cover_charge: event.cover_charge } : null,
+    profile as any,
+  );
+
+  // Only render when on invite step
+  if (state.currentStep !== 'invite' || !invite || !event) {
     return null;
   }
-
-  const { invite } = state;
-  const event = invite.event;
-  const inviter = invite.inviter;
 
   const handleAccept = async () => {
     setIsResponding(true);
     try {
+      // Strict gate: pay cover before flipping the invite to accepted.
+      const ok = await ensurePaid();
+      if (!ok) {
+        setIsResponding(false);
+        return;
+      }
+
       await respondToInvite.mutateAsync({
         inviteId: invite.id,
         eventId: invite.event_id,
         response: 'accepted',
       });
-      
-      // Fire confetti celebration
+
       fireRallyConfetti();
-      
       toast.success("You're in! 🎉");
-      
-      // Small delay for confetti effect, then progress
+
       setTimeout(() => {
         progressToRides();
       }, 500);
     } catch (error: any) {
-      toast.error(error.message || 'Failed to join rally');
+      if (error?.code === 'cover_required') {
+        toast.error('Cover charge required — opening payment…');
+        navigate(`/events/${invite.event_id}`);
+        cancelOnboarding();
+      } else {
+        toast.error(error.message || 'Failed to join rally');
+      }
       setIsResponding(false);
     }
   };
@@ -57,7 +79,7 @@ export function RallyInviteBanner() {
         eventId: invite.event_id,
         response: 'declined',
       });
-      
+
       setIsExiting(true);
       setTimeout(() => {
         cancelOnboarding();
@@ -126,7 +148,7 @@ export function RallyInviteBanner() {
               )}
 
               {/* Badges */}
-              <div className="flex items-center gap-2 pt-2 justify-center">
+              <div className="flex items-center gap-2 pt-2 justify-center flex-wrap">
                 {event?.is_quick_rally && (
                   <Badge className="bg-yellow-500/20 text-yellow-700 border-yellow-500/30">
                     <Zap className="h-3 w-3 mr-1" />
@@ -137,6 +159,12 @@ export function RallyInviteBanner() {
                   <Badge className="bg-purple-500/20 text-purple-700 border-purple-500/30">
                     <Beer className="h-3 w-3 mr-1" />
                     Bar Hop
+                  </Badge>
+                )}
+                {cover > 0 && (
+                  <Badge className="bg-primary/15 text-primary border-primary/30">
+                    <DollarSign className="h-3 w-3 mr-1" />
+                    ${cover.toFixed(2)} cover
                   </Badge>
                 )}
               </div>
@@ -151,7 +179,11 @@ export function RallyInviteBanner() {
             disabled={isResponding}
             className="w-full h-14 text-lg font-bold rounded-xl bg-gradient-to-r from-primary via-primary to-primary/85 hover:opacity-90 text-white shadow-lg shadow-primary/30"
           >
-            {isResponding ? 'Joining...' : "I'm In!"}
+            {isResponding
+              ? 'Joining...'
+              : cover > 0
+              ? `Pay $${cover.toFixed(2)} & Join`
+              : "I'm In!"}
           </Button>
           <Button
             variant="ghost"
@@ -162,6 +194,7 @@ export function RallyInviteBanner() {
             Nah
           </Button>
         </div>
+        {coverDialog}
       </div>
     </div>
   );
