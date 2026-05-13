@@ -110,7 +110,9 @@ export function CoverChargeDialog({
               {/* Brand flag */}
               <div className="flex items-start justify-between mb-6">
                 <div className="h-8 w-10 rounded-md bg-gradient-to-br from-amber-200/80 to-amber-500/80 shadow-inner border border-amber-300/40" />
-                <img src={rallyLogo} alt="R@lly" className="h-7 w-7 object-contain" />
+                <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20">
+                  <img src={rallyLogo} alt="R@lly" className="h-10 w-10 object-contain" />
+                </div>
               </div>
               <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-semibold mb-1">
                 One-time entry
