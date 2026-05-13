@@ -148,7 +148,7 @@ export function RallyInviteBanner() {
               )}
 
               {/* Badges */}
-              <div className="flex items-center gap-2 pt-2 justify-center">
+              <div className="flex items-center gap-2 pt-2 justify-center flex-wrap">
                 {event?.is_quick_rally && (
                   <Badge className="bg-yellow-500/20 text-yellow-700 border-yellow-500/30">
                     <Zap className="h-3 w-3 mr-1" />
@@ -159,6 +159,12 @@ export function RallyInviteBanner() {
                   <Badge className="bg-purple-500/20 text-purple-700 border-purple-500/30">
                     <Beer className="h-3 w-3 mr-1" />
                     Bar Hop
+                  </Badge>
+                )}
+                {cover > 0 && (
+                  <Badge className="bg-primary/15 text-primary border-primary/30">
+                    <DollarSign className="h-3 w-3 mr-1" />
+                    ${cover.toFixed(2)} cover
                   </Badge>
                 )}
               </div>
@@ -173,7 +179,11 @@ export function RallyInviteBanner() {
             disabled={isResponding}
             className="w-full h-14 text-lg font-bold rounded-xl bg-gradient-to-r from-primary via-primary to-primary/85 hover:opacity-90 text-white shadow-lg shadow-primary/30"
           >
-            {isResponding ? 'Joining...' : "I'm In!"}
+            {isResponding
+              ? 'Joining...'
+              : cover > 0
+              ? `Pay $${cover.toFixed(2)} & Join`
+              : "I'm In!"}
           </Button>
           <Button
             variant="ghost"
@@ -184,6 +194,7 @@ export function RallyInviteBanner() {
             Nah
           </Button>
         </div>
+        {coverDialog}
       </div>
     </div>
   );
