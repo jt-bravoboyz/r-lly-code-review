@@ -1,10 +1,28 @@
-## Use the real R@lly logo on the cover charge card
+## Problem
 
-Replace the generated flag glyph (`rally-flag-flat-glyph-1024.png`) in the top-right of the Apple Pay–style hero card with the actual brand logo (`rally-logo.png`) — the same file used in the app header.
+In the Create Event dialog, the **Event Type** dropdown and **Date** picker do nothing when clicked. The clicks are actually firing — the menus open, but they render *behind* the dialog and are invisible/unclickable.
 
-### Change
-- File: `src/components/payments/CoverChargeDialog.tsx`
-  - Replace the import `rally-flag-flat-glyph-1024.png` with `@/assets/rally-logo.png`.
-  - Keep the same orange rounded-square mark slot in the top-right; render the logo inside it (object-contain, slight inset so it reads cleanly against the orange).
+## Root cause
 
-No other layout, copy, or behavior changes.
+A previous fix raised the dialog stacking context:
+- `DialogOverlay` → `z-[200]`
+- `DialogContent` → `z-[201]`
+
+But the Radix portals for Select and Popover still use the shadcn default `z-50`:
+- `src/components/ui/select.tsx` line 69 → `SelectContent` uses `z-50`
+- `src/components/ui/popover.tsx` line 20 → `PopoverContent` uses `z-50`
+
+Since `50 < 201`, the dropdown panels mount underneath the dialog and look "broken".
+
+## Fix
+
+Bump both portaled surfaces above the dialog layer.
+
+1. **`src/components/ui/select.tsx`** — change `SelectContent` className from `z-50` to `z-[300]`.
+2. **`src/components/ui/popover.tsx`** — change `PopoverContent` className from `z-50` to `z-[300]`.
+
+That's it — no logic changes, no Create Event dialog edits needed. This also fixes any other Select/Popover that lives inside a Dialog (date pickers, location search, etc.).
+
+## Verification
+
+Open Create Event → click **Event Type** (options appear) and **Pick a date** (calendar appears) on top of the dialog.
