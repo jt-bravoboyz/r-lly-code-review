@@ -1,35 +1,39 @@
-## Problem
-When the invite is accepted from **PendingInvites** ("I'm In!") or the **RallyInviteBanner** onboarding popup, the server returns `{ error: 'cover_required', status: 'payment_required' }`. Today both components silently swallow that, fire the success toast and (for PendingInvites) navigate to the event — leaving the user stranded with no way to actually pay. The toast at the bottom of the screen reading `cover_required` is the raw server error leaking through.
+## Cover Charge — Glass + Apple Pay Polish
 
-The `CoverChargeDialog` is currently only wired to the **JOIN** button on `EventDetail`, not to invite-accept buttons.
+Refine `CoverChargeDialog` and `FluidPayCardForm` so the screen feels like a premium Apple Pay sheet with R@lly's glass/liquid language, plus a clear "your info is safe" trust moment.
 
-## Fix
-Reuse the existing `useCoverChargeGate(event, profile)` hook in the two invite-accept entry points so the payment dialog opens *before* the invite is marked accepted.
+### Visual direction
 
-### 1. `src/components/events/PendingInvites.tsx`
-- For each invite, build a lightweight `EventLike` object from `invite.event` (already has `id`, `title`, `cover_charge`).
-- Wrap the card in a small subcomponent (e.g. `PendingInviteCard`) so each invite gets its own `useCoverChargeGate` instance and its own rendered `dialog`.
-- In `handleRespond('accepted')`:
-  1. `await ensurePaid()` — bail silently if user dismisses.
-  2. Then `respondToInvite.mutateAsync(...)` as today.
-  3. On success show "You're in!" + navigate.
-- Render `{coverDialog}` inside the card.
-- Remove the dependency on the swallowed `payment_required` early-return (still safe to leave in the hook as defense-in-depth).
+- **Glass sheet container**: swap the flat `DialogContent` for a layered glass panel — `backdrop-blur-2xl`, soft inner highlight (top 1px white/10), subtle outer glow in R@lly Orange at low opacity, rounded-3xl. Ambient drift behind (orange → purple) like the rest of the app.
+- **Hero amount card**: replace the gray `bg-muted` block with a tilted Apple Pay–style card visual:
+  - Frosted gradient (white/8 → white/2 in dark, white/60 → white/30 in light)
+  - Event title + host avatar top-left, R@lly mark top-right
+  - Big `$5.00` in Montserrat, "Cover" label below
+  - Soft spotlight shimmer on mount (one-shot, ~1.2s)
+- **Pay button**: tall pill, R@lly Orange gradient with inner highlight + soft outer glow, haptic-feel press scale. Apple Pay-style "Hold to confirm" optional; default = single tap.
+- **Card form (when shown)**: inputs upgraded to glass (already styled, but tighten) — floating labels, monospace card number with brand glyph that swaps live (Visa/MC/Amex), subtle success tick when fields validate.
+- **One-tap saved card row**: shown as a mini Apple Pay card chip with brand + ••••last4 and a chevron.
 
-### 2. `src/components/onboarding/RallyInviteBanner.tsx`
-- Same pattern: pass `state.invite.event` + `profile` to `useCoverChargeGate`.
-- In `handleAccept`, call `await ensurePaid()` first; if false, just reset `isResponding` and return.
-- Then run the existing `respondToInvite.mutateAsync(...)` flow.
-- Render `{coverDialog}` near the bottom of the banner (above the action buttons).
+### Trust moment
 
-### 3. Defense-in-depth tidy-up — `src/hooks/useEventInvites.tsx`
-- When `result?.status === 'payment_required'` is returned (someone bypasses the gate), throw a friendly `Error('A cover charge is required for this event.')` instead of returning silently. That way the toast no longer reads `cover_required` if a future caller forgets to gate.
-- Update `PendingInvites` / `RallyInviteBanner` to special-case this error and navigate to `/events/:eventId` so the user lands on the dialog-equipped page.
+A dedicated **Secure Payment** strip directly under the amount, not as a tiny footer:
 
-## Out of scope
-- No changes to the `request_join_event` SQL function — server-side gate is already correct.
-- No redesign of `CoverChargeDialog` itself.
-- No changes to invite list queries (cover_charge already comes back via the embedded `event:events(...)` selector — confirm during impl, add to select if missing).
+```text
+[lock icon]  Encrypted end-to-end
+             Powered by Fluid Pay · PCI-DSS Level 1
+```
 
-## Result
-Sko (or any new invitee) taps **I'm In!** on the invite card → `CoverChargeDialog` slides up → enters card → payment succeeds → invite flips to accepted → joins event. No more naked `cover_required` toast.
+- Glass pill, lock icon in R@lly Orange, two lines of micro-copy.
+- Tappable → opens a small popover with: "We never see or store your card number. Your card is tokenized by Fluid Pay (PCI-DSS Level 1) the moment you tap Pay."
+- Replaces the current tiny "Powered by Fluid Pay" badge (which moves into the popover).
+
+### Files to touch
+
+- `src/components/payments/CoverChargeDialog.tsx` — restructure layout, add hero card, trust strip, glass shell.
+- `src/components/payments/FluidPayCardForm.tsx` — input polish, live brand glyph, inline validation states.
+- `src/components/payments/PoweredByFluidPay.tsx` — extend into a `SecurePaymentBadge` with popover variant (keeps old export for compatibility).
+- No business logic, no backend, no schema changes. Sandbox/simulated payment path untouched.
+
+### Next step
+
+Before I build, I'll generate 3 visual directions of the new cover charge sheet so you can pick the exact glass/Apple Pay flavor, then implement the chosen one.
