@@ -163,7 +163,6 @@ export function RallyInviteBanner() {
                 )}
                 {cover > 0 && (
                   <Badge className="bg-primary/15 text-primary border-primary/30">
-                    <DollarSign className="h-3 w-3 mr-1" />
                     ${cover.toFixed(2)} cover
                   </Badge>
                 )}
