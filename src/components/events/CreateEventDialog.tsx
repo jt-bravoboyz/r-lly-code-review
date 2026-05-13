@@ -77,7 +77,7 @@ const timeOptions = generateTimeOptions();
 
 export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {}) {
   const [open, setOpen] = useState(false);
-  const [datePickerOpen, setDatePickerOpen] = useState(false);
+  
   const [stagedMedia, setStagedMedia] = useState<StagedFile[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState('');
