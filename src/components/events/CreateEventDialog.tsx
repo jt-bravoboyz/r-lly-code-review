@@ -354,7 +354,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
         
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div ref={essentialsRef} className="space-y-4">
+            <div ref={essentialsRef} className="space-y-4 scroll-mt-14">
             <p className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground/60 font-montserrat -mb-2">Essentials</p>
             <FormField
               control={form.control}
