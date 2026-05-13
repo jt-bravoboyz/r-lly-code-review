@@ -147,6 +147,11 @@ export default {
           "15%": { opacity: "0.45" },
           "100%": { transform: "translate(-50%, -50%) scale(3.6)", opacity: "0" },
         },
+        "shimmer": {
+          "0%": { transform: "translateX(-100%) rotate(12deg)", opacity: "0" },
+          "30%": { opacity: "1" },
+          "100%": { transform: "translateX(100%) rotate(12deg)", opacity: "0" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
