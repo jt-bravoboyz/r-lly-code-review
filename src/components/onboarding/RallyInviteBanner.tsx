@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react';
 import { format } from 'date-fns';
-import { MapPin, Calendar, Zap, Beer, X } from 'lucide-react';
+import { MapPin, Calendar, Zap, Beer, X, DollarSign } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useRallyOnboarding } from '@/contexts/RallyOnboardingContext';
 import { useRespondToInvite } from '@/hooks/useEventInvites';
+import { useCoverChargeGate } from '@/hooks/useCoverChargeGate';
+import { useAuth } from '@/hooks/useAuth';
 import { useConfetti } from '@/hooks/useConfetti';
 import { toast } from 'sonner';
 
