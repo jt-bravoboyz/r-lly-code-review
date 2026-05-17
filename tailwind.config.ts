@@ -152,11 +152,6 @@ export default {
           "30%": { opacity: "1" },
           "100%": { transform: "translateX(100%) rotate(12deg)", opacity: "0" },
         },
-        "avatar-pop": {
-          "0%": { transform: "scale(0.6)", opacity: "0" },
-          "60%": { transform: "scale(1.08)", opacity: "1" },
-          "100%": { transform: "scale(1)", opacity: "1" },
-        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -168,7 +163,6 @@ export default {
         "scale-in": "scale-in 0.2s ease-out",
         "pin-breath": "pin-breath 3.5s ease-in-out infinite",
         "rally-beacon-ring": "rally-beacon-ring 3.6s ease-out infinite",
-        "avatar-pop": "avatar-pop 320ms cubic-bezier(0.22, 1, 0.36, 1)",
       },
     },
   },
