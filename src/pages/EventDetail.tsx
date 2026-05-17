@@ -156,6 +156,7 @@ export default function EventDetail() {
     const next = new URLSearchParams(searchParams);
     next.delete('pay');
     setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   const [showRallyComplete, setShowRallyComplete] = useState(false);
   const [showTransportSelector, setShowTransportSelector] = useState(false);
