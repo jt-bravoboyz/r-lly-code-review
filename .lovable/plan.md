@@ -1,72 +1,55 @@
-# Interactive Itemized Claim Screen
+# Apple-Refined Itemized Claim Screen
 
-Upgrade `src/components/payments/ClaimItemsView.tsx` (and a tiny tweak to `PaySplitShareDialog.tsx`) so attendees see a live, social, fully-prorated split experience. No DB schema changes — `split_check_item_claims` already supports multiple profiles per item.
+Polish `src/components/payments/ClaimItemsView.tsx` (and one small wrapper tweak in `PaySplitShareDialog.tsx`) so the four features I just shipped feel iOS-native. No DB/API changes.
 
 ---
 
-## 1. Attendee avatars on each item row
+## 1. Sticky glass Live Summary
 
-- On `refresh()`, after loading claims, fetch profile data for every distinct `profile_id` via `safe_profiles` (`id, display_name, avatar_url`).
-- Cache in `claimantsByItem: Record<string, Array<{id, name, avatar, qty}>>`.
-- Render a small avatar stack to the right of the item description:
-  - Use shadcn `<Avatar>` + `<AvatarImage>` / `<AvatarFallback>` (initials).
-  - Size `h-6 w-6`, `-ml-2` overlap, ring `ring-2 ring-background`.
-  - Subtle pop-in animation (`animate-in fade-in zoom-in-50 duration-200`) so new claimers feel "live".
-  - Current user gets an orange ring (`ring-primary`) to self-identify.
+Restructure the component into a flex column with an internal scrollable list and a pinned footer:
 
-## 2. Shared items (fractional claims)
+- Outer wrapper: `flex flex-col max-h-[70vh]`.
+- Item list: `flex-1 overflow-y-auto divide-y divide-border/40` (replaces today's `space-y-2` gaps — Apple-style hairlines instead of stacked cards).
+- Live Summary: detaches from in-flow card and becomes a **sticky footer**:
+  - Classes: `sticky bottom-0 -mx-* backdrop-blur-md bg-background/75 border-t border-border/40 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]`
+  - Tight rows: `text-[13px] leading-tight`, three lines (Subtotal / Tax & Tip / Total) with `tabular-nums font-medium`.
+  - Removes the boxy `card-rally border-primary/30 bg-primary/5` look — replaced by the glass bar.
+  - Keeps the same math (`mySubtotalC + myTaxTipC = myTotalC`) and `onTotalsChange` callback.
 
-- **Remove the `remaining` cap.** Any attendee may always tap `+` on any item — no disabled state from supply.
-- Per-person cost for an item becomes:
-  `myShare = unit_price_cents * (myQty / totalClaimedQty) * item.quantity`
-  - i.e. claims represent *weight*. If 2 people each claim 1 of a qty-1 item, total claimed = 2 → each pays 50% of `unit_price * 1`.
-  - If 3 people claim 1 of a qty-2 item, each pays `unit_price * 2 / 3`.
-- This matches the host's settlement math only when host RPC also prorates by weight; we already do (verified in `useMyUnpaidSplit` itemized path which calls the existing RPC). Client-side estimate purely drives the Live Summary — server remains source of truth at pay time.
+In `PaySplitShareDialog.tsx`, give the wrapping `<DialogContent>` `p-0` adjustments only if needed so the sticky bar can hug the bottom of the modal; the dialog already has `max-h-[90vh] overflow-y-auto` which we'll narrow to let `ClaimItemsView` own its own scroll region for itemized mode.
 
-## 3. Live Summary footer card
+## 2. Refined micro-interactions
 
-Below the item list, add a sticky-feel card (`card-rally` with `border-primary/30 bg-primary/5`) that recomputes on every claim change:
+- **Final total scale pulse:** wrap the total `<span>` with `key={myTotalC}` and class `transition-transform duration-150 ease-out scale-[1.02]` applied on a state flip via a one-shot `useEffect` that toggles a boolean for 150ms (then back to `scale-100`). Tabular-nums prevents horizontal jitter so the pulse is purely vertical/scale.
+- **Avatar pop-ins:** swap the current `animate-in fade-in zoom-in-50 duration-200` for a tighter spring feel — add a tiny project-local keyframe `avatar-pop` in `tailwind.config.ts` (`0% { transform: scale(0.6); opacity: 0 } 60% { transform: scale(1.08); opacity: 1 } 100% { transform: scale(1) }`, `cubic-bezier(0.22, 1, 0.36, 1)`, 320ms) and apply `animate-[avatar-pop_320ms_cubic-bezier(0.22,1,0.36,1)]` on the `<Avatar>`.
 
-```text
-Your Items Subtotal         $XX.XX
-Your Prorated Tax & Tip   + $X.XX
-─────────────────────────────────
-Your Estimated Final Charge $XX.XX
-```
+## 3. Sophisticated unclaimed state
 
-Math:
-- `mySubtotal = Σ myShare(item)` across all items.
-- `grandSubtotal = Σ unit_price_cents * item.quantity` (request total pre-tax/tip).
-- `taxTipPool = request.tax_cents + request.tip_cents` (passed in from parent — see #5).
-- `myTaxTip = grandSubtotal > 0 ? taxTipPool * (mySubtotal / grandSubtotal) : 0`.
-- `myTotal = mySubtotal + myTaxTip`.
+Replace today's loud dashed/pulsing primary block with a restrained breathing state:
 
-Animate the final number with a brief `transition-all` + scale pulse when it changes.
+- Unclaimed row: `border border-dashed border-primary/20 bg-primary/[0.01] animate-pulse [animation-duration:4s]` plus `rounded-xl` to soften.
+- Claimed row: `border border-transparent bg-transparent` (the new `divide-y` hairline carries the structure).
+- Drop the colored "Unclaimed"/"Claimed" pills — replace with a tiny right-aligned dot: `h-1.5 w-1.5 rounded-full bg-primary/40` (unclaimed) or `bg-muted-foreground/20` (claimed). Cleaner, less shouty.
 
-## 4. Unclaimed-items glow
+## 4. Haptic-feedback layout
 
-For each item, compute `totalClaimed = Σ claims.quantity_claimed` across all profiles.
-- If `totalClaimed < item.quantity` → row gets `border-2 border-dashed border-primary/40 bg-primary/[0.03]` with a soft `animate-pulse` (slowed via custom `[animation-duration:3s]`).
-- If `totalClaimed >= item.quantity` → solid `border border-border bg-muted/40` (claimed/over-claimed = settled visually).
-- Small "Unclaimed" / "Claimed" pill on the right edge for clarity, using `text-[10px]` muted token.
-
-## 5. Wiring
-
-- `ClaimItemsView` props gain optional `tax_cents`, `tip_cents`, `onTotalsChange?: (myCents:number)=>void`.
-- `PaySplitShareDialog.tsx` already fetches the request — pass `request.tax_cents` and `request.tip_cents` into `ClaimItemsView`, and use `onTotalsChange` to update the dialog's "Pay $X.XX" CTA in real time for itemized requests (currently it reads a server-side computed total; we'll prefer the live local estimate for display, server still authoritative at submit).
+- Rows use `py-3 px-1` for breathing room within `divide-y`.
+- Quantity buttons grow to Apple-grade tap targets: `h-9 w-9` (still visually compact thanks to `rounded-full` and `variant="ghost"` styling), with `active:scale-95 transition-transform` for tactile press.
+- Replace generic `<Button variant="outline">` for +/- with `variant="ghost"` + `border border-border/60 rounded-full` so they read as iOS stepper buttons.
+- Avatar stack ring: keep `ring-2 ring-background`; self avatar gets a thinner `ring-[1.5px] ring-primary`.
+- Tap-target padding on the row itself isn't tappable (only the +/- are), so no accidental triggers.
 
 ---
 
 ## Technical Details
 
 **Files:**
-- Edit `src/components/payments/ClaimItemsView.tsx` (main work)
-- Light edit `src/components/payments/PaySplitShareDialog.tsx` (pass tax/tip, consume `onTotalsChange` for CTA label)
+- `src/components/payments/ClaimItemsView.tsx` — the core refinement work above.
+- `tailwind.config.ts` — add `avatar-pop` keyframe + animation entry.
+- `src/components/payments/PaySplitShareDialog.tsx` — minor: relax `overflow-y-auto` on `DialogContent` for itemized mode so the inner sticky footer pins correctly; the rest stays.
 
-**No DB migration.** Existing `split_check_item_claims` (composite unique on `item_id,profile_id`) already supports many profiles per item. The fractional cost is purely a derived display + handled by the host's existing settlement RPC.
+**Tokens only:** `bg-background/75`, `border-border/40`, `border-primary/20`, `bg-primary/[0.01]`, `text-muted-foreground`, `ring-primary`. No raw hex, no new colors.
 
-**Realtime:** Existing channel subscription stays; we just also re-fetch profile metadata when a new `profile_id` appears (cache hit otherwise).
+**No DB / API / RLS changes.** Math, schema, realtime channels, and `onTotalsChange` wiring are unchanged from the previous implementation.
 
-**Tokens only** — `bg-primary/5`, `border-primary/40`, `ring-primary`, `text-muted-foreground`. No raw hex.
-
-**Out of scope:** Host-side settlement panel, server payment math, schema changes, notifications.
+**Out of scope:** Host-side settlement panel, dialog CTA styling, payment flow, notifications.
