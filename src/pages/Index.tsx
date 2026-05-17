@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Zap, ArrowRight, Plus, Bell, Sparkles, Clock, Calendar, History } from 'lucide-react';
+import { Zap, ArrowRight, Plus, Bell, Sparkles, Clock, Calendar, History, KeyRound } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -101,7 +101,16 @@ export default function Index() {
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Link
+              to="/join"
+              aria-label="Join with code"
+              className="inline-flex items-center gap-1.5 h-11 min-w-11 px-2.5 sm:px-3 rounded-full bg-white/10 hover:bg-white/20 active:scale-[0.97] ring-1 ring-white/20 backdrop-blur-md text-white/90 transition-all"
+            >
+              <KeyRound className="h-[18px] w-[18px]" strokeWidth={2.25} />
+              <span className="hidden min-[380px]:inline text-[13px] font-medium tracking-tight">Join with code</span>
+            </Link>
+
             <Link to="/notifications" className="relative group">
               <div className="absolute inset-0 bg-white/10 rounded-full blur-sm group-hover:bg-white/20 transition-all" />
               <Bell className="h-6 w-6 text-white relative" strokeWidth={2} />

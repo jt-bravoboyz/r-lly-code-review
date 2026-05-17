@@ -718,6 +718,14 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
               </p>
             )}
 
+            <button
+              type="button"
+              onClick={() => { setOpen(false); navigate('/join'); }}
+              className="block w-full text-center text-[12px] text-muted-foreground hover:text-foreground transition-colors mt-2"
+            >
+              Got an invite code? <span className="text-primary font-medium">Join a R@lly →</span>
+            </button>
+
             {failedUploads.length > 0 && !isUploading && (
               <Button
                 type="button"
