@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Minus, Plus } from 'lucide-react';
+import { useHaptics } from '@/hooks/useHaptics';
 
 interface Props {
   requestId: string;
@@ -26,9 +27,9 @@ function initials(name: string) {
 
 export function ClaimItemsView({ requestId, profileId, taxCents = 0, tipCents = 0, onChange, onTotalsChange }: Props) {
   const [items, setItems] = useState<any[]>([]);
-  // item_id -> Claimant[]
   const [claimsByItem, setClaimsByItem] = useState<Record<string, Claimant[]>>({});
   const [profileCache, setProfileCache] = useState<Record<string, { name: string; avatar: string | null }>>({});
+  const { triggerHaptic } = useHaptics();
 
   const refresh = async () => {
     const { data: it } = await supabase.from('split_check_items').select('*').eq('request_id', requestId).order('line_no');
@@ -38,7 +39,6 @@ export function ClaimItemsView({ requestId, profileId, taxCents = 0, tipCents = 
     const { data: cls } = await supabase.from('split_check_item_claims').select('*').in('item_id', itemIds);
     const rows = cls ?? [];
 
-    // hydrate profile cache for any new profile ids
     const needed = Array.from(new Set(rows.map((r: any) => r.profile_id))).filter(id => !profileCache[id]);
     let newCache = profileCache;
     if (needed.length) {
@@ -78,6 +78,7 @@ export function ClaimItemsView({ requestId, profileId, taxCents = 0, tipCents = 
     const current = mineRow?.qty ?? 0;
     const next = Math.max(0, current + delta);
     if (next === current) return;
+    triggerHaptic('selection');
     if (next === 0) {
       await supabase.from('split_check_item_claims').delete().eq('item_id', itemId).eq('profile_id', profileId);
     } else {
@@ -86,7 +87,6 @@ export function ClaimItemsView({ requestId, profileId, taxCents = 0, tipCents = 
     refresh(); onChange?.();
   };
 
-  // ---- Live math ----
   const { mySubtotalC, grandSubtotalC, myTaxTipC, myTotalC } = useMemo(() => {
     let mine = 0;
     let grand = 0;
@@ -110,100 +110,109 @@ export function ClaimItemsView({ requestId, profileId, taxCents = 0, tipCents = 
   const fmt = (c: number) => `$${(c / 100).toFixed(2)}`;
 
   return (
-    <div className="space-y-2">
-      <p className="text-sm font-medium">Claim what you ordered</p>
+    <div className="space-y-3 pb-28">
+      <p className="text-[13px] font-medium text-foreground/80 tracking-tight">Claim what you ordered</p>
 
-      {items.map(it => {
-        const claimants = claimsByItem[it.id] ?? [];
-        const totalClaimed = claimants.reduce((s, c) => s + c.qty, 0);
-        const mine = claimants.find(c => c.profile_id === profileId)?.qty ?? 0;
-        const unclaimed = totalClaimed < it.quantity;
-        const lineTotal = it.unit_price_cents * it.quantity;
-        const myShareC = totalClaimed > 0 && mine > 0 ? Math.round(lineTotal * (mine / totalClaimed)) : 0;
+      <div className="rounded-2xl border border-border/60 bg-card/60 divide-y divide-border/40 overflow-hidden">
+        {items.map(it => {
+          const claimants = claimsByItem[it.id] ?? [];
+          const totalClaimed = claimants.reduce((s, c) => s + c.qty, 0);
+          const mine = claimants.find(c => c.profile_id === profileId)?.qty ?? 0;
+          const unclaimed = totalClaimed < it.quantity;
+          const lineTotal = it.unit_price_cents * it.quantity;
+          const myShareC = totalClaimed > 0 && mine > 0 ? Math.round(lineTotal * (mine / totalClaimed)) : 0;
 
-        return (
-          <div
-            key={it.id}
-            className={[
-              'flex items-center gap-2 p-2.5 rounded-lg transition-all',
-              unclaimed
-                ? 'border-2 border-dashed border-primary/40 bg-primary/[0.04] animate-pulse [animation-duration:3s]'
-                : 'border border-border bg-muted/40',
-            ].join(' ')}
-          >
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <p className="text-sm truncate">{it.description}</p>
-                <span className={[
-                  'text-[10px] px-1.5 py-0.5 rounded-full shrink-0',
-                  unclaimed ? 'bg-primary/15 text-primary' : 'bg-muted text-muted-foreground',
-                ].join(' ')}>
-                  {unclaimed ? 'Unclaimed' : 'Claimed'}
-                </span>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {fmt(it.unit_price_cents)} · qty {it.quantity}
-                {mine > 0 && <span className="text-primary font-medium"> · you: {fmt(myShareC)}</span>}
-              </p>
-              {claimants.length > 0 && (
-                <div className="flex items-center mt-1.5">
-                  {claimants.slice(0, 6).map(c => (
-                    <Avatar
-                      key={c.profile_id}
-                      className={[
-                        'h-6 w-6 -ml-2 first:ml-0 ring-2 ring-background animate-in fade-in zoom-in-50 duration-200',
-                        c.profile_id === profileId ? 'ring-primary' : '',
-                      ].join(' ')}
-                      title={`${c.name}${c.qty > 1 ? ` ×${c.qty}` : ''}`}
-                    >
-                      {c.avatar && <AvatarImage src={c.avatar} alt={c.name} />}
-                      <AvatarFallback className="text-[10px]">{initials(c.name)}</AvatarFallback>
-                    </Avatar>
-                  ))}
-                  {claimants.length > 6 && (
-                    <span className="text-[10px] text-muted-foreground -ml-1 pl-2">+{claimants.length - 6}</span>
-                  )}
+          return (
+            <div
+              key={it.id}
+              className={[
+                'flex items-center gap-3 px-3 py-3 transition-colors duration-300',
+                unclaimed
+                  ? 'border-l-2 border-l-dashed border-l-primary/20 bg-primary/[0.015] animate-pulse [animation-duration:4s]'
+                  : 'border-l-2 border-l-transparent',
+              ].join(' ')}
+            >
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <p className="text-[14px] font-medium tracking-tight truncate">{it.description}</p>
                 </div>
-              )}
+                <p className="text-[11px] text-muted-foreground tabular-nums mt-0.5">
+                  {fmt(it.unit_price_cents)} · qty {it.quantity}
+                  {mine > 0 && <span className="text-primary font-medium"> · you {fmt(myShareC)}</span>}
+                </p>
+                {claimants.length > 0 && (
+                  <div className="flex items-center mt-2">
+                    {claimants.slice(0, 6).map(c => (
+                      <Avatar
+                        key={c.profile_id}
+                        className={[
+                          'h-6 w-6 -ml-1.5 first:ml-0 ring-2 ring-background',
+                          'animate-in fade-in zoom-in-75 duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]',
+                          c.profile_id === profileId ? '!ring-primary' : '',
+                        ].join(' ')}
+                        title={`${c.name}${c.qty > 1 ? ` ×${c.qty}` : ''}`}
+                      >
+                        {c.avatar && <AvatarImage src={c.avatar} alt={c.name} />}
+                        <AvatarFallback className="text-[9px] font-medium">{initials(c.name)}</AvatarFallback>
+                      </Avatar>
+                    ))}
+                    {claimants.length > 6 && (
+                      <span className="text-[10px] text-muted-foreground ml-2 tabular-nums">+{claimants.length - 6}</span>
+                    )}
+                  </div>
+                )}
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <Button
+                  size="icon"
+                  variant="outline"
+                  className="h-9 w-9 rounded-full active:scale-95 transition-transform"
+                  onClick={() => change(it.id, -1)}
+                  disabled={mine === 0}
+                >
+                  <Minus className="h-3.5 w-3.5" />
+                </Button>
+                <span className="w-5 text-center text-[14px] font-semibold tabular-nums">{mine}</span>
+                <Button
+                  size="icon"
+                  variant="outline"
+                  className="h-9 w-9 rounded-full active:scale-95 transition-transform"
+                  onClick={() => change(it.id, +1)}
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                </Button>
+              </div>
             </div>
-            <div className="flex items-center gap-1.5 shrink-0">
-              <Button size="icon" variant="outline" className="h-7 w-7" onClick={() => change(it.id, -1)} disabled={mine === 0}>
-                <Minus className="h-3 w-3" />
-              </Button>
-              <span className="w-6 text-center text-sm font-medium">{mine}</span>
-              <Button size="icon" variant="outline" className="h-7 w-7" onClick={() => change(it.id, +1)}>
-                <Plus className="h-3 w-3" />
-              </Button>
-            </div>
-          </div>
-        );
-      })}
+          );
+        })}
 
-      {!items.length && <p className="text-sm text-muted-foreground">No items.</p>}
+        {!items.length && <p className="text-sm text-muted-foreground p-4 text-center">No items.</p>}
+      </div>
 
       {items.length > 0 && (
-        <div className="card-rally border border-primary/30 bg-primary/5 rounded-xl p-3 mt-3 space-y-1.5">
-          <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-semibold">Live Summary</p>
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Your Items Subtotal</span>
+        <div className="sticky bottom-0 left-0 right-0 -mx-6 px-6 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-md bg-background/75 border-t border-border/40 z-10">
+          <p className="text-[10px] uppercase tracking-[0.08em] text-muted-foreground font-semibold mb-1.5">Live Summary</p>
+          <div className="flex items-center justify-between text-[13px]">
+            <span className="text-muted-foreground">Your items subtotal</span>
             <span className="font-medium tabular-nums">{fmt(mySubtotalC)}</span>
           </div>
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Your Prorated Tax &amp; Tip</span>
+          <div className="flex items-center justify-between text-[13px] mt-0.5">
+            <span className="text-muted-foreground">Prorated tax &amp; tip</span>
             <span className="font-medium tabular-nums">+ {fmt(myTaxTipC)}</span>
           </div>
-          <div className="h-px bg-border my-1" />
+          <div className="h-px bg-border/40 my-2" />
           <div className="flex items-center justify-between">
-            <span className="text-sm font-semibold">Your Estimated Final Charge</span>
+            <span className="text-[13px] font-medium tracking-tight">Estimated final charge</span>
             <span
               key={myTotalC}
-              className="text-lg font-bold font-montserrat text-primary tabular-nums animate-in zoom-in-95 duration-200"
+              className="text-[19px] font-semibold font-montserrat text-primary tabular-nums inline-block transition-transform duration-150 ease-out animate-in zoom-in-[1.02]"
+              style={{ transform: 'scale(1.02)', animation: 'scale-in 150ms ease-out' }}
             >
               {fmt(myTotalC)}
             </span>
           </div>
           {grandSubtotalC > 0 && mySubtotalC === 0 && (
-            <p className="text-[11px] text-muted-foreground pt-1">Tap + on items above to start your tab.</p>
+            <p className="text-[11px] text-muted-foreground pt-1.5">Tap + on items above to start your tab.</p>
           )}
         </div>
       )}
