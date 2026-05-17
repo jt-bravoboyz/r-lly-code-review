@@ -1,34 +1,55 @@
-# Add a "Join a R@lly with code" entry point
+# Fix: Founders blocked from joining cover-charge R@llies
 
-## Problem
-The `/join` route + manual code input already exist (`src/pages/JoinRally.tsx`), but nothing in the app's chrome links to it. The only way in today is tapping a shared `rlly.cloud/join/<code>` link from outside the app. Users who were told a code verbally have no way to redeem it.
+## Root cause
+`request_join_event` (SECURITY DEFINER RPC) enforces the cover charge by checking for a `payments` row:
 
-## Plan
+```sql
+IF NOT v_is_host THEN
+  IF COALESCE(v_cover, 0) > 0 THEN
+    SELECT EXISTS (SELECT 1 FROM payments
+      WHERE event_id = ... AND user_id = auth.uid()
+        AND kind = 'cover' AND status = 'succeeded') INTO v_paid;
+    IF NOT v_paid THEN
+      RETURN jsonb_build_object('error', 'cover_required', ...);
+    END IF;
+  END IF;
+END IF;
+```
 
-### 1. Primary entry — Home screen header (`src/pages/Index.tsx`)
-- Add a clean, premium Apple-style action button in the top header row of the Home page (`src/pages/Index.tsx`).
-- Pair a neutral ghost style (`text-foreground/80`) `KeyRound` icon + label "Join with code" next to or balanced with the primary active triggers.
-- Tapping it navigates to `/join` (the page already supports the empty-code state with its manual-entry input).
-- On mobile viewports < 380px: collapse to icon-only to preserve space; from sm: up, show full label.
-- Maintain a crisp 44px touch target.
+The client-side `CoverChargeDialog` short-circuits with a "Founder Fee Waived" screen and calls `onPaid('founder_waived')` — but **no `payments` row is ever inserted**, so the RPC rejects the join with `cover_required`. The user sees the waiver, taps Continue, and the toast says "cover_required".
 
-### 2. Secondary entry — CreateEventDialog footer (`src/components/events/CreateEventDialog.tsx`)
-- One-line text link at the bottom of the create sheet: *"Got an invite code? Join a R@lly →"* that closes the sheet and navigates to `/join`.
-- Covers the case where a new user taps "+ Create" thinking that's how you participate.
+Founder status is a real server-checkable attribute (`profiles.founder_number IS NOT NULL`), so the waiver should be enforced in the database, not relied on from the client.
 
-### 3. Optional empty-state fallback (`src/pages/Events.tsx`)
-- On the Events page empty state ("No R@llies yet"), add a secondary **"Join with code"** ghost action below the primary "Create your first R@lly" CTA. (De-prioritized; only if Home header feels hidden on that tab.)
+## Fix
+Single migration that updates `request_join_event` to also exempt founders from the cover gate:
+
+```sql
+-- inside the NOT v_is_host branch, before the payment check:
+DECLARE v_is_founder boolean;
+...
+SELECT (founder_number IS NOT NULL)
+  INTO v_is_founder
+  FROM profiles WHERE id = v_profile_id;
+
+IF COALESCE(v_cover, 0) > 0 AND NOT v_is_founder THEN
+  ... existing payment check ...
+END IF;
+```
+
+Everything else in the function (host exemption, attendee insert, status) is unchanged.
+
+## Why this fix
+- **Authoritative**: matches the existing UI promise without trusting the client.
+- **Minimal blast radius**: only one branch of one RPC; no schema changes, no client edits, no new tables.
+- **Non-founders unaffected**: cover gate still fires for them exactly as today.
+- **Already-paid non-founders unaffected**: the `succeeded` payment check still short-circuits for them.
 
 ## Out of scope
-- No changes to `JoinRally.tsx` itself — its UI, RPC calls, and pending-code persistence already work.
-- No changes to the bottom nav (5 tabs are already at capacity per the layout system).
-- No changes to deep-link handling or `AuthRedirectGuard`.
+- No changes to `CoverChargeDialog` UI — it already renders the correct waiver screen for founders, and that flow will now actually succeed.
+- No changes to `useCoverChargeGate` — it remains the right client gate for non-founders.
+- No retroactive payment-row backfill — founders never needed one.
 
-## Files to touch
-- `src/pages/Index.tsx` — header CTA row.
-- `src/components/events/CreateEventDialog.tsx` — footer link.
-
-## Visual / token notes
-- Use existing `Button variant="ghost"` + `KeyRound` from `lucide-react`.
-- Brand orange only on the primary action — the join entry stays neutral (`text-foreground/80`) so it doesn't compete.
-- 44px touch target preserved.
+## Verification
+1. Founder account taps Join on a R@lly with `cover_charge > 0` → sees "Founder Fee Waived" → Continue → RPC returns `success: true, status: attending` (or `pending` for non-invitees on private events).
+2. Non-founder account on the same R@lly → still gated by `CoverChargeDialog` → must pay → RPC succeeds only after the `payments` row exists.
+3. Host/co-host → unchanged, exempt path still wins first.
