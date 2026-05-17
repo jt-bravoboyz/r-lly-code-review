@@ -54,6 +54,16 @@ Deno.serve(async (req) => {
     }
     const body = parsed.data;
 
+    // Production rule: split_share payments MUST carry an idempotency key
+    if (body.kind === "split_share" && !body.idempotency_key) {
+      return new Response(
+        JSON.stringify({ ok: false, error: "idempotency_key_required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    const isSimulatedToken = body.payment_token.startsWith("simulated_") || body.payment_token.startsWith("tok_sandbox_");
+
     // Resolve payer profile
     const { data: payerProfile } = await admin.from("profiles").select("id").eq("user_id", userId).maybeSingle();
 
@@ -139,35 +149,47 @@ Deno.serve(async (req) => {
       throw insErr;
     }
 
-    // Call Fluid Pay /transaction/sale
-    const fpRes = await fetch(`${cfg.baseUrl}/transaction/sale`, {
-      method: "POST",
-      headers: {
-        "Authorization": cfg.privateKey,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        amount: body.amount_cents,
-        order_id: pending.id,
-        payment_method: { token: body.payment_token },
-        merchant_id: destination,
-      }),
-    });
-    const fpJson = await fpRes.json().catch(() => ({}));
+    let fpJson: any = null;
+    let txId: string | null = null;
 
-    if (!fpRes.ok || fpJson?.status === "declined" || fpJson?.status === "error") {
-      await admin.from("payments").update({
-        status: "failed",
-        error_message: fpJson?.msg ?? `HTTP ${fpRes.status}`,
-        metadata: fpJson,
-      }).eq("id", pending.id);
-      return new Response(
-        JSON.stringify({ ok: false, error: fpJson?.msg ?? "payment_declined", payment_id: pending.id }),
-        { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
+    if (isSimulatedToken) {
+      // Simulated path: skip Fluid Pay entirely, record success locally.
+      fpJson = { simulated: true };
+      txId = `sim_${pending.id}`;
+    } else {
+      // Call Fluid Pay /transaction/sale
+      const fpRes = await fetch(`${cfg.baseUrl}/transaction/sale`, {
+        method: "POST",
+        headers: {
+          "Authorization": cfg.privateKey,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          amount: body.amount_cents,
+          order_id: pending.id,
+          payment_method: { token: body.payment_token },
+          merchant_id: destination,
+        }),
+      });
+      fpJson = await fpRes.json().catch(() => ({}));
+
+      if (!fpRes.ok || fpJson?.status === "declined" || fpJson?.status === "error") {
+        const rawMsg = fpJson?.msg ?? `HTTP ${fpRes.status}`;
+        await admin.from("payments").update({
+          status: "failed",
+          error_message: rawMsg,
+          metadata: fpJson,
+        }).eq("id", pending.id);
+        // Map upstream 404s to a clean user-facing code
+        const userMsg = /404/.test(String(rawMsg)) ? "payment_unavailable" : (fpJson?.msg ?? "payment_declined");
+        return new Response(
+          JSON.stringify({ ok: false, error: userMsg, payment_id: pending.id }),
+          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      txId = fpJson?.data?.id ?? fpJson?.id ?? null;
     }
-
-    const txId = fpJson?.data?.id ?? fpJson?.id ?? null;
 
     await admin.from("payments").update({
       status: "paid",

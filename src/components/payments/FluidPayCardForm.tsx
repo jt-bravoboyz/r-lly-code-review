@@ -11,6 +11,7 @@ interface Props {
   onTokenize: (token: string, brand: string, last4: string, save: boolean) => Promise<void>;
   submitLabel?: string;
   showSaveOption?: boolean;
+  externalDisabled?: boolean;
 }
 
 function detectBrand(num: string): 'visa' | 'mastercard' | 'amex' | 'discover' | 'card' {
@@ -44,8 +45,8 @@ const BrandGlyph = ({ brand }: { brand: string }) => {
   }
 };
 
-export function FluidPayCardForm({ amountCents, onTokenize, submitLabel, showSaveOption = true }: Props) {
-  const { config } = useFluidPay();
+export function FluidPayCardForm({ amountCents, onTokenize, submitLabel, showSaveOption = true, externalDisabled = false }: Props) {
+  const { config, loadTokenizer, isSimulated } = useFluidPay();
   const [number, setNumber] = useState('');
   const [exp, setExp] = useState('');
   const [cvv, setCvv] = useState('');
@@ -58,14 +59,55 @@ export function FluidPayCardForm({ amountCents, onTokenize, submitLabel, showSav
   const expValid = exp.replace(/\D/g, '').length === 4;
   const cvvValid = cvv.length >= 3;
   const allValid = cardValid && expValid && cvvValid;
+  const disabled = busy || !allValid || externalDisabled;
+
+  const tokenizeReal = async (cleaned: string, expDigits: string): Promise<string> => {
+    const ok = await loadTokenizer();
+    const tk: any = (window as any).FluidPayTokenizer ?? (window as any).FluidPay;
+    if (!ok || !tk || !config?.publicKey) {
+      throw new Error('Card processing unavailable. Try again shortly.');
+    }
+    const exp_month = expDigits.slice(0, 2);
+    const exp_year = expDigits.slice(2, 4);
+    const payload = {
+      publicKey: config.publicKey,
+      card: { number: cleaned, exp_month, exp_year, cvv },
+    };
+    // Fluid Pay's tokenizer exposes either `create` (promise) or `createPaymentToken` (callback).
+    if (typeof tk.create === 'function') {
+      const res = await tk.create(payload);
+      const token = res?.id ?? res?.token ?? res?.data?.id;
+      if (!token) throw new Error('Tokenization failed');
+      return token as string;
+    }
+    if (typeof tk.createPaymentToken === 'function') {
+      return await new Promise<string>((resolve, reject) => {
+        tk.createPaymentToken(payload, (res: any) => {
+          const token = res?.id ?? res?.token ?? res?.data?.id;
+          if (token) resolve(token);
+          else reject(new Error(res?.msg ?? 'Tokenization failed'));
+        });
+      });
+    }
+    throw new Error('Card tokenizer incompatible');
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (busy || externalDisabled) return;
     setBusy(true); setErr(null);
     try {
       const cleaned = number.replace(/\s+/g, '');
+      const expDigits = exp.replace(/\D/g, '');
       const last4 = cleaned.slice(-4);
-      const token = `tok_sandbox_${Date.now()}_${last4}`;
+
+      let token: string;
+      if (isSimulated() || !config?.configured) {
+        // Simulated / unconfigured path — prefixed token signals the server to skip the live charge.
+        token = `simulated_${Date.now()}_${last4}`;
+      } else {
+        token = await tokenizeReal(cleaned, expDigits);
+      }
       await onTokenize(token, brand, last4, save);
     } catch (e: any) {
       setErr(e?.message ?? 'Payment failed');
@@ -96,6 +138,7 @@ export function FluidPayCardForm({ amountCents, onTokenize, submitLabel, showSav
             onChange={e => setNumber(formatCard(e.target.value))}
             className="h-12 pr-14 font-mono tracking-wide text-base rounded-2xl"
             required
+            disabled={busy || externalDisabled}
           />
           <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
             {cardValid && <Check className="h-3.5 w-3.5 text-primary" />}
@@ -118,6 +161,7 @@ export function FluidPayCardForm({ amountCents, onTokenize, submitLabel, showSav
             onChange={e => setExp(formatExp(e.target.value))}
             className="h-12 font-mono text-base rounded-2xl"
             required
+            disabled={busy || externalDisabled}
           />
         </div>
         <div className="space-y-1.5">
@@ -133,13 +177,14 @@ export function FluidPayCardForm({ amountCents, onTokenize, submitLabel, showSav
             onChange={e => setCvv(e.target.value.replace(/\D/g, '').slice(0, 4))}
             className="h-12 font-mono text-base rounded-2xl"
             required
+            disabled={busy || externalDisabled}
           />
         </div>
       </div>
 
       {showSaveOption && (
         <label className="flex items-center gap-2.5 text-sm pt-1 cursor-pointer select-none">
-          <Checkbox checked={save} onCheckedChange={(v) => setSave(!!v)} />
+          <Checkbox checked={save} onCheckedChange={(v) => setSave(!!v)} disabled={busy || externalDisabled} />
           <span className="text-foreground/80">Save for one-tap pay next R@lly</span>
         </label>
       )}
@@ -149,7 +194,7 @@ export function FluidPayCardForm({ amountCents, onTokenize, submitLabel, showSav
       <Button
         type="submit"
         className="w-full h-14 rounded-2xl text-base font-semibold bg-gradient-to-b from-primary to-primary/85 hover:from-primary hover:to-primary shadow-[0_8px_24px_-6px_hsl(var(--primary)/0.55),inset_0_1px_0_hsl(0_0%_100%/0.25)] active:scale-[0.99] transition-transform disabled:opacity-60"
-        disabled={busy || !allValid}
+        disabled={disabled}
       >
         {busy ? (
           <><Loader2 className="h-5 w-5 mr-2 animate-spin" /> Processing…</>
