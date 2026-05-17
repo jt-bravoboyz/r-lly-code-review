@@ -102,7 +102,14 @@ export function PaySplitShareDialog({ open, onOpenChange, requestId, profileId, 
         <DialogHeader><DialogTitle>Pay your share</DialogTitle></DialogHeader>
 
         {request.mode === 'itemized' && (
-          <ClaimItemsView requestId={requestId} profileId={profileId} onChange={refreshItemized} />
+          <ClaimItemsView
+            requestId={requestId}
+            profileId={profileId}
+            taxCents={request.tax_cents ?? 0}
+            tipCents={request.tip_cents ?? 0}
+            onChange={refreshItemized}
+            onTotalsChange={(c) => setComputedTotal(c)}
+          />
         )}
 
         <div className="text-center py-3 bg-muted rounded-xl">

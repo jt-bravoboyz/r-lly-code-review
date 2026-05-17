@@ -1,46 +1,82 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Minus, Plus } from 'lucide-react';
 
 interface Props {
   requestId: string;
   profileId: string;
+  taxCents?: number;
+  tipCents?: number;
   onChange?: () => void;
+  onTotalsChange?: (myCents: number) => void;
 }
 
-export function ClaimItemsView({ requestId, profileId, onChange }: Props) {
+interface Claimant {
+  profile_id: string;
+  qty: number;
+  name: string;
+  avatar: string | null;
+}
+
+function initials(name: string) {
+  return name.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]?.toUpperCase() ?? '').join('') || '?';
+}
+
+export function ClaimItemsView({ requestId, profileId, taxCents = 0, tipCents = 0, onChange, onTotalsChange }: Props) {
   const [items, setItems] = useState<any[]>([]);
-  const [claims, setClaims] = useState<Record<string, number>>({}); // item_id -> qty by me
-  const [taken, setTaken] = useState<Record<string, number>>({}); // item_id -> total qty claimed (by anyone)
+  // item_id -> Claimant[]
+  const [claimsByItem, setClaimsByItem] = useState<Record<string, Claimant[]>>({});
+  const [profileCache, setProfileCache] = useState<Record<string, { name: string; avatar: string | null }>>({});
 
   const refresh = async () => {
     const { data: it } = await supabase.from('split_check_items').select('*').eq('request_id', requestId).order('line_no');
     setItems(it ?? []);
     const itemIds = (it ?? []).map((i: any) => i.id);
-    if (!itemIds.length) return;
+    if (!itemIds.length) { setClaimsByItem({}); return; }
     const { data: cls } = await supabase.from('split_check_item_claims').select('*').in('item_id', itemIds);
-    const my: Record<string, number> = {};
-    const all: Record<string, number> = {};
-    (cls ?? []).forEach((c: any) => {
-      all[c.item_id] = (all[c.item_id] ?? 0) + c.quantity_claimed;
-      if (c.profile_id === profileId) my[c.item_id] = c.quantity_claimed;
+    const rows = cls ?? [];
+
+    // hydrate profile cache for any new profile ids
+    const needed = Array.from(new Set(rows.map((r: any) => r.profile_id))).filter(id => !profileCache[id]);
+    let newCache = profileCache;
+    if (needed.length) {
+      const { data: profs } = await supabase.from('safe_profiles').select('id, display_name, avatar_url').in('id', needed);
+      newCache = { ...profileCache };
+      (profs ?? []).forEach((p: any) => {
+        newCache[p.id] = { name: p.display_name ?? 'Someone', avatar: p.avatar_url ?? null };
+      });
+      setProfileCache(newCache);
+    }
+
+    const grouped: Record<string, Claimant[]> = {};
+    rows.forEach((c: any) => {
+      const meta = newCache[c.profile_id] ?? { name: 'Someone', avatar: null };
+      (grouped[c.item_id] ||= []).push({
+        profile_id: c.profile_id,
+        qty: c.quantity_claimed,
+        name: meta.name,
+        avatar: meta.avatar,
+      });
     });
-    setClaims(my); setTaken(all);
+    setClaimsByItem(grouped);
   };
 
-  useEffect(() => { refresh(); }, [requestId, profileId]);
+  useEffect(() => { refresh(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [requestId, profileId]);
 
   useEffect(() => {
     const ch = supabase.channel(`claim-items-${requestId}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'split_check_item_claims' }, () => { refresh(); onChange?.(); })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [requestId]);
 
-  const change = async (itemId: string, delta: number, max: number) => {
-    const current = claims[itemId] ?? 0;
-    const next = Math.max(0, Math.min(max, current + delta));
+  const change = async (itemId: string, delta: number) => {
+    const mineRow = (claimsByItem[itemId] ?? []).find(c => c.profile_id === profileId);
+    const current = mineRow?.qty ?? 0;
+    const next = Math.max(0, current + delta);
     if (next === current) return;
     if (next === 0) {
       await supabase.from('split_check_item_claims').delete().eq('item_id', itemId).eq('profile_id', profileId);
@@ -50,28 +86,127 @@ export function ClaimItemsView({ requestId, profileId, onChange }: Props) {
     refresh(); onChange?.();
   };
 
+  // ---- Live math ----
+  const { mySubtotalC, grandSubtotalC, myTaxTipC, myTotalC } = useMemo(() => {
+    let mine = 0;
+    let grand = 0;
+    items.forEach(it => {
+      const lineTotal = it.unit_price_cents * it.quantity;
+      grand += lineTotal;
+      const claimants = claimsByItem[it.id] ?? [];
+      const totalClaimed = claimants.reduce((s, c) => s + c.qty, 0);
+      const myQty = claimants.find(c => c.profile_id === profileId)?.qty ?? 0;
+      if (totalClaimed > 0 && myQty > 0) {
+        mine += Math.round(lineTotal * (myQty / totalClaimed));
+      }
+    });
+    const pool = taxCents + tipCents;
+    const tt = grand > 0 ? Math.round(pool * (mine / grand)) : 0;
+    return { mySubtotalC: mine, grandSubtotalC: grand, myTaxTipC: tt, myTotalC: mine + tt };
+  }, [items, claimsByItem, profileId, taxCents, tipCents]);
+
+  useEffect(() => { onTotalsChange?.(myTotalC); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [myTotalC]);
+
+  const fmt = (c: number) => `$${(c / 100).toFixed(2)}`;
+
   return (
     <div className="space-y-2">
       <p className="text-sm font-medium">Claim what you ordered</p>
+
       {items.map(it => {
-        const otherTaken = (taken[it.id] ?? 0) - (claims[it.id] ?? 0);
-        const remaining = it.quantity - otherTaken;
-        const mine = claims[it.id] ?? 0;
+        const claimants = claimsByItem[it.id] ?? [];
+        const totalClaimed = claimants.reduce((s, c) => s + c.qty, 0);
+        const mine = claimants.find(c => c.profile_id === profileId)?.qty ?? 0;
+        const unclaimed = totalClaimed < it.quantity;
+        const lineTotal = it.unit_price_cents * it.quantity;
+        const myShareC = totalClaimed > 0 && mine > 0 ? Math.round(lineTotal * (mine / totalClaimed)) : 0;
+
         return (
-          <div key={it.id} className="flex items-center gap-2 p-2 rounded-lg bg-muted/40">
+          <div
+            key={it.id}
+            className={[
+              'flex items-center gap-2 p-2.5 rounded-lg transition-all',
+              unclaimed
+                ? 'border-2 border-dashed border-primary/40 bg-primary/[0.04] animate-pulse [animation-duration:3s]'
+                : 'border border-border bg-muted/40',
+            ].join(' ')}
+          >
             <div className="flex-1 min-w-0">
-              <p className="text-sm truncate">{it.description}</p>
-              <p className="text-xs text-muted-foreground">${(it.unit_price_cents/100).toFixed(2)} · {remaining - mine} of {it.quantity} left</p>
+              <div className="flex items-center gap-2">
+                <p className="text-sm truncate">{it.description}</p>
+                <span className={[
+                  'text-[10px] px-1.5 py-0.5 rounded-full shrink-0',
+                  unclaimed ? 'bg-primary/15 text-primary' : 'bg-muted text-muted-foreground',
+                ].join(' ')}>
+                  {unclaimed ? 'Unclaimed' : 'Claimed'}
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {fmt(it.unit_price_cents)} · qty {it.quantity}
+                {mine > 0 && <span className="text-primary font-medium"> · you: {fmt(myShareC)}</span>}
+              </p>
+              {claimants.length > 0 && (
+                <div className="flex items-center mt-1.5">
+                  {claimants.slice(0, 6).map(c => (
+                    <Avatar
+                      key={c.profile_id}
+                      className={[
+                        'h-6 w-6 -ml-2 first:ml-0 ring-2 ring-background animate-in fade-in zoom-in-50 duration-200',
+                        c.profile_id === profileId ? 'ring-primary' : '',
+                      ].join(' ')}
+                      title={`${c.name}${c.qty > 1 ? ` ×${c.qty}` : ''}`}
+                    >
+                      {c.avatar && <AvatarImage src={c.avatar} alt={c.name} />}
+                      <AvatarFallback className="text-[10px]">{initials(c.name)}</AvatarFallback>
+                    </Avatar>
+                  ))}
+                  {claimants.length > 6 && (
+                    <span className="text-[10px] text-muted-foreground -ml-1 pl-2">+{claimants.length - 6}</span>
+                  )}
+                </div>
+              )}
             </div>
-            <div className="flex items-center gap-1.5">
-              <Button size="icon" variant="outline" className="h-7 w-7" onClick={() => change(it.id, -1, remaining)} disabled={mine === 0}><Minus className="h-3 w-3" /></Button>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <Button size="icon" variant="outline" className="h-7 w-7" onClick={() => change(it.id, -1)} disabled={mine === 0}>
+                <Minus className="h-3 w-3" />
+              </Button>
               <span className="w-6 text-center text-sm font-medium">{mine}</span>
-              <Button size="icon" variant="outline" className="h-7 w-7" onClick={() => change(it.id, +1, remaining)} disabled={mine >= remaining}><Plus className="h-3 w-3" /></Button>
+              <Button size="icon" variant="outline" className="h-7 w-7" onClick={() => change(it.id, +1)}>
+                <Plus className="h-3 w-3" />
+              </Button>
             </div>
           </div>
         );
       })}
+
       {!items.length && <p className="text-sm text-muted-foreground">No items.</p>}
+
+      {items.length > 0 && (
+        <div className="card-rally border border-primary/30 bg-primary/5 rounded-xl p-3 mt-3 space-y-1.5">
+          <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-semibold">Live Summary</p>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Your Items Subtotal</span>
+            <span className="font-medium tabular-nums">{fmt(mySubtotalC)}</span>
+          </div>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Your Prorated Tax &amp; Tip</span>
+            <span className="font-medium tabular-nums">+ {fmt(myTaxTipC)}</span>
+          </div>
+          <div className="h-px bg-border my-1" />
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-semibold">Your Estimated Final Charge</span>
+            <span
+              key={myTotalC}
+              className="text-lg font-bold font-montserrat text-primary tabular-nums animate-in zoom-in-95 duration-200"
+            >
+              {fmt(myTotalC)}
+            </span>
+          </div>
+          {grandSubtotalC > 0 && mySubtotalC === 0 && (
+            <p className="text-[11px] text-muted-foreground pt-1">Tap + on items above to start your tab.</p>
+          )}
+        </div>
+      )}
     </div>
   );
 }
