@@ -78,6 +78,7 @@ import { TransportModeSelector } from '@/components/events/TransportModeSelector
 import { useCoverChargeGate } from '@/hooks/useCoverChargeGate';
 import { RequestPaymentDialog } from '@/components/events/RequestPaymentDialog';
 import { SplitCheckSettlementPanel } from '@/components/events/SplitCheckSettlementPanel';
+import { SplitCheckSection } from '@/components/events/SplitCheckSection';
 import { PaySplitShareDialog } from '@/components/payments/PaySplitShareDialog';
 import { useMyUnpaidSplit } from '@/hooks/useMyUnpaidSplit';
 import { RideshareDrawer } from '@/components/rides/RideshareDrawer';
