@@ -1,59 +1,81 @@
-## Diagnosis
+## Goal
 
-- Both `request-split-check` and `process-fluid-pay` exist on disk, are registered in `supabase/config.toml`, and have zero logs — meaning either they've never been hit or they aren't deployed in this preview's edge runtime.
-- All required secrets ARE present (`FLUID_PAY_PRIVATE_KEY`, `FLUID_PAY_PUBLIC_KEY`, `FLUID_PAY_PARTNER_KEY`, `FLUID_PAY_ENV`, `PLATFORM_FEE_PERCENT`, `PLATFORM_MASTER_SUB_MERCHANT_ID`).
-- The literal `{"ok":false,"error":"404 not found"}` body shape matches `process-fluid-pay`'s failure response when Fluid Pay's REST API itself returns 404. That means the function IS running, but the upstream `/transaction/sale` call hits a 404 — most likely because `FluidPayCardForm` mints a **synthetic** `tok_sandbox_${ts}_${last4}` token instead of a real Fluid Pay tokenizer token, and Fluid Pay sandbox rejects it.
-- Idempotency key + busy lock from the previous turn are already wired in `PaySplitShareDialog`. `FluidPayCardForm` has its own local `busy` lock on its submit button.
+Make Split-Check a first-class, always-on capability on every R@lly, and finally hook up the attendee side of the flow so unpaid shares are impossible to miss.
 
-## Plan
+---
 
-### 1. Force-deploy both functions and re-verify routing
-Deploy `request-split-check` and `process-fluid-pay` immediately so the edge runtime registers the latest versions. Then call each with a minimal probe via `curl_edge_functions` to confirm the endpoints respond (auth 401 is the expected healthy response when called without a valid JWT; a 404 means routing is genuinely broken and we'll escalate).
+## 1. Remove the creation toggle
 
-### 2. Fix the real 404 root cause: real tokenization
-`FluidPayCardForm.handleSubmit` currently fabricates a token:
-```ts
-const token = `tok_sandbox_${Date.now()}_${last4}`;
-```
-Fluid Pay sandbox rejects this with 404 because no such token exists in their vault. Replace with a real tokenization call using the already-loaded `window.FluidPayTokenizer` script (the hook `useFluidPay.loadTokenizer()` exists for this exact purpose):
+**File:** `src/components/events/CreateEventDialog.tsx`
 
-```ts
-const ok = await loadTokenizer();
-if (!ok || !window.FluidPayTokenizer) throw new Error('Tokenizer unavailable');
-const tok = await window.FluidPayTokenizer.create({
-  publicKey: config.publicKey,
-  card: { number: cleaned, exp_month, exp_year, cvv },
-});
-await onTokenize(tok.id, brand, last4, save);
-```
+- Delete the "Split Check" Switch block (lines ~535–543).
+- In the form's default values / schema, force `split_check: true` so every newly created event ships with splits enabled.
+- Leave the existing DB column alone; existing `false` rows will be ignored by the new always-on UI.
 
-When `config.configured === false` (no keys), fall back to the synthetic token AND mark the call as simulated so `process-fluid-pay` skips the upstream sale. Implementation: client sends `simulate: true`; server returns a synthetic success payment row without calling Fluid Pay.
+## 2. Remove the time gate on the host card
 
-### 3. Production pay-guard hardening across all branches
-- `PaySplitShareDialog` saved-card branch is already guarded by `busy || amountCents === 0 || target?.status === 'paid'`. Good.
-- `FluidPayCardForm` has its own local `busy` (`disabled={busy || !allValid}`), but its `busy` doesn't know about the parent's already-paid state. Add an `externalDisabled?: boolean` prop and have `PaySplitShareDialog` pass `target?.status === 'paid' || amountCents === 0`. The submit button then becomes `disabled={busy || !allValid || externalDisabled}`.
-- Also guard the form-level `handleSubmit` with `if (busy || externalDisabled) return;` so an Enter-key submit can't bypass.
+**File:** `src/pages/EventDetail.tsx` (lines ~885–923)
 
-### 4. Idempotency key — already wired, verify and reinforce
-- Client (`PaySplitShareDialog.pay`) already generates `${target.id}:${Date.now()}:${nonce}` and sends it. Confirmed in code.
-- Server (`process-fluid-pay`) already (a) returns the prior payment if the same `idempotency_key` is found, (b) returns the existing paid `split_check_target` row if that payer already settled this request, (c) handles the 23505 race via the partial unique index added last turn.
-- Add one extra safety: in `process-fluid-pay`, refuse the request if `idempotency_key` is missing AND `kind === 'split_share'` (i.e. require idempotency for split shares in production). Cover charges remain optional.
+- Today the Split-Check card only renders inside the `!isCompleted && isAfterRally` branch.
+- Lift the host-only `<Card className="card-rally">…SplitCheckSettlementPanel…</Card>` block out of that branch and render it whenever `canManage && !isCompleted` (so hosts and co-hosts see it before, during, and after the R@lly, but it disappears once the event is fully completed/archived).
+- Keep the "Request Payment" button + `RequestPaymentDialog` exactly as wired (`setShowRequestPayment(true)`).
+- The Safety/After-R@lly block stays untouched in its current branch.
 
-### 5. Surface upstream failures cleanly
-Tweak `process-fluid-pay`'s 402 branch so when Fluid Pay returns `404 not found`, the response message is `"payment_unavailable"` instead of the raw upstream string — easier for the UI toast and avoids leaking internal error text.
+## 3. Wire the attendee Pay-Your-Share flow (the real fix)
 
-## Files to touch
+This is the missing piece — `PaySplitShareDialog` exists but is never mounted. We add three small things:
 
-- `supabase/functions/process-fluid-pay/index.ts` — add `simulate` short-circuit, mandatory `idempotency_key` for split_share, cleaner upstream error mapping.
-- `src/components/payments/FluidPayCardForm.tsx` — real tokenization via `window.FluidPayTokenizer`, `externalDisabled` prop, submit guard.
-- `src/components/payments/PaySplitShareDialog.tsx` — pass `externalDisabled` into the card form.
-- `src/components/payments/CoverChargeDialog.tsx` — same `externalDisabled` wire-through (busy locking parity).
-- Deploy both functions via `supabase--deploy_edge_functions`.
+### 3a. A hook that finds the viewer's unpaid share for an event
+
+**New file:** `src/hooks/useMyUnpaidSplit.tsx`
+
+- Input: `eventId`, `profileId`.
+- Queries `split_check_requests` for the event, joins `split_check_targets` where `profile_id = me` and `status = 'pending'`.
+- Subscribes to the same realtime channel pattern as `useSplitCheck` (`split-check-${eventId}`) so the CTA disappears the instant the row flips to `paid`.
+- Returns `{ unpaid: Array<{ requestId, mode, amountCents }>, total, refetch }`.
+
+### 3b. "Pay Your Share" CTA on `EventDetail.tsx`
+
+- For non-host attendees, render a prominent orange CTA card directly under the hero action bar whenever `useMyUnpaidSplit` returns at least one unpaid row:
+  - Headline: `"Your tab: $XX.XX"`
+  - Sub: `"N share${>1?'s':''} waiting"` (or `"Tap to claim your items"` when any unpaid row is `itemized`).
+  - Tapping the card opens `PaySplitShareDialog` with the oldest unpaid `requestId`. If multiple are open, the dialog cycles to the next one via `onPaid`.
+- State: `const [payRequestId, setPayRequestId] = useState<string | null>(null);` + mount `<PaySplitShareDialog open={!!payRequestId} … />` alongside the other event dialogs (~line 1376).
+- Pass `savedToken / savedCardLast4 / savedCardBrand` from the existing `useMerchantAccount` / saved-card profile lookup (same source `CoverChargeDialog` uses).
+
+### 3c. Notification card deep link
+
+**File:** `src/pages/Notifications.tsx`
+
+- In `handleNotificationClick`, add a branch for `type === 'split_check_request'` that navigates to `/events/${data.event_id}?pay=${data.request_id}`.
+- In `EventDetail.tsx`, read the `pay` search param on mount and call `setPayRequestId(payParam)` so the dialog auto-opens. Strip the param after open (same pattern used for `?rogue=`).
+- Optional polish: in the notification list, append a small "Pay $X.XX" pill button on `split_check_request` rows for a one-tap path that bypasses the event page (calls `setPayRequestId` only if you preload context — easiest is to just route to the deep-link URL above).
+
+## 4. Walkthrough I will deliver after these edits ship
+
+Once Steps 1–3 are merged I will:
+
+1. Set `localStorage.rally.simulatePayments=true` in preview so no real card is needed.
+2. Capture and post six labeled screenshots inline, with the tap-path under each, so you can replay the flow:
+   - Create R@lly dialog (toggle gone, splits implicit).
+   - Event page as host (Split-Check card visible before After R@lly).
+   - Request Payment → Quick Split tab filled in.
+   - Request Payment → Itemized tab with parsed receipt.
+   - Settlement panel mid-flight (paid + pending + nudge bell).
+   - Attendee view of same event with the new "Your tab" CTA → `PaySplitShareDialog` open → simulated paid confirmation.
+3. Confirm the notification deep link by tapping a `split_check_request` row in `/notifications` and verifying the dialog auto-opens with the right amount.
+
+---
+
+## Files touched
+
+- `src/components/events/CreateEventDialog.tsx` — remove toggle, force default.
+- `src/pages/EventDetail.tsx` — un-gate host card, mount `PaySplitShareDialog`, render attendee CTA, handle `?pay=` param.
+- `src/pages/Notifications.tsx` — route `split_check_request` to `/events/:id?pay=:requestId`.
+- `src/hooks/useMyUnpaidSplit.tsx` — **new** hook.
 
 ## Out of scope
-- Provisioning a real Fluid Pay sub-merchant / KYC. If `PLATFORM_MASTER_SUB_MERCHANT_ID` is itself the wrong value in the Fluid Pay dashboard, only the user can fix that — I'll flag it in chat if the post-deploy probe still 404s with a real tokenized card.
 
-## Validation
-1. Probe deployed functions with `curl_edge_functions` — expect 401 (unauth) not 404.
-2. In the preview, attempt a real card pay; the upstream call now uses a real Fluid Pay token. If it still 404s, the diagnostic message will name the missing piece (likely sub-merchant id).
-3. Double-tap the pay button under load → only one row updates, idempotency key returns `deduped: true` on the second invocation.
+- No DB migration. `events.split_check` stays as-is; we just stop reading it from the UI gates.
+- No edits to `request-split-check`, `process-fluid-pay`, or `PaySplitShareDialog` internals — they're already production-hardened from the previous pass.
+- Founder/host payout onboarding (`PayoutSettingsSection`) is unchanged; the existing in-panel "Set up payouts" amber prompt still fires when needed.
