@@ -148,6 +148,15 @@ export default function EventDetail() {
     setSearchParams(next, { replace: true });
   }, [searchParams, id, showAlertById, setSearchParams]);
 
+  // Deep-link split-check pay dialog from a notification: ?pay=<request_id>
+  useEffect(() => {
+    const payId = searchParams.get('pay');
+    if (!payId) return;
+    setPayRequestId(payId);
+    const next = new URLSearchParams(searchParams);
+    next.delete('pay');
+    setSearchParams(next, { replace: true });
+
   const [showRallyComplete, setShowRallyComplete] = useState(false);
   const [showTransportSelector, setShowTransportSelector] = useState(false);
   const { ensurePaid, dialog: coverDialog } = useCoverChargeGate(event as any, profile as any);
