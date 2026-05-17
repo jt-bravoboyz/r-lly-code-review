@@ -1394,6 +1394,20 @@ export default function EventDetail() {
         />
       )}
 
+      {/* Attendee pay-your-share dialog (opens via inline CTA or ?pay= deep link from notifications) */}
+      {profile && payRequestId && (
+        <PaySplitShareDialog
+          open={!!payRequestId}
+          onOpenChange={(v) => { if (!v) setPayRequestId(null); }}
+          requestId={payRequestId}
+          profileId={profile.id}
+          savedToken={(profile as any).fluid_pay_token ?? null}
+          savedCardLast4={(profile as any).fluid_pay_card_last4 ?? null}
+          savedCardBrand={(profile as any).fluid_pay_card_brand ?? null}
+          onPaid={() => setPayRequestId(null)}
+        />
+      )}
+
       {/* Rideshare Drawer - departure flow */}
       {profile && (
         <RideshareDrawer
