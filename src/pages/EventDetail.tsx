@@ -78,6 +78,8 @@ import { TransportModeSelector } from '@/components/events/TransportModeSelector
 import { useCoverChargeGate } from '@/hooks/useCoverChargeGate';
 import { RequestPaymentDialog } from '@/components/events/RequestPaymentDialog';
 import { SplitCheckSettlementPanel } from '@/components/events/SplitCheckSettlementPanel';
+import { PaySplitShareDialog } from '@/components/payments/PaySplitShareDialog';
+import { useMyUnpaidSplit } from '@/hooks/useMyUnpaidSplit';
 import { RideshareDrawer } from '@/components/rides/RideshareDrawer';
 import { RideshareDeepLinkButtons } from '@/components/rides/RideshareDeepLinkButtons';
 import { supabase } from '@/integrations/supabase/client';
@@ -150,6 +152,7 @@ export default function EventDetail() {
   const [showTransportSelector, setShowTransportSelector] = useState(false);
   const { ensurePaid, dialog: coverDialog } = useCoverChargeGate(event as any, profile as any);
   const [showRequestPayment, setShowRequestPayment] = useState(false);
+  const [payRequestId, setPayRequestId] = useState<string | null>(null);
   const [showRideshareDrawer, setShowRideshareDrawer] = useState(false);
   const [joinFlowDismissedForSession, setJoinFlowDismissedForSession] = useState(false);
   const [locationPromptDismissedForSession, setLocationPromptDismissedForSession] = useState(false);
@@ -900,25 +903,6 @@ export default function EventDetail() {
                   }
                 }}
               />
-            )}
-            {canManage && (
-              <Card className="card-rally">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base flex items-center justify-between">
-                    <span>Split Check</span>
-                    <Button size="sm" onClick={() => setShowRequestPayment(true)}>
-                      Request Payment
-                    </Button>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <SplitCheckSettlementPanel
-                    eventId={event.id}
-                    hostProfileId={(event as any).creator_id}
-                    onOpenPayoutSetup={() => navigate('/profile')}
-                  />
-                </CardContent>
-              </Card>
             )}
           </div>
         ) : !isSimpleMode && (isLiveEvent || isScheduled) && isAttending ? (
