@@ -92,7 +92,9 @@ export default function Notifications() {
       return;
     }
 
-    if (notification.type === 'rally_started' && data?.event_id) {
+    if (notification.type === 'split_check_request' && data?.event_id && data?.request_id) {
+      navigate(`/events/${data.event_id}?pay=${data.request_id}`);
+    } else if (notification.type === 'rally_started' && data?.event_id) {
       navigate(`/events/${data.event_id}`);
     } else if ((notification.type === 'squad_chat_unread' || notification.type === 'rally_chat_unread' || notification.type === 'chat_unread') && data?.chat_id) {
       if (data?.event_id) {

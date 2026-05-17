@@ -532,16 +532,6 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
                   )}
                 />
 
-                {/* Split Check */}
-                <div className="flex items-center justify-between py-2">
-                  <Label htmlFor="split-check" className="text-sm">Split Check</Label>
-                  <Switch
-                    id="split-check"
-                    checked={form.watch('split_check')}
-                    onCheckedChange={(v) => form.setValue('split_check', v)}
-                  />
-                </div>
-
                 {/* Dress Code */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between py-2">
