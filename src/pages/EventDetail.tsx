@@ -843,7 +843,19 @@ export default function EventDetail() {
           </section>
         )}
 
-        {/* Edit My Plan - visible during scheduled phase for attendees who completed join flow */}
+        {/* Split Check — host card (always available pre-completion) + attendee "Pay your share" CTA */}
+        {!isCompleted && (
+          <SplitCheckSection
+            eventId={event.id}
+            creatorId={(event as any).creator_id}
+            canManage={canManage}
+            profileId={profile?.id}
+            onRequestPayment={() => setShowRequestPayment(true)}
+            onOpenPay={(rid) => setPayRequestId(rid)}
+            onOpenPayoutSetup={() => navigate('/profile')}
+          />
+        )}
+
         {!isCompleted && isScheduled && isAttending && hasCompletedJoinFlow && (
           <Button
             variant="outline"
