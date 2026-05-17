@@ -147,7 +147,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
       is_barhop: false,
       
       cover_charge: '',
-      split_check: false,
+      split_check: true,
       dress_code_enabled: false,
       dress_code: '',
       song_recs_enabled: false,
