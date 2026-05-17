@@ -1619,6 +1619,7 @@ export type Database = {
           fluid_pay_transaction_id: string | null
           host_net_cents: number
           id: string
+          idempotency_key: string | null
           kind: string
           metadata: Json
           parent_payment_id: string | null
@@ -1639,6 +1640,7 @@ export type Database = {
           fluid_pay_transaction_id?: string | null
           host_net_cents?: number
           id?: string
+          idempotency_key?: string | null
           kind: string
           metadata?: Json
           parent_payment_id?: string | null
@@ -1659,6 +1661,7 @@ export type Database = {
           fluid_pay_transaction_id?: string | null
           host_net_cents?: number
           id?: string
+          idempotency_key?: string | null
           kind?: string
           metadata?: Json
           parent_payment_id?: string | null
