@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Zap, ArrowRight, Plus, Bell, Sparkles, Clock, Calendar, History } from 'lucide-react';
+import { Zap, ArrowRight, Plus, Bell, Sparkles, Clock, Calendar, History, KeyRound } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
