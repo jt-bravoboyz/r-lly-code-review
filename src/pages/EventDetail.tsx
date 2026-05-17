@@ -77,7 +77,8 @@ import { PendingJoinRequests } from '@/components/events/PendingJoinRequests';
 import { TransportModeSelector } from '@/components/events/TransportModeSelector';
 import { useCoverChargeGate } from '@/hooks/useCoverChargeGate';
 import { RequestPaymentDialog } from '@/components/events/RequestPaymentDialog';
-import { SplitCheckSettlementPanel } from '@/components/events/SplitCheckSettlementPanel';
+import { SplitCheckSection } from '@/components/events/SplitCheckSection';
+import { PaySplitShareDialog } from '@/components/payments/PaySplitShareDialog';
 import { RideshareDrawer } from '@/components/rides/RideshareDrawer';
 import { RideshareDeepLinkButtons } from '@/components/rides/RideshareDeepLinkButtons';
 import { supabase } from '@/integrations/supabase/client';
@@ -146,10 +147,21 @@ export default function EventDetail() {
     setSearchParams(next, { replace: true });
   }, [searchParams, id, showAlertById, setSearchParams]);
 
+  // Deep-link split-check pay dialog from a notification: ?pay=<request_id>
+  useEffect(() => {
+    const payId = searchParams.get('pay');
+    if (!payId) return;
+    setPayRequestId(payId);
+    const next = new URLSearchParams(searchParams);
+    next.delete('pay');
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
+
   const [showRallyComplete, setShowRallyComplete] = useState(false);
   const [showTransportSelector, setShowTransportSelector] = useState(false);
   const { ensurePaid, dialog: coverDialog } = useCoverChargeGate(event as any, profile as any);
   const [showRequestPayment, setShowRequestPayment] = useState(false);
+  const [payRequestId, setPayRequestId] = useState<string | null>(null);
   const [showRideshareDrawer, setShowRideshareDrawer] = useState(false);
   const [joinFlowDismissedForSession, setJoinFlowDismissedForSession] = useState(false);
   const [locationPromptDismissedForSession, setLocationPromptDismissedForSession] = useState(false);
@@ -830,7 +842,19 @@ export default function EventDetail() {
           </section>
         )}
 
-        {/* Edit My Plan - visible during scheduled phase for attendees who completed join flow */}
+        {/* Split Check — host card (always available pre-completion) + attendee "Pay your share" CTA */}
+        {!isCompleted && (
+          <SplitCheckSection
+            eventId={event.id}
+            creatorId={(event as any).creator_id}
+            canManage={canManage}
+            profileId={profile?.id}
+            onRequestPayment={() => setShowRequestPayment(true)}
+            onOpenPay={(rid) => setPayRequestId(rid)}
+            onOpenPayoutSetup={() => navigate('/profile')}
+          />
+        )}
+
         {!isCompleted && isScheduled && isAttending && hasCompletedJoinFlow && (
           <Button
             variant="outline"
@@ -900,25 +924,6 @@ export default function EventDetail() {
                   }
                 }}
               />
-            )}
-            {canManage && (
-              <Card className="card-rally">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base flex items-center justify-between">
-                    <span>Split Check</span>
-                    <Button size="sm" onClick={() => setShowRequestPayment(true)}>
-                      Request Payment
-                    </Button>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <SplitCheckSettlementPanel
-                    eventId={event.id}
-                    hostProfileId={(event as any).creator_id}
-                    onOpenPayoutSetup={() => navigate('/profile')}
-                  />
-                </CardContent>
-              </Card>
             )}
           </div>
         ) : !isSimpleMode && (isLiveEvent || isScheduled) && isAttending ? (
@@ -1384,6 +1389,20 @@ export default function EventDetail() {
             profile_id: a.profile?.id ?? a.profile_id,
             display_name: a.profile?.display_name ?? a.display_name,
           })).filter((a: any) => a.profile_id)}
+        />
+      )}
+
+      {/* Attendee pay-your-share dialog (opens via inline CTA or ?pay= deep link from notifications) */}
+      {profile && payRequestId && (
+        <PaySplitShareDialog
+          open={!!payRequestId}
+          onOpenChange={(v) => { if (!v) setPayRequestId(null); }}
+          requestId={payRequestId}
+          profileId={profile.id}
+          savedToken={(profile as any).fluid_pay_token ?? null}
+          savedCardLast4={(profile as any).fluid_pay_card_last4 ?? null}
+          savedCardBrand={(profile as any).fluid_pay_card_brand ?? null}
+          onPaid={() => setPayRequestId(null)}
         />
       )}
 
