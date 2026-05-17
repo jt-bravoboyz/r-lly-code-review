@@ -11,6 +11,7 @@ const BodySchema = z.object({
   save_token: z.boolean().optional(),
   card_brand: z.string().optional(),
   card_last4: z.string().optional(),
+  idempotency_key: z.string().min(8).max(128).optional(),
 });
 
 Deno.serve(async (req) => {
@@ -56,6 +57,38 @@ Deno.serve(async (req) => {
     // Resolve payer profile
     const { data: payerProfile } = await admin.from("profiles").select("id").eq("user_id", userId).maybeSingle();
 
+    // Idempotency short-circuit: replayed key returns the original payment without re-charging
+    if (body.idempotency_key) {
+      const { data: existing } = await admin.from("payments")
+        .select("id, status, fluid_pay_transaction_id")
+        .eq("idempotency_key", body.idempotency_key)
+        .maybeSingle();
+      if (existing) {
+        return new Response(JSON.stringify({
+          ok: existing.status === "paid",
+          payment_id: existing.id,
+          transaction_id: existing.fluid_pay_transaction_id,
+          deduped: true,
+        }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+    }
+
+    // Split-share dedupe: if this payer already paid this request, return without re-charging
+    if (body.kind === "split_share" && body.split_request_id && payerProfile?.id) {
+      const { data: paidTarget } = await admin.from("split_check_targets")
+        .select("payment_id, status")
+        .eq("request_id", body.split_request_id)
+        .eq("profile_id", payerProfile.id)
+        .maybeSingle();
+      if (paidTarget?.status === "paid" && paidTarget.payment_id) {
+        return new Response(JSON.stringify({
+          ok: true,
+          payment_id: paidTarget.payment_id,
+          deduped: true,
+        }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+    }
+
     // Resolve destination sub-merchant via event host
     let destination: string | null = cfg.platformMasterSubMerchantId;
     if (body.event_id) {
@@ -73,7 +106,8 @@ Deno.serve(async (req) => {
     const platform_fee_cents = Math.round(body.amount_cents * cfg.platformFeePercent / 100);
     const host_net_cents = body.amount_cents - platform_fee_cents;
 
-    // Insert pending payment
+    // Insert pending payment. The unique index on idempotency_key turns a racing duplicate
+    // into a 23505 error, which we surface as the existing payment.
     const { data: pending, error: insErr } = await admin.from("payments").insert({
       event_id: body.event_id ?? null,
       user_id: userId,
@@ -85,8 +119,25 @@ Deno.serve(async (req) => {
       platform_fee_cents,
       host_net_cents,
       status: "pending",
+      idempotency_key: body.idempotency_key ?? null,
     }).select("id").single();
-    if (insErr) throw insErr;
+    if (insErr) {
+      if ((insErr as any).code === "23505" && body.idempotency_key) {
+        const { data: existing } = await admin.from("payments")
+          .select("id, status, fluid_pay_transaction_id")
+          .eq("idempotency_key", body.idempotency_key)
+          .maybeSingle();
+        if (existing) {
+          return new Response(JSON.stringify({
+            ok: existing.status === "paid",
+            payment_id: existing.id,
+            transaction_id: existing.fluid_pay_transaction_id,
+            deduped: true,
+          }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+      }
+      throw insErr;
+    }
 
     // Call Fluid Pay /transaction/sale
     const fpRes = await fetch(`${cfg.baseUrl}/transaction/sale`, {

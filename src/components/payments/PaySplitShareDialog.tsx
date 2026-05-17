@@ -54,29 +54,46 @@ export function PaySplitShareDialog({ open, onOpenChange, requestId, profileId, 
   const amountCents = request.mode === 'quick' ? (target?.share_cents ?? 0) : computedTotal;
 
   const pay = async (token: string, brand: string, last4: string, save: boolean) => {
-    if (isSimulated()) {
-      const r = await simulatePayment(amountCents / 100, false);
-      if (r.status === 'paid') {
-        await supabase.from('split_check_targets').update({ status: 'paid', share_cents: amountCents }).eq('id', target.id);
-        toast.success('Paid (simulated)');
-        onPaid?.(); onOpenChange(false);
-      } else toast.error('Failed');
+    if (busy) return;
+    if (target?.status === 'paid') {
+      toast.info('Already paid');
+      onOpenChange(false);
       return;
     }
     setBusy(true);
-    if (request.mode === 'itemized') {
-      await supabase.from('split_check_targets').update({ share_cents: amountCents }).eq('id', target.id);
+    const idempotencyKey = `${target?.id ?? requestId}:${Date.now()}:${Math.random().toString(36).slice(2, 10)}`;
+
+    try {
+      if (isSimulated()) {
+        const r = await simulatePayment(amountCents / 100, false);
+        if (r.status === 'paid') {
+          await supabase
+            .from('split_check_targets')
+            .update({ status: 'paid', share_cents: amountCents })
+            .eq('id', target.id)
+            .neq('status', 'paid');
+          toast.success('Paid (simulated)');
+          onPaid?.(); onOpenChange(false);
+        } else toast.error('Failed');
+        return;
+      }
+
+      if (request.mode === 'itemized') {
+        await supabase.from('split_check_targets').update({ share_cents: amountCents }).eq('id', target.id);
+      }
+      const { data, error } = await supabase.functions.invoke('process-fluid-pay', {
+        body: {
+          payment_token: token, amount_cents: amountCents, kind: 'split_share',
+          event_id: request.event_id, split_request_id: requestId,
+          save_token: save, card_brand: brand, card_last4: last4,
+          idempotency_key: idempotencyKey,
+        },
+      });
+      if (error || !data?.ok) { toast.error((data as any)?.error ?? 'Payment failed'); return; }
+      onPaid?.(); onOpenChange(false);
+    } finally {
+      setBusy(false);
     }
-    const { data, error } = await supabase.functions.invoke('process-fluid-pay', {
-      body: {
-        payment_token: token, amount_cents: amountCents, kind: 'split_share',
-        event_id: request.event_id, split_request_id: requestId,
-        save_token: save, card_brand: brand, card_last4: last4,
-      },
-    });
-    setBusy(false);
-    if (error || !data?.ok) { toast.error((data as any)?.error ?? 'Payment failed'); return; }
-    onPaid?.(); onOpenChange(false);
   };
 
   return (
@@ -94,10 +111,10 @@ export function PaySplitShareDialog({ open, onOpenChange, requestId, profileId, 
         </div>
 
         {savedToken ? (
-          <Button className="w-full h-12" disabled={busy || amountCents === 0}
+          <Button className="w-full h-12" disabled={busy || amountCents === 0 || target?.status === 'paid'}
             onClick={() => pay(savedToken, savedCardBrand ?? 'card', savedCardLast4 ?? '', false)}>
             {busy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
-            One-Tap Pay ${(amountCents/100).toFixed(2)}
+            {target?.status === 'paid' ? 'Already paid' : `One-Tap Pay $${(amountCents/100).toFixed(2)}`}
           </Button>
         ) : (
           <FluidPayCardForm amountCents={amountCents} onTokenize={pay} />
