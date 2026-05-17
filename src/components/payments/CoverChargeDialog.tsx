@@ -32,30 +32,36 @@ export function CoverChargeDialog({
   const [busy, setBusy] = useState(false);
 
   const charge = async (token: string, brand: string, last4: string, save: boolean) => {
-    if (isSimulated()) {
-      const r = await simulatePayment(amountCents / 100, false);
-      if (r.status === 'paid') {
-        onPaid(`sim_${r.transactionId}`);
-        onOpenChange(false);
-      } else {
-        toast.error('Simulated payment failed');
-      }
-      return;
-    }
+    if (busy) return;
     setBusy(true);
-    const { data, error } = await supabase.functions.invoke('process-fluid-pay', {
-      body: {
-        payment_token: token, amount_cents: amountCents, kind: 'cover',
-        event_id: eventId, save_token: save, card_brand: brand, card_last4: last4,
-      },
-    });
-    setBusy(false);
-    if (error || !data?.ok) {
-      toast.error((data as any)?.error ?? error?.message ?? 'Payment failed');
-      return;
+    const idempotencyKey = `cover:${eventId}:${Date.now()}:${Math.random().toString(36).slice(2, 10)}`;
+    try {
+      if (isSimulated()) {
+        const r = await simulatePayment(amountCents / 100, false);
+        if (r.status === 'paid') {
+          onPaid(`sim_${r.transactionId}`);
+          onOpenChange(false);
+        } else {
+          toast.error('Simulated payment failed');
+        }
+        return;
+      }
+      const { data, error } = await supabase.functions.invoke('process-fluid-pay', {
+        body: {
+          payment_token: token, amount_cents: amountCents, kind: 'cover',
+          event_id: eventId, save_token: save, card_brand: brand, card_last4: last4,
+          idempotency_key: idempotencyKey,
+        },
+      });
+      if (error || !data?.ok) {
+        toast.error((data as any)?.error ?? error?.message ?? 'Payment failed');
+        return;
+      }
+      onPaid(data.payment_id);
+      onOpenChange(false);
+    } finally {
+      setBusy(false);
     }
-    onPaid(data.payment_id);
-    onOpenChange(false);
   };
 
   if (founderWaived) {
@@ -148,7 +154,11 @@ export function CoverChargeDialog({
               </Button>
             </div>
           ) : (
-            <FluidPayCardForm amountCents={amountCents} onTokenize={charge} />
+            <FluidPayCardForm
+              amountCents={amountCents}
+              onTokenize={charge}
+              externalDisabled={busy}
+            />
           )}
         </div>
       </DialogContent>

@@ -117,7 +117,11 @@ export function PaySplitShareDialog({ open, onOpenChange, requestId, profileId, 
             {target?.status === 'paid' ? 'Already paid' : `One-Tap Pay $${(amountCents/100).toFixed(2)}`}
           </Button>
         ) : (
-          <FluidPayCardForm amountCents={amountCents} onTokenize={pay} />
+          <FluidPayCardForm
+            amountCents={amountCents}
+            onTokenize={pay}
+            externalDisabled={busy || amountCents === 0 || target?.status === 'paid'}
+          />
         )}
       </DialogContent>
     </Dialog>
