@@ -1,81 +1,72 @@
-## Goal
+# Interactive Itemized Claim Screen
 
-Make Split-Check a first-class, always-on capability on every R@lly, and finally hook up the attendee side of the flow so unpaid shares are impossible to miss.
-
----
-
-## 1. Remove the creation toggle
-
-**File:** `src/components/events/CreateEventDialog.tsx`
-
-- Delete the "Split Check" Switch block (lines ~535–543).
-- In the form's default values / schema, force `split_check: true` so every newly created event ships with splits enabled.
-- Leave the existing DB column alone; existing `false` rows will be ignored by the new always-on UI.
-
-## 2. Remove the time gate on the host card
-
-**File:** `src/pages/EventDetail.tsx` (lines ~885–923)
-
-- Today the Split-Check card only renders inside the `!isCompleted && isAfterRally` branch.
-- Lift the host-only `<Card className="card-rally">…SplitCheckSettlementPanel…</Card>` block out of that branch and render it whenever `canManage && !isCompleted` (so hosts and co-hosts see it before, during, and after the R@lly, but it disappears once the event is fully completed/archived).
-- Keep the "Request Payment" button + `RequestPaymentDialog` exactly as wired (`setShowRequestPayment(true)`).
-- The Safety/After-R@lly block stays untouched in its current branch.
-
-## 3. Wire the attendee Pay-Your-Share flow (the real fix)
-
-This is the missing piece — `PaySplitShareDialog` exists but is never mounted. We add three small things:
-
-### 3a. A hook that finds the viewer's unpaid share for an event
-
-**New file:** `src/hooks/useMyUnpaidSplit.tsx`
-
-- Input: `eventId`, `profileId`.
-- Queries `split_check_requests` for the event, joins `split_check_targets` where `profile_id = me` and `status = 'pending'`.
-- Subscribes to the same realtime channel pattern as `useSplitCheck` (`split-check-${eventId}`) so the CTA disappears the instant the row flips to `paid`.
-- Returns `{ unpaid: Array<{ requestId, mode, amountCents }>, total, refetch }`.
-
-### 3b. "Pay Your Share" CTA on `EventDetail.tsx`
-
-- For non-host attendees, render a prominent orange CTA card directly under the hero action bar whenever `useMyUnpaidSplit` returns at least one unpaid row:
-  - Headline: `"Your tab: $XX.XX"`
-  - Sub: `"N share${>1?'s':''} waiting"` (or `"Tap to claim your items"` when any unpaid row is `itemized`).
-  - Tapping the card opens `PaySplitShareDialog` with the oldest unpaid `requestId`. If multiple are open, the dialog cycles to the next one via `onPaid`.
-- State: `const [payRequestId, setPayRequestId] = useState<string | null>(null);` + mount `<PaySplitShareDialog open={!!payRequestId} … />` alongside the other event dialogs (~line 1376).
-- Pass `savedToken / savedCardLast4 / savedCardBrand` from the existing `useMerchantAccount` / saved-card profile lookup (same source `CoverChargeDialog` uses).
-
-### 3c. Notification card deep link
-
-**File:** `src/pages/Notifications.tsx`
-
-- In `handleNotificationClick`, add a branch for `type === 'split_check_request'` that navigates to `/events/${data.event_id}?pay=${data.request_id}`.
-- In `EventDetail.tsx`, read the `pay` search param on mount and call `setPayRequestId(payParam)` so the dialog auto-opens. Strip the param after open (same pattern used for `?rogue=`).
-- Optional polish: in the notification list, append a small "Pay $X.XX" pill button on `split_check_request` rows for a one-tap path that bypasses the event page (calls `setPayRequestId` only if you preload context — easiest is to just route to the deep-link URL above).
-
-## 4. Walkthrough I will deliver after these edits ship
-
-Once Steps 1–3 are merged I will:
-
-1. Set `localStorage.rally.simulatePayments=true` in preview so no real card is needed.
-2. Capture and post six labeled screenshots inline, with the tap-path under each, so you can replay the flow:
-   - Create R@lly dialog (toggle gone, splits implicit).
-   - Event page as host (Split-Check card visible before After R@lly).
-   - Request Payment → Quick Split tab filled in.
-   - Request Payment → Itemized tab with parsed receipt.
-   - Settlement panel mid-flight (paid + pending + nudge bell).
-   - Attendee view of same event with the new "Your tab" CTA → `PaySplitShareDialog` open → simulated paid confirmation.
-3. Confirm the notification deep link by tapping a `split_check_request` row in `/notifications` and verifying the dialog auto-opens with the right amount.
+Upgrade `src/components/payments/ClaimItemsView.tsx` (and a tiny tweak to `PaySplitShareDialog.tsx`) so attendees see a live, social, fully-prorated split experience. No DB schema changes — `split_check_item_claims` already supports multiple profiles per item.
 
 ---
 
-## Files touched
+## 1. Attendee avatars on each item row
 
-- `src/components/events/CreateEventDialog.tsx` — remove toggle, force default.
-- `src/pages/EventDetail.tsx` — un-gate host card, mount `PaySplitShareDialog`, render attendee CTA, handle `?pay=` param.
-- `src/pages/Notifications.tsx` — route `split_check_request` to `/events/:id?pay=:requestId`.
-- `src/hooks/useMyUnpaidSplit.tsx` — **new** hook.
+- On `refresh()`, after loading claims, fetch profile data for every distinct `profile_id` via `safe_profiles` (`id, display_name, avatar_url`).
+- Cache in `claimantsByItem: Record<string, Array<{id, name, avatar, qty}>>`.
+- Render a small avatar stack to the right of the item description:
+  - Use shadcn `<Avatar>` + `<AvatarImage>` / `<AvatarFallback>` (initials).
+  - Size `h-6 w-6`, `-ml-2` overlap, ring `ring-2 ring-background`.
+  - Subtle pop-in animation (`animate-in fade-in zoom-in-50 duration-200`) so new claimers feel "live".
+  - Current user gets an orange ring (`ring-primary`) to self-identify.
 
-## Out of scope
+## 2. Shared items (fractional claims)
 
-- No DB migration. `events.split_check` stays as-is; we just stop reading it from the UI gates.
-- No edits to `request-split-check`, `process-fluid-pay`, or `PaySplitShareDialog` internals — they're already production-hardened from the previous pass.
-- Founder/host payout onboarding (`PayoutSettingsSection`) is unchanged; the existing in-panel "Set up payouts" amber prompt still fires when needed.
+- **Remove the `remaining` cap.** Any attendee may always tap `+` on any item — no disabled state from supply.
+- Per-person cost for an item becomes:
+  `myShare = unit_price_cents * (myQty / totalClaimedQty) * item.quantity`
+  - i.e. claims represent *weight*. If 2 people each claim 1 of a qty-1 item, total claimed = 2 → each pays 50% of `unit_price * 1`.
+  - If 3 people claim 1 of a qty-2 item, each pays `unit_price * 2 / 3`.
+- This matches the host's settlement math only when host RPC also prorates by weight; we already do (verified in `useMyUnpaidSplit` itemized path which calls the existing RPC). Client-side estimate purely drives the Live Summary — server remains source of truth at pay time.
+
+## 3. Live Summary footer card
+
+Below the item list, add a sticky-feel card (`card-rally` with `border-primary/30 bg-primary/5`) that recomputes on every claim change:
+
+```text
+Your Items Subtotal         $XX.XX
+Your Prorated Tax & Tip   + $X.XX
+─────────────────────────────────
+Your Estimated Final Charge $XX.XX
+```
+
+Math:
+- `mySubtotal = Σ myShare(item)` across all items.
+- `grandSubtotal = Σ unit_price_cents * item.quantity` (request total pre-tax/tip).
+- `taxTipPool = request.tax_cents + request.tip_cents` (passed in from parent — see #5).
+- `myTaxTip = grandSubtotal > 0 ? taxTipPool * (mySubtotal / grandSubtotal) : 0`.
+- `myTotal = mySubtotal + myTaxTip`.
+
+Animate the final number with a brief `transition-all` + scale pulse when it changes.
+
+## 4. Unclaimed-items glow
+
+For each item, compute `totalClaimed = Σ claims.quantity_claimed` across all profiles.
+- If `totalClaimed < item.quantity` → row gets `border-2 border-dashed border-primary/40 bg-primary/[0.03]` with a soft `animate-pulse` (slowed via custom `[animation-duration:3s]`).
+- If `totalClaimed >= item.quantity` → solid `border border-border bg-muted/40` (claimed/over-claimed = settled visually).
+- Small "Unclaimed" / "Claimed" pill on the right edge for clarity, using `text-[10px]` muted token.
+
+## 5. Wiring
+
+- `ClaimItemsView` props gain optional `tax_cents`, `tip_cents`, `onTotalsChange?: (myCents:number)=>void`.
+- `PaySplitShareDialog.tsx` already fetches the request — pass `request.tax_cents` and `request.tip_cents` into `ClaimItemsView`, and use `onTotalsChange` to update the dialog's "Pay $X.XX" CTA in real time for itemized requests (currently it reads a server-side computed total; we'll prefer the live local estimate for display, server still authoritative at submit).
+
+---
+
+## Technical Details
+
+**Files:**
+- Edit `src/components/payments/ClaimItemsView.tsx` (main work)
+- Light edit `src/components/payments/PaySplitShareDialog.tsx` (pass tax/tip, consume `onTotalsChange` for CTA label)
+
+**No DB migration.** Existing `split_check_item_claims` (composite unique on `item_id,profile_id`) already supports many profiles per item. The fractional cost is purely a derived display + handled by the host's existing settlement RPC.
+
+**Realtime:** Existing channel subscription stays; we just also re-fetch profile metadata when a new `profile_id` appears (cache hit otherwise).
+
+**Tokens only** — `bg-primary/5`, `border-primary/40`, `ring-primary`, `text-muted-foreground`. No raw hex.
+
+**Out of scope:** Host-side settlement panel, server payment math, schema changes, notifications.
