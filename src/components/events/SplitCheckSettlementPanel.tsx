@@ -70,20 +70,53 @@ export function SplitCheckSettlementPanel({ eventId, hostProfileId, onOpenPayout
         const yourNet = collected - platformFee;
         const pendingIds = reqTargets.filter((t: any) => t.status === 'pending').map((t: any) => t.profile_id);
 
+        const isCanceled = r.status === 'canceled';
+        const cancelRequest = async () => {
+          if (!confirm('Cancel this split-check request? Pending attendees will stop seeing the pay prompt.')) return;
+          setCancelingId(r.id);
+          const { error } = await supabase
+            .from('split_check_requests')
+            .update({ status: 'canceled' })
+            .eq('id', r.id);
+          setCancelingId(null);
+          if (error) { toast.error('Could not cancel'); return; }
+          toast.success('Request canceled');
+          refetch();
+        };
+
         return (
-          <Card key={r.id} className="p-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
+          <Card key={r.id} className={['p-4 space-y-3', isCanceled ? 'opacity-70' : ''].join(' ')}>
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
                 <p className="text-sm font-semibold">{r.mode === 'quick' ? 'Quick Split' : 'Itemized Split'}</p>
                 <p className="text-xs text-muted-foreground">${(r.total_cents/100).toFixed(2)} total</p>
               </div>
-              <Badge variant={r.status === 'settled' ? 'default' : 'secondary'}>{r.status}</Badge>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <Badge
+                  variant={r.status === 'settled' ? 'default' : isCanceled ? 'destructive' : 'secondary'}
+                  className="text-[10px]"
+                >
+                  {r.status}
+                </Badge>
+                {r.status === 'open' && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 px-2 text-xs text-muted-foreground hover:text-destructive"
+                    onClick={cancelRequest}
+                    disabled={cancelingId === r.id}
+                  >
+                    {cancelingId === r.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <X className="h-3 w-3 mr-1" />}
+                    Cancel
+                  </Button>
+                )}
+              </div>
             </div>
 
             <div className="grid grid-cols-3 gap-2 text-center text-xs">
               <div><p className="font-bold text-base">${(collected/100).toFixed(2)}</p><p className="text-muted-foreground">Collected</p></div>
               <div><p className="font-bold text-base">${(outstanding/100).toFixed(2)}</p><p className="text-muted-foreground">Outstanding</p></div>
-              <div><p className="font-bold text-base">${(yourNet/100).toFixed(2)}</p><p className="text-muted-foreground">Your net</p></div>
+              <div><p className="font-bold text-base">${(yourNet/100).toFixed(2)}</p><p className="text-muted-foreground">Your net (est.)</p></div>
             </div>
 
             {!payoutsActive && collected > 0 && (
@@ -97,53 +130,87 @@ export function SplitCheckSettlementPanel({ eventId, hostProfileId, onOpenPayout
             )}
 
             <div className="space-y-1.5">
-              {reqTargets.map((t: any) => (
-                <div key={t.id} className="flex items-center justify-between gap-2 text-sm py-1">
-                  <span className="truncate">{profileNames[t.profile_id] ?? t.profile_id.slice(0, 8)}</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground">${((t.share_cents ?? 0)/100).toFixed(2)}</span>
-                    <Badge variant={t.status === 'paid' ? 'default' : t.status === 'refunded' ? 'destructive' : 'secondary'} className="text-[10px]">{t.status}</Badge>
-                    {t.status === 'pending' && (
-                      <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => nudge(r.id, t.profile_id)} disabled={nudgingId === t.profile_id}>
-                        {nudgingId === t.profile_id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Bell className="h-3 w-3" />}
-                      </Button>
-                    )}
-                    {t.status === 'paid' && t.payment_id && (
-                      <Button size="sm" variant="ghost" className="h-7 px-2 text-xs"
-                        onClick={() => setRefundFor({ paymentId: t.payment_id, amount: t.share_cents })}>
-                        Refund
-                      </Button>
-                    )}
+              {reqTargets.map((t: any) => {
+                const meta = profileMap[t.profile_id];
+                return (
+                  <div key={t.id} className="flex items-center justify-between gap-2 text-sm py-1">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Avatar className="h-6 w-6">
+                        {meta?.avatar && <AvatarImage src={meta.avatar} alt={meta.name} />}
+                        <AvatarFallback className="text-[9px]">{(meta?.name ?? '?').slice(0,1).toUpperCase()}</AvatarFallback>
+                      </Avatar>
+                      <span className="truncate">{meta?.name ?? t.profile_id.slice(0, 8)}</span>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-xs text-muted-foreground tabular-nums">${((t.share_cents ?? 0)/100).toFixed(2)}</span>
+                      <Badge
+                        variant={t.status === 'paid' ? 'default' : t.status === 'refunded' || t.status === 'declined' ? 'destructive' : 'secondary'}
+                        className="text-[10px]"
+                      >
+                        {t.status}
+                      </Badge>
+                      {t.status === 'pending' && !isCanceled && (
+                        <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => nudge(r.id, t.profile_id)} disabled={nudgingId === t.profile_id}>
+                          {nudgingId === t.profile_id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Bell className="h-3 w-3" />}
+                        </Button>
+                      )}
+                      {t.status === 'paid' && t.payment_id && (
+                        <Button size="sm" variant="ghost" className="h-7 px-2 text-xs"
+                          onClick={() => setRefundFor({ paymentId: t.payment_id, amount: t.share_cents })}>
+                          Refund
+                        </Button>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
-            {pendingIds.length > 1 && (
+            {pendingIds.length > 1 && !isCanceled && (
               <Button size="sm" variant="outline" className="w-full" onClick={() => nudgeAll(r.id, pendingIds)}>
                 <RefreshCw className="h-3 w-3 mr-1" /> Re-request all ({pendingIds.length})
               </Button>
             )}
 
-            {r.mode === 'itemized' && reqItems.length > 0 && (() => {
-              const unclaimed = reqItems.map((it: any) => {
-                const taken = reqClaims.filter((c: any) => c.item_id === it.id).reduce((s: number, c: any) => s + c.quantity_claimed, 0);
-                const left = it.quantity - taken;
-                return left > 0 ? { ...it, left, uncovered_cents: left * it.unit_price_cents } : null;
-              }).filter(Boolean);
-              if (!unclaimed.length) return null;
-              return (
-                <div className="border-t pt-2">
-                  <p className="text-xs font-medium mb-1">Unclaimed items</p>
-                  {unclaimed.map((it: any) => (
-                    <div key={it.id} className="flex items-center justify-between text-xs py-0.5">
-                      <span className="truncate">{it.description} ×{it.left}</span>
-                      <span className="text-muted-foreground">${(it.uncovered_cents/100).toFixed(2)}</span>
+            {/* Live per-item claim progress (itemized) */}
+            {r.mode === 'itemized' && reqItems.length > 0 && (
+              <div className="border-t pt-2 space-y-1.5">
+                <p className="text-[11px] uppercase tracking-[0.06em] font-semibold text-muted-foreground">Live claims</p>
+                {reqItems.map((it: any) => {
+                  const itemClaims = reqClaims.filter((c: any) => c.item_id === it.id);
+                  const taken = itemClaims.reduce((s: number, c: any) => s + c.quantity_claimed, 0);
+                  const left = it.quantity - taken;
+                  return (
+                    <div key={it.id} className="flex items-center justify-between gap-2 text-[12px]">
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
+                        <span className="truncate font-medium">{it.description}</span>
+                        <span className="text-muted-foreground tabular-nums shrink-0">{taken}/{it.quantity}</span>
+                        {left > 0 && (
+                          <span className="text-[10px] text-primary/80 shrink-0">· {left} open</span>
+                        )}
+                      </div>
+                      <div className="flex items-center -space-x-1.5 shrink-0">
+                        {itemClaims.slice(0, 5).map((c: any) => {
+                          const meta = profileMap[c.profile_id];
+                          return (
+                            <Avatar key={c.profile_id} className="h-5 w-5 ring-2 ring-background" title={`${meta?.name ?? 'Someone'}${c.quantity_claimed > 1 ? ` ×${c.quantity_claimed}` : ''}`}>
+                              {meta?.avatar && <AvatarImage src={meta.avatar} alt={meta?.name ?? 'Someone'} />}
+                              <AvatarFallback className="text-[8px]">{(meta?.name ?? '?').slice(0,1).toUpperCase()}</AvatarFallback>
+                            </Avatar>
+                          );
+                        })}
+                        {itemClaims.length > 5 && (
+                          <span className="text-[10px] text-muted-foreground pl-1.5">+{itemClaims.length - 5}</span>
+                        )}
+                        {itemClaims.length === 0 && (
+                          <span className="text-[10px] text-muted-foreground italic">unclaimed</span>
+                        )}
+                      </div>
                     </div>
-                  ))}
-                </div>
-              );
-            })()}
+                  );
+                })}
+              </div>
+            )}
           </Card>
         );
       })}
