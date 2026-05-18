@@ -202,8 +202,47 @@ export function RequestPaymentDialog({ open, onOpenChange, eventId, attendees, o
             </div>
             {AttendeePicker}
             <Textarea placeholder="Note (optional)" rows={2} value={note} onChange={e => setNote(e.target.value)} />
-            <Button className="w-full" onClick={sendItemized} disabled={busy}>
-              {busy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null} Send Itemized Request
+
+            {/* Mandatory OCR Review & Confirm gate */}
+            {items.length > 0 && (() => {
+              const t = itemizedTotals;
+              const fmt = (c: number) => `$${(c / 100).toFixed(2)}`;
+              const itemsMatch = Math.abs(t.itemsVsSubtotalDelta) <= 1; // 1¢ rounding leeway
+              return (
+                <div className="rounded-2xl border border-border/60 bg-card/60 p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[12px] font-semibold tracking-tight uppercase text-foreground/80">Review &amp; Confirm</p>
+                    {itemsMatch ? (
+                      <span className="inline-flex items-center gap-1 text-[11px] text-emerald-600"><CheckCircle2 className="h-3 w-3" /> Items match subtotal</span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-[11px] text-amber-600"><AlertCircle className="h-3 w-3" /> {fmt(Math.abs(t.itemsVsSubtotalDelta))} off</span>
+                    )}
+                  </div>
+                  <div className="text-[13px] space-y-0.5 tabular-nums">
+                    <div className="flex justify-between"><span className="text-muted-foreground">Items sum</span><span>{fmt(t.sumItems)}</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">Subtotal entered</span><span>{fmt(t.subC)}</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">Tax</span><span>{fmt(t.taxC)}</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">Tip</span><span>{fmt(t.tipC)}</span></div>
+                    <div className="h-px bg-border/40 my-1" />
+                    <div className="flex justify-between font-semibold"><span>Total being requested</span><span className="text-primary">{fmt(t.grand)}</span></div>
+                  </div>
+                  <label className="flex items-start gap-2 pt-1 cursor-pointer">
+                    <Checkbox checked={reviewConfirmed} onCheckedChange={(v) => setReviewConfirmed(!!v)} />
+                    <span className="text-[12px] leading-snug text-foreground/80">
+                      I've reviewed the line items, subtotal, tax, and tip — these numbers are correct.
+                    </span>
+                  </label>
+                </div>
+              );
+            })()}
+
+            <Button
+              className="w-full"
+              onClick={sendItemized}
+              disabled={busy || items.length === 0 || !reviewConfirmed || selected.size === 0}
+            >
+              {busy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+              {reviewConfirmed ? 'Send Itemized Request' : 'Confirm review to send'}
             </Button>
           </TabsContent>
         </Tabs>
