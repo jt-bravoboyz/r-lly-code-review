@@ -66,8 +66,16 @@ export function SplitCheckSettlementPanel({ eventId, hostProfileId, onOpenPayout
         const outstanding = r.total_cents - collected;
         const reqItems = items.filter((i: any) => i.request_id === r.id);
         const reqClaims = claims.filter((c: any) => reqItems.some((i: any) => i.id === c.item_id));
-        const platformFee = Math.round(collected * 0.05); // visual estimate; server is source of truth
-        const yourNet = collected - platformFee;
+        // J: authoritative net = SUM(host_net_cents) of paid split_share payments
+        //    minus SUM(host_net_cents) of refunds tied to those payments.
+        const reqPayments = (payments ?? []).filter((p: any) => p.split_request_id === r.id);
+        const grossNet = reqPayments
+          .filter((p: any) => p.kind === 'split_share' && (p.status === 'paid' || p.status === 'partially_refunded'))
+          .reduce((s: number, p: any) => s + (p.host_net_cents ?? 0), 0);
+        const refundedNet = reqPayments
+          .filter((p: any) => p.kind === 'refund' && p.status === 'paid')
+          .reduce((s: number, p: any) => s + (p.host_net_cents ?? p.amount_cents ?? 0), 0);
+        const yourNet = Math.max(0, grossNet - refundedNet);
         const pendingIds = reqTargets.filter((t: any) => t.status === 'pending').map((t: any) => t.profile_id);
 
         const isCanceled = r.status === 'canceled';
