@@ -19,8 +19,9 @@ export function useMyUnpaidSplit(eventId: string | null | undefined, profileId: 
     if (!eventId || !profileId) { setUnpaid([]); setLoading(false); return; }
     const { data: reqs } = await supabase
       .from('split_check_requests')
-      .select('id, mode')
-      .eq('event_id', eventId);
+      .select('id, mode, status')
+      .eq('event_id', eventId)
+      .eq('status', 'open');
     const ids = (reqs ?? []).map((r: any) => r.id);
     if (!ids.length) { setUnpaid([]); setLoading(false); return; }
     const { data: targets } = await supabase

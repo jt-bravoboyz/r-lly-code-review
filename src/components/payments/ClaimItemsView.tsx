@@ -10,6 +10,7 @@ interface Props {
   profileId: string;
   taxCents?: number;
   tipCents?: number;
+  receiptImageUrl?: string | null;
   onChange?: () => void;
   onTotalsChange?: (myCents: number) => void;
 }
@@ -25,7 +26,8 @@ function initials(name: string) {
   return name.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]?.toUpperCase() ?? '').join('') || '?';
 }
 
-export function ClaimItemsView({ requestId, profileId, taxCents = 0, tipCents = 0, onChange, onTotalsChange }: Props) {
+export function ClaimItemsView({ requestId, profileId, taxCents = 0, tipCents = 0, receiptImageUrl = null, onChange, onTotalsChange }: Props) {
+  const [showReceipt, setShowReceipt] = useState(false);
   const [items, setItems] = useState<any[]>([]);
   const [claimsByItem, setClaimsByItem] = useState<Record<string, Claimant[]>>({});
   const [profileCache, setProfileCache] = useState<Record<string, { name: string; avatar: string | null }>>({});
@@ -111,7 +113,25 @@ export function ClaimItemsView({ requestId, profileId, taxCents = 0, tipCents = 
 
   return (
     <div className="space-y-3 pb-28">
+      {receiptImageUrl && (
+        <div className="rounded-2xl border border-border/60 bg-card/60 overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setShowReceipt(v => !v)}
+            className="w-full px-3 py-2 flex items-center justify-between text-[12px] font-medium text-foreground/80 hover:bg-muted/40 transition-colors"
+          >
+            <span>Receipt photo</span>
+            <span className="text-[11px] text-muted-foreground">{showReceipt ? 'Hide' : 'View'}</span>
+          </button>
+          {showReceipt && (
+            <a href={receiptImageUrl} target="_blank" rel="noopener noreferrer" className="block">
+              <img src={receiptImageUrl} alt="Receipt" className="w-full max-h-72 object-contain bg-muted" />
+            </a>
+          )}
+        </div>
+      )}
       <p className="text-[13px] font-medium text-foreground/80 tracking-tight">Claim what you ordered</p>
+
 
       <div className="rounded-2xl border border-border/60 bg-card/60 divide-y divide-border/40 overflow-hidden">
         {items.map(it => {
@@ -126,10 +146,10 @@ export function ClaimItemsView({ requestId, profileId, taxCents = 0, tipCents = 
             <div
               key={it.id}
               className={[
-                'flex items-center gap-3 px-3 py-3 transition-colors duration-300',
+                'relative flex items-center gap-3 px-3 py-3 transition-colors duration-300',
                 unclaimed
-                  ? 'border-l-2 border-l-dashed border-l-primary/20 bg-primary/[0.015] animate-pulse [animation-duration:4s]'
-                  : 'border-l-2 border-l-transparent',
+                  ? 'bg-primary/[0.015] before:content-[""] before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:border-l-2 before:border-dashed before:border-primary/25 animate-pulse [animation-duration:4s]'
+                  : '',
               ].join(' ')}
             >
               <div className="flex-1 min-w-0">
@@ -205,8 +225,7 @@ export function ClaimItemsView({ requestId, profileId, taxCents = 0, tipCents = 
             <span className="text-[13px] font-medium tracking-tight">Estimated final charge</span>
             <span
               key={myTotalC}
-              className="text-[19px] font-semibold font-montserrat text-primary tabular-nums inline-block transition-transform duration-150 ease-out animate-in zoom-in-[1.02]"
-              style={{ transform: 'scale(1.02)', animation: 'scale-in 150ms ease-out' }}
+              className="text-[19px] font-semibold font-montserrat text-primary tabular-nums inline-block animate-in zoom-in-95 duration-200 ease-out"
             >
               {fmt(myTotalC)}
             </span>

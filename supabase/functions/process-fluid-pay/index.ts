@@ -99,6 +99,30 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Snapshot-claim validation: for itemized splits, recompute the payer's share
+    // from current claims and reject if it drifted from the amount the client sent.
+    if (body.kind === "split_share" && body.split_request_id && payerProfile?.id) {
+      const { data: reqRow } = await admin.from("split_check_requests")
+        .select("mode, status").eq("id", body.split_request_id).maybeSingle();
+      if (reqRow?.status === "canceled") {
+        return new Response(JSON.stringify({ ok: false, error: "request_canceled" }),
+          { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      if (reqRow?.mode === "itemized") {
+        const { data: snap } = await admin.rpc("compute_itemized_share", {
+          p_request_id: body.split_request_id, p_profile_id: payerProfile.id,
+        });
+        const row = Array.isArray(snap) ? snap[0] : snap;
+        const serverTotal = row?.total_cents ?? 0;
+        if (serverTotal !== body.amount_cents) {
+          return new Response(JSON.stringify({
+            ok: false, error: "claim_snapshot_mismatch",
+            server_total_cents: serverTotal, client_total_cents: body.amount_cents,
+          }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+      }
+    }
+
     // Resolve destination sub-merchant via event host
     let destination: string | null = cfg.platformMasterSubMerchantId;
     if (body.event_id) {
