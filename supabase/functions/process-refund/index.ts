@@ -73,10 +73,23 @@ Deno.serve(async (req) => {
     const newStatus = refundAmount >= orig.amount_cents ? "refunded" : "partially_refunded";
     await admin.from("payments").update({ status: newStatus }).eq("id", orig.id);
 
-    // Flip target status if it was a split_share
-    if (orig.kind === "split_share" && orig.split_request_id) {
+    // Flip target status + free up the refunded payer's item claims so the host's
+    // "Unclaimed items" view re-surfaces them for re-collection.
+    if (orig.kind === "split_share" && orig.split_request_id && orig.profile_id) {
       await admin.from("split_check_targets").update({ status: "refunded" })
         .eq("request_id", orig.split_request_id).eq("profile_id", orig.profile_id);
+
+      const { data: itemRows } = await admin.from("split_check_items")
+        .select("id").eq("request_id", orig.split_request_id);
+      const itemIds = (itemRows ?? []).map((r: any) => r.id);
+      if (itemIds.length) {
+        await admin.from("split_check_item_claims").delete()
+          .in("item_id", itemIds).eq("profile_id", orig.profile_id);
+      }
+
+      // Re-open the request if it had auto-settled
+      await admin.from("split_check_requests").update({ status: "open" })
+        .eq("id", orig.split_request_id).eq("status", "settled");
     }
 
     // Notify the original payer
