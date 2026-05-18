@@ -62,6 +62,16 @@ Deno.serve(async (req) => {
       );
     }
 
+    // A: Authoritative $0 block — never let a payer "settle" by claiming nothing.
+    // Zod already rejects negatives via .positive(), but split_share with 0 must be
+    // explicitly refused with a typed code the client can react to.
+    if (body.kind === "split_share" && body.amount_cents <= 0) {
+      return new Response(
+        JSON.stringify({ ok: false, error: "amount_must_be_positive" }),
+        { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     const isSimulatedToken = body.payment_token.startsWith("simulated_") || body.payment_token.startsWith("tok_sandbox_");
 
     // Resolve payer profile

@@ -24,6 +24,20 @@ const BodySchema = z.object({
   receipt_image_url: z.string().optional(),
 });
 
+/**
+ * Distribute `total` cents across `n` payers without rounding-up over-collection.
+ * Returns an array of integer cents whose sum === total exactly.
+ * The first `remainder` payers absorb the +1 cent.
+ */
+function exactQuickShares(total: number, n: number): number[] {
+  if (n <= 0) return [];
+  const base = Math.floor(total / n);
+  const remainder = total - base * n;
+  const out: number[] = new Array(n);
+  for (let i = 0; i < n; i++) out[i] = base + (i < remainder ? 1 : 0);
+  return out;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
@@ -54,10 +68,31 @@ Deno.serve(async (req) => {
     const { data: hostCheck } = await admin.rpc("is_event_host_or_cohost", { p_event_id: body.event_id, p_user_id: userId });
     if (!hostCheck) return new Response(JSON.stringify({ error: "forbidden" }), { status: 403, headers: corsHeaders });
 
-    let total = 0, subtotal = 0, tax = 0, tip = 0, perShare: number | null = null;
+    // C: Attendee whitelist — every target must actually be an active attendee of this event.
+    const uniqueTargets = Array.from(new Set(body.target_profile_ids));
+    const { data: validAttendees } = await admin
+      .from("event_attendees")
+      .select("profile_id")
+      .eq("event_id", body.event_id)
+      .in("profile_id", uniqueTargets);
+    const validSet = new Set((validAttendees ?? []).map((r: any) => r.profile_id));
+    const invalid = uniqueTargets.filter((id) => !validSet.has(id));
+    if (invalid.length) {
+      return new Response(
+        JSON.stringify({ ok: false, error: "invalid_targets", invalid_profile_ids: invalid }),
+        { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+    const targets = uniqueTargets; // preserves first-seen ordering of caller
+
+    let total = 0, subtotal = 0, tax = 0, tip = 0;
+    let quickShares: number[] = [];
+    let perShare: number | null = null;
     if (body.mode === "quick") {
       total = body.total_cents ?? 0;
-      perShare = Math.ceil(total / body.target_profile_ids.length);
+      // E (quick): exact distribution — first K payers absorb +1¢, host never over-collects.
+      quickShares = exactQuickShares(total, targets.length);
+      perShare = quickShares[0] ?? 0; // for backwards-compatible per_share_cents preview
     } else {
       subtotal = body.subtotal_cents ?? (body.items?.reduce((s, i) => s + i.quantity * i.unit_price_cents, 0) ?? 0);
       tax = body.tax_cents ?? 0;
@@ -80,11 +115,11 @@ Deno.serve(async (req) => {
     }).select("id").single();
     if (reqErr) throw reqErr;
 
-    // Targets
-    const targetRows = body.target_profile_ids.map(pid => ({
+    // Targets — quick uses exact per-payer cents
+    const targetRows = targets.map((pid, idx) => ({
       request_id: reqRow.id,
       profile_id: pid,
-      share_cents: body.mode === "quick" ? (perShare ?? 0) : 0,
+      share_cents: body.mode === "quick" ? (quickShares[idx] ?? 0) : 0,
     }));
     await admin.from("split_check_targets").insert(targetRows);
 
@@ -102,19 +137,33 @@ Deno.serve(async (req) => {
       await admin.from("split_check_items").insert(itemRows);
     }
 
-    // Notifications
+    // Notifications (in-app)
     const { data: ev } = await admin.from("events").select("title").eq("id", body.event_id).maybeSingle();
-    const notifRows = body.target_profile_ids.map(pid => ({
+    const titleStr = `Pay your share for "${ev?.title ?? "the R@lly"}"`;
+    const notifRows = targets.map((pid, idx) => ({
       profile_id: pid,
       type: "split_check_request",
-      title: `Pay your share for "${ev?.title ?? "the R@lly"}"`,
+      title: titleStr,
       body: body.mode === "quick"
-        ? `$${((perShare ?? 0) / 100).toFixed(2)} requested`
+        ? `$${((quickShares[idx] ?? 0) / 100).toFixed(2)} requested`
         : "Tap to claim your items",
       data: { event_id: body.event_id, request_id: reqRow.id, mode: body.mode },
       read: false,
     }));
     await admin.from("notifications").insert(notifRows);
+
+    // I: Initial push fan-out — best-effort, parity with the Nudge flow.
+    try {
+      await admin.functions.invoke("send-push-notification", {
+        body: {
+          profile_ids: targets,
+          title: titleStr,
+          body: body.mode === "quick"
+            ? "Tap to pay your share"
+            : "Tap to claim your items",
+        },
+      });
+    } catch (_) { /* non-blocking */ }
 
     return new Response(JSON.stringify({ ok: true, request_id: reqRow.id }), {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },

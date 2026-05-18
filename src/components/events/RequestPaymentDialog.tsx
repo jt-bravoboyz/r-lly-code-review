@@ -7,7 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Loader2, Trash2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Loader2, Trash2, AlertCircle, CheckCircle2, Search, Check } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { ReceiptUploader } from './ReceiptUploader';
@@ -28,6 +29,8 @@ export function RequestPaymentDialog({ open, onOpenChange, eventId, attendees, o
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
+  const [search, setSearch] = useState('');
+  const [profileMeta, setProfileMeta] = useState<Record<string, { name: string; avatar: string | null }>>({});
   const sendLockRef = useRef(false);
   const lastSendRef = useRef(0);
 
@@ -47,11 +50,24 @@ export function RequestPaymentDialog({ open, onOpenChange, eventId, attendees, o
     if (!open) {
       setSelected(new Set()); setNote(''); setTotalDollars('');
       setItems([]); setSubtotal(''); setTax(''); setTip(''); setReceiptUrl(null);
-      setReviewConfirmed(false);
+      setReviewConfirmed(false); setSearch('');
       setTab('quick');
       sendLockRef.current = false;
     }
   }, [open]);
+
+  // Hydrate avatars + canonical names for attendees from safe_profiles
+  useEffect(() => {
+    if (!open) return;
+    const ids = Array.from(new Set(attendees.map((a) => a.profile_id)));
+    if (!ids.length) return;
+    supabase.from('safe_profiles').select('id, display_name, avatar_url').in('id', ids)
+      .then(({ data }) => {
+        setProfileMeta(Object.fromEntries(
+          (data ?? []).map((p: any) => [p.id, { name: p.display_name ?? 'Someone', avatar: p.avatar_url ?? null }])
+        ));
+      });
+  }, [open, attendees]);
 
   const totalCentsQuick = Math.round((parseFloat(totalDollars) || 0) * 100);
   const perShareQuick = selected.size > 0 ? Math.ceil(totalCentsQuick / selected.size) : 0;
@@ -131,17 +147,92 @@ export function RequestPaymentDialog({ open, onOpenChange, eventId, attendees, o
     onSent?.(); onOpenChange(false);
   });
 
+  // Apple-grade attendee picker — avatars, instant search, select all/none.
+  const filteredAttendees = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return attendees;
+    return attendees.filter((a) => {
+      const meta = profileMeta[a.profile_id];
+      const name = (meta?.name ?? a.display_name ?? '').toLowerCase();
+      return name.includes(q);
+    });
+  }, [attendees, profileMeta, search]);
+
+  const allFilteredSelected = filteredAttendees.length > 0 && filteredAttendees.every((a) => selected.has(a.profile_id));
+  const toggleAllFiltered = () => {
+    const next = new Set(selected);
+    if (allFilteredSelected) filteredAttendees.forEach((a) => next.delete(a.profile_id));
+    else filteredAttendees.forEach((a) => next.add(a.profile_id));
+    setSelected(next);
+  };
+  const initials = (name: string) =>
+    name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]?.toUpperCase() ?? '').join('') || '?';
+
   const AttendeePicker = (
-    <div className="space-y-1.5">
-      <Label>Split with</Label>
-      <ScrollArea className="h-32 rounded-md border p-2">
-        {attendees.map(a => (
-          <label key={a.profile_id} className="flex items-center gap-2 py-1 text-sm">
-            <Checkbox checked={selected.has(a.profile_id)} onCheckedChange={() => toggle(a.profile_id)} />
-            {a.display_name ?? a.profile_id.slice(0, 8)}
-          </label>
-        ))}
-        {!attendees.length && <p className="text-xs text-muted-foreground">No attendees yet.</p>}
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <Label className="text-[12px] font-semibold tracking-tight uppercase text-foreground/80">
+          Split with {selected.size > 0 && <span className="text-primary normal-case font-medium">· {selected.size} selected</span>}
+        </Label>
+        {attendees.length > 0 && (
+          <button
+            type="button"
+            onClick={toggleAllFiltered}
+            className="text-[11px] font-medium text-primary hover:text-primary/80 transition-colors"
+          >
+            {allFilteredSelected ? 'Select None' : 'Select All'}
+          </button>
+        )}
+      </div>
+
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+        <Input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search attendees"
+          className="pl-9 h-9 rounded-xl bg-card/60 border-border/60"
+        />
+      </div>
+
+      <ScrollArea className="h-44 rounded-2xl border border-border/60 bg-card/40 p-1">
+        {filteredAttendees.length === 0 ? (
+          <p className="text-xs text-muted-foreground p-4 text-center">
+            {attendees.length === 0 ? 'No attendees yet.' : 'No matches.'}
+          </p>
+        ) : (
+          filteredAttendees.map((a) => {
+            const meta = profileMeta[a.profile_id];
+            const name = meta?.name ?? a.display_name ?? a.profile_id.slice(0, 8);
+            const isSel = selected.has(a.profile_id);
+            return (
+              <button
+                key={a.profile_id}
+                type="button"
+                onClick={() => toggle(a.profile_id)}
+                className={[
+                  'w-full flex items-center gap-3 px-2.5 py-2 rounded-xl text-left transition-all duration-150 min-h-[44px]',
+                  'active:scale-[0.99]',
+                  isSel ? 'bg-primary/10 ring-1 ring-primary/30' : 'hover:bg-muted/40',
+                ].join(' ')}
+              >
+                <Avatar className={['h-9 w-9 shrink-0 ring-2', isSel ? 'ring-primary' : 'ring-background'].join(' ')}>
+                  {meta?.avatar && <AvatarImage src={meta.avatar} alt={name} />}
+                  <AvatarFallback className="text-[11px] font-semibold">{initials(name)}</AvatarFallback>
+                </Avatar>
+                <span className="flex-1 min-w-0 truncate text-[14px] font-medium tracking-tight">{name}</span>
+                <span
+                  className={[
+                    'h-5 w-5 rounded-full flex items-center justify-center shrink-0 transition-all',
+                    isSel ? 'bg-primary text-primary-foreground scale-100' : 'border-2 border-border scale-90',
+                  ].join(' ')}
+                >
+                  {isSel && <Check className="h-3 w-3" strokeWidth={3} />}
+                </span>
+              </button>
+            );
+          })
+        )}
       </ScrollArea>
     </div>
   );
