@@ -159,7 +159,6 @@ export function RequestPaymentDialog({ open, onOpenChange, eventId, attendees, o
   }, [attendees, profileMeta, search]);
 
   const allFilteredSelected = filteredAttendees.length > 0 && filteredAttendees.every((a) => selected.has(a.profile_id));
-  const someFilteredSelected = filteredAttendees.some((a) => selected.has(a.profile_id));
   const toggleAllFiltered = () => {
     const next = new Set(selected);
     if (allFilteredSelected) filteredAttendees.forEach((a) => next.delete(a.profile_id));
