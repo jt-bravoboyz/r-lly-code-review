@@ -107,6 +107,7 @@ export function PaySplitShareDialog({ open, onOpenChange, requestId, profileId, 
             profileId={profileId}
             taxCents={request.tax_cents ?? 0}
             tipCents={request.tip_cents ?? 0}
+            receiptImageUrl={request.receipt_image_url ?? null}
             onChange={refreshItemized}
             onTotalsChange={(c) => setComputedTotal(c)}
           />
@@ -118,7 +119,7 @@ export function PaySplitShareDialog({ open, onOpenChange, requestId, profileId, 
         </div>
 
         {savedToken ? (
-          <Button className="w-full h-12" disabled={busy || amountCents === 0 || target?.status === 'paid'}
+          <Button className="w-full h-12" disabled={busy || amountCents === 0 || target?.status === 'paid' || target?.status === 'declined'}
             onClick={() => pay(savedToken, savedCardBrand ?? 'card', savedCardLast4 ?? '', false)}>
             {busy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
             {target?.status === 'paid' ? 'Already paid' : `One-Tap Pay $${(amountCents/100).toFixed(2)}`}
@@ -127,8 +128,32 @@ export function PaySplitShareDialog({ open, onOpenChange, requestId, profileId, 
           <FluidPayCardForm
             amountCents={amountCents}
             onTokenize={pay}
-            externalDisabled={busy || amountCents === 0 || target?.status === 'paid'}
+            externalDisabled={busy || amountCents === 0 || target?.status === 'paid' || target?.status === 'declined'}
           />
+        )}
+
+        {target && target.status !== 'paid' && target.status !== 'declined' && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full text-muted-foreground hover:text-destructive text-xs"
+            disabled={busy}
+            onClick={async () => {
+              if (!confirm('Decline this tab? The host will be notified you opted out.')) return;
+              const { error } = await supabase
+                .from('split_check_targets')
+                .update({ status: 'declined' })
+                .eq('id', target.id);
+              if (error) { toast.error('Could not decline'); return; }
+              toast.success('Host notified — declined');
+              onPaid?.(); onOpenChange(false);
+            }}
+          >
+            Not my tab — decline
+          </Button>
+        )}
+        {target?.status === 'declined' && (
+          <p className="text-center text-xs text-muted-foreground">You declined this tab.</p>
         )}
       </DialogContent>
     </Dialog>
