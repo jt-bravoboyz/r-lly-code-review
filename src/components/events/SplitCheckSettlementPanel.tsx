@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSplitCheck } from '@/hooks/useSplitCheck';
 import { useMerchantAccount } from '@/hooks/useMerchantAccount';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Bell, RefreshCw, Loader2, AlertCircle } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Bell, RefreshCw, Loader2, AlertCircle, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { RefundConfirmDialog } from '@/components/payments/RefundConfirmDialog';
 
@@ -18,16 +19,22 @@ interface Props {
 export function SplitCheckSettlementPanel({ eventId, hostProfileId, onOpenPayoutSetup }: Props) {
   const { requests, targets, items, claims, refetch } = useSplitCheck(eventId);
   const { account } = useMerchantAccount(hostProfileId);
-  const [profileNames, setProfileNames] = useState<Record<string, string>>({});
+  const [profileMap, setProfileMap] = useState<Record<string, { name: string; avatar: string | null }>>({});
   const [refundFor, setRefundFor] = useState<{ paymentId: string; amount: number } | null>(null);
   const [nudgingId, setNudgingId] = useState<string | null>(null);
+  const [cancelingId, setCancelingId] = useState<string | null>(null);
 
   useEffect(() => {
-    const ids = Array.from(new Set(targets.map((t: any) => t.profile_id)));
+    const ids = Array.from(new Set([
+      ...targets.map((t: any) => t.profile_id),
+      ...claims.map((c: any) => c.profile_id),
+    ]));
     if (!ids.length) return;
-    supabase.from('safe_profiles').select('id, display_name').in('id', ids)
-      .then(({ data }) => setProfileNames(Object.fromEntries((data ?? []).map((p: any) => [p.id, p.display_name]))));
-  }, [targets]);
+    supabase.from('safe_profiles').select('id, display_name, avatar_url').in('id', ids)
+      .then(({ data }) => setProfileMap(Object.fromEntries(
+        (data ?? []).map((p: any) => [p.id, { name: p.display_name ?? 'Someone', avatar: p.avatar_url ?? null }])
+      )));
+  }, [targets, claims]);
 
   if (!requests.length) return null;
 
