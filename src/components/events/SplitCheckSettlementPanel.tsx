@@ -17,7 +17,7 @@ interface Props {
 }
 
 export function SplitCheckSettlementPanel({ eventId, hostProfileId, onOpenPayoutSetup }: Props) {
-  const { requests, targets, items, claims, refetch } = useSplitCheck(eventId);
+  const { requests, targets, items, claims, payments, refetch } = useSplitCheck(eventId);
   const { account } = useMerchantAccount(hostProfileId);
   const [profileMap, setProfileMap] = useState<Record<string, { name: string; avatar: string | null }>>({});
   const [refundFor, setRefundFor] = useState<{ paymentId: string; amount: number } | null>(null);
