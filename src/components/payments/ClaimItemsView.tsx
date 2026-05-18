@@ -10,6 +10,7 @@ interface Props {
   profileId: string;
   taxCents?: number;
   tipCents?: number;
+  receiptImageUrl?: string | null;
   onChange?: () => void;
   onTotalsChange?: (myCents: number) => void;
 }
@@ -25,7 +26,8 @@ function initials(name: string) {
   return name.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]?.toUpperCase() ?? '').join('') || '?';
 }
 
-export function ClaimItemsView({ requestId, profileId, taxCents = 0, tipCents = 0, onChange, onTotalsChange }: Props) {
+export function ClaimItemsView({ requestId, profileId, taxCents = 0, tipCents = 0, receiptImageUrl = null, onChange, onTotalsChange }: Props) {
+  const [showReceipt, setShowReceipt] = useState(false);
   const [items, setItems] = useState<any[]>([]);
   const [claimsByItem, setClaimsByItem] = useState<Record<string, Claimant[]>>({});
   const [profileCache, setProfileCache] = useState<Record<string, { name: string; avatar: string | null }>>({});
@@ -111,7 +113,25 @@ export function ClaimItemsView({ requestId, profileId, taxCents = 0, tipCents = 
 
   return (
     <div className="space-y-3 pb-28">
+      {receiptImageUrl && (
+        <div className="rounded-2xl border border-border/60 bg-card/60 overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setShowReceipt(v => !v)}
+            className="w-full px-3 py-2 flex items-center justify-between text-[12px] font-medium text-foreground/80 hover:bg-muted/40 transition-colors"
+          >
+            <span>Receipt photo</span>
+            <span className="text-[11px] text-muted-foreground">{showReceipt ? 'Hide' : 'View'}</span>
+          </button>
+          {showReceipt && (
+            <a href={receiptImageUrl} target="_blank" rel="noopener noreferrer" className="block">
+              <img src={receiptImageUrl} alt="Receipt" className="w-full max-h-72 object-contain bg-muted" />
+            </a>
+          )}
+        </div>
+      )}
       <p className="text-[13px] font-medium text-foreground/80 tracking-tight">Claim what you ordered</p>
+
 
       <div className="rounded-2xl border border-border/60 bg-card/60 divide-y divide-border/40 overflow-hidden">
         {items.map(it => {
