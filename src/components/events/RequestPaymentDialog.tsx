@@ -29,6 +29,8 @@ export function RequestPaymentDialog({ open, onOpenChange, eventId, attendees, o
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
+  const [search, setSearch] = useState('');
+  const [profileMeta, setProfileMeta] = useState<Record<string, { name: string; avatar: string | null }>>({});
   const sendLockRef = useRef(false);
   const lastSendRef = useRef(0);
 
@@ -48,11 +50,24 @@ export function RequestPaymentDialog({ open, onOpenChange, eventId, attendees, o
     if (!open) {
       setSelected(new Set()); setNote(''); setTotalDollars('');
       setItems([]); setSubtotal(''); setTax(''); setTip(''); setReceiptUrl(null);
-      setReviewConfirmed(false);
+      setReviewConfirmed(false); setSearch('');
       setTab('quick');
       sendLockRef.current = false;
     }
   }, [open]);
+
+  // Hydrate avatars + canonical names for attendees from safe_profiles
+  useEffect(() => {
+    if (!open) return;
+    const ids = Array.from(new Set(attendees.map((a) => a.profile_id)));
+    if (!ids.length) return;
+    supabase.from('safe_profiles').select('id, display_name, avatar_url').in('id', ids)
+      .then(({ data }) => {
+        setProfileMeta(Object.fromEntries(
+          (data ?? []).map((p: any) => [p.id, { name: p.display_name ?? 'Someone', avatar: p.avatar_url ?? null }])
+        ));
+      });
+  }, [open, attendees]);
 
   const totalCentsQuick = Math.round((parseFloat(totalDollars) || 0) * 100);
   const perShareQuick = selected.size > 0 ? Math.ceil(totalCentsQuick / selected.size) : 0;
