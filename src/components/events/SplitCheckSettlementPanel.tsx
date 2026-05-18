@@ -124,7 +124,7 @@ export function SplitCheckSettlementPanel({ eventId, hostProfileId, onOpenPayout
             <div className="grid grid-cols-3 gap-2 text-center text-xs">
               <div><p className="font-bold text-base">${(collected/100).toFixed(2)}</p><p className="text-muted-foreground">Collected</p></div>
               <div><p className="font-bold text-base">${(outstanding/100).toFixed(2)}</p><p className="text-muted-foreground">Outstanding</p></div>
-              <div><p className="font-bold text-base">${(yourNet/100).toFixed(2)}</p><p className="text-muted-foreground">Your net (est.)</p></div>
+              <div><p className="font-bold text-base">${(yourNet/100).toFixed(2)}</p><p className="text-muted-foreground">Your net</p></div>
             </div>
 
             {!payoutsActive && collected > 0 && (
