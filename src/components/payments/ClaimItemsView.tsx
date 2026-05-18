@@ -126,10 +126,10 @@ export function ClaimItemsView({ requestId, profileId, taxCents = 0, tipCents = 
             <div
               key={it.id}
               className={[
-                'flex items-center gap-3 px-3 py-3 transition-colors duration-300',
+                'relative flex items-center gap-3 px-3 py-3 transition-colors duration-300',
                 unclaimed
-                  ? 'border-l-2 border-l-dashed border-l-primary/20 bg-primary/[0.015] animate-pulse [animation-duration:4s]'
-                  : 'border-l-2 border-l-transparent',
+                  ? 'bg-primary/[0.015] before:content-[""] before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:border-l-2 before:border-dashed before:border-primary/25 animate-pulse [animation-duration:4s]'
+                  : '',
               ].join(' ')}
             >
               <div className="flex-1 min-w-0">
@@ -205,8 +205,7 @@ export function ClaimItemsView({ requestId, profileId, taxCents = 0, tipCents = 
             <span className="text-[13px] font-medium tracking-tight">Estimated final charge</span>
             <span
               key={myTotalC}
-              className="text-[19px] font-semibold font-montserrat text-primary tabular-nums inline-block transition-transform duration-150 ease-out animate-in zoom-in-[1.02]"
-              style={{ transform: 'scale(1.02)', animation: 'scale-in 150ms ease-out' }}
+              className="text-[19px] font-semibold font-montserrat text-primary tabular-nums inline-block animate-in zoom-in-95 duration-200 ease-out"
             >
               {fmt(myTotalC)}
             </span>
