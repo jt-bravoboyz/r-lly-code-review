@@ -72,11 +72,34 @@ export function RequestPaymentDialog({ open, onOpenChange, eventId, attendees, o
     setTax(((r.tax_cents ?? 0) / 100).toString());
     setTip(((r.tip_cents ?? 0) / 100).toString());
     setReceiptUrl(r.image_url);
+    setReviewConfirmed(false);
   };
 
-  const sendQuick = async () => {
-    if (selected.size === 0 || totalCentsQuick === 0) { toast.error('Pick attendees and enter a total'); return; }
+  // Itemized review math — drives the mandatory confirm gate.
+  const itemizedTotals = useMemo(() => {
+    const sumItems = items.reduce((s, i) => s + i.quantity * i.unit_price_cents, 0);
+    const subC = itemizedSubtotalCents || sumItems;
+    const taxC = Math.round((parseFloat(tax) || 0) * 100);
+    const tipC = Math.round((parseFloat(tip) || 0) * 100);
+    const grand = subC + taxC + tipC;
+    const itemsVsSubtotalDelta = subC - sumItems;
+    return { sumItems, subC, taxC, tipC, grand, itemsVsSubtotalDelta };
+  }, [items, itemizedSubtotalCents, tax, tip]);
+
+  const guardedSend = async (fn: () => Promise<void>) => {
+    if (sendLockRef.current) return;
+    // 4s cooldown against rapid double-tap & accidental re-fires
+    const now = Date.now();
+    if (now - lastSendRef.current < 4000) return;
+    sendLockRef.current = true;
+    lastSendRef.current = now;
     setBusy(true);
+    try { await fn(); }
+    finally { setBusy(false); sendLockRef.current = false; }
+  };
+
+  const sendQuick = () => guardedSend(async () => {
+    if (selected.size === 0 || totalCentsQuick === 0) { toast.error('Pick attendees and enter a total'); return; }
     const { data, error } = await supabase.functions.invoke('request-split-check', {
       body: {
         event_id: eventId, mode: 'quick',
@@ -84,31 +107,29 @@ export function RequestPaymentDialog({ open, onOpenChange, eventId, attendees, o
         total_cents: totalCentsQuick, note: note || undefined,
       },
     });
-    setBusy(false);
     if (error || !data?.ok) { toast.error((data as any)?.error ?? 'Failed'); return; }
     toast.success('Split-check sent');
     onSent?.(); onOpenChange(false);
-  };
+  });
 
-  const sendItemized = async () => {
+  const sendItemized = () => guardedSend(async () => {
     if (selected.size === 0 || items.length === 0) { toast.error('Pick attendees and add items'); return; }
-    setBusy(true);
+    if (!reviewConfirmed) { toast.error('Confirm the receipt totals first'); return; }
     const { data, error } = await supabase.functions.invoke('request-split-check', {
       body: {
         event_id: eventId, mode: 'itemized',
         target_profile_ids: Array.from(selected),
         items, subtotal_cents: itemizedSubtotalCents,
-        tax_cents: Math.round((parseFloat(tax) || 0) * 100),
-        tip_cents: Math.round((parseFloat(tip) || 0) * 100),
+        tax_cents: itemizedTotals.taxC,
+        tip_cents: itemizedTotals.tipC,
         receipt_image_url: receiptUrl ?? undefined,
         note: note || undefined,
       },
     });
-    setBusy(false);
     if (error || !data?.ok) { toast.error((data as any)?.error ?? 'Failed'); return; }
     toast.success('Itemized request sent');
     onSent?.(); onOpenChange(false);
-  };
+  });
 
   const AttendeePicker = (
     <div className="space-y-1.5">
