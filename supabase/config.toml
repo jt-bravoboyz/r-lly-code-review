@@ -39,3 +39,10 @@ project_id = "lovzfxppnxictkvymyot"
     verify_jwt = true
   [functions.fluid-pay-onboarding]
     verify_jwt = true
+  [functions.process-guest-pay]
+    verify_jwt = false
+  [functions.get-guest-tab]
+    verify_jwt = false
+  [functions.claim-guest-payment]
+    verify_jwt = true
+

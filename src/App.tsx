@@ -37,6 +37,8 @@ import NotFound from "./pages/NotFound";
 import InviteHistory from "./pages/InviteHistory";
 import AdminDashboard from "./pages/AdminDashboard";
 import Unsubscribe from "./pages/Unsubscribe";
+import SplitCheckHome from "./pages/SplitCheckHome";
+import SplitGuestPay from "./pages/SplitGuestPay";
 
 const queryClient = new QueryClient();
 
@@ -84,6 +86,8 @@ const App = () => (
                       <Route path="/invite-history" element={<InviteHistory />} />
                       <Route path="/admin" element={<AdminDashboard />} />
                       <Route path="/unsubscribe" element={<Unsubscribe />} />
+                      <Route path="/tabs" element={<SplitCheckHome />} />
+                      <Route path="/tab/pay/:requestId" element={<SplitGuestPay />} />
                       <Route path="*" element={<NotFound />} />
                     </Routes>
                   </TutorialProvider>

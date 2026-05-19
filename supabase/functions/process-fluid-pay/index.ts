@@ -133,19 +133,26 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Resolve destination sub-merchant via event host
+    // Resolve destination sub-merchant via event host OR standalone-tab host
     let destination: string | null = cfg.platformMasterSubMerchantId;
+    let resolvedHostProfileId: string | null = null;
     if (body.event_id) {
       const { data: ev } = await admin.from("events").select("creator_id").eq("id", body.event_id).maybeSingle();
-      if (ev?.creator_id) {
-        const { data: ma } = await admin.from("merchant_accounts")
-          .select("fluid_pay_sub_merchant_id, status, payouts_enabled")
-          .eq("profile_id", ev.creator_id).maybeSingle();
-        if (ma?.status === "active" && ma.payouts_enabled && ma.fluid_pay_sub_merchant_id) {
-          destination = ma.fluid_pay_sub_merchant_id;
-        }
+      if (ev?.creator_id) resolvedHostProfileId = ev.creator_id;
+    } else if (body.split_request_id) {
+      const { data: sr } = await admin.from("split_check_requests")
+        .select("host_id, context").eq("id", body.split_request_id).maybeSingle();
+      if (sr?.host_id) resolvedHostProfileId = sr.host_id;
+    }
+    if (resolvedHostProfileId) {
+      const { data: ma } = await admin.from("merchant_accounts")
+        .select("fluid_pay_sub_merchant_id, status, payouts_enabled")
+        .eq("profile_id", resolvedHostProfileId).maybeSingle();
+      if (ma?.status === "active" && ma.payouts_enabled && ma.fluid_pay_sub_merchant_id) {
+        destination = ma.fluid_pay_sub_merchant_id;
       }
     }
+
 
     const platform_fee_cents = Math.round(body.amount_cents * cfg.platformFeePercent / 100);
     const host_net_cents = body.amount_cents - platform_fee_cents;

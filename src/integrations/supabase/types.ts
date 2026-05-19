@@ -1628,7 +1628,7 @@ export type Database = {
           split_request_id: string | null
           status: string
           updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           amount_cents: number
@@ -1649,7 +1649,7 @@ export type Database = {
           split_request_id?: string | null
           status?: string
           updated_at?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           amount_cents?: number
@@ -1670,7 +1670,7 @@ export type Database = {
           split_request_id?: string | null
           status?: string
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -3161,8 +3161,9 @@ export type Database = {
       }
       split_check_requests: {
         Row: {
+          context: string
           created_at: string
-          event_id: string
+          event_id: string | null
           host_id: string
           id: string
           mode: string
@@ -3173,12 +3174,14 @@ export type Database = {
           subtotal_cents: number
           tax_cents: number
           tip_cents: number
+          title: string | null
           total_cents: number
           updated_at: string
         }
         Insert: {
+          context?: string
           created_at?: string
-          event_id: string
+          event_id?: string | null
           host_id: string
           id?: string
           mode: string
@@ -3189,12 +3192,14 @@ export type Database = {
           subtotal_cents?: number
           tax_cents?: number
           tip_cents?: number
+          title?: string | null
           total_cents?: number
           updated_at?: string
         }
         Update: {
+          context?: string
           created_at?: string
-          event_id?: string
+          event_id?: string | null
           host_id?: string
           id?: string
           mode?: string
@@ -3205,6 +3210,7 @@ export type Database = {
           subtotal_cents?: number
           tax_cents?: number
           tip_cents?: number
+          title?: string | null
           total_cents?: number
           updated_at?: string
         }
@@ -3318,6 +3324,128 @@ export type Database = {
           },
           {
             foreignKeyName: "split_check_targets_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "split_check_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      split_guest_tokens: {
+        Row: {
+          amount_cents: number
+          claimed_profile_id: string | null
+          created_at: string
+          created_by: string | null
+          display_name: string | null
+          email: string | null
+          expires_at: string
+          fluid_pay_transaction_id: string | null
+          id: string
+          paid_at: string | null
+          payment_id: string | null
+          phone: string | null
+          request_id: string
+          token_hash: string
+        }
+        Insert: {
+          amount_cents: number
+          claimed_profile_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          display_name?: string | null
+          email?: string | null
+          expires_at?: string
+          fluid_pay_transaction_id?: string | null
+          id?: string
+          paid_at?: string | null
+          payment_id?: string | null
+          phone?: string | null
+          request_id: string
+          token_hash: string
+        }
+        Update: {
+          amount_cents?: number
+          claimed_profile_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          display_name?: string | null
+          email?: string | null
+          expires_at?: string
+          fluid_pay_transaction_id?: string | null
+          id?: string
+          paid_at?: string | null
+          payment_id?: string | null
+          phone?: string | null
+          request_id?: string
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "split_guest_tokens_claimed_profile_id_fkey"
+            columns: ["claimed_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "split_guest_tokens_claimed_profile_id_fkey"
+            columns: ["claimed_profile_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "split_guest_tokens_claimed_profile_id_fkey"
+            columns: ["claimed_profile_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "split_guest_tokens_claimed_profile_id_fkey"
+            columns: ["claimed_profile_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles_with_connection"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "split_guest_tokens_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "split_guest_tokens_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "split_guest_tokens_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "split_guest_tokens_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles_with_connection"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "split_guest_tokens_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "split_guest_tokens_request_id_fkey"
             columns: ["request_id"]
             isOneToOne: false
             referencedRelation: "split_check_requests"
