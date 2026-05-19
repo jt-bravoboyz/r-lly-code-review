@@ -121,6 +121,24 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
     setSelectedFriendIds(prev => prev.includes(friendId) ? prev.filter(id => id !== friendId) : [...prev, friendId]);
   };
 
+  const handleFlyerUpload = async (file: File) => {
+    if (!profile?.id) return;
+    try {
+      setFlyerUploading(true);
+      const ext = file.name.split('.').pop() || 'jpg';
+      const path = `${profile.id}/custom/${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from('event_flyers').upload(path, file, { upsert: true, contentType: file.type });
+      if (error) throw error;
+      const { data } = supabase.storage.from('event_flyers').getPublicUrl(path);
+      setFlyerCustomUrl(data.publicUrl);
+      toast.success('Photo set as flyer');
+    } catch (e: any) {
+      toast.error(e?.message || 'Upload failed');
+    } finally {
+      setFlyerUploading(false);
+    }
+  };
+
   const handleScroll = useCallback(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
