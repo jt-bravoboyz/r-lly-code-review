@@ -130,7 +130,7 @@ async function buildPng(inputs: FlyerInputs, bgPublicBase: string): Promise<Uint
 
   const svg = await satori(tree, {
     width: 1200, height: 630,
-    fonts: [{ name: 'Playfair Display', data: font, weight: 700, style: 'normal' }],
+    fonts: font ? [{ name: 'Playfair Display', data: font, weight: 700, style: 'normal' }] : [],
   });
 
   await ensureWasm();
