@@ -417,6 +417,8 @@ export type Database = {
           current_lng: number | null
           dd_dropoff_confirmed_at: string | null
           dd_dropoff_confirmed_by: string | null
+          declined_at: string | null
+          declined_by: string | null
           departure_provider: string | null
           departure_transport_mode: string | null
           destination_lat: number | null
@@ -455,6 +457,8 @@ export type Database = {
           current_lng?: number | null
           dd_dropoff_confirmed_at?: string | null
           dd_dropoff_confirmed_by?: string | null
+          declined_at?: string | null
+          declined_by?: string | null
           departure_provider?: string | null
           departure_transport_mode?: string | null
           destination_lat?: number | null
@@ -493,6 +497,8 @@ export type Database = {
           current_lng?: number | null
           dd_dropoff_confirmed_at?: string | null
           dd_dropoff_confirmed_by?: string | null
+          declined_at?: string | null
+          declined_by?: string | null
           departure_provider?: string | null
           departure_transport_mode?: string | null
           destination_lat?: number | null
@@ -915,6 +921,8 @@ export type Database = {
           id: string
           image_url: string | null
           invite_code: string | null
+          invite_code_expires_at: string | null
+          invite_code_rotated_at: string | null
           is_barhop: boolean | null
           is_quick_rally: boolean | null
           location_lat: number | null
@@ -943,6 +951,8 @@ export type Database = {
           id?: string
           image_url?: string | null
           invite_code?: string | null
+          invite_code_expires_at?: string | null
+          invite_code_rotated_at?: string | null
           is_barhop?: boolean | null
           is_quick_rally?: boolean | null
           location_lat?: number | null
@@ -971,6 +981,8 @@ export type Database = {
           id?: string
           image_url?: string | null
           invite_code?: string | null
+          invite_code_expires_at?: string | null
+          invite_code_rotated_at?: string | null
           is_barhop?: boolean | null
           is_quick_rally?: boolean | null
           location_lat?: number | null
@@ -4579,6 +4591,8 @@ export type Database = {
           id: string
           image_url: string | null
           invite_code: string | null
+          invite_code_expires_at: string | null
+          invite_code_rotated_at: string | null
           is_barhop: boolean | null
           is_quick_rally: boolean | null
           location_lat: number | null
@@ -4658,9 +4672,17 @@ export type Database = {
         }
         Returns: boolean
       }
+      host_decline_attendee: {
+        Args: { _event_id: string; _profile_id: string }
+        Returns: Json
+      }
       host_outstanding_balance: {
         Args: { p_profile_id: string }
         Returns: number
+      }
+      host_reinvite_attendee: {
+        Args: { _event_id: string; _profile_id: string }
+        Returns: Json
       }
       is_after_rally_invited: {
         Args: { _event_id: string; _profile_id: string }
@@ -4719,6 +4741,8 @@ export type Database = {
           id: string
           image_url: string | null
           invite_code: string | null
+          invite_code_expires_at: string | null
+          invite_code_rotated_at: string | null
           is_barhop: boolean | null
           is_quick_rally: boolean | null
           location_lat: number | null
@@ -4837,6 +4861,10 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: undefined
       }
+      rotate_event_invite_code: {
+        Args: { _event_id: string; _ttl_hours?: number }
+        Returns: Json
+      }
       search_public_profiles: {
         Args: { p_limit?: number; p_query: string }
         Returns: {
@@ -4872,6 +4900,8 @@ export type Database = {
           id: string
           image_url: string | null
           invite_code: string | null
+          invite_code_expires_at: string | null
+          invite_code_rotated_at: string | null
           is_barhop: boolean | null
           is_quick_rally: boolean | null
           location_lat: number | null
