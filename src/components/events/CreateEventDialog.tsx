@@ -95,6 +95,9 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [selectedSquads, setSelectedSquads] = useState<Squad[]>([]);
   const [selectedFriendIds, setSelectedFriendIds] = useState<string[]>([]);
+  const [flyerTheme, setFlyerTheme] = useState<FlyerThemeKey>(DEFAULT_FLYER_THEME);
+  const [flyerCustomUrl, setFlyerCustomUrl] = useState<string | null>(null);
+  const [flyerUploading, setFlyerUploading] = useState(false);
   const { profile } = useAuth();
   const { data: mySquads } = useAllMySquads();
   const { data: rallyFriends = [] } = useRallyFriends();
