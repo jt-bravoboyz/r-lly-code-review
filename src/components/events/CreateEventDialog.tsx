@@ -33,6 +33,10 @@ import { Progress } from '@/components/ui/progress';
 import { useRallyFriends } from '@/hooks/useRallyFriends';
 import { useRecentlyFriended } from '@/hooks/useFriendships';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { FlyerThemePicker } from '@/components/events/FlyerThemePicker';
+import { ThemedFlyerCanvas } from '@/components/events/ThemedFlyerCanvas';
+import { DEFAULT_FLYER_THEME, type FlyerThemeKey } from '@/lib/flyerThemes';
+import { supabase } from '@/integrations/supabase/client';
 
 const eventSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters'),
