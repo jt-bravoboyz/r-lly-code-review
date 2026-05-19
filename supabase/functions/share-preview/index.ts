@@ -85,8 +85,8 @@ Deno.serve(async (req) => {
 <meta name="twitter:title" content="${escapeHtml(title)}" />
 <meta name="twitter:description" content="${escapeHtml(description)}" />
 <meta name="twitter:image" content="${escapeHtml(ogImage)}" />
-<meta http-equiv="refresh" content="0; url=${escapeHtml(to)}" />
-</head><body><p>Redirecting to <a href="${escapeHtml(to)}">${escapeHtml(to)}</a>…</p><script>location.replace(${JSON.stringify(to)})</script></body></html>`;
+<meta http-equiv="refresh" content="1; url=${escapeHtml(to)}" />
+</head><body><main><h1>${escapeHtml(title)}</h1><p>${escapeHtml(description)}</p><p><a href="${escapeHtml(to)}">Open this R@lly</a></p></main></body></html>`;
 
   return new Response(html, {
     status: 200,
