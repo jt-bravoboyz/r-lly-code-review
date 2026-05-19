@@ -21,18 +21,23 @@ async function ensureWasm() {
   await wasmReady;
 }
 
-// Lazy-load Playfair Display.
+// Lazy-load Playfair Display. Returns null if unreachable so render still proceeds.
 let playfairFont: ArrayBuffer | null = null;
-async function getPlayfair(): Promise<ArrayBuffer> {
+async function getPlayfair(): Promise<ArrayBuffer | null> {
   if (playfairFont) return playfairFont;
-  const css = await fetch(
-    'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap',
-    { headers: { 'User-Agent': 'Mozilla/5.0' } },
-  ).then(r => r.text());
-  const url = css.match(/url\((https:\/\/[^)]+\.woff2)\)/)?.[1];
-  if (!url) throw new Error('Playfair font URL not found');
-  playfairFont = await fetch(url).then(r => r.arrayBuffer());
-  return playfairFont!;
+  try {
+    const css = await fetch(
+      'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap',
+      { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' } },
+    ).then(r => r.text());
+    const url = css.match(/url\((https:\/\/[^)]+\.(?:woff2|woff|ttf))\)/)?.[1];
+    if (!url) throw new Error('Playfair font URL not found');
+    playfairFont = await fetch(url).then(r => r.arrayBuffer());
+    return playfairFont;
+  } catch (e) {
+    console.warn('[render-event-og-image] font load failed, falling back to sans', e);
+    return null;
+  }
 }
 
 const FALLBACK_URL =
