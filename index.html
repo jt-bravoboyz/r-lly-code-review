@@ -12,38 +12,6 @@
     <meta property="og:type" content="website" />
     <meta property="og:image" content="/rally-icon-192.png" />
 
-    <script>
-      (function () {
-        if (location.pathname !== '/share-preview') return;
-        var params = new URLSearchParams(location.search);
-        var to = params.get('to') || 'https://rlly.cloud/';
-        var type = params.get('type') || 'event';
-        var id = params.get('id') || '';
-        var title = type === 'tab' ? 'Split this tab — R@lly' : "You're invited — R@lly";
-        var description = 'Nights That Matter. Tap to RSVP.';
-        var image = id
-          ? 'https://lovzfxppnxictkvymyot.functions.supabase.co/render-event-og-image?' + (type === 'tab' ? 'tab=' : 'id=') + encodeURIComponent(id)
-          : 'https://rlly.cloud/rally-icon-512.png';
-        function meta(attr, name, content) {
-          document.write('<meta ' + attr + '="' + name + '" content="' + String(content).replace(/&/g, '&amp;').replace(/"/g, '&quot;') + '">');
-        }
-        document.write('<title>' + title + '</title>');
-        meta('name', 'description', description);
-        meta('property', 'og:type', 'website');
-        meta('property', 'og:site_name', 'R@lly');
-        meta('property', 'og:title', title);
-        meta('property', 'og:description', description);
-        meta('property', 'og:url', to);
-        meta('property', 'og:image', image);
-        meta('property', 'og:image:width', '1200');
-        meta('property', 'og:image:height', '630');
-        meta('name', 'twitter:card', 'summary_large_image');
-        meta('name', 'twitter:title', title);
-        meta('name', 'twitter:description', description);
-        meta('name', 'twitter:image', image);
-      })();
-    </script>
-
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:site" content="@RallyApp" />
     <meta name="twitter:title" content="R@lly — The app for nights that matter" />
