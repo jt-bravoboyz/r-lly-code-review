@@ -194,9 +194,6 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
           dress_code: data.dress_code_enabled && data.dress_code?.trim()
             ? data.dress_code.trim()
             : null,
-          dress_code: data.dress_code_enabled && data.dress_code?.trim()
-            ? data.dress_code.trim()
-            : null,
           song_recs_enabled: data.song_recs_enabled,
           flyer_theme: flyerTheme,
           flyer_custom_image_url: flyerCustomUrl,
