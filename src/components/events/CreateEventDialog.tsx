@@ -604,6 +604,31 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
 
                 {/* Staged media picker — files held locally until submit */}
                 <StagedMediaPicker stagedFiles={stagedMedia} onChange={setStagedMedia} />
+
+                {/* Themed Flyer */}
+                <FlyerThemePicker
+                  value={flyerTheme}
+                  customImageUrl={flyerCustomUrl}
+                  onChange={(k) => { setFlyerTheme(k); setFlyerCustomUrl(null); }}
+                  onUploadCustom={handleFlyerUpload}
+                />
+                {(form.watch('title')?.length ?? 0) >= 3 && (
+                  <div className="mx-auto w-[220px]">
+                    <ThemedFlyerCanvas
+                      themeKey={flyerTheme}
+                      customImageUrl={flyerCustomUrl}
+                      title={form.watch('title')}
+                      startTime={form.watch('date') && form.watch('time') ? (() => {
+                        const [h, m] = form.watch('time').split(':').map(Number);
+                        const d = new Date(form.watch('date'));
+                        d.setHours(h || 20, m || 0, 0, 0);
+                        return d;
+                      })() : null}
+                      locationName={form.watch('location_name') || null}
+                      dressCode={form.watch('dress_code_enabled') ? form.watch('dress_code') || null : null}
+                    />
+                  </div>
+                )}
               </CollapsibleContent>
             </Collapsible>
 
