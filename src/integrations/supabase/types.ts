@@ -918,6 +918,10 @@ export type Database = {
           dress_code: string | null
           end_time: string | null
           event_type: string
+          flyer_custom_image_url: string | null
+          flyer_og_generated_at: string | null
+          flyer_og_url: string | null
+          flyer_theme: string
           id: string
           image_url: string | null
           invite_code: string | null
@@ -948,6 +952,10 @@ export type Database = {
           dress_code?: string | null
           end_time?: string | null
           event_type?: string
+          flyer_custom_image_url?: string | null
+          flyer_og_generated_at?: string | null
+          flyer_og_url?: string | null
+          flyer_theme?: string
           id?: string
           image_url?: string | null
           invite_code?: string | null
@@ -978,6 +986,10 @@ export type Database = {
           dress_code?: string | null
           end_time?: string | null
           event_type?: string
+          flyer_custom_image_url?: string | null
+          flyer_og_generated_at?: string | null
+          flyer_og_url?: string | null
+          flyer_theme?: string
           id?: string
           image_url?: string | null
           invite_code?: string | null
@@ -3176,6 +3188,8 @@ export type Database = {
           context: string
           created_at: string
           event_id: string | null
+          flyer_og_generated_at: string | null
+          flyer_og_url: string | null
           host_id: string
           id: string
           mode: string
@@ -3194,6 +3208,8 @@ export type Database = {
           context?: string
           created_at?: string
           event_id?: string | null
+          flyer_og_generated_at?: string | null
+          flyer_og_url?: string | null
           host_id: string
           id?: string
           mode: string
@@ -3212,6 +3228,8 @@ export type Database = {
           context?: string
           created_at?: string
           event_id?: string | null
+          flyer_og_generated_at?: string | null
+          flyer_og_url?: string | null
           host_id?: string
           id?: string
           mode?: string
@@ -4588,6 +4606,10 @@ export type Database = {
           dress_code: string | null
           end_time: string | null
           event_type: string
+          flyer_custom_image_url: string | null
+          flyer_og_generated_at: string | null
+          flyer_og_url: string | null
+          flyer_theme: string
           id: string
           image_url: string | null
           invite_code: string | null
@@ -4738,6 +4760,10 @@ export type Database = {
           dress_code: string | null
           end_time: string | null
           event_type: string
+          flyer_custom_image_url: string | null
+          flyer_og_generated_at: string | null
+          flyer_og_url: string | null
+          flyer_theme: string
           id: string
           image_url: string | null
           invite_code: string | null
@@ -4897,6 +4923,10 @@ export type Database = {
           dress_code: string | null
           end_time: string | null
           event_type: string
+          flyer_custom_image_url: string | null
+          flyer_og_generated_at: string | null
+          flyer_og_url: string | null
+          flyer_theme: string
           id: string
           image_url: string | null
           invite_code: string | null
