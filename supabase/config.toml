@@ -45,4 +45,9 @@ project_id = "lovzfxppnxictkvymyot"
     verify_jwt = false
   [functions.claim-guest-payment]
     verify_jwt = true
+  [functions.render-event-og-image]
+    verify_jwt = false
+  [functions.share-preview]
+    verify_jwt = false
+
 

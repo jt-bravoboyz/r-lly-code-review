@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { getPublicName } from '@/lib/identity';
 import { PUBLIC_APP_URL } from '@/lib/appUrl';
+import { buildRallyShareUrl } from '@/lib/shareUrls';
 import { useParams, Navigate, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { getEventTypeLabel, getEventTypeEmoji, getEventTypeVibe } from '@/lib/eventTypes';
@@ -599,7 +600,7 @@ export default function EventDetail() {
                   size="sm"
                   className="text-xs text-muted-foreground gap-1 px-0 h-auto py-0.5"
                   onClick={() => {
-                     navigator.clipboard.writeText(`${PUBLIC_APP_URL}/join/${event.invite_code}?r=${profile?.id || ''}`);
+                     navigator.clipboard.writeText(buildRallyShareUrl({ eventId: event.id, inviteCode: event.invite_code }, { referrerId: profile?.id }));
                      trackEvent('invite_link_copied', { event_id: event.id });
                      toast.success('Link copied!');
                   }}

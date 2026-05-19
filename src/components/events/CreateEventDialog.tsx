@@ -33,6 +33,10 @@ import { Progress } from '@/components/ui/progress';
 import { useRallyFriends } from '@/hooks/useRallyFriends';
 import { useRecentlyFriended } from '@/hooks/useFriendships';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { FlyerThemePicker } from '@/components/events/FlyerThemePicker';
+import { ThemedFlyerCanvas } from '@/components/events/ThemedFlyerCanvas';
+import { DEFAULT_FLYER_THEME, type FlyerThemeKey } from '@/lib/flyerThemes';
+import { supabase } from '@/integrations/supabase/client';
 
 const eventSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters'),
@@ -91,6 +95,9 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [selectedSquads, setSelectedSquads] = useState<Squad[]>([]);
   const [selectedFriendIds, setSelectedFriendIds] = useState<string[]>([]);
+  const [flyerTheme, setFlyerTheme] = useState<FlyerThemeKey>(DEFAULT_FLYER_THEME);
+  const [flyerCustomUrl, setFlyerCustomUrl] = useState<string | null>(null);
+  const [flyerUploading, setFlyerUploading] = useState(false);
   const { profile } = useAuth();
   const { data: mySquads } = useAllMySquads();
   const { data: rallyFriends = [] } = useRallyFriends();
@@ -112,6 +119,24 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
 
   const toggleFriendSelection = (friendId: string) => {
     setSelectedFriendIds(prev => prev.includes(friendId) ? prev.filter(id => id !== friendId) : [...prev, friendId]);
+  };
+
+  const handleFlyerUpload = async (file: File) => {
+    if (!profile?.id) return;
+    try {
+      setFlyerUploading(true);
+      const ext = file.name.split('.').pop() || 'jpg';
+      const path = `${profile.id}/custom/${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from('event_flyers').upload(path, file, { upsert: true, contentType: file.type });
+      if (error) throw error;
+      const { data } = supabase.storage.from('event_flyers').getPublicUrl(path);
+      setFlyerCustomUrl(data.publicUrl);
+      toast.success('Photo set as flyer');
+    } catch (e: any) {
+      toast.error(e?.message || 'Upload failed');
+    } finally {
+      setFlyerUploading(false);
+    }
   };
 
   const handleScroll = useCallback(() => {
@@ -188,6 +213,8 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
             ? data.dress_code.trim()
             : null,
           song_recs_enabled: data.song_recs_enabled,
+          flyer_theme: flyerTheme,
+          flyer_custom_image_url: flyerCustomUrl,
         } as any);
       } catch (insertErr: any) {
         console.error('[CreateEvent] insert failed', {
@@ -287,6 +314,8 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
       }
 
       toast.success('Event created!');
+      // Fire-and-forget: bake the OG flyer image to storage so first share is instant.
+      supabase.functions.invoke('render-event-og-image', { body: { id: result.id } }).catch(() => {});
       setOpen(false);
       setStagedMedia([]);
       setSelectedSquads([]);
@@ -575,6 +604,31 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
 
                 {/* Staged media picker — files held locally until submit */}
                 <StagedMediaPicker stagedFiles={stagedMedia} onChange={setStagedMedia} />
+
+                {/* Themed Flyer */}
+                <FlyerThemePicker
+                  value={flyerTheme}
+                  customImageUrl={flyerCustomUrl}
+                  onChange={(k) => { setFlyerTheme(k); setFlyerCustomUrl(null); }}
+                  onUploadCustom={handleFlyerUpload}
+                />
+                {(form.watch('title')?.length ?? 0) >= 3 && (
+                  <div className="mx-auto w-[220px]">
+                    <ThemedFlyerCanvas
+                      themeKey={flyerTheme}
+                      customImageUrl={flyerCustomUrl}
+                      title={form.watch('title')}
+                      startTime={form.watch('date') && form.watch('time') ? (() => {
+                        const [h, m] = form.watch('time').split(':').map(Number);
+                        const d = new Date(form.watch('date'));
+                        d.setHours(h || 20, m || 0, 0, 0);
+                        return d;
+                      })() : null}
+                      locationName={form.watch('location_name') || null}
+                      dressCode={form.watch('dress_code_enabled') ? form.watch('dress_code') || null : null}
+                    />
+                  </div>
+                )}
               </CollapsibleContent>
             </Collapsible>
 
