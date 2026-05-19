@@ -1,13 +1,12 @@
-// Crawler-aware router. Bots get minimal HTML with full og:* + twitter:* meta tags
-// pointing at our render-event-og-image endpoint. Humans 302 to the SPA target.
+// Share preview router. Always returns HTML with full og:* + twitter:* meta tags
+// pointing at our render-event-og-image endpoint. Humans are bounced to the SPA
+// via meta-refresh + JS redirect so crawlers (which don't run JS) still see meta.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
-
-const BOT_REGEX = /facebookexternalhit|Twitterbot|Slackbot|LinkedInBot|WhatsApp|iMessage|Discordbot|TelegramBot|Pinterest|bingbot|Googlebot|Applebot|redditbot|Mastodon|SkypeUriPreview|vkShare|W3C_Validator|embedly|quora|outbrain/i;
 
 function escapeHtml(s: string): string {
   return s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
@@ -21,14 +20,7 @@ Deno.serve(async (req) => {
   const id = url.searchParams.get('id');
   if (!to) return new Response('Missing `to`', { status: 400, headers: corsHeaders });
 
-  const ua = req.headers.get('user-agent') ?? '';
-  const isBot = BOT_REGEX.test(ua);
-
-  if (!isBot) {
-    return Response.redirect(to, 302);
-  }
-
-  // Build meta-only HTML for crawlers.
+  // Build meta HTML for crawlers; humans get auto-bounced via meta-refresh + JS.
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   const projectId = (supabaseUrl.match(/https:\/\/([^.]+)\./)?.[1]) ?? '';
   const ogParam = type === 'tab' ? `tab=${id}` : `id=${id}`;
