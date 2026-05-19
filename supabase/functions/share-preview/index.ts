@@ -76,15 +76,15 @@ Deno.serve(async (req) => {
 <meta property="og:title" content="${escapeHtml(title)}" />
 <meta property="og:description" content="${escapeHtml(description)}" />
 <meta property="og:url" content="${escapeHtml(to)}" />
-<meta property="og:image" content="${ogImage}" />
-<meta property="og:image:secure_url" content="${ogImage}" />
+<meta property="og:image" content="${escapeHtml(ogImage)}" />
+<meta property="og:image:secure_url" content="${escapeHtml(ogImage)}" />
 <meta property="og:image:type" content="image/png" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content="${escapeHtml(title)}" />
 <meta name="twitter:description" content="${escapeHtml(description)}" />
-<meta name="twitter:image" content="${ogImage}" />
+<meta name="twitter:image" content="${escapeHtml(ogImage)}" />
 <meta http-equiv="refresh" content="0; url=${escapeHtml(to)}" />
 </head><body><p>Redirecting to <a href="${escapeHtml(to)}">${escapeHtml(to)}</a>…</p><script>location.replace(${JSON.stringify(to)})</script></body></html>`;
 
