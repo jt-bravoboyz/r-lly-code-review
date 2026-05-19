@@ -48,8 +48,7 @@ export function SplitCheckSection({
       )}
 
       {/* Host settlement panel — always available pre-completion */}
-      {/* DRAFT: forced visible for layout testing */}
-      {(canManage || true) && (
+      {canManage && (
         <Card className="card-rally">
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center justify-between">

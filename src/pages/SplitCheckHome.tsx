@@ -167,35 +167,55 @@ export default function SplitCheckHome() {
       </header>
 
       <main className="px-5 pt-6 space-y-8 max-w-2xl mx-auto">
-        <Section title="Tabs I've hosted">
-          {loading ? (
-            <SkeletonCards />
-          ) : hosted.length === 0 ? (
-            <EmptyState
-              title="No tabs yet"
-              body="Split your first check — R@lly takes care of the math."
-              cta="Start a tab"
-              onCta={() => setStartOpen(true)}
-            />
-          ) : (
-            hosted.map((r) => (
-              <HostedCard key={r.id} row={r} onOpen={() => goOpen(r)} />
-            ))
-          )}
-        </Section>
+        {!loading && hosted.length === 0 && owed.length === 0 ? (
+          <div className="rounded-3xl bg-card/70 backdrop-blur-xl border border-border/60 px-6 py-10 text-center shadow-[0_8px_32px_hsl(27_91%_53%/0.06)]" style={{ WebkitBackdropFilter: 'blur(20px)' }}>
+            <div className="mx-auto h-16 w-16 rounded-full bg-gradient-to-br from-primary/25 to-primary/5 flex items-center justify-center mb-4 shadow-inner">
+              <Receipt className="h-8 w-8 text-primary" />
+            </div>
+            <h2 className="text-xl font-bold font-montserrat text-foreground">No tabs yet.</h2>
+            <p className="text-sm text-muted-foreground mt-2 max-w-xs mx-auto">
+              Start a tab to split a check, settle a round, or front the bar. Nights that matter, math that doesn't.
+            </p>
+            <Button
+              onClick={() => setStartOpen(true)}
+              className="mt-6 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 px-6 h-11 font-semibold shadow-lg shadow-primary/20"
+            >
+              <Plus className="h-4 w-4 mr-1.5" /> Start a Tab
+            </Button>
+          </div>
+        ) : (
+          <>
+            <Section title="Tabs I've hosted">
+              {loading ? (
+                <SkeletonCards />
+              ) : hosted.length === 0 ? (
+                <EmptyState
+                  title="No tabs yet"
+                  body="Split your first check — R@lly takes care of the math."
+                  cta="Start a tab"
+                  onCta={() => setStartOpen(true)}
+                />
+              ) : (
+                hosted.map((r) => (
+                  <HostedCard key={r.id} row={r} onOpen={() => goOpen(r)} />
+                ))
+              )}
+            </Section>
 
-        <Section title="Tabs I owe or paid">
-          {loading ? (
-            <SkeletonCards />
-          ) : owed.length === 0 ? (
-            <EmptyState
-              title="All settled up"
-              body="When friends invite you to a tab, it'll show here."
-            />
-          ) : (
-            owed.map((r) => <OwedCard key={r.id} row={r} onOpen={() => goOpen(r)} />)
-          )}
-        </Section>
+            <Section title="Tabs I owe or paid">
+              {loading ? (
+                <SkeletonCards />
+              ) : owed.length === 0 ? (
+                <EmptyState
+                  title="All settled up"
+                  body="When friends invite you to a tab, it'll show here."
+                />
+              ) : (
+                owed.map((r) => <OwedCard key={r.id} row={r} onOpen={() => goOpen(r)} />)
+              )}
+            </Section>
+          </>
+        )}
       </main>
 
       <BottomNav />

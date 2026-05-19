@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Bell, Car, MapPin, Users, CheckCircle, Clock, Zap, MessageCircle, UserPlus } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { useNotifications, useMarkNotificationRead, useDeleteNotification } from '@/hooks/useNotifications';
+import { useNotifications, useMarkNotificationRead, useDeleteNotification, useMarkAllNotificationsRead } from '@/hooks/useNotifications';
 import { SwipeDismissCard } from '@/components/notifications/SwipeDismissCard';
 import { Link, useNavigate } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -25,6 +25,7 @@ export default function Notifications() {
   const { profile, loading: authLoading } = useAuth();
   const { data: notifications, isLoading } = useNotifications();
   const markRead = useMarkNotificationRead();
+  const markAllRead = useMarkAllNotificationsRead();
   const deleteNotification = useDeleteNotification();
   const respondToFriendRequest = useRespondToFriendRequest();
   const markFriendRequestRead = useMarkFriendRequestNotificationsRead();
@@ -92,9 +93,21 @@ export default function Notifications() {
       return;
     }
 
-    if (notification.type === 'split_check_request' && data?.event_id && data?.request_id) {
-      navigate(`/events/${data.event_id}?pay=${data.request_id}`);
-    } else if (notification.type === 'rally_started' && data?.event_id) {
+    if (notification.type === 'split_check_request') {
+      // Standalone R@lly Tab (no event_id) → deep-link to the tabs ledger or guest pay page
+      if (!data?.event_id) {
+        const token = data?.token ?? data?.guest_token ?? data?.share_token;
+        navigate(token ? `/tab/pay/${token}` : '/tabs');
+        return;
+      }
+      if (data?.request_id) {
+        navigate(`/events/${data.event_id}?pay=${data.request_id}`);
+        return;
+      }
+      navigate(`/events/${data.event_id}`);
+      return;
+    }
+    if (notification.type === 'rally_started' && data?.event_id) {
       navigate(`/events/${data.event_id}`);
     } else if ((notification.type === 'squad_chat_unread' || notification.type === 'rally_chat_unread' || notification.type === 'chat_unread') && data?.chat_id) {
       if (data?.event_id) {
@@ -165,11 +178,27 @@ export default function Notifications() {
               <h2 className="text-lg font-bold text-foreground font-montserrat">Activity</h2>
               <p className="text-sm text-muted-foreground">Stay updated on your squad</p>
             </div>
-            {unreadCount > 0 && (
-              <Badge className="bg-primary text-white shadow-[0_0_12px_hsl(27_91%_53%/0.3)]">
-                {unreadCount} new
-              </Badge>
-            )}
+            <div className="flex items-center gap-3">
+              {unreadCount > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    markAllRead.mutate(undefined, {
+                      onSuccess: () => toast.success('All caught up.'),
+                    });
+                  }}
+                  disabled={markAllRead.isPending}
+                  className="text-sm text-primary font-semibold hover:text-primary/80 transition-colors disabled:opacity-50"
+                >
+                  Mark all read
+                </button>
+              )}
+              {unreadCount > 0 && (
+                <Badge className="bg-primary text-white shadow-[0_0_12px_hsl(27_91%_53%/0.3)]">
+                  {unreadCount} new
+                </Badge>
+              )}
+            </div>
           </div>
         )}
 
