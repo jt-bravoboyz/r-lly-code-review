@@ -16,6 +16,7 @@ import { SquadSettingsDialog } from '@/components/squads/SquadSettingsDialog';
 import { GroupPhotoCropperDialog } from '@/components/squads/GroupPhotoCropperDialog';
 import { getSquadIcon, type SquadSymbol } from '@/components/squads/SquadSymbolPicker';
 import { useSquadDetail, useUpdateSquadPhoto, useSquadEventHistory } from '@/hooks/useSquadDetail';
+import { SquadUpcomingEvents } from '@/components/events/SquadUpcomingEvents';
 import { useDeleteSquad, useRemoveSquadMember } from '@/hooks/useSquads';
 import { useSquadMedia, useAddSquadMedia } from '@/hooks/useSquadMedia';
 import { useAuth } from '@/hooks/useAuth';
@@ -619,6 +620,16 @@ export default function SquadDetail() {
               <p className="text-xs text-muted-foreground text-center mt-2">No gallery photos yet</p>
             )}
           </div>
+
+          <Separator />
+
+          {/* Upcoming R@llies from squadmates */}
+          {squad && (
+            <SquadUpcomingEvents
+              squadId={squad.id}
+              memberIds={allMembers.map((m: any) => m.profile_id).filter(Boolean)}
+            />
+          )}
 
           <Separator />
 

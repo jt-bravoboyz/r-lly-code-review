@@ -267,6 +267,26 @@ export function RequestPaymentDialog({ open, onOpenChange, eventId, attendees, o
 
           <TabsContent value="itemized" className="space-y-3 mt-3">
             <ReceiptUploader eventId={eventId} draftId={draftId} currentImageUrl={receiptUrl} onParsed={handleParsed} rescan={!!receiptUrl} />
+            {items.length > 0 && (() => {
+              const lowItems = items.filter((it) => (it.confidence ?? 1) < 0.6);
+              if (lowItems.length === 0) return null;
+              const avg = items.reduce((s, it) => s + (it.confidence ?? 1), 0) / items.length;
+              return (
+                <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-3 py-2.5 space-y-2">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[12px] font-semibold tracking-tight text-amber-700 dark:text-amber-400">
+                        Low scan confidence on {lowItems.length} item{lowItems.length === 1 ? '' : 's'}
+                      </p>
+                      <p className="text-[11px] text-amber-700/80 dark:text-amber-400/80 leading-snug mt-0.5">
+                        Receipt clarity was {Math.round(avg * 100)}%. Retake the photo or edit the flagged rows below before sending.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
             {items.length > 0 && (
               <div className="space-y-1.5">
                 <Label>Items</Label>

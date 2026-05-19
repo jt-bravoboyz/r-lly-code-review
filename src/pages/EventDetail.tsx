@@ -592,19 +592,55 @@ export default function EventDetail() {
               <p className="text-xs text-muted-foreground mt-0.5">
                 {format(new Date(event.start_time), 'EEEE')} · {format(new Date(event.start_time), 'h:mm a')}{event.location_name ? ` · ${event.location_name}` : ''}
               </p>
-              {/* Copy invite link */}
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-xs text-muted-foreground gap-1 px-0 h-auto py-0.5 mt-1"
-                onClick={() => {
-                   navigator.clipboard.writeText(`${PUBLIC_APP_URL}/join/${event.invite_code}?r=${profile?.id || ''}`);
-                   trackEvent('invite_link_copied', { event_id: event.id });
-                   toast.success('Link copied!');
-                }}
-              >
-                <Link2 className="h-3 w-3" /> Copy invite link
-              </Button>
+              {/* Copy invite link + host rotation */}
+              <div className="flex items-center gap-2 mt-1 flex-wrap">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs text-muted-foreground gap-1 px-0 h-auto py-0.5"
+                  onClick={() => {
+                     navigator.clipboard.writeText(`${PUBLIC_APP_URL}/join/${event.invite_code}?r=${profile?.id || ''}`);
+                     trackEvent('invite_link_copied', { event_id: event.id });
+                     toast.success('Link copied!');
+                  }}
+                >
+                  <Link2 className="h-3 w-3" /> Copy invite link
+                </Button>
+                {(event as any).invite_code_expires_at && (() => {
+                  const expiresAt = new Date((event as any).invite_code_expires_at as string).getTime();
+                  const expired = expiresAt < Date.now();
+                  const hoursLeft = Math.max(0, Math.round((expiresAt - Date.now()) / 3600000));
+                  return (
+                    <span
+                      className={`text-[10px] font-semibold tracking-wide uppercase px-1.5 py-0.5 rounded-full ${
+                        expired
+                          ? 'bg-destructive/15 text-destructive'
+                          : 'bg-muted text-muted-foreground'
+                      }`}
+                    >
+                      {expired ? 'Expired' : `Expires in ${hoursLeft}h`}
+                    </span>
+                  );
+                })()}
+                {canManage && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs text-primary gap-1 px-0 h-auto py-0.5"
+                    onClick={async () => {
+                      const { error } = await (supabase as any).rpc('rotate_event_invite_code', {
+                        _event_id: event.id,
+                        _ttl_hours: 72,
+                      });
+                      if (error) { toast.error('Could not rotate invite'); return; }
+                      toast.success('New invite link generated');
+                      queryClient.invalidateQueries({ queryKey: ['event', event.id] });
+                    }}
+                  >
+                    Rotate
+                  </Button>
+                )}
+              </div>
             </div>
             <InviteToEventDialog
               eventId={event.id}
