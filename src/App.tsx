@@ -39,6 +39,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import Unsubscribe from "./pages/Unsubscribe";
 import SplitCheckHome from "./pages/SplitCheckHome";
 import SplitGuestPay from "./pages/SplitGuestPay";
+import Friends from "./pages/Friends";
 
 const queryClient = new QueryClient();
 
@@ -88,6 +89,7 @@ const App = () => (
                       <Route path="/unsubscribe" element={<Unsubscribe />} />
                       <Route path="/tabs" element={<SplitCheckHome />} />
                       <Route path="/tab/pay/:requestId" element={<SplitGuestPay />} />
+                      <Route path="/friends" element={<Friends />} />
                       <Route path="*" element={<NotFound />} />
                     </Routes>
                   </TutorialProvider>
