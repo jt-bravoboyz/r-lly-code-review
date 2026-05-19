@@ -8,7 +8,8 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:unfurl": "node scripts/test-worker-unfurl.mjs"
   },
   "dependencies": {
     "@capacitor-community/bluetooth-le": "^7.3.0",
