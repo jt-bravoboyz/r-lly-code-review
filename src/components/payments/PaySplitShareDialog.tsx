@@ -1,8 +1,18 @@
 import { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ArrowRight } from 'lucide-react';
 import { simulatePayment } from '@/lib/paymentService';
 import { FluidPayCardForm } from './FluidPayCardForm';
 import { useFluidPay } from '@/hooks/useFluidPay';
@@ -26,6 +36,8 @@ export function PaySplitShareDialog({ open, onOpenChange, requestId, profileId, 
   const [target, setTarget] = useState<any>(null);
   const [computedTotal, setComputedTotal] = useState<number>(0);
   const [busy, setBusy] = useState(false);
+  const [mismatch, setMismatch] = useState<{ from: number; to: number } | null>(null);
+  const [confirmDecline, setConfirmDecline] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -89,12 +101,25 @@ export function PaySplitShareDialog({ open, onOpenChange, requestId, profileId, 
           idempotency_key: idempotencyKey,
         },
       });
+
+      // Claim snapshot mismatch — someone updated their items mid-pay. Surface as an
+      // inline AlertDialog rather than a raw toast so the payer can re-verify cleanly.
+      if (data?.error === 'claim_snapshot_mismatch') {
+        const newTotal = data?.server_total_cents ?? amountCents;
+        setMismatch({ from: amountCents, to: newTotal });
+        setComputedTotal(newTotal);
+        await refreshItemized();
+        return;
+      }
+
       if (error || !data?.ok) { toast.error((data as any)?.error ?? 'Payment failed'); return; }
       onPaid?.(); onOpenChange(false);
     } finally {
       setBusy(false);
     }
   };
+
+  const fmt = (c: number) => `$${(c / 100).toFixed(2)}`;
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!busy) onOpenChange(v); }}>
@@ -138,16 +163,7 @@ export function PaySplitShareDialog({ open, onOpenChange, requestId, profileId, 
             size="sm"
             className="w-full text-muted-foreground hover:text-destructive text-xs"
             disabled={busy}
-            onClick={async () => {
-              if (!confirm('Decline this tab? The host will be notified you opted out.')) return;
-              const { error } = await supabase
-                .from('split_check_targets')
-                .update({ status: 'declined' })
-                .eq('id', target.id);
-              if (error) { toast.error('Could not decline'); return; }
-              toast.success('Host notified — declined');
-              onPaid?.(); onOpenChange(false);
-            }}
+            onClick={() => setConfirmDecline(true)}
           >
             Not my tab — decline
           </Button>
@@ -155,6 +171,67 @@ export function PaySplitShareDialog({ open, onOpenChange, requestId, profileId, 
         {target?.status === 'declined' && (
           <p className="text-center text-xs text-muted-foreground">You declined this tab.</p>
         )}
+
+        {/* Snapshot-mismatch recovery dialog */}
+        <AlertDialog open={!!mismatch} onOpenChange={(v) => !v && setMismatch(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Your tab just changed</AlertDialogTitle>
+              <AlertDialogDescription>
+                Someone at the table just updated their claims. Re-verify your new total before paying.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            {mismatch && (
+              <div className="flex items-center justify-center gap-3 py-2 font-montserrat tabular-nums">
+                <span className="text-base text-muted-foreground line-through">{fmt(mismatch.from)}</span>
+                <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                <span className="text-2xl font-bold text-primary">{fmt(mismatch.to)}</span>
+              </div>
+            )}
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={async () => {
+                  await refreshItemized();
+                  setMismatch(null);
+                }}
+              >
+                Re-verify & pay
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Decline confirmation — replaces window.confirm */}
+        <AlertDialog open={confirmDecline} onOpenChange={setConfirmDecline}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Decline this tab?</AlertDialogTitle>
+              <AlertDialogDescription>
+                The host will be notified you opted out. You can't undo this.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Keep paying</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                onClick={async () => {
+                  setConfirmDecline(false);
+                  if (!target) return;
+                  const { error } = await supabase
+                    .from('split_check_targets')
+                    .update({ status: 'declined' })
+                    .eq('id', target.id);
+                  if (error) { toast.error('Could not decline'); return; }
+                  toast.success('Host notified — declined');
+                  onPaid?.(); onOpenChange(false);
+                }}
+              >
+                Decline
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </DialogContent>
     </Dialog>
   );

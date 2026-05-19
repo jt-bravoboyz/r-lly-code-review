@@ -7,6 +7,9 @@ const BodySchema = z.object({
   target_profile_ids: z.array(z.string().uuid()).min(1),
 });
 
+// 5-minute hard cap per target per request — protects attendees from nudge spam.
+const COOLDOWN_MS = 5 * 60 * 1000;
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
@@ -40,14 +43,50 @@ Deno.serve(async (req) => {
     }
 
     const { data: ev } = await admin.from("events").select("title").eq("id", req_row.event_id).maybeSingle();
-    const now = new Date().toISOString();
+    const now = Date.now();
+    const nowIso = new Date(now).toISOString();
 
-    await admin.from("split_check_targets")
-      .update({ last_nudged_at: now })
+    // Read current last_nudged_at for the requested targets so we can enforce the cooldown.
+    const { data: existingTargets } = await admin.from("split_check_targets")
+      .select("profile_id, last_nudged_at")
       .eq("request_id", request_id)
       .in("profile_id", target_profile_ids);
 
+    const lastByProfile = new Map<string, number | null>(
+      (existingTargets ?? []).map((r: any) => [
+        r.profile_id,
+        r.last_nudged_at ? new Date(r.last_nudged_at).getTime() : null,
+      ]),
+    );
+
+    const allowed: string[] = [];
+    const cooling: { profile_id: string; seconds_remaining: number }[] = [];
     for (const pid of target_profile_ids) {
+      const last = lastByProfile.get(pid) ?? null;
+      const elapsed = last === null ? Infinity : now - last;
+      if (elapsed >= COOLDOWN_MS) {
+        allowed.push(pid);
+      } else {
+        cooling.push({
+          profile_id: pid,
+          seconds_remaining: Math.max(1, Math.ceil((COOLDOWN_MS - elapsed) / 1000)),
+        });
+      }
+    }
+
+    if (allowed.length === 0) {
+      return new Response(
+        JSON.stringify({ ok: false, error: "nudge_cooldown", nudged: 0, skipped: cooling.length, cooling }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    await admin.from("split_check_targets")
+      .update({ last_nudged_at: nowIso })
+      .eq("request_id", request_id)
+      .in("profile_id", allowed);
+
+    for (const pid of allowed) {
       const { data: existing } = await admin.from("notifications")
         .select("id, data")
         .eq("profile_id", pid)
@@ -62,7 +101,7 @@ Deno.serve(async (req) => {
         const nudge_count = ((existing.data as any)?.nudge_count ?? 0) + 1;
         await admin.from("notifications").update({
           title: `Reminder — Pay your share for "${ev?.title ?? "the R@lly"}"`,
-          created_at: now,
+          created_at: nowIso,
           data: { ...(existing.data as any), nudge_count },
         }).eq("id", existing.id);
       } else {
@@ -77,20 +116,21 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Fire push (best-effort)
+    // Fire push (best-effort) — only to allowed targets.
     try {
       await admin.functions.invoke("send-push-notification", {
         body: {
-          profile_ids: target_profile_ids,
+          profile_ids: allowed,
           title: `Reminder — Pay your share for "${ev?.title ?? "the R@lly"}"`,
           body: "Tap to pay",
         },
       });
     } catch (_) { /* ignore */ }
 
-    return new Response(JSON.stringify({ ok: true, count: target_profile_ids.length }), {
-      status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ ok: true, nudged: allowed.length, skipped: cooling.length, cooling }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
   } catch (err) {
     console.error("nudge-split-share error", err);
     return new Response(JSON.stringify({ error: (err as Error).message }), { status: 500, headers: corsHeaders });
