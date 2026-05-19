@@ -93,14 +93,25 @@ export function PaySplitShareDialog({ open, onOpenChange, requestId, profileId, 
       if (request.mode === 'itemized') {
         await supabase.from('split_check_targets').update({ share_cents: amountCents }).eq('id', target.id);
       }
-      const { data, error } = await supabase.functions.invoke('process-fluid-pay', {
-        body: {
-          payment_token: token, amount_cents: amountCents, kind: 'split_share',
-          event_id: request.event_id, split_request_id: requestId,
-          save_token: save, card_brand: brand, card_last4: last4,
-          idempotency_key: idempotencyKey,
-        },
-      });
+      const payBody = {
+        payment_token: token, amount_cents: amountCents, kind: 'split_share' as const,
+        event_id: request.event_id, split_request_id: requestId,
+        save_token: save, card_brand: brand, card_last4: last4,
+        idempotency_key: idempotencyKey,
+      };
+
+      // Offline-first: if the user lost connectivity right as they tap pay,
+      // enqueue the payment instead of failing hard. ConnectionStatusBanner
+      // will surface the queue and auto-drain on reconnect.
+      if (typeof navigator !== 'undefined' && !navigator.onLine) {
+        const { enqueuePayment } = await import('@/lib/paymentQueue');
+        await enqueuePayment(payBody, 'offline');
+        toast.success("You're offline — we'll send this the moment you reconnect.");
+        onPaid?.(); onOpenChange(false);
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke('process-fluid-pay', { body: payBody });
 
       // Claim snapshot mismatch — someone updated their items mid-pay. Surface as an
       // inline AlertDialog rather than a raw toast so the payer can re-verify cleanly.
@@ -112,7 +123,18 @@ export function PaySplitShareDialog({ open, onOpenChange, requestId, profileId, 
         return;
       }
 
-      if (error || !data?.ok) { toast.error((data as any)?.error ?? 'Payment failed'); return; }
+      if (error || !data?.ok) {
+        // Network-class failures get queued for background retry.
+        const transient = !!error || ['network_error', 'timeout', 'service_unavailable'].includes((data as any)?.error);
+        if (transient) {
+          const { enqueuePayment } = await import('@/lib/paymentQueue');
+          await enqueuePayment(payBody, (data as any)?.error ?? error?.message ?? 'transient');
+          toast.success('Connection hiccup — payment queued and will retry automatically.');
+          onPaid?.(); onOpenChange(false);
+          return;
+        }
+        toast.error((data as any)?.error ?? 'Payment failed'); return;
+      }
       onPaid?.(); onOpenChange(false);
     } finally {
       setBusy(false);
