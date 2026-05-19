@@ -1,55 +1,64 @@
-# Fix: Founders blocked from joining cover-charge R@llies
+# Split Check — Final Polish Pass
 
-## Root cause
-`request_join_event` (SECURITY DEFINER RPC) enforces the cover charge by checking for a `payments` row:
+Three focused improvements. No business-logic changes; UX + one server guard.
 
-```sql
-IF NOT v_is_host THEN
-  IF COALESCE(v_cover, 0) > 0 THEN
-    SELECT EXISTS (SELECT 1 FROM payments
-      WHERE event_id = ... AND user_id = auth.uid()
-        AND kind = 'cover' AND status = 'succeeded') INTO v_paid;
-    IF NOT v_paid THEN
-      RETURN jsonb_build_object('error', 'cover_required', ...);
-    END IF;
-  END IF;
-END IF;
+---
+
+## 1. Itemized Amount Mutation Warning (PaySplitShareDialog.tsx)
+
+**Goal:** Turn server's `409 claim_snapshot_mismatch` into a clear in-flow recovery moment.
+
+- In `pay()`, inspect the edge function response. When `data.error === "claim_snapshot_mismatch"`, do not toast — instead:
+  - Update local `computedTotal` to `data.server_total_cents`.
+  - Open a small inline `AlertDialog` ("Your tab just changed") showing:
+    - "Someone at the table just updated their claims."
+    - Old amount → New amount (with arrow, tabular-nums, R@lly Orange on the new value).
+    - Two actions: **Re-verify & pay** (closes alert, refreshes `refreshItemized()`, leaves payer ready to tap Pay again) and **Cancel** (dismisses).
+- Also re-trigger `refreshItemized()` immediately so the big amount tile reflects the new total in real time.
+- Keep existing generic-error toast as the fallback for any other error code.
+
+## 2. Nudge Cooldown (supabase/functions/nudge-split-share/index.ts)
+
+**Goal:** 5-minute hard cap per target per request.
+
+- After resolving `req_row` + auth, query existing `split_check_targets` for the supplied `(request_id, target_profile_ids)` and read `last_nudged_at`.
+- Partition into:
+  - `allowed` — `last_nudged_at` is null or older than 5 minutes ago.
+  - `cooling` — still inside the window. Capture each one's `seconds_remaining`.
+- If `allowed.length === 0`: return `429 nudge_cooldown` with `{ cooling: [{profile_id, seconds_remaining}] }` so the client can surface a clean message.
+- Otherwise, run the existing notification + push fan-out **only** against `allowed`, and update `last_nudged_at = now()` only on those rows.
+- Response payload: `{ ok: true, nudged: allowed.length, skipped: cooling.length, cooling }`.
+- `SplitCheckSettlementPanel.tsx` nudge handlers stay mostly unchanged; just upgrade the toast:
+  - `nudged > 0` → `toast.success` (e.g. "Nudged 1" or "Nudged 3, skipped 2 (recently nudged)")
+  - All cooling → `toast.error("Cool down — try again in {Math.ceil(maxSecs/60)} min")`.
+
+## 3. Replace `window.confirm` with `<AlertDialog>` (brand polish)
+
+Two confirm() callsites to swap:
+
+**SplitCheckSettlementPanel.tsx — Cancel request**
+- Replace `confirm('Cancel this split-check request?...')` with an `AlertDialog`:
+  - Title: "Cancel this split-check?"
+  - Description: "Pending attendees will stop seeing the pay prompt. Already-paid shares stay collected."
+  - Actions: **Keep it open** (secondary) / **Cancel request** (destructive).
+- Track open state per-request id (single `cancelTargetId` state is enough since only one alert is open at a time).
+
+**PaySplitShareDialog.tsx — Decline tab**
+- Replace `confirm('Decline this tab?...')` with an `AlertDialog`:
+  - Title: "Decline this tab?"
+  - Description: "The host will be notified you opted out. You can't undo this."
+  - Actions: **Keep paying** / **Decline** (destructive).
+
+Both use shadcn's `AlertDialog` (`@/components/ui/alert-dialog`) so they inherit the Glass/Liquid + Montserrat language automatically.
+
+---
+
+## Files touched
+
+```text
+supabase/functions/nudge-split-share/index.ts   (cooldown logic + new response shape)
+src/components/payments/PaySplitShareDialog.tsx (409 handler + AlertDialog for decline)
+src/components/events/SplitCheckSettlementPanel.tsx (AlertDialog for cancel + cooldown toast)
 ```
 
-The client-side `CoverChargeDialog` short-circuits with a "Founder Fee Waived" screen and calls `onPaid('founder_waived')` — but **no `payments` row is ever inserted**, so the RPC rejects the join with `cover_required`. The user sees the waiver, taps Continue, and the toast says "cover_required".
-
-Founder status is a real server-checkable attribute (`profiles.founder_number IS NOT NULL`), so the waiver should be enforced in the database, not relied on from the client.
-
-## Fix
-Single migration that updates `request_join_event` to also exempt founders from the cover gate:
-
-```sql
--- inside the NOT v_is_host branch, before the payment check:
-DECLARE v_is_founder boolean;
-...
-SELECT (founder_number IS NOT NULL)
-  INTO v_is_founder
-  FROM profiles WHERE id = v_profile_id;
-
-IF COALESCE(v_cover, 0) > 0 AND NOT v_is_founder THEN
-  ... existing payment check ...
-END IF;
-```
-
-Everything else in the function (host exemption, attendee insert, status) is unchanged.
-
-## Why this fix
-- **Authoritative**: matches the existing UI promise without trusting the client.
-- **Minimal blast radius**: only one branch of one RPC; no schema changes, no client edits, no new tables.
-- **Non-founders unaffected**: cover gate still fires for them exactly as today.
-- **Already-paid non-founders unaffected**: the `succeeded` payment check still short-circuits for them.
-
-## Out of scope
-- No changes to `CoverChargeDialog` UI — it already renders the correct waiver screen for founders, and that flow will now actually succeed.
-- No changes to `useCoverChargeGate` — it remains the right client gate for non-founders.
-- No retroactive payment-row backfill — founders never needed one.
-
-## Verification
-1. Founder account taps Join on a R@lly with `cover_charge > 0` → sees "Founder Fee Waived" → Continue → RPC returns `success: true, status: attending` (or `pending` for non-invitees on private events).
-2. Non-founder account on the same R@lly → still gated by `CoverChargeDialog` → must pay → RPC succeeds only after the `payments` row exists.
-3. Host/co-host → unchanged, exempt path still wins first.
+No database migration needed — `last_nudged_at` already exists and is being written by the current code path.

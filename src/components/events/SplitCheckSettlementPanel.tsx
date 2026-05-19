@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSplitCheck } from '@/hooks/useSplitCheck';
 import { useMerchantAccount } from '@/hooks/useMerchantAccount';
 import { supabase } from '@/integrations/supabase/client';
@@ -6,6 +6,16 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Bell, RefreshCw, Loader2, AlertCircle, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { RefundConfirmDialog } from '@/components/payments/RefundConfirmDialog';
@@ -23,6 +33,7 @@ export function SplitCheckSettlementPanel({ eventId, hostProfileId, onOpenPayout
   const [refundFor, setRefundFor] = useState<{ paymentId: string; amount: number } | null>(null);
   const [nudgingId, setNudgingId] = useState<string | null>(null);
   const [cancelingId, setCancelingId] = useState<string | null>(null);
+  const [confirmCancel, setConfirmCancel] = useState<string | null>(null);
 
   useEffect(() => {
     const ids = Array.from(new Set([
@@ -38,25 +49,53 @@ export function SplitCheckSettlementPanel({ eventId, hostProfileId, onOpenPayout
 
   if (!requests.length) return null;
 
+  // Surface cooldown info cleanly when the edge function returns 429 nudge_cooldown.
+  const handleNudgeResponse = (data: any, error: any) => {
+    if (error) { toast.error('Could not nudge'); return; }
+    if (data?.error === 'nudge_cooldown') {
+      const maxSecs = (data.cooling ?? []).reduce((m: number, c: any) => Math.max(m, c.seconds_remaining ?? 0), 0);
+      const mins = Math.max(1, Math.ceil(maxSecs / 60));
+      toast.error(`Cool down — try again in ${mins} min`);
+      return;
+    }
+    if (data?.nudged > 0 && data?.skipped > 0) {
+      toast.success(`Nudged ${data.nudged} · skipped ${data.skipped} (recently nudged)`);
+    } else if (data?.nudged > 0) {
+      toast.success(data.nudged === 1 ? 'Nudged' : `Nudged ${data.nudged}`);
+    }
+  };
+
   const nudge = async (requestId: string, profileId: string) => {
     setNudgingId(profileId);
-    const { error } = await supabase.functions.invoke('nudge-split-share', {
+    const { data, error } = await supabase.functions.invoke('nudge-split-share', {
       body: { request_id: requestId, target_profile_ids: [profileId] },
     });
     setNudgingId(null);
-    if (error) toast.error('Could not nudge');
-    else toast.success('Nudged');
+    handleNudgeResponse(data, error);
   };
 
   const nudgeAll = async (requestId: string, ids: string[]) => {
     if (!ids.length) return;
-    const { error } = await supabase.functions.invoke('nudge-split-share', {
+    const { data, error } = await supabase.functions.invoke('nudge-split-share', {
       body: { request_id: requestId, target_profile_ids: ids },
     });
-    if (error) toast.error('Could not nudge'); else toast.success(`Nudged ${ids.length}`);
+    handleNudgeResponse(data, error);
   };
 
   const payoutsActive = account?.status === 'active' && account.payouts_enabled;
+
+  const performCancel = async (requestId: string) => {
+    setCancelingId(requestId);
+    const { error } = await supabase
+      .from('split_check_requests')
+      .update({ status: 'canceled' })
+      .eq('id', requestId);
+    setCancelingId(null);
+    setConfirmCancel(null);
+    if (error) { toast.error('Could not cancel'); return; }
+    toast.success('Request canceled');
+    refetch();
+  };
 
   return (
     <div className="space-y-3">
@@ -79,18 +118,6 @@ export function SplitCheckSettlementPanel({ eventId, hostProfileId, onOpenPayout
         const pendingIds = reqTargets.filter((t: any) => t.status === 'pending').map((t: any) => t.profile_id);
 
         const isCanceled = r.status === 'canceled';
-        const cancelRequest = async () => {
-          if (!confirm('Cancel this split-check request? Pending attendees will stop seeing the pay prompt.')) return;
-          setCancelingId(r.id);
-          const { error } = await supabase
-            .from('split_check_requests')
-            .update({ status: 'canceled' })
-            .eq('id', r.id);
-          setCancelingId(null);
-          if (error) { toast.error('Could not cancel'); return; }
-          toast.success('Request canceled');
-          refetch();
-        };
 
         return (
           <Card key={r.id} className={['p-4 space-y-3', isCanceled ? 'opacity-70' : ''].join(' ')}>
@@ -111,7 +138,7 @@ export function SplitCheckSettlementPanel({ eventId, hostProfileId, onOpenPayout
                     size="sm"
                     variant="ghost"
                     className="h-7 px-2 text-xs text-muted-foreground hover:text-destructive"
-                    onClick={cancelRequest}
+                    onClick={() => setConfirmCancel(r.id)}
                     disabled={cancelingId === r.id}
                   >
                     {cancelingId === r.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <X className="h-3 w-3 mr-1" />}
@@ -226,6 +253,27 @@ export function SplitCheckSettlementPanel({ eventId, hostProfileId, onOpenPayout
         <RefundConfirmDialog open={!!refundFor} onOpenChange={(v) => !v && setRefundFor(null)}
           paymentId={refundFor.paymentId} originalAmountCents={refundFor.amount} onRefunded={refetch} />
       )}
+
+      {/* Cancel confirmation — replaces window.confirm */}
+      <AlertDialog open={!!confirmCancel} onOpenChange={(v) => !v && setConfirmCancel(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel this split-check?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Pending attendees will stop seeing the pay prompt. Already-paid shares stay collected.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep it open</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => confirmCancel && performCancel(confirmCancel)}
+            >
+              Cancel request
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
