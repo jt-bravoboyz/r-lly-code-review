@@ -213,6 +213,26 @@ export function useUnreadCount() {
   return notifications?.filter(n => !n.read).length || 0;
 }
 
+export function useMarkAllNotificationsRead() {
+  const queryClient = useQueryClient();
+  const { profile } = useAuth();
+
+  return useMutation({
+    mutationFn: async () => {
+      if (!profile?.id) return;
+      const { error } = await supabase
+        .from('notifications')
+        .update({ read: true })
+        .eq('profile_id', profile.id)
+        .eq('read', false);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications', profile?.id] });
+    },
+  });
+}
+
 export function useCreateNotification() {
   const queryClient = useQueryClient();
 
