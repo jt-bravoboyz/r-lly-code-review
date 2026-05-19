@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { Mail, Lock, User, ChevronRight, ArrowLeft, Phone, Fingerprint, Eye, EyeOff } from 'lucide-react';
 import { z } from 'zod';
 import { PolicyAcceptanceDialog } from '@/components/legal/PolicyAcceptanceDialog';
+import { BiometricOptInDialog } from '@/components/auth/BiometricOptInDialog';
 import { trackEvent } from '@/lib/analytics';
 // Tutorial auto-starts via useTutorial profile-age check
 import { lovable } from '@/integrations/lovable/index';
@@ -88,6 +89,7 @@ export default function Auth() {
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const [showPolicyDialog, setShowPolicyDialog] = useState(false);
   const [pendingAuthAction, setPendingAuthAction] = useState<'signup' | 'google' | 'apple' | null>(null);
+  const [biometricOptInOpen, setBiometricOptInOpen] = useState(false);
   const [rememberMe, setRememberMe] = useState(() => {
     return localStorage.getItem('rally-remember-me') === 'true';
   });
@@ -337,11 +339,7 @@ export default function Auth() {
       
       // Offer biometric setup if supported and not already registered
       if (biometricSupported && !biometricRegistered && profile) {
-        setTimeout(() => {
-          if (confirm('Would you like to enable Face ID / Fingerprint login for faster access next time?')) {
-            registerBiometric(profile.id, email.trim());
-          }
-        }, 1000);
+        setTimeout(() => setBiometricOptInOpen(true), 1000);
       }
     } catch (error: any) {
       const errorMessage = getAuthErrorMessage(error);
@@ -1053,6 +1051,13 @@ export default function Auth() {
         open={showPolicyDialog}
         onOpenChange={setShowPolicyDialog}
         onAccept={handlePolicyAccepted}
+      />
+      <BiometricOptInDialog
+        open={biometricOptInOpen}
+        onOpenChange={setBiometricOptInOpen}
+        onEnable={() => {
+          if (profile) registerBiometric(profile.id, email.trim());
+        }}
       />
     </div>
   );

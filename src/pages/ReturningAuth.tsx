@@ -12,6 +12,7 @@ import { trackEvent } from '@/lib/analytics';
 import { toast } from 'sonner';
 import { Mail, Lock, ChevronRight, ArrowLeft, Fingerprint } from 'lucide-react';
 import { z } from 'zod';
+import { BiometricOptInDialog } from '@/components/auth/BiometricOptInDialog';
 
 const emailSchema = z.string().trim().email('Please enter a valid email address').max(255, 'Email is too long');
 const passwordSchema = z.string().min(6, 'Password must be at least 6 characters').max(128, 'Password is too long');
@@ -31,6 +32,7 @@ export default function ReturningAuth() {
   const [showContent, setShowContent] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [resetEmailSent, setResetEmailSent] = useState(false);
+  const [biometricOptInOpen, setBiometricOptInOpen] = useState(false);
   const [rememberMe, setRememberMe] = useState(() => {
     return localStorage.getItem('rally-remember-me') === 'true';
   });
@@ -210,11 +212,7 @@ export default function ReturningAuth() {
       
       // Offer biometric setup if supported and not already registered
       if (biometricSupported && !biometricRegistered && profile) {
-        setTimeout(() => {
-          if (confirm('Would you like to enable Face ID / Fingerprint login for faster access next time?')) {
-            registerBiometric(profile.id, email.trim());
-          }
-        }, 1000);
+        setTimeout(() => setBiometricOptInOpen(true), 1000);
       }
     } catch (error: any) {
       const errorMessage = getAuthErrorMessage(error);
@@ -633,6 +631,13 @@ export default function ReturningAuth() {
           </p>
         </div>
       )}
+      <BiometricOptInDialog
+        open={biometricOptInOpen}
+        onOpenChange={setBiometricOptInOpen}
+        onEnable={() => {
+          if (profile) registerBiometric(profile.id, email.trim());
+        }}
+      />
     </div>
   );
 }
