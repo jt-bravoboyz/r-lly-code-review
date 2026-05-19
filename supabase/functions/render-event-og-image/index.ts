@@ -128,9 +128,19 @@ async function buildPng(inputs: FlyerInputs, bgPublicBase: string): Promise<Uint
     },
   };
 
+  // Satori requires at least one font. If Google Fonts is unreachable, fall back
+  // to a fontsource CDN mirror so text always renders.
+  let fontData: ArrayBuffer | null = font;
+  if (!fontData) {
+    try {
+      fontData = await fetch('https://cdn.jsdelivr.net/fontsource/fonts/playfair-display@latest/latin-700-normal.woff').then(r => r.arrayBuffer());
+    } catch (e) {
+      console.warn('[render-event-og-image] fontsource fallback failed', e);
+    }
+  }
   const svg = await satori(tree, {
     width: 1200, height: 630,
-    fonts: font ? [{ name: 'Playfair Display', data: font, weight: 700, style: 'normal' }] : [],
+    fonts: fontData ? [{ name: 'Playfair Display', data: fontData, weight: 700, style: 'normal' }] : [],
   });
 
   await ensureWasm();
