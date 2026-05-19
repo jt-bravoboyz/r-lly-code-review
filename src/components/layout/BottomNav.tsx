@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Zap, Users, User, Bell, Receipt } from 'lucide-react';
+import { Home, Zap, Users, Bell, Receipt } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUnreadCount } from '@/hooks/useNotifications';
 import { useTutorial } from '@/hooks/useTutorial';
@@ -7,10 +7,9 @@ import { useTutorial } from '@/hooks/useTutorial';
 const navItems = [
   { path: '/', icon: Home, label: 'Home', tutorialId: 'nav-home' },
   { path: '/events', icon: Zap, label: 'R@lly', tutorialId: 'nav-events' },
-  { path: '/tabs', icon: Receipt, label: 'Tabs', tutorialId: 'nav-tabs' },
   { path: '/notifications', icon: Bell, label: 'Alerts', tutorialId: 'nav-notifications' },
+  { path: '/tabs', icon: Receipt, label: 'Tabs', tutorialId: 'nav-tabs' },
   { path: '/squads', icon: Users, label: 'Squads', tutorialId: 'nav-squads' },
-  { path: '/profile', icon: User, label: 'Profile', tutorialId: 'nav-profile' },
 ];
 
 export function BottomNav() {
@@ -33,7 +32,7 @@ export function BottomNav() {
               to={path}
               data-tutorial={tutorialId}
               className={cn(
-                "flex flex-col items-center gap-1 px-3 py-2 text-xs font-medium transition-all duration-300 rounded-2xl",
+                "flex flex-col items-center gap-1 px-2 py-2 text-[11px] font-medium transition-all duration-300 rounded-2xl",
                 isTutorialTarget
                   ? "bg-[#F47A19] text-white shadow-[0_0_16px_rgba(244,122,25,0.55)] animate-pulse scale-110"
                   : isActive 
