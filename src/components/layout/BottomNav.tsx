@@ -32,7 +32,7 @@ export function BottomNav() {
               to={path}
               data-tutorial={tutorialId}
               className={cn(
-                "flex flex-col items-center gap-1 px-3 py-2 text-xs font-medium transition-all duration-300 rounded-2xl",
+                "flex flex-col items-center gap-1 px-2 py-2 text-[11px] font-medium transition-all duration-300 rounded-2xl",
                 isTutorialTarget
                   ? "bg-[#F47A19] text-white shadow-[0_0_16px_rgba(244,122,25,0.55)] animate-pulse scale-110"
                   : isActive 
