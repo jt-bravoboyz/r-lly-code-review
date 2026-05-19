@@ -154,9 +154,21 @@ async function sha(s: string): Promise<string> {
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   const url = new URL(req.url);
-  const eventId = url.searchParams.get('id');
-  const code = url.searchParams.get('code');
-  const tabId = url.searchParams.get('tab');
+  let eventId = url.searchParams.get('id');
+  let code = url.searchParams.get('code');
+  let tabId = url.searchParams.get('tab');
+  const wantsJson = url.searchParams.get('format') === 'json' || req.headers.get('accept')?.includes('application/json');
+
+  if (req.method === 'POST') {
+    try {
+      const body = await req.json();
+      eventId = body?.id ?? body?.eventId ?? eventId;
+      code = body?.code ?? code;
+      tabId = body?.tab ?? body?.tabId ?? tabId;
+    } catch (_) {
+      // Keep URL params as the source of truth if the body is empty or invalid.
+    }
+  }
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -176,7 +188,10 @@ Deno.serve(async (req) => {
         .select('id,title,total_cents,flyer_og_url,flyer_theme,flyer_custom_image_url,flyer_og_generated_at')
         .eq('id', tabId).maybeSingle();
       if (!data) throw new Error('Tab not found');
-      if (data.flyer_og_url) return Response.redirect(data.flyer_og_url, 302);
+      if (data.flyer_og_url) {
+        if (wantsJson) return new Response(JSON.stringify({ imageUrl: data.flyer_og_url }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        return Response.redirect(data.flyer_og_url, 302);
+      }
       inputs = {
         title: data.title ?? 'Split a tab',
         dateLabel: `$${((data.total_cents ?? 0) / 100).toFixed(2)} · Split with friends`,
@@ -192,7 +207,10 @@ Deno.serve(async (req) => {
       let q = supabase.from('events').select('id,title,start_time,location_name,flyer_theme,flyer_custom_image_url,flyer_og_url,creator_id,invite_code');
       const { data } = code ? await q.eq('invite_code', code).maybeSingle() : await q.eq('id', eventId!).maybeSingle();
       if (!data) throw new Error('Event not found');
-      if (data.flyer_og_url) return Response.redirect(data.flyer_og_url, 302);
+      if (data.flyer_og_url) {
+        if (wantsJson) return new Response(JSON.stringify({ imageUrl: data.flyer_og_url }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        return Response.redirect(data.flyer_og_url, 302);
+      }
       let hostName: string | null = null;
       if (data.creator_id) {
         const { data: p } = await supabase.from('safe_profiles').select('display_name').eq('id', data.creator_id).maybeSingle();
@@ -211,6 +229,7 @@ Deno.serve(async (req) => {
       writeBackId = data.id;
       cacheKey = `event/${data.id}/${await sha(JSON.stringify(inputs))}.png`;
     } else {
+      if (wantsJson) return new Response(JSON.stringify({ imageUrl: FALLBACK_URL }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       return Response.redirect(FALLBACK_URL, 302);
     }
 
@@ -230,9 +249,11 @@ Deno.serve(async (req) => {
       }).eq('id', writeBackId);
     }
 
+    if (wantsJson) return new Response(JSON.stringify({ imageUrl: cachedUrl }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     return Response.redirect(cachedUrl, 302);
   } catch (err) {
     console.error('[render-event-og-image]', err);
+    if (wantsJson) return new Response(JSON.stringify({ imageUrl: FALLBACK_URL, error: 'render_failed' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     return Response.redirect(FALLBACK_URL, 302);
   }
 });
