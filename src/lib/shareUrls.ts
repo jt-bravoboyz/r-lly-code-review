@@ -3,11 +3,8 @@
 // per-event OG metadata before a human is 302'd to the SPA.
 import { PUBLIC_APP_URL } from '@/lib/appUrl';
 
-const SUPABASE_PROJECT_ID = import.meta.env.VITE_SUPABASE_PROJECT_ID as string | undefined;
-
 function previewBase(): string {
-  if (!SUPABASE_PROJECT_ID) return PUBLIC_APP_URL;
-  return `https://${SUPABASE_PROJECT_ID}.functions.supabase.co/share-preview`;
+  return `${PUBLIC_APP_URL}/share-preview`;
 }
 
 export interface ShareLinkOptions {
@@ -42,6 +39,7 @@ export function buildTabShareUrl(
 export function buildOgImageUrl(
   params: { eventId?: string; requestId?: string; inviteCode?: string },
 ): string {
+  const SUPABASE_PROJECT_ID = import.meta.env.VITE_SUPABASE_PROJECT_ID as string | undefined;
   if (!SUPABASE_PROJECT_ID) return `${PUBLIC_APP_URL}/og-fallback.png`;
   const sp = new URLSearchParams();
   if (params.eventId) sp.set('id', params.eventId);
