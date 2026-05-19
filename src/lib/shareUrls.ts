@@ -4,7 +4,9 @@
 import { PUBLIC_APP_URL } from '@/lib/appUrl';
 
 function previewBase(): string {
-  return `${PUBLIC_APP_URL}/share-preview`;
+  const SUPABASE_PROJECT_ID = import.meta.env.VITE_SUPABASE_PROJECT_ID as string | undefined;
+  if (!SUPABASE_PROJECT_ID) return PUBLIC_APP_URL;
+  return `https://${SUPABASE_PROJECT_ID}.functions.supabase.co/share-preview`;
 }
 
 export interface ShareLinkOptions {
