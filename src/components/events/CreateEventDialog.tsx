@@ -296,6 +296,8 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
       }
 
       toast.success('Event created!');
+      // Fire-and-forget: bake the OG flyer image to storage so first share is instant.
+      supabase.functions.invoke('render-event-og-image', { body: { id: result.id } }).catch(() => {});
       setOpen(false);
       setStagedMedia([]);
       setSelectedSquads([]);
