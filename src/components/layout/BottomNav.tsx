@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Zap, Users, User, Bell } from 'lucide-react';
+import { Home, Zap, Users, User, Bell, Receipt } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUnreadCount } from '@/hooks/useNotifications';
 import { useTutorial } from '@/hooks/useTutorial';
@@ -7,8 +7,8 @@ import { useTutorial } from '@/hooks/useTutorial';
 const navItems = [
   { path: '/', icon: Home, label: 'Home', tutorialId: 'nav-home' },
   { path: '/events', icon: Zap, label: 'R@lly', tutorialId: 'nav-events' },
+  { path: '/tabs', icon: Receipt, label: 'Tabs', tutorialId: 'nav-tabs' },
   { path: '/notifications', icon: Bell, label: 'Alerts', tutorialId: 'nav-notifications' },
-  { path: '/squads', icon: Users, label: 'Squads', tutorialId: 'nav-squads' },
   { path: '/profile', icon: User, label: 'Profile', tutorialId: 'nav-profile' },
 ];
 
