@@ -1,61 +1,39 @@
-## What's broken
+## Plan
 
-You shared `…/share-preview?to=…&type=event&id=…`. iMessage scraped it but only got plain text. Two real bugs in the freshly-deployed flyer pipeline:
+Fix the R@lly share-preview pipeline so pasted event links produce a real rich preview instead of a text-document-style card.
 
-### Bug A — `share-preview` only emits OG tags when it recognises the bot
-`BOT_REGEX` checks for `iMessage`, `Applebot`, etc. The actual iMessage Link Preview crawler sends a generic Safari User-Agent (no "iMessage" string), so the function 302-redirects to the SPA. The SPA's `index.html` has no per-event `og:*` tags, so iMessage falls back to plain text.
+### What I’ll change
 
-### Bug B — `render-event-og-image` is throwing and always 302-ing to the fallback
-Edge logs show every call dies with:
-```
-Error: Playfair font URL not found
-  at getPlayfair (…/render-event-og-image/index.ts:29:19)
-```
-The Google Fonts CSS endpoint returns `.ttf` when called with `User-Agent: Mozilla/5.0` (the regex only looks for `.woff2`). So the font URL parse returns null → exception → catch block redirects to `og-fallback.png`. Even when iMessage *does* fetch our `og:image`, it just gets the static fallback.
+1. **Serve crawler HTML with the right content type**
+   - Update `supabase/functions/share-preview/index.ts` so every response explicitly includes browser/crawler-safe headers:
+     - `Content-Type: text/html; charset=utf-8`
+     - remove/avoid `nosniff`/sandbox-style behavior that makes the function look like a text document in some preview clients
+   - Keep the full `og:*` and `twitter:*` tags.
+   - Keep the human redirect to `https://rlly.cloud/join/F5FF4F`, but make crawler parsing the priority.
 
-## Fix
+2. **Use a direct PNG image URL in `og:image`**
+   - Change `share-preview` so it resolves/generates the flyer image URL first, then places the final stored PNG URL in `<meta property="og:image">`.
+   - Avoid pointing social apps at a second redirecting function for the image, because iMessage and some clients are fragile with chained redirects.
 
-Two surgical edits, no new files.
+3. **Fix OG image generation failure**
+   - Update `supabase/functions/render-event-og-image/index.ts` to stop using unsupported WOFF2 fonts in Satori.
+   - Prefer a known Satori-compatible WOFF/TTF source or fall back cleanly to a bundled/system-safe font path.
+   - Ensure the generated file is uploaded as `image/png`, not the current fallback JPEG.
 
-### 1. `supabase/functions/share-preview/index.ts`
-Drop the User-Agent sniffing entirely and always return the HTML doc with full `og:*` + `twitter:*` tags plus a `<meta http-equiv="refresh">` and a `<script>` redirect for humans. This is what Partiful / Eventbrite do, and removes the bot-UA guessing game.
+4. **Make the renderer callable by both GET and internal POST**
+   - Keep existing GET support for direct image generation.
+   - Add a small JSON response mode for internal use by `share-preview`, so `share-preview` can obtain the final PNG URL before building meta tags.
 
-```text
-- if (!isBot) return Response.redirect(to, 302);
-+ // Always return HTML with OG tags. Humans are bounced via meta-refresh + JS.
-```
-Add `<script>location.replace(${JSON.stringify(to)})</script>` in `<body>` so humans navigate instantly while crawlers (which don't run JS) still see the meta tags.
+5. **Clear the bad cached flyer URL for this event**
+   - Clear stale `flyer_og_url`/`flyer_og_generated_at` for the affected event and any affected tab rows so the next share regenerates with the corrected renderer.
 
-### 2. `supabase/functions/render-event-og-image/index.ts`
-Make font loading robust:
+6. **Verify the exact URL you pasted**
+   - Confirm the share URL returns `200` HTML with `Content-Type: text/html`.
+   - Confirm the HTML contains a final stored `og:image` PNG URL.
+   - Confirm that PNG URL returns `200 image/png` without redirecting to `_system/og-fallback.png`.
 
-- Request Google Fonts CSS with a Chrome User-Agent (`Mozilla/5.0 … Chrome/120…`) so it returns `.woff2`.
-- Widen the regex to also accept `.woff` and `.ttf`.
-- If the font fetch still fails, render WITHOUT a custom font (Satori falls back to a built-in sans-serif) instead of throwing — a slightly less branded PNG is far better than the fallback graphic every time.
+### Technical notes
 
-```text
-const css = await fetch(GFONTS_URL, {
-  headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' },
-}).then(r => r.text());
-const url = css.match(/url\((https:\/\/[^)]+\.(?:woff2|woff|ttf))\)/)?.[1];
-```
-
-Wrap `getPlayfair()` in try/catch inside `buildPng` so a font outage degrades gracefully.
-
-### 3. Invalidate the broken cache row
-The first successful call for this event already wrote a `flyer_og_url` pointing at the fallback PNG (because the render exception was caught after the cache row was written? — actually it isn't, but to be safe).
-Run once via Supabase:
-```sql
-UPDATE public.events SET flyer_og_url = NULL, flyer_og_generated_at = NULL WHERE flyer_og_url IS NOT NULL;
-UPDATE public.split_check_requests SET flyer_og_url = NULL, flyer_og_generated_at = NULL WHERE flyer_og_url IS NOT NULL;
-```
-
-## Files changed
-- `supabase/functions/share-preview/index.ts`
-- `supabase/functions/render-event-og-image/index.ts`
-- One-off `UPDATE` via migration tool to clear stale cache columns.
-
-## Verification
-1. `curl -A "Mozilla/5.0 (Macintosh; Intel Mac OS X) AppleWebKit/605" https://…/share-preview?…` returns 200 HTML containing `<meta property="og:image"`.
-2. `curl -I https://…/render-event-og-image?id=…` returns 302 to a freshly uploaded `event_flyers/event/<id>/<hash>.png` (NOT to `og-fallback.png`).
-3. Re-share the link in iMessage → preview card shows the themed flyer with the event title.
+- Root cause confirmed: the deployed `share-preview` response body is HTML, but the edge gateway is exposing it as `Content-Type: text/plain` in the function test path, which makes messaging apps treat it like a text document.
+- Second confirmed issue: `render-event-og-image` is still failing with `Unsupported OpenType signature wOF2`, so it redirects to the fallback image instead of generating the themed flyer.
+- No app UI changes are needed; this is isolated to the two share/OG backend functions plus one cache cleanup.

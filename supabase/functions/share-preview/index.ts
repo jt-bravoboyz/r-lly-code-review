@@ -12,6 +12,19 @@ function escapeHtml(s: string): string {
   return s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
 }
 
+async function resolveOgImage(projectId: string, ogParam: string, fallback: string): Promise<string> {
+  try {
+    const renderUrl = `https://${projectId}.functions.supabase.co/render-event-og-image?${ogParam}&format=json`;
+    const res = await fetch(renderUrl, { headers: { Accept: 'application/json' } });
+    if (!res.ok) throw new Error(`render failed: ${res.status}`);
+    const data = await res.json();
+    return typeof data?.imageUrl === 'string' && data.imageUrl ? data.imageUrl : fallback;
+  } catch (e) {
+    console.error('[share-preview] og image resolve failed', e);
+    return fallback;
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   const url = new URL(req.url);
@@ -24,7 +37,8 @@ Deno.serve(async (req) => {
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   const projectId = (supabaseUrl.match(/https:\/\/([^.]+)\./)?.[1]) ?? '';
   const ogParam = type === 'tab' ? `tab=${id}` : `id=${id}`;
-  const ogImage = `https://${projectId}.functions.supabase.co/render-event-og-image?${ogParam}`;
+  const fallbackOgImage = `${supabaseUrl}/storage/v1/object/public/event_flyers/_system/og-fallback.png`;
+  const ogImage = projectId ? await resolveOgImage(projectId, ogParam, fallbackOgImage) : fallbackOgImage;
 
   let title = "You're invited — R@lly";
   let description = 'Nights That Matter. Tap to RSVP.';
@@ -62,18 +76,20 @@ Deno.serve(async (req) => {
 <meta property="og:title" content="${escapeHtml(title)}" />
 <meta property="og:description" content="${escapeHtml(description)}" />
 <meta property="og:url" content="${escapeHtml(to)}" />
-<meta property="og:image" content="${ogImage}" />
+<meta property="og:image" content="${escapeHtml(ogImage)}" />
+<meta property="og:image:secure_url" content="${escapeHtml(ogImage)}" />
+<meta property="og:image:type" content="image/png" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content="${escapeHtml(title)}" />
 <meta name="twitter:description" content="${escapeHtml(description)}" />
-<meta name="twitter:image" content="${ogImage}" />
-<meta http-equiv="refresh" content="0; url=${escapeHtml(to)}" />
-</head><body><p>Redirecting to <a href="${escapeHtml(to)}">${escapeHtml(to)}</a>…</p><script>location.replace(${JSON.stringify(to)})</script></body></html>`;
+<meta name="twitter:image" content="${escapeHtml(ogImage)}" />
+<meta http-equiv="refresh" content="1; url=${escapeHtml(to)}" />
+</head><body><main><h1>${escapeHtml(title)}</h1><p>${escapeHtml(description)}</p><p><a href="${escapeHtml(to)}">Open this R@lly</a></p></main></body></html>`;
 
-  return new Response(html, {
-    status: 200,
-    headers: { ...corsHeaders, 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=300' },
-  });
+  const headers = new Headers(corsHeaders);
+  headers.set('content-type', 'text/html; charset=utf-8');
+  headers.set('cache-control', 'public, max-age=300');
+  return new Response(html, { status: 200, headers });
 });
