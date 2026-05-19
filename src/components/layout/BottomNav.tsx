@@ -9,6 +9,7 @@ const navItems = [
   { path: '/events', icon: Zap, label: 'R@lly', tutorialId: 'nav-events' },
   { path: '/tabs', icon: Receipt, label: 'Tabs', tutorialId: 'nav-tabs' },
   { path: '/notifications', icon: Bell, label: 'Alerts', tutorialId: 'nav-notifications' },
+  { path: '/squads', icon: Users, label: 'Squads', tutorialId: 'nav-squads' },
   { path: '/profile', icon: User, label: 'Profile', tutorialId: 'nav-profile' },
 ];
 
@@ -19,7 +20,7 @@ export function BottomNav() {
 
   return (
     <nav className="fixed bottom-4 left-4 right-4 z-50 rounded-2xl bg-card/80 backdrop-blur-xl border border-border/60 shadow-[0_4px_24px_hsl(0_0%_0%/0.08)] dark:bg-card/60 dark:border-white/[0.08] dark:shadow-[0_8px_32px_hsl(0_0%_0%/0.4),inset_0_1px_0_hsl(0_0%_100%/0.06)]" style={{ paddingBottom: 'env(safe-area-inset-bottom)', WebkitBackdropFilter: 'blur(20px)' }}>
-      <div className="flex h-16 items-center justify-around px-2">
+      <div className="flex h-16 items-center justify-around px-1">
         {navItems.map(({ path, icon: Icon, label, tutorialId }) => {
           const isActive = location.pathname === path || 
             (path !== '/' && location.pathname.startsWith(path));
