@@ -1,5 +1,5 @@
 import { forwardRef } from 'react';
-import { Clock, MapPin, Users, Beer, ChevronRight } from 'lucide-react';
+import { Clock, MapPin, Users, Beer, ChevronRight, Receipt, DollarSign } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
@@ -17,11 +17,14 @@ interface EventCardProps {
     status?: string | null;
     location_name: string | null;
     is_barhop: boolean | null;
+    split_check?: boolean | null;
+    cover_charge?: number | null;
     
     creator?: {
       id: string;
       display_name: string | null;
       avatar_url: string | null;
+      tier_key?: string | null;
     } | null;
     attendees?: { count: number }[];
   };
@@ -78,6 +81,18 @@ export const EventCard = forwardRef<HTMLAnchorElement, EventCardProps>(
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 text-[10px] font-bold border border-amber-500/20 shadow-sm">
                           <Beer className="h-3 w-3 icon-bounce" />
                           Bar Hop
+                        </span>
+                      )}
+                      {event.split_check && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/15 text-primary text-[10px] font-bold border border-primary/20 shadow-sm">
+                          <Receipt className="h-3 w-3" />
+                          Split
+                        </span>
+                      )}
+                      {(event.cover_charge ?? 0) > 0 && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-500 text-[10px] font-bold border border-amber-500/20 shadow-sm">
+                          <DollarSign className="h-3 w-3" />
+                          {Number(event.cover_charge).toFixed(0)}
                         </span>
                       )}
                       {isLive && (
