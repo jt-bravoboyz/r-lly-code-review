@@ -86,6 +86,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useRenderLoopDetector } from '@/hooks/useRenderLoopDetector';
 import { ProfileTapWrapper } from '@/components/profile/ProfileTapWrapper';
+import { EventThemeProvider } from '@/components/events/EventThemeProvider';
 
 const VIBE_STYLES: Record<string, string> = {
   orange: "bg-orange-500/10 text-orange-600 border-orange-500/30",
