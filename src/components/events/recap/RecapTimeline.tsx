@@ -3,7 +3,7 @@ import { Camera, Share2, ShieldCheck } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { PUBLIC_APP_URL } from '@/lib/appUrl';
+import { buildRallyShareUrl } from '@/lib/shareUrls';
 import { cn } from '@/lib/utils';
 import { RecapMediaTile, type RecapMediaItem } from './RecapMediaTile';
 import { getRecapCloser } from './recapClosers';
@@ -58,7 +58,7 @@ export function RecapTimeline({
     const text = `${closer.emoji} ${closer.title}\n\n"${eventTitle}" R@lly Recap:\n📸 ${stats.photoCount} Photos${videoCount ? ` · 🎞️ ${videoCount} Clips` : ''} | 🔥 ${stats.rogueCount} Rogues | 💬 ${stats.reactionCount} Reactions\n\n${closer.share.toUpperCase()}\n\nPowered by R@lly`;
     if (navigator.share) {
       try {
-        await navigator.share({ title: `${eventTitle} — R@lly Recap`, text, url: `${PUBLIC_APP_URL}/events/${eventId}` });
+        await navigator.share({ title: `${eventTitle} — R@lly Recap`, text, url: buildRallyShareUrl({ eventId }) });
       } catch { /* cancelled */ }
     } else {
       await navigator.clipboard.writeText(text);

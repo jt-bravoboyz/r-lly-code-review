@@ -55,7 +55,7 @@ export default function JoinRally() {
   const { ensurePaid, dialog: coverDialog } = useCoverChargeGate(event, profile);
 
   const fetchEvent = async (inviteCode: string) => {
-    if (!inviteCode || inviteCode.length < 6) return;
+    if (!inviteCode || inviteCode.length < 4) return;
     
     setLoading(true);
     setIsExpired(false);
