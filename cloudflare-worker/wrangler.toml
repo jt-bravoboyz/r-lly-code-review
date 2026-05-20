@@ -2,7 +2,7 @@ name = "rlly-share-unfurl"
 main = "src/index.ts"
 compatibility_date = "2025-05-01"
 workers_dev = true
-# Deploy trigger: v3 (force workflow run after secrets added to Actions)
+# Deploy trigger: v4 (force redeploy — unfurl header still missing 2026-05-20)
 
 # Routes bind the Worker to rlly.cloud share paths.
 # The rlly.cloud zone must exist in the same Cloudflare account as the
