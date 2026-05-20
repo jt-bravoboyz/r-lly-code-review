@@ -85,11 +85,17 @@ export function InviteToEventDialog({
     [existingAttendeeIds, existingInviteIds, eventInvites]
   );
 
-  const shareLink = profile?.id
-    ? `${PUBLIC_APP_URL}/join/${inviteCode}?r=${profile.id}`
-    : `${PUBLIC_APP_URL}/join/${inviteCode}`;
+  // All shares route through buildRallyShareUrl → crawler-aware share-preview
+  // edge function so iMessage/Slack render the themed flyer instead of generic OG.
+  const shareLink = inviteCode
+    ? buildRallyShareUrl(
+        { eventId, inviteCode },
+        { referrerId: profile?.id ?? null }
+      )
+    : buildRallyShareUrl({ eventId, inviteCode: null });
 
-  const smsPreview = `You're in. ${eventTitle} — Tap to join the crew: ${shareLink}`;
+  const smsPreview = `You're locked in for "${eventTitle}". Claim your spot 🔥 ${shareLink}`;
+
 
   // Influence threshold: 10+ unique invites in history
   const isTopInviter = (inviteHistory?.length || 0) >= 10;
