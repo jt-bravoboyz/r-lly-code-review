@@ -239,7 +239,7 @@ export default function JoinRally() {
         trackEvent('invite_code_redeemed', {
           event_id: event.id,
           invite_code: event.invite_code,
-          source: 'join_rally_page',
+          source: code ? 'join_rally_page_link' : 'join_rally_page_manual',
         });
         toast.success("You're in! 🎉", {
           description: 'Welcome to the R@lly!',
