@@ -47,6 +47,7 @@ export default function JoinRally() {
   const [alreadyJoined, setAlreadyJoined] = useState(false);
   const [isPending, setIsPending] = useState(false);
   const [isExpired, setIsExpired] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   const [showSafetyChoice, setShowSafetyChoice] = useState(false);
   const [showRidesSelection, setShowRidesSelection] = useState(false);
   const [joinedEventId, setJoinedEventId] = useState<string | null>(null);
@@ -59,13 +60,21 @@ export default function JoinRally() {
     
     setLoading(true);
     setIsExpired(false);
+    setLoadError(false);
     
     const { data: rpcData, error: rpcError } = await supabase
       .rpc('get_event_preview_by_invite_code', { invite_code_param: inviteCode });
 
     if (rpcError) {
       console.error('Error fetching event:', rpcError);
-      toast.error('Failed to find rally');
+      // Structurally-valid code that failed to load (network blip, RLS edge) —
+      // surface a retryable error instead of a misleading "not found" card.
+      const looksValid = /^[A-Z0-9]{4,8}$/i.test(inviteCode.trim());
+      if (looksValid) {
+        setLoadError(true);
+      } else {
+        toast.error('Failed to find rally');
+      }
       setEvent(null);
       setLoading(false);
       return;
@@ -465,8 +474,26 @@ export default function JoinRally() {
             </div>
           )}
 
+          {/* Transient load error — retryable */}
+          {!loading && loadError && (
+            <div className="backdrop-blur-xl bg-card/80 border border-border rounded-2xl p-8 shadow-lg text-center space-y-4">
+              <div className="w-16 h-16 rounded-full bg-muted mx-auto flex items-center justify-center">
+                <Zap className="h-8 w-8 text-muted-foreground" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold font-montserrat text-foreground">Trouble loading invite</h2>
+                <p className="text-sm text-muted-foreground">
+                  Check your connection and try again.
+                </p>
+              </div>
+              <Button onClick={() => fetchEvent(code || manualCode)}>
+                Retry
+              </Button>
+            </div>
+          )}
+
           {/* Not Found */}
-          {!loading && !event && !isExpired && code && (
+          {!loading && !event && !isExpired && !loadError && code && (
             <div className="backdrop-blur-xl bg-card/80 border border-border rounded-2xl p-8 shadow-lg text-center space-y-4">
               <div className="w-16 h-16 rounded-full bg-muted mx-auto flex items-center justify-center">
                 <Users className="h-8 w-8 text-muted-foreground" />
