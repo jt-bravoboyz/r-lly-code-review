@@ -69,6 +69,17 @@ export default function Auth() {
     return localStorage.getItem('rally-referrer-id') || null;
   }, []);
 
+  // Contextual join intent: when arriving from JoinRally as an unauthenticated
+  // user, the URL carries ?intent=join&title=<event title> so we can swap the
+  // generic auth headline for "Sign in to claim your spot in {title}".
+  const joinIntent = useMemo(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('intent') !== 'join') return null;
+    const title = params.get('title');
+    return title ? title.trim() : null;
+  }, []);
+
+
   // Check if user has an account (set after first successful signup/signin)
   // This is SEPARATE from onboarding completion - a user can complete onboarding
   // but not have an account yet (they need to sign up first)
