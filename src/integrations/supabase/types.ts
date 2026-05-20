@@ -4584,6 +4584,7 @@ export type Database = {
           description: string
           id: string
           invite_code: string
+          invite_code_expires_at: string
           is_barhop: boolean
           is_quick_rally: boolean
           location_name: string
