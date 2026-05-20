@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { getPublicName } from '@/lib/identity';
-import { PUBLIC_APP_URL } from '@/lib/appUrl';
+import { buildRallyShareUrl } from '@/lib/shareUrls';
+
 import {
   UserPlus,
   Users,
