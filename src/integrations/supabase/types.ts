@@ -4819,7 +4819,7 @@ export type Database = {
         Returns: undefined
       }
       request_join_event: {
-        Args: { p_event_id: string; p_has_invite_code?: boolean }
+        Args: { p_event_id: string; p_invite_code?: string }
         Returns: Json
       }
       rly_award_points: {
