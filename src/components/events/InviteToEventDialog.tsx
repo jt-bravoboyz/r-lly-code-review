@@ -231,12 +231,13 @@ export function InviteToEventDialog({
         displayName: name,
         eventInviteCode: inviteCode,
       });
-      openSMSInvite(phone, eventTitle, inviteCode);
+      openSMSInvite(phone, eventTitle, inviteCode, { eventId, referrerId: profile?.id ?? null });
       toast.success(`SMS opened for ${name || phone}!`);
     } catch (err: any) {
       if (err.message?.includes('Already invited')) {
         toast.info('Already invited this number');
-        openSMSInvite(phone, eventTitle, inviteCode);
+        openSMSInvite(phone, eventTitle, inviteCode, { eventId, referrerId: profile?.id ?? null });
+
       } else {
         toast.error(err.message || 'Failed to create invite');
       }
