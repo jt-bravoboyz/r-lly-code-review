@@ -437,8 +437,26 @@ export default function JoinRally() {
             </div>
           )}
 
+          {/* Expired */}
+          {!loading && isExpired && (
+            <div className="backdrop-blur-xl bg-white/[0.06] border border-[#F47A19]/30 rounded-2xl p-8 shadow-[0_8px_32px_rgba(0,0,0,0.4)] text-center space-y-4">
+              <div className="w-16 h-16 rounded-full bg-[#F47A19]/15 mx-auto flex items-center justify-center">
+                <Zap className="h-8 w-8 text-[#F47A19]" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold font-montserrat text-white">Invite Link Expired</h2>
+                <p className="text-sm text-white/60">
+                  Ask the host for a fresh link — this one's past its window.
+                </p>
+              </div>
+              <Button variant="outline" className="border-white/[0.1] text-white" onClick={() => navigate('/events')}>
+                Browse R@llies
+              </Button>
+            </div>
+          )}
+
           {/* Not Found */}
-          {!loading && !event && code && (
+          {!loading && !event && !isExpired && code && (
             <div className="backdrop-blur-xl bg-white/[0.06] border border-white/[0.1] rounded-2xl p-8 shadow-[0_8px_32px_rgba(0,0,0,0.4)] text-center space-y-4">
               <div className="w-16 h-16 rounded-full bg-white/[0.06] mx-auto flex items-center justify-center">
                 <Users className="h-8 w-8 text-white/40" />
