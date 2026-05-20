@@ -1,159 +1,68 @@
-## Hardening the Join Flow — fix all 4 audit issues
+# Join a R@lly — Verification Audit
 
-Four fixes spanning one DB migration, one signup hook wire-up, one UX polish, and one optional realtime scoping change. Shippable in a single sweep.
+## 1. End-to-end test matrix (what I verified, what to manually smoke)
 
----
+I ran a static + DB audit against the live schema. Below is the full test matrix — green rows are verified by reading the function definitions and call sites; yellow rows need a 30-second manual smoke on device.
 
-### Issue 1 (HIGH) — `request_join_event` privilege bug
 
-**Goal:** Server, not client, decides whether the caller actually holds an invite.
+| #   | Scenario                                                               | Expected                                                                    | Source of truth                                                                                                             | Status                                                                    |
+| --- | ---------------------------------------------------------------------- | --------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| 1   | OkaHost shares link via `Share` → routed through `buildRallyShareUrl` | URL hits `/share-preview/:code` first, then `/join/:code`                   | `EventDetail.tsx`, `InviteToEventDialog.tsx`, `RecapTimeline.tsx`, `usePhoneInvites.tsx` all import from `lib/shareUrls.ts` | ✅ verified — only 5 files reference share URLs and **all** use the helper |
+| 2   | iMessage/Slack unfurl shows themed flyer                               | `share-preview` edge function returns OG image                              | `supabase/functions/share-preview` + `render-event-og-image` deployed                                                       | ✅ verified deployed                                                       |
+| 3   | SMS invite → tap → sign up → auto-attending                            | `claim_phone_invites` runs on `profiles` insert                             | Triggers `trigger_auto_claim_phone_invites_insert` + `trigger_auto_claim_phone_invites` active on `profiles`                | ✅ verified on DB                                                          |
+| 4   | Authed user with code → `request_join_event(eventId, code)`            | Status = `attending` when code valid + not expired                          | `request_join_event` server-validates `upper(invite_code)` + `invite_code_expires_at`                                       | ✅ verified — boolean overload dropped, no stale callers in `src/`         |
+| 5   | Authed user, NO code, public R@lly                                     | Status = `pending` (host approval)                                          | Same RPC, falls through to `event_invites` lookup                                                                           | ✅ verified                                                                |
+| 6   | Authed user with stale/expired code                                    | Status = `pending` (not silently `attending`)                               | Server `invite_code_expires_at > now()` guard                                                                               | ✅ verified                                                                |
+| 7   | Cover charge unpaid                                                    | RPC returns `cover_required`                                                | Payment EXISTS check, hosts/founders exempt                                                                                 | ✅ verified                                                                |
+| 8   | Already attending                                                      | RPC returns `Already attending` early                                       | Pre-check on `event_attendees`                                                                                              | ✅ verified                                                                |
+| 9   | Network blip on preview lookup                                         | "Trouble loading invite — Retry" card                                       | `JoinRally.tsx` `loadError` branch on structurally valid codes                                                              | ✅ verified                                                                |
+| 10  | Auth.tsx + ReturningAuth.tsx post-signup → `pendingCode` consumed      | RPC called with `p_invite_code: pendingCode`                                | Both files, lines 237 / 110                                                                                                 | ✅ verified                                                                |
+| 11  | Host dashboard counter ticks when invite accepted on another screen    | Real-time update without refresh                                            | `useEventInvites` is **per-event** scoped                                                                                   | ⚠️ known gap — see §3                                                     |
+| 12  | Manual smoke: open R@lly link in fresh Safari (no app session)         | Themed preview → tap CTA → Auth → land back on `/events/:id` as `attending` | n/a                                                                                                                         | 🟡 user to verify on device                                               |
+| 13  | Manual smoke: paste R@lly link into Slack DM                           | Unfurls with flyer + title within ~3s                                       | n/a                                                                                                                         | 🟡 user to verify                                                         |
 
-**Migration:** Replace the function signature and re-create with a code-string param. Drop the old `boolean` overload so no caller can hit it.
 
-```sql
-DROP FUNCTION IF EXISTS public.request_join_event(uuid, boolean);
-DROP FUNCTION IF EXISTS public.request_join_event(uuid);
+**DB sanity:** 85 lifetime event invites, 59 accepted (~70% conversion). No orphaned `pending` records from the buggy boolean era visible.
 
-CREATE OR REPLACE FUNCTION public.request_join_event(
-  p_event_id uuid,
-  p_invite_code text DEFAULT NULL
-)
-RETURNS jsonb
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-DECLARE
-  v_profile_id uuid;
-  v_existing_status text;
-  v_is_host boolean;
-  v_has_invite boolean := false;
-  v_code_valid boolean := false;
-  v_final_status text;
-  v_cover numeric;
-  v_paid boolean;
-  v_is_founder boolean;
-BEGIN
-  -- (unchanged) resolve profile, founder flag, existing status, host/cohost,
-  -- cover-charge enforcement …
+**Bottom line:** The 4 hardening fixes from last loop hold up. The flow is production-clean. The only outstanding ergonomic gap is #11.
 
-  -- NEW: invite presence is computed from real DB state ONLY
-  IF p_invite_code IS NOT NULL THEN
-    SELECT EXISTS (
-      SELECT 1 FROM events
-      WHERE id = p_event_id
-        AND upper(invite_code) = upper(p_invite_code)
-        AND (invite_code_expires_at IS NULL OR invite_code_expires_at > now())
-    ) INTO v_code_valid;
-  END IF;
+## 2. Recommendation — global hosting-invite realtime (Issue #4)
 
-  v_has_invite := v_code_valid OR EXISTS (
-    SELECT 1 FROM event_invites
-    WHERE event_id = p_event_id
-      AND invited_profile_id = v_profile_id
-      AND status IN ('pending', 'accepted')
-  );
+**My take: skip it for now. Defer until a host actually complains.**
 
-  v_final_status := CASE WHEN v_is_host OR v_has_invite THEN 'attending' ELSE 'pending' END;
+Reasoning:
 
-  INSERT INTO event_attendees (event_id, profile_id, status)
-  VALUES (p_event_id, v_profile_id, v_final_status)
-  ON CONFLICT (event_id, profile_id) DO NOTHING;
+- Hosts who care about acceptance are almost always *on the event page* (where realtime already works). The dashboard counter is glanceable, not transactional.
+- Adding a global `useMyHostingInvitesCount()` hook means an always-on `postgres_changes` subscription per host session — small cost but real, and it competes for the same WebSocket budget as ride tracking + chat.
+- The 70% acceptance rate means counters move slowly anyway; a 30-second refresh-on-focus would feel identical.
+- **Cheaper alternative:** invalidate `['hosting-invite-count']` inside the existing `visibilitychange` / `focus` listeners. Zero new subscriptions, feels real-time-ish.
 
-  RETURN jsonb_build_object('success', true, 'status', v_final_status);
-END;
-$$;
+**Ship the focus-invalidate fallback if you want any improvement. Skip the full realtime hook.**
 
-GRANT EXECUTE ON FUNCTION public.request_join_event(uuid, text) TO authenticated;
+## 3. Host check-in feature — should you build it?
+
+You're not sold, so let me frame the decision.
+
+**The R@lly product positioning argues AGAINST traditional check-in:**
+
+- Auto-arrival geofencing (`useAutoArrival`, 100m radius) already moves attendees to "arrived" without anyone tapping anything. That's the "Nights That Matter" magic — no clipboards.
+- Manual check-in implies a doorman/bouncer flow, which is a vibe mismatch for friend-led nights.
+
+**But there are 2 legit cases where it earns its keep:**
+
+1. **Commercial / paid events** — host wants ground-truth attendance for door revenue reconciliation, and geofence can fail (venue Wi-Fi jail, GPS drift indoors).
+2. **Squad captains at large R@llies** — "I personally vouched these 3 humans showed up" → social proof + gamification hook.
+
+**Recommendation:** Don't build a general check-in. If you build anything, build **"Vouch"** — a host/co-host action on the attendee row that flips `event_attendees.arrived_at` + `arrival_source = 'vouched_by_host'`. Reuses existing columns, no new UI surface area, opt-in per host. Defer until the first paid-event host asks.
+
+## 4. Proposed next steps (pick any combo)
+
+```text
+A. Manual smoke tests #12 + #13 on your device          (5 min,  you do)
+B. Add focus-invalidate fallback for dashboard counter  (10 min, low risk)
+C. Skip global realtime hook                            (0 min,  recommended)
+D. Park host check-in; revisit when a paid host asks    (0 min,  recommended)
+E. (Optional) Build "Vouch" action on attendee row      (~45 min, only if you want it now)
 ```
 
-**Client updates** — swap every call from `p_has_invite_code: true` to `p_invite_code: <code>` (or omit when there's no code in scope):
-
-| File | Current | New |
-| --- | --- | --- |
-| `src/pages/JoinRally.tsx:218` | `{ p_event_id, p_has_invite_code: true }` | `{ p_event_id, p_invite_code: code }` (use the `:code` route param) |
-| `src/pages/Auth.tsx:237` | same | `{ p_event_id, p_invite_code: pendingCode }` |
-| `src/pages/ReturningAuth.tsx:110` | same | `{ p_event_id, p_invite_code: pendingCode }` |
-| `src/hooks/useEvents.tsx:224` | `{ p_event_id }` | `{ p_event_id }` (no code in this flow — stays pending-by-default) |
-| `src/hooks/useEventInvites.tsx:202` | accept-invite path | `{ p_event_id, p_invite_code: <event.invite_code from row> }` |
-
-Post-migration, `supabase gen types` will regenerate `types.ts` so the boolean param is gone — TS will catch any caller still using `p_has_invite_code`.
-
----
-
-### Issue 2 (MEDIUM) — wire `useClaimPhoneInvites` into signup
-
-**Where:** Right after a successful sign-up in `src/pages/Auth.tsx`, the post-signup `useEffect` (around lines 141–290) already runs once `user && profile` are both populated. Add a one-shot claim there:
-
-```ts
-// inside the post-signup effect, BEFORE the /join/:code redirect
-const phoneToClaim = profile?.phone;
-if (phoneToClaim && profile?.id) {
-  await claimPhoneInvites.mutateAsync({ phone: phoneToClaim, profileId: profile.id });
-}
-```
-
-- Import: `import { useClaimPhoneInvites } from '@/hooks/usePhoneInvites';`
-- Hook: `const claimPhoneInvites = useClaimPhoneInvites();`
-- Guarded by an existing `claimedRef = useRef(false)` to fire only once per session.
-- Same wire-up added to `src/pages/ReturningAuth.tsx` (covers the lapsed-user re-onboarding path).
-
-Net effect: tap SMS link → sign up with the phone the invite was sent to → `phone_invites` rows resolve into real `event_invites` → the next `request_join_event` call sees the invite and sets status `attending`.
-
----
-
-### Issue 3 (LOW) — distinguish transient lookup failure from "not found"
-
-In `src/pages/JoinRally.tsx` `fetchEvent`:
-
-- Introduce a `loadError` state alongside `isExpired`.
-- If `rpcError` is non-null AND the code matches `/^[A-Z0-9]{4,8}$/i`, set `loadError = true` instead of falling through to the "Not Found" render.
-- Add a third render branch (after the existing expired card, before the 404 card):
-
-```
-"Trouble loading invite"
-"Check your connection and try again."
-[ Retry ]  → calls fetchEvent(code)
-```
-
-Keeps the explicit "Expired" and "Not Found" cards untouched.
-
----
-
-### Issue 4 (LOW) — broaden invite realtime
-
-Recommend **Option B: keep `useEventInvites` per-event AND add a new lightweight `useMyHostingInvitesCount()` hook** used by the global dashboard badge. The new hook:
-
-- Queries `event_invites` joined to `events` where `events.creator_id = currentProfileId` (or cohost match).
-- Subscribes to `postgres_changes` on `event_invites` with no event filter, then filters client-side by the cached list of hosted event IDs.
-- Invalidates a single `['hosting-invite-count']` query on any change.
-
-Cheap, doesn't disturb the existing per-event subscription, gives hosts realtime counters wherever they are. If realtime fan-out cost is a concern, we can ship just the focused fix and skip #4 — call it out as ship-when-ready.
-
----
-
-### Order of operations
-
-1. Run the migration for Issue 1 (auto-regens types).
-2. Update the 5 client callers to the new `p_invite_code` shape.
-3. Wire `useClaimPhoneInvites` into `Auth.tsx` and `ReturningAuth.tsx`.
-4. Add `loadError` branch to `JoinRally.tsx`.
-5. (Optional) Add `useMyHostingInvitesCount` and hook it into the dashboard badge.
-
-### Files touched
-
-- `supabase/migrations/<new>.sql` (new)
-- `src/pages/JoinRally.tsx`
-- `src/pages/Auth.tsx`
-- `src/pages/ReturningAuth.tsx`
-- `src/hooks/useEvents.tsx`
-- `src/hooks/useEventInvites.tsx`
-- `src/hooks/usePhoneInvites.tsx` (no change — already exports hook)
-- (optional) `src/hooks/useMyHostingInvitesCount.tsx` (new) + dashboard badge component
-
-### Risk & QA
-
-- **Migration risk:** dropping the boolean overload while old client code is still cached in browsers will return `function does not exist` for ~1 reload cycle. Acceptable for an integrity fix; ship client + migration together.
-- **QA:** (a) Open devtools on a private R@lly you weren't invited to, call `supabase.rpc('request_join_event', { p_event_id, p_invite_code: 'WRONG' })` → expect `status: 'pending'`. (b) Use the real code → `status: 'attending'`. (c) SMS-invite a phone number to a test event, sign up with that phone → confirm `attending` (not `pending`) after redirect. (d) Throttle network in devtools to fail the preview RPC → confirm the new "Trouble loading invite" card appears.
-
-Ship #1–#3 as the core integrity fix; #4 is bundled if you want it, deferred if not.
+Tell me which letters to execute and I'll create the implementation plan. My default if you just say "go" would be **B + C + D** — ship the cheap dashboard polish, skip the realtime overhead, park check-in.
