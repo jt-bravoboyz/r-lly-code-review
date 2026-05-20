@@ -26,6 +26,7 @@ interface EventPreview {
   is_quick_rally: boolean;
   invite_code: string;
   cover_charge: number;
+  invite_code_expires_at: string | null;
   creator: {
     id: string;
     display_name: string | null;
@@ -45,6 +46,7 @@ export default function JoinRally() {
   const [joining, setJoining] = useState(false);
   const [alreadyJoined, setAlreadyJoined] = useState(false);
   const [isPending, setIsPending] = useState(false);
+  const [isExpired, setIsExpired] = useState(false);
   const [showSafetyChoice, setShowSafetyChoice] = useState(false);
   const [showRidesSelection, setShowRidesSelection] = useState(false);
   const [joinedEventId, setJoinedEventId] = useState<string | null>(null);
@@ -56,6 +58,7 @@ export default function JoinRally() {
     if (!inviteCode || inviteCode.length < 6) return;
     
     setLoading(true);
+    setIsExpired(false);
     
     const { data: rpcData, error: rpcError } = await supabase
       .rpc('get_event_preview_by_invite_code', { invite_code_param: inviteCode });
@@ -69,7 +72,15 @@ export default function JoinRally() {
     }
 
     if (rpcData && rpcData.length > 0) {
-      const eventData = rpcData[0];
+      const eventData = rpcData[0] as any;
+      const expiresAt: string | null = eventData.invite_code_expires_at ?? null;
+      if (expiresAt && new Date(expiresAt).getTime() < Date.now()) {
+        setIsExpired(true);
+        setEvent(null);
+        setLoading(false);
+        return;
+      }
+
       const transformedEvent: EventPreview = {
         id: eventData.id,
         title: eventData.title,
@@ -79,7 +90,8 @@ export default function JoinRally() {
         is_barhop: eventData.is_barhop,
         is_quick_rally: eventData.is_quick_rally,
         invite_code: eventData.invite_code,
-        cover_charge: Number((eventData as any).cover_charge ?? 0),
+        cover_charge: Number(eventData.cover_charge ?? 0),
+        invite_code_expires_at: expiresAt,
         creator: {
           id: eventData.creator_id,
           display_name: eventData.creator_display_name,
@@ -118,6 +130,52 @@ export default function JoinRally() {
     }
     setLoading(false);
   };
+
+  // Realtime: when host flips this user's status from pending → attending,
+  // auto-advance into the success flow without requiring a page refresh.
+  useEffect(() => {
+    if (!event?.id || !profile?.id || !isPending) return;
+
+    const channel = supabase
+      .channel(`join-pending-${event.id}-${profile.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'event_attendees',
+          filter: `profile_id=eq.${profile.id}`,
+        },
+        (payload) => {
+          const row = payload.new as { event_id: string; status: string };
+          if (row.event_id !== event.id) return;
+          if (row.status !== 'attending') return;
+
+          // Flip background card from "Pending" → "You're In" instantly
+          setIsPending(false);
+          setAlreadyJoined(true);
+          setHasMadeSafetyChoice(false);
+          setJoinedEventId(event.id);
+
+          trackEvent('invite_code_redeemed', {
+            event_id: event.id,
+            invite_code: event.invite_code,
+            source: 'join_rally_page_realtime',
+          });
+
+          toast.success("You're in! 🎉", {
+            description: 'Host approved — welcome to the R@lly!',
+          });
+
+          setShowSafetyChoice(true);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [event?.id, event?.invite_code, profile?.id, isPending]);
 
   useEffect(() => {
     if (code) {
@@ -181,7 +239,7 @@ export default function JoinRally() {
         trackEvent('invite_code_redeemed', {
           event_id: event.id,
           invite_code: event.invite_code,
-          source: 'join_rally_page',
+          source: code ? 'join_rally_page_link' : 'join_rally_page_manual',
         });
         toast.success("You're in! 🎉", {
           description: 'Welcome to the R@lly!',
@@ -379,8 +437,26 @@ export default function JoinRally() {
             </div>
           )}
 
+          {/* Expired */}
+          {!loading && isExpired && (
+            <div className="backdrop-blur-xl bg-white/[0.06] border border-[#F47A19]/30 rounded-2xl p-8 shadow-[0_8px_32px_rgba(0,0,0,0.4)] text-center space-y-4">
+              <div className="w-16 h-16 rounded-full bg-[#F47A19]/15 mx-auto flex items-center justify-center">
+                <Zap className="h-8 w-8 text-[#F47A19]" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold font-montserrat text-white">Invite Link Expired</h2>
+                <p className="text-sm text-white/60">
+                  Ask the host for a fresh link — this one's past its window.
+                </p>
+              </div>
+              <Button variant="outline" className="border-white/[0.1] text-white" onClick={() => navigate('/events')}>
+                Browse R@llies
+              </Button>
+            </div>
+          )}
+
           {/* Not Found */}
-          {!loading && !event && code && (
+          {!loading && !event && !isExpired && code && (
             <div className="backdrop-blur-xl bg-white/[0.06] border border-white/[0.1] rounded-2xl p-8 shadow-[0_8px_32px_rgba(0,0,0,0.4)] text-center space-y-4">
               <div className="w-16 h-16 rounded-full bg-white/[0.06] mx-auto flex items-center justify-center">
                 <Users className="h-8 w-8 text-white/40" />
