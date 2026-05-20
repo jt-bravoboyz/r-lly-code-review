@@ -2,6 +2,7 @@ name = "rlly-share-unfurl"
 main = "src/index.ts"
 compatibility_date = "2025-05-01"
 workers_dev = true
+# Deploy trigger: v2 (force workflow run after GitHub connect)
 
 # Routes bind the Worker to rlly.cloud share paths.
 # The rlly.cloud zone must exist in the same Cloudflare account as the
