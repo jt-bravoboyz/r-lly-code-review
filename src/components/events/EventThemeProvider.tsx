@@ -15,6 +15,32 @@ function parseRgba(input: string): { r: number; g: number; b: number; a: number 
   return { r: +m[1], g: +m[2], b: +m[3], a: m[4] !== undefined ? +m[4] : 1 };
 }
 
+/** Parse "#rgb", "#rrggbb", or "#rrggbbaa" into {r,g,b}. Returns null on failure. */
+function hexToRgb(input: string): { r: number; g: number; b: number } | null {
+  if (typeof input !== 'string') return null;
+  let h = input.trim().replace(/^#/, '');
+  // Expand 3-digit shorthand (#f00 → #ff0000) and 4-digit (#f00a → #ff0000aa)
+  if (h.length === 3 || h.length === 4) {
+    h = h.split('').map((c) => c + c).join('');
+  }
+  if (h.length !== 6 && h.length !== 8) return null;
+  if (!/^[0-9a-fA-F]+$/.test(h)) return null;
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  if (Number.isNaN(r) || Number.isNaN(g) || Number.isNaN(b)) return null;
+  return { r, g, b };
+}
+
+/** Build the accent-soft token. Falls back to a neutral ink-tinted glass if parse fails. */
+function buildAccentSoft(accentHex: string, fallbackInk: string): string {
+  const rgb = hexToRgb(accentHex);
+  if (rgb) return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.14)`;
+  return fallbackInk === '#FFF5E8'
+    ? 'rgba(255, 245, 232, 0.14)'
+    : 'rgba(26, 17, 8, 0.10)';
+}
+
 /** Relative luminance (0..1) for an sRGB color. */
 function luminance(r: number, g: number, b: number): number {
   const f = (v: number) => {
@@ -23,6 +49,7 @@ function luminance(r: number, g: number, b: number): number {
   };
   return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
 }
+
 
 /**
  * Wraps the Event Detail screen in the host's selected flyer theme.
