@@ -164,6 +164,8 @@ export default function EventDetail() {
   const { ensurePaid, dialog: coverDialog } = useCoverChargeGate(event as any, profile as any);
   const [showRequestPayment, setShowRequestPayment] = useState(false);
   const [payRequestId, setPayRequestId] = useState<string | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
+
   const [showRideshareDrawer, setShowRideshareDrawer] = useState(false);
   const [joinFlowDismissedForSession, setJoinFlowDismissedForSession] = useState(false);
   const [locationPromptDismissedForSession, setLocationPromptDismissedForSession] = useState(false);
