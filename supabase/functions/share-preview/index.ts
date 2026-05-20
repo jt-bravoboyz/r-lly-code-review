@@ -43,8 +43,9 @@ Deno.serve(async (req) => {
     if (seg === 'join') { type = type ?? 'event'; code = code ?? val; }
     else if (seg === 'event' || seg === 'events') { type = type ?? 'event'; id = id ?? val; }
     else if (seg === 'tab' || seg === 'tabs') { type = type ?? 'tab'; id = id ?? val; }
-    if (!to) to = `https://rlly.cloud${url.pathname}${url.search}`;
+    if (!to) to = `https://rlly.cloud/${seg}/${val}`;
   }
+
 
   if (!to) return new Response('Missing `to`', { status: 400, headers: corsHeaders });
 
