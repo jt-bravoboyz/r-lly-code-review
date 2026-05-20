@@ -1,0 +1,33 @@
+name: Deploy Cloudflare Worker (share-unfurl)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'cloudflare-worker/**'
+      - '.github/workflows/deploy-cloudflare-worker.yml'
+      - 'scripts/test-worker-unfurl.mjs'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Deploy Worker (rlly-share-unfurl)
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: cloudflare-worker
+
+      - name: Verify unfurl against rlly.cloud
+        run: |
+          # Give Cloudflare a moment to propagate the new route binding.
+          sleep 10
+          node scripts/test-worker-unfurl.mjs

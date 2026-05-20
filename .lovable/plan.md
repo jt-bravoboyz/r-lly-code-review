@@ -1,79 +1,59 @@
-## Findings
+Yes — we can move the Cloudflare Worker setup into GitHub so the Worker script, routes, and verification are managed as code instead of relying on the Cloudflare UI.
 
-The unfurl system is still not working correctly in production.
+Important limitation: GitHub can deploy the Worker and its routes, but it cannot bypass Cloudflare account permissions. You’ll still need to add Cloudflare credentials once as GitHub repository secrets.
 
-- `https://rlly-share-unfurl.rally-app.workers.dev/join/F5FF4F` still returns `Hello World!` as `text/plain`, so that Worker hostname is not running the intended unfurl script.
-- `https://rlly.cloud/join/F5FF4F` returns the normal R@lly app shell for Facebook and Slack crawlers, with the generic OG image `/rally-icon-192.png`. That means the `rlly.cloud/*` Worker route is not intercepting this request, or it is failing open to the origin.
-- The direct preview renderer does work when called with the expected query-string shape:
-  - `to=https://rlly.cloud/join/F5FF4F`
-  - `type=event`
-  - `id=7ac9026b-ed40-44f9-b8d5-95cd5c0c1b86`
-- The direct preview response returns the correct event metadata:
-  - `og:title`: `Thank You LBT Volunteers — R@lly`
-  - `og:description`: `Celebrating all the amazing volunteers of Long Bay Theatre`
-  - `og:image`: the generated event flyer image
+Plan:
 
-## Root cause
+1. Add Cloudflare Worker source to the repo
+   - Create a dedicated Worker entry file for `rlly-share-unfurl`.
+   - The Worker will detect bot user agents on `rlly.cloud/join/*` and `rlly.cloud/events/*`.
+   - Bot requests will proxy to the existing `share-preview` backend function.
+   - Human/browser requests will pass through to the normal R@lly app.
 
-There are two likely Cloudflare-side issues:
+2. Add Wrangler configuration
+   - Add `wrangler.toml` with:
+     - Worker name: `rlly-share-unfurl`
+     - Route: `rlly.cloud/join/*`
+     - Route: `rlly.cloud/events/*`
+     - Compatibility date
+   - This is the part that should make Cloudflare routes reproducible from GitHub instead of manually configured in the dashboard.
 
-1. The Worker deployed at `rlly-share-unfurl.rally-app.workers.dev` is still the default script, not the R@lly unfurl Worker.
-2. The Worker route for `rlly.cloud/*` is either not attached to the right Worker, not matching `/join/*`, or the Worker code is forwarding `/join/F5FF4F` directly to the preview function. The current backend preview function does not accept `/join/F5FF4F`; it expects query parameters.
+3. Add npm scripts
+   - Add scripts like:
+     - `worker:deploy` to deploy via Wrangler
+     - `worker:tail` for logs if needed
+     - keep `test:unfurl` as the verification command
 
-## Fix plan
+4. Add GitHub Actions workflow
+   - Create `.github/workflows/deploy-cloudflare-worker.yml`.
+   - On push to the main branch, deploy the Worker using Cloudflare’s official Wrangler action.
+   - After deploy, run `npm run test:unfurl` so the workflow fails if Facebook/Slack/Twitter still receive generic app-shell OG tags.
 
-Update the Cloudflare Worker so bot requests to public R@lly URLs are rewritten into the preview function’s expected query format.
+5. Document required GitHub secrets
+   - Add setup notes for these repo secrets:
+     - `CLOUDFLARE_API_TOKEN`
+     - `CLOUDFLARE_ACCOUNT_ID`
+   - The API token needs permission to edit Workers and routes for the `rlly.cloud` zone.
 
-### 1. Worker route behavior
+6. Verify locally after implementation
+   - Run the unfurl script again after the configuration is in place.
+   - Confirm Facebook, Slack, Twitter, and a human UA return the expected split behavior:
+     - bots: event-specific premium flyer OG metadata
+     - humans: normal app page
 
-For human browsers:
-
-```text
-https://rlly.cloud/join/F5FF4F -> pass through to the R@lly app
-```
-
-For bots/crawlers:
-
-```text
-https://rlly.cloud/join/F5FF4F
-  -> Worker detects bot User-Agent
-  -> Worker extracts invite code F5FF4F
-  -> Worker resolves the matching event id
-  -> Worker fetches:
-     /share-preview?to=https://rlly.cloud/join/F5FF4F&type=event&id=<event_id>
-  -> Worker returns that HTML as text/html
-```
-
-### 2. Code changes needed in Cloudflare
-
-The Worker should either:
-
-- resolve invite codes by querying the public event lookup endpoint/RPC if one exists, or
-- call a small Lovable Cloud backend function that accepts `/join/:code` and returns the proper preview HTML.
-
-The cleanest durable app-side improvement is to update `share-preview` itself so it can accept `code=F5FF4F`, look up the event id server-side, and render the preview. Then the Worker only needs to rewrite:
+Technical details:
 
 ```text
-/join/F5FF4F
--> /share-preview?to=https://rlly.cloud/join/F5FF4F&type=event&code=F5FF4F
+GitHub push
+  -> GitHub Action
+  -> Wrangler deploy
+  -> Cloudflare Worker + routes
+  -> npm run test:unfurl
+  -> verify rlly.cloud/join/* and rlly.cloud/events/*
 ```
 
-### 3. Validation after Cloudflare update
+What you’ll need to do after I implement it:
 
-Run these checks:
-
-```bash
-curl -A "facebookexternalhit/1.1" https://rlly.cloud/join/F5FF4F
-curl -A "Slackbot-LinkExpanding 1.0 (+https://api.slack.com/robots)" https://rlly.cloud/join/F5FF4F
-curl -A "Mozilla/5.0" https://rlly.cloud/join/F5FF4F
-```
-
-Expected result:
-
-- Facebook/Slack requests return `content-type: text/html; charset=utf-8`
-- Facebook/Slack requests include event-specific `og:title`, `og:description`, and `og:image`
-- Human browser requests still load the normal R@lly app
-
-## Recommended next implementation
-
-I should update the `share-preview` backend function to support `code=<invite_code>` directly, then provide the exact Cloudflare Worker script that maps `/join/:code` bot traffic to that endpoint. This avoids needing Cloudflare to know database details and keeps the sensitive lookup in Lovable Cloud.
+1. Connect this Lovable project to GitHub if it is not already connected.
+2. Add the two Cloudflare secrets in the GitHub repo settings.
+3. Push/sync the changes so the GitHub Action can deploy the Worker.
