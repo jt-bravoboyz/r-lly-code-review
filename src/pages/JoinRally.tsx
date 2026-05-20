@@ -271,10 +271,12 @@ export default function JoinRally() {
 
   const handleCodeSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (manualCode.length >= 6) {
-      fetchEvent(manualCode);
+    const trimmed = manualCode.trim();
+    if (trimmed.length >= 4) {
+      fetchEvent(trimmed);
     }
   };
+
 
   if (authLoading) {
     return (
