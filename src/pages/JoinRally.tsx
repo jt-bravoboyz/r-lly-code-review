@@ -58,6 +58,7 @@ export default function JoinRally() {
     if (!inviteCode || inviteCode.length < 6) return;
     
     setLoading(true);
+    setIsExpired(false);
     
     const { data: rpcData, error: rpcError } = await supabase
       .rpc('get_event_preview_by_invite_code', { invite_code_param: inviteCode });
@@ -71,7 +72,15 @@ export default function JoinRally() {
     }
 
     if (rpcData && rpcData.length > 0) {
-      const eventData = rpcData[0];
+      const eventData = rpcData[0] as any;
+      const expiresAt: string | null = eventData.invite_code_expires_at ?? null;
+      if (expiresAt && new Date(expiresAt).getTime() < Date.now()) {
+        setIsExpired(true);
+        setEvent(null);
+        setLoading(false);
+        return;
+      }
+
       const transformedEvent: EventPreview = {
         id: eventData.id,
         title: eventData.title,
@@ -81,7 +90,8 @@ export default function JoinRally() {
         is_barhop: eventData.is_barhop,
         is_quick_rally: eventData.is_quick_rally,
         invite_code: eventData.invite_code,
-        cover_charge: Number((eventData as any).cover_charge ?? 0),
+        cover_charge: Number(eventData.cover_charge ?? 0),
+        invite_code_expires_at: expiresAt,
         creator: {
           id: eventData.creator_id,
           display_name: eventData.creator_display_name,
@@ -120,6 +130,52 @@ export default function JoinRally() {
     }
     setLoading(false);
   };
+
+  // Realtime: when host flips this user's status from pending → attending,
+  // auto-advance into the success flow without requiring a page refresh.
+  useEffect(() => {
+    if (!event?.id || !profile?.id || !isPending) return;
+
+    const channel = supabase
+      .channel(`join-pending-${event.id}-${profile.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'event_attendees',
+          filter: `profile_id=eq.${profile.id}`,
+        },
+        (payload) => {
+          const row = payload.new as { event_id: string; status: string };
+          if (row.event_id !== event.id) return;
+          if (row.status !== 'attending') return;
+
+          // Flip background card from "Pending" → "You're In" instantly
+          setIsPending(false);
+          setAlreadyJoined(true);
+          setHasMadeSafetyChoice(false);
+          setJoinedEventId(event.id);
+
+          trackEvent('invite_code_redeemed', {
+            event_id: event.id,
+            invite_code: event.invite_code,
+            source: 'join_rally_page_realtime',
+          });
+
+          toast.success("You're in! 🎉", {
+            description: 'Host approved — welcome to the R@lly!',
+          });
+
+          setShowSafetyChoice(true);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [event?.id, event?.invite_code, profile?.id, isPending]);
 
   useEffect(() => {
     if (code) {
