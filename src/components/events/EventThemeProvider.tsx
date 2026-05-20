@@ -84,13 +84,17 @@ export function EventThemeProvider({ themeKey, disabled, children }: EventThemeP
   }
 
   const [accent, accent2, accent3] = theme.palette;
+  const accentSoft = buildAccentSoft(accent, ink);
+  const inkStrong = mode === 'light' ? '#0B0F1A' : '#FFFFFF';
 
   const cssVars: React.CSSProperties = {
     // Theme tokens consumable by descendants
     ['--theme-accent' as any]: accent,
     ['--theme-accent-2' as any]: accent2,
     ['--theme-accent-3' as any]: accent3,
+    ['--theme-accent-soft' as any]: accentSoft,
     ['--theme-ink' as any]: ink,
+    ['--theme-ink-strong' as any]: inkStrong,
     ['--theme-meta' as any]: meta,
     ['--theme-glass-tint' as any]: glassTint,
     ['--theme-glass-border' as any]: glassBorder,
@@ -124,6 +128,7 @@ export function EventThemeProvider({ themeKey, disabled, children }: EventThemeP
           style={{ background: accent2 }}
         />
       </div>
+
 
       {children}
     </div>
