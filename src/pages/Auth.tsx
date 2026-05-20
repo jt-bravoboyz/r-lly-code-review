@@ -590,18 +590,30 @@ export default function Auth() {
             showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
           }`}
         >
+          {/* Contextual join headline — overrides default copy when arriving from /join/:code */}
+          {joinIntent && !isForgotPassword && (
+            <p
+              className="text-sm text-center mb-2 font-montserrat uppercase tracking-[0.2em]"
+              style={{ color: "#FF6A00" }}
+            >
+              {isSignUp ? 'One step to lock it in' : 'Welcome back'}
+            </p>
+          )}
           {/* Form title */}
-          <h2 
+          <h2
             className="text-xl font-semibold text-center mb-6 font-montserrat"
             style={{ color: "rgba(255, 255, 255, 0.90)" }}
           >
-            {isForgotPassword 
-              ? 'Reset Password' 
-              : isSignUp 
-                ? (!hasAccount ? 'Welcome' : 'Create Your Account')
-                : 'Welcome Back'
+            {isForgotPassword
+              ? 'Reset Password'
+              : joinIntent
+                ? `Sign ${isSignUp ? 'up' : 'in'} to claim your spot in ${joinIntent}`
+                : isSignUp
+                  ? (!hasAccount ? 'Welcome' : 'Create Your Account')
+                  : 'Welcome Back'
             }
           </h2>
+
 
           {/* Forgot Password Form */}
           {isForgotPassword ? (
