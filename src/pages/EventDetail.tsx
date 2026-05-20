@@ -512,7 +512,7 @@ export default function EventDetail() {
         {/* Completed R@lly: minimal header */}
         {isCompleted && (
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold tracking-tight font-montserrat">{event.title}</h1>
+            <h1 className="text-2xl font-bold tracking-tight font-montserrat event-themed-title">{event.title}</h1>
             <Badge className="bg-muted text-muted-foreground border-0">
               <CheckCircle2 className="h-3 w-3 mr-1" />
               Completed
