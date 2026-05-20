@@ -30,8 +30,9 @@ export interface EventInvite {
 // Get pending invites for the current user
 export function usePendingInvites() {
   const { profile } = useAuth();
+  const queryClient = useQueryClient();
 
-  return useQuery({
+  const query = useQuery({
     queryKey: ['event-invites', 'pending', profile?.id],
     queryFn: async () => {
       if (!profile?.id) return [];
@@ -51,8 +52,33 @@ export function usePendingInvites() {
       return data as EventInvite[];
     },
     enabled: !!profile?.id,
+    refetchOnWindowFocus: true,
   });
+
+  // Cheap "feels-real-time" fallback for the global dashboard counter without
+  // standing up a per-session postgres_changes subscription: re-fetch invite
+  // state whenever the tab regains focus or visibility. Covers the case where
+  // a host accepts/sends invites from another device/screen.
+  useEffect(() => {
+    if (!profile?.id) return;
+    const invalidate = () => {
+      queryClient.invalidateQueries({ queryKey: ['event-invites', 'pending', profile.id] });
+      queryClient.invalidateQueries({ queryKey: ['all-event-invites', profile.id] });
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') invalidate();
+    };
+    window.addEventListener('focus', invalidate);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      window.removeEventListener('focus', invalidate);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, [profile?.id, queryClient]);
+
+  return query;
 }
+
 
 // Get all invites for a specific event (with realtime acceptance/decline sync)
 export function useEventInvites(eventId: string | undefined) {
