@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { getPublicName } from '@/lib/identity';
-import { PUBLIC_APP_URL } from '@/lib/appUrl';
+import { buildRallyShareUrl } from '@/lib/shareUrls';
+
 import {
   UserPlus,
   Users,
@@ -84,11 +85,17 @@ export function InviteToEventDialog({
     [existingAttendeeIds, existingInviteIds, eventInvites]
   );
 
-  const shareLink = profile?.id
-    ? `${PUBLIC_APP_URL}/join/${inviteCode}?r=${profile.id}`
-    : `${PUBLIC_APP_URL}/join/${inviteCode}`;
+  // All shares route through buildRallyShareUrl → crawler-aware share-preview
+  // edge function so iMessage/Slack render the themed flyer instead of generic OG.
+  const shareLink = inviteCode
+    ? buildRallyShareUrl(
+        { eventId, inviteCode },
+        { referrerId: profile?.id ?? null }
+      )
+    : buildRallyShareUrl({ eventId, inviteCode: null });
 
-  const smsPreview = `You're in. ${eventTitle} — Tap to join the crew: ${shareLink}`;
+  const smsPreview = `You're locked in for "${eventTitle}". Claim your spot 🔥 ${shareLink}`;
+
 
   // Influence threshold: 10+ unique invites in history
   const isTopInviter = (inviteHistory?.length || 0) >= 10;
@@ -139,7 +146,7 @@ export function InviteToEventDialog({
       try {
         await navigator.share({
           title: `Join ${eventTitle}`,
-          text: `You're invited to ${eventTitle} — Tap to join the crew`,
+          text: `You're locked in for "${eventTitle}". Claim your spot 🔥`,
           url: shareLink,
         });
       } catch {
@@ -149,6 +156,7 @@ export function InviteToEventDialog({
       handleCopyLink();
     }
   };
+
 
   const handleInviteSquad = async (squad: Squad) => {
     const profilesToInvite: string[] = [];
@@ -223,12 +231,13 @@ export function InviteToEventDialog({
         displayName: name,
         eventInviteCode: inviteCode,
       });
-      openSMSInvite(phone, eventTitle, inviteCode);
+      openSMSInvite(phone, eventTitle, inviteCode, { eventId, referrerId: profile?.id ?? null });
       toast.success(`SMS opened for ${name || phone}!`);
     } catch (err: any) {
       if (err.message?.includes('Already invited')) {
         toast.info('Already invited this number');
-        openSMSInvite(phone, eventTitle, inviteCode);
+        openSMSInvite(phone, eventTitle, inviteCode, { eventId, referrerId: profile?.id ?? null });
+
       } else {
         toast.error(err.message || 'Failed to create invite');
       }

@@ -54,9 +54,11 @@ export function usePendingInvites() {
   });
 }
 
-// Get all invites for a specific event
+// Get all invites for a specific event (with realtime acceptance/decline sync)
 export function useEventInvites(eventId: string | undefined) {
-  return useQuery({
+  const queryClient = useQueryClient();
+
+  const query = useQuery({
     queryKey: ['event-invites', eventId],
     queryFn: async () => {
       if (!eventId) return [];
@@ -75,7 +77,36 @@ export function useEventInvites(eventId: string | undefined) {
     },
     enabled: !!eventId,
   });
+
+  // Live host feedback: any insert/update/delete to event_invites for this
+  // event (e.g. invitee flips status pending → accepted/declined) re-fetches
+  // the query so the InviteToEventDialog reflects state without a refresh.
+  useEffect(() => {
+    if (!eventId) return;
+    const channel = supabase
+      .channel(`event-invites-${eventId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'event_invites',
+          filter: `event_id=eq.${eventId}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['event-invites', eventId] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [eventId, queryClient]);
+
+  return query;
 }
+
 
 // Create invites for squad members
 export function useCreateEventInvites() {

@@ -194,9 +194,15 @@ export default function JoinRally() {
       if (ref) {
         localStorage.setItem('rally-referrer-id', ref);
       }
-      navigate('/auth');
+      // Contextual auth landing: pass intent + event title so /auth can
+      // render "Sign in to claim your spot in {title}".
+      const authParams = new URLSearchParams({ intent: 'join' });
+      if (event?.title) authParams.set('title', event.title);
+      if (ref) authParams.set('r', ref);
+      navigate(`/auth?${authParams.toString()}`);
       return;
     }
+
 
     if (!event) return;
 
@@ -265,15 +271,17 @@ export default function JoinRally() {
 
   const handleCodeSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (manualCode.length >= 6) {
-      fetchEvent(manualCode);
+    const trimmed = manualCode.trim();
+    if (trimmed.length >= 4) {
+      fetchEvent(trimmed);
     }
   };
 
+
   if (authLoading) {
     return (
-      <div className="min-h-[100dvh] flex items-center justify-center bg-black">
-        <div className="w-24 h-24 rounded-full bg-white/[0.06] flex items-center justify-center animate-pulse">
+      <div className="min-h-[100dvh] flex items-center justify-center bg-background">
+        <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center animate-pulse">
           <img src={rallyLogo} alt="R@lly" className="w-14 h-14 object-contain" />
         </div>
       </div>
@@ -281,17 +289,17 @@ export default function JoinRally() {
   }
 
   return (
-    <div className="min-h-[100dvh] bg-black relative overflow-hidden flex flex-col">
-      {/* Ambient radial glow */}
+    <div className="min-h-[100dvh] bg-background relative overflow-hidden flex flex-col">
+      {/* Ambient brand glow — subtle warmth on light surface */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-[#F47A19]/15 blur-[120px]" />
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[400px] h-[300px] rounded-full bg-[#F47A19]/[0.08] blur-[100px]" />
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-[#F47A19]/10 blur-[120px]" />
+        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[400px] h-[300px] rounded-full bg-[#F47A19]/5 blur-[100px]" />
       </div>
 
       {/* Transparent floating header */}
       <div className="fixed top-0 left-0 right-0 z-40" style={{ paddingTop: 'env(safe-area-inset-top, 1.5rem)' }}>
         <div className="relative flex items-center justify-center px-4 py-3">
-          <Button variant="ghost" size="sm" className="absolute left-4 text-white/70 hover:text-white" asChild>
+          <Button variant="ghost" size="sm" className="absolute left-4 text-muted-foreground hover:text-foreground" asChild>
             <Link to="/events">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back
@@ -305,23 +313,25 @@ export default function JoinRally() {
         <div className="w-full max-w-sm space-y-6">
           {/* Manual Code Entry */}
           {!code && (
-            <div className="backdrop-blur-xl bg-white/[0.06] border border-white/[0.1] rounded-2xl p-8 shadow-[0_8px_32px_rgba(0,0,0,0.4)] space-y-5">
+            <div className="backdrop-blur-xl bg-card/80 border border-border rounded-2xl p-8 shadow-lg space-y-5">
               <div className="text-center">
-                <h2 className="text-2xl font-bold font-montserrat text-white">Join a R@lly</h2>
-                <p className="text-sm text-white/50 mt-1">Enter the invite code</p>
+                <h2 className="text-2xl font-bold font-montserrat text-foreground">Join a R@lly</h2>
+                <p className="text-sm text-muted-foreground mt-1">Enter the invite code</p>
               </div>
               <form onSubmit={handleCodeSubmit} className="space-y-4">
                 <Input
                   value={manualCode}
                   onChange={(e) => setManualCode(e.target.value.toUpperCase())}
                   placeholder="ABCD12"
-                  className="text-center text-2xl tracking-[0.3em] font-bold uppercase bg-white/[0.06] border-white/[0.1] text-white placeholder:text-white/20 focus-visible:ring-[#F47A19]/40 focus-visible:border-[#F47A19]/30 h-14 rounded-xl"
-                  maxLength={6}
+                  className="text-center text-2xl tracking-[0.3em] font-bold uppercase bg-background border-border h-14 rounded-xl"
+                  autoComplete="off"
+                  autoCapitalize="characters"
+                  spellCheck={false}
                 />
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   className="w-full gradient-primary h-12"
-                  disabled={manualCode.length < 6 || loading}
+                  disabled={manualCode.trim().length < 4 || loading}
                 >
                   {loading ? 'Looking...' : 'Find Rally'}
                 </Button>
@@ -331,17 +341,17 @@ export default function JoinRally() {
 
           {/* Loading State */}
           {loading && code && (
-            <div className="backdrop-blur-xl bg-white/[0.06] border border-white/[0.1] rounded-2xl p-8 shadow-[0_8px_32px_rgba(0,0,0,0.4)] space-y-4">
-              <Skeleton className="h-8 w-3/4 mx-auto bg-white/[0.08]" />
-              <Skeleton className="h-4 w-1/2 mx-auto bg-white/[0.08]" />
-              <Skeleton className="h-16 w-full bg-white/[0.08]" />
-              <Skeleton className="h-10 w-full bg-white/[0.08]" />
+            <div className="backdrop-blur-xl bg-card/80 border border-border rounded-2xl p-8 shadow-lg space-y-4">
+              <Skeleton className="h-8 w-3/4 mx-auto" />
+              <Skeleton className="h-4 w-1/2 mx-auto" />
+              <Skeleton className="h-16 w-full" />
+              <Skeleton className="h-10 w-full" />
             </div>
           )}
 
           {/* Event Preview */}
           {!loading && event && (
-            <div className="backdrop-blur-xl bg-white/[0.06] border border-white/[0.1] rounded-2xl overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
+            <div className="backdrop-blur-xl bg-card/80 border border-border rounded-2xl overflow-hidden shadow-lg">
               <div className="bg-gradient-to-r from-[#F47A19] to-[#F47A19]/80 p-5">
                 <div className="flex items-center gap-2 mb-2">
                   {event.is_quick_rally && (
@@ -358,9 +368,9 @@ export default function JoinRally() {
                 </div>
                 <h1 className="text-2xl font-bold font-montserrat text-white">{event.title}</h1>
                 {event.location_name && (
-                  <p className="text-white/80 text-sm mt-1">📍 {event.location_name}</p>
+                  <p className="text-white/90 text-sm mt-1">📍 {event.location_name}</p>
                 )}
-                <p className="text-white/80 text-sm">
+                <p className="text-white/90 text-sm">
                   {format(new Date(event.start_time), 'EEEE, MMM d · h:mm a')}
                 </p>
               </div>
@@ -370,30 +380,30 @@ export default function JoinRally() {
                 <div className="flex items-center gap-3">
                   <Avatar>
                     <AvatarImage src={event.creator.avatar_url || undefined} />
-                    <AvatarFallback className="bg-white/[0.1] text-white">
+                    <AvatarFallback className="bg-muted text-foreground">
                       {event.creator.display_name?.charAt(0)?.toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="text-sm text-white/50">Hosted by</p>
-                    <p className="font-medium text-white">{event.creator.display_name}</p>
+                    <p className="text-sm text-muted-foreground">Hosted by</p>
+                    <p className="font-medium text-foreground">{event.creator.display_name}</p>
                   </div>
                 </div>
 
                 {/* Attendees */}
-                <div className="flex items-center gap-2 text-sm text-white/50">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Users className="h-4 w-4" />
                   <span>{event.attendees?.[0]?.count || 0} people going</span>
                 </div>
 
                 {/* Description */}
                 {event.description && (
-                  <p className="text-sm text-white/50">{event.description}</p>
+                  <p className="text-sm text-muted-foreground">{event.description}</p>
                 )}
 
                 {/* Join Button */}
                 {alreadyJoined ? (
-                  <Button 
+                  <Button
                     className="w-full h-12"
                     onClick={() => {
                       if (hasMadeSafetyChoice) {
@@ -409,18 +419,18 @@ export default function JoinRally() {
                   </Button>
                 ) : isPending ? (
                   <div className="space-y-3">
-                    <div className="p-4 rounded-xl bg-white/[0.06] border border-white/[0.1] text-center">
-                      <div className="w-12 h-12 rounded-full bg-white/[0.1] mx-auto mb-2 flex items-center justify-center">
-                        <Users className="h-6 w-6 text-white/60" />
+                    <div className="p-4 rounded-xl bg-muted border border-border text-center">
+                      <div className="w-12 h-12 rounded-full bg-background mx-auto mb-2 flex items-center justify-center">
+                        <Users className="h-6 w-6 text-muted-foreground" />
                       </div>
-                      <p className="font-semibold text-white">Request Pending</p>
-                      <p className="text-sm text-white/50 mt-1">
+                      <p className="font-semibold text-foreground">Request Pending</p>
+                      <p className="text-sm text-muted-foreground mt-1">
                         Waiting for the host to approve your request
                       </p>
                     </div>
                   </div>
                 ) : (
-                  <Button 
+                  <Button
                     className="w-full gradient-primary h-12"
                     onClick={handleJoin}
                     disabled={joining}
@@ -439,17 +449,17 @@ export default function JoinRally() {
 
           {/* Expired */}
           {!loading && isExpired && (
-            <div className="backdrop-blur-xl bg-white/[0.06] border border-[#F47A19]/30 rounded-2xl p-8 shadow-[0_8px_32px_rgba(0,0,0,0.4)] text-center space-y-4">
+            <div className="backdrop-blur-xl bg-card/80 border border-[#F47A19]/30 rounded-2xl p-8 shadow-lg text-center space-y-4">
               <div className="w-16 h-16 rounded-full bg-[#F47A19]/15 mx-auto flex items-center justify-center">
                 <Zap className="h-8 w-8 text-[#F47A19]" />
               </div>
               <div>
-                <h2 className="text-lg font-bold font-montserrat text-white">Invite Link Expired</h2>
-                <p className="text-sm text-white/60">
+                <h2 className="text-lg font-bold font-montserrat text-foreground">Invite Link Expired</h2>
+                <p className="text-sm text-muted-foreground">
                   Ask the host for a fresh link — this one's past its window.
                 </p>
               </div>
-              <Button variant="outline" className="border-white/[0.1] text-white" onClick={() => navigate('/events')}>
+              <Button variant="outline" onClick={() => navigate('/events')}>
                 Browse R@llies
               </Button>
             </div>
@@ -457,23 +467,24 @@ export default function JoinRally() {
 
           {/* Not Found */}
           {!loading && !event && !isExpired && code && (
-            <div className="backdrop-blur-xl bg-white/[0.06] border border-white/[0.1] rounded-2xl p-8 shadow-[0_8px_32px_rgba(0,0,0,0.4)] text-center space-y-4">
-              <div className="w-16 h-16 rounded-full bg-white/[0.06] mx-auto flex items-center justify-center">
-                <Users className="h-8 w-8 text-white/40" />
+            <div className="backdrop-blur-xl bg-card/80 border border-border rounded-2xl p-8 shadow-lg text-center space-y-4">
+              <div className="w-16 h-16 rounded-full bg-muted mx-auto flex items-center justify-center">
+                <Users className="h-8 w-8 text-muted-foreground" />
               </div>
               <div>
-                <h2 className="text-lg font-bold font-montserrat text-white">R@lly Not Found</h2>
-                <p className="text-sm text-white/50">
+                <h2 className="text-lg font-bold font-montserrat text-foreground">R@lly Not Found</h2>
+                <p className="text-sm text-muted-foreground">
                   This invite code doesn't match any active R@lly.
                 </p>
               </div>
-              <Button variant="outline" className="border-white/[0.1] text-white" onClick={() => navigate('/events')}>
+              <Button variant="outline" onClick={() => navigate('/events')}>
                 Browse R@llies
               </Button>
             </div>
           )}
         </div>
       </main>
+
 
       {/* Safety Choice Modal */}
       <SafetyChoiceModal

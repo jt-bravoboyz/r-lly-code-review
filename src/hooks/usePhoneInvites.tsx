@@ -2,7 +2,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { normalizePhoneNumber } from './usePhoneContacts';
-import { PUBLIC_APP_URL } from '@/lib/appUrl';
+import { buildRallyShareUrl } from '@/lib/shareUrls';
+
 
 export interface PhoneInvite {
   id: string;
@@ -109,29 +110,31 @@ export function useCreatePhoneInvite() {
   });
 }
 
-// Open native SMS with invite message
+// Open native SMS with invite message.
+// Uses buildRallyShareUrl so the link routes through the crawler-aware
+// share-preview function and renders the themed flyer in iMessage previews.
 export function openSMSInvite(
-  phoneNumber: string, 
-  eventTitle: string, 
-  inviteCode: string
+  phoneNumber: string,
+  eventTitle: string,
+  inviteCode: string,
+  opts: { eventId?: string; referrerId?: string | null } = {}
 ) {
-  const appStoreLink = 'https://apps.apple.com/app/rally'; // Placeholder
-  const playStoreLink = 'https://play.google.com/store/apps/details?id=com.bravoboyz.rally'; // Placeholder
-  const webLink = `${PUBLIC_APP_URL}/join/${inviteCode}`;
-  
+  const shareLink = opts.eventId
+    ? buildRallyShareUrl(
+        { eventId: opts.eventId, inviteCode },
+        { referrerId: opts.referrerId ?? null }
+      )
+    : `https://rlly.cloud/join/${inviteCode}`;
+
   const message = encodeURIComponent(
-    `You're invited to "${eventTitle}" on R@lly! 🎉\n\n` +
-    `Join here: ${webLink}\n\n` +
-    `Code: ${inviteCode}\n\n` +
-    `Download R@lly:\n` +
-    `iOS: ${appStoreLink}\n` +
-    `Android: ${playStoreLink}`
+    `You're locked in for "${eventTitle}". Claim your spot 🔥\n${shareLink}\n\nCode: ${inviteCode}`
   );
-  
+
   // Use sms: protocol to open native SMS app
   const smsUrl = `sms:${phoneNumber}?body=${message}`;
   window.open(smsUrl, '_blank');
 }
+
 
 // Claim phone invites when user signs up (call after auth)
 export function useClaimPhoneInvites() {
