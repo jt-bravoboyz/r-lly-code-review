@@ -146,7 +146,7 @@ export function InviteToEventDialog({
       try {
         await navigator.share({
           title: `Join ${eventTitle}`,
-          text: `You're invited to ${eventTitle} — Tap to join the crew`,
+          text: `You're locked in for "${eventTitle}". Claim your spot 🔥`,
           url: shareLink,
         });
       } catch {
@@ -156,6 +156,7 @@ export function InviteToEventDialog({
       handleCopyLink();
     }
   };
+
 
   const handleInviteSquad = async (squad: Squad) => {
     const profilesToInvite: string[] = [];
