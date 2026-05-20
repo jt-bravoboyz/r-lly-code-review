@@ -217,7 +217,7 @@ export default function JoinRally() {
 
       const { data, error } = await supabase.rpc('request_join_event', {
         p_event_id: event.id,
-        p_has_invite_code: true
+        p_invite_code: event.invite_code,
       });
 
       if (error) {

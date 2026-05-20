@@ -236,7 +236,7 @@ export default function Auth() {
         // Request to join the rally — invitee gets auto-accepted
         const { data: joinData, error: joinError } = await supabase.rpc('request_join_event', {
           p_event_id: eventData.id,
-          p_has_invite_code: true,
+          p_invite_code: pendingCode,
         });
 
         if (joinError) throw joinError;
