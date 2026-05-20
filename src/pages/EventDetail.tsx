@@ -1487,5 +1487,6 @@ export default function EventDetail() {
         />
       )}
     </div>
+    </EventThemeProvider>
   );
 }
