@@ -2006,3 +2006,159 @@
 /* Fixed-height spacer for sticky/transparent headers — extends the colored
    bar all the way up behind the status bar. */
 .h-safe-top { height: env(safe-area-inset-top, 1.5rem); }
+
+/* =========================================================================
+   EVENT FLYER THEME — page-scoped glassmorphism for /events/:id
+   Activated by <EventThemeProvider> which sets CSS vars + .event-themed class.
+   ========================================================================= */
+
+.event-themed {
+  position: relative;
+  isolation: isolate;
+  color: var(--theme-ink);
+}
+
+/* Ambient backdrop layer */
+.event-themed-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  /* Fade in when the theme mounts */
+  animation: themed-backdrop-fade 600ms ease-out both;
+}
+
+@keyframes themed-backdrop-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.event-themed-backdrop__image {
+  position: absolute;
+  inset: -4%;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  filter: saturate(1.05);
+  animation: themed-ken-burns 22s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+@keyframes themed-ken-burns {
+  0%   { transform: scale(1.00) translate3d(0, 0, 0); }
+  100% { transform: scale(1.06) translate3d(-1.5%, -1%, 0); }
+}
+
+.event-themed-backdrop__scrim {
+  position: absolute;
+  inset: 0;
+  /* Inline background overrides this — kept as a safety floor */
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.event-themed-backdrop__blob {
+  position: absolute;
+  width: 60vmin;
+  height: 60vmin;
+  border-radius: 50%;
+  filter: blur(72px);
+  opacity: 0.35;
+  mix-blend-mode: screen;
+  will-change: transform;
+}
+
+.event-themed--light .event-themed-backdrop__blob {
+  mix-blend-mode: multiply;
+  opacity: 0.28;
+}
+
+.event-themed-backdrop__blob--a {
+  top: -10%;
+  left: -10%;
+  animation: themed-blob-drift-a 26s ease-in-out infinite alternate;
+}
+
+.event-themed-backdrop__blob--b {
+  bottom: -15%;
+  right: -15%;
+  animation: themed-blob-drift-b 32s ease-in-out infinite alternate;
+}
+
+@keyframes themed-blob-drift-a {
+  0%   { transform: translate3d(0, 0, 0)       scale(1.0); }
+  100% { transform: translate3d(8vw, 12vh, 0)  scale(1.15); }
+}
+@keyframes themed-blob-drift-b {
+  0%   { transform: translate3d(0, 0, 0)        scale(1.0); }
+  100% { transform: translate3d(-10vw, -8vh, 0) scale(1.2); }
+}
+
+/* Lift main content above the backdrop */
+.event-themed > main,
+.event-themed > .event-themed-content {
+  position: relative;
+  z-index: 1;
+}
+
+/* ---- Themed surfaces ---- */
+/* The page already uses rounded-2xl bg-card/50 border border-border/50 panels
+   and shadcn <Card>. We override their surface within .event-themed. */
+
+.event-themed [class*="bg-card"],
+.event-themed .ev-glass {
+  background: var(--theme-glass-tint) !important;
+  border-color: var(--theme-glass-border) !important;
+  backdrop-filter: blur(24px) saturate(1.1);
+  -webkit-backdrop-filter: blur(24px) saturate(1.1);
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.08) inset,
+    0 20px 60px -30px rgba(0, 0, 0, 0.55);
+  color: var(--theme-ink);
+}
+
+.event-themed--light [class*="bg-card"],
+.event-themed--light .ev-glass {
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.7) inset,
+    0 18px 50px -28px rgba(0, 0, 0, 0.28);
+}
+
+/* Body text inside themed cards */
+.event-themed [class*="text-muted-foreground"] {
+  color: var(--theme-meta) !important;
+}
+
+/* Section headings use the accent */
+.event-themed h2,
+.event-themed h3,
+.event-themed .ev-accent {
+  color: var(--theme-accent);
+}
+
+/* Themed primary action glow on the JOIN button area */
+.event-themed .btn-gradient-primary {
+  box-shadow: var(--theme-glow), 0 8px 24px -10px rgba(0,0,0,0.4);
+}
+
+/* Title gradient utility — apply to the event title <h1>. */
+.event-themed-title {
+  background-image: var(--theme-title-gradient);
+  -webkit-background-clip: text;
+          background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 2px 12px rgba(0,0,0,0.25));
+}
+
+/* Tabs accent */
+.event-themed [role="tab"][data-state="active"] {
+  color: var(--theme-accent) !important;
+}
+
+/* Back button & ghost buttons stay readable */
+.event-themed .text-muted-foreground { color: var(--theme-meta) !important; }
+
+/* Disable theme styling when After R@lly purple mode is active —
+   .after-rally-mode already provides its own full-screen treatment. */
+.event-themed.after-rally-mode .event-themed-backdrop { display: none; }

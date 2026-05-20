@@ -86,6 +86,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useRenderLoopDetector } from '@/hooks/useRenderLoopDetector';
 import { ProfileTapWrapper } from '@/components/profile/ProfileTapWrapper';
+import { EventThemeProvider } from '@/components/events/EventThemeProvider';
 
 const VIBE_STYLES: Record<string, string> = {
   orange: "bg-orange-500/10 text-orange-600 border-orange-500/30",
@@ -490,6 +491,7 @@ export default function EventDetail() {
   };
 
   return (
+    <EventThemeProvider themeKey={(event as any).flyer_theme} disabled={showAfterRallyTheme}>
     <div className={`min-h-[100dvh] pb-20 ${showAfterRallyTheme ? 'after-rally-mode' : ''}`}>
       <Header afterRallyMode={showAfterRallyTheme} />
       
@@ -510,7 +512,7 @@ export default function EventDetail() {
         {/* Completed R@lly: minimal header */}
         {isCompleted && (
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold tracking-tight font-montserrat">{event.title}</h1>
+            <h1 className="text-2xl font-bold tracking-tight font-montserrat event-themed-title">{event.title}</h1>
             <Badge className="bg-muted text-muted-foreground border-0">
               <CheckCircle2 className="h-3 w-3 mr-1" />
               Completed
@@ -547,9 +549,9 @@ export default function EventDetail() {
                   </Badge>
                 )}
               </div>
-              <h1 className="text-3xl font-bold tracking-tight">
+              <h1 className="text-3xl font-bold tracking-tight event-themed-title">
                 {getEventTypeEmoji(event.event_type) && (
-                  <span className="mr-1.5">{getEventTypeEmoji(event.event_type)}</span>
+                  <span className="mr-1.5" style={{ WebkitTextFillColor: 'initial' }}>{getEventTypeEmoji(event.event_type)}</span>
                 )}
                 {event.title}
               </h1>
@@ -1485,5 +1487,6 @@ export default function EventDetail() {
         />
       )}
     </div>
+    </EventThemeProvider>
   );
 }
