@@ -549,12 +549,13 @@ export default function EventDetail() {
                   </Badge>
                 )}
               </div>
-              <h1 className="text-3xl font-bold tracking-tight event-themed-title">
+              <h1 className="text-3xl font-bold tracking-tight event-themed-title ev-ink-strong">
                 {getEventTypeEmoji(event.event_type) && (
                   <span className="mr-1.5" style={{ WebkitTextFillColor: 'initial' }}>{getEventTypeEmoji(event.event_type)}</span>
                 )}
                 {event.title}
               </h1>
+
               {/* Safety completion badge */}
               {isAfterRally && safetyComplete && (
                 <p className="text-xs text-green-600 font-medium flex items-center gap-1 mt-1">
