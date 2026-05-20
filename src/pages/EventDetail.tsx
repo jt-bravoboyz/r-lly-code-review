@@ -549,9 +549,9 @@ export default function EventDetail() {
                   </Badge>
                 )}
               </div>
-              <h1 className="text-3xl font-bold tracking-tight">
+              <h1 className="text-3xl font-bold tracking-tight event-themed-title">
                 {getEventTypeEmoji(event.event_type) && (
-                  <span className="mr-1.5">{getEventTypeEmoji(event.event_type)}</span>
+                  <span className="mr-1.5" style={{ WebkitTextFillColor: 'initial' }}>{getEventTypeEmoji(event.event_type)}</span>
                 )}
                 {event.title}
               </h1>
