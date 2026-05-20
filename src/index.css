@@ -2109,20 +2109,40 @@
 .event-themed .ev-glass {
   background: var(--theme-glass-tint) !important;
   border-color: var(--theme-glass-border) !important;
-  backdrop-filter: blur(24px) saturate(1.1);
-  -webkit-backdrop-filter: blur(24px) saturate(1.1);
+  backdrop-filter: blur(24px) saturate(1.15);
+  -webkit-backdrop-filter: blur(24px) saturate(1.15);
   box-shadow:
-    0 1px 0 0 rgba(255, 255, 255, 0.08) inset,
-    0 20px 60px -30px rgba(0, 0, 0, 0.55);
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.05),
+    0 14px 44px -24px rgba(0, 0, 0, 0.55);
   color: var(--theme-ink);
 }
 
 .event-themed--light [class*="bg-card"],
 .event-themed--light .ev-glass {
   box-shadow:
-    0 1px 0 0 rgba(255, 255, 255, 0.7) inset,
-    0 18px 50px -28px rgba(0, 0, 0, 0.28);
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.7),
+    0 12px 36px -22px rgba(0, 0, 0, 0.28);
 }
+
+/* Heavily frosted container for over-gradient header/metadata blocks */
+.event-themed .ev-frost {
+  background: var(--theme-glass-tint);
+  backdrop-filter: blur(28px) saturate(1.2);
+  -webkit-backdrop-filter: blur(28px) saturate(1.2);
+  border: 1px solid var(--theme-glass-border);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.05),
+    0 10px 40px -20px rgba(0, 0, 0, 0.45);
+  border-radius: 1rem;
+}
+.event-themed--light .ev-frost {
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.6),
+    0 8px 30px -16px rgba(0, 0, 0, 0.18);
+}
+
+/* Max-contrast text inside dynamic theme contexts */
+.event-themed .ev-ink-strong { color: var(--theme-ink-strong) !important; }
 
 /* Body text inside themed cards */
 .event-themed [class*="text-muted-foreground"] {
@@ -2151,9 +2171,24 @@
   filter: drop-shadow(0 2px 12px rgba(0,0,0,0.25));
 }
 
-/* Tabs accent */
+/* Tabs — themed chrome + accent-tinted active pop */
+.event-themed [role="tablist"] {
+  background: var(--theme-glass-tint);
+  border: 1px solid var(--theme-glass-border);
+  backdrop-filter: blur(20px) saturate(1.15);
+  -webkit-backdrop-filter: blur(20px) saturate(1.15);
+  border-radius: 0.75rem;
+  padding: 4px;
+}
+.event-themed [role="tab"] {
+  color: var(--theme-meta) !important;
+  transition: background-color .2s ease, color .2s ease;
+  border-radius: 0.55rem;
+}
 .event-themed [role="tab"][data-state="active"] {
+  background: var(--theme-accent-soft) !important;
   color: var(--theme-accent) !important;
+  box-shadow: inset 0 1px 0 0 rgba(255,255,255,0.08);
 }
 
 /* Back button & ghost buttons stay readable */
@@ -2162,3 +2197,4 @@
 /* Disable theme styling when After R@lly purple mode is active —
    .after-rally-mode already provides its own full-screen treatment. */
 .event-themed.after-rally-mode .event-themed-backdrop { display: none; }
+

@@ -164,6 +164,8 @@ export default function EventDetail() {
   const { ensurePaid, dialog: coverDialog } = useCoverChargeGate(event as any, profile as any);
   const [showRequestPayment, setShowRequestPayment] = useState(false);
   const [payRequestId, setPayRequestId] = useState<string | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
+
   const [showRideshareDrawer, setShowRideshareDrawer] = useState(false);
   const [joinFlowDismissedForSession, setJoinFlowDismissedForSession] = useState(false);
   const [locationPromptDismissedForSession, setLocationPromptDismissedForSession] = useState(false);
@@ -549,12 +551,13 @@ export default function EventDetail() {
                   </Badge>
                 )}
               </div>
-              <h1 className="text-3xl font-bold tracking-tight event-themed-title">
+              <h1 className="text-3xl font-bold tracking-tight event-themed-title ev-ink-strong">
                 {getEventTypeEmoji(event.event_type) && (
                   <span className="mr-1.5" style={{ WebkitTextFillColor: 'initial' }}>{getEventTypeEmoji(event.event_type)}</span>
                 )}
                 {event.title}
               </h1>
+
               {/* Safety completion badge */}
               {isAfterRally && safetyComplete && (
                 <p className="text-xs text-green-600 font-medium flex items-center gap-1 mt-1">
@@ -591,59 +594,70 @@ export default function EventDetail() {
                   )}
                 </div>
               )}
-              {/* Header context line */}
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {format(new Date(event.start_time), 'EEEE')} · {format(new Date(event.start_time), 'h:mm a')}{event.location_name ? ` · ${event.location_name}` : ''}
-              </p>
-              {/* Copy invite link + host rotation */}
-              <div className="flex items-center gap-2 mt-1 flex-wrap">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-xs text-muted-foreground gap-1 px-0 h-auto py-0.5"
-                  onClick={() => {
-                     navigator.clipboard.writeText(buildRallyShareUrl({ eventId: event.id, inviteCode: event.invite_code }, { referrerId: profile?.id }));
-                     trackEvent('invite_link_copied', { event_id: event.id });
-                     toast.success('Link copied!');
-                  }}
-                >
-                  <Link2 className="h-3 w-3" /> Copy invite link
-                </Button>
-                {(event as any).invite_code_expires_at && (() => {
-                  const expiresAt = new Date((event as any).invite_code_expires_at as string).getTime();
-                  const expired = expiresAt < Date.now();
-                  const hoursLeft = Math.max(0, Math.round((expiresAt - Date.now()) / 3600000));
-                  return (
-                    <span
-                      className={`text-[10px] font-semibold tracking-wide uppercase px-1.5 py-0.5 rounded-full ${
-                        expired
-                          ? 'bg-destructive/15 text-destructive'
-                          : 'bg-muted text-muted-foreground'
-                      }`}
-                    >
-                      {expired ? 'Expired' : `Expires in ${hoursLeft}h`}
-                    </span>
-                  );
-                })()}
-                {canManage && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-xs text-primary gap-1 px-0 h-auto py-0.5"
-                    onClick={async () => {
-                      const { error } = await (supabase as any).rpc('rotate_event_invite_code', {
-                        _event_id: event.id,
-                        _ttl_hours: 72,
-                      });
-                      if (error) { toast.error('Could not rotate invite'); return; }
-                      toast.success('New invite link generated');
-                      queryClient.invalidateQueries({ queryKey: ['event', event.id] });
+              {/* Frosted metadata + invite cluster */}
+              <div className="ev-frost px-3 py-2.5 mt-2 space-y-2">
+                <p className="text-xs text-muted-foreground">
+                  {format(new Date(event.start_time), 'EEEE')} · {format(new Date(event.start_time), 'h:mm a')}{event.location_name ? ` · ${event.location_name}` : ''}
+                </p>
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  <button
+                    type="button"
+                    className="inline-flex items-center gap-1.5 text-xs font-medium pl-2.5 pr-3 py-1.5 rounded-full bg-background/40 backdrop-blur-md border border-white/10 dark:border-black/10 hover:bg-background/55 transition shadow-sm text-foreground"
+                    onClick={() => {
+                      navigator.clipboard.writeText(buildRallyShareUrl({ eventId: event.id, inviteCode: event.invite_code }, { referrerId: profile?.id }));
+                      trackEvent('invite_link_copied', { event_id: event.id });
+                      toast.success('Link copied!');
+                      setLinkCopied(true);
+                      window.setTimeout(() => setLinkCopied(false), 1200);
                     }}
                   >
-                    Rotate
-                  </Button>
-                )}
+                    {linkCopied ? (
+                      <Check className="h-3.5 w-3.5 opacity-80" />
+                    ) : (
+                      <Link2 className="h-3.5 w-3.5 opacity-80" />
+                    )}
+                    {linkCopied ? 'Copied' : 'Copy invite link'}
+                  </button>
+                  {(event as any).invite_code_expires_at && (() => {
+                    const expiresAt = new Date((event as any).invite_code_expires_at as string).getTime();
+                    const expired = expiresAt < Date.now();
+                    const hoursLeft = Math.max(0, Math.round((expiresAt - Date.now()) / 3600000));
+                    return (
+                      <span
+                        className={`text-[10px] font-semibold tracking-wide uppercase px-2 py-0.5 rounded-full ${
+                          expired
+                            ? 'bg-destructive/15 text-destructive'
+                            : 'bg-background/40 text-muted-foreground border border-white/10 dark:border-black/10'
+                        }`}
+                      >
+                        {expired ? 'Expired' : `Expires in ${hoursLeft}h`}
+                      </span>
+                    );
+                  })()}
+                  {canManage && (
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-1.5 text-xs font-medium pl-2.5 pr-3 py-1.5 rounded-full border border-transparent transition shadow-sm"
+                      style={{
+                        color: 'var(--theme-accent)',
+                        background: 'var(--theme-accent-soft)',
+                      }}
+                      onClick={async () => {
+                        const { error } = await (supabase as any).rpc('rotate_event_invite_code', {
+                          _event_id: event.id,
+                          _ttl_hours: 72,
+                        });
+                        if (error) { toast.error('Could not rotate invite'); return; }
+                        toast.success('New invite link generated');
+                        queryClient.invalidateQueries({ queryKey: ['event', event.id] });
+                      }}
+                    >
+                      Rotate
+                    </button>
+                  )}
+                </div>
               </div>
+
             </div>
             <InviteToEventDialog
               eventId={event.id}
