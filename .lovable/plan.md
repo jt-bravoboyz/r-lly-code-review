@@ -1,70 +1,79 @@
-## Goal
-Make the entire Event Detail page dynamically adopt the glassmorphism aesthetic of the host's selected `flyer_theme` (one of 9 themes). Background, glass tints, accent glows, title gradient, and card surfaces all shift per theme — while keeping the page legible, mobile-safe, and consistent with the existing 2026 Glass/Liquid system.
+## Findings
 
-## Approach
+The unfurl system is still not working correctly in production.
 
-### 1. New theming primitive: `EventThemeProvider`
-Create `src/components/events/EventThemeProvider.tsx`:
-- Accepts `themeKey` from `event.flyer_theme`.
-- Resolves the full `FlyerTheme` via `getFlyerTheme()`.
-- Renders a fixed-position **ambient backdrop layer** (z=0, behind content):
-  - Full-bleed `bgPublicPath` image, `object-cover`, slight scale + slow drift animation.
-  - Two ambient color blobs using `palette[0]` and `palette[1]` (`blur-3xl`, low opacity, animated drift) for the signature R@lly "liquid" feel.
-  - A dark/light scrim derived from `archTint` to guarantee text contrast.
-- Pushes CSS custom properties onto a wrapper div so descendants can opt-in:
-  ```
-  --theme-accent, --theme-accent-2, --theme-ink, --theme-meta,
-  --theme-glass-tint, --theme-glass-border, --theme-glow,
-  --theme-title-gradient
-  ```
-- Computes a `mode: 'light' | 'dark'` flag from `archTint` luminance so glass surfaces know whether to use white-over-dark or black-over-light tinting (Garden Party / Sunday Brunch / Beach Club are light; the rest dark).
+- `https://rlly-share-unfurl.rally-app.workers.dev/join/F5FF4F` still returns `Hello World!` as `text/plain`, so that Worker hostname is not running the intended unfurl script.
+- `https://rlly.cloud/join/F5FF4F` returns the normal R@lly app shell for Facebook and Slack crawlers, with the generic OG image `/rally-icon-192.png`. That means the `rlly.cloud/*` Worker route is not intercepting this request, or it is failing open to the origin.
+- The direct preview renderer does work when called with the expected query-string shape:
+  - `to=https://rlly.cloud/join/F5FF4F`
+  - `type=event`
+  - `id=7ac9026b-ed40-44f9-b8d5-95cd5c0c1b86`
+- The direct preview response returns the correct event metadata:
+  - `og:title`: `Thank You LBT Volunteers — R@lly`
+  - `og:description`: `Celebrating all the amazing volunteers of Long Bay Theatre`
+  - `og:image`: the generated event flyer image
 
-### 2. New `ThemedGlassCard` wrapper
-Create `src/components/events/ThemedGlassCard.tsx` — a thin wrapper over shadcn `Card` that:
-- Uses `backdrop-blur-xl` + `bg-[var(--theme-glass-tint)]` + `border-[var(--theme-glass-border)]`.
-- Adds the theme's `frameGlow` as a soft shadow.
-- Inner highlight stroke for the liquid-glass look already used elsewhere in the app.
-- Same API as `Card` (drop-in) so refactor is a search-and-replace inside `EventDetail.tsx`.
+## Root cause
 
-### 3. Refactor `src/pages/EventDetail.tsx`
-- Wrap the page's outer `<div>` in `<EventThemeProvider themeKey={event.flyer_theme}>`.
-- Replace plain `Card` usages in the main content stream with `ThemedGlassCard` (keep shadcn `Card` for modals/dialogs that already live in portals on neutral surfaces).
-- Title / hero heading: apply `bg-clip-text` with `--theme-title-gradient` so the event title shifts per theme.
-- Section headings & primary icons: tint with `--theme-accent`.
-- Primary CTAs ("Join R@lly", "I'm Here", "Start R@lly", etc.): keep R@lly Orange brand button when theme is `rally_dynamic`; for other themes, add a `theme` variant that fills with `--theme-accent` and chooses contrasting foreground from `mode`.
-- Tab bar (Tabs/TabsList): glass surface with active indicator using `--theme-accent`.
-- Badges (vibe chips, status pills): swap the static `VIBE_STYLES` map for theme-aware glass pills.
-- Carousel frame / map preview / AfterRallyCard: thin border + glow from theme.
-- Loading skeleton: tint via theme accent.
+There are two likely Cloudflare-side issues:
 
-### 4. Safety/legibility rules (Core memory compliance)
-- 44px touch targets preserved.
-- All text colors come from `--theme-ink` / `--theme-meta` so light themes (brunch/garden/beach) flip to dark text automatically.
-- Never drop below WCAG AA contrast — scrim opacity is tuned per theme in the registry (already handled by `archTint`).
-- Mapbox map styling stays untouched (per Maps memory).
-- R@lly Orange stays primary on `rally_dynamic`; other themes get their accent but the brand button (e.g. publish, share, brand logo) stays Orange.
+1. The Worker deployed at `rlly-share-unfurl.rally-app.workers.dev` is still the default script, not the R@lly unfurl Worker.
+2. The Worker route for `rlly.cloud/*` is either not attached to the right Worker, not matching `/join/*`, or the Worker code is forwarding `/join/F5FF4F` directly to the preview function. The current backend preview function does not accept `/join/F5FF4F`; it expects query parameters.
 
-### 5. Subtle motion (no new deps)
-- Background image: 18s `ken-burns` scale 1.0→1.04 ease-in-out infinite alternate.
-- Ambient blobs: 22s drift via existing Tailwind keyframes (or add `theme-drift` to `tailwind.config.ts`).
-- Glass cards: existing fade-in/scale-in on mount.
+## Fix plan
 
-### 6. Edge cases
-- `event.flyer_theme` missing → `getFlyerTheme()` already defaults to `rally_dynamic`.
-- If host changes theme later, the page re-renders via the existing `useEvent` query; backdrop crossfades (200ms opacity).
-- Recap / "Rally Complete" overlay and modals keep their own designs — they sit above the themed surface and are intentionally unaffected.
+Update the Cloudflare Worker so bot requests to public R@lly URLs are rewritten into the preview function’s expected query format.
 
-## Files touched
+### 1. Worker route behavior
+
+For human browsers:
+
 ```text
-NEW   src/components/events/EventThemeProvider.tsx
-NEW   src/components/events/ThemedGlassCard.tsx
-EDIT  src/pages/EventDetail.tsx            (wrap + swap Card→ThemedGlassCard + title gradient + accent tokens)
-EDIT  tailwind.config.ts                   (add `theme-drift` / `ken-burns` keyframes if not present)
+https://rlly.cloud/join/F5FF4F -> pass through to the R@lly app
 ```
 
-No DB changes. No edge function changes. No new dependencies.
+For bots/crawlers:
 
-## Out of scope (ask if you want these next)
-- Theming child components (`AfterRallyCard`, `RallyHeroMediaCarousel`, `SafetyTracker`, `EventChat`, etc.) deeply. They will inherit the ambient backdrop + CSS vars, but their internal surfaces stay on shadcn tokens for this pass. Happy to do a follow-up sweep.
-- Theming the global `Header` / `BottomNav` while on the event page.
-- Per-theme custom fonts beyond Montserrat (titles get the gradient, not the font swap — flyer fonts are Playfair, which would conflict with our Core typography rule unless you want me to allow it on this page).
+```text
+https://rlly.cloud/join/F5FF4F
+  -> Worker detects bot User-Agent
+  -> Worker extracts invite code F5FF4F
+  -> Worker resolves the matching event id
+  -> Worker fetches:
+     /share-preview?to=https://rlly.cloud/join/F5FF4F&type=event&id=<event_id>
+  -> Worker returns that HTML as text/html
+```
+
+### 2. Code changes needed in Cloudflare
+
+The Worker should either:
+
+- resolve invite codes by querying the public event lookup endpoint/RPC if one exists, or
+- call a small Lovable Cloud backend function that accepts `/join/:code` and returns the proper preview HTML.
+
+The cleanest durable app-side improvement is to update `share-preview` itself so it can accept `code=F5FF4F`, look up the event id server-side, and render the preview. Then the Worker only needs to rewrite:
+
+```text
+/join/F5FF4F
+-> /share-preview?to=https://rlly.cloud/join/F5FF4F&type=event&code=F5FF4F
+```
+
+### 3. Validation after Cloudflare update
+
+Run these checks:
+
+```bash
+curl -A "facebookexternalhit/1.1" https://rlly.cloud/join/F5FF4F
+curl -A "Slackbot-LinkExpanding 1.0 (+https://api.slack.com/robots)" https://rlly.cloud/join/F5FF4F
+curl -A "Mozilla/5.0" https://rlly.cloud/join/F5FF4F
+```
+
+Expected result:
+
+- Facebook/Slack requests return `content-type: text/html; charset=utf-8`
+- Facebook/Slack requests include event-specific `og:title`, `og:description`, and `og:image`
+- Human browser requests still load the normal R@lly app
+
+## Recommended next implementation
+
+I should update the `share-preview` backend function to support `code=<invite_code>` directly, then provide the exact Cloudflare Worker script that maps `/join/:code` bot traffic to that endpoint. This avoids needing Cloudflare to know database details and keeps the sensitive lookup in Lovable Cloud.

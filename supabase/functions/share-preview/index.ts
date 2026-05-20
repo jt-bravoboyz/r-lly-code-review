@@ -28,25 +28,45 @@ async function resolveOgImage(projectId: string, ogParam: string, fallback: stri
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   const url = new URL(req.url);
-  const to = url.searchParams.get('to');
-  const type = url.searchParams.get('type'); // 'event' | 'tab'
-  const id = url.searchParams.get('id');
+
+  // Accept both query-string mode and path mode (so a Cloudflare Worker can simply
+  // forward bot requests like /join/F5FF4F or /events/<id> verbatim).
+  let to = url.searchParams.get('to');
+  let type = url.searchParams.get('type'); // 'event' | 'tab'
+  let id = url.searchParams.get('id');
+  let code = url.searchParams.get('code');
+
+  const pathMatch = url.pathname.match(/\/(join|event|events|tab|tabs)\/([A-Za-z0-9_-]+)/i);
+  if (pathMatch) {
+    const seg = pathMatch[1].toLowerCase();
+    const val = pathMatch[2];
+    if (seg === 'join') { type = type ?? 'event'; code = code ?? val; }
+    else if (seg === 'event' || seg === 'events') { type = type ?? 'event'; id = id ?? val; }
+    else if (seg === 'tab' || seg === 'tabs') { type = type ?? 'tab'; id = id ?? val; }
+    if (!to) to = `https://rlly.cloud/${seg}/${val}`;
+  }
+
+
   if (!to) return new Response('Missing `to`', { status: 400, headers: corsHeaders });
 
-  // Build meta HTML for crawlers; humans get auto-bounced via meta-refresh + JS.
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   const projectId = (supabaseUrl.match(/https:\/\/([^.]+)\./)?.[1]) ?? '';
-  const ogParam = type === 'tab' ? `tab=${id}` : `id=${id}`;
   const fallbackOgImage = `${supabaseUrl}/storage/v1/object/public/event_flyers/_system/og-fallback.png`;
-  const ogImage = projectId ? await resolveOgImage(projectId, ogParam, fallbackOgImage) : fallbackOgImage;
 
   let title = "You're invited — R@lly";
   let description = 'Nights That Matter. Tap to RSVP.';
+  let resolvedEventId = id;
 
   try {
     const supabase = createClient(supabaseUrl, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { auth: { persistSession: false } });
-    if (type === 'event' && id) {
-      const { data } = await supabase.from('events').select('title,description,start_time,location_name').eq('id', id).maybeSingle();
+
+    if (type === 'event' && !resolvedEventId && code) {
+      const { data: byCode } = await supabase.from('events').select('id').eq('invite_code', code).maybeSingle();
+      if (byCode?.id) resolvedEventId = byCode.id;
+    }
+
+    if (type === 'event' && resolvedEventId) {
+      const { data } = await supabase.from('events').select('title,description,start_time,location_name').eq('id', resolvedEventId).maybeSingle();
       if (data) {
         title = `${data.title} — R@lly`;
         const when = data.start_time ? new Date(data.start_time).toUTCString().slice(0, 22) : '';
@@ -63,6 +83,17 @@ Deno.serve(async (req) => {
   } catch (e) {
     console.error('[share-preview] lookup failed', e);
   }
+
+  const ogParam = type === 'tab' && id
+    ? `tab=${id}`
+    : resolvedEventId
+      ? `id=${resolvedEventId}`
+      : code
+        ? `code=${code}`
+        : '';
+  const ogImage = projectId && ogParam
+    ? await resolveOgImage(projectId, ogParam, fallbackOgImage)
+    : fallbackOgImage;
 
   const html = `<!doctype html>
 <html lang="en"><head>
