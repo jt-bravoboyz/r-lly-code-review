@@ -311,6 +311,6 @@ export function useEventByInviteCode(inviteCode: string | undefined) {
       if (error) throw error;
       return data;
     },
-    enabled: !!inviteCode && inviteCode.length >= 6
+    enabled: !!inviteCode && inviteCode.length >= 4
   });
 }

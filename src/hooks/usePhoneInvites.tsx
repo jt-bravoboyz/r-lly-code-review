@@ -117,14 +117,14 @@ export function openSMSInvite(
   phoneNumber: string,
   eventTitle: string,
   inviteCode: string,
-  opts: { eventId?: string; referrerId?: string | null } = {}
+  opts: { eventId: string; referrerId?: string | null }
 ) {
-  const shareLink = opts.eventId
-    ? buildRallyShareUrl(
-        { eventId: opts.eventId, inviteCode },
-        { referrerId: opts.referrerId ?? null }
-      )
-    : `https://rlly.cloud/join/${inviteCode}`;
+  // eventId is required so every SMS link routes through share-preview and
+  // renders the themed flyer in iMessage. No raw-URL fallback by design.
+  const shareLink = buildRallyShareUrl(
+    { eventId: opts.eventId, inviteCode },
+    { referrerId: opts.referrerId ?? null }
+  );
 
   const message = encodeURIComponent(
     `You're locked in for "${eventTitle}". Claim your spot 🔥\n${shareLink}\n\nCode: ${inviteCode}`

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { getPublicName } from '@/lib/identity';
-import { PUBLIC_APP_URL } from '@/lib/appUrl';
+
 import { buildRallyShareUrl } from '@/lib/shareUrls';
 import { useParams, Navigate, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
