@@ -19,12 +19,72 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Verify Cloudflare secrets & permissions
+        run: |
+          set -e
+
+          TOKEN="${{ secrets.CLOUDFLARE_API_TOKEN }}"
+          ACCT="${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
+
+          if [ -z "$ACCT" ]; then
+            echo "::error::CLOUDFLARE_ACCOUNT_ID secret is missing. Add it in GitHub → Settings → Secrets and variables → Actions."
+            exit 1
+          fi
+          echo "✅ CLOUDFLARE_ACCOUNT_ID is present."
+
+          if [ -z "$TOKEN" ]; then
+            echo "::error::CLOUDFLARE_API_TOKEN secret is missing. Add it in GitHub → Settings → Secrets and variables → Actions."
+            exit 1
+          fi
+          echo "✅ CLOUDFLARE_API_TOKEN is present."
+
+          # Verify token validity
+          VERIFY=$(curl -sS -w "\n%{http_code}" -H "Authorization: Bearer $TOKEN" \
+            "https://api.cloudflare.com/client/v4/user/tokens/verify")
+          HTTP_CODE=$(echo "$VERIFY" | tail -n1)
+          BODY=$(echo "$VERIFY" | sed '$d')
+
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "::error::CLOUDFLARE_API_TOKEN appears invalid or expired (HTTP $HTTP_CODE)."
+            echo "Response: $BODY"
+            exit 1
+          fi
+          echo "✅ CLOUDFLARE_API_TOKEN is valid."
+
+          # Verify zone access for rlly.cloud
+          ZONE=$(curl -sS -w "\n%{http_code}" -H "Authorization: Bearer $TOKEN" \
+            "https://api.cloudflare.com/client/v4/zones?name=rlly.cloud")
+          Z_HTTP=$(echo "$ZONE" | tail -n1)
+          Z_BODY=$(echo "$ZONE" | sed '$d')
+
+          if [ "$Z_HTTP" != "200" ]; then
+            echo "::error::Cannot read zones with this token (HTTP $Z_HTTP). Ensure the token has 'Zone → Read' permission."
+            echo "Response: $Z_BODY"
+            exit 1
+          fi
+
+          ZONE_COUNT=$(echo "$Z_BODY" | jq -r '.result_info.total_count // 0')
+          if [ "$ZONE_COUNT" = "0" ]; then
+            echo "::error::Token is valid but cannot find the 'rlly.cloud' zone. Ensure the zone is in the same Cloudflare account and the token includes 'Zone → Read' for rlly.cloud."
+            exit 1
+          fi
+          echo "✅ rlly.cloud zone is accessible."
+
+          # Verify account matches zone
+          ZONE_ACCT=$(echo "$Z_BODY" | jq -r '.result[0].account.id // empty')
+          if [ "$ZONE_ACCT" != "$ACCT" ]; then
+            echo "::error::CLOUDFLARE_ACCOUNT_ID ($ACCT) does not match the rlly.cloud zone owner ($ZONE_ACCT)."
+            exit 1
+          fi
+          echo "✅ Account ID matches rlly.cloud zone owner."
+
       - name: Deploy Worker (rlly-share-unfurl)
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: cloudflare-worker
+
 
       - name: Verify unfurl against rlly.cloud
         run: |
