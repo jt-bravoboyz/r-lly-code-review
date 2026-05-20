@@ -194,9 +194,15 @@ export default function JoinRally() {
       if (ref) {
         localStorage.setItem('rally-referrer-id', ref);
       }
-      navigate('/auth');
+      // Contextual auth landing: pass intent + event title so /auth can
+      // render "Sign in to claim your spot in {title}".
+      const authParams = new URLSearchParams({ intent: 'join' });
+      if (event?.title) authParams.set('title', event.title);
+      if (ref) authParams.set('r', ref);
+      navigate(`/auth?${authParams.toString()}`);
       return;
     }
+
 
     if (!event) return;
 
