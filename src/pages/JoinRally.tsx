@@ -26,6 +26,7 @@ interface EventPreview {
   is_quick_rally: boolean;
   invite_code: string;
   cover_charge: number;
+  invite_code_expires_at: string | null;
   creator: {
     id: string;
     display_name: string | null;
@@ -45,6 +46,7 @@ export default function JoinRally() {
   const [joining, setJoining] = useState(false);
   const [alreadyJoined, setAlreadyJoined] = useState(false);
   const [isPending, setIsPending] = useState(false);
+  const [isExpired, setIsExpired] = useState(false);
   const [showSafetyChoice, setShowSafetyChoice] = useState(false);
   const [showRidesSelection, setShowRidesSelection] = useState(false);
   const [joinedEventId, setJoinedEventId] = useState<string | null>(null);
