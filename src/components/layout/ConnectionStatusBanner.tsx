@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { WifiOff, Wifi, CloudUpload } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { subscribeQueueCount, drainPaymentQueue } from '@/lib/paymentQueue';
+import { addNetworkListener, isOnlineSync } from '@/lib/nativeNetwork';
 
 /**
  * Global connection status banner.
@@ -9,32 +10,32 @@ import { subscribeQueueCount, drainPaymentQueue } from '@/lib/paymentQueue';
  * - Shows a brief success bar when connection is restored, then auto-hides.
  * - Surfaces queued offline payment count and offers a manual retry.
  * Mounted once in App.tsx so it overlays every route.
+ *
+ * Uses @/lib/nativeNetwork so WKWebView reports network status via
+ * @capacitor/network instead of the unreliable navigator.onLine.
  */
 export function ConnectionStatusBanner() {
-  const [isOnline, setIsOnline] = useState(
-    typeof navigator !== 'undefined' ? navigator.onLine : true
-  );
+  const [isOnline, setIsOnline] = useState(isOnlineSync());
   const [showRecovered, setShowRecovered] = useState(false);
   const [queued, setQueued] = useState(0);
   const [draining, setDraining] = useState(false);
 
   useEffect(() => {
-    const handleOnline = () => {
-      setIsOnline(true);
-      setShowRecovered(true);
-      const t = setTimeout(() => setShowRecovered(false), 2500);
-      return () => clearTimeout(t);
-    };
-    const handleOffline = () => {
-      setIsOnline(false);
-      setShowRecovered(false);
-    };
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
+    let recoveredTimer: ReturnType<typeof setTimeout> | null = null;
+    const unsubscribe = addNetworkListener((connected) => {
+      if (connected) {
+        setIsOnline(true);
+        setShowRecovered(true);
+        if (recoveredTimer) clearTimeout(recoveredTimer);
+        recoveredTimer = setTimeout(() => setShowRecovered(false), 2500);
+      } else {
+        setIsOnline(false);
+        setShowRecovered(false);
+      }
+    });
     return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
+      unsubscribe();
+      if (recoveredTimer) clearTimeout(recoveredTimer);
     };
   }, []);
 

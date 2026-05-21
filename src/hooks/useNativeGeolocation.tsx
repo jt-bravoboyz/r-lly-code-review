@@ -188,7 +188,13 @@ export function useNativeGeolocation(
         setHasPermissions(granted);
         return granted;
       } else {
-        // Web - permissions are requested on first use
+        // Web - permissions are requested on first use.
+        // Extra safety guard: never fall back to the WKWebView geolocation
+        // prompt on native (uses the wrong NSLocationUsageDescription).
+        if (Capacitor.isNativePlatform() || typeof navigator === 'undefined' || !navigator.geolocation) {
+          setHasPermissions(false);
+          return false;
+        }
         return new Promise((resolve) => {
           navigator.geolocation.getCurrentPosition(
             () => {
@@ -328,6 +334,10 @@ export function useNativeGeolocation(
           pos.timestamp
         );
       } else {
+        if (Capacitor.isNativePlatform() || typeof navigator === 'undefined' || !navigator.geolocation) {
+          setError('Geolocation unavailable');
+          return null;
+        }
         return new Promise((resolve, reject) => {
           navigator.geolocation.getCurrentPosition(
             (pos) => {
@@ -393,7 +403,11 @@ export function useNativeGeolocation(
         
         watchIdRef.current = id;
       } else {
-        // Web fallback
+        // Web fallback — guarded so a native build can never fall through.
+        if (Capacitor.isNativePlatform() || typeof navigator === 'undefined' || !navigator.geolocation) {
+          setError('Geolocation unavailable');
+          return;
+        }
         const id = navigator.geolocation.watchPosition(
           (pos) => {
             processPosition(pos.coords as any, pos.timestamp);
@@ -426,7 +440,9 @@ export function useNativeGeolocation(
     }
     
     if (!isNative && webWatchIdRef.current !== null) {
-      navigator.geolocation.clearWatch(webWatchIdRef.current);
+      if (typeof navigator !== 'undefined' && navigator.geolocation) {
+        navigator.geolocation.clearWatch(webWatchIdRef.current);
+      }
       webWatchIdRef.current = null;
     }
     

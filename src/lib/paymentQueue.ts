@@ -8,6 +8,7 @@
  * same charge).
  */
 import { supabase } from '@/integrations/supabase/client';
+import { isOnlineSync, addNetworkListener } from '@/lib/nativeNetwork';
 
 const DB_NAME = 'rally-payments';
 const STORE = 'queued-pays';
@@ -103,7 +104,7 @@ async function removeQueued(id: number | undefined): Promise<void> {
 let draining = false;
 
 export async function drainPaymentQueue(): Promise<{ ok: number; failed: number }> {
-  if (draining || typeof navigator !== 'undefined' && !navigator.onLine) {
+  if (draining || !isOnlineSync()) {
     return { ok: 0, failed: 0 };
   }
   draining = true;
@@ -146,9 +147,11 @@ export function subscribeQueueCount(listener: Listener): () => void {
   return () => { listeners.delete(listener); };
 }
 
-// Auto-drain on online + on load
+// Auto-drain on connection-restored + shortly after load.
+// Uses @capacitor/network on native (WKWebView's navigator.onLine is unreliable).
 if (typeof window !== 'undefined') {
-  window.addEventListener('online', () => { drainPaymentQueue(); });
-  // Drain shortly after load in case items survived from a previous session.
-  setTimeout(() => { if (navigator.onLine) drainPaymentQueue(); }, 1500);
+  addNetworkListener((connected) => {
+    if (connected) drainPaymentQueue();
+  });
+  setTimeout(() => { if (isOnlineSync()) drainPaymentQueue(); }, 1500);
 }

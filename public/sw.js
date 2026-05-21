@@ -1,4 +1,20 @@
 // R@lly Service Worker for Push Notifications and Offline Support
+// Native Capacitor builds must NEVER register or run this worker — push is
+// handled by @capacitor/push-notifications and offline by @capacitor/network.
+// Belt-and-braces: bail out at install time if somehow loaded inside WKWebView.
+if (
+  typeof self !== 'undefined' &&
+  self.navigator &&
+  /Capacitor|CapacitorWebView/i.test(self.navigator.userAgent || '')
+) {
+  self.addEventListener('install', (e) => e.waitUntil(self.skipWaiting()));
+  self.addEventListener('activate', (e) => e.waitUntil(self.registration.unregister()));
+  // Stop loading the rest of the worker.
+  // eslint-disable-next-line no-throw-literal
+  throw 'Capacitor native build — service worker disabled.';
+}
+
+
 
 const CACHE_NAME = 'rally-cache-v5';
 const OFFLINE_URL = '/';

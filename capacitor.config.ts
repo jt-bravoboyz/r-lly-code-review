@@ -17,6 +17,27 @@ const config: CapacitorConfig = {
       cleartext: true,
     }
   } : {}),
+  plugins: {
+    SplashScreen: {
+      // We hide the splash programmatically once auth resolves
+      // (see src/lib/nativeBootstrap.ts) to prevent a white flash.
+      launchAutoHide: false,
+      backgroundColor: '#0F172A',
+      showSpinner: false,
+    },
+    StatusBar: {
+      style: 'DARK',
+      backgroundColor: '#0F172A',
+      overlaysWebView: true,
+    },
+    Keyboard: {
+      resize: 'native',
+      resizeOnFullScreen: true,
+    },
+    PushNotifications: {
+      presentationOptions: ['badge', 'sound', 'alert'],
+    },
+  },
 };
 
 export default config;

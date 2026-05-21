@@ -103,7 +103,8 @@ export function PaySplitShareDialog({ open, onOpenChange, requestId, profileId, 
       // Offline-first: if the user lost connectivity right as they tap pay,
       // enqueue the payment instead of failing hard. ConnectionStatusBanner
       // will surface the queue and auto-drain on reconnect.
-      if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      const { isOnline: checkOnline } = await import('@/lib/nativeNetwork');
+      if (!(await checkOnline())) {
         const { enqueuePayment } = await import('@/lib/paymentQueue');
         await enqueuePayment(payBody, 'offline');
         toast.success("You're offline — we'll send this the moment you reconnect.");
