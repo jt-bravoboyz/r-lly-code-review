@@ -192,7 +192,7 @@ const Documentation = () => {
     }
   }, [user, loading, navigate]);
 
-  const copyToClipboard = (text: string, name: string) => {
+  const handleCopy = (text: string, name: string) => {
     copyToClipboard(text);
     toast.success(`${name} copied to clipboard!`);
   };
