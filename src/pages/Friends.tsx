@@ -108,7 +108,7 @@ export default function Friends() {
   };
 
   return (
-    <div className="min-h-[100dvh] bg-gradient-to-b from-background to-muted/30 pb-24">
+    <div className="min-h-[100dvh] bg-gradient-to-b from-background to-muted/30 pb-bottom-nav">
       <div
         className="sticky top-0 z-30 backdrop-blur-xl bg-background/70 border-b border-border/40"
         style={{ paddingTop: 'max(env(safe-area-inset-top), 0.5rem)' }}

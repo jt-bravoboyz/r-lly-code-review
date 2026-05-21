@@ -59,7 +59,7 @@ export default function Achievements() {
   const earnedBadges = badges.filter(b => b.isEarned);
 
   return (
-    <div className="min-h-[100dvh] pb-24 bg-background">
+    <div className="min-h-[100dvh] pb-bottom-nav bg-background">
       <Header title="Badges & Ranks" />
       
       <main className="container py-6 space-y-6">

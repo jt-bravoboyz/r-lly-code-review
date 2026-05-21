@@ -185,7 +185,7 @@ export default function Settings() {
   };
 
   return (
-    <div className="min-h-[100dvh] pb-28 bg-gradient-to-b from-secondary/30 via-background to-secondary/20 relative overflow-hidden">
+    <div className="min-h-[100dvh] pb-bottom-nav bg-gradient-to-b from-secondary/30 via-background to-secondary/20 relative overflow-hidden">
       {/* Background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 -right-20 w-60 h-60 bg-primary/5 rounded-full blur-3xl animate-pulse" />

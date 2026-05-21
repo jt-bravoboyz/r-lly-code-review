@@ -136,7 +136,7 @@ export default function Notifications() {
   }
 
   return (
-    <div className="min-h-[100dvh] pb-24 bg-background relative overflow-hidden">
+    <div className="min-h-[100dvh] pb-bottom-nav bg-background relative overflow-hidden">
       {/* Ambient Background Orbs */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-1/4 -right-20 w-72 h-72 rounded-full bg-primary/[0.04] blur-3xl animate-orb-float" />

@@ -1999,6 +1999,8 @@
    ======================================================================== */
 .safe-top    { padding-top: max(env(safe-area-inset-top), 1rem); }
 .safe-bottom { padding-bottom: max(env(safe-area-inset-bottom), 1rem); }
+/* Reserve space for the docked BottomNav (h-16 / 4rem) + safe-area + breathing room. */
+.pb-bottom-nav { padding-bottom: calc(4rem + env(safe-area-inset-bottom) + 1rem); }
 .safe-x {
   padding-left: env(safe-area-inset-left);
   padding-right: env(safe-area-inset-right);
