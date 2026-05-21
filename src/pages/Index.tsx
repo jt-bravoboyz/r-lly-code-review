@@ -8,7 +8,7 @@ import { BottomNav } from '@/components/layout/BottomNav';
 import { EventCard } from '@/components/events/EventCard';
 import { CreateEventDialog } from '@/components/events/CreateEventDialog';
 import { PendingInvites } from '@/components/events/PendingInvites';
-import { PWAInstallPrompt } from '@/components/pwa/PWAInstallPrompt';
+
 import { QuickRallyDialog } from '@/components/events/QuickRallyDialog';
 import { useAuth } from '@/hooks/useAuth';
 import { useMyEvents } from '@/hooks/useMyEvents';
@@ -74,15 +74,14 @@ export default function Index() {
   const userInitials = userName.slice(0, 2).toUpperCase();
 
   return (
-    <div className="min-h-[100dvh] pb-28 bg-transparent relative overflow-hidden">
+    <div className="min-h-[100dvh] pb-bottom-nav bg-transparent relative overflow-hidden">
       {/* Living background orbs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-40 -right-20 w-72 h-72 bg-primary/10 rounded-full blur-[80px] animate-orb-float" />
         <div className="absolute top-1/3 -left-20 w-96 h-96 bg-primary/8 rounded-full blur-[100px] animate-orb-float-reverse" />
         <div className="absolute bottom-60 right-10 w-48 h-48 bg-primary/6 rounded-full blur-[60px] animate-orb-float" style={{ animationDelay: '-3s' }} />
       </div>
-      {/* PWA Install Prompt */}
-      <PWAInstallPrompt />
+      
       
       {/* Name setup for Apple/OAuth users */}
       <IdentitySetupDialog />
@@ -266,6 +265,12 @@ export default function Index() {
               <History className="h-5 w-5 text-muted-foreground" />
               <h3 className="text-xl font-bold font-montserrat animate-text-shimmer bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">Past R@llies</h3>
             </div>
+            <Button variant="ghost" size="sm" asChild className="text-primary hover:text-primary/80 font-bold font-montserrat hover:bg-primary/10">
+              <Link to="/rallies/past" className="flex items-center gap-1">
+                See All
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
             </div>
 
             <div className="space-y-4 opacity-80">
