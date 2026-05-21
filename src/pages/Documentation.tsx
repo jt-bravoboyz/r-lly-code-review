@@ -273,7 +273,7 @@ const Documentation = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => copyToClipboard(appWorkflowChart, "App Workflow")}
+                    onClick={() => handleCopy(appWorkflowChart, "App Workflow")}
                     className="flex-1"
                   >
                     <Copy className="h-4 w-4 mr-2" />
@@ -309,7 +309,7 @@ const Documentation = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => copyToClipboard(featureFunctionsChart, "Feature Functions")}
+                    onClick={() => handleCopy(featureFunctionsChart, "Feature Functions")}
                     className="flex-1"
                   >
                     <Copy className="h-4 w-4 mr-2" />
