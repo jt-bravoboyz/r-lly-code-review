@@ -23,3 +23,26 @@ export async function openExternalLink(url: string) {
   }
   window.open(url, '_blank', 'noopener,noreferrer');
 }
+
+/**
+ * Open a maps / directions URL.
+ * - Native (Capacitor): in-app Safari View Controller — the user can
+ *   then tap through to Apple/Google Maps.
+ * - Mobile web: same-window navigation so iOS / Android can hand off
+ *   the universal link to the installed Maps app.
+ * - Desktop web: new tab.
+ */
+export function openDirectionsLink(url: string) {
+  if (Capacitor.isNativePlatform()) {
+    void Browser.open({ url });
+    return;
+  }
+  const isMobile =
+    /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ||
+    window.matchMedia('(pointer: coarse)').matches;
+  if (isMobile) {
+    window.location.href = url;
+  } else {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }
+}
