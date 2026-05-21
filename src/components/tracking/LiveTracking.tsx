@@ -9,6 +9,7 @@ import { useLocationContext } from '@/contexts/LocationContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { TrackingSettings } from './TrackingSettings';
+import { openDirectionsLink } from '@/lib/nativeLinks';
 
 interface LiveTrackingProps {
   eventId: string;
@@ -113,16 +114,9 @@ export function LiveTracking({ eventId, destination, isLive }: LiveTrackingProps
       url += `&origin=${currentPosition.lat},${currentPosition.lng}`;
     }
 
-    const isMobile =
-      /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ||
-      window.matchMedia('(pointer: coarse)').matches;
-
-    if (isMobile) {
-      window.location.href = url;
-    } else {
-      window.open(url, '_blank', 'noopener,noreferrer');
-    }
+    openDirectionsLink(url);
   };
+
 
   const getBatteryIcon = () => {
     if (batteryInfo.charging) return <BatteryCharging className="h-3 w-3 text-green-500" />;

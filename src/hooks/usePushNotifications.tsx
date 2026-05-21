@@ -1,7 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
+import { Capacitor } from '@capacitor/core';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+
+// TODO(native-push): On Capacitor native we currently no-op. Wire up
+// @capacitor/push-notifications (APNs/FCM) in a follow-up so native
+// devices can register a device token instead of a web PushSubscription.
+
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
@@ -26,8 +32,14 @@ export function usePushNotifications() {
   const [vapidPublicKey, setVapidPublicKey] = useState<string | null>(null);
 
   useEffect(() => {
+    // Capacitor WKWebView ignores web push / service workers — gate them off.
+    if (Capacitor.isNativePlatform()) {
+      setIsSupported(false);
+      return;
+    }
     setIsSupported('serviceWorker' in navigator && 'PushManager' in window);
   }, []);
+
 
   // Get VAPID public key - prefer environment variable (no network call)
   useEffect(() => {
@@ -67,6 +79,9 @@ export function usePushNotifications() {
   }, [isSupported]);
 
   const registerServiceWorker = useCallback(async () => {
+    if (Capacitor.isNativePlatform()) {
+      throw new Error('Service workers are not used on native — see TODO(native-push).');
+    }
     if (!('serviceWorker' in navigator)) {
       throw new Error('Service workers not supported');
     }
@@ -75,6 +90,7 @@ export function usePushNotifications() {
     if (import.meta.env.DEV) console.log('Service Worker registered:', registration);
     return registration;
   }, []);
+
 
   const subscribe = useCallback(async () => {
     if (!profile?.id) {

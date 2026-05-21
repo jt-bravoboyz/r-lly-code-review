@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { getPublicName } from '@/lib/identity';
 import { MiniFounderGem } from '@/components/badges/MiniFounderGem';
 import { PUBLIC_APP_URL } from '@/lib/appUrl';
+import { openProtocolLink } from '@/lib/nativeLinks';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -117,7 +118,7 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
     const message = encodeURIComponent(
       `Yo! I'm getting the squad together on R@lly. Use my link to join the inner circle: ${inviteLink}`
     );
-    window.open(`sms:${phone}?body=${message}`, '_blank');
+    openProtocolLink(`sms:${phone}?body=${message}`);
   };
 
   const handleFriendAction = async (targetProfileId: string) => {
@@ -578,7 +579,7 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
                                   else if (contact.email) {
                                     const referralParam = profile?.id ? `?r=${profile.id}` : '';
                                     const inviteLink = `${PUBLIC_APP_URL}${referralParam}`;
-                                    window.open(`mailto:${contact.email}?subject=${encodeURIComponent("Join me on R@lly!")}&body=${encodeURIComponent(`Yo! I'm getting the squad together on R@lly. Use my link to join the inner circle: ${inviteLink}`)}`, '_blank');
+                                    openProtocolLink(`mailto:${contact.email}?subject=${encodeURIComponent("Join me on R@lly!")}&body=${encodeURIComponent(`Yo! I'm getting the squad together on R@lly. Use my link to join the inner circle: ${inviteLink}`)}`);
                                   }
                                 }}
                               >

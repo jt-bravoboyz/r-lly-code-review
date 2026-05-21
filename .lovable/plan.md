@@ -1,68 +1,77 @@
-## R@lly iOS pre-launch fix pack
+# Native iOS Build Hardening
 
-Six fixes — all presentation/integration layer, no schema changes.
+Three surgical changes so the codebase behaves correctly inside the Capacitor WKWebView shell we'll ship to Xcode / TestFlight.
 
-### 1. Remove "Install R@lly" home-screen popup
-Inside a native iOS build the PWA install banner is meaningless. Remove it.
+## 1. Guard the Service Worker (push notifications)
 
-- Find the `<PWAInstallPrompt />` mount (likely `Index.tsx` / `AppEntry.tsx`) and delete the import + render.
-- Optionally guard the component so it never renders inside Capacitor: `if (Capacitor.isNativePlatform()) return null;` — belt and suspenders.
+**File:** `src/hooks/usePushNotifications.tsx`
 
-### 2. Bottom nav covering content
-Today `BottomNav` floats (`fixed bottom-4 left-4 right-4 rounded-2xl`, `h-16`) and pages use ad-hoc `pb-28`. Content still gets clipped on several screens.
+- Import `Capacitor` from `@capacitor/core`.
+- Compute `isNative = Capacitor.isNativePlatform()` once.
+- Set `isSupported` to `false` whenever `isNative` is true — this short-circuits every effect that touches `navigator.serviceWorker` / `PushManager`.
+- Wrap the `navigator.serviceWorker.register('/sw.js')` call in `registerServiceWorker()` with a `if (isNative) throw new Error('Use Capacitor Push on native')` early return guard.
+- Add a `// TODO(native-push):` comment noting that native APNs registration via `@capacitor/push-notifications` will be wired up in a follow-up task (out of scope here — per the audit, that's its own work item).
 
-Fix:
-- Dock it flush: change to `bottom-0 left-0 right-0 rounded-none border-t border-border/60`, keep the safe-area-inset-bottom padding so the iPhone home indicator is respected.
-- Add a single `pb-bottom-nav` utility in `index.css` resolving to `calc(4rem + env(safe-area-inset-bottom) + 1rem)`.
-- Replace ad-hoc `pb-24` / `pb-28` on main scroll containers (`Index`, `Events`, `Notifications`, `Squads`, `Profile`, `Achievements`, `SplitCheckHome`, `EventDetail`) with `pb-bottom-nav`.
+Result: on iOS the SW never registers, no VAPID fetch fires, and the in-app `Enable Notifications` toggle simply reports unsupported until native push is wired.
 
-Predictable, no auto-hide jank, matches native iOS tab-bar behavior.
+## 2. Remove residual PWA install banner + contact-sync warning
 
-### 3. Past R@llies archive
-No dedicated "all past R@llies" view today.
+**Files to delete (no remaining importers — verified via ripgrep):**
+- `src/components/pwa/PWAInstallPrompt.tsx`
+- `src/hooks/usePWAInstall.tsx`
 
-- New route `/rallies/past` → new page `src/pages/PastRallies.tsx`.
-- Reuses `useMyEvents`; filters status `completed` or `ended`, sorted newest first.
-- Row: title, date, location, attendee count, tap → `/events/:id` (already shows recap/gallery for past events).
-- Entry points: "See all" link in the Home Past section header + a "View past R@llies" link on the Profile screen under the stats row.
-- Empty state: "No R@llies in the books yet. Your story starts at the next one."
+(The `PWAInstallPrompt` component is already unmounted from `App.tsx`; we're just removing the dead source so the `beforeinstallprompt` listener can never re-attach if someone re-imports the hook later.)
 
-### 4. Invite previews showing raw code instead of the flyer image
-Shared invite links are rendering as a code blob in iMessage/WhatsApp/etc instead of the themed flyer image. Two known causes to fix:
+**Contact-sync warning copy** — `src/components/contacts/AddPeopleSheet.tsx`:
+- Delete the "Apple disclaimer" `<p>` block (lines ~248–251): *"Apple limits contact syncing on web apps. Type any name or number above to send an invite link manually."*
+- In `handleNativeContacts()`, remove the web-only `toast.info('Apple restricts direct contact access in browsers…')` fallback (lines ~149–152). On native we go through the Capacitor Contacts permission sheet; on web we fall through silently to the Import Options (VCF / Paste / CSV) that are already visible right below.
 
-- **Crawler routing**: confirm every share link is built via `buildRallyShareUrl` / `buildTabShareUrl` (memory: Themed Flyer Engine). Audit `usePhoneInvites`, `ContactInviteDialog`, `SquadInviteDialog`, `PaySplitShareDialog`, recap share buttons. Any place still hand-building a URL gets swapped.
-- **OG headers on the share-preview function**: re-check `supabase/functions/share-preview/index.ts` returns proper `Content-Type: text/html`, `og:image` absolute URL (must be `https://rlly.cloud/...`), `og:image:width/height`, `twitter:card = summary_large_image`, and a 200 (not 302) when the user-agent is a crawler (facebookexternalhint, WhatsApp, Twitterbot, iMessagebot, Slackbot, LinkedInBot, Discordbot). If the function is currently 302-redirecting crawlers to the app, that's why iMessage shows the code blob — fix by serving the OG HTML inline.
-- **Render check**: run `scripts/check-share-preview.mjs` against a sample event + tab URL after the fix to confirm `og:image` resolves and `render-event-og-image` returns a real PNG.
+## 3. Native-safe URL handlers
 
-### 5. Share links must use rlly.cloud (no `*.lovable.app` / `*.lovableproject.com`)
-Memory already says this, but links are leaking the long Lovable preview host.
+Add a tiny shared helper so every call site behaves correctly under Capacitor.
 
-- Audit `src/lib/appUrl.ts` / `src/lib/shareUrls.ts` — `PUBLIC_APP_URL` must always resolve to `https://rlly.cloud` for any share/invite/recap/tab URL, regardless of `window.location.origin`. Don't fall back to `window.location.origin` for share-bound URLs.
-- Sweep for hard-coded preview hosts: `rg -n 'lovableproject\.com|lovable\.app|id-preview'` and replace any share-link construction with the helpers.
-- SMS invite copy (`usePhoneInvites`, `invite-sms-delivery-logic`) must use `rlly.cloud` deep-link only.
+**New file:** `src/lib/nativeLinks.ts`
 
-### 6. Native contacts + native SMS for invites (App Store-ready)
-Today's invite flow uses web Contact Picker / paste / CSV. For the iOS build we want true native pickers.
+```ts
+import { Capacitor } from '@capacitor/core';
+import { Browser } from '@capacitor/browser';
 
-- Install `@capacitor-community/contacts` and `@capacitor/share` (already may be partial). Add Info.plist usage strings via `scripts/ios-setup.sh`:
-  - `NSContactsUsageDescription`: "R@lly uses your contacts so you can invite friends to your R@llies."
-- Extend `usePhoneContacts` with a Capacitor branch:
-  - If `Capacitor.isNativePlatform()`, request `Contacts.requestPermissions()`, then `Contacts.getContacts({ projection: { name: true, phones: true, emails: true } })`.
-  - Else fall back to existing web behavior (`navigator.contacts` / paste / CSV).
-- Add a "Invite via Text" path in `ContactInviteDialog`:
-  - Native: open the iOS Messages composer pre-filled with the R@lly Remix template (memory: Invite UX and Voice). Use `sms:` URL scheme — `sms:&body=...` on iOS — wrapped in an anchor tap (works inside WKWebView). For batched recipients, `sms:/open?addresses=+1...,+1...&body=...` (iOS supports `?` not `&` as the first separator — memory: Invite SMS Delivery Logic already encodes this correctly; reuse that helper).
-  - Web fallback: existing share-sheet / `navigator.share` path stays.
-- Permission denied: show a soft dialog explaining how to enable contacts access in Settings, with a "Try paste instead" CTA.
-- Privacy: contacts are read in-memory only, never persisted to the DB unless the user explicitly taps "R@lly" on a name (existing behavior).
+// sms:, mailto:, tel: → always same-window navigation (works on web + native)
+export function openProtocolLink(url: string) {
+  window.location.href = url;
+}
 
-### Technical notes / order of work
-1. (5) `appUrl.ts` + share helpers — single source of truth for `rlly.cloud`.
-2. (4) Share-preview function + invite call sites — confirms the flyer image renders.
-3. (1) Remove PWA banner.
-4. (2) Dock the bottom nav + standardize padding.
-5. (3) Past R@llies page + entry points.
-6. (6) Capacitor Contacts plugin + native SMS path + Info.plist strings.
+// External https/http → Capacitor Browser (in-app Safari) on native,
+// new tab on web.
+export async function openExternalLink(url: string) {
+  if (Capacitor.isNativePlatform()) {
+    await Browser.open({ url });
+  } else {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }
+}
+```
 
-After all changes: `npm run build && npx cap sync ios`, then reopen Xcode.
+**Install dependency:** `@capacitor/browser` (matched to Capacitor 8).
 
-Nothing in this plan touches DB schema, RLS, or auth — all presentation / integration layer.
+**Refactor these call sites to use the helpers:**
+
+| File | Current call | Replacement |
+|---|---|---|
+| `src/hooks/usePhoneInvites.tsx` (`openSMSInvite`) | `window.open(smsUrl, '_blank')` | `openProtocolLink(smsUrl)` |
+| `src/components/squads/ContactsTab.tsx` (SMS button ~L120) | `window.open(\`sms:…\`, '_blank')` | `openProtocolLink(\`sms:…\`)` |
+| `src/components/squads/ContactsTab.tsx` (mailto ~L581) | `window.open(\`mailto:…\`, '_blank')` | `openProtocolLink(\`mailto:…\`)` |
+| `src/components/squads/SquadInviteDialog.tsx` (mailto ~L110) | `window.open(\`mailto:…\`, '_blank')` | `openProtocolLink(...)` |
+| `src/components/squads/SquadInviteDialog.tsx` (sms ~L120) | `window.open(smsUrl, '_blank')` | `openProtocolLink(smsUrl)` |
+| `src/components/rides/RideshareDrawer.tsx` (~L62) | `window.open(url, '_blank', 'noopener,noreferrer')` | `await openExternalLink(url)` (https Uber/Apple Maps/Google Maps fallback; the existing `window.location.href = url` branch for mobile UA already covers `lyft://` deep links) |
+
+Other `window.open` sites flagged in the audit (`mapStyles.ts`, `LiveTracking.tsx`, `TurnByTurnNav.tsx`) are all external `https:` map links and will also be migrated to `openExternalLink` in the same pass for consistency.
+
+## Out of scope (separate tickets)
+
+- Swapping web push (VAPID) for `@capacitor/push-notifications` (APNs).
+- Replacing `useOfflineQueue` Background Sync with an in-app retry queue.
+- Installing `@capacitor/status-bar`, `@capacitor/splash-screen`, `@capacitor/keyboard`.
+- Viewport meta cleanup (`maximum-scale=1`).
+
+These were called out in the earlier audit and will be addressed in follow-up passes so this PR stays focused and reviewable.

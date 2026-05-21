@@ -1,4 +1,5 @@
 import mapboxgl from 'mapbox-gl';
+import { openDirectionsLink } from '@/lib/nativeLinks';
 
 /**
  * R@lly brand color tokens for map overrides.
@@ -131,13 +132,7 @@ export function applyRallyMapOverrides(
  * Desktop → new tab via window.open
  */
 export function openDirections(url: string) {
-  const isMobile =
-    /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ||
-    window.matchMedia('(pointer: coarse)').matches;
-
-  if (isMobile) {
-    window.location.href = url;
-  } else {
-    window.open(url, '_blank', 'noopener,noreferrer');
-  }
+  // Delegates to the shared native-aware helper so Capacitor builds open
+  // the link in an in-app Safari view instead of a blank WKWebView window.
+  openDirectionsLink(url);
 }

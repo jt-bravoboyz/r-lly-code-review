@@ -146,10 +146,9 @@ export function AddPeopleSheet() {
         return;
       }
 
-      toast.info(
-        'Apple restricts direct contact access in browsers. Use Contact Card import, Quick Paste, or CSV below!',
-        { duration: 5000 }
-      );
+      // Web fallback: no direct contact API — user can still use the
+      // Import Options (VCF / Quick Paste / CSV) shown below.
+
     } catch (err: any) {
       if (err.message?.includes('cancelled')) {
         // User cancelled — no error
@@ -245,10 +244,8 @@ export function AddPeopleSheet() {
             </button>
           )}
 
-          {/* iOS disclaimer */}
-          <p className="text-xs text-muted-foreground text-center px-2">
-            Apple limits contact syncing on web apps. Type any name or number above to send an invite link manually.
-          </p>
+
+
 
           {/* Collapsed Import Options */}
           <Collapsible open={importOpen} onOpenChange={setImportOpen}>
