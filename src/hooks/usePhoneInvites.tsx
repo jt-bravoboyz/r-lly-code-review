@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { normalizePhoneNumber } from './usePhoneContacts';
 import { buildRallyShareUrl } from '@/lib/shareUrls';
+import { openProtocolLink } from '@/lib/nativeLinks';
 
 
 export interface PhoneInvite {
@@ -132,8 +133,9 @@ export function openSMSInvite(
 
   // Use sms: protocol to open native SMS app
   const smsUrl = `sms:${phoneNumber}?body=${message}`;
-  window.open(smsUrl, '_blank');
+  openProtocolLink(smsUrl);
 }
+
 
 
 // Claim phone invites when user signs up (call after auth)

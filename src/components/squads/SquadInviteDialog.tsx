@@ -107,7 +107,7 @@ export function SquadInviteDialog({ squadId, squadName, trigger }: SquadInviteDi
           `Or use invite code: ${data.invite_code}\n\n` +
           `See you there! 🎉`
         );
-        window.open(`mailto:${contactValue}?subject=${subject}&body=${body}`, '_blank');
+        openProtocolLink(`mailto:${contactValue}?subject=${subject}&body=${body}`);
         toast.success('Email opened! Send it to invite your friend.');
       } else {
         const message = encodeURIComponent(
@@ -117,7 +117,7 @@ export function SquadInviteDialog({ squadId, squadName, trigger }: SquadInviteDi
         const smsUrl = /iPhone|iPad|iPod/i.test(navigator.userAgent)
           ? `sms:${cleanPhone}&body=${message}`
           : `sms:${cleanPhone}?body=${message}`;
-        window.open(smsUrl, '_blank');
+        openProtocolLink(smsUrl);
         toast.success('SMS opened! Send it to invite your friend.');
       }
 
