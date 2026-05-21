@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import * as nativeGeo from '@/lib/nativeGeo';
 import { MapPin, Loader2, X, Home, Building, Star, Utensils, Edit2, Heart, Briefcase, BookmarkPlus } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -88,8 +89,8 @@ export function LocationSearch({
 
   // Get user's current location for proximity bias
   useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
+    if (nativeGeo.isGeolocationAvailable()) {
+      nativeGeo.getCurrentPosition(
         (position) => {
           setUserLocation({
             lat: position.coords.latitude,

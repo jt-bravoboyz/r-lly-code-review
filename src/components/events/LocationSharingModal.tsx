@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import * as nativeGeo from '@/lib/nativeGeo';
 import { MapPin, Shield, Loader2, Settings, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -54,7 +55,7 @@ export function LocationSharingModal({
     setIsLoading(true);
     setDenied(false);
     try {
-      if (!navigator.geolocation) {
+      if (!nativeGeo.isGeolocationAvailable()) {
         await markPromptShown(false);
         toast.info("No worries—you can turn it on later in the Rally.", { icon: '📍' });
         onComplete();
@@ -65,7 +66,7 @@ export function LocationSharingModal({
 
       try {
         await new Promise<void>((resolve, reject) => {
-          navigator.geolocation.getCurrentPosition(
+          nativeGeo.getCurrentPosition(
             () => { permissionGranted = true; resolve(); },
             (err) => {
               if (err.code === 1) {
