@@ -14,6 +14,7 @@ import { TutorialOverlay } from "@/components/tutorial/TutorialOverlay";
 import { RallyOnboardingOverlay } from "@/components/onboarding/RallyOnboardingOverlay";
 import { AuthRedirectGuard } from "@/components/AuthRedirectGuard";
 import { AppEntry } from "@/components/AppEntry";
+import { NativeBootstrap } from "@/components/NativeBootstrap";
 import { PhotoPermissionDialog } from "@/components/events/PhotoPermissionDialog";
 import { PublicProfileProvider } from "@/contexts/PublicProfileContext";
 import { ConnectionStatusBanner } from "@/components/layout/ConnectionStatusBanner";
@@ -59,6 +60,7 @@ const App = () => (
                 <NavigationPortal />
                 <PhotoPermissionDialog />
                 <BrowserRouter>
+                  <NativeBootstrap />
                   <RallyOnboardingOverlay />
                   <AuthRedirectGuard />
                   <TutorialProvider>
