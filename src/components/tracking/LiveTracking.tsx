@@ -113,16 +113,9 @@ export function LiveTracking({ eventId, destination, isLive }: LiveTrackingProps
       url += `&origin=${currentPosition.lat},${currentPosition.lng}`;
     }
 
-    const isMobile =
-      /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ||
-      window.matchMedia('(pointer: coarse)').matches;
-
-    if (isMobile) {
-      window.location.href = url;
-    } else {
-      window.open(url, '_blank', 'noopener,noreferrer');
-    }
+    openDirectionsLink(url);
   };
+
 
   const getBatteryIcon = () => {
     if (batteryInfo.charging) return <BatteryCharging className="h-3 w-3 text-green-500" />;

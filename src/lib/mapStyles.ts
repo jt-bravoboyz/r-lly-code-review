@@ -1,4 +1,5 @@
 import mapboxgl from 'mapbox-gl';
+import { openDirectionsLink } from '@/lib/nativeLinks';
 
 /**
  * R@lly brand color tokens for map overrides.
