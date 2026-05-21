@@ -1,77 +1,75 @@
-# Native iOS Build Hardening
+## Native iOS Readiness — Remaining Adjustments
 
-Three surgical changes so the codebase behaves correctly inside the Capacitor WKWebView shell we'll ship to Xcode / TestFlight.
+After last pass, most device APIs are guarded. Here is what is **still web-shaped** and what to change. Everything below preserves the live web build via `Capacitor.isNativePlatform()` guards.
 
-## 1. Guard the Service Worker (push notifications)
+---
 
-**File:** `src/hooks/usePushNotifications.tsx`
+### 🔴 Will misbehave inside WKWebView
 
-- Import `Capacitor` from `@capacitor/core`.
-- Compute `isNative = Capacitor.isNativePlatform()` once.
-- Set `isSupported` to `false` whenever `isNative` is true — this short-circuits every effect that touches `navigator.serviceWorker` / `PushManager`.
-- Wrap the `navigator.serviceWorker.register('/sw.js')` call in `registerServiceWorker()` with a `if (isNative) throw new Error('Use Capacitor Push on native')` early return guard.
-- Add a `// TODO(native-push):` comment noting that native APNs registration via `@capacitor/push-notifications` will be wired up in a follow-up task (out of scope here — per the audit, that's its own work item).
+**1. `usePushNotifications.tsx` still touches web push paths on native**
+Even though `isSupported` should be false on native, lines 85, 96, 156, 202 still reference `navigator.serviceWorker.ready` / `register('/sw.js')`. Need an explicit early-return on `Capacitor.isNativePlatform()` at the top of `subscribe()`, `registerServiceWorker()`, and `unsubscribe()` so a stray call from a future component can't trigger the web flow on iOS.
 
-Result: on iOS the SW never registers, no VAPID fetch fires, and the in-app `Enable Notifications` toggle simply reports unsupported until native push is wired.
+**2. `useNativeGeolocation.tsx` falls back to `navigator.geolocation` inside the *native* hook**
+Lines 193, 332, 397, 429 use the browser API as a fallback. That's fine on web, but the branches need a `!Capacitor.isNativePlatform()` guard so a Capacitor plugin failure can't accidentally fall through to the WKWebView geolocation prompt (which uses the wrong NSLocationUsageDescription string).
 
-## 2. Remove residual PWA install banner + contact-sync warning
+**3. `useOfflineQueue.tsx` — Background Sync still referenced**
+Lines 74 and 122 read `'sync' in navigator.serviceWorker`. Line 122 already has `!isNative()` but line 74 does not. Wrap both.
 
-**Files to delete (no remaining importers — verified via ripgrep):**
-- `src/components/pwa/PWAInstallPrompt.tsx`
-- `src/hooks/usePWAInstall.tsx`
+**4. `paymentQueue.ts` + `PaySplitShareDialog.tsx` rely on `navigator.onLine`**
+`navigator.onLine` is unreliable in WKWebView (often stuck on `true` after airplane mode toggles). Switch the native path to `@capacitor/network`'s `Network.getStatus()` / `addListener('networkStatusChange')`. Web path keeps `navigator.onLine`.
 
-(The `PWAInstallPrompt` component is already unmounted from `App.tsx`; we're just removing the dead source so the `beforeinstallprompt` listener can never re-attach if someone re-imports the hook later.)
+**5. `ConnectionStatusBanner.tsx`** — same `navigator.onLine` issue. Subscribe to `Network` plugin on native.
 
-**Contact-sync warning copy** — `src/components/contacts/AddPeopleSheet.tsx`:
-- Delete the "Apple disclaimer" `<p>` block (lines ~248–251): *"Apple limits contact syncing on web apps. Type any name or number above to send an invite link manually."*
-- In `handleNativeContacts()`, remove the web-only `toast.info('Apple restricts direct contact access in browsers…')` fallback (lines ~149–152). On native we go through the Capacitor Contacts permission sheet; on web we fall through silently to the Import Options (VCF / Paste / CSV) that are already visible right below.
+---
 
-## 3. Native-safe URL handlers
+### 🟠 Capacitor plugin config missing
 
-Add a tiny shared helper so every call site behaves correctly under Capacitor.
-
-**New file:** `src/lib/nativeLinks.ts`
-
+**6. `capacitor.config.ts` declares no plugin options.** Recommend adding:
 ```ts
-import { Capacitor } from '@capacitor/core';
-import { Browser } from '@capacitor/browser';
-
-// sms:, mailto:, tel: → always same-window navigation (works on web + native)
-export function openProtocolLink(url: string) {
-  window.location.href = url;
-}
-
-// External https/http → Capacitor Browser (in-app Safari) on native,
-// new tab on web.
-export async function openExternalLink(url: string) {
-  if (Capacitor.isNativePlatform()) {
-    await Browser.open({ url });
-  } else {
-    window.open(url, '_blank', 'noopener,noreferrer');
-  }
+plugins: {
+  SplashScreen: { launchAutoHide: false, backgroundColor: '#0F172A' },
+  StatusBar: { style: 'DARK', overlaysWebView: true },
+  Keyboard: { resize: 'native', resizeOnFullScreen: true },
+  PushNotifications: { presentationOptions: ['badge', 'sound', 'alert'] },
 }
 ```
+Without these, the iOS splash flashes white before `NativeBootstrap` hides it, the status bar bg won't match the dark theme, and incoming push notifications show no banner while app is foregrounded.
 
-**Install dependency:** `@capacitor/browser` (matched to Capacitor 8).
+**7. Universal Links entitlement reminder (no code change)**
+`nativeBootstrap` already routes `rlly.cloud/join/:code` via `appUrlOpen`. For iOS to *receive* those events instead of bouncing to Safari, the Xcode project needs the Associated Domains entitlement (`applinks:rlly.cloud`) + the AASA file at `https://rlly.cloud/.well-known/apple-app-site-association`. Will flag this in the README, no code edit needed.
 
-**Refactor these call sites to use the helpers:**
+---
 
-| File | Current call | Replacement |
-|---|---|---|
-| `src/hooks/usePhoneInvites.tsx` (`openSMSInvite`) | `window.open(smsUrl, '_blank')` | `openProtocolLink(smsUrl)` |
-| `src/components/squads/ContactsTab.tsx` (SMS button ~L120) | `window.open(\`sms:…\`, '_blank')` | `openProtocolLink(\`sms:…\`)` |
-| `src/components/squads/ContactsTab.tsx` (mailto ~L581) | `window.open(\`mailto:…\`, '_blank')` | `openProtocolLink(\`mailto:…\`)` |
-| `src/components/squads/SquadInviteDialog.tsx` (mailto ~L110) | `window.open(\`mailto:…\`, '_blank')` | `openProtocolLink(...)` |
-| `src/components/squads/SquadInviteDialog.tsx` (sms ~L120) | `window.open(smsUrl, '_blank')` | `openProtocolLink(smsUrl)` |
-| `src/components/rides/RideshareDrawer.tsx` (~L62) | `window.open(url, '_blank', 'noopener,noreferrer')` | `await openExternalLink(url)` (https Uber/Apple Maps/Google Maps fallback; the existing `window.location.href = url` branch for mobile UA already covers `lyft://` deep links) |
+### 🟡 Polish (nice-to-have, non-blocking)
 
-Other `window.open` sites flagged in the audit (`mapStyles.ts`, `LiveTracking.tsx`, `TurnByTurnNav.tsx`) are all external `https:` map links and will also be migrated to `openExternalLink` in the same pass for consistency.
+**8. `index.html` viewport** — already cleaned of `maximum-scale=1`. ✅
+**9. Service worker file `public/sw.js`** — keep shipping it for the web PWA, but verify the kill-switch behavior so it never registers when `navigator.userAgent` matches `Capacitor/iOS`. Currently safe (only `usePushNotifications` registers it, and that hook is guarded), but a one-line guard inside `sw.js`'s `install` is cheap insurance.
+**10. `localStorage` is fine in WKWebView** but is wiped if the user clears app storage from iOS Settings → R@lly. The auth-related keys (founding member slot, dismissed invite IDs, join codes) should be mirrored to `@capacitor/preferences` on native for durability. Optional — flag only.
 
-## Out of scope (separate tickets)
+---
 
-- Swapping web push (VAPID) for `@capacitor/push-notifications` (APNs).
-- Replacing `useOfflineQueue` Background Sync with an in-app retry queue.
-- Installing `@capacitor/status-bar`, `@capacitor/splash-screen`, `@capacitor/keyboard`.
-- Viewport meta cleanup (`maximum-scale=1`).
+### Files to change
 
-These were called out in the earlier audit and will be addressed in follow-up passes so this PR stays focused and reviewable.
+```
+src/hooks/usePushNotifications.tsx     — add native short-circuits
+src/hooks/useNativeGeolocation.tsx     — guard web fallback branches
+src/hooks/useOfflineQueue.tsx          — guard line 74 sync check
+src/lib/paymentQueue.ts                — Network plugin on native
+src/components/payments/PaySplitShareDialog.tsx — Network plugin on native
+src/components/layout/ConnectionStatusBanner.tsx — Network plugin on native
+capacitor.config.ts                    — add plugins{} block
+public/sw.js                           — Capacitor UA early return (1 line)
+```
+
+No web-build behavior changes. All edits are inside `if (Capacitor.isNativePlatform())` branches or additive plugin config.
+
+---
+
+### Suggested execution order
+
+1. Capacitor config (#6) — instant polish, zero risk
+2. Push + geo + offline guards (#1, #2, #3) — close the last WKWebView leaks
+3. Network plugin migration (#4, #5) — single helper, three call-sites
+4. SW + preferences polish (#9, #10) — last mile
+
+Approve and I'll execute in that order in a single pass.
