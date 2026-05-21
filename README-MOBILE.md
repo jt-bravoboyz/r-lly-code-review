@@ -46,12 +46,14 @@ No need to re-run `cap add` or touch Xcode unless you change native config.
 
 ## Dev vs Production build
 
-`capacitor.config.ts` automatically picks the right mode:
+By default, `capacitor.config.ts` builds a **self-contained native app** that loads the bundled `dist/` web assets. This is what you want for Xcode, TestFlight, and the App Store.
 
 | Command | Behavior |
 |---|---|
-| `npm run build` | Self-contained native app. Use for App Store / TestFlight. |
-| `npm run build:dev` | Keeps live hot-reload from the Lovable sandbox while you iterate. |
+| `npm run build && npx cap sync ios` | Self-contained native app. **Use this for Xcode / TestFlight / App Store.** |
+| `CAP_LIVE_RELOAD=1 npx cap sync ios` | Opt-in: points the native shell at the Lovable sandbox for hot-reload while iterating. |
+
+> ⚠️ If Xcode opens your app and it shows the Lovable website instead of R@lly, you either ran `cap sync` with `CAP_LIVE_RELOAD=1` set, or you have an old `ios/App/App/capacitor.config.json` from before this change. Delete `ios/App/App/capacitor.config.json`, then re-run `npm run build && npx cap sync ios`.
 
 ## iOS Permissions
 
