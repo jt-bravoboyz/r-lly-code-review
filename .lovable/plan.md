@@ -1,58 +1,68 @@
-## The problem
+## R@lly iOS pre-launch fix pack
 
-When you run `npx cap sync ios` and then open Xcode, the app launches and just shows the Lovable preview website instead of your real native app.
+Six fixes — all presentation/integration layer, no schema changes.
 
-**Root cause:** `capacitor.config.ts` currently injects `server.url = https://...lovableproject.com` whenever `NODE_ENV !== 'production'`. On your Mac, `NODE_ENV` is almost never set to `production` during `npx cap sync`, so that dev server URL gets baked into `ios/App/App/capacitor.config.json`. iOS then loads the Lovable website instead of the local bundled web app.
+### 1. Remove "Install R@lly" home-screen popup
+Inside a native iOS build the PWA install banner is meaningless. Remove it.
 
-This is the "live hot-reload from Lovable" behavior — useful for quick prototyping, wrong for a real native app.
+- Find the `<PWAInstallPrompt />` mount (likely `Index.tsx` / `AppEntry.tsx`) and delete the import + render.
+- Optionally guard the component so it never renders inside Capacitor: `if (Capacitor.isNativePlatform()) return null;` — belt and suspenders.
 
-## The fix (1 file)
+### 2. Bottom nav covering content
+Today `BottomNav` floats (`fixed bottom-4 left-4 right-4 rounded-2xl`, `h-16`) and pages use ad-hoc `pb-28`. Content still gets clipped on several screens.
 
-Flip the logic in `capacitor.config.ts` so it defaults to **native/self-contained** and only points at the Lovable sandbox when you explicitly opt in with `CAP_LIVE_RELOAD=1`.
+Fix:
+- Dock it flush: change to `bottom-0 left-0 right-0 rounded-none border-t border-border/60`, keep the safe-area-inset-bottom padding so the iPhone home indicator is respected.
+- Add a single `pb-bottom-nav` utility in `index.css` resolving to `calc(4rem + env(safe-area-inset-bottom) + 1rem)`.
+- Replace ad-hoc `pb-24` / `pb-28` on main scroll containers (`Index`, `Events`, `Notifications`, `Squads`, `Profile`, `Achievements`, `SplitCheckHome`, `EventDetail`) with `pb-bottom-nav`.
 
-```ts
-// capacitor.config.ts
-import type { CapacitorConfig } from '@capacitor/cli';
+Predictable, no auto-hide jank, matches native iOS tab-bar behavior.
 
-const useLovableLiveReload = process.env.CAP_LIVE_RELOAD === '1';
+### 3. Past R@llies archive
+No dedicated "all past R@llies" view today.
 
-const config: CapacitorConfig = {
-  appId: 'app.lovable.30a08aa7cdeb4250a60c0605f836113c',
-  appName: 'R@lly',
-  webDir: 'dist',
-  ...(useLovableLiveReload ? {
-    server: {
-      androidScheme: 'https',
-      url: 'https://30a08aa7-cdeb-4250-a60c-0605f836113c.lovableproject.com?forceHideBadge=true',
-      cleartext: true,
-    }
-  } : {}),
-};
+- New route `/rallies/past` → new page `src/pages/PastRallies.tsx`.
+- Reuses `useMyEvents`; filters status `completed` or `ended`, sorted newest first.
+- Row: title, date, location, attendee count, tap → `/events/:id` (already shows recap/gallery for past events).
+- Entry points: "See all" link in the Home Past section header + a "View past R@llies" link on the Profile screen under the stats row.
+- Empty state: "No R@llies in the books yet. Your story starts at the next one."
 
-export default config;
-```
+### 4. Invite previews showing raw code instead of the flyer image
+Shared invite links are rendering as a code blob in iMessage/WhatsApp/etc instead of the themed flyer image. Two known causes to fix:
 
-Result:
-- `npm run build && npx cap sync ios` → self-contained native app loading your bundled `dist/` files. This is what you want for Xcode / TestFlight / App Store.
-- `CAP_LIVE_RELOAD=1 npx cap sync ios` → opt-in live reload from the Lovable sandbox (only if you ever want it).
+- **Crawler routing**: confirm every share link is built via `buildRallyShareUrl` / `buildTabShareUrl` (memory: Themed Flyer Engine). Audit `usePhoneInvites`, `ContactInviteDialog`, `SquadInviteDialog`, `PaySplitShareDialog`, recap share buttons. Any place still hand-building a URL gets swapped.
+- **OG headers on the share-preview function**: re-check `supabase/functions/share-preview/index.ts` returns proper `Content-Type: text/html`, `og:image` absolute URL (must be `https://rlly.cloud/...`), `og:image:width/height`, `twitter:card = summary_large_image`, and a 200 (not 302) when the user-agent is a crawler (facebookexternalhint, WhatsApp, Twitterbot, iMessagebot, Slackbot, LinkedInBot, Discordbot). If the function is currently 302-redirecting crawlers to the app, that's why iMessage shows the code blob — fix by serving the OG HTML inline.
+- **Render check**: run `scripts/check-share-preview.mjs` against a sample event + tab URL after the fix to confirm `og:image` resolves and `render-event-og-image` returns a real PNG.
 
-## What you do on your Mac after I push this
+### 5. Share links must use rlly.cloud (no `*.lovable.app` / `*.lovableproject.com`)
+Memory already says this, but links are leaking the long Lovable preview host.
 
-```bash
-git pull
-npm install
-npm run build
-npx cap sync ios          # now writes a clean capacitor.config.json (no server.url)
-npx cap open ios
-```
+- Audit `src/lib/appUrl.ts` / `src/lib/shareUrls.ts` — `PUBLIC_APP_URL` must always resolve to `https://rlly.cloud` for any share/invite/recap/tab URL, regardless of `window.location.origin`. Don't fall back to `window.location.origin` for share-bound URLs.
+- Sweep for hard-coded preview hosts: `rg -n 'lovableproject\.com|lovable\.app|id-preview'` and replace any share-link construction with the helpers.
+- SMS invite copy (`usePhoneInvites`, `invite-sms-delivery-logic`) must use `rlly.cloud` deep-link only.
 
-In Xcode hit ▶︎ Run. The app will boot into your real R@lly UI, not the Lovable website.
+### 6. Native contacts + native SMS for invites (App Store-ready)
+Today's invite flow uses web Contact Picker / paste / CSV. For the iOS build we want true native pickers.
 
-If you've already opened the project once and want to be 100% sure there's no leftover dev URL, you can also delete `ios/App/App/capacitor.config.json` before re-running `npx cap sync ios` — `sync` will regenerate it fresh.
+- Install `@capacitor-community/contacts` and `@capacitor/share` (already may be partial). Add Info.plist usage strings via `scripts/ios-setup.sh`:
+  - `NSContactsUsageDescription`: "R@lly uses your contacts so you can invite friends to your R@llies."
+- Extend `usePhoneContacts` with a Capacitor branch:
+  - If `Capacitor.isNativePlatform()`, request `Contacts.requestPermissions()`, then `Contacts.getContacts({ projection: { name: true, phones: true, emails: true } })`.
+  - Else fall back to existing web behavior (`navigator.contacts` / paste / CSV).
+- Add a "Invite via Text" path in `ContactInviteDialog`:
+  - Native: open the iOS Messages composer pre-filled with the R@lly Remix template (memory: Invite UX and Voice). Use `sms:` URL scheme — `sms:&body=...` on iOS — wrapped in an anchor tap (works inside WKWebView). For batched recipients, `sms:/open?addresses=+1...,+1...&body=...` (iOS supports `?` not `&` as the first separator — memory: Invite SMS Delivery Logic already encodes this correctly; reuse that helper).
+  - Web fallback: existing share-sheet / `navigator.share` path stays.
+- Permission denied: show a soft dialog explaining how to enable contacts access in Settings, with a "Try paste instead" CTA.
+- Privacy: contacts are read in-memory only, never persisted to the DB unless the user explicitly taps "R@lly" on a name (existing behavior).
 
-## Files changed
+### Technical notes / order of work
+1. (5) `appUrl.ts` + share helpers — single source of truth for `rlly.cloud`.
+2. (4) Share-preview function + invite call sites — confirms the flyer image renders.
+3. (1) Remove PWA banner.
+4. (2) Dock the bottom nav + standardize padding.
+5. (3) Past R@llies page + entry points.
+6. (6) Capacitor Contacts plugin + native SMS path + Info.plist strings.
 
-- `capacitor.config.ts` — invert the dev-server condition as above.
-- `README-MOBILE.md` — update the "Dev vs Production build" section to reflect the new `CAP_LIVE_RELOAD=1` opt-in (instead of the old `NODE_ENV` behavior).
+After all changes: `npm run build && npx cap sync ios`, then reopen Xcode.
 
-No other code, no native changes, no Supabase changes.
+Nothing in this plan touches DB schema, RLS, or auth — all presentation / integration layer.
