@@ -1,76 +1,41 @@
-# Export R@lly to Xcode (iOS)
+# Capture screenshots of all R@lly feature screens
 
-Good news: your project is **already wired for Capacitor** (`capacitor.config.ts` present, `@capacitor/ios` installed, appId `app.lovable.30a08aa7cdeb4250a60c0605f836113c`, appName `R@lly`). No code changes are needed — this is a one-time setup you run on your Mac.
+Walk through the app in the browser sandbox at mobile viewport (390×844) and capture every feature screen I listed earlier, even without a populated R@lly. Most will show empty-state UI, which still demonstrates the layout, header, action bar, and design system.
 
-## What you'll need
-- A **Mac** with **Xcode 15+** installed (from the Mac App Store)
-- **Node.js 20+** and **npm**
-- **CocoaPods** (`sudo gem install cocoapods` if missing)
-- An **Apple Developer account** (free is fine to test on your own device; $99/yr to ship to TestFlight / App Store)
+## What gets captured
 
-## Step 1 — Get the code out of Lovable
-1. In Lovable, top-right **GitHub → Connect to GitHub**, then **Create Repository**.
-2. On your Mac:
-   ```bash
-   git clone https://github.com/<you>/<repo>.git rally
-   cd rally
-   npm install
-   ```
+**Public / pre-auth** (work logged out — re-shoot at mobile size)
+1. Landing
+2. Onboarding 1–3
+3. Sign Up
+4. Sign In
+5. Legal & Policies
 
-## Step 2 — Add the iOS platform
-```bash
-npx cap add ios
-npx cap update ios
-```
-This creates an `ios/` folder containing the native Xcode project.
+**Auth-gated — empty/seed state** (will show login wall if not logged in)
+6. R@lly Feed home (Coming Soon)
+7. Events list
+8. Create Event flow (Apple 2026 sticky form)
+9. Event Detail — hero / dress code / playlist sections
+10. Add People sheet
+11. Squads list + Squad Detail
+12. Ride Logistics panel (inside event)
+13. R@lly Home command dashboard (host view)
+14. Safety Tracker (attendee view)
+15. After R@lly opt-in dialog
+16. Photo gallery + upload
+17. Profile + Payment Method (Coming Soon) + Payout (Coming Soon)
+18. Notifications Command Center
+19. Achievements / Tier Ladder
+20. R@lly Tabs (Coming Soon)
 
-## Step 3 — Build the web app + sync to native
-```bash
-npm run build
-npx cap sync ios
-```
-Run `npm run build && npx cap sync ios` again **any time you pull new changes** from Lovable.
+## How
 
-## Step 4 — Open in Xcode
-```bash
-npx cap open ios
-```
-This opens `ios/App/App.xcworkspace` in Xcode. From there:
-- Select the **App** target → **Signing & Capabilities** → pick your **Team**.
-- Plug in an iPhone (or pick a simulator) at the top, hit ▶︎ **Run**.
+- Browser sandbox, viewport 390×844 (iPhone 14 Pro).
+- For each route: `navigate_to_sandbox` → `screenshot` → save under `/mnt/documents/rally-screens/NN-name.png`.
+- Auth-gated screens that bounce to `/auth` will be captured as-is (showing the redirect/login gate) and flagged in the index.
+- Zip everything into `/mnt/documents/rally-screens.zip` and emit as a `<presentation-artifact>`.
 
-## Step 5 — iOS permissions (required for R@lly features)
-Open `ios/App/App/Info.plist` in Xcode and add usage strings — iOS will crash without these the first time the feature is hit:
+## Heads up
+Without being logged in, **screens 6–20 will mostly show the login redirect, not the actual feature UI**. If you want the real populated screens (DD assignments, attendee grids, live tracking map, photo gallery with photos, etc.), the only way is to log into the preview iframe first — then I can re-run capture for the auth-gated set.
 
-| Key | Why R@lly needs it |
-|---|---|
-| `NSLocationWhenInUseUsageDescription` | R@lly Home tracking, live ride ETAs, event map |
-| `NSLocationAlwaysAndWhenInUseUsageDescription` | Background safety tracking on the way home |
-| `NSContactsUsageDescription` | Invite squad from your contacts |
-| `NSCameraUsageDescription` | Profile + squad photos, R@lly photo gallery |
-| `NSPhotoLibraryUsageDescription` / `NSPhotoLibraryAddUsageDescription` | Upload + save R@lly photos |
-| `NSMotionUsageDescription` | Auto-arrival / compass features |
-| `NSBluetoothAlwaysUsageDescription` | Indoor positioning |
-
-Suggested copy: *"R@lly uses your location to keep your squad safe and confirm everyone made it home."*
-
-## Step 6 — Turn OFF the Lovable dev server for shipping builds
-Your `capacitor.config.ts` already does this automatically — the `server.url` pointing back at the Lovable sandbox is only included when `NODE_ENV !== 'production'`. So:
-- `npm run build` → ships a self-contained native app (correct for App Store / TestFlight).
-- `npm run build:dev` → keeps live hot-reload from Lovable (handy while developing).
-
-## Step 7 — Ship it
-- **Test on your iPhone:** plug in, trust the cert in **Settings → General → VPN & Device Management**, hit Run.
-- **TestFlight / App Store:** in Xcode, **Product → Archive → Distribute App**. You'll need an App Store Connect record at appstoreconnect.apple.com matching bundle ID `app.lovable.30a08aa7cdeb4250a60c0605f836113c` (you can rename this to your own bundle ID before archiving if you prefer, e.g. `com.rally.app`).
-
-## One thing to flag
-The Lovable preview keeps `R@lly` as the appName, but **iOS strips the `@`** from the home-screen label in some locales. If you want the home-screen icon to read exactly "R@lly", set the **CFBundleDisplayName** in `Info.plist` to `R@lly` explicitly.
-
-## Reference
-Full Lovable mobile guide: https://lovable.dev/blog/mobile-development
-
----
-
-Want me to (after you approve this plan and switch to Build):
-1. Add a `README-MOBILE.md` to the repo with these exact commands so it's checked into source, **and/or**
-2. Pre-fill the iOS `Info.plist` permission strings via a small `scripts/ios-setup.sh` so you don't have to edit them by hand in Xcode?
+Approve and I'll start shooting. After login, say the word and I'll re-shoot the gated set with real data.
