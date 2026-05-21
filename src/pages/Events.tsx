@@ -3,7 +3,7 @@ import { RallyFeedComingSoon } from '@/components/events/RallyFeedComingSoon';
 
 export default function Events() {
   return (
-    <div className="relative min-h-[100dvh] overflow-hidden bg-background pb-28">
+    <div className="relative min-h-[100dvh] overflow-hidden bg-background pb-bottom-nav">
       <RallyFeedComingSoon />
       <BottomNav />
     </div>

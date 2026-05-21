@@ -162,7 +162,7 @@ export default function InviteHistory() {
   );
 
   return (
-    <div className="min-h-[100dvh] pb-28 bg-gradient-to-b from-secondary/30 via-background to-secondary/20">
+    <div className="min-h-[100dvh] pb-bottom-nav bg-gradient-to-b from-secondary/30 via-background to-secondary/20">
       <Header title="Invite History" />
 
       <main className="container py-6">
