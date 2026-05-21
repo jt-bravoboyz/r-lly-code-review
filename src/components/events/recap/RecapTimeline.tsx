@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { shareContent, copyToClipboard } from '@/lib/nativeShare';
 import { Camera, Share2, ShieldCheck } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -56,12 +57,12 @@ export function RecapTimeline({
 
   const handleShare = async () => {
     const text = `${closer.emoji} ${closer.title}\n\n"${eventTitle}" R@lly Recap:\n📸 ${stats.photoCount} Photos${videoCount ? ` · 🎞️ ${videoCount} Clips` : ''} | 🔥 ${stats.rogueCount} Rogues | 💬 ${stats.reactionCount} Reactions\n\n${closer.share.toUpperCase()}\n\nPowered by R@lly`;
-    if (navigator.share) {
+    if ((true /* shareContent */)) {
       try {
-        await navigator.share({ title: `${eventTitle} — R@lly Recap`, text, url: buildRallyShareUrl({ eventId }) });
+        await shareContent({ title: `${eventTitle} — R@lly Recap`, text, url: buildRallyShareUrl({ eventId }) });
       } catch { /* cancelled */ }
     } else {
-      await navigator.clipboard.writeText(text);
+      await copyToClipboard(text);
       toast.success('Recap copied to clipboard!');
     }
   };

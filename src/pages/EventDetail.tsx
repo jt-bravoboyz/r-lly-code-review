@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { copyToClipboard } from '@/lib/nativeShare';
 import { getPublicName } from '@/lib/identity';
 
 import { buildRallyShareUrl } from '@/lib/shareUrls';
@@ -604,7 +605,7 @@ export default function EventDetail() {
                     type="button"
                     className="inline-flex items-center gap-1.5 text-xs font-medium pl-2.5 pr-3 py-1.5 rounded-full bg-background/40 backdrop-blur-md border border-white/10 dark:border-black/10 hover:bg-background/55 transition shadow-sm text-foreground"
                     onClick={() => {
-                      navigator.clipboard.writeText(buildRallyShareUrl({ eventId: event.id, inviteCode: event.invite_code }, { referrerId: profile?.id }));
+                      copyToClipboard(buildRallyShareUrl({ eventId: event.id, inviteCode: event.invite_code }, { referrerId: profile?.id }));
                       trackEvent('invite_link_copied', { event_id: event.id });
                       toast.success('Link copied!');
                       setLinkCopied(true);

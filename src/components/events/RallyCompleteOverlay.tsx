@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { shareContent, copyToClipboard } from '@/lib/nativeShare';
 import { useNavigate } from 'react-router-dom';
 import { useConfetti } from '@/hooks/useConfetti';
 import { PartyPopper, Users, Car, ShieldCheck, Share2, UserPlus, UsersRound } from 'lucide-react';
@@ -84,14 +85,14 @@ export function RallyCompleteOverlay({
 
   const handleShareRecap = async () => {
     const text = `${eventTitle} — ${attendeeCount} showed up. Everyone made it home. That's how you R@lly. 🎯`;
-    if (navigator.share) {
+    if ((true /* shareContent */)) {
       try {
-        await navigator.share({ title: 'R@lly Recap', text });
+        await shareContent({ title: 'R@lly Recap', text });
       } catch {
         // User cancelled — no-op
       }
     } else {
-      await navigator.clipboard.writeText(text);
+      await copyToClipboard(text);
       toast.success('Recap copied to clipboard!');
     }
     callDone();

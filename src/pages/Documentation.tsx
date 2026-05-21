@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { copyToClipboard } from '@/lib/nativeShare';
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Header } from "@/components/layout/Header";
@@ -192,7 +193,7 @@ const Documentation = () => {
   }, [user, loading, navigate]);
 
   const copyToClipboard = (text: string, name: string) => {
-    navigator.clipboard.writeText(text);
+    copyToClipboard(text);
     toast.success(`${name} copied to clipboard!`);
   };
 

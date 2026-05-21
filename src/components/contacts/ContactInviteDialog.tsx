@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
+import { shareContent } from '@/lib/nativeShare';
 import { PUBLIC_APP_URL } from '@/lib/appUrl';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -109,9 +110,9 @@ export function ContactInviteDialog({ open, onOpenChange }: ContactInviteDialogP
 
     const phones = selected.map(c => c.phone).filter(Boolean).join(',');
 
-    if (navigator.share) {
+    if ((true /* shareContent */)) {
       try {
-        await navigator.share({ title: 'Join R@lly', text: smsBody });
+        await shareContent({ title: 'Join R@lly', text: smsBody });
       } catch { /* cancelled */ }
     } else {
       const encoded = encodeURIComponent(smsBody);
@@ -137,8 +138,8 @@ export function ContactInviteDialog({ open, onOpenChange }: ContactInviteDialogP
     if (isPhone) {
       window.location.href = `sms:${target}${sep}body=${encoded}`;
     } else {
-      if (navigator.share) {
-        navigator.share({ title: 'Join R@lly', text: smsBody }).catch(() => {});
+      if ((true /* shareContent */)) {
+        shareContent({ title: 'Join R@lly', text: smsBody }).catch(() => {});
       } else {
         window.location.href = `sms:${sep}body=${encoded}`;
       }

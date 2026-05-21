@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { shareContent, copyToClipboard } from '@/lib/nativeShare';
 import { getPublicName } from '@/lib/identity';
 import { PUBLIC_APP_URL } from '@/lib/appUrl';
 import { openProtocolLink } from '@/lib/nativeLinks';
@@ -158,7 +159,7 @@ export function SquadInviteDialog({ squadId, squadName, trigger }: SquadInviteDi
       }
 
       const inviteLink = `${baseUrl}/join-squad/${code}`;
-      await navigator.clipboard.writeText(inviteLink);
+      await copyToClipboard(inviteLink);
       setCopied(true);
       toast.success('Invite link copied!');
       setTimeout(() => setCopied(false), 2000);
@@ -192,14 +193,14 @@ export function SquadInviteDialog({ squadId, squadName, trigger }: SquadInviteDi
 
       const inviteLink = `${baseUrl}/join-squad/${code}`;
 
-      if (navigator.share) {
-        await navigator.share({
+      if ((true /* shareContent */)) {
+        await shareContent({
           title: `Join my squad on R@lly`,
           text: `Join "${squadName}" on R@lly! Use code: ${code}`,
           url: inviteLink,
         });
       } else {
-        await navigator.clipboard.writeText(inviteLink);
+        await copyToClipboard(inviteLink);
         toast.success('Link copied!');
       }
     } catch (error) {
