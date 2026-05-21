@@ -40,6 +40,7 @@ import Unsubscribe from "./pages/Unsubscribe";
 import SplitCheckHome from "./pages/SplitCheckHome";
 import SplitGuestPay from "./pages/SplitGuestPay";
 import Friends from "./pages/Friends";
+import PastRallies from "./pages/PastRallies";
 
 const queryClient = new QueryClient();
 
@@ -90,6 +91,7 @@ const App = () => (
                       <Route path="/tabs" element={<SplitCheckHome />} />
                       <Route path="/tab/pay/:requestId" element={<SplitGuestPay />} />
                       <Route path="/friends" element={<Friends />} />
+                      <Route path="/rallies/past" element={<PastRallies />} />
                       <Route path="*" element={<NotFound />} />
                     </Routes>
                   </TutorialProvider>
