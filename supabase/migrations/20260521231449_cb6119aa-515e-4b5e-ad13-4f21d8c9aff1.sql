@@ -1,0 +1,1 @@
+UPDATE public.events SET flyer_theme = 'tequila_sunset', flyer_og_url = NULL, flyer_og_generated_at = NULL WHERE invite_code = 'E60C41';
