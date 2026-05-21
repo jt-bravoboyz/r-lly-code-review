@@ -10,6 +10,7 @@ import { useAppSettings } from '@/hooks/useAppSettings';
 import { toast } from 'sonner';
 import { escapeHtml } from '@/lib/sanitize';
 import { formatDistance as formatDistanceUtil } from '@/lib/formatDistance';
+import { openDirectionsLink } from '@/lib/nativeLinks';
 interface NavigationTarget {
   profileId: string;
   displayName: string;
@@ -620,14 +621,7 @@ export function TurnByTurnNav({ target, onClose }: TurnByTurnNavProps) {
             className="w-full mt-4"
             onClick={() => {
               const url = `https://www.google.com/maps/dir/?api=1&destination=${target.lat},${target.lng}&travelmode=walking`;
-              const isMobile =
-                /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ||
-                window.matchMedia('(pointer: coarse)').matches;
-              if (isMobile) {
-                window.location.href = url;
-              } else {
-                window.open(url, '_blank', 'noopener,noreferrer');
-              }
+              openDirectionsLink(url);
             }}
           >
             Open in Maps

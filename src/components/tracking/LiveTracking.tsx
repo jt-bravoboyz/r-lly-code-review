@@ -9,6 +9,7 @@ import { useLocationContext } from '@/contexts/LocationContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { TrackingSettings } from './TrackingSettings';
+import { openDirectionsLink } from '@/lib/nativeLinks';
 
 interface LiveTrackingProps {
   eventId: string;
