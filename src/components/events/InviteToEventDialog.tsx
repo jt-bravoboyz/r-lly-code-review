@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { shareContent, copyToClipboard } from '@/lib/nativeShare';
 import { getPublicName } from '@/lib/identity';
 import { buildRallyShareUrl } from '@/lib/shareUrls';
 
@@ -128,23 +129,23 @@ export function InviteToEventDialog({
   );
 
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(shareLink);
+    copyToClipboard(shareLink);
     setCopiedLink(true);
     toast.success('Invite link copied!');
     setTimeout(() => setCopiedLink(false), 1800);
   };
 
   const handleCopyCode = () => {
-    navigator.clipboard.writeText(inviteCode || '');
+    copyToClipboard(inviteCode || '');
     setCopiedCode(true);
     toast.success('Code copied!');
     setTimeout(() => setCopiedCode(false), 1800);
   };
 
   const handleShare = async () => {
-    if (navigator.share) {
+    if ((true /* shareContent */)) {
       try {
-        await navigator.share({
+        await shareContent({
           title: `Join ${eventTitle}`,
           text: `You're locked in for "${eventTitle}". Claim your spot 🔥`,
           url: shareLink,

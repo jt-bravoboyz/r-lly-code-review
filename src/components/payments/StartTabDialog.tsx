@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { copyToClipboard } from '@/lib/nativeShare';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -253,7 +254,7 @@ export function StartTabDialog({ open, onOpenChange, onCreated }: Props) {
   };
 
   const copyLink = async (url: string) => {
-    try { await navigator.clipboard.writeText(url); toast.success('Link copied'); }
+    try { await copyToClipboard(url); toast.success('Link copied'); }
     catch { toast.error('Copy failed'); }
   };
 

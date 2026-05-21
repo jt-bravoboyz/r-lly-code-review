@@ -1,4 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react';
+import * as nativeGeo from '@/lib/nativeGeo';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useMyAttendeeStatus } from './useSafetyStatus';
@@ -93,7 +94,7 @@ export function useAutoArrival({ eventId, eventStatus }: UseAutoArrivalProps) {
   useEffect(() => {
     if (!shouldTrack) {
       if (watchIdRef.current !== null) {
-        navigator.geolocation.clearWatch(watchIdRef.current);
+        nativeGeo.clearWatch(watchIdRef.current);
         watchIdRef.current = null;
       }
       return;
@@ -121,7 +122,7 @@ export function useAutoArrival({ eventId, eventStatus }: UseAutoArrivalProps) {
         console.log('[AutoArrival] Starting location watch for auto-arrival detection');
       }
 
-      watchIdRef.current = navigator.geolocation.watchPosition(
+      watchIdRef.current = nativeGeo.watchPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
           const distance = calculateDistanceMeters(latitude, longitude, destLat, destLng);
@@ -154,7 +155,7 @@ export function useAutoArrival({ eventId, eventStatus }: UseAutoArrivalProps) {
 
     return () => {
       if (watchIdRef.current !== null) {
-        navigator.geolocation.clearWatch(watchIdRef.current);
+        nativeGeo.clearWatch(watchIdRef.current);
         watchIdRef.current = null;
       }
     };

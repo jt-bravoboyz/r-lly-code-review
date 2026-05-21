@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { copyToClipboard } from '@/lib/nativeShare';
 import { supabase } from '@/integrations/supabase/client';
 import { AlertTriangle, Copy } from 'lucide-react';
 import { AdminEmptyState } from './AdminEmptyState';
@@ -35,7 +36,7 @@ export function ErrorLogFeed() {
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
 
   const copyOne = (text: string, idx: number) => {
-    navigator.clipboard.writeText(text);
+    copyToClipboard(text);
     setCopiedIdx(idx);
     toast.success('Error copied');
     setTimeout(() => setCopiedIdx(null), 1500);
@@ -54,7 +55,7 @@ export function ErrorLogFeed() {
         return `[${sev}] ${time}\n${msg}${path ? `\nat ${path}` : ''}${stack ? `\n${stack}` : ''}`;
       })
       .join('\n\n---\n\n');
-    navigator.clipboard.writeText(dump);
+    copyToClipboard(dump);
     toast.success(`Copied ${errors.length} error${errors.length === 1 ? '' : 's'}`);
   };
 

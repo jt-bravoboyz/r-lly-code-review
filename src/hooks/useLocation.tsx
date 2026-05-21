@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import * as nativeGeo from '@/lib/nativeGeo';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 
@@ -19,14 +20,14 @@ export function useLocation() {
   });
 
   const getCurrentLocation = useCallback(() => {
-    if (!navigator.geolocation) {
+    if (!nativeGeo.isGeolocationAvailable()) {
       setLocation(prev => ({ ...prev, error: 'Geolocation not supported' }));
       return;
     }
 
     setLocation(prev => ({ ...prev, loading: true }));
 
-    navigator.geolocation.getCurrentPosition(
+    nativeGeo.getCurrentPosition(
       (position) => {
         setLocation({
           lat: position.coords.latitude,

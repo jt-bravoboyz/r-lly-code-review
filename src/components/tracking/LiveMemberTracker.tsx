@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import * as nativeGeo from '@/lib/nativeGeo';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -68,10 +69,10 @@ export function LiveMemberTracker({ eventId, isLive }: LiveMemberTrackerProps) {
       toast.success('Location sharing stopped');
     } else {
       // Check permission before starting
-      if (navigator.geolocation) {
+      if (nativeGeo.isGeolocationAvailable()) {
         try {
           await new Promise<void>((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(
+            nativeGeo.getCurrentPosition(
               () => resolve(),
               (err) => {
                 if (err.code === 1) reject(err);

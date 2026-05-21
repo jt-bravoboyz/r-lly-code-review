@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
+import { shareContent, copyToClipboard } from '@/lib/nativeShare';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Share2, ChevronRight } from 'lucide-react';
@@ -62,14 +63,14 @@ export function TierUpModal({ isOpen, onClose, tierUpData }: TierUpModalProps) {
     if (!tierUpData?.toTier) return;
     
     // Web Share API or fallback
-    if (navigator.share) {
-      navigator.share({
+    if ((true /* shareContent */)) {
+      shareContent({
         title: 'R@lly Tier Up!',
         text: `I just reached ${tierUpData.toTier.tier_name} tier on R@lly! 🎉`,
       }).catch(() => {});
     } else {
       // Copy to clipboard
-      navigator.clipboard.writeText(
+      copyToClipboard(
         `I just reached ${tierUpData.toTier.tier_name} tier on R@lly! 🎉`
       );
     }

@@ -1,4 +1,5 @@
 import { useEffect, useCallback } from 'react';
+import { Capacitor } from '@capacitor/core';
 
 interface PendingUpdate {
   id?: number;
@@ -11,6 +12,7 @@ interface PendingUpdate {
 
 const DB_NAME = 'rally-offline';
 const STORE_NAME = 'pending-updates';
+const NATIVE_FLUSH_INTERVAL_MS = 30_000;
 
 function openDB(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -26,35 +28,64 @@ function openDB(): Promise<IDBDatabase> {
   });
 }
 
+const isNative = () => Capacitor.isNativePlatform();
+
 export function useOfflineQueue() {
-  // Register for background sync when online
+  // Online → flush. On native we use @capacitor/network + an interval since
+  // Background Sync is not available in WKWebView. On web we keep the
+  // existing Background Sync registration with the manual fallback.
   useEffect(() => {
+    let intervalId: ReturnType<typeof setInterval> | null = null;
+    let removeNativeListener: (() => void) | null = null;
+
+    const flushNow = () => {
+      void syncPendingUpdates();
+    };
+
+    if (isNative()) {
+      // Lazy-load so the web bundle doesn't pull this in.
+      let cancelled = false;
+      (async () => {
+        try {
+          const { Network } = await import('@capacitor/network');
+          if (cancelled) return;
+          const handle = await Network.addListener('networkStatusChange', (status) => {
+            if (status.connected) flushNow();
+          });
+          removeNativeListener = () => {
+            handle.remove().catch(() => {});
+          };
+          const status = await Network.getStatus();
+          if (status.connected) flushNow();
+        } catch (err) {
+          console.warn('Native network listener failed, falling back to interval', err);
+        }
+      })();
+      // Belt-and-braces interval flush so a stuck queue still drains.
+      intervalId = setInterval(flushNow, NATIVE_FLUSH_INTERVAL_MS);
+      return () => {
+        cancelled = true;
+        removeNativeListener?.();
+        if (intervalId) clearInterval(intervalId);
+      };
+    }
+
     const handleOnline = async () => {
       if ('serviceWorker' in navigator && 'sync' in (navigator.serviceWorker as any)) {
         const registration = await navigator.serviceWorker.ready;
         try {
           await (registration as any).sync.register('sync-rally-updates');
-        } catch (error) {
-          if (import.meta.env.DEV) console.log('Background sync not supported');
-          // Fallback: manually sync
-          syncPendingUpdates();
+        } catch {
+          flushNow();
         }
       } else {
-        // No background sync, manually sync
-        syncPendingUpdates();
+        flushNow();
       }
     };
 
     window.addEventListener('online', handleOnline);
-    
-    // Check if we're online and have pending updates
-    if (navigator.onLine) {
-      handleOnline();
-    }
-
-    return () => {
-      window.removeEventListener('online', handleOnline);
-    };
+    if (navigator.onLine) handleOnline();
+    return () => window.removeEventListener('online', handleOnline);
   }, []);
 
   const queueUpdate = useCallback(async (
@@ -64,43 +95,39 @@ export function useOfflineQueue() {
     headers?: Record<string, string>
   ) => {
     if (navigator.onLine) {
-      // Online - send immediately
       const response = await fetch(url, {
         method,
-        headers: {
-          'Content-Type': 'application/json',
-          ...headers,
-        },
+        headers: { 'Content-Type': 'application/json', ...headers },
         body: body ? JSON.stringify(body) : undefined,
       });
       return response;
     }
 
-    // Offline - queue for later
     try {
       const db = await openDB();
       const tx = db.transaction(STORE_NAME, 'readwrite');
       const store = tx.objectStore(STORE_NAME);
-      
+
       const update: PendingUpdate = {
         url,
         method,
-        headers: {
-          'Content-Type': 'application/json',
-          ...headers,
-        },
+        headers: { 'Content-Type': 'application/json', ...headers },
         body: body ? JSON.stringify(body) : '',
         timestamp: Date.now(),
       };
-      
+
       await store.add(update);
-      
-      // Register for background sync
-      if ('serviceWorker' in navigator && 'sync' in (navigator.serviceWorker as any)) {
-        const registration = await navigator.serviceWorker.ready;
-        await (registration as any).sync.register('sync-rally-updates');
+
+      // Only register Background Sync on web; native uses the interval+listener above.
+      if (!isNative() && 'serviceWorker' in navigator && 'sync' in (navigator.serviceWorker as any)) {
+        try {
+          const registration = await navigator.serviceWorker.ready;
+          await (registration as any).sync.register('sync-rally-updates');
+        } catch {
+          /* sync unavailable — interval / online listener will flush */
+        }
       }
-      
+
       return { ok: true, queued: true };
     } catch (error) {
       console.error('Failed to queue update:', error);
@@ -116,12 +143,14 @@ async function syncPendingUpdates() {
     const db = await openDB();
     const tx = db.transaction(STORE_NAME, 'readonly');
     const store = tx.objectStore(STORE_NAME);
-    
+
     const request = store.getAll();
     const updates = await new Promise<PendingUpdate[]>((resolve, reject) => {
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error);
     });
+
+    if (updates.length === 0) return;
 
     for (const update of updates) {
       try {
@@ -132,10 +161,10 @@ async function syncPendingUpdates() {
         });
       } catch (error) {
         console.error('Failed to sync update:', error);
+        return; // keep the queue; we'll retry on next tick / network event
       }
     }
 
-    // Clear synced updates
     const clearTx = db.transaction(STORE_NAME, 'readwrite');
     clearTx.objectStore(STORE_NAME).clear();
   } catch (error) {

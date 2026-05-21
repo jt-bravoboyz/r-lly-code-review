@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
+import * as nativeGeo from '@/lib/nativeGeo';
 import { getPublicName } from '@/lib/identity';
 import { Capacitor } from '@capacitor/core';
 import { supabase } from '@/integrations/supabase/client';
@@ -421,13 +422,13 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
       }).catch(handleError);
     } else {
       // Web fallback using browser geolocation
-      if (!navigator.geolocation) {
+      if (!nativeGeo.isGeolocationAvailable()) {
         console.error('Geolocation not supported');
         return;
       }
 
       // Initial position fetch
-      navigator.geolocation.getCurrentPosition(
+      nativeGeo.getCurrentPosition(
         (position) => handlePositionUpdate({
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
@@ -445,7 +446,7 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
       );
 
       // Set up adaptive watching
-      const id = navigator.geolocation.watchPosition(
+      const id = nativeGeo.watchPosition(
         (position) => handlePositionUpdate({
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
@@ -601,7 +602,7 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
     }
     
     if (watchIdRef.current !== null) {
-      navigator.geolocation.clearWatch(watchIdRef.current);
+      nativeGeo.clearWatch(watchIdRef.current);
       watchIdRef.current = null;
     }
 
@@ -651,7 +652,7 @@ export function LocationProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     return () => {
       if (watchIdRef.current !== null) {
-        navigator.geolocation.clearWatch(watchIdRef.current);
+        nativeGeo.clearWatch(watchIdRef.current);
       }
       if (updateIntervalRef.current) {
         clearInterval(updateIntervalRef.current);

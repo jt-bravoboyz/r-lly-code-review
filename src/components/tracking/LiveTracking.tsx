@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import * as nativeGeo from '@/lib/nativeGeo';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -66,14 +67,14 @@ export function LiveTracking({ eventId, destination, isLive }: LiveTrackingProps
   }, [profile?.id, eventId]); // intentionally exclude deps that would cause loops
 
   const startTracking = async () => {
-    if (!navigator.geolocation) {
+    if (!nativeGeo.isGeolocationAvailable()) {
       toast.error('Geolocation is not supported by your browser');
       return;
     }
 
     try {
       await new Promise<void>((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(
+        nativeGeo.getCurrentPosition(
           () => resolve(),
           (err) => {
             if (err.code === 1) reject(err);

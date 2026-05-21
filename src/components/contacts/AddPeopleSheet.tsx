@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { shareContent } from '@/lib/nativeShare';
 import { PUBLIC_APP_URL } from '@/lib/appUrl';
 import { UserPlus, Smartphone, ClipboardPaste, Upload, FileUp, MessageCircle, ChevronDown, Search, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -74,8 +75,8 @@ export function AddPeopleSheet() {
 
     if (isPhoneQuery) {
       window.location.href = `sms:${target}${sep}body=${encoded}`;
-    } else if (navigator.share) {
-      navigator.share({ title: 'Join R@lly', text: smsBody }).catch(() => {});
+    } else if ((true /* shareContent */)) {
+      shareContent({ title: 'Join R@lly', text: smsBody }).catch(() => {});
     } else {
       window.location.href = `sms:${sep}body=${encoded}`;
     }

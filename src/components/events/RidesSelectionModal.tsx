@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import * as nativeGeo from '@/lib/nativeGeo';
 import { Car, Shield, Navigation, ArrowLeft, Loader2, MapPin, Home, Sparkles, LocateFixed } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -428,12 +429,12 @@ export function RidesSelectionModal({
                     label="Current Location"
                     sublabel="Use your GPS position"
                     onClick={async () => {
-                      if (!navigator.geolocation) {
+                      if (!nativeGeo.isGeolocationAvailable()) {
                         toast.error('Location not available on this device');
                         return;
                       }
                       toast.loading('Getting your location...', { id: 'geo' });
-                      navigator.geolocation.getCurrentPosition(
+                      nativeGeo.getCurrentPosition(
                         async (pos) => {
                           const { latitude, lng } = { latitude: pos.coords.latitude, lng: pos.coords.longitude };
                           setLocationCoords({ lat: latitude, lng });
