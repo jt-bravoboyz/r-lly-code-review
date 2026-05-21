@@ -5,6 +5,8 @@ import { Car, Train, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { trackEvent } from '@/lib/analytics';
+import { openExternalLink } from '@/lib/nativeLinks';
+import { Capacitor } from '@capacitor/core';
 
 interface RideshareDrawerProps {
   open: boolean;
@@ -56,10 +58,16 @@ export function RideshareDrawer({
       trackEvent('rideshare_selected', { provider });
 
       // Open deep link using device-aware navigation
-      if (isMobile()) {
+      // - Native: route https:// links through Capacitor Browser (in-app Safari)
+      //   so they don't open in a blank WKWebView window. App-scheme deep links
+      //   (e.g. lyft://) still need location.href to be handed off to iOS.
+      const isAppScheme = /^[a-z]+:\/\//i.test(url) && !/^https?:\/\//i.test(url);
+      if (Capacitor.isNativePlatform() && !isAppScheme) {
+        await openExternalLink(url);
+      } else if (isMobile()) {
         window.location.href = url;
       } else {
-        window.open(url, '_blank', 'noopener,noreferrer');
+        await openExternalLink(url);
       }
 
       toast.success('Safe travels! 🏠');
