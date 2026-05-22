@@ -204,7 +204,7 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{ fontSize: '16px' }}
-              className="pl-10 h-12 bg-black/[0.04] dark:bg-white/5 border border-black/[0.06] dark:border-white/10 rounded-2xl text-zinc-900 dark:text-white placeholder:text-zinc-500 focus-visible:ring-1 focus-visible:ring-[#F47A19]/40 focus-visible:border-[#F47A19]/40"
+              className="pl-10 h-12 bg-black/[0.04] dark:bg-white/5 border border-black/[0.06] dark:border-white/10 rounded-2xl text-zinc-900 dark:text-white placeholder:text-zinc-500 focus-visible:ring-2 focus-visible:ring-[#F47A19] focus-visible:border-[#F47A19] transition-colors"
             />
           </div>
           <AddPeopleSheet />
