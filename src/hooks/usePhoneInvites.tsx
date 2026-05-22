@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { normalizePhoneNumber } from './usePhoneContacts';
 import { buildRallyShareUrl } from '@/lib/shareUrls';
-import { openProtocolLink } from '@/lib/nativeLinks';
+import { openSms } from '@/lib/nativeLinks';
 
 
 export interface PhoneInvite {

@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { shareContent, copyToClipboard } from '@/lib/nativeShare';
 import { getPublicName } from '@/lib/identity';
 import { PUBLIC_APP_URL } from '@/lib/appUrl';
-import { openProtocolLink } from '@/lib/nativeLinks';
+import { openSms, openMailto } from '@/lib/nativeLinks';
 import { Mail, MessageSquare, Copy, Check, Send, UserPlus, Search, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
