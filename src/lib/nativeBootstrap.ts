@@ -16,11 +16,10 @@ export async function initNativeShell(opts: {
   if (!Capacitor.isNativePlatform()) return;
   initialized = true;
 
-  const [{ StatusBar, Style }, { Keyboard, KeyboardResize }, { SplashScreen }, { App }] =
+  const [{ StatusBar, Style }, { Keyboard, KeyboardResize }, { App }] =
     await Promise.all([
       import('@capacitor/status-bar'),
       import('@capacitor/keyboard'),
-      import('@capacitor/splash-screen'),
       import('@capacitor/app'),
     ]);
 
