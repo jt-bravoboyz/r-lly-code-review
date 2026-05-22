@@ -386,7 +386,7 @@ export function AddPeopleSheet() {
                 value={phoneQuery}
                 onChange={(e) => setPhoneQuery(e.target.value)}
                 style={noZoomInputStyle}
-                className="pl-11 h-14 rounded-2xl bg-white/[0.03] border-white/10 text-base text-white placeholder:text-zinc-600 font-bold focus-visible:ring-1 focus-visible:ring-[#F47A19]/50 focus-visible:border-[#F47A19]/50"
+                className="pl-11 h-14 rounded-2xl bg-black/[0.04] dark:bg-white/[0.03] border-black/[0.06] dark:border-white/10 text-base text-zinc-900 dark:text-white placeholder:text-zinc-500 dark:placeholder:text-zinc-600 font-bold focus-visible:ring-1 focus-visible:ring-[#F47A19]/50 focus-visible:border-[#F47A19]/50"
               />
             </div>
 
