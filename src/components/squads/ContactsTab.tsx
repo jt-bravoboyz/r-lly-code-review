@@ -255,20 +255,20 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
                   return (
                     <div
                       key={result.id}
-                      className="flex items-center gap-3 p-3 rounded-2xl bg-white/[0.02] border border-white/[0.05]"
+                      className="flex items-center gap-3 p-3 rounded-2xl bg-black/[0.03] dark:bg-white/[0.02] border border-black/[0.05] dark:border-white/[0.05]"
                     >
                       <ProfileTapWrapper
                         profileId={result.id}
                         className="flex items-center gap-3 min-w-0 flex-1"
                       >
-                        <Avatar className="h-11 w-11 shrink-0 ring-1 ring-white/10">
+                        <Avatar className="h-11 w-11 shrink-0 ring-1 ring-black/10 dark:ring-white/10">
                           <AvatarImage src={result.avatar_url || undefined} />
                           <AvatarFallback className="bg-[#F47A19]/15 text-[#F47A19] font-black">
                             {result.display_name?.charAt(0)?.toUpperCase() || '?'}
                           </AvatarFallback>
                         </Avatar>
                         <div className="min-w-0 text-left">
-                          <p className="font-bold text-sm text-white truncate">
+                          <p className="font-bold text-sm text-zinc-900 dark:text-white truncate">
                             {result.display_name || 'R@lly Member'}
                           </p>
                           {result.bio && (
