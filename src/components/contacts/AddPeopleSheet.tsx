@@ -235,7 +235,7 @@ export function AddPeopleSheet() {
           <section className="space-y-4">
             <div className="flex items-center gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-[#F47A19] shadow-[0_0_8px_#F47A19]" />
-              <h3 className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.2em] font-montserrat">
+              <h3 className="text-zinc-600 dark:text-zinc-500 text-[10px] font-black uppercase tracking-[0.2em] font-montserrat">
                 R@lly Network
               </h3>
             </div>
