@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { getPublicName } from '@/lib/identity';
 import { MiniFounderGem } from '@/components/badges/MiniFounderGem';
 import { PUBLIC_APP_URL } from '@/lib/appUrl';
-import { openProtocolLink } from '@/lib/nativeLinks';
+import { openSms } from '@/lib/nativeLinks';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -125,17 +125,13 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
     if (name || phone) {
       upsertContacts.mutate([{ name, phone, source: 'invite' }]);
     }
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    const sep = isIOS ? '&' : '?';
-    openProtocolLink(`sms:${phone}${sep}body=${encodeURIComponent(smsBody)}`);
+    openSms(phone, smsBody);
   };
 
   const handleSendSelected = () => {
     const selected = filteredContacts.filter((c) => selectedKeys.has(c.key));
     const phones = selected.map((c) => c.phone).filter(Boolean).join(',');
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    const sep = isIOS ? '&' : '?';
-    openProtocolLink(`sms:${phones}${sep}body=${encodeURIComponent(smsBody)}`);
+    openSms(phones, smsBody);
     toast.success(`Invite opened for ${selected.length} contact${selected.length > 1 ? 's' : ''}`);
     setSelectedKeys(new Set());
   };

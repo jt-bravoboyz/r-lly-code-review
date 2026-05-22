@@ -15,6 +15,7 @@ import { useUserContacts } from '@/hooks/useUserContacts';
 import { useAuth } from '@/hooks/useAuth';
 import { useRallyFriends } from '@/hooks/useRallyFriends';
 import { Capacitor } from '@capacitor/core';
+import { openSms, openMailto } from '@/lib/nativeLinks';
 import { Contacts } from '@capacitor-community/contacts';
 import { toast } from 'sonner';
 import { useUpsertUserContacts } from '@/hooks/useUserContacts';
@@ -62,9 +63,6 @@ export function AddPeopleSheet() {
 
   const handleQuickAdd = () => {
     const target = isPhoneQuery ? digitsOnly : '';
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    const sep = isIOS ? '&' : '?';
-    const encoded = encodeURIComponent(smsBody);
 
     // Smart merge: save contact before opening SMS
     if (trimmed) {
@@ -75,11 +73,9 @@ export function AddPeopleSheet() {
     }
 
     if (isPhoneQuery) {
-      window.location.href = `sms:${target}${sep}body=${encoded}`;
-    } else if ((true /* shareContent */)) {
-      shareContent({ title: 'Join R@lly', text: smsBody }).catch(() => {});
+      openSms(target, smsBody);
     } else {
-      window.location.href = `sms:${sep}body=${encoded}`;
+      shareContent({ title: 'Join R@lly', text: smsBody }).catch(() => {});
     }
     toast(`Invite sent for ${trimmed}!`);
   };
@@ -265,14 +261,9 @@ export function AddPeopleSheet() {
                 }}
                 onInvite={(c) => {
                   if (c.phone) {
-                    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-                    const sep = isIOS ? '&' : '?';
-                    const encoded = encodeURIComponent(smsBody);
-                    window.location.href = `sms:${c.phone}${sep}body=${encoded}`;
+                    openSms(c.phone, smsBody);
                   } else if (c.email) {
-                    const subject = encodeURIComponent('Join me on R@lly!');
-                    const body = encodeURIComponent(smsBody);
-                    window.location.href = `mailto:${c.email}?subject=${subject}&body=${body}`;
+                    openMailto(c.email, { subject: 'Join me on R@lly!', body: smsBody });
                   }
                   toast.success(`Invite opened for ${c.name || c.phone || c.email}!`);
                 }}

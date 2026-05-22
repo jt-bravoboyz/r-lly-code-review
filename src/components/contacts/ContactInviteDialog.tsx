@@ -16,6 +16,7 @@ import { CSVContactImport } from './CSVContactImport';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
+import { openSms } from '@/lib/nativeLinks';
 
 interface ContactInviteDialogProps {
   open: boolean;
@@ -108,16 +109,9 @@ export function ContactInviteDialog({ open, onOpenChange }: ContactInviteDialogP
 
     setIsSending(true);
 
-    const phones = selected.map(c => c.phone).filter(Boolean).join(',');
-
-    if ((true /* shareContent */)) {
-      try {
-        await shareContent({ title: 'Join R@lly', text: smsBody });
-      } catch { /* cancelled */ }
-    } else {
-      const encoded = encodeURIComponent(smsBody);
-      window.location.href = `sms:${phones}?body=${encoded}`;
-    }
+    try {
+      await shareContent({ title: 'Join R@lly', text: smsBody });
+    } catch { /* cancelled */ }
 
     setIsSending(false);
     setSelectedIds(new Set());
@@ -131,18 +125,10 @@ export function ContactInviteDialog({ open, onOpenChange }: ContactInviteDialogP
     const isPhone = digitsOnly.length >= 10;
     const target = isPhone ? digitsOnly : trimmed;
 
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    const sep = isIOS ? '&' : '?';
-    const encoded = encodeURIComponent(smsBody);
-
     if (isPhone) {
-      window.location.href = `sms:${target}${sep}body=${encoded}`;
+      openSms(target, smsBody);
     } else {
-      if ((true /* shareContent */)) {
-        shareContent({ title: 'Join R@lly', text: smsBody }).catch(() => {});
-      } else {
-        window.location.href = `sms:${sep}body=${encoded}`;
-      }
+      shareContent({ title: 'Join R@lly', text: smsBody }).catch(() => {});
     }
     toast(`Invite sent for ${trimmed}!`);
   };
