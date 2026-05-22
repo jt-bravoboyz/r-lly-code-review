@@ -618,10 +618,10 @@ export default function ReturningAuth() {
             New to R@lly?{" "}
             <button 
               onClick={() => {
-                // Clear the account flag and reload to show signup flow
+                // Clear the account flag and route to root to show signup flow
                 localStorage.removeItem('rally-has-account');
                 localStorage.removeItem('rally-onboarding-complete');
-                window.location.href = '/';
+                navigate('/', { replace: true });
               }}
               className="font-semibold hover:underline"
               style={{ color: "#FF6A00" }}
