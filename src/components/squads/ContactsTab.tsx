@@ -234,7 +234,7 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
                   <MessageCircle className="h-5 w-5 text-white" />
                 </div>
                 <div className="text-left flex-1 min-w-0">
-                  <p className="font-black text-sm font-montserrat text-white truncate">
+                  <p className="font-black text-sm font-montserrat text-zinc-900 dark:text-white truncate">
                     {isPhoneQuery ? `R@lly ${trimmed}` : `Invite '${trimmed}' via Text`}
                   </p>
                   <p className="text-[11px] text-zinc-500 font-semibold">
