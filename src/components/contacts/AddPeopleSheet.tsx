@@ -212,16 +212,16 @@ export function AddPeopleSheet() {
 
       <SheetContent
         side="bottom"
-        className="rounded-t-[3rem] h-[92dvh] bg-[#121214] border-t border-white/15 shadow-[0_-20px_60px_-15px_rgba(0,0,0,0.8)] p-0 flex flex-col"
+        className="rounded-t-[3rem] h-[92dvh] bg-white/80 dark:bg-[#121214] backdrop-blur-2xl border-t border-black/[0.08] dark:border-white/15 shadow-[0_-20px_60px_-15px_rgba(0,0,0,0.2)] dark:shadow-[0_-20px_60px_-15px_rgba(0,0,0,0.8)] p-0 flex flex-col"
       >
         {/* Drag handle */}
         <div className="flex justify-center pt-3 shrink-0">
-          <div className="w-12 h-1.5 bg-zinc-800 rounded-full" />
+          <div className="w-12 h-1.5 bg-zinc-300 dark:bg-zinc-800 rounded-full" />
         </div>
 
         {/* Header */}
         <SheetHeader className="px-7 pt-[max(env(safe-area-inset-top),0.5rem)] pb-6 text-left shrink-0">
-          <SheetTitle className="font-montserrat text-white font-black text-3xl tracking-tighter">
+          <SheetTitle className="font-montserrat text-zinc-900 dark:text-white font-black text-3xl tracking-tighter">
             Add People
           </SheetTitle>
           <p className="text-[#F47A19] font-bold text-sm mt-1 font-montserrat">
