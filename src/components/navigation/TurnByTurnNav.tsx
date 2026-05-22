@@ -433,7 +433,7 @@ export function TurnByTurnNav({ target, onClose }: TurnByTurnNavProps) {
 
   if (tokenLoading) {
     return (
-      <div className="fixed inset-0 z-50 bg-background flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-50 bg-background flex items-center justify-center p-4 safe-top safe-bottom">
         <div className="text-center space-y-4">
           <RefreshCw className="h-8 w-8 animate-spin mx-auto text-primary" />
           <p className="text-muted-foreground">Loading navigation...</p>
@@ -444,7 +444,7 @@ export function TurnByTurnNav({ target, onClose }: TurnByTurnNavProps) {
 
   if (!MAPBOX_TOKEN || tokenError) {
     return (
-      <div className="fixed inset-0 z-50 bg-background flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-50 bg-background flex items-center justify-center p-4 safe-top safe-bottom">
         <div className="text-center space-y-4">
           <p className="text-muted-foreground">{tokenError || 'Mapbox token not configured'}</p>
           <Button onClick={onClose}>Close</Button>
@@ -454,7 +454,7 @@ export function TurnByTurnNav({ target, onClose }: TurnByTurnNavProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-background">
+    <div className="fixed inset-0 z-50 bg-background safe-top safe-bottom">
       {/* Proximity pulse overlay */}
       {pulseAlert && (
         <div className="absolute inset-0 z-[60] pointer-events-none animate-pulse">

@@ -140,8 +140,7 @@ export function FindFriendView({ member, onClose }: FindFriendViewProps) {
   return (
     <div className="fixed inset-0 z-50 bg-background">
       {/* Header */}
-      <div className="sticky top-0 bg-background border-b">
-        <div className="h-6" />
+      <div className="sticky top-0 bg-background border-b" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
         <div className="flex items-center gap-3 px-4 py-3">
           <Button variant="ghost" size="icon" onClick={onClose}>
             <ArrowLeft className="h-5 w-5" />

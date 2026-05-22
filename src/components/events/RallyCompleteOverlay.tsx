@@ -105,7 +105,7 @@ export function RallyCompleteOverlay({
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-background/95 backdrop-blur-sm animate-fade-in overflow-y-auto">
+    <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-background/95 backdrop-blur-sm animate-fade-in overflow-y-auto safe-top safe-bottom">
       <div className="flex flex-col items-center gap-6 animate-scale-in max-w-xs w-full px-4 py-8">
         {/* Icon */}
         <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center">

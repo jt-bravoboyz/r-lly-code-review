@@ -26,7 +26,8 @@ export function ImageLightbox({ src, onClose }: Props) {
       onClick={onClose}
     >
       <button
-        className="absolute top-6 right-6 h-10 w-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white"
+        className="absolute right-6 h-10 w-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white"
+        style={{ top: 'max(env(safe-area-inset-top), 1.5rem)' }}
         onClick={onClose}
         aria-label="Close"
       >
