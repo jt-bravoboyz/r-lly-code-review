@@ -633,6 +633,12 @@ export function EventPhotoFeed({ eventId, isHost, eventStatus, eventUpdatedAt }:
                     href={photos[viewerIndex].url}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={(e) => {
+                      if (Capacitor.isNativePlatform()) {
+                        e.preventDefault();
+                        void openExternalLink(photos[viewerIndex].url);
+                      }
+                    }}
                     className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-primary text-primary-foreground text-sm font-medium"
                   >
                     <ExternalLink className="h-4 w-4" />

@@ -59,16 +59,25 @@ export function AttendeeLocationItem({
         <Badge variant="outline" className="text-[10px] bg-green-100 text-green-700 border-green-200">
           {getTimeSinceUpdate()}
         </Badge>
-        {lat && lng && (
-          <a
-            href={`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="p-1.5 rounded-full bg-primary/10 hover:bg-primary/20 transition-colors"
-          >
-            <Navigation className="h-3.5 w-3.5 text-primary" />
-          </a>
-        )}
+        {lat && lng && (() => {
+          const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+          return (
+            <a
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => {
+                if (Capacitor.isNativePlatform()) {
+                  e.preventDefault();
+                  openDirectionsLink(url);
+                }
+              }}
+              className="p-1.5 rounded-full bg-primary/10 hover:bg-primary/20 transition-colors"
+            >
+              <Navigation className="h-3.5 w-3.5 text-primary" />
+            </a>
+          );
+        })()}
       </div>
     </div>
   );

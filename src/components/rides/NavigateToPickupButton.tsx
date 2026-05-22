@@ -1,5 +1,7 @@
 import { Navigation } from 'lucide-react';
 import { toast } from 'sonner';
+import { Capacitor } from '@capacitor/core';
+import { openDirectionsLink } from '@/lib/nativeLinks';
 
 interface NavigateToPickupButtonProps {
   pickupLocation: string;

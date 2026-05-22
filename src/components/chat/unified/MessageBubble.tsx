@@ -110,7 +110,13 @@ export function MessageBubble({
               'underline inline-flex items-center gap-1',
               isOwn ? 'text-white/95' : 'text-primary'
             )}
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (Capacitor.isNativePlatform()) {
+                e.preventDefault();
+                void openExternalLink(part);
+              }
+            }}
           >
             {part.length > 30 ? part.substring(0, 30) + '…' : part}
             <ExternalLink className="h-3 w-3" />

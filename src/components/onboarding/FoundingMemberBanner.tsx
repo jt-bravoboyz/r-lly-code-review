@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { X, MessageSquare, Star } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
+import { openExternalLink } from '@/lib/nativeLinks';
 import { useAuth } from '@/hooks/useAuth';
 
 export function FoundingMemberBanner() {

@@ -246,7 +246,7 @@ const Documentation = () => {
           <CardContent className="text-sm text-muted-foreground space-y-2">
             <p>Copy the Mermaid code and paste it into:</p>
             <ul className="list-disc list-inside space-y-1 ml-2">
-              <li><strong>Mermaid Live Editor:</strong> <a href="https://mermaid.live" target="_blank" rel="noopener noreferrer" className="text-primary underline">mermaid.live</a></li>
+              <li><strong>Mermaid Live Editor:</strong> <a href="https://mermaid.live" target="_blank" rel="noopener noreferrer" onClick={(e) => { if (Capacitor.isNativePlatform()) { e.preventDefault(); void openExternalLink('https://mermaid.live'); } }} className="text-primary underline">mermaid.live</a></li>
               <li><strong>VS Code:</strong> Install "Mermaid Preview" extension</li>
               <li><strong>Notion/Obsidian:</strong> Paste in a code block with "mermaid" language</li>
               <li><strong>GitHub:</strong> Paste in markdown with ```mermaid code fence</li>

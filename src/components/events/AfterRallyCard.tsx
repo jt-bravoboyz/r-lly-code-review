@@ -86,6 +86,12 @@ export function AfterRallyCard({
                 href={directionsUrl}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={(e) => {
+                  if (Capacitor.isNativePlatform()) {
+                    e.preventDefault();
+                    openDirectionsLink(directionsUrl);
+                  }
+                }}
                 className="w-full inline-flex items-center justify-center rounded-md text-sm font-medium h-10 px-4 border border-purple-400/40 text-purple-100 hover:bg-purple-800/50 hover:text-white"
               >
                 <Navigation className="h-4 w-4 mr-2" />
