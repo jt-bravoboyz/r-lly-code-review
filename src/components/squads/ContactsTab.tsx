@@ -283,7 +283,7 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
                         className={cn(
                           'h-8 rounded-full shrink-0 text-[11px] font-black uppercase tracking-wider px-3',
                           isLocked
-                            ? 'bg-white/5 text-zinc-400 hover:bg-white/5'
+                            ? 'bg-black/5 dark:bg-white/5 text-zinc-500 dark:text-zinc-400 hover:bg-black/5 dark:hover:bg-white/5'
                             : 'bg-[#F47A19] text-white hover:bg-[#F47A19]/90 shadow-lg shadow-[#F47A19]/20'
                         )}
                         disabled={
