@@ -257,9 +257,9 @@ export function AddPeopleSheet() {
             <div className="grid grid-cols-2 gap-3">
               <Collapsible open={friendsOpen} onOpenChange={setFriendsOpen}>
                 <CollapsibleTrigger asChild>
-                  <button className="w-full h-16 bg-white/[0.03] border border-white/10 rounded-[1.25rem] flex items-center justify-between px-4 transition-all active:scale-[0.98] active:bg-white/[0.06]">
+                  <button className="w-full h-16 bg-black/[0.04] dark:bg-white/[0.03] border border-black/[0.06] dark:border-white/10 rounded-[1.25rem] flex items-center justify-between px-4 transition-all active:scale-[0.98] active:bg-black/[0.06] dark:active:bg-white/[0.06]">
                     <div className="text-left min-w-0">
-                      <p className="text-white font-black text-sm tracking-tight">
+                      <p className="text-zinc-900 dark:text-white font-black text-sm tracking-tight">
                         Friends
                       </p>
                       <p className="text-[#F47A19] font-black text-[9px] uppercase tracking-tight mt-0.5">
@@ -275,11 +275,11 @@ export function AddPeopleSheet() {
 
               <Collapsible open={discoverOpen} onOpenChange={setDiscoverOpen}>
                 <CollapsibleTrigger asChild>
-                  <button className="w-full h-16 bg-white/[0.03] border border-white/10 rounded-[1.25rem] flex items-center justify-between px-4 transition-all active:scale-[0.98] active:bg-white/[0.06]">
+                  <button className="w-full h-16 bg-black/[0.04] dark:bg-white/[0.03] border border-black/[0.06] dark:border-white/10 rounded-[1.25rem] flex items-center justify-between px-4 transition-all active:scale-[0.98] active:bg-black/[0.06] dark:active:bg-white/[0.06]">
                     <div className="text-left min-w-0 flex items-center gap-2">
                       <Sparkles className="h-4 w-4 text-[#F47A19] shrink-0" />
                       <div>
-                        <p className="text-white font-black text-sm tracking-tight">
+                        <p className="text-zinc-900 dark:text-white font-black text-sm tracking-tight">
                           Discover
                         </p>
                         <p className="text-zinc-500 font-black text-[9px] uppercase tracking-tight mt-0.5">
