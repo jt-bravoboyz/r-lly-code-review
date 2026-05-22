@@ -1,76 +1,115 @@
-# Native Polish Audit — Suggested Cleanups
+# Add People Premium Redesign + Native Polish Pass
 
-Quick scan of the codebase against your native-iOS rules. Nothing here is broken — these are the rough edges most likely to read as "web app" on a phone.
+Two parallel tracks: (1) reskin & restructure `AddPeopleSheet` to match R@lly's premium dark glass aesthetic with two split search bars and collapsible sections; (2) finish the remaining items from the native audit behind `Capacitor.isNativePlatform()` guards so the web build stays untouched.
 
-## High value
+---
 
-### 1. Maps links still hardcode `https://www.google.com/maps/...`
-You have a `nativeLinks` facade and a Mapbox-only policy, but ~14 components still build raw Google Maps URLs. Many do pass them through `openDirections`/`openProtocolLink`, but a few don't:
+## Track 1 — AddPeopleSheet Redesign
 
-- `src/components/tracking/LiveTracking.tsx:107-111` — builds Google Maps URL, opens directly (no facade).
-- `src/components/tracking/AttendeeMap.tsx:100-103` — same.
-- `src/components/rides/RideshareDrawer.tsx:89-90` — branches on iOS via `navigator.userAgent` instead of `Capacitor.getPlatform()`.
+File: `src/components/contacts/AddPeopleSheet.tsx` (full rewrite of body, keep hooks/state surface).
 
-On iOS native, a `https://maps.google.com/...` link in a webview can pop the in-app browser instead of Apple Maps. Suggest: one `openMapsDirections({ lat, lng, label })` helper in `nativeLinks` that emits `maps://` on iOS native, `geo:` on Android native, and the existing Google URL on web. All 14 call sites then collapse to one line.
+### Structure (top → bottom inside the sheet)
 
-### 2. SMS / mailto deep links use `window.location.href`
-`AddPeopleSheet.tsx` (4 spots) and `ContactInviteDialog.tsx` (3 spots) still do `window.location.href = 'sms:...'`. On iOS WKWebView this can blank the page momentarily and the back-swipe gets weird. `nativeLinks.openProtocolLink` already exists — route every `sms:` / `mailto:` through it for consistent behavior.
+```text
+┌─ SheetHeader ────────────────────────────────┐
+│  "Add People"                                │
+│  subtitle: "Pull your crew into the night"   │
+├─ Section 1: R@LLY NETWORK ───────────────────┤
+│  [🔍  Search friends & R@lly members…]       │   ← Search Bar 1
+│  ▸ R@lly Friends (N)            chevron      │   ← Collapsible, closed
+│  ▸ Discover on R@lly             chevron     │   ← ContactSmartSearch, closed
+│  ── Quick-Add row appears here on no-match ──│
+├─ Section 2: YOUR PHONE ──────────────────────┤
+│  [📱  Search phone contacts…]                │   ← Search Bar 2
+│  [ Sync iPhone Contacts ] (native CTA)       │
+│  ▸ From Your Phone (N)          chevron      │   ← Collapsible, closed
+│  (web-only Tabs: VCF / Paste / CSV — hidden  │
+│   entirely when Capacitor.isNativePlatform)  │
+└──────────────────────────────────────────────┘
+   sticky bottom action bar (when selections > 0)
+```
 
-### 3. Fixed overlays missing safe-area padding
-Most of your overlays use `fixed inset-0` without `safe-top`/`safe-bottom`. On iPhones with a notch/Dynamic Island the close button or top header lands under the status bar:
+### Visual language (premium dark)
 
-- `RogueAlertOverlay.tsx`
-- `RallyCompleteOverlay.tsx`
-- `RallyHeroMediaCarousel.tsx` (full-screen viewer)
-- `ImageLightbox.tsx`
-- `TurnByTurnNav.tsx` (3 fixed overlays)
-- `FindFriendView.tsx`
-- `RallyInviteBanner.tsx`, `RallyRidesBanner.tsx`, `LocationSharingBanner.tsx`
-- `ConnectionStatusBanner.tsx` — `fixed top-0` with no `pt-safe`, so on iPhone it overlaps the clock.
+- Sheet container: `bg-background/95 backdrop-blur-2xl border-t border-white/10 rounded-t-3xl` with `pt-safe pb-safe` and inner `px-4`.
+- Section headers: tiny uppercase Montserrat labels in `text-muted-foreground/70`, with a 1px hairline divider above each.
+- Search bars: rounded-2xl, `bg-white/[0.03] border border-white/10`, leading icon in `text-muted-foreground`, focus ring `ring-1 ring-primary/40`.
+- Collapsible triggers: full-width pill rows, `h-12 rounded-2xl bg-white/[0.04] hover:bg-white/[0.07]`, chevron rotates 180° on open, count badge right-aligned in `bg-primary/15 text-primary`.
+- List rows: `rounded-xl px-3 py-2.5` with avatar circle (40px), name in Montserrat 14/600, secondary in 12/400 muted; selected state ring in `--primary` + faint orange wash.
+- Quick-Add: keep the orange accent treatment but upgrade to glass — `bg-primary/12 border border-primary/30 ring-1 ring-primary/20 shadow-[0_4px_24px_-8px_hsl(var(--primary)/0.4)]`.
+- All collapsibles use `data-[state=open]:animate-accordion-down` for smooth expand.
 
-`EventPhotoFeed.tsx` already uses `safe-top safe-bottom` — that's the pattern to copy everywhere.
+### Behavior
 
-### 4. `min-h-screen` on `NotFound.tsx`
-You enforce `100dvh` in your Core memory but `src/pages/NotFound.tsx:12` still uses `min-h-screen`. On iOS Safari/WKWebView this gets cut off by the bottom bar. Swap to `min-h-[100dvh]`.
+- Two independent `useState` queries: `networkQuery`, `phoneQuery`.
+- Network section: `filteredFriends` (existing) + `ContactSmartSearch` filtered by `networkQuery`.
+- Phone section: `unifiedPhoneContacts` (existing `cloudContacts` merge) filtered by `phoneQuery`.
+- Both collapsibles default `open={false}`; auto-open when their respective query has ≥1 char AND yields results.
+- Multi-select on phone contacts → sticky bottom CTA "R@lly N Contacts" → batch `openSms` via the unified helper.
+- Web-only Tabs block (`VCF / Paste / CSV`) wrapped in `{!Capacitor.isNativePlatform() && …}`.
 
-### 5. `ReturningAuth.tsx:624` uses `window.location.href = '/'`
-Full-page nav inside a Capacitor app reloads the bundle. Should be `navigate('/')` from `react-router-dom`.
+### Keyboard / safe-area hardening (applied here as the reference pattern)
 
-## Medium value
+- `SheetContent` gets `h-[92dvh] pt-safe pb-safe` (replace `h-[85vh]`).
+- Both `Input` components get `text-base` (≥16px) plus `style={{ fontSize: '16px' }}` failsafe to suppress iOS auto-zoom.
+- Inner scroll container: `max-h-[calc(92dvh-env(safe-area-inset-top)-72px)] overscroll-contain`.
+- Sticky action bar: `sticky bottom-0 -mx-4 px-4 pt-3 pb-[max(env(safe-area-inset-bottom),12px)] bg-background/90 backdrop-blur-xl border-t border-white/10`.
 
-### 6. iOS detection via `navigator.userAgent`
-Multiple places (`AddPeopleSheet`, `ContactInviteDialog`, `ContactsTab`, `RideshareDrawer`) check `/iPad|iPhone|iPod/.test(navigator.userAgent)` to pick `?` vs `&` for SMS. This works on web, but inside Capacitor on iOS the UA is also "iPhone" — fine here, but the pattern is fragile and duplicated 6+ times. Centralize as `buildSmsUrl(to, body)` in `nativeLinks.ts`.
+---
 
-### 7. Native splash + status bar style
-You added `WelcomeBackOverlay` — good. Two follow-ups:
-- `capacitor.config.ts` should set `StatusBar.style = 'light'` (or match your light-mode default) so the iOS clock isn't invisible during the orange splash.
-- Configure Capacitor's native `SplashScreen` plugin so the brief flash before React mounts is also branded R@lly orange, not the default white.
+## Track 2 — Native Audit Completion
 
-### 8. Pull-to-refresh / bounce scrolling
-Capacitor iOS lets the whole webview rubber-band, which on full-screen overlays (recap, lightbox, turn-by-turn) exposes the white app background. Add `overscroll-behavior: none` on `html, body` in `index.css` and `-webkit-overflow-scrolling: touch` only on scroll containers.
+### 2a. Map links → `openMapsDirections` facade
 
-### 9. Haptics coverage
-You have `useHaptics` but only 1 reference. Native apps "feel" right when primary CTAs buzz. Suggest hooking it into: split-pay confirm, R@lly Home arrived, friend-request accept, DD arrival, tier-up celebration.
+`openMapsDirections` already exists in `src/lib/nativeLinks.ts`. Sweep all call sites that still hand-build `https://www.google.com/maps/...` or use `openDirections(rawUrl)` and migrate them. Confirmed targets from grep (extend if more surface during edit):
 
-### 10. Back-swipe / hardware back button
-No `@capacitor/app` `backButton` listener exists. On Android the hardware back button currently exits the app instead of popping the router. One global listener in `NativeBootstrap.ts` that calls `navigate(-1)` (or closes the top sheet/dialog) fixes it.
+- `src/components/rides/RideshareDrawer.tsx`
+- `src/components/rides/RideshareDeepLinkButtons.tsx`
+- `src/components/events/AttendeeMap.tsx`
+- `src/components/events/LiveTracking.tsx`
+- Any remaining occurrences found by `rg "google\.com/maps|maps\.apple\.com" src/` at edit time.
 
-## Low value / polish
+Keep the existing display-only "Apple Maps" vs "Google Maps" label in `RideshareDrawer` (it's a string, not behavior).
 
-### 11. Long-press text selection
-Add `user-select: none` to non-text UI surfaces (chat bubbles excepted) so long-pressing a card on iOS doesn't show the copy/share callout.
+### 2b. SMS / mailto unification
 
-### 12. Tap highlight color
-`-webkit-tap-highlight-color: transparent` is missing globally. You'll see the default iOS gray flash on every button tap.
+- `src/hooks/usePhoneInvites.tsx` line ~135 — replace hand-built `sms:${phone}?body=${msg}` with `openSms(phone, decodedMsg)`.
+- `src/components/squads/SquadInviteDialog.tsx` lines 112 & 120-121 — replace with `openMailto` and `openSms`.
 
-### 13. Disable iOS form zoom
-Inputs with `font-size < 16px` cause iOS to zoom the viewport on focus. Quick global rule: `input, textarea, select { font-size: max(16px, 1em); }`.
+### 2c. Router nav + dead branches
 
-### 14. `AddPeopleSheet` `handleQuickAdd` always calls share
-Line 76 reads `if ((true /* shareContent */))` — dead conditional left over from a refactor. The phone-number SMS branch never runs because the truthy literal short-circuits. Worth cleaning up; same dead branch is in `ContactInviteDialog.tsx:113` and `:141`.
+- Audit `window.location.href = '/'` etc. in non-protocol contexts (notably `ReturningAuth.tsx`) and swap to `useNavigate()`.
+- Remove any `if (true) { … }` dead branches in `AddPeopleSheet.tsx` and `ContactInviteDialog.tsx` (will collapse during the rewrite of AddPeopleSheet; explicit grep + delete in ContactInviteDialog).
 
-## What I'd tackle first
+### 2d. Safe-area + iOS hardening (global, behind no runtime guard — CSS only)
 
-If you only do three: **#1 (maps facade)**, **#3 (safe-area on overlays)**, and **#5 + #14 (router nav + dead `if (true)` branches)**. Those collectively kill the "this is a webview" tells without much surface change.
+- Add `safe-top` / `safe-bottom` classes to fixed overlays that currently use bare `fixed inset-0`:
+  - `RogueAlertOverlay.tsx`, `RallyCompleteOverlay.tsx`, `RallyHeroMediaCarousel.tsx`, `ImageLightbox.tsx`, `TurnByTurnNav.tsx`, `FindFriendView.tsx`, `RallyInviteBanner.tsx`, `RallyRidesBanner.tsx`, `LocationSharingBanner.tsx`, `WelcomeBackOverlay.tsx`.
+  - Skip `components/ui/*` primitives (shadcn — leave alone) and `EventPhotoFeed` (already safe).
+- Add to `src/index.css`:
+  - `html { -webkit-tap-highlight-color: transparent; }`
+  - `input, textarea, select { font-size: max(16px, 1rem); }` scoped under a `.native` body class so web typography isn't affected. The `.native` class gets toggled in `nativeBootstrap.ts` when `Capacitor.isNativePlatform()` is true.
+  - `body { background: hsl(var(--background)); }` to kill white-edge bleed on rubber-band scroll.
+- `NotFound.tsx`: `min-h-screen` → `min-h-[100dvh]`.
 
-Want me to implement any of these? I can take them as one combined pass or split into batches (e.g. all-maps, all-safe-area, etc.).
+---
+
+## Out of Scope (explicit)
+
+- No changes to splash/status-bar plugin config (#7) or haptics coverage (#9) — separate pass.
+- No changes to `src/integrations/supabase/*`, no DB migrations.
+- No business-logic changes to friends/contacts hooks; this is presentation + native-link routing only.
+
+---
+
+## Files Touched (estimated)
+
+Redesign: `src/components/contacts/AddPeopleSheet.tsx`.
+Native sweep: `usePhoneInvites.tsx`, `SquadInviteDialog.tsx`, `RideshareDrawer.tsx`, `RideshareDeepLinkButtons.tsx`, `AttendeeMap.tsx`, `LiveTracking.tsx`, `ReturningAuth.tsx`, `ContactInviteDialog.tsx`, `NotFound.tsx`, `src/index.css`, `src/lib/nativeBootstrap.ts`, and the ~10 overlay components listed in 2d.
+
+## Validation
+
+- After the redesign: open the sheet at mobile viewport, verify both search bars are independent, both collapsibles default closed, web Tabs block is hidden when `Capacitor.isNativePlatform()` returns true (simulate by temporarily forcing).
+- `rg "google\.com/maps" src/` should return only `nativeLinks.ts`.
+- `rg "sms:\$\{|mailto:\$\{" src/` should return zero hits outside `nativeLinks.ts`.
+- `rg "if \(true\)" src/` returns zero.
