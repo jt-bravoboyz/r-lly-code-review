@@ -517,8 +517,8 @@ export function AddPeopleSheet() {
                     </TabsList>
                     <TabsContent value="vcf" className="mt-3">
                       <VCFContactImport onComplete={() => setOpen(false)} />
-                      <p className="text-xs text-zinc-500 mt-3 leading-relaxed">
-                        <strong className="text-zinc-300">iPhone tip:</strong> Open Contacts → tap a contact → Share → save as .vcf → upload here.
+                      <p className="text-xs text-zinc-600 dark:text-zinc-500 mt-3 leading-relaxed">
+                        <strong className="text-zinc-800 dark:text-zinc-300">iPhone tip:</strong> Open Contacts → tap a contact → Share → save as .vcf → upload here.
                       </p>
                     </TabsContent>
                     <TabsContent value="paste" className="mt-3">
