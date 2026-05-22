@@ -7,7 +7,7 @@ import { MapPin, Loader2, Navigation } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { applyRallyMapOverrides, RALLY_MARKER_COLORS } from '@/lib/mapStyles';
 import { Capacitor } from '@capacitor/core';
-import { openDirectionsLink } from '@/lib/nativeLinks';
+import { buildMapsUrl, openMapsDirections } from '@/lib/nativeLinks';
 
 interface LocationMapPreviewProps {
   lat: number;
@@ -41,7 +41,7 @@ export const LocationMapPreview = forwardRef<HTMLDivElement, LocationMapPreviewP
     // POL-5: Theme-aware map style
     const mapStyle = resolvedTheme === 'dark' ? 'mapbox://styles/mapbox/dark-v11' : 'mapbox://styles/mapbox/streets-v12';
 
-    const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+    const directionsUrl = buildMapsUrl({ lat, lng });
 
     useEffect(() => {
       if (!token || !mapContainer.current || map.current) return;

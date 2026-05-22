@@ -2,7 +2,7 @@ import { Moon, MapPin, Check, Navigation } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Capacitor } from '@capacitor/core';
-import { openDirectionsLink } from '@/lib/nativeLinks';
+import { buildMapsUrl, openMapsDirections } from '@/lib/nativeLinks';
 
 interface AfterRallyCardProps {
   eventId: string;
@@ -25,9 +25,9 @@ export function AfterRallyCard({
   const hasLocation = !!afterRallyLocation;
   
   const directionsUrl = afterRallyLat && afterRallyLng
-    ? `https://www.google.com/maps/dir/?api=1&destination=${afterRallyLat},${afterRallyLng}`
+    ? buildMapsUrl({ lat: afterRallyLat, lng: afterRallyLng })
     : afterRallyLocation
-      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(afterRallyLocation)}`
+      ? buildMapsUrl({ address: afterRallyLocation, mode: 'search' })
       : null;
 
   return (
@@ -91,7 +91,11 @@ export function AfterRallyCard({
                 onClick={(e) => {
                   if (Capacitor.isNativePlatform()) {
                     e.preventDefault();
-                    openDirectionsLink(directionsUrl);
+                    openMapsDirections(
+                      afterRallyLat && afterRallyLng
+                        ? { lat: afterRallyLat, lng: afterRallyLng }
+                        : { address: afterRallyLocation, mode: 'search' }
+                    );
                   }
                 }}
                 className="w-full inline-flex items-center justify-center rounded-md text-sm font-medium h-10 px-4 border border-purple-400/40 text-purple-100 hover:bg-purple-800/50 hover:text-white"

@@ -12,6 +12,7 @@ import { Home, User, Building2, MapPin, Navigation, CheckCircle2, Lock, Users, U
 import { useAuth } from '@/hooks/useAuth';
 import { useMyAttendeeStatus, useUpdateSafetyStatus } from '@/hooks/useSafetyStatus';
 import { openDirections } from '@/lib/mapStyles';
+import { buildMapsUrl } from '@/lib/nativeLinks';
 import { useSafetyNotifications } from '@/hooks/useSafetyNotifications';
 import { getPrivateName } from '@/lib/identity';
 import { useMapboxToken } from '@/hooks/useMapboxToken';
@@ -273,8 +274,7 @@ export function RallyHomeButton({ eventId, trigger, eventStatus, autoOpen, onAut
           action: {
             label: 'Get Directions',
             onClick: () => {
-              const encodedAddress = encodeURIComponent(finalAddress);
-              openDirections(`https://www.google.com/maps/dir/?api=1&destination=${encodedAddress}`);
+              openDirections(buildMapsUrl({ address: finalAddress }));
             }
           }
         });
@@ -490,8 +490,7 @@ export function RallyHomeButton({ eventId, trigger, eventStatus, autoOpen, onAut
             action: {
               label: 'Get Directions',
               onClick: () => {
-                const encodedAddress = encodeURIComponent(destinationName);
-                openDirections(`https://www.google.com/maps/dir/?api=1&destination=${encodedAddress}`);
+                openDirections(buildMapsUrl({ address: destinationName }));
               }
             }
           });

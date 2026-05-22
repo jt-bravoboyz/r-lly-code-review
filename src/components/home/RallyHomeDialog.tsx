@@ -9,6 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { openDirections } from '@/lib/mapStyles';
+import { buildMapsUrl } from '@/lib/nativeLinks';
 
 type DestinationType = 'home' | 'friend' | 'hotel' | 'custom';
 
@@ -69,9 +70,7 @@ export function RallyHomeDialog({ trigger }: RallyHomeDialogProps) {
         action: {
           label: 'Get Directions',
           onClick: () => {
-            // Open in maps
-            const encodedAddress = encodeURIComponent(finalAddress);
-            openDirections(`https://www.google.com/maps/dir/?api=1&destination=${encodedAddress}`);
+            openDirections(buildMapsUrl({ address: finalAddress }));
           }
         }
       });

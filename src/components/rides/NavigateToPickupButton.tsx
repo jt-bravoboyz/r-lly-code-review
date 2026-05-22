@@ -1,7 +1,7 @@
 import { Navigation } from 'lucide-react';
 import { toast } from 'sonner';
 import { Capacitor } from '@capacitor/core';
-import { openDirectionsLink } from '@/lib/nativeLinks';
+import { buildMapsUrl, openMapsDirections } from '@/lib/nativeLinks';
 
 interface NavigateToPickupButtonProps {
   pickupLocation: string;
@@ -22,21 +22,22 @@ export function NavigateToPickupButton({
   variant = 'outline',
   className = '',
 }: NavigateToPickupButtonProps) {
-  const url = pickupLat && pickupLng
-    ? `https://www.google.com/maps/dir/?api=1&destination=${pickupLat},${pickupLng}`
+  const target = pickupLat && pickupLng
+    ? { lat: pickupLat, lng: pickupLng }
     : pickupLocation
-      ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(pickupLocation)}`
+      ? { address: pickupLocation }
       : null;
 
-  if (!url) return null;
+  if (!target) return null;
+  const url = buildMapsUrl(target);
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     if (passengerName) {
       toast.success(`Navigating to pick up ${passengerName}`);
     }
-    if (Capacitor.isNativePlatform() && url) {
+    if (Capacitor.isNativePlatform()) {
       e.preventDefault();
-      openDirectionsLink(url);
+      openMapsDirections(target);
     }
   };
 
