@@ -419,9 +419,9 @@ export function AddPeopleSheet() {
             {/* Collapsible · From Your Phone */}
             <Collapsible open={phoneListOpen} onOpenChange={setPhoneListOpen}>
               <CollapsibleTrigger asChild>
-                <button className="w-full h-14 px-5 rounded-2xl bg-white/[0.03] border border-white/10 hover:bg-white/[0.05] transition-colors flex items-center gap-3">
+                <button className="w-full h-14 px-5 rounded-2xl bg-black/[0.04] dark:bg-white/[0.03] border border-black/[0.06] dark:border-white/10 hover:bg-black/[0.06] dark:hover:bg-white/[0.05] transition-colors flex items-center gap-3">
                   <Users className="h-4 w-4 text-[#F47A19]" />
-                  <span className="text-sm font-bold font-montserrat text-white flex-1 text-left">
+                  <span className="text-sm font-bold font-montserrat text-zinc-900 dark:text-white flex-1 text-left">
                     From Your Phone
                   </span>
                   <span className="text-[10px] font-black px-2 py-1 rounded-lg bg-[#F47A19]/15 text-[#F47A19] uppercase tracking-wider">
