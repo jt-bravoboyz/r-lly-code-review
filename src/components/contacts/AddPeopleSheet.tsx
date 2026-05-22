@@ -203,7 +203,7 @@ export function AddPeopleSheet() {
       <SheetTrigger asChild>
         <button
           type="button"
-          className="h-12 px-5 bg-[#F47A19] rounded-2xl text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-[#F47A19]/30 active:scale-95 transition-transform inline-flex items-center gap-2 shrink-0"
+          className="h-12 px-5 bg-[#F47A19] rounded-2xl text-white font-black text-xs uppercase tracking-wider shadow-[0_4px_20px_rgba(244,122,25,0.35)] hover:shadow-[0_6px_28px_rgba(244,122,25,0.5)] active:scale-95 transition-all inline-flex items-center gap-2 shrink-0"
         >
           <UserPlus className="h-4 w-4" />
           Add
