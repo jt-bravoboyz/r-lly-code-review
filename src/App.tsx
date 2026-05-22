@@ -42,6 +42,8 @@ import SplitCheckHome from "./pages/SplitCheckHome";
 import SplitGuestPay from "./pages/SplitGuestPay";
 import Friends from "./pages/Friends";
 import PastRallies from "./pages/PastRallies";
+import Demo from "./pages/Demo";
+
 
 const queryClient = new QueryClient();
 
@@ -94,7 +96,9 @@ const App = () => (
                       <Route path="/tab/pay/:requestId" element={<SplitGuestPay />} />
                       <Route path="/friends" element={<Friends />} />
                       <Route path="/rallies/past" element={<PastRallies />} />
+                      <Route path="/demo" element={<Demo />} />
                       <Route path="*" element={<NotFound />} />
+
                     </Routes>
                   </TutorialProvider>
                 </BrowserRouter>

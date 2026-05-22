@@ -33,6 +33,37 @@ set_string() {
   fi
 }
 
+# Ensure an array key exists, then append a string entry only if missing.
+ensure_array_entry() {
+  local key="$1"
+  local entry="$2"
+  if ! $PB -c "Print :$key" "$PLIST" >/dev/null 2>&1; then
+    $PB -c "Add :$key array" "$PLIST"
+    echo "  +  $key (array)"
+  fi
+  # Walk existing entries; bail if entry already present.
+  local i=0
+  while $PB -c "Print :$key:$i" "$PLIST" >/dev/null 2>&1; do
+    local existing
+    existing=$($PB -c "Print :$key:$i" "$PLIST" 2>/dev/null || echo "")
+    if [ "$existing" = "$entry" ]; then
+      echo "  =  $key[] $entry"
+      return 0
+    fi
+    i=$((i + 1))
+  done
+  $PB -c "Add :$key: string $entry" "$PLIST"
+  echo "  +  $key[] $entry"
+}
+
+    $PB -c "Set :$key $value" "$PLIST"
+    echo "  ↻  $key"
+  else
+    $PB -c "Add :$key string $value" "$PLIST"
+    echo "  +  $key"
+  fi
+}
+
 echo "🛠  Patching $PLIST ..."
 
 # Display name — force exact "R@lly" spelling (iOS strips @ in some locales)
@@ -63,7 +94,14 @@ set_string "NSMotionUsageDescription" \
   "R@lly uses motion data for auto-arrival and the in-app compass."
 
 # Bluetooth — indoor positioning
+# Bluetooth — indoor positioning
 set_string "NSBluetoothAlwaysUsageDescription" \
   "R@lly uses Bluetooth for indoor positioning when GPS is weak."
+
+# Background modes — R@lly Home keeps tracking after the screen locks,
+# and push notifications wake the app for ride/safety alerts.
+ensure_array_entry "UIBackgroundModes" "location"
+ensure_array_entry "UIBackgroundModes" "remote-notification"
+
 
 echo "✅ Done. Next: npm run build && npx cap sync ios && npx cap open ios"
