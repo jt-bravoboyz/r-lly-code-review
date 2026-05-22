@@ -289,42 +289,44 @@ export function AddPeopleSheet() {
                   <Smartphone className="h-5 w-5 text-primary" />
                 </div>
                 <div className="text-left">
-                  <p className="font-medium text-sm">Phone / Computer Contacts</p>
+                  <p className="font-medium text-sm">{isNative ? 'Sync iPhone Contacts' : 'Phone / Computer Contacts'}</p>
                   <p className="text-xs text-muted-foreground">
                     {isSyncing ? 'Syncing…' : 'Pull from your device'}
                   </p>
                 </div>
               </Button>
 
-              {/* Tabs for VCF, paste, and CSV */}
-              <Tabs defaultValue="vcf" className="w-full">
-                <TabsList className="w-full grid grid-cols-3">
-                  <TabsTrigger value="vcf" className="gap-1 text-xs">
-                    <FileUp className="h-3.5 w-3.5" />
-                    Contact Card
-                  </TabsTrigger>
-                  <TabsTrigger value="paste" className="gap-1 text-xs">
-                    <ClipboardPaste className="h-3.5 w-3.5" />
-                    Quick Paste
-                  </TabsTrigger>
-                  <TabsTrigger value="csv" className="gap-1 text-xs">
-                    <Upload className="h-3.5 w-3.5" />
-                    CSV
-                  </TabsTrigger>
-                </TabsList>
-                <TabsContent value="vcf" className="mt-3">
-                  <VCFContactImport onComplete={() => setOpen(false)} />
-                  <p className="text-xs text-muted-foreground mt-3 leading-relaxed">
-                    <strong>iPhone tip:</strong> Open Contacts → tap a contact → Share → save as .vcf → upload here.
-                  </p>
-                </TabsContent>
-                <TabsContent value="paste" className="mt-3">
-                  <SmartPasteContacts onComplete={() => setOpen(false)} />
-                </TabsContent>
-                <TabsContent value="csv" className="mt-3">
-                  <CSVContactImport />
-                </TabsContent>
-              </Tabs>
+              {/* Web-only import paths: hidden on native (native has direct device sync above) */}
+              {!isNative && (
+                <Tabs defaultValue="vcf" className="w-full">
+                  <TabsList className="w-full grid grid-cols-3">
+                    <TabsTrigger value="vcf" className="gap-1 text-xs">
+                      <FileUp className="h-3.5 w-3.5" />
+                      Contact Card
+                    </TabsTrigger>
+                    <TabsTrigger value="paste" className="gap-1 text-xs">
+                      <ClipboardPaste className="h-3.5 w-3.5" />
+                      Quick Paste
+                    </TabsTrigger>
+                    <TabsTrigger value="csv" className="gap-1 text-xs">
+                      <Upload className="h-3.5 w-3.5" />
+                      CSV
+                    </TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="vcf" className="mt-3">
+                    <VCFContactImport onComplete={() => setOpen(false)} />
+                    <p className="text-xs text-muted-foreground mt-3 leading-relaxed">
+                      <strong>iPhone tip:</strong> Open Contacts → tap a contact → Share → save as .vcf → upload here.
+                    </p>
+                  </TabsContent>
+                  <TabsContent value="paste" className="mt-3">
+                    <SmartPasteContacts onComplete={() => setOpen(false)} />
+                  </TabsContent>
+                  <TabsContent value="csv" className="mt-3">
+                    <CSVContactImport />
+                  </TabsContent>
+                </Tabs>
+              )}
             </CollapsibleContent>
           </Collapsible>
         </div>
