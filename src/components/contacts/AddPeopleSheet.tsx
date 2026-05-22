@@ -372,7 +372,7 @@ export function AddPeopleSheet() {
           {/* ─────────── Section 2 · YOUR PHONE ─────────── */}
           <section className="space-y-4">
             <div className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-zinc-400 dark:bg-zinc-600" />
+              <span className="w-1.5 h-1.5 rounded-full bg-[#F47A19] shadow-[0_0_8px_rgba(244,122,25,0.7)]" />
               <h3 className="text-zinc-600 dark:text-zinc-500 text-[10px] font-black uppercase tracking-[0.2em] font-montserrat">
                 Your Phone
               </h3>
