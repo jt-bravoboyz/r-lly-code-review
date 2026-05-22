@@ -14,7 +14,9 @@ import { useRallyFriends } from '@/hooks/useRallyFriends';
 import { usePhoneContacts } from '@/hooks/usePhoneContacts';
 import { useUserContacts } from '@/hooks/useUserContacts';
 import { AddPeopleSheet } from '@/components/contacts/AddPeopleSheet';
+import { ContactRowSkeleton } from '@/components/contacts/ContactRowSkeleton';
 import { cn } from '@/lib/utils';
+
 import {
   getFriendshipState,
   useFriendships,
@@ -247,7 +249,14 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
             )}
 
             {/* R@lly Members search results — only while typing */}
+            {showSearchResults && loadingRallySearch && rallySearchResults.length === 0 && (
+              <section className="space-y-2">
+                <SectionLabel accent>R@lly Members</SectionLabel>
+                <ContactRowSkeleton count={3} />
+              </section>
+            )}
             {showSearchResults && rallySearchResults.length > 0 && (
+
               <section className="space-y-2">
                 <SectionLabel accent>R@lly Members</SectionLabel>
                 {rallySearchResults.map((result) => {
@@ -302,7 +311,14 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
             )}
 
             {/* R@lly Friends */}
+            {loadingFriends && filteredFriends.length === 0 && (
+              <section className="space-y-2">
+                <SectionLabel accent>R@lly Friends</SectionLabel>
+                <ContactRowSkeleton count={5} />
+              </section>
+            )}
             {filteredFriends.length > 0 && (
+
               <section className="space-y-2">
                 <SectionLabel accent>R@lly Friends</SectionLabel>
                 {filteredFriends.map((friend) => (
