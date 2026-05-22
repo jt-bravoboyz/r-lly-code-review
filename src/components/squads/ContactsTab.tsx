@@ -38,10 +38,24 @@ type SelectableContact = {
   email?: string;
 };
 
-const SectionLabel = ({ children }: { children: React.ReactNode }) => (
-  <p className="text-[11px] font-semibold font-montserrat text-muted-foreground uppercase tracking-wider px-1 pt-1">
-    {children}
-  </p>
+const SectionLabel = ({
+  children,
+  accent = false,
+}: {
+  children: React.ReactNode;
+  accent?: boolean;
+}) => (
+  <div className="flex items-center gap-2 px-1 pt-1">
+    <span
+      className={cn(
+        'w-1.5 h-1.5 rounded-full',
+        accent ? 'bg-[#F47A19] shadow-[0_0_8px_#F47A19]' : 'bg-zinc-600'
+      )}
+    />
+    <p className="text-[10px] font-black font-montserrat text-zinc-500 uppercase tracking-[0.2em]">
+      {children}
+    </p>
+  </div>
 );
 
 export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps) {
