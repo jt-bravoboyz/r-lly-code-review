@@ -360,7 +360,7 @@ export function AddPeopleSheet() {
                   <MessageCircle className="h-5 w-5 text-white" />
                 </div>
                 <div className="text-left flex-1 min-w-0">
-                  <p className="font-black font-montserrat text-sm text-white truncate">
+                  <p className="font-black font-montserrat text-sm text-zinc-900 dark:text-white truncate">
                     {isNetworkPhoneQuery ? `R@lly ${trimmedNetwork}` : `Invite '${trimmedNetwork}' via Text`}
                   </p>
                   <p className="text-[11px] text-zinc-500 font-semibold">Tap to send an invite link</p>
