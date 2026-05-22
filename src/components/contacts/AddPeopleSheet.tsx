@@ -486,9 +486,9 @@ export function AddPeopleSheet() {
             {!isNative && (
               <Collapsible open={importOpen} onOpenChange={setImportOpen}>
                 <CollapsibleTrigger asChild>
-                  <button className="w-full h-14 px-5 rounded-2xl bg-white/[0.03] border border-white/10 hover:bg-white/[0.05] transition-colors flex items-center gap-3">
+                  <button className="w-full h-14 px-5 rounded-2xl bg-black/[0.04] dark:bg-white/[0.03] border border-black/[0.06] dark:border-white/10 hover:bg-black/[0.06] dark:hover:bg-white/[0.05] transition-colors flex items-center gap-3">
                     <FileUp className="h-4 w-4 text-zinc-500" />
-                    <span className="text-sm font-bold font-montserrat text-zinc-300 flex-1 text-left">
+                    <span className="text-sm font-bold font-montserrat text-zinc-700 dark:text-zinc-300 flex-1 text-left">
                       Web Import
                     </span>
                     <span className="text-[9px] font-black text-zinc-500 uppercase tracking-widest hidden sm:inline">
