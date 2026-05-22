@@ -359,7 +359,7 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
                         'w-full flex items-center gap-3 p-3 rounded-2xl border transition-all active:scale-[0.99]',
                         isSelected
                           ? 'bg-[#F47A19]/10 border-[#F47A19]/40 ring-1 ring-[#F47A19]/40 shadow-[0_4px_20px_-8px_rgba(244,122,25,0.5)]'
-                          : 'bg-white/[0.02] border-white/[0.05] hover:bg-white/[0.04]'
+                          : 'bg-black/[0.03] dark:bg-white/[0.02] border-black/[0.05] dark:border-white/[0.05] hover:bg-black/[0.05] dark:hover:bg-white/[0.04]'
                       )}
                     >
                       <div
@@ -367,7 +367,7 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
                           'h-11 w-11 rounded-2xl shrink-0 flex items-center justify-center font-black text-sm',
                           isSelected
                             ? 'bg-[#F47A19] text-white shadow-lg shadow-[#F47A19]/30'
-                            : 'bg-white/5 text-zinc-400 border border-white/10'
+                            : 'bg-black/5 dark:bg-white/5 text-zinc-600 dark:text-zinc-400 border border-black/[0.06] dark:border-white/10'
                         )}
                       >
                         {isSelected ? (
@@ -377,7 +377,7 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
                         )}
                       </div>
                       <div className="flex-1 text-left min-w-0">
-                        <p className="font-bold text-sm text-white truncate">{contact.name}</p>
+                        <p className="font-bold text-sm text-zinc-900 dark:text-white truncate">{contact.name}</p>
                         {contact.subline && (
                           <p className="text-[11px] text-zinc-500 truncate">
                             {contact.subline}
