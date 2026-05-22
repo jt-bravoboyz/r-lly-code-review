@@ -1,155 +1,65 @@
-## Native Polish — Pass A + B + C (combined)
+## Plan
 
-All three passes in one approval. Strict `Capacitor.isNativePlatform()` gating throughout — web/PWA flow untouched.
+### 1. Replace fetch-then-merge with native upsert in `src/hooks/useUserContacts.tsx`
 
-> Note: `src/components/FlagSplash.tsx` was already deleted as part of this audit (it was unreferenced).
+The current `useUpsertUserContacts` mutation does a SELECT-then-UPDATE/INSERT loop. Since the DB already has unique constraints `user_contacts_owner_phone_unique (owner_id, phone)` and `user_contacts_owner_email_unique (owner_id, email)`, we can collapse it to two `.upsert()` calls.
 
----
+Replace the body of `mutationFn` (after the `normalized` filter) with:
 
-### Pass A — Native link & asset polish
+```ts
+const rows = normalized.map(c => ({
+  owner_id: profile.id,
+  name: c.name,
+  phone: c.phone,
+  email: c.email,
+  source: c.source,
+  last_synced_at: new Date().toISOString(),
+}));
 
-**A1. Route every `target="_blank"` through native helpers**
+const withPhone = rows.filter(c => c.phone !== null);
+const emailOnly = rows.filter(c => c.phone === null && c.email !== null);
 
-Add an `onClick` handler that calls `openExternalLink(url)` / `openDirectionsLink(url)` and short-circuits with `e.preventDefault()` on native. On web the anchor behaves normally (new tab). Files:
+let allData: any[] = [];
 
-| File | Helper |
-|---|---|
-| `src/components/location/LocationMapPreview.tsx` (2 anchors) | `openDirectionsLink` |
-| `src/components/rides/NavigateToPickupButton.tsx` (2 anchors) | `openDirectionsLink` |
-| `src/components/events/AfterRallyCard.tsx` (Get Directions) | `openDirectionsLink` |
-| `src/components/tracking/AttendeeMap.tsx` (Open in Maps) | `openDirectionsLink` |
-| `src/components/tracking/AttendeeLocationItem.tsx` (Navigate) | `openDirectionsLink` |
-| `src/components/events/EventPhotoFeed.tsx` (Open video) | `openExternalLink` |
-| `src/components/chat/unified/MessageBubble.tsx` (user URLs) | `openExternalLink` |
-| `src/components/payments/ClaimItemsView.tsx` (receipt) | `openExternalLink` |
-| `src/components/onboarding/FoundingMemberBanner.tsx` (Canny) | `openExternalLink` |
-| `src/pages/Documentation.tsx` (mermaid.live) | `openExternalLink` |
+if (withPhone.length > 0) {
+  const { data, error } = await supabase
+    .from('user_contacts')
+    .upsert(withPhone, { onConflict: 'owner_id,phone', ignoreDuplicates: true })
+    .select();
+  if (error) throw error;
+  if (data) allData = allData.concat(data);
+}
 
-Pattern applied to each:
-```tsx
-<a
-  href={url}
-  target="_blank"
-  rel="noopener noreferrer"
-  onClick={(e) => {
-    if (Capacitor.isNativePlatform()) {
-      e.preventDefault();
-      void openExternalLink(url); // or openDirectionsLink
-    }
-  }}
->
+if (emailOnly.length > 0) {
+  const { data, error } = await supabase
+    .from('user_contacts')
+    .upsert(emailOnly, { onConflict: 'owner_id,email', ignoreDuplicates: true })
+    .select();
+  if (error) throw error;
+  if (data) allData = allData.concat(data);
+}
+
+return allData;
 ```
 
-**A2. Manifest sync** — `public/manifest.json`: `background_color` `#F47A19` → `#0F172A` (matches native splash).
+Removes ~80 lines of merge logic. `ignoreDuplicates: true` matches your snippet — re-syncs skip rows that already exist instead of bumping `last_synced_at`. (Note: this is a behavior shift from today's merge — flag if you'd rather keep `merge-duplicates` to refresh names/source.)
 
-**A3. apple-touch-icon refresh** — `index.html` line 22: `/rally-icon-192.png` → `/rally-icon-192-v6.png` (matches manifest v6).
+Also update the `mem://architecture/contact-sync-architecture` memory to reflect the new strategy.
 
-**A4. FlagSplash removed** — done (unreferenced file deleted).
+### 2. Hide web-only import paths on native in `src/components/contacts/AddPeopleSheet.tsx`
 
----
+Compute `const isNative = Capacitor.isNativePlatform();` once at the top of the component, then on native:
 
-### Pass B — Discoverability
+- Skip rendering the `<Tabs>` block (Contact Card / Quick Paste / CSV) entirely.
+- Keep on native: search input, R@lly Friends list, Quick Add, Cloud `ContactSmartSearch`, and the "Phone / Computer Contacts" device-sync button.
+- On web: leave everything as-is.
 
-**B1. Home: always show Past R@llies section** (`src/pages/Index.tsx` lines 260–282)
-
-Remove the outer `{pastEvents.length > 0 && (...)}` wrapper. Header + "See All" always render. When empty, render a soft glass card:
-
-```tsx
-<section className="space-y-4">
-  <div className="flex items-center justify-between">
-    {/* header + See All — unchanged */}
-  </div>
-  {pastEvents.length > 0 ? (
-    <div className="space-y-4 opacity-80">
-      {pastEvents.slice(0, 3).map(e => <EventCard key={e.id} event={e} />)}
-    </div>
-  ) : (
-    <Card className="glass-elevated rounded-2xl">
-      <CardContent className="p-6 text-center">
-        <p className="text-sm text-muted-foreground font-montserrat">
-          Your past nights will show up here.
-        </p>
-      </CardContent>
-    </Card>
-  )}
-</section>
-```
-
-**B2. Profile: add "Past R@llies" row** (`src/pages/Profile.tsx`, insert before line 701 — "App Settings" block)
-
-```tsx
-<div className="pt-3 border-t border-border">
-  <button
-    onClick={() => navigate('/rallies/past')}
-    className="w-full flex items-center justify-between py-2 hover:bg-muted/50 rounded-lg px-1 transition-colors"
-  >
-    <div className="flex items-center gap-3">
-      <History className="h-5 w-5 text-muted-foreground" />
-      <div className="text-left">
-        <span className="font-medium">Past R@llies</span>
-        <p className="text-xs text-muted-foreground">Your full night archive</p>
-      </div>
-    </div>
-    <ChevronRight className="h-5 w-5 text-muted-foreground" />
-  </button>
-</div>
-```
-
-Add `History` to the lucide-react import on line 15.
-
----
-
-### Pass C — Branded "Welcome Back" transition (native only)
-
-**C1. New component** — `src/components/WelcomeBackOverlay.tsx`
-
-- Renders only when `Capacitor.isNativePlatform()` is true.
-- Once per session (sessionStorage key `rally-welcome-back-shown`).
-- Centered `/logo.svg` + "R@lly" wordmark over `#0F172A`, gentle 1.2s pulse, orange radial glow.
-- Hard cap: **1.2s total** (920ms hold + 280ms fade-out).
-- `z-[100]`, fixed, becomes pointer-events-none during fade so it never blocks taps.
-
-```tsx
-const MAX_DURATION_MS = 1200;
-const FADE_MS = 280;
-const SESSION_KEY = 'rally-welcome-back-shown';
-// pulse keyframes inline, no Tailwind config change
-```
-
-**C2. Wire into Home** (`src/pages/Index.tsx`)
-
-Import and render `<WelcomeBackOverlay />` at the top of the authenticated `Index` return — outside main scroll area. It self-removes after 1.2s and skips entirely on web, so no impact on the PWA or browser experience.
-
----
-
-### Web/PWA safety summary
-
-- Every behavior change is wrapped in `Capacitor.isNativePlatform()`.
-- Anchors retain `href` + `target="_blank"` so right-click / middle-click / desktop SEO still work.
-- Manifest color is purely visual (PWA splash on Android) — no functional impact.
-- WelcomeBackOverlay early-returns `null` on web.
-
----
+Also tighten the device button label on native to "Sync iPhone Contacts" (drop the "Phone / Computer" web framing).
 
 ### Files touched
 
-```text
-edited:   src/pages/Index.tsx
-edited:   src/pages/Profile.tsx
-edited:   src/components/location/LocationMapPreview.tsx
-edited:   src/components/rides/NavigateToPickupButton.tsx
-edited:   src/components/events/AfterRallyCard.tsx
-edited:   src/components/tracking/AttendeeMap.tsx
-edited:   src/components/tracking/AttendeeLocationItem.tsx
-edited:   src/components/events/EventPhotoFeed.tsx
-edited:   src/components/chat/unified/MessageBubble.tsx
-edited:   src/components/payments/ClaimItemsView.tsx
-edited:   src/components/onboarding/FoundingMemberBanner.tsx
-edited:   src/pages/Documentation.tsx
-edited:   public/manifest.json
-edited:   index.html
-created:  src/components/WelcomeBackOverlay.tsx
-deleted:  src/components/FlagSplash.tsx   (already done)
-```
+- `src/hooks/useUserContacts.tsx` — rewrite upsert path
+- `src/components/contacts/AddPeopleSheet.tsx` — gate Tabs block behind `!isNative`
+- `mem://architecture/contact-sync-architecture` — update memory
 
-No DB, RLS, edge function, or schema changes.
+No DB, RLS, or edge function changes.

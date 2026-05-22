@@ -65,86 +65,33 @@ export function useUpsertUserContacts() {
 
       if (normalized.length === 0) return [];
 
-      // Fetch existing contacts for this owner to do merge-aware saves
-      const phones = normalized.map(c => c.phone).filter(Boolean) as string[];
-      const emails = normalized.map(c => c.email).filter(Boolean) as string[];
+      const rows = normalized.map(c => ({
+        owner_id: profile.id,
+        name: c.name,
+        phone: c.phone,
+        email: c.email,
+        source: c.source,
+        last_synced_at: new Date().toISOString(),
+      }));
 
-      let existing: UserContact[] = [];
-
-      if (phones.length > 0 || emails.length > 0) {
-        let query = supabase
-          .from('user_contacts')
-          .select('*')
-          .eq('owner_id', profile.id);
-
-        // Build OR filter for phone or email matches
-        const orParts: string[] = [];
-        if (phones.length > 0) orParts.push(`phone.in.(${phones.join(',')})`);
-        if (emails.length > 0) orParts.push(`email.in.(${emails.join(',')})`);
-        query = query.or(orParts.join(','));
-
-        const { data } = await query;
-        existing = (data || []) as UserContact[];
-      }
-
-      // Build lookup maps
-      const byPhone = new Map<string, UserContact>();
-      const byEmail = new Map<string, UserContact>();
-      existing.forEach(e => {
-        if (e.phone) byPhone.set(e.phone, e);
-        if (e.email) byEmail.set(e.email, e);
-      });
-
-      const updates: { id: string; name?: string | null; phone?: string | null; email?: string | null; source: string; last_synced_at: string }[] = [];
-      const inserts: { owner_id: string; name: string | null; phone: string | null; email: string | null; source: string; last_synced_at: string }[] = [];
-      const now = new Date().toISOString();
-
-      for (const c of normalized) {
-        const matchByPhone = c.phone ? byPhone.get(c.phone) : undefined;
-        const matchByEmail = c.email ? byEmail.get(c.email) : undefined;
-        const match = matchByPhone || matchByEmail;
-
-        if (match) {
-          // Merge: update existing row with any new fields
-          updates.push({
-            id: match.id,
-            name: c.name || match.name,
-            phone: c.phone || match.phone,
-            email: c.email || match.email,
-            source: c.source,
-            last_synced_at: now,
-          });
-        } else {
-          inserts.push({
-            owner_id: profile.id,
-            name: c.name,
-            phone: c.phone,
-            email: c.email,
-            source: c.source,
-            last_synced_at: now,
-          });
-        }
-      }
+      const withPhone = rows.filter(c => c.phone !== null);
+      const emailOnly = rows.filter(c => c.phone === null && c.email !== null);
 
       let allData: any[] = [];
 
-      // Process updates one by one (by id)
-      for (const u of updates) {
-        const { id, ...fields } = u;
+      if (withPhone.length > 0) {
         const { data, error } = await supabase
           .from('user_contacts')
-          .update(fields)
-          .eq('id', id)
+          .upsert(withPhone, { onConflict: 'owner_id,phone', ignoreDuplicates: true })
           .select();
         if (error) throw error;
         if (data) allData = allData.concat(data);
       }
 
-      // Batch insert new contacts
-      if (inserts.length > 0) {
+      if (emailOnly.length > 0) {
         const { data, error } = await supabase
           .from('user_contacts')
-          .insert(inserts)
+          .upsert(emailOnly, { onConflict: 'owner_id,email', ignoreDuplicates: true })
           .select();
         if (error) throw error;
         if (data) allData = allData.concat(data);
