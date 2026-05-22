@@ -43,7 +43,7 @@ export function WelcomeBackOverlay() {
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center"
+      className="fixed inset-0 z-[100] flex items-center justify-center safe-top safe-bottom"
       style={{
         backgroundColor: '#0F172A',
         opacity: fading ? 0 : 1,
