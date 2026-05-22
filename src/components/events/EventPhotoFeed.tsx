@@ -15,6 +15,8 @@ import { ensurePhotoPermission } from './PhotoPermissionDialog';
 import { useHaptics } from '@/hooks/useHaptics';
 import { usePublicProfile } from '@/contexts/PublicProfileContext';
 import { useVideoThumbnailBackfill } from '@/hooks/useVideoThumbnailBackfill';
+import { Capacitor } from '@capacitor/core';
+import { openExternalLink } from '@/lib/nativeLinks';
 
 const MAX_PHOTOS_PER_EVENT = 500;
 const MAX_VIDEOS_PER_EVENT = 5;

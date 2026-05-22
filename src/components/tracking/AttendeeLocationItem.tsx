@@ -4,6 +4,8 @@ import { Badge } from '@/components/ui/badge';
 import { Navigation, MapPin } from 'lucide-react';
 import { useReverseGeocode } from '@/hooks/useReverseGeocode';
 import { formatDistanceToNow } from 'date-fns';
+import { Capacitor } from '@capacitor/core';
+import { openDirectionsLink } from '@/lib/nativeLinks';
 
 interface AttendeeLocationItemProps {
   id: string;

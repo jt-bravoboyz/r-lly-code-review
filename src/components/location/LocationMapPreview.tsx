@@ -6,6 +6,8 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { MapPin, Loader2, Navigation } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { applyRallyMapOverrides, RALLY_MARKER_COLORS } from '@/lib/mapStyles';
+import { Capacitor } from '@capacitor/core';
+import { openDirectionsLink } from '@/lib/nativeLinks';
 
 interface LocationMapPreviewProps {
   lat: number;

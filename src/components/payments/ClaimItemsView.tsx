@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Minus, Plus } from 'lucide-react';
 import { useHaptics } from '@/hooks/useHaptics';
+import { Capacitor } from '@capacitor/core';
+import { openExternalLink } from '@/lib/nativeLinks';
 
 interface Props {
   requestId: string;

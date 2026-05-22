@@ -11,6 +11,8 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/hooks/useAuth';
 import { AttendeeLocationItem } from './AttendeeLocationItem';
 import { AvatarPin } from './AvatarPin';
+import { Capacitor } from '@capacitor/core';
+import { openDirectionsLink } from '@/lib/nativeLinks';
 
 interface Attendee {
   id: string;

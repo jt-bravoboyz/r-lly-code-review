@@ -9,6 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Copy, Download, FileText, GitBranch, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { Capacitor } from '@capacitor/core';
+import { openExternalLink } from '@/lib/nativeLinks';
 
 const appWorkflowChart = `flowchart TD
     subgraph AUTH["🔐 AUTHENTICATION"]

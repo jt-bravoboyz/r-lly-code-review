@@ -9,6 +9,8 @@ import { usePublicProfile } from '@/contexts/PublicProfileContext';
 import { ReactionBar } from './ReactionBar';
 import { ImageLightbox } from './ImageLightbox';
 import { cn } from '@/lib/utils';
+import { Capacitor } from '@capacitor/core';
+import { openExternalLink } from '@/lib/nativeLinks';
 
 const URL_REGEX = /(https?:\/\/[^\s]+)/g;
 

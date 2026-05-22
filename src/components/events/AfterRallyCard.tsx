@@ -1,6 +1,8 @@
 import { Moon, MapPin, Check, Navigation } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Capacitor } from '@capacitor/core';
+import { openDirectionsLink } from '@/lib/nativeLinks';
 
 interface AfterRallyCardProps {
   eventId: string;
