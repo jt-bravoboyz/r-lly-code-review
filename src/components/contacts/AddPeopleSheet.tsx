@@ -394,16 +394,16 @@ export function AddPeopleSheet() {
             <button
               onClick={handleNativeContacts}
               disabled={isSyncing}
-              className="group w-full p-5 bg-gradient-to-br from-[#F47A19]/10 to-transparent border border-[#F47A19]/20 rounded-[2rem] flex items-center gap-5 transition-all active:scale-[0.98] disabled:opacity-60"
+              className="group w-full p-5 bg-gradient-to-br from-[#F47A19]/15 dark:from-[#F47A19]/10 to-transparent border border-[#F47A19]/25 dark:border-[#F47A19]/20 rounded-[2rem] flex items-center gap-5 transition-all active:scale-[0.98] disabled:opacity-60"
             >
               <div className="w-14 h-14 bg-[#F47A19] rounded-2xl flex items-center justify-center text-white shadow-xl shadow-[#F47A19]/30 shrink-0 transition-transform group-hover:rotate-6">
                 <Smartphone className="h-7 w-7" />
               </div>
               <div className="text-left min-w-0 flex-1">
-                <p className="text-white font-black text-lg tracking-tight font-montserrat">
+                <p className="text-zinc-900 dark:text-white font-black text-lg tracking-tight font-montserrat">
                   {isNative ? 'Sync iPhone' : 'Sync Contacts'}
                 </p>
-                <p className="text-zinc-500 text-xs font-semibold tracking-tight truncate">
+                <p className="text-zinc-600 dark:text-zinc-500 text-xs font-semibold tracking-tight truncate">
                   {isSyncing
                     ? 'Syncing…'
                     : cloudContacts.length > 0
@@ -411,8 +411,8 @@ export function AddPeopleSheet() {
                     : 'Bring your phone book into R@lly'}
                 </p>
               </div>
-              <div className="bg-white/10 rounded-full p-2 shrink-0">
-                <ChevronDown className="w-4 h-4 text-white -rotate-90" />
+              <div className="bg-black/10 dark:bg-white/10 rounded-full p-2 shrink-0">
+                <ChevronDown className="w-4 h-4 text-zinc-900 dark:text-white -rotate-90" />
               </div>
             </button>
 
