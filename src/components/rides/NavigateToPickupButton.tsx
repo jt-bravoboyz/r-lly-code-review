@@ -30,9 +30,13 @@ export function NavigateToPickupButton({
 
   if (!url) return null;
 
-  const handleClick = () => {
+  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     if (passengerName) {
       toast.success(`Navigating to pick up ${passengerName}`);
+    }
+    if (Capacitor.isNativePlatform() && url) {
+      e.preventDefault();
+      openDirectionsLink(url);
     }
   };
 

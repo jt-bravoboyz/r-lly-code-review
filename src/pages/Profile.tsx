@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Settings, LogOut, MapPin, Award, Camera, Users, Home, Shield, Pencil, Save, X, FileText, ChevronRight, Navigation, Phone, Mail, CreditCard, Contact, CheckCircle2, Send, Star } from 'lucide-react';
+import { Settings, LogOut, MapPin, Award, Camera, Users, Home, Shield, Pencil, Save, X, FileText, ChevronRight, Navigation, Phone, Mail, CreditCard, Contact, CheckCircle2, Send, Star, History } from 'lucide-react';
 import { usePhoneContacts } from '@/hooks/usePhoneContacts';
 import { ContactSyncButton } from '@/components/contacts/ContactSyncButton';
 import { ContactInviteDialog } from '@/components/contacts/ContactInviteDialog';
@@ -691,6 +691,23 @@ export default function Profile() {
                     <span className="font-medium">R@lly Tabs</span>
                     <p className="text-xs text-muted-foreground">
                       Split checks, hosted & owed
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight className="h-5 w-5 text-muted-foreground" />
+              </button>
+            </div>
+            <div className="pt-3 border-t border-border">
+              <button
+                onClick={() => navigate('/rallies/past')}
+                className="w-full flex items-center justify-between py-2 hover:bg-muted/50 rounded-lg px-1 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <History className="h-5 w-5 text-muted-foreground" />
+                  <div className="text-left">
+                    <span className="font-medium">Past R@llies</span>
+                    <p className="text-xs text-muted-foreground">
+                      Your full night archive
                     </p>
                   </div>
                 </div>

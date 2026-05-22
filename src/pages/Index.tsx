@@ -257,10 +257,9 @@ export default function Index() {
           )}
         </section>
 
-        {/* Past Events Section */}
-        {pastEvents.length > 0 && (
-          <section className="space-y-4">
-            <div className="flex items-center justify-between">
+        {/* Past Events Section — always visible so the archive is always reachable */}
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <History className="h-5 w-5 text-muted-foreground" />
               <h3 className="text-xl font-bold font-montserrat animate-text-shimmer bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">Past R@llies</h3>
@@ -271,15 +270,24 @@ export default function Index() {
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
-            </div>
+          </div>
 
+          {pastEvents.length > 0 ? (
             <div className="space-y-4 opacity-80">
               {pastEvents.slice(0, 3).map((event) => (
                 <EventCard key={event.id} event={event} />
               ))}
             </div>
-          </section>
-        )}
+          ) : (
+            <Card className="glass-elevated rounded-2xl">
+              <CardContent className="p-6 text-center">
+                <p className="text-sm text-muted-foreground font-montserrat">
+                  Your past nights will show up here.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </section>
       </main>
 
       <BottomNav />
