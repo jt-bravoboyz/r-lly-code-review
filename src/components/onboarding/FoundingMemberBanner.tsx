@@ -48,6 +48,12 @@ export function FoundingMemberBanner() {
             href="https://rally.canny.io"
             target="_blank"
             rel="noopener noreferrer"
+            onClick={(e) => {
+              if (Capacitor.isNativePlatform()) {
+                e.preventDefault();
+                void openExternalLink('https://rally.canny.io');
+              }
+            }}
             className="inline-flex items-center gap-1.5 mt-2.5 text-xs font-semibold text-primary hover:text-primary/80 transition-colors bg-primary/10 hover:bg-primary/20 px-3 py-1.5 rounded-full border border-primary/20"
           >
             <MessageSquare className="w-3.5 h-3.5" />
