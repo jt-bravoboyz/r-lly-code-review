@@ -536,7 +536,7 @@ export function AddPeopleSheet() {
 
         {/* Sticky batch-invite action bar */}
         {selectedCount > 0 && (
-          <div className="sticky bottom-0 px-7 pt-3 pb-[max(env(safe-area-inset-bottom),16px)] bg-[#121214]/95 backdrop-blur-xl border-t border-white/10 animate-in slide-in-from-bottom duration-200">
+          <div className="sticky bottom-0 px-7 pt-3 pb-[max(env(safe-area-inset-bottom),16px)] bg-white/85 dark:bg-[#121214]/95 backdrop-blur-xl border-t border-black/[0.06] dark:border-white/10 animate-in slide-in-from-bottom duration-200">
             <Button
               onClick={handleBatchInvite}
               className="w-full h-12 rounded-2xl gap-2 font-black font-montserrat uppercase tracking-wider text-sm bg-[#F47A19] hover:bg-[#F47A19]/90 text-white shadow-xl shadow-[#F47A19]/30"
