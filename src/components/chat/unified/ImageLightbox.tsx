@@ -22,7 +22,7 @@ export function ImageLightbox({ src, onClose }: Props) {
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[200] bg-black/90 backdrop-blur-xl flex items-center justify-center animate-fade-in"
+      className="fixed inset-0 z-[200] bg-black/90 backdrop-blur-xl flex items-center justify-center animate-fade-in safe-top safe-bottom"
       onClick={onClose}
     >
       <button

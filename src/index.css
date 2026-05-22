@@ -2030,6 +2030,23 @@
    bar all the way up behind the status bar. */
 .h-safe-top { height: env(safe-area-inset-top, 1.5rem); }
 
+/* ========================================================================
+   Native-only hardening — applied when body has `.native` class (toggled
+   by nativeBootstrap when Capacitor.isNativePlatform() returns true).
+   Web build is completely untouched.
+   ======================================================================== */
+body.native input,
+body.native textarea,
+body.native select {
+  /* Forces ≥16px on form inputs so iOS WKWebView won't auto-zoom on focus. */
+  font-size: max(16px, 1rem);
+}
+body.native {
+  /* Match background so rubber-band overscroll doesn't reveal white edges. */
+  background: hsl(var(--background));
+  overscroll-behavior-y: none;
+}
+
 /* =========================================================================
    EVENT FLYER THEME — page-scoped glassmorphism for /events/:id
    Activated by <EventThemeProvider> which sets CSS vars + .event-themed class.

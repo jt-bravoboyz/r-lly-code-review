@@ -16,6 +16,12 @@ export async function initNativeShell(opts: {
   if (!Capacitor.isNativePlatform()) return;
   initialized = true;
 
+  // Tag <body> so CSS can apply native-only hardening (16px input font,
+  // background-matched overscroll). Web build never gets this class.
+  if (typeof document !== 'undefined') {
+    document.body.classList.add('native');
+  }
+
   const [{ StatusBar, Style }, { Keyboard, KeyboardResize }, { App }] =
     await Promise.all([
       import('@capacitor/status-bar'),

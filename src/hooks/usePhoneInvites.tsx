@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { normalizePhoneNumber } from './usePhoneContacts';
 import { buildRallyShareUrl } from '@/lib/shareUrls';
-import { openProtocolLink } from '@/lib/nativeLinks';
+import { openSms } from '@/lib/nativeLinks';
 
 
 export interface PhoneInvite {
@@ -127,13 +127,10 @@ export function openSMSInvite(
     { referrerId: opts.referrerId ?? null }
   );
 
-  const message = encodeURIComponent(
-    `You're locked in for "${eventTitle}". Claim your spot 🔥\n${shareLink}\n\nCode: ${inviteCode}`
-  );
+  const message = `You're locked in for "${eventTitle}". Claim your spot 🔥\n${shareLink}\n\nCode: ${inviteCode}`;
 
-  // Use sms: protocol to open native SMS app
-  const smsUrl = `sms:${phoneNumber}?body=${message}`;
-  openProtocolLink(smsUrl);
+  // Route through platform-aware helper (handles iOS `&body=` vs `?body=`).
+  openSms(phoneNumber, message);
 }
 
 

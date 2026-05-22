@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { shareContent, copyToClipboard } from '@/lib/nativeShare';
 import { getPublicName } from '@/lib/identity';
 import { PUBLIC_APP_URL } from '@/lib/appUrl';
-import { openProtocolLink } from '@/lib/nativeLinks';
+import { openSms, openMailto } from '@/lib/nativeLinks';
 import { Mail, MessageSquare, Copy, Check, Send, UserPlus, Search, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -102,24 +102,18 @@ export function SquadInviteDialog({ squadId, squadName, trigger }: SquadInviteDi
       setGeneratedCode(data.invite_code);
 
       if (type === 'email') {
-        const subject = encodeURIComponent(`Join my squad "${squadName}" on R@lly!`);
-        const body = encodeURIComponent(
+        const subject = `Join my squad "${squadName}" on R@lly!`;
+        const body =
           `Hey!\n\nI want you to join my squad "${squadName}" on R@lly - the app for planning nights out with friends.\n\n` +
           `Click this link to join: ${inviteLink}\n\n` +
           `Or use invite code: ${data.invite_code}\n\n` +
-          `See you there! 🎉`
-        );
-        openProtocolLink(`mailto:${contactValue}?subject=${subject}&body=${body}`);
+          `See you there! 🎉`;
+        openMailto(contactValue, { subject, body });
         toast.success('Email opened! Send it to invite your friend.');
       } else {
-        const message = encodeURIComponent(
-          `Join my squad "${squadName}" on R@lly! 🎉\n\n${inviteLink}\n\nCode: ${data.invite_code}`
-        );
+        const message = `Join my squad "${squadName}" on R@lly! 🎉\n\n${inviteLink}\n\nCode: ${data.invite_code}`;
         const cleanPhone = contactValue.replace(/[^\d+]/g, '');
-        const smsUrl = /iPhone|iPad|iPod/i.test(navigator.userAgent)
-          ? `sms:${cleanPhone}&body=${message}`
-          : `sms:${cleanPhone}?body=${message}`;
-        openProtocolLink(smsUrl);
+        openSms(cleanPhone, message);
         toast.success('SMS opened! Send it to invite your friend.');
       }
 
