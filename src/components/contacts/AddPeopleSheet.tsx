@@ -123,8 +123,6 @@ export function AddPeopleSheet() {
   const handleBatchInvite = () => {
     const selected = filteredPhoneContacts.filter((c) => selectedPhoneIds.has(c.id));
     if (selected.length === 0) return;
-    // Open SMS for first selected (multi-recipient SMS is unreliable across platforms);
-    // share-sheet handles bulk on native better.
     const phones = selected.map((c) => c.phone).filter(Boolean) as string[];
     if (phones.length > 0) {
       openSms(phones.join(','), smsBody);
@@ -203,67 +201,105 @@ export function AddPeopleSheet() {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button size="sm" className="gap-2 rounded-full">
+        <button
+          type="button"
+          className="h-12 px-5 bg-[#F47A19] rounded-2xl text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-[#F47A19]/30 active:scale-95 transition-transform inline-flex items-center gap-2 shrink-0"
+        >
           <UserPlus className="h-4 w-4" />
-          Add People
-        </Button>
+          Add
+        </button>
       </SheetTrigger>
 
       <SheetContent
         side="bottom"
-        className="rounded-t-3xl h-[92dvh] bg-background/95 backdrop-blur-2xl border-t border-white/10 p-0 flex flex-col"
+        className="rounded-t-[3rem] h-[92dvh] bg-[#121214] border-t border-white/15 shadow-[0_-20px_60px_-15px_rgba(0,0,0,0.8)] p-0 flex flex-col"
       >
-        {/* Header — sits below the status bar via safe-top padding */}
-        <SheetHeader className="px-5 pt-[max(env(safe-area-inset-top),1rem)] pb-3 text-left">
-          <SheetTitle className="font-montserrat text-xl tracking-tight">Add People</SheetTitle>
-          <p className="text-xs text-muted-foreground font-montserrat">
+        {/* Drag handle */}
+        <div className="flex justify-center pt-3 shrink-0">
+          <div className="w-12 h-1.5 bg-zinc-800 rounded-full" />
+        </div>
+
+        {/* Header */}
+        <SheetHeader className="px-7 pt-[max(env(safe-area-inset-top),0.5rem)] pb-6 text-left shrink-0">
+          <SheetTitle className="font-montserrat text-white font-black text-3xl tracking-tighter">
+            Add People
+          </SheetTitle>
+          <p className="text-[#F47A19] font-bold text-sm mt-1 font-montserrat">
             Pull your crew into the night
           </p>
         </SheetHeader>
 
         {/* Scrollable body */}
-        <div className="flex-1 overflow-y-auto overscroll-contain px-5 pb-6 space-y-6">
+        <div className="flex-1 overflow-y-auto overscroll-contain px-7 pb-8 space-y-9">
           {/* ─────────── Section 1 · R@LLY NETWORK ─────────── */}
-          <section className="space-y-3">
+          <section className="space-y-4">
             <div className="flex items-center gap-2">
-              <span className="h-px flex-1 bg-white/10" />
-              <p className="text-[10px] font-semibold tracking-[0.18em] text-muted-foreground/70 font-montserrat uppercase">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#F47A19] shadow-[0_0_8px_#F47A19]" />
+              <h3 className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.2em] font-montserrat">
                 R@lly Network
-              </p>
-              <span className="h-px flex-1 bg-white/10" />
+              </h3>
             </div>
 
             {/* Search Bar 1 — friends & members */}
             <div className="relative">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
               <Input
-                placeholder="Search friends & R@lly members…"
+                placeholder="Search friends & members…"
                 value={networkQuery}
                 onChange={(e) => setNetworkQuery(e.target.value)}
                 style={noZoomInputStyle}
-                className="pl-10 h-12 rounded-2xl bg-white/[0.03] border-white/10 text-base focus-visible:ring-1 focus-visible:ring-primary/40 focus-visible:border-primary/40"
+                className="pl-11 pr-10 h-14 rounded-2xl bg-white/[0.03] border-white/10 text-base text-white placeholder:text-zinc-600 font-bold focus-visible:ring-1 focus-visible:ring-[#F47A19]/50 focus-visible:border-[#F47A19]/50"
               />
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-[#F47A19] shadow-[0_0_8px_#F47A19] animate-pulse" />
             </div>
 
-            {/* Collapsible · R@lly Friends */}
+            {/* Two-column grid: Friends + Discover triggers */}
+            <div className="grid grid-cols-2 gap-3">
+              <Collapsible open={friendsOpen} onOpenChange={setFriendsOpen}>
+                <CollapsibleTrigger asChild>
+                  <button className="w-full h-16 bg-white/[0.03] border border-white/10 rounded-[1.25rem] flex items-center justify-between px-4 transition-all active:scale-[0.98] active:bg-white/[0.06]">
+                    <div className="text-left min-w-0">
+                      <p className="text-white font-black text-sm tracking-tight">
+                        Friends
+                      </p>
+                      <p className="text-[#F47A19] font-black text-[9px] uppercase tracking-tight mt-0.5">
+                        {filteredFriends.length} Active
+                      </p>
+                    </div>
+                    <ChevronDown
+                      className={`h-4 w-4 text-zinc-500 transition-transform duration-200 shrink-0 ${friendsOpen ? 'rotate-180' : ''}`}
+                    />
+                  </button>
+                </CollapsibleTrigger>
+              </Collapsible>
+
+              <Collapsible open={discoverOpen} onOpenChange={setDiscoverOpen}>
+                <CollapsibleTrigger asChild>
+                  <button className="w-full h-16 bg-white/[0.03] border border-white/10 rounded-[1.25rem] flex items-center justify-between px-4 transition-all active:scale-[0.98] active:bg-white/[0.06]">
+                    <div className="text-left min-w-0 flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 text-[#F47A19] shrink-0" />
+                      <div>
+                        <p className="text-white font-black text-sm tracking-tight">
+                          Discover
+                        </p>
+                        <p className="text-zinc-500 font-black text-[9px] uppercase tracking-tight mt-0.5">
+                          Explore
+                        </p>
+                      </div>
+                    </div>
+                    <ChevronDown
+                      className={`h-4 w-4 text-zinc-500 transition-transform duration-200 shrink-0 ${discoverOpen ? 'rotate-180' : ''}`}
+                    />
+                  </button>
+                </CollapsibleTrigger>
+              </Collapsible>
+            </div>
+
+            {/* Full-width expanded content for Friends */}
             <Collapsible open={friendsOpen} onOpenChange={setFriendsOpen}>
-              <CollapsibleTrigger asChild>
-                <button className="w-full h-12 px-4 rounded-2xl bg-white/[0.04] hover:bg-white/[0.07] active:bg-white/[0.09] transition-colors flex items-center gap-3 group">
-                  <Users className="h-4 w-4 text-primary" />
-                  <span className="text-sm font-medium font-montserrat text-foreground flex-1 text-left">
-                    R@lly Friends
-                  </span>
-                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-primary/15 text-primary">
-                    {filteredFriends.length}
-                  </span>
-                  <ChevronDown
-                    className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${friendsOpen ? 'rotate-180' : ''}`}
-                  />
-                </button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="pt-2 space-y-1.5 data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
+              <CollapsibleContent className="space-y-1.5 data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
                 {filteredFriends.length === 0 ? (
-                  <p className="text-xs text-muted-foreground px-3 py-4 text-center">
+                  <p className="text-xs text-zinc-500 px-3 py-4 text-center font-semibold">
                     No friends match that search.
                   </p>
                 ) : (
@@ -271,20 +307,20 @@ export function AddPeopleSheet() {
                     <button
                       key={friend.id}
                       onClick={() => toast.success(`Selected ${friend.display_name}`)}
-                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/[0.02] hover:bg-white/[0.05] transition-colors"
+                      className="w-full flex items-center gap-3 p-3 rounded-2xl bg-white/[0.02] border border-white/[0.05] hover:bg-white/[0.05] transition-colors"
                     >
-                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden">
+                      <div className="w-11 h-11 rounded-full bg-[#F47A19]/15 ring-1 ring-white/10 flex items-center justify-center shrink-0 overflow-hidden">
                         {friend.avatar_url ? (
                           <img src={friend.avatar_url} alt="" className="w-full h-full object-cover" />
                         ) : (
-                          <Users className="h-4 w-4 text-primary" />
+                          <Users className="h-4 w-4 text-[#F47A19]" />
                         )}
                       </div>
                       <div className="flex-1 min-w-0 text-left">
-                        <p className="font-semibold font-montserrat text-sm text-foreground truncate">
+                        <p className="font-bold font-montserrat text-sm text-white truncate">
                           {friend.display_name || 'R@lly User'}
                         </p>
-                        <p className="text-[11px] text-muted-foreground truncate">
+                        <p className="text-[11px] text-zinc-500 truncate">
                           {friend.isSquadMate && friend.isReferral
                             ? 'Squad Mate · Referred'
                             : friend.isSquadMate
@@ -300,20 +336,9 @@ export function AddPeopleSheet() {
               </CollapsibleContent>
             </Collapsible>
 
-            {/* Collapsible · Discover on R@lly (DB autocomplete) */}
+            {/* Full-width expanded content for Discover */}
             <Collapsible open={discoverOpen} onOpenChange={setDiscoverOpen}>
-              <CollapsibleTrigger asChild>
-                <button className="w-full h-12 px-4 rounded-2xl bg-white/[0.04] hover:bg-white/[0.07] active:bg-white/[0.09] transition-colors flex items-center gap-3">
-                  <Sparkles className="h-4 w-4 text-primary" />
-                  <span className="text-sm font-medium font-montserrat text-foreground flex-1 text-left">
-                    Discover on R@lly
-                  </span>
-                  <ChevronDown
-                    className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${discoverOpen ? 'rotate-180' : ''}`}
-                  />
-                </button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="pt-2 data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
+              <CollapsibleContent className="data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
                 <ContactSmartSearch
                   onSelect={(c) => toast.success(`Selected ${c.name || c.phone || c.email}`)}
                   onInvite={(c) => {
@@ -329,83 +354,89 @@ export function AddPeopleSheet() {
             {showQuickAdd && (
               <button
                 onClick={handleQuickAdd}
-                className="w-full flex items-center gap-3 p-4 rounded-2xl bg-primary/12 border border-primary/30 ring-1 ring-primary/20 shadow-[0_4px_24px_-8px_hsl(var(--primary)/0.4)] animate-in fade-in duration-300 active:scale-[0.99] transition-transform"
+                className="w-full flex items-center gap-3 p-4 rounded-2xl bg-gradient-to-br from-[#F47A19]/15 to-transparent border border-[#F47A19]/30 shadow-[0_4px_24px_-8px_rgba(244,122,25,0.4)] animate-in fade-in duration-300 active:scale-[0.99] transition-transform"
               >
-                <div className="w-11 h-11 rounded-full bg-primary flex items-center justify-center shrink-0">
-                  <MessageCircle className="h-5 w-5 text-primary-foreground" />
+                <div className="w-11 h-11 rounded-2xl bg-[#F47A19] flex items-center justify-center shrink-0 shadow-lg shadow-[#F47A19]/30">
+                  <MessageCircle className="h-5 w-5 text-white" />
                 </div>
                 <div className="text-left flex-1 min-w-0">
-                  <p className="font-bold font-montserrat text-sm text-foreground truncate">
+                  <p className="font-black font-montserrat text-sm text-white truncate">
                     {isNetworkPhoneQuery ? `R@lly ${trimmedNetwork}` : `Invite '${trimmedNetwork}' via Text`}
                   </p>
-                  <p className="text-[11px] text-muted-foreground">Tap to send an invite link</p>
+                  <p className="text-[11px] text-zinc-500 font-semibold">Tap to send an invite link</p>
                 </div>
               </button>
             )}
           </section>
 
           {/* ─────────── Section 2 · YOUR PHONE ─────────── */}
-          <section className="space-y-3">
+          <section className="space-y-4">
             <div className="flex items-center gap-2">
-              <span className="h-px flex-1 bg-white/10" />
-              <p className="text-[10px] font-semibold tracking-[0.18em] text-muted-foreground/70 font-montserrat uppercase">
+              <span className="w-1.5 h-1.5 rounded-full bg-zinc-600" />
+              <h3 className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.2em] font-montserrat">
                 Your Phone
-              </p>
-              <span className="h-px flex-1 bg-white/10" />
+              </h3>
             </div>
 
             {/* Search Bar 2 — phone book */}
             <div className="relative">
-              <PhoneIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <PhoneIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
               <Input
                 placeholder="Search phone contacts…"
                 value={phoneQuery}
                 onChange={(e) => setPhoneQuery(e.target.value)}
                 style={noZoomInputStyle}
-                className="pl-10 h-12 rounded-2xl bg-white/[0.03] border-white/10 text-base focus-visible:ring-1 focus-visible:ring-primary/40 focus-visible:border-primary/40"
+                className="pl-11 h-14 rounded-2xl bg-white/[0.03] border-white/10 text-base text-white placeholder:text-zinc-600 font-bold focus-visible:ring-1 focus-visible:ring-[#F47A19]/50 focus-visible:border-[#F47A19]/50"
               />
             </div>
 
-            {/* Sync CTA — primary action for this section */}
+            {/* Premium Sync Hero */}
             <button
               onClick={handleNativeContacts}
               disabled={isSyncing}
-              className="w-full flex items-center gap-3 p-4 rounded-2xl bg-white/[0.04] hover:bg-white/[0.07] active:bg-white/[0.09] border border-white/10 transition-colors disabled:opacity-60"
+              className="group w-full p-5 bg-gradient-to-br from-[#F47A19]/10 to-transparent border border-[#F47A19]/20 rounded-[2rem] flex items-center gap-5 transition-all active:scale-[0.98] disabled:opacity-60"
             >
-              <div className="w-11 h-11 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
-                <Smartphone className="h-5 w-5 text-primary" />
+              <div className="w-14 h-14 bg-[#F47A19] rounded-2xl flex items-center justify-center text-white shadow-xl shadow-[#F47A19]/30 shrink-0 transition-transform group-hover:rotate-6">
+                <Smartphone className="h-7 w-7" />
               </div>
-              <div className="text-left flex-1 min-w-0">
-                <p className="font-semibold font-montserrat text-sm text-foreground">
-                  {isNative ? 'Sync iPhone Contacts' : 'Pull from Device'}
+              <div className="text-left min-w-0 flex-1">
+                <p className="text-white font-black text-lg tracking-tight font-montserrat">
+                  {isNative ? 'Sync iPhone' : 'Sync Contacts'}
                 </p>
-                <p className="text-[11px] text-muted-foreground">
-                  {isSyncing ? 'Syncing…' : 'Bring your phone book into R@lly'}
+                <p className="text-zinc-500 text-xs font-semibold tracking-tight truncate">
+                  {isSyncing
+                    ? 'Syncing…'
+                    : cloudContacts.length > 0
+                    ? `${cloudContacts.length} ready to invite`
+                    : 'Bring your phone book into R@lly'}
                 </p>
+              </div>
+              <div className="bg-white/10 rounded-full p-2 shrink-0">
+                <ChevronDown className="w-4 h-4 text-white -rotate-90" />
               </div>
             </button>
 
             {/* Collapsible · From Your Phone */}
             <Collapsible open={phoneListOpen} onOpenChange={setPhoneListOpen}>
               <CollapsibleTrigger asChild>
-                <button className="w-full h-12 px-4 rounded-2xl bg-white/[0.04] hover:bg-white/[0.07] active:bg-white/[0.09] transition-colors flex items-center gap-3">
-                  <Users className="h-4 w-4 text-primary" />
-                  <span className="text-sm font-medium font-montserrat text-foreground flex-1 text-left">
+                <button className="w-full h-14 px-5 rounded-2xl bg-white/[0.03] border border-white/10 hover:bg-white/[0.05] transition-colors flex items-center gap-3">
+                  <Users className="h-4 w-4 text-[#F47A19]" />
+                  <span className="text-sm font-bold font-montserrat text-white flex-1 text-left">
                     From Your Phone
                   </span>
-                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-primary/15 text-primary">
+                  <span className="text-[10px] font-black px-2 py-1 rounded-lg bg-[#F47A19]/15 text-[#F47A19] uppercase tracking-wider">
                     {filteredPhoneContacts.length}
                   </span>
                   <ChevronDown
-                    className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${phoneListOpen ? 'rotate-180' : ''}`}
+                    className={`h-4 w-4 text-zinc-500 transition-transform duration-200 ${phoneListOpen ? 'rotate-180' : ''}`}
                   />
                 </button>
               </CollapsibleTrigger>
               <CollapsibleContent className="pt-2 space-y-1.5 data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
                 {filteredPhoneContacts.length === 0 ? (
-                  <p className="text-xs text-muted-foreground px-3 py-4 text-center">
+                  <p className="text-xs text-zinc-500 px-3 py-4 text-center font-semibold">
                     {cloudContacts.length === 0
-                      ? 'No contacts synced yet. Tap "Sync iPhone Contacts" above.'
+                      ? 'No contacts synced yet. Tap "Sync Contacts" above.'
                       : 'No contacts match that search.'}
                   </p>
                 ) : (
@@ -415,30 +446,32 @@ export function AddPeopleSheet() {
                       <button
                         key={c.id}
                         onClick={() => togglePhoneSelection(c.id)}
-                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-colors ${
+                        className={`w-full flex items-center gap-3 p-3 rounded-2xl border transition-all active:scale-[0.99] ${
                           selected
-                            ? 'bg-primary/10 border-primary/40 ring-1 ring-primary/30'
-                            : 'bg-white/[0.02] border-transparent hover:bg-white/[0.05]'
+                            ? 'bg-[#F47A19]/10 border-[#F47A19]/40 ring-1 ring-[#F47A19]/40 shadow-[0_4px_20px_-8px_rgba(244,122,25,0.5)]'
+                            : 'bg-white/[0.02] border-white/[0.05] hover:bg-white/[0.05]'
                         }`}
                       >
                         <div
-                          className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
-                            selected ? 'bg-primary text-primary-foreground' : 'bg-primary/10 text-primary'
+                          className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 font-black ${
+                            selected
+                              ? 'bg-[#F47A19] text-white shadow-lg shadow-[#F47A19]/30'
+                              : 'bg-white/5 text-zinc-400 border border-white/10'
                           }`}
                         >
                           {selected ? (
-                            <UserPlus className="h-4 w-4" />
+                            <UserPlus className="h-5 w-5" />
                           ) : (
-                            <span className="text-sm font-semibold font-montserrat">
+                            <span className="text-sm font-montserrat">
                               {(c.name || c.phone || '?').charAt(0).toUpperCase()}
                             </span>
                           )}
                         </div>
                         <div className="flex-1 min-w-0 text-left">
-                          <p className="font-semibold font-montserrat text-sm text-foreground truncate">
+                          <p className="font-bold font-montserrat text-sm text-white truncate">
                             {c.name || c.phone || c.email}
                           </p>
-                          <p className="text-[11px] text-muted-foreground truncate">
+                          <p className="text-[11px] text-zinc-500 truncate">
                             {c.phone || c.email || ''}
                           </p>
                         </div>
@@ -453,36 +486,39 @@ export function AddPeopleSheet() {
             {!isNative && (
               <Collapsible open={importOpen} onOpenChange={setImportOpen}>
                 <CollapsibleTrigger asChild>
-                  <button className="w-full h-11 px-4 rounded-2xl bg-white/[0.02] hover:bg-white/[0.05] transition-colors flex items-center gap-3 text-muted-foreground">
-                    <FileUp className="h-4 w-4" />
-                    <span className="text-xs font-medium font-montserrat flex-1 text-left">
-                      Web Import (VCF · Paste · CSV)
+                  <button className="w-full h-14 px-5 rounded-2xl bg-white/[0.03] border border-white/10 hover:bg-white/[0.05] transition-colors flex items-center gap-3">
+                    <FileUp className="h-4 w-4 text-zinc-500" />
+                    <span className="text-sm font-bold font-montserrat text-zinc-300 flex-1 text-left">
+                      Web Import
+                    </span>
+                    <span className="text-[9px] font-black text-zinc-500 uppercase tracking-widest hidden sm:inline">
+                      VCF · Paste · CSV
                     </span>
                     <ChevronDown
-                      className={`h-4 w-4 transition-transform duration-200 ${importOpen ? 'rotate-180' : ''}`}
+                      className={`h-4 w-4 text-zinc-500 transition-transform duration-200 ${importOpen ? 'rotate-180' : ''}`}
                     />
                   </button>
                 </CollapsibleTrigger>
                 <CollapsibleContent className="pt-2 data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
                   <Tabs defaultValue="vcf" className="w-full">
-                    <TabsList className="w-full grid grid-cols-3">
-                      <TabsTrigger value="vcf" className="gap-1 text-xs">
+                    <TabsList className="w-full grid grid-cols-3 bg-white/[0.03] border border-white/10">
+                      <TabsTrigger value="vcf" className="gap-1 text-xs font-bold data-[state=active]:bg-[#F47A19] data-[state=active]:text-white">
                         <FileUp className="h-3.5 w-3.5" />
                         Card
                       </TabsTrigger>
-                      <TabsTrigger value="paste" className="gap-1 text-xs">
+                      <TabsTrigger value="paste" className="gap-1 text-xs font-bold data-[state=active]:bg-[#F47A19] data-[state=active]:text-white">
                         <ClipboardPaste className="h-3.5 w-3.5" />
                         Paste
                       </TabsTrigger>
-                      <TabsTrigger value="csv" className="gap-1 text-xs">
+                      <TabsTrigger value="csv" className="gap-1 text-xs font-bold data-[state=active]:bg-[#F47A19] data-[state=active]:text-white">
                         <Upload className="h-3.5 w-3.5" />
                         CSV
                       </TabsTrigger>
                     </TabsList>
                     <TabsContent value="vcf" className="mt-3">
                       <VCFContactImport onComplete={() => setOpen(false)} />
-                      <p className="text-xs text-muted-foreground mt-3 leading-relaxed">
-                        <strong>iPhone tip:</strong> Open Contacts → tap a contact → Share → save as .vcf → upload here.
+                      <p className="text-xs text-zinc-500 mt-3 leading-relaxed">
+                        <strong className="text-zinc-300">iPhone tip:</strong> Open Contacts → tap a contact → Share → save as .vcf → upload here.
                       </p>
                     </TabsContent>
                     <TabsContent value="paste" className="mt-3">
@@ -500,10 +536,10 @@ export function AddPeopleSheet() {
 
         {/* Sticky batch-invite action bar */}
         {selectedCount > 0 && (
-          <div className="sticky bottom-0 px-5 pt-3 pb-[max(env(safe-area-inset-bottom),12px)] bg-background/90 backdrop-blur-xl border-t border-white/10 animate-in slide-in-from-bottom duration-200">
+          <div className="sticky bottom-0 px-7 pt-3 pb-[max(env(safe-area-inset-bottom),16px)] bg-[#121214]/95 backdrop-blur-xl border-t border-white/10 animate-in slide-in-from-bottom duration-200">
             <Button
               onClick={handleBatchInvite}
-              className="w-full h-12 rounded-2xl gap-2 font-semibold font-montserrat"
+              className="w-full h-12 rounded-2xl gap-2 font-black font-montserrat uppercase tracking-wider text-sm bg-[#F47A19] hover:bg-[#F47A19]/90 text-white shadow-xl shadow-[#F47A19]/30"
             >
               <MessageCircle className="h-4 w-4" />
               R@lly {selectedCount} {selectedCount === 1 ? 'Contact' : 'Contacts'}

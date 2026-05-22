@@ -38,10 +38,24 @@ type SelectableContact = {
   email?: string;
 };
 
-const SectionLabel = ({ children }: { children: React.ReactNode }) => (
-  <p className="text-[11px] font-semibold font-montserrat text-muted-foreground uppercase tracking-wider px-1 pt-1">
-    {children}
-  </p>
+const SectionLabel = ({
+  children,
+  accent = false,
+}: {
+  children: React.ReactNode;
+  accent?: boolean;
+}) => (
+  <div className="flex items-center gap-2 px-1 pt-1">
+    <span
+      className={cn(
+        'w-1.5 h-1.5 rounded-full',
+        accent ? 'bg-[#F47A19] shadow-[0_0_8px_#F47A19]' : 'bg-zinc-600'
+      )}
+    />
+    <p className="text-[10px] font-black font-montserrat text-zinc-500 uppercase tracking-[0.2em]">
+      {children}
+    </p>
+  </div>
 );
 
 export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps) {
@@ -168,221 +182,236 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
   const selectedCount = selectedKeys.size;
 
   return (
-    <div className="space-y-3 relative">
-      {/* Search + Add People */}
-      <div className="flex gap-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search friends, contacts, handles…"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 bg-white/80 backdrop-blur-sm border-0 shadow-sm rounded-xl"
-          />
+    <div className="relative">
+      {/* Premium dark-glass island — wraps the entire Contacts surface */}
+      <div className="relative overflow-hidden rounded-3xl bg-[#0F0F12] border border-white/[0.08] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] p-4 sm:p-5 space-y-5">
+        {/* Ambient orange drift */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -top-16 -right-16 w-48 h-48 rounded-full bg-[#F47A19]/15 blur-3xl"
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -bottom-24 -left-20 w-56 h-56 rounded-full bg-[#F47A19]/[0.06] blur-3xl"
+        />
+
+        {/* Search + Add People */}
+        <div className="relative z-10 flex gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
+            <Input
+              placeholder="Search friends, contacts, handles…"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ fontSize: '16px' }}
+              className="pl-10 h-12 bg-white/5 border border-white/10 rounded-2xl text-white placeholder:text-zinc-500 focus-visible:ring-1 focus-visible:ring-[#F47A19]/40 focus-visible:border-[#F47A19]/40"
+            />
+          </div>
+          <AddPeopleSheet />
         </div>
-        <AddPeopleSheet />
-      </div>
 
-      <ScrollArea
-        className={cn(
-          'pr-2',
-          selectedCount > 0
-            ? 'h-[calc(100vh-380px)]'
-            : 'h-[calc(100vh-300px)]'
-        )}
-      >
-        <div className="space-y-5 pb-4">
-          {/* Quick Add when search has no matches */}
-          {noMatches && (
-            <button
-              onClick={() =>
-                handleInviteToApp(
-                  isPhoneQuery ? digitsOnly : '',
-                  isPhoneQuery ? undefined : trimmed
-                )
-              }
-              className="w-full flex items-center gap-3 p-4 rounded-2xl border-l-4 border-[#F47A19] bg-[#F47A19]/10 animate-in fade-in duration-300 hover:scale-[1.01] transition-all cursor-pointer"
-            >
-              <div className="w-10 h-10 rounded-full bg-[#F47A19] flex items-center justify-center shrink-0">
-                <MessageCircle className="h-5 w-5 text-white" />
-              </div>
-              <div className="text-left">
-                <p className="font-bold text-sm font-montserrat text-foreground">
-                  {isPhoneQuery ? `R@lly ${trimmed}` : `Invite '${trimmed}' via Text`}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Tap to open SMS with your invite link
-                </p>
-              </div>
-            </button>
+        <ScrollArea
+          className={cn(
+            'pr-2 relative z-10',
+            selectedCount > 0
+              ? 'h-[calc(100vh-420px)]'
+              : 'h-[calc(100vh-340px)]'
           )}
+        >
+          <div className="space-y-5 pb-4">
+            {/* Quick Add when search has no matches */}
+            {noMatches && (
+              <button
+                onClick={() =>
+                  handleInviteToApp(
+                    isPhoneQuery ? digitsOnly : '',
+                    isPhoneQuery ? undefined : trimmed
+                  )
+                }
+                className="w-full flex items-center gap-3 p-4 rounded-2xl bg-gradient-to-br from-[#F47A19]/15 to-transparent border border-[#F47A19]/30 shadow-[0_4px_24px_-8px_rgba(244,122,25,0.4)] animate-in fade-in duration-300 active:scale-[0.99] transition-transform"
+              >
+                <div className="w-11 h-11 rounded-2xl bg-[#F47A19] flex items-center justify-center shrink-0 shadow-lg shadow-[#F47A19]/30">
+                  <MessageCircle className="h-5 w-5 text-white" />
+                </div>
+                <div className="text-left flex-1 min-w-0">
+                  <p className="font-black text-sm font-montserrat text-white truncate">
+                    {isPhoneQuery ? `R@lly ${trimmed}` : `Invite '${trimmed}' via Text`}
+                  </p>
+                  <p className="text-[11px] text-zinc-500 font-semibold">
+                    Tap to open SMS with your invite link
+                  </p>
+                </div>
+              </button>
+            )}
 
-          {/* R@lly Members search results — only while typing */}
-          {showSearchResults && rallySearchResults.length > 0 && (
-            <section className="space-y-2">
-              <SectionLabel>R@lly Members</SectionLabel>
-              {rallySearchResults.map((result) => {
-                const state = getFriendshipState(result.id, friendships, profile?.id);
-                const isLocked =
-                  state.state === 'accepted' || state.state === 'pending_outgoing';
-                return (
+            {/* R@lly Members search results — only while typing */}
+            {showSearchResults && rallySearchResults.length > 0 && (
+              <section className="space-y-2">
+                <SectionLabel accent>R@lly Members</SectionLabel>
+                {rallySearchResults.map((result) => {
+                  const state = getFriendshipState(result.id, friendships, profile?.id);
+                  const isLocked =
+                    state.state === 'accepted' || state.state === 'pending_outgoing';
+                  return (
+                    <div
+                      key={result.id}
+                      className="flex items-center gap-3 p-3 rounded-2xl bg-white/[0.02] border border-white/[0.05]"
+                    >
+                      <ProfileTapWrapper
+                        profileId={result.id}
+                        className="flex items-center gap-3 min-w-0 flex-1"
+                      >
+                        <Avatar className="h-11 w-11 shrink-0 ring-1 ring-white/10">
+                          <AvatarImage src={result.avatar_url || undefined} />
+                          <AvatarFallback className="bg-[#F47A19]/15 text-[#F47A19] font-black">
+                            {result.display_name?.charAt(0)?.toUpperCase() || '?'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0 text-left">
+                          <p className="font-bold text-sm text-white truncate">
+                            {result.display_name || 'R@lly Member'}
+                          </p>
+                          {result.bio && (
+                            <p className="text-[11px] text-zinc-500 line-clamp-1">
+                              {result.bio}
+                            </p>
+                          )}
+                        </div>
+                      </ProfileTapWrapper>
+                      <Button
+                        size="sm"
+                        className={cn(
+                          'h-8 rounded-full shrink-0 text-[11px] font-black uppercase tracking-wider px-3',
+                          isLocked
+                            ? 'bg-white/5 text-zinc-400 hover:bg-white/5'
+                            : 'bg-[#F47A19] text-white hover:bg-[#F47A19]/90 shadow-lg shadow-[#F47A19]/20'
+                        )}
+                        disabled={
+                          isLocked || requestFriend.isPending || respondToFriendRequest.isPending
+                        }
+                        onClick={() => handleFriendAction(result.id)}
+                      >
+                        {state.label}
+                      </Button>
+                    </div>
+                  );
+                })}
+              </section>
+            )}
+
+            {/* R@lly Friends */}
+            {filteredFriends.length > 0 && (
+              <section className="space-y-2">
+                <SectionLabel accent>R@lly Friends</SectionLabel>
+                {filteredFriends.map((friend) => (
                   <div
-                    key={result.id}
-                    className="flex items-center gap-3 px-1 py-2"
+                    key={friend.id}
+                    className="flex items-center gap-3 p-3 rounded-2xl bg-white/[0.02] border border-white/[0.05] hover:bg-white/[0.04] transition-colors"
                   >
                     <ProfileTapWrapper
-                      profileId={result.id}
-                      className="flex items-center gap-3 min-w-0 flex-1"
+                      profileId={friend.id}
+                      className="flex items-center gap-3 flex-1 min-w-0"
                     >
-                      <Avatar className="h-10 w-10 shrink-0">
-                        <AvatarImage src={result.avatar_url || undefined} />
-                        <AvatarFallback className="bg-primary/20 text-primary font-bold">
-                          {result.display_name?.charAt(0)?.toUpperCase() || '?'}
+                      <Avatar className="h-11 w-11 shrink-0 ring-1 ring-white/10">
+                        <AvatarImage src={friend.avatar_url || undefined} />
+                        <AvatarFallback className="bg-[#F47A19]/15 text-[#F47A19] font-black">
+                          {friend.display_name?.charAt(0)?.toUpperCase() || '?'}
                         </AvatarFallback>
                       </Avatar>
-                      <div className="min-w-0 text-left">
-                        <p className="font-medium text-sm truncate">
-                          {result.display_name || 'R@lly Member'}
+                      <div className="text-left min-w-0">
+                        <p className="font-bold text-sm inline-flex items-center text-white truncate">
+                          {getPublicName(friend)}
+                          <MiniFounderGem profileId={friend.id} />
                         </p>
-                        {result.bio && (
-                          <p className="text-xs text-muted-foreground line-clamp-1">
-                            {result.bio}
+                        {friend.isSquadMate && (
+                          <p className="text-[11px] text-zinc-500 truncate">
+                            In {friend.squadSymbols.length} squad
+                            {friend.squadSymbols.length !== 1 ? 's' : ''}
                           </p>
                         )}
                       </div>
                     </ProfileTapWrapper>
-                    <Button
-                      size="sm"
-                      variant={isLocked ? 'ghost' : 'default'}
-                      className="h-8 rounded-full shrink-0 text-xs"
-                      disabled={
-                        isLocked || requestFriend.isPending || respondToFriendRequest.isPending
-                      }
-                      onClick={() => handleFriendAction(result.id)}
-                    >
-                      {state.label}
-                    </Button>
-                  </div>
-                );
-              })}
-            </section>
-          )}
-
-          {/* R@lly Friends */}
-          {filteredFriends.length > 0 && (
-            <section className="space-y-1">
-              <SectionLabel>R@lly Friends</SectionLabel>
-              {filteredFriends.map((friend) => (
-                <div
-                  key={friend.id}
-                  className="flex items-center gap-3 px-1 py-2 rounded-xl hover:bg-muted/40 transition-colors"
-                >
-                  <ProfileTapWrapper
-                    profileId={friend.id}
-                    className="flex items-center gap-3 flex-1 min-w-0"
-                  >
-                    <Avatar className="h-10 w-10 shrink-0">
-                      <AvatarImage src={friend.avatar_url || undefined} />
-                      <AvatarFallback className="bg-primary/20 text-primary font-bold">
-                        {friend.display_name?.charAt(0)?.toUpperCase() || '?'}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="text-left min-w-0">
-                      <p className="font-medium text-sm inline-flex items-center truncate">
-                        {getPublicName(friend)}
-                        <MiniFounderGem profileId={friend.id} />
-                      </p>
-                      {friend.isSquadMate && (
-                        <p className="text-xs text-muted-foreground truncate">
-                          In {friend.squadSymbols.length} squad
-                          {friend.squadSymbols.length !== 1 ? 's' : ''}
-                        </p>
-                      )}
-                    </div>
-                  </ProfileTapWrapper>
-                  {onInviteToRally && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-8 w-8 p-0 text-primary shrink-0"
-                      onClick={() => onInviteToRally(friend.id)}
-                    >
-                      <Zap className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-              ))}
-            </section>
-          )}
-
-          {/* Unified contacts — selectable */}
-          {filteredContacts.length > 0 && (
-            <section className="space-y-1">
-              <SectionLabel>Your Contacts</SectionLabel>
-              {filteredContacts.map((contact) => {
-                const isSelected = selectedKeys.has(contact.key);
-                return (
-                  <button
-                    key={contact.key}
-                    onClick={() => toggleContact(contact.key)}
-                    className={cn(
-                      'w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all',
-                      isSelected
-                        ? 'bg-primary/10 ring-1 ring-primary/30'
-                        : 'hover:bg-muted/40'
+                    {onInviteToRally && (
+                      <Button
+                        size="sm"
+                        className="h-9 w-9 p-0 rounded-xl bg-[#F47A19]/15 text-[#F47A19] hover:bg-[#F47A19]/25 shrink-0"
+                        onClick={() => onInviteToRally(friend.id)}
+                      >
+                        <Zap className="h-4 w-4" />
+                      </Button>
                     )}
-                  >
-                    <Avatar className="h-10 w-10 shrink-0">
-                      <AvatarFallback
+                  </div>
+                ))}
+              </section>
+            )}
+
+            {/* Unified contacts — selectable */}
+            {filteredContacts.length > 0 && (
+              <section className="space-y-2">
+                <SectionLabel>Your Contacts</SectionLabel>
+                {filteredContacts.map((contact) => {
+                  const isSelected = selectedKeys.has(contact.key);
+                  return (
+                    <button
+                      key={contact.key}
+                      onClick={() => toggleContact(contact.key)}
+                      className={cn(
+                        'w-full flex items-center gap-3 p-3 rounded-2xl border transition-all active:scale-[0.99]',
+                        isSelected
+                          ? 'bg-[#F47A19]/10 border-[#F47A19]/40 ring-1 ring-[#F47A19]/40 shadow-[0_4px_20px_-8px_rgba(244,122,25,0.5)]'
+                          : 'bg-white/[0.02] border-white/[0.05] hover:bg-white/[0.04]'
+                      )}
+                    >
+                      <div
                         className={cn(
-                          'font-bold text-sm',
+                          'h-11 w-11 rounded-2xl shrink-0 flex items-center justify-center font-black text-sm',
                           isSelected
-                            ? 'bg-primary text-primary-foreground'
-                            : 'bg-muted text-muted-foreground'
+                            ? 'bg-[#F47A19] text-white shadow-lg shadow-[#F47A19]/30'
+                            : 'bg-white/5 text-zinc-400 border border-white/10'
                         )}
                       >
                         {isSelected ? (
-                          <Check className="h-4 w-4" />
+                          <Check className="h-5 w-5" />
                         ) : (
                           contact.name.charAt(0).toUpperCase() || '#'
                         )}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 text-left min-w-0">
-                      <p className="font-medium text-sm truncate">{contact.name}</p>
-                      {contact.subline && (
-                        <p className="text-xs text-muted-foreground truncate">
-                          {contact.subline}
-                        </p>
-                      )}
-                    </div>
-                  </button>
-                );
-              })}
-            </section>
-          )}
-
-          {/* Empty state — only when there's truly nothing */}
-          {!loadingFriends &&
-            rallyFriends.length === 0 &&
-            unifiedContacts.length === 0 &&
-            !showSearchResults && (
-              <div className="text-center py-12 px-6">
-                <p className="text-sm text-muted-foreground">
-                  Nobody here yet. Tap{' '}
-                  <span className="font-semibold text-foreground">Add People</span> to
-                  sync your contacts or invite by name.
-                </p>
-              </div>
+                      </div>
+                      <div className="flex-1 text-left min-w-0">
+                        <p className="font-bold text-sm text-white truncate">{contact.name}</p>
+                        {contact.subline && (
+                          <p className="text-[11px] text-zinc-500 truncate">
+                            {contact.subline}
+                          </p>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </section>
             )}
-        </div>
-      </ScrollArea>
+
+            {/* Empty state — only when there's truly nothing */}
+            {!loadingFriends &&
+              rallyFriends.length === 0 &&
+              unifiedContacts.length === 0 &&
+              !showSearchResults && (
+                <div className="text-center py-14 px-6">
+                  <p className="text-sm text-zinc-500 font-semibold">
+                    Nobody here yet. Tap{' '}
+                    <span className="font-black text-[#F47A19]">Add People</span> to
+                    sync your contacts or invite by name.
+                  </p>
+                </div>
+              )}
+          </div>
+        </ScrollArea>
+      </div>
 
       {/* Sticky multi-select action bar */}
       {selectedCount > 0 && (
-        <div className="sticky bottom-0 left-0 right-0 px-2 pb-2 pt-3 bg-gradient-to-t from-background via-background to-background/0 animate-in slide-in-from-bottom-2 duration-200">
+        <div className="sticky bottom-0 left-0 right-0 px-2 pb-[max(env(safe-area-inset-bottom),12px)] pt-3 animate-in slide-in-from-bottom-2 duration-200">
           <Button
-            className="w-full rounded-xl h-12 text-base font-bold bg-[#F47A19] hover:bg-[#F47A19]/90 text-white shadow-lg"
+            className="w-full rounded-2xl h-12 text-sm font-black font-montserrat uppercase tracking-wider bg-[#F47A19] hover:bg-[#F47A19]/90 text-white shadow-xl shadow-[#F47A19]/30"
             onClick={handleSendSelected}
           >
             <MessageCircle className="h-4 w-4 mr-2" />
