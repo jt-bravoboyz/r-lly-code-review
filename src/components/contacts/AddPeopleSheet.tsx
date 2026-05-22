@@ -212,16 +212,16 @@ export function AddPeopleSheet() {
 
       <SheetContent
         side="bottom"
-        className="rounded-t-[3rem] h-[92dvh] bg-[#121214] border-t border-white/15 shadow-[0_-20px_60px_-15px_rgba(0,0,0,0.8)] p-0 flex flex-col"
+        className="rounded-t-[3rem] h-[92dvh] bg-white/80 dark:bg-[#121214] backdrop-blur-2xl border-t border-black/[0.08] dark:border-white/15 shadow-[0_-20px_60px_-15px_rgba(0,0,0,0.2)] dark:shadow-[0_-20px_60px_-15px_rgba(0,0,0,0.8)] p-0 flex flex-col"
       >
         {/* Drag handle */}
         <div className="flex justify-center pt-3 shrink-0">
-          <div className="w-12 h-1.5 bg-zinc-800 rounded-full" />
+          <div className="w-12 h-1.5 bg-zinc-300 dark:bg-zinc-800 rounded-full" />
         </div>
 
         {/* Header */}
         <SheetHeader className="px-7 pt-[max(env(safe-area-inset-top),0.5rem)] pb-6 text-left shrink-0">
-          <SheetTitle className="font-montserrat text-white font-black text-3xl tracking-tighter">
+          <SheetTitle className="font-montserrat text-zinc-900 dark:text-white font-black text-3xl tracking-tighter">
             Add People
           </SheetTitle>
           <p className="text-[#F47A19] font-bold text-sm mt-1 font-montserrat">
@@ -235,7 +235,7 @@ export function AddPeopleSheet() {
           <section className="space-y-4">
             <div className="flex items-center gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-[#F47A19] shadow-[0_0_8px_#F47A19]" />
-              <h3 className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.2em] font-montserrat">
+              <h3 className="text-zinc-600 dark:text-zinc-500 text-[10px] font-black uppercase tracking-[0.2em] font-montserrat">
                 R@lly Network
               </h3>
             </div>
@@ -248,7 +248,7 @@ export function AddPeopleSheet() {
                 value={networkQuery}
                 onChange={(e) => setNetworkQuery(e.target.value)}
                 style={noZoomInputStyle}
-                className="pl-11 pr-10 h-14 rounded-2xl bg-white/[0.03] border-white/10 text-base text-white placeholder:text-zinc-600 font-bold focus-visible:ring-1 focus-visible:ring-[#F47A19]/50 focus-visible:border-[#F47A19]/50"
+                className="pl-11 pr-10 h-14 rounded-2xl bg-black/[0.04] dark:bg-white/[0.03] border-black/[0.06] dark:border-white/10 text-base text-zinc-900 dark:text-white placeholder:text-zinc-500 dark:placeholder:text-zinc-600 font-bold focus-visible:ring-1 focus-visible:ring-[#F47A19]/50 focus-visible:border-[#F47A19]/50"
               />
               <span className="absolute right-4 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-[#F47A19] shadow-[0_0_8px_#F47A19] animate-pulse" />
             </div>
@@ -257,9 +257,9 @@ export function AddPeopleSheet() {
             <div className="grid grid-cols-2 gap-3">
               <Collapsible open={friendsOpen} onOpenChange={setFriendsOpen}>
                 <CollapsibleTrigger asChild>
-                  <button className="w-full h-16 bg-white/[0.03] border border-white/10 rounded-[1.25rem] flex items-center justify-between px-4 transition-all active:scale-[0.98] active:bg-white/[0.06]">
+                  <button className="w-full h-16 bg-black/[0.04] dark:bg-white/[0.03] border border-black/[0.06] dark:border-white/10 rounded-[1.25rem] flex items-center justify-between px-4 transition-all active:scale-[0.98] active:bg-black/[0.06] dark:active:bg-white/[0.06]">
                     <div className="text-left min-w-0">
-                      <p className="text-white font-black text-sm tracking-tight">
+                      <p className="text-zinc-900 dark:text-white font-black text-sm tracking-tight">
                         Friends
                       </p>
                       <p className="text-[#F47A19] font-black text-[9px] uppercase tracking-tight mt-0.5">
@@ -275,11 +275,11 @@ export function AddPeopleSheet() {
 
               <Collapsible open={discoverOpen} onOpenChange={setDiscoverOpen}>
                 <CollapsibleTrigger asChild>
-                  <button className="w-full h-16 bg-white/[0.03] border border-white/10 rounded-[1.25rem] flex items-center justify-between px-4 transition-all active:scale-[0.98] active:bg-white/[0.06]">
+                  <button className="w-full h-16 bg-black/[0.04] dark:bg-white/[0.03] border border-black/[0.06] dark:border-white/10 rounded-[1.25rem] flex items-center justify-between px-4 transition-all active:scale-[0.98] active:bg-black/[0.06] dark:active:bg-white/[0.06]">
                     <div className="text-left min-w-0 flex items-center gap-2">
                       <Sparkles className="h-4 w-4 text-[#F47A19] shrink-0" />
                       <div>
-                        <p className="text-white font-black text-sm tracking-tight">
+                        <p className="text-zinc-900 dark:text-white font-black text-sm tracking-tight">
                           Discover
                         </p>
                         <p className="text-zinc-500 font-black text-[9px] uppercase tracking-tight mt-0.5">
@@ -307,9 +307,9 @@ export function AddPeopleSheet() {
                     <button
                       key={friend.id}
                       onClick={() => toast.success(`Selected ${friend.display_name}`)}
-                      className="w-full flex items-center gap-3 p-3 rounded-2xl bg-white/[0.02] border border-white/[0.05] hover:bg-white/[0.05] transition-colors"
+                      className="w-full flex items-center gap-3 p-3 rounded-2xl bg-black/[0.03] dark:bg-white/[0.02] border border-black/[0.05] dark:border-white/[0.05] hover:bg-black/[0.05] dark:hover:bg-white/[0.05] transition-colors"
                     >
-                      <div className="w-11 h-11 rounded-full bg-[#F47A19]/15 ring-1 ring-white/10 flex items-center justify-center shrink-0 overflow-hidden">
+                      <div className="w-11 h-11 rounded-full bg-[#F47A19]/15 ring-1 ring-black/10 dark:ring-white/10 flex items-center justify-center shrink-0 overflow-hidden">
                         {friend.avatar_url ? (
                           <img src={friend.avatar_url} alt="" className="w-full h-full object-cover" />
                         ) : (
@@ -317,7 +317,7 @@ export function AddPeopleSheet() {
                         )}
                       </div>
                       <div className="flex-1 min-w-0 text-left">
-                        <p className="font-bold font-montserrat text-sm text-white truncate">
+                        <p className="font-bold font-montserrat text-sm text-zinc-900 dark:text-white truncate">
                           {friend.display_name || 'R@lly User'}
                         </p>
                         <p className="text-[11px] text-zinc-500 truncate">
@@ -360,7 +360,7 @@ export function AddPeopleSheet() {
                   <MessageCircle className="h-5 w-5 text-white" />
                 </div>
                 <div className="text-left flex-1 min-w-0">
-                  <p className="font-black font-montserrat text-sm text-white truncate">
+                  <p className="font-black font-montserrat text-sm text-zinc-900 dark:text-white truncate">
                     {isNetworkPhoneQuery ? `R@lly ${trimmedNetwork}` : `Invite '${trimmedNetwork}' via Text`}
                   </p>
                   <p className="text-[11px] text-zinc-500 font-semibold">Tap to send an invite link</p>
@@ -372,8 +372,8 @@ export function AddPeopleSheet() {
           {/* ─────────── Section 2 · YOUR PHONE ─────────── */}
           <section className="space-y-4">
             <div className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-zinc-600" />
-              <h3 className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.2em] font-montserrat">
+              <span className="w-1.5 h-1.5 rounded-full bg-zinc-400 dark:bg-zinc-600" />
+              <h3 className="text-zinc-600 dark:text-zinc-500 text-[10px] font-black uppercase tracking-[0.2em] font-montserrat">
                 Your Phone
               </h3>
             </div>
@@ -386,7 +386,7 @@ export function AddPeopleSheet() {
                 value={phoneQuery}
                 onChange={(e) => setPhoneQuery(e.target.value)}
                 style={noZoomInputStyle}
-                className="pl-11 h-14 rounded-2xl bg-white/[0.03] border-white/10 text-base text-white placeholder:text-zinc-600 font-bold focus-visible:ring-1 focus-visible:ring-[#F47A19]/50 focus-visible:border-[#F47A19]/50"
+                className="pl-11 h-14 rounded-2xl bg-black/[0.04] dark:bg-white/[0.03] border-black/[0.06] dark:border-white/10 text-base text-zinc-900 dark:text-white placeholder:text-zinc-500 dark:placeholder:text-zinc-600 font-bold focus-visible:ring-1 focus-visible:ring-[#F47A19]/50 focus-visible:border-[#F47A19]/50"
               />
             </div>
 
@@ -394,16 +394,16 @@ export function AddPeopleSheet() {
             <button
               onClick={handleNativeContacts}
               disabled={isSyncing}
-              className="group w-full p-5 bg-gradient-to-br from-[#F47A19]/10 to-transparent border border-[#F47A19]/20 rounded-[2rem] flex items-center gap-5 transition-all active:scale-[0.98] disabled:opacity-60"
+              className="group w-full p-5 bg-gradient-to-br from-[#F47A19]/15 dark:from-[#F47A19]/10 to-transparent border border-[#F47A19]/25 dark:border-[#F47A19]/20 rounded-[2rem] flex items-center gap-5 transition-all active:scale-[0.98] disabled:opacity-60"
             >
               <div className="w-14 h-14 bg-[#F47A19] rounded-2xl flex items-center justify-center text-white shadow-xl shadow-[#F47A19]/30 shrink-0 transition-transform group-hover:rotate-6">
                 <Smartphone className="h-7 w-7" />
               </div>
               <div className="text-left min-w-0 flex-1">
-                <p className="text-white font-black text-lg tracking-tight font-montserrat">
+                <p className="text-zinc-900 dark:text-white font-black text-lg tracking-tight font-montserrat">
                   {isNative ? 'Sync iPhone' : 'Sync Contacts'}
                 </p>
-                <p className="text-zinc-500 text-xs font-semibold tracking-tight truncate">
+                <p className="text-zinc-600 dark:text-zinc-500 text-xs font-semibold tracking-tight truncate">
                   {isSyncing
                     ? 'Syncing…'
                     : cloudContacts.length > 0
@@ -411,17 +411,17 @@ export function AddPeopleSheet() {
                     : 'Bring your phone book into R@lly'}
                 </p>
               </div>
-              <div className="bg-white/10 rounded-full p-2 shrink-0">
-                <ChevronDown className="w-4 h-4 text-white -rotate-90" />
+              <div className="bg-black/10 dark:bg-white/10 rounded-full p-2 shrink-0">
+                <ChevronDown className="w-4 h-4 text-zinc-900 dark:text-white -rotate-90" />
               </div>
             </button>
 
             {/* Collapsible · From Your Phone */}
             <Collapsible open={phoneListOpen} onOpenChange={setPhoneListOpen}>
               <CollapsibleTrigger asChild>
-                <button className="w-full h-14 px-5 rounded-2xl bg-white/[0.03] border border-white/10 hover:bg-white/[0.05] transition-colors flex items-center gap-3">
+                <button className="w-full h-14 px-5 rounded-2xl bg-black/[0.04] dark:bg-white/[0.03] border border-black/[0.06] dark:border-white/10 hover:bg-black/[0.06] dark:hover:bg-white/[0.05] transition-colors flex items-center gap-3">
                   <Users className="h-4 w-4 text-[#F47A19]" />
-                  <span className="text-sm font-bold font-montserrat text-white flex-1 text-left">
+                  <span className="text-sm font-bold font-montserrat text-zinc-900 dark:text-white flex-1 text-left">
                     From Your Phone
                   </span>
                   <span className="text-[10px] font-black px-2 py-1 rounded-lg bg-[#F47A19]/15 text-[#F47A19] uppercase tracking-wider">
@@ -449,14 +449,14 @@ export function AddPeopleSheet() {
                         className={`w-full flex items-center gap-3 p-3 rounded-2xl border transition-all active:scale-[0.99] ${
                           selected
                             ? 'bg-[#F47A19]/10 border-[#F47A19]/40 ring-1 ring-[#F47A19]/40 shadow-[0_4px_20px_-8px_rgba(244,122,25,0.5)]'
-                            : 'bg-white/[0.02] border-white/[0.05] hover:bg-white/[0.05]'
+                            : 'bg-black/[0.03] dark:bg-white/[0.02] border-black/[0.05] dark:border-white/[0.05] hover:bg-black/[0.05] dark:hover:bg-white/[0.05]'
                         }`}
                       >
                         <div
                           className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 font-black ${
                             selected
                               ? 'bg-[#F47A19] text-white shadow-lg shadow-[#F47A19]/30'
-                              : 'bg-white/5 text-zinc-400 border border-white/10'
+                              : 'bg-black/5 dark:bg-white/5 text-zinc-600 dark:text-zinc-400 border border-black/[0.06] dark:border-white/10'
                           }`}
                         >
                           {selected ? (
@@ -468,7 +468,7 @@ export function AddPeopleSheet() {
                           )}
                         </div>
                         <div className="flex-1 min-w-0 text-left">
-                          <p className="font-bold font-montserrat text-sm text-white truncate">
+                          <p className="font-bold font-montserrat text-sm text-zinc-900 dark:text-white truncate">
                             {c.name || c.phone || c.email}
                           </p>
                           <p className="text-[11px] text-zinc-500 truncate">
@@ -486,9 +486,9 @@ export function AddPeopleSheet() {
             {!isNative && (
               <Collapsible open={importOpen} onOpenChange={setImportOpen}>
                 <CollapsibleTrigger asChild>
-                  <button className="w-full h-14 px-5 rounded-2xl bg-white/[0.03] border border-white/10 hover:bg-white/[0.05] transition-colors flex items-center gap-3">
+                  <button className="w-full h-14 px-5 rounded-2xl bg-black/[0.04] dark:bg-white/[0.03] border border-black/[0.06] dark:border-white/10 hover:bg-black/[0.06] dark:hover:bg-white/[0.05] transition-colors flex items-center gap-3">
                     <FileUp className="h-4 w-4 text-zinc-500" />
-                    <span className="text-sm font-bold font-montserrat text-zinc-300 flex-1 text-left">
+                    <span className="text-sm font-bold font-montserrat text-zinc-700 dark:text-zinc-300 flex-1 text-left">
                       Web Import
                     </span>
                     <span className="text-[9px] font-black text-zinc-500 uppercase tracking-widest hidden sm:inline">
@@ -501,7 +501,7 @@ export function AddPeopleSheet() {
                 </CollapsibleTrigger>
                 <CollapsibleContent className="pt-2 data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
                   <Tabs defaultValue="vcf" className="w-full">
-                    <TabsList className="w-full grid grid-cols-3 bg-white/[0.03] border border-white/10">
+                    <TabsList className="w-full grid grid-cols-3 bg-black/[0.04] dark:bg-white/[0.03] border border-black/[0.06] dark:border-white/10">
                       <TabsTrigger value="vcf" className="gap-1 text-xs font-bold data-[state=active]:bg-[#F47A19] data-[state=active]:text-white">
                         <FileUp className="h-3.5 w-3.5" />
                         Card
@@ -517,8 +517,8 @@ export function AddPeopleSheet() {
                     </TabsList>
                     <TabsContent value="vcf" className="mt-3">
                       <VCFContactImport onComplete={() => setOpen(false)} />
-                      <p className="text-xs text-zinc-500 mt-3 leading-relaxed">
-                        <strong className="text-zinc-300">iPhone tip:</strong> Open Contacts → tap a contact → Share → save as .vcf → upload here.
+                      <p className="text-xs text-zinc-600 dark:text-zinc-500 mt-3 leading-relaxed">
+                        <strong className="text-zinc-800 dark:text-zinc-300">iPhone tip:</strong> Open Contacts → tap a contact → Share → save as .vcf → upload here.
                       </p>
                     </TabsContent>
                     <TabsContent value="paste" className="mt-3">
@@ -536,7 +536,7 @@ export function AddPeopleSheet() {
 
         {/* Sticky batch-invite action bar */}
         {selectedCount > 0 && (
-          <div className="sticky bottom-0 px-7 pt-3 pb-[max(env(safe-area-inset-bottom),16px)] bg-[#121214]/95 backdrop-blur-xl border-t border-white/10 animate-in slide-in-from-bottom duration-200">
+          <div className="sticky bottom-0 px-7 pt-3 pb-[max(env(safe-area-inset-bottom),16px)] bg-white/85 dark:bg-[#121214]/95 backdrop-blur-xl border-t border-black/[0.06] dark:border-white/10 animate-in slide-in-from-bottom duration-200">
             <Button
               onClick={handleBatchInvite}
               className="w-full h-12 rounded-2xl gap-2 font-black font-montserrat uppercase tracking-wider text-sm bg-[#F47A19] hover:bg-[#F47A19]/90 text-white shadow-xl shadow-[#F47A19]/30"

@@ -49,10 +49,10 @@ const SectionLabel = ({
     <span
       className={cn(
         'w-1.5 h-1.5 rounded-full',
-        accent ? 'bg-[#F47A19] shadow-[0_0_8px_#F47A19]' : 'bg-zinc-600'
+        accent ? 'bg-[#F47A19] shadow-[0_0_8px_#F47A19]' : 'bg-zinc-400 dark:bg-zinc-600'
       )}
     />
-    <p className="text-[10px] font-black font-montserrat text-zinc-500 uppercase tracking-[0.2em]">
+    <p className="text-[10px] font-black font-montserrat text-zinc-600 dark:text-zinc-500 uppercase tracking-[0.2em]">
       {children}
     </p>
   </div>
@@ -183,16 +183,16 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
 
   return (
     <div className="relative">
-      {/* Premium dark-glass island — wraps the entire Contacts surface */}
-      <div className="relative overflow-hidden rounded-3xl bg-[#0F0F12] border border-white/[0.08] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] p-4 sm:p-5 space-y-5">
+      {/* Premium glass island — adapts to light/dark */}
+      <div className="relative overflow-hidden rounded-3xl bg-white/70 dark:bg-[#0F0F12] backdrop-blur-xl border border-black/[0.05] dark:border-white/[0.08] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.15)] dark:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] p-4 sm:p-5 space-y-5">
         {/* Ambient orange drift */}
         <div
           aria-hidden
-          className="pointer-events-none absolute -top-16 -right-16 w-48 h-48 rounded-full bg-[#F47A19]/15 blur-3xl"
+          className="pointer-events-none absolute -top-16 -right-16 w-48 h-48 rounded-full bg-[#F47A19]/10 dark:bg-[#F47A19]/15 blur-3xl"
         />
         <div
           aria-hidden
-          className="pointer-events-none absolute -bottom-24 -left-20 w-56 h-56 rounded-full bg-[#F47A19]/[0.06] blur-3xl"
+          className="pointer-events-none absolute -bottom-24 -left-20 w-56 h-56 rounded-full bg-[#F47A19]/[0.04] dark:bg-[#F47A19]/[0.06] blur-3xl"
         />
 
         {/* Search + Add People */}
@@ -204,7 +204,7 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{ fontSize: '16px' }}
-              className="pl-10 h-12 bg-white/5 border border-white/10 rounded-2xl text-white placeholder:text-zinc-500 focus-visible:ring-1 focus-visible:ring-[#F47A19]/40 focus-visible:border-[#F47A19]/40"
+              className="pl-10 h-12 bg-black/[0.04] dark:bg-white/5 border border-black/[0.06] dark:border-white/10 rounded-2xl text-zinc-900 dark:text-white placeholder:text-zinc-500 focus-visible:ring-1 focus-visible:ring-[#F47A19]/40 focus-visible:border-[#F47A19]/40"
             />
           </div>
           <AddPeopleSheet />
@@ -234,7 +234,7 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
                   <MessageCircle className="h-5 w-5 text-white" />
                 </div>
                 <div className="text-left flex-1 min-w-0">
-                  <p className="font-black text-sm font-montserrat text-white truncate">
+                  <p className="font-black text-sm font-montserrat text-zinc-900 dark:text-white truncate">
                     {isPhoneQuery ? `R@lly ${trimmed}` : `Invite '${trimmed}' via Text`}
                   </p>
                   <p className="text-[11px] text-zinc-500 font-semibold">
@@ -255,20 +255,20 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
                   return (
                     <div
                       key={result.id}
-                      className="flex items-center gap-3 p-3 rounded-2xl bg-white/[0.02] border border-white/[0.05]"
+                      className="flex items-center gap-3 p-3 rounded-2xl bg-black/[0.03] dark:bg-white/[0.02] border border-black/[0.05] dark:border-white/[0.05]"
                     >
                       <ProfileTapWrapper
                         profileId={result.id}
                         className="flex items-center gap-3 min-w-0 flex-1"
                       >
-                        <Avatar className="h-11 w-11 shrink-0 ring-1 ring-white/10">
+                        <Avatar className="h-11 w-11 shrink-0 ring-1 ring-black/10 dark:ring-white/10">
                           <AvatarImage src={result.avatar_url || undefined} />
                           <AvatarFallback className="bg-[#F47A19]/15 text-[#F47A19] font-black">
                             {result.display_name?.charAt(0)?.toUpperCase() || '?'}
                           </AvatarFallback>
                         </Avatar>
                         <div className="min-w-0 text-left">
-                          <p className="font-bold text-sm text-white truncate">
+                          <p className="font-bold text-sm text-zinc-900 dark:text-white truncate">
                             {result.display_name || 'R@lly Member'}
                           </p>
                           {result.bio && (
@@ -283,7 +283,7 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
                         className={cn(
                           'h-8 rounded-full shrink-0 text-[11px] font-black uppercase tracking-wider px-3',
                           isLocked
-                            ? 'bg-white/5 text-zinc-400 hover:bg-white/5'
+                            ? 'bg-black/5 dark:bg-white/5 text-zinc-500 dark:text-zinc-400 hover:bg-black/5 dark:hover:bg-white/5'
                             : 'bg-[#F47A19] text-white hover:bg-[#F47A19]/90 shadow-lg shadow-[#F47A19]/20'
                         )}
                         disabled={
@@ -306,20 +306,20 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
                 {filteredFriends.map((friend) => (
                   <div
                     key={friend.id}
-                    className="flex items-center gap-3 p-3 rounded-2xl bg-white/[0.02] border border-white/[0.05] hover:bg-white/[0.04] transition-colors"
+                    className="flex items-center gap-3 p-3 rounded-2xl bg-black/[0.03] dark:bg-white/[0.02] border border-black/[0.05] dark:border-white/[0.05] hover:bg-black/[0.05] dark:hover:bg-white/[0.04] transition-colors"
                   >
                     <ProfileTapWrapper
                       profileId={friend.id}
                       className="flex items-center gap-3 flex-1 min-w-0"
                     >
-                      <Avatar className="h-11 w-11 shrink-0 ring-1 ring-white/10">
+                      <Avatar className="h-11 w-11 shrink-0 ring-1 ring-black/10 dark:ring-white/10">
                         <AvatarImage src={friend.avatar_url || undefined} />
                         <AvatarFallback className="bg-[#F47A19]/15 text-[#F47A19] font-black">
                           {friend.display_name?.charAt(0)?.toUpperCase() || '?'}
                         </AvatarFallback>
                       </Avatar>
                       <div className="text-left min-w-0">
-                        <p className="font-bold text-sm inline-flex items-center text-white truncate">
+                        <p className="font-bold text-sm inline-flex items-center text-zinc-900 dark:text-white truncate">
                           {getPublicName(friend)}
                           <MiniFounderGem profileId={friend.id} />
                         </p>
@@ -359,7 +359,7 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
                         'w-full flex items-center gap-3 p-3 rounded-2xl border transition-all active:scale-[0.99]',
                         isSelected
                           ? 'bg-[#F47A19]/10 border-[#F47A19]/40 ring-1 ring-[#F47A19]/40 shadow-[0_4px_20px_-8px_rgba(244,122,25,0.5)]'
-                          : 'bg-white/[0.02] border-white/[0.05] hover:bg-white/[0.04]'
+                          : 'bg-black/[0.03] dark:bg-white/[0.02] border-black/[0.05] dark:border-white/[0.05] hover:bg-black/[0.05] dark:hover:bg-white/[0.04]'
                       )}
                     >
                       <div
@@ -367,7 +367,7 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
                           'h-11 w-11 rounded-2xl shrink-0 flex items-center justify-center font-black text-sm',
                           isSelected
                             ? 'bg-[#F47A19] text-white shadow-lg shadow-[#F47A19]/30'
-                            : 'bg-white/5 text-zinc-400 border border-white/10'
+                            : 'bg-black/5 dark:bg-white/5 text-zinc-600 dark:text-zinc-400 border border-black/[0.06] dark:border-white/10'
                         )}
                       >
                         {isSelected ? (
@@ -377,7 +377,7 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
                         )}
                       </div>
                       <div className="flex-1 text-left min-w-0">
-                        <p className="font-bold text-sm text-white truncate">{contact.name}</p>
+                        <p className="font-bold text-sm text-zinc-900 dark:text-white truncate">{contact.name}</p>
                         {contact.subline && (
                           <p className="text-[11px] text-zinc-500 truncate">
                             {contact.subline}
