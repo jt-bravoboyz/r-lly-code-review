@@ -183,16 +183,16 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
 
   return (
     <div className="relative">
-      {/* Premium dark-glass island — wraps the entire Contacts surface */}
-      <div className="relative overflow-hidden rounded-3xl bg-[#0F0F12] border border-white/[0.08] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] p-4 sm:p-5 space-y-5">
+      {/* Premium glass island — adapts to light/dark */}
+      <div className="relative overflow-hidden rounded-3xl bg-white/70 dark:bg-[#0F0F12] backdrop-blur-xl border border-black/[0.05] dark:border-white/[0.08] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.15)] dark:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] p-4 sm:p-5 space-y-5">
         {/* Ambient orange drift */}
         <div
           aria-hidden
-          className="pointer-events-none absolute -top-16 -right-16 w-48 h-48 rounded-full bg-[#F47A19]/15 blur-3xl"
+          className="pointer-events-none absolute -top-16 -right-16 w-48 h-48 rounded-full bg-[#F47A19]/10 dark:bg-[#F47A19]/15 blur-3xl"
         />
         <div
           aria-hidden
-          className="pointer-events-none absolute -bottom-24 -left-20 w-56 h-56 rounded-full bg-[#F47A19]/[0.06] blur-3xl"
+          className="pointer-events-none absolute -bottom-24 -left-20 w-56 h-56 rounded-full bg-[#F47A19]/[0.04] dark:bg-[#F47A19]/[0.06] blur-3xl"
         />
 
         {/* Search + Add People */}
@@ -204,7 +204,7 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{ fontSize: '16px' }}
-              className="pl-10 h-12 bg-white/5 border border-white/10 rounded-2xl text-white placeholder:text-zinc-500 focus-visible:ring-1 focus-visible:ring-[#F47A19]/40 focus-visible:border-[#F47A19]/40"
+              className="pl-10 h-12 bg-black/[0.04] dark:bg-white/5 border border-black/[0.06] dark:border-white/10 rounded-2xl text-zinc-900 dark:text-white placeholder:text-zinc-500 focus-visible:ring-1 focus-visible:ring-[#F47A19]/40 focus-visible:border-[#F47A19]/40"
             />
           </div>
           <AddPeopleSheet />
