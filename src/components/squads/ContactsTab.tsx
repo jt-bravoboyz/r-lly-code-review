@@ -49,7 +49,9 @@ const SectionLabel = ({
     <span
       className={cn(
         'w-1.5 h-1.5 rounded-full',
-        accent ? 'bg-[#F47A19] shadow-[0_0_8px_#F47A19]' : 'bg-zinc-400 dark:bg-zinc-600'
+        accent
+          ? 'bg-[#F47A19] shadow-[0_0_10px_#F47A19]'
+          : 'bg-[#F47A19] shadow-[0_0_8px_rgba(244,122,25,0.7)]'
       )}
     />
     <p className="text-[10px] font-black font-montserrat text-zinc-600 dark:text-zinc-500 uppercase tracking-[0.2em]">
