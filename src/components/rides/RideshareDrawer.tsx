@@ -5,7 +5,7 @@ import { Car, Train, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { trackEvent } from '@/lib/analytics';
-import { openExternalLink } from '@/lib/nativeLinks';
+import { buildMapsUrl, openExternalLink } from '@/lib/nativeLinks';
 import { Capacitor } from '@capacitor/core';
 
 interface RideshareDrawerProps {
@@ -85,9 +85,7 @@ export function RideshareDrawer({
 
   const uberUrl = `https://m.uber.com/looking?dropoff[latitude]=${lat}&dropoff[longitude]=${lng}`;
   const lyftUrl = `lyft://ridetype?id=lyft&destination[latitude]=${lat}&destination[longitude]=${lng}`;
-  const transitUrl = isIOS()
-    ? `https://maps.apple.com/?daddr=${lat},${lng}&dirflg=r`
-    : `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=transit`;
+  const transitUrl = buildMapsUrl({ lat, lng, mode: 'transit' });
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>

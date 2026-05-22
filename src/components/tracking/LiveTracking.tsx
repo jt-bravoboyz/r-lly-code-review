@@ -10,7 +10,7 @@ import { useLocationContext } from '@/contexts/LocationContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { TrackingSettings } from './TrackingSettings';
-import { openDirectionsLink } from '@/lib/nativeLinks';
+import { openMapsDirections } from '@/lib/nativeLinks';
 
 interface LiveTrackingProps {
   eventId: string;
@@ -101,21 +101,15 @@ export function LiveTracking({ eventId, destination, isLive }: LiveTrackingProps
   };
 
   const handleOpenDirections = () => {
-    let url: string;
-    
-    if (destination.lat && destination.lng) {
-      url = `https://www.google.com/maps/dir/?api=1&destination=${destination.lat},${destination.lng}`;
-    } else if (destination.address) {
-      url = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination.address)}`;
-    } else {
-      url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(destination.name)}`;
-    }
-
-    if (currentPosition) {
-      url += `&origin=${currentPosition.lat},${currentPosition.lng}`;
-    }
-
-    openDirectionsLink(url);
+    openMapsDirections({
+      lat: destination.lat,
+      lng: destination.lng,
+      address: destination.address,
+      label: destination.name,
+      originLat: currentPosition?.lat,
+      originLng: currentPosition?.lng,
+      mode: destination.lat || destination.address ? 'directions' : 'search',
+    });
   };
 
 

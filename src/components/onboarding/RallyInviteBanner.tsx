@@ -92,7 +92,7 @@ export function RallyInviteBanner() {
 
   return (
     <div 
-      className={`fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm ${
+      className={`fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm safe-top safe-bottom ${
         isExiting ? 'rally-onboarding-banner-exit' : 'rally-onboarding-banner'
       }`}
     >

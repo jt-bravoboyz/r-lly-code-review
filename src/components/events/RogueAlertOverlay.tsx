@@ -42,7 +42,7 @@ export function RogueAlertOverlay({ alert, reactionCounts, onReact, onDismiss, q
 
   return (
     <div
-      className={`fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm transition-opacity duration-300 ${visible ? 'opacity-100' : 'opacity-0'}`}
+      className={`fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm safe-top safe-bottom transition-opacity duration-300 ${visible ? 'opacity-100' : 'opacity-0'}`}
       onClick={handleDismiss}
     >
       <div

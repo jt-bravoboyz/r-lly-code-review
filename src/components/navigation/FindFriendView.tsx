@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { openDirections } from '@/lib/mapStyles';
+import { buildMapsUrl } from '@/lib/nativeLinks';
 import { ArrowLeft, Navigation, Compass, Target, MapPin, Building2, TreePine, Wifi, Signal, AlertTriangle, CheckCircle2, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -139,8 +140,7 @@ export function FindFriendView({ member, onClose }: FindFriendViewProps) {
   return (
     <div className="fixed inset-0 z-50 bg-background">
       {/* Header */}
-      <div className="sticky top-0 bg-background border-b">
-        <div className="h-6" />
+      <div className="sticky top-0 bg-background border-b" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
         <div className="flex items-center gap-3 px-4 py-3">
           <Button variant="ghost" size="icon" onClick={onClose}>
             <ArrowLeft className="h-5 w-5" />
@@ -300,10 +300,12 @@ export function FindFriendView({ member, onClose }: FindFriendViewProps) {
             variant="outline"
             className="w-full h-12 rounded-xl"
             onClick={() => {
-              const url = `https://www.google.com/maps/dir/?api=1&destination=${member.lat},${member.lng}${
-                currentPosition ? `&origin=${currentPosition.lat},${currentPosition.lng}` : ''
-              }&travelmode=walking`;
-              openDirections(url);
+              openDirections(buildMapsUrl({
+                lat: member.lat,
+                lng: member.lng,
+                originLat: currentPosition?.lat,
+                originLng: currentPosition?.lng,
+              }));
             }}
           >
             <MapPin className="h-4 w-4 mr-2" />

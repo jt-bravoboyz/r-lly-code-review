@@ -13,10 +13,31 @@
 @layer base {
   html {
     background-color: #121212;
+    /* Disable iOS rubber-band scroll exposing app background. */
+    overscroll-behavior: none;
+    /* Kill the gray tap-flash on every button. */
+    -webkit-tap-highlight-color: transparent;
   }
 
   body {
+    overscroll-behavior: none;
   }
+
+  /* Allow text selection inside chat bubbles + form fields; suppress
+     long-press copy/share callouts elsewhere on iOS. */
+  button, a, [role="button"], .no-select {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+
+  /* iOS Safari/WKWebView auto-zooms when an input has font-size < 16px.
+     Floor every form control at 16px to keep the viewport stable. */
+  input, textarea, select {
+    font-size: max(16px, 1em);
+  }
+
+
 
   :root,
   .light {

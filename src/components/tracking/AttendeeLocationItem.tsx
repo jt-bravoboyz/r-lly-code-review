@@ -5,7 +5,7 @@ import { Navigation, MapPin } from 'lucide-react';
 import { useReverseGeocode } from '@/hooks/useReverseGeocode';
 import { formatDistanceToNow } from 'date-fns';
 import { Capacitor } from '@capacitor/core';
-import { openDirectionsLink } from '@/lib/nativeLinks';
+import { buildMapsUrl, openMapsDirections } from '@/lib/nativeLinks';
 
 interface AttendeeLocationItemProps {
   id: string;
@@ -62,7 +62,7 @@ export function AttendeeLocationItem({
           {getTimeSinceUpdate()}
         </Badge>
         {lat && lng && (() => {
-          const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+          const url = buildMapsUrl({ lat, lng });
           return (
             <a
               href={url}
@@ -71,7 +71,7 @@ export function AttendeeLocationItem({
               onClick={(e) => {
                 if (Capacitor.isNativePlatform()) {
                   e.preventDefault();
-                  openDirectionsLink(url);
+                  openMapsDirections({ lat, lng });
                 }
               }}
               className="p-1.5 rounded-full bg-primary/10 hover:bg-primary/20 transition-colors"

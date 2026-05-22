@@ -12,7 +12,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { AttendeeLocationItem } from './AttendeeLocationItem';
 import { AvatarPin } from './AvatarPin';
 import { Capacitor } from '@capacitor/core';
-import { openDirectionsLink } from '@/lib/nativeLinks';
+import { buildMapsUrl, openDirectionsLink } from '@/lib/nativeLinks';
 
 interface Attendee {
   id: string;
@@ -93,14 +93,14 @@ export function AttendeeMap({ eventId, attendees, eventLocation }: AttendeeMapPr
     a => !a.share_location || !a.current_lat
   );
 
-  // Open in Maps URL (preserved)
+  // Open in Maps URL — platform-aware (Apple Maps on iOS, Google Maps elsewhere).
   const mapLinkUrl = (() => {
     const first = sharingAttendees[0];
     if (first?.current_lat && first?.current_lng) {
-      return `https://www.google.com/maps?q=${first.current_lat},${first.current_lng}`;
+      return buildMapsUrl({ lat: first.current_lat, lng: first.current_lng, mode: 'search' });
     }
     if (eventLocation?.lat && eventLocation?.lng) {
-      return `https://www.google.com/maps?q=${eventLocation.lng ? `${eventLocation.lat},${eventLocation.lng}` : ''}`;
+      return buildMapsUrl({ lat: eventLocation.lat, lng: eventLocation.lng, mode: 'search' });
     }
     return null;
   })();

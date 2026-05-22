@@ -7,7 +7,7 @@ import { MapPin, Loader2, Navigation } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { applyRallyMapOverrides, RALLY_MARKER_COLORS } from '@/lib/mapStyles';
 import { Capacitor } from '@capacitor/core';
-import { openDirectionsLink } from '@/lib/nativeLinks';
+import { buildMapsUrl, openMapsDirections } from '@/lib/nativeLinks';
 
 interface LocationMapPreviewProps {
   lat: number;
@@ -41,7 +41,7 @@ export const LocationMapPreview = forwardRef<HTMLDivElement, LocationMapPreviewP
     // POL-5: Theme-aware map style
     const mapStyle = resolvedTheme === 'dark' ? 'mapbox://styles/mapbox/dark-v11' : 'mapbox://styles/mapbox/streets-v12';
 
-    const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+    const directionsUrl = buildMapsUrl({ lat, lng });
 
     useEffect(() => {
       if (!token || !mapContainer.current || map.current) return;
@@ -132,7 +132,7 @@ export const LocationMapPreview = forwardRef<HTMLDivElement, LocationMapPreviewP
               onClick={(e) => {
                 if (Capacitor.isNativePlatform()) {
                   e.preventDefault();
-                  openDirectionsLink(directionsUrl);
+                  openMapsDirections({ lat, lng });
                 }
               }}
               className="inline-flex items-center justify-center rounded-md text-sm font-medium border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 px-3 mt-1"
@@ -165,7 +165,7 @@ export const LocationMapPreview = forwardRef<HTMLDivElement, LocationMapPreviewP
                 onClick={(e) => {
                   if (Capacitor.isNativePlatform()) {
                     e.preventDefault();
-                    openDirectionsLink(directionsUrl);
+                    openMapsDirections({ lat, lng });
                   }
                 }}
                 className="shrink-0 h-7 text-xs inline-flex items-center justify-center rounded-md font-medium bg-secondary text-secondary-foreground hover:bg-secondary/80 px-3"

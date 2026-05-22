@@ -359,7 +359,7 @@ export function RallyHeroMediaCarousel({ eventId, canManage = false }: RallyHero
           style={{ top: 0, left: 0, right: 0, bottom: 0, width: '100vw', height: '100vh', position: 'fixed' }}
           onClick={closeViewer}
         >
-          <div className="absolute top-4 right-4 z-[100000] flex items-center gap-2">
+          <div className="absolute right-4 z-[100000] flex items-center gap-2" style={{ top: 'max(env(safe-area-inset-top), 1rem)' }}>
             {viewerType === 'photo' && (
               <button
                 onClick={(e) => { e.stopPropagation(); handleDownloadCurrent(); }}
