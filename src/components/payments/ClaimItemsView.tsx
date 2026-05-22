@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Minus, Plus } from 'lucide-react';
 import { useHaptics } from '@/hooks/useHaptics';
+import { Capacitor } from '@capacitor/core';
+import { openExternalLink } from '@/lib/nativeLinks';
 
 interface Props {
   requestId: string;
@@ -124,7 +126,18 @@ export function ClaimItemsView({ requestId, profileId, taxCents = 0, tipCents = 
             <span className="text-[11px] text-muted-foreground">{showReceipt ? 'Hide' : 'View'}</span>
           </button>
           {showReceipt && (
-            <a href={receiptImageUrl} target="_blank" rel="noopener noreferrer" className="block">
+            <a
+              href={receiptImageUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => {
+                if (Capacitor.isNativePlatform()) {
+                  e.preventDefault();
+                  void openExternalLink(receiptImageUrl);
+                }
+              }}
+              className="block"
+            >
               <img src={receiptImageUrl} alt="Receipt" className="w-full max-h-72 object-contain bg-muted" />
             </a>
           )}

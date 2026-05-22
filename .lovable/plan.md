@@ -1,75 +1,155 @@
-## Native iOS Readiness — Remaining Adjustments
+## Native Polish — Pass A + B + C (combined)
 
-After last pass, most device APIs are guarded. Here is what is **still web-shaped** and what to change. Everything below preserves the live web build via `Capacitor.isNativePlatform()` guards.
+All three passes in one approval. Strict `Capacitor.isNativePlatform()` gating throughout — web/PWA flow untouched.
 
----
-
-### 🔴 Will misbehave inside WKWebView
-
-**1. `usePushNotifications.tsx` still touches web push paths on native**
-Even though `isSupported` should be false on native, lines 85, 96, 156, 202 still reference `navigator.serviceWorker.ready` / `register('/sw.js')`. Need an explicit early-return on `Capacitor.isNativePlatform()` at the top of `subscribe()`, `registerServiceWorker()`, and `unsubscribe()` so a stray call from a future component can't trigger the web flow on iOS.
-
-**2. `useNativeGeolocation.tsx` falls back to `navigator.geolocation` inside the *native* hook**
-Lines 193, 332, 397, 429 use the browser API as a fallback. That's fine on web, but the branches need a `!Capacitor.isNativePlatform()` guard so a Capacitor plugin failure can't accidentally fall through to the WKWebView geolocation prompt (which uses the wrong NSLocationUsageDescription string).
-
-**3. `useOfflineQueue.tsx` — Background Sync still referenced**
-Lines 74 and 122 read `'sync' in navigator.serviceWorker`. Line 122 already has `!isNative()` but line 74 does not. Wrap both.
-
-**4. `paymentQueue.ts` + `PaySplitShareDialog.tsx` rely on `navigator.onLine`**
-`navigator.onLine` is unreliable in WKWebView (often stuck on `true` after airplane mode toggles). Switch the native path to `@capacitor/network`'s `Network.getStatus()` / `addListener('networkStatusChange')`. Web path keeps `navigator.onLine`.
-
-**5. `ConnectionStatusBanner.tsx`** — same `navigator.onLine` issue. Subscribe to `Network` plugin on native.
+> Note: `src/components/FlagSplash.tsx` was already deleted as part of this audit (it was unreferenced).
 
 ---
 
-### 🟠 Capacitor plugin config missing
+### Pass A — Native link & asset polish
 
-**6. `capacitor.config.ts` declares no plugin options.** Recommend adding:
-```ts
-plugins: {
-  SplashScreen: { launchAutoHide: false, backgroundColor: '#0F172A' },
-  StatusBar: { style: 'DARK', overlaysWebView: true },
-  Keyboard: { resize: 'native', resizeOnFullScreen: true },
-  PushNotifications: { presentationOptions: ['badge', 'sound', 'alert'] },
-}
-```
-Without these, the iOS splash flashes white before `NativeBootstrap` hides it, the status bar bg won't match the dark theme, and incoming push notifications show no banner while app is foregrounded.
+**A1. Route every `target="_blank"` through native helpers**
 
-**7. Universal Links entitlement reminder (no code change)**
-`nativeBootstrap` already routes `rlly.cloud/join/:code` via `appUrlOpen`. For iOS to *receive* those events instead of bouncing to Safari, the Xcode project needs the Associated Domains entitlement (`applinks:rlly.cloud`) + the AASA file at `https://rlly.cloud/.well-known/apple-app-site-association`. Will flag this in the README, no code edit needed.
+Add an `onClick` handler that calls `openExternalLink(url)` / `openDirectionsLink(url)` and short-circuits with `e.preventDefault()` on native. On web the anchor behaves normally (new tab). Files:
 
----
+| File | Helper |
+|---|---|
+| `src/components/location/LocationMapPreview.tsx` (2 anchors) | `openDirectionsLink` |
+| `src/components/rides/NavigateToPickupButton.tsx` (2 anchors) | `openDirectionsLink` |
+| `src/components/events/AfterRallyCard.tsx` (Get Directions) | `openDirectionsLink` |
+| `src/components/tracking/AttendeeMap.tsx` (Open in Maps) | `openDirectionsLink` |
+| `src/components/tracking/AttendeeLocationItem.tsx` (Navigate) | `openDirectionsLink` |
+| `src/components/events/EventPhotoFeed.tsx` (Open video) | `openExternalLink` |
+| `src/components/chat/unified/MessageBubble.tsx` (user URLs) | `openExternalLink` |
+| `src/components/payments/ClaimItemsView.tsx` (receipt) | `openExternalLink` |
+| `src/components/onboarding/FoundingMemberBanner.tsx` (Canny) | `openExternalLink` |
+| `src/pages/Documentation.tsx` (mermaid.live) | `openExternalLink` |
 
-### 🟡 Polish (nice-to-have, non-blocking)
-
-**8. `index.html` viewport** — already cleaned of `maximum-scale=1`. ✅
-**9. Service worker file `public/sw.js`** — keep shipping it for the web PWA, but verify the kill-switch behavior so it never registers when `navigator.userAgent` matches `Capacitor/iOS`. Currently safe (only `usePushNotifications` registers it, and that hook is guarded), but a one-line guard inside `sw.js`'s `install` is cheap insurance.
-**10. `localStorage` is fine in WKWebView** but is wiped if the user clears app storage from iOS Settings → R@lly. The auth-related keys (founding member slot, dismissed invite IDs, join codes) should be mirrored to `@capacitor/preferences` on native for durability. Optional — flag only.
-
----
-
-### Files to change
-
-```
-src/hooks/usePushNotifications.tsx     — add native short-circuits
-src/hooks/useNativeGeolocation.tsx     — guard web fallback branches
-src/hooks/useOfflineQueue.tsx          — guard line 74 sync check
-src/lib/paymentQueue.ts                — Network plugin on native
-src/components/payments/PaySplitShareDialog.tsx — Network plugin on native
-src/components/layout/ConnectionStatusBanner.tsx — Network plugin on native
-capacitor.config.ts                    — add plugins{} block
-public/sw.js                           — Capacitor UA early return (1 line)
+Pattern applied to each:
+```tsx
+<a
+  href={url}
+  target="_blank"
+  rel="noopener noreferrer"
+  onClick={(e) => {
+    if (Capacitor.isNativePlatform()) {
+      e.preventDefault();
+      void openExternalLink(url); // or openDirectionsLink
+    }
+  }}
+>
 ```
 
-No web-build behavior changes. All edits are inside `if (Capacitor.isNativePlatform())` branches or additive plugin config.
+**A2. Manifest sync** — `public/manifest.json`: `background_color` `#F47A19` → `#0F172A` (matches native splash).
+
+**A3. apple-touch-icon refresh** — `index.html` line 22: `/rally-icon-192.png` → `/rally-icon-192-v6.png` (matches manifest v6).
+
+**A4. FlagSplash removed** — done (unreferenced file deleted).
 
 ---
 
-### Suggested execution order
+### Pass B — Discoverability
 
-1. Capacitor config (#6) — instant polish, zero risk
-2. Push + geo + offline guards (#1, #2, #3) — close the last WKWebView leaks
-3. Network plugin migration (#4, #5) — single helper, three call-sites
-4. SW + preferences polish (#9, #10) — last mile
+**B1. Home: always show Past R@llies section** (`src/pages/Index.tsx` lines 260–282)
 
-Approve and I'll execute in that order in a single pass.
+Remove the outer `{pastEvents.length > 0 && (...)}` wrapper. Header + "See All" always render. When empty, render a soft glass card:
+
+```tsx
+<section className="space-y-4">
+  <div className="flex items-center justify-between">
+    {/* header + See All — unchanged */}
+  </div>
+  {pastEvents.length > 0 ? (
+    <div className="space-y-4 opacity-80">
+      {pastEvents.slice(0, 3).map(e => <EventCard key={e.id} event={e} />)}
+    </div>
+  ) : (
+    <Card className="glass-elevated rounded-2xl">
+      <CardContent className="p-6 text-center">
+        <p className="text-sm text-muted-foreground font-montserrat">
+          Your past nights will show up here.
+        </p>
+      </CardContent>
+    </Card>
+  )}
+</section>
+```
+
+**B2. Profile: add "Past R@llies" row** (`src/pages/Profile.tsx`, insert before line 701 — "App Settings" block)
+
+```tsx
+<div className="pt-3 border-t border-border">
+  <button
+    onClick={() => navigate('/rallies/past')}
+    className="w-full flex items-center justify-between py-2 hover:bg-muted/50 rounded-lg px-1 transition-colors"
+  >
+    <div className="flex items-center gap-3">
+      <History className="h-5 w-5 text-muted-foreground" />
+      <div className="text-left">
+        <span className="font-medium">Past R@llies</span>
+        <p className="text-xs text-muted-foreground">Your full night archive</p>
+      </div>
+    </div>
+    <ChevronRight className="h-5 w-5 text-muted-foreground" />
+  </button>
+</div>
+```
+
+Add `History` to the lucide-react import on line 15.
+
+---
+
+### Pass C — Branded "Welcome Back" transition (native only)
+
+**C1. New component** — `src/components/WelcomeBackOverlay.tsx`
+
+- Renders only when `Capacitor.isNativePlatform()` is true.
+- Once per session (sessionStorage key `rally-welcome-back-shown`).
+- Centered `/logo.svg` + "R@lly" wordmark over `#0F172A`, gentle 1.2s pulse, orange radial glow.
+- Hard cap: **1.2s total** (920ms hold + 280ms fade-out).
+- `z-[100]`, fixed, becomes pointer-events-none during fade so it never blocks taps.
+
+```tsx
+const MAX_DURATION_MS = 1200;
+const FADE_MS = 280;
+const SESSION_KEY = 'rally-welcome-back-shown';
+// pulse keyframes inline, no Tailwind config change
+```
+
+**C2. Wire into Home** (`src/pages/Index.tsx`)
+
+Import and render `<WelcomeBackOverlay />` at the top of the authenticated `Index` return — outside main scroll area. It self-removes after 1.2s and skips entirely on web, so no impact on the PWA or browser experience.
+
+---
+
+### Web/PWA safety summary
+
+- Every behavior change is wrapped in `Capacitor.isNativePlatform()`.
+- Anchors retain `href` + `target="_blank"` so right-click / middle-click / desktop SEO still work.
+- Manifest color is purely visual (PWA splash on Android) — no functional impact.
+- WelcomeBackOverlay early-returns `null` on web.
+
+---
+
+### Files touched
+
+```text
+edited:   src/pages/Index.tsx
+edited:   src/pages/Profile.tsx
+edited:   src/components/location/LocationMapPreview.tsx
+edited:   src/components/rides/NavigateToPickupButton.tsx
+edited:   src/components/events/AfterRallyCard.tsx
+edited:   src/components/tracking/AttendeeMap.tsx
+edited:   src/components/tracking/AttendeeLocationItem.tsx
+edited:   src/components/events/EventPhotoFeed.tsx
+edited:   src/components/chat/unified/MessageBubble.tsx
+edited:   src/components/payments/ClaimItemsView.tsx
+edited:   src/components/onboarding/FoundingMemberBanner.tsx
+edited:   src/pages/Documentation.tsx
+edited:   public/manifest.json
+edited:   index.html
+created:  src/components/WelcomeBackOverlay.tsx
+deleted:  src/components/FlagSplash.tsx   (already done)
+```
+
+No DB, RLS, edge function, or schema changes.

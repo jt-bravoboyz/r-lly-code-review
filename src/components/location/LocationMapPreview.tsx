@@ -6,6 +6,8 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { MapPin, Loader2, Navigation } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { applyRallyMapOverrides, RALLY_MARKER_COLORS } from '@/lib/mapStyles';
+import { Capacitor } from '@capacitor/core';
+import { openDirectionsLink } from '@/lib/nativeLinks';
 
 interface LocationMapPreviewProps {
   lat: number;
@@ -127,6 +129,12 @@ export const LocationMapPreview = forwardRef<HTMLDivElement, LocationMapPreviewP
               href={directionsUrl}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={(e) => {
+                if (Capacitor.isNativePlatform()) {
+                  e.preventDefault();
+                  openDirectionsLink(directionsUrl);
+                }
+              }}
               className="inline-flex items-center justify-center rounded-md text-sm font-medium border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 px-3 mt-1"
             >
               <Navigation className="h-3 w-3 mr-1.5" />
@@ -154,6 +162,12 @@ export const LocationMapPreview = forwardRef<HTMLDivElement, LocationMapPreviewP
                 href={directionsUrl}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={(e) => {
+                  if (Capacitor.isNativePlatform()) {
+                    e.preventDefault();
+                    openDirectionsLink(directionsUrl);
+                  }
+                }}
                 className="shrink-0 h-7 text-xs inline-flex items-center justify-center rounded-md font-medium bg-secondary text-secondary-foreground hover:bg-secondary/80 px-3"
               >
                 <Navigation className="h-3 w-3 mr-1" />

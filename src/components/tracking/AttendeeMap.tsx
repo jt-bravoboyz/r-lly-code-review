@@ -11,6 +11,8 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/hooks/useAuth';
 import { AttendeeLocationItem } from './AttendeeLocationItem';
 import { AvatarPin } from './AvatarPin';
+import { Capacitor } from '@capacitor/core';
+import { openDirectionsLink } from '@/lib/nativeLinks';
 
 interface Attendee {
   id: string;
@@ -280,6 +282,12 @@ export function AttendeeMap({ eventId, attendees, eventLocation }: AttendeeMapPr
                     href={mapLinkUrl}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={(e) => {
+                      if (Capacitor.isNativePlatform()) {
+                        e.preventDefault();
+                        openDirectionsLink(mapLinkUrl);
+                      }
+                    }}
                     className="absolute top-2 right-2 z-10 bg-background/90 backdrop-blur-md rounded-full px-3 py-1.5 flex items-center gap-1.5 text-xs font-medium shadow-md hover:bg-background transition-colors"
                   >
                     <ExternalLink className="h-3.5 w-3.5" />

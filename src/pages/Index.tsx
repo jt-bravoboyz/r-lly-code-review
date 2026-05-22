@@ -19,6 +19,7 @@ import { IdentitySetupDialog } from '@/components/profile/NameSetupDialog';
 import { FoundingMemberBanner } from '@/components/onboarding/FoundingMemberBanner';
 import rallyLogo from '@/assets/rally-logo.png';
 import { MiniFounderGem } from '@/components/badges/MiniFounderGem';
+import { WelcomeBackOverlay } from '@/components/WelcomeBackOverlay';
 
 export default function Index() {
   const { user, profile, loading } = useAuth();
@@ -75,6 +76,7 @@ export default function Index() {
 
   return (
     <div className="min-h-[100dvh] pb-bottom-nav bg-transparent relative overflow-hidden">
+      <WelcomeBackOverlay />
       {/* Living background orbs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-40 -right-20 w-72 h-72 bg-primary/10 rounded-full blur-[80px] animate-orb-float" />
@@ -257,10 +259,9 @@ export default function Index() {
           )}
         </section>
 
-        {/* Past Events Section */}
-        {pastEvents.length > 0 && (
-          <section className="space-y-4">
-            <div className="flex items-center justify-between">
+        {/* Past Events Section — always visible so the archive is always reachable */}
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <History className="h-5 w-5 text-muted-foreground" />
               <h3 className="text-xl font-bold font-montserrat animate-text-shimmer bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">Past R@llies</h3>
@@ -271,15 +272,24 @@ export default function Index() {
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
-            </div>
+          </div>
 
+          {pastEvents.length > 0 ? (
             <div className="space-y-4 opacity-80">
               {pastEvents.slice(0, 3).map((event) => (
                 <EventCard key={event.id} event={event} />
               ))}
             </div>
-          </section>
-        )}
+          ) : (
+            <Card className="glass-elevated rounded-2xl">
+              <CardContent className="p-6 text-center">
+                <p className="text-sm text-muted-foreground font-montserrat">
+                  Your past nights will show up here.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </section>
       </main>
 
       <BottomNav />

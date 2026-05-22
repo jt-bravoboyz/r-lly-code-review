@@ -1,5 +1,7 @@
 import { Navigation } from 'lucide-react';
 import { toast } from 'sonner';
+import { Capacitor } from '@capacitor/core';
+import { openDirectionsLink } from '@/lib/nativeLinks';
 
 interface NavigateToPickupButtonProps {
   pickupLocation: string;
@@ -28,9 +30,13 @@ export function NavigateToPickupButton({
 
   if (!url) return null;
 
-  const handleClick = () => {
+  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     if (passengerName) {
       toast.success(`Navigating to pick up ${passengerName}`);
+    }
+    if (Capacitor.isNativePlatform() && url) {
+      e.preventDefault();
+      openDirectionsLink(url);
     }
   };
 

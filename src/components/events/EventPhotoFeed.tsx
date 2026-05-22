@@ -15,6 +15,8 @@ import { ensurePhotoPermission } from './PhotoPermissionDialog';
 import { useHaptics } from '@/hooks/useHaptics';
 import { usePublicProfile } from '@/contexts/PublicProfileContext';
 import { useVideoThumbnailBackfill } from '@/hooks/useVideoThumbnailBackfill';
+import { Capacitor } from '@capacitor/core';
+import { openExternalLink } from '@/lib/nativeLinks';
 
 const MAX_PHOTOS_PER_EVENT = 500;
 const MAX_VIDEOS_PER_EVENT = 5;
@@ -633,6 +635,12 @@ export function EventPhotoFeed({ eventId, isHost, eventStatus, eventUpdatedAt }:
                     href={photos[viewerIndex].url}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={(e) => {
+                      if (Capacitor.isNativePlatform()) {
+                        e.preventDefault();
+                        void openExternalLink(photos[viewerIndex].url);
+                      }
+                    }}
                     className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-primary text-primary-foreground text-sm font-medium"
                   >
                     <ExternalLink className="h-4 w-4" />
