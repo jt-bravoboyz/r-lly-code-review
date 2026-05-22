@@ -449,14 +449,14 @@ export function AddPeopleSheet() {
                         className={`w-full flex items-center gap-3 p-3 rounded-2xl border transition-all active:scale-[0.99] ${
                           selected
                             ? 'bg-[#F47A19]/10 border-[#F47A19]/40 ring-1 ring-[#F47A19]/40 shadow-[0_4px_20px_-8px_rgba(244,122,25,0.5)]'
-                            : 'bg-white/[0.02] border-white/[0.05] hover:bg-white/[0.05]'
+                            : 'bg-black/[0.03] dark:bg-white/[0.02] border-black/[0.05] dark:border-white/[0.05] hover:bg-black/[0.05] dark:hover:bg-white/[0.05]'
                         }`}
                       >
                         <div
                           className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 font-black ${
                             selected
                               ? 'bg-[#F47A19] text-white shadow-lg shadow-[#F47A19]/30'
-                              : 'bg-white/5 text-zinc-400 border border-white/10'
+                              : 'bg-black/5 dark:bg-white/5 text-zinc-600 dark:text-zinc-400 border border-black/[0.06] dark:border-white/10'
                           }`}
                         >
                           {selected ? (
@@ -468,7 +468,7 @@ export function AddPeopleSheet() {
                           )}
                         </div>
                         <div className="flex-1 min-w-0 text-left">
-                          <p className="font-bold font-montserrat text-sm text-white truncate">
+                          <p className="font-bold font-montserrat text-sm text-zinc-900 dark:text-white truncate">
                             {c.name || c.phone || c.email}
                           </p>
                           <p className="text-[11px] text-zinc-500 truncate">
