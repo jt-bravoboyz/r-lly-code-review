@@ -12,6 +12,13 @@ dist
 dist-ssr
 *.local
 
+# iOS native — commit project files but not CocoaPods deps or build artifacts
+ios/App/Pods/
+ios/App/build/
+ios/**/xcuserdata/
+ios/**/*.xcuserstate
+ios/App/App/public/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
