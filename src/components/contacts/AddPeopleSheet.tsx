@@ -307,9 +307,9 @@ export function AddPeopleSheet() {
                     <button
                       key={friend.id}
                       onClick={() => toast.success(`Selected ${friend.display_name}`)}
-                      className="w-full flex items-center gap-3 p-3 rounded-2xl bg-white/[0.02] border border-white/[0.05] hover:bg-white/[0.05] transition-colors"
+                      className="w-full flex items-center gap-3 p-3 rounded-2xl bg-black/[0.03] dark:bg-white/[0.02] border border-black/[0.05] dark:border-white/[0.05] hover:bg-black/[0.05] dark:hover:bg-white/[0.05] transition-colors"
                     >
-                      <div className="w-11 h-11 rounded-full bg-[#F47A19]/15 ring-1 ring-white/10 flex items-center justify-center shrink-0 overflow-hidden">
+                      <div className="w-11 h-11 rounded-full bg-[#F47A19]/15 ring-1 ring-black/10 dark:ring-white/10 flex items-center justify-center shrink-0 overflow-hidden">
                         {friend.avatar_url ? (
                           <img src={friend.avatar_url} alt="" className="w-full h-full object-cover" />
                         ) : (
@@ -317,7 +317,7 @@ export function AddPeopleSheet() {
                         )}
                       </div>
                       <div className="flex-1 min-w-0 text-left">
-                        <p className="font-bold font-montserrat text-sm text-white truncate">
+                        <p className="font-bold font-montserrat text-sm text-zinc-900 dark:text-white truncate">
                           {friend.display_name || 'R@lly User'}
                         </p>
                         <p className="text-[11px] text-zinc-500 truncate">
