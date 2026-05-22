@@ -19,6 +19,7 @@ import { IdentitySetupDialog } from '@/components/profile/NameSetupDialog';
 import { FoundingMemberBanner } from '@/components/onboarding/FoundingMemberBanner';
 import rallyLogo from '@/assets/rally-logo.png';
 import { MiniFounderGem } from '@/components/badges/MiniFounderGem';
+import { WelcomeBackOverlay } from '@/components/WelcomeBackOverlay';
 
 export default function Index() {
   const { user, profile, loading } = useAuth();
@@ -75,6 +76,7 @@ export default function Index() {
 
   return (
     <div className="min-h-[100dvh] pb-bottom-nav bg-transparent relative overflow-hidden">
+      <WelcomeBackOverlay />
       {/* Living background orbs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-40 -right-20 w-72 h-72 bg-primary/10 rounded-full blur-[80px] animate-orb-float" />
