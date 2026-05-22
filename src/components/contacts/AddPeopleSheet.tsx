@@ -31,6 +31,8 @@ import { openSms, openMailto } from '@/lib/nativeLinks';
 import { Contacts } from '@capacitor-community/contacts';
 import { toast } from 'sonner';
 import { useUpsertUserContacts } from '@/hooks/useUserContacts';
+import { ContactRowSkeleton } from '@/components/contacts/ContactRowSkeleton';
+
 
 /**
  * Inputs render with a forced 16px font-size to suppress iOS Safari/WKWebView
@@ -433,12 +435,15 @@ export function AddPeopleSheet() {
                 </button>
               </CollapsibleTrigger>
               <CollapsibleContent className="pt-2 space-y-1.5 data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
-                {filteredPhoneContacts.length === 0 ? (
+                {isSyncing ? (
+                  <ContactRowSkeleton count={6} />
+                ) : filteredPhoneContacts.length === 0 ? (
                   <p className="text-xs text-zinc-500 px-3 py-4 text-center font-semibold">
                     {cloudContacts.length === 0
                       ? 'No contacts synced yet. Tap "Sync Contacts" above.'
                       : 'No contacts match that search.'}
                   </p>
+
                 ) : (
                   filteredPhoneContacts.slice(0, 100).map((c) => {
                     const selected = selectedPhoneIds.has(c.id);

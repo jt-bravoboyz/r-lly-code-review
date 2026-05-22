@@ -1,50 +1,76 @@
-# Squads → Contacts: Premium Liquid Glass Redesign
+# Final Execution Pass — App Store Hardening + Premium Contacts UI
 
-Apply the chosen "Premium liquid glass" direction to the Contacts tab and the Add People sheet. Brand tokens (R@lly Orange `#F47A19`, Montserrat, dark glass/liquid 2026 UI) are locked. All existing functionality, hooks, and data flows are preserved — this is a structural and visual restyle only.
+One coordinated sweep across native config, routing, and the Contacts surface. All changes preserve web compatibility via existing `Capacitor.isNativePlatform()` and `dark:` adaptive guards.
 
-## Files to edit
+---
 
-1. `src/components/squads/ContactsTab.tsx`
-2. `src/components/contacts/AddPeopleSheet.tsx`
+## Part 1 — App Store Pre-Upload Hardening 🔴
 
-No changes to `src/pages/Squads.tsx`, no new components, no data/RLS changes, no logic changes.
+### `capacitor.config.ts`
+- `appId`: `app.lovable.30a08aa7cdeb4250a60c0605f836113c` → **`com.bravoboyz.rally`**
+- `SplashScreen.backgroundColor`: `#0F172A` → **`#F47A19`** (brand orange, kills navy flash)
+- `StatusBar.style`: `'DARK'` → **`'LIGHT'`** (matches `nativeBootstrap.ts` runtime override, no flicker)
+- `StatusBar.backgroundColor`: `#0F172A` → **`#F47A19`**
 
-## ContactsTab — dark glass "premium island"
+> Note for you, post-pull: a stale `ios/App/App/capacitor.config.json` may still hold the old bundle ID — delete it and re-run `npx cap sync ios`. Also create the App Store Connect record under the new ID before first upload.
 
-Wrap the entire tab body in a dark glass card so it visually separates from the light Squads shell and reads as a flagship feature:
+### `scripts/ios-setup.sh`
+Add a PlistBuddy helper for arrays and inject:
+```
+UIBackgroundModes = [ "location", "remote-notification" ]
+```
+Idempotent: detect existing entries, only add missing modes. Keeps the rest of the script untouched.
 
-- Container: `bg-[#0F0F12] rounded-3xl border border-white/[0.08] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] p-5 space-y-5` with subtle ambient orange radial in the top-right corner (low opacity, blurred).
-- Search row: dark glass input `h-12 bg-white/5 border border-white/10 rounded-2xl text-white placeholder:text-zinc-500` + a compact pill "Add" button (`h-12 px-6 bg-[#F47A19] rounded-2xl text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-[#F47A19]/20 active:scale-95`).
-- `SectionLabel`: tiny orange bullet dot + `text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500`.
-- Contact rows: `bg-white/[0.02] border border-white/[0.05] rounded-2xl p-3` with a `h-12 w-12 rounded-full` avatar, white bold name, zinc subline; selected state swaps to `bg-[#F47A19]/10 border-[#F47A19]/30 ring-1 ring-[#F47A19]/40` with a filled orange check tile.
-- Quick-Add no-match row: orange-gradient glass card, same orange tile + Montserrat black title.
-- Sticky multi-select bar: orange button on `bg-black/40 backdrop-blur-xl` strip with safe-area padding.
+### `src/App.tsx`
+- Import `Demo` from `./pages/Demo`
+- Register `<Route path="/demo" element={<Demo />} />` above the `*` catch-all so the marketing prototype is reachable
 
-## AddPeopleSheet — cinematic dark glass sheet
+---
 
-Rebuild the SheetContent shell and section composition while keeping every collapsible, search input, sync action, and import flow intact.
+## Part 2 — Premium Adaptive Contacts UI + Skeletons
 
-- Sheet shell: `bg-[#121214] border-t border-white/15 rounded-t-[3rem] shadow-[0_-20px_60px_-15px_rgba(0,0,0,0.8)]` with a centered drag handle (`w-12 h-1.5 bg-zinc-800 rounded-full`).
-- Header: large `text-3xl font-black tracking-tighter text-white` title + orange tagline `text-[#F47A19] font-bold text-sm` ("Pull your crew into the night"), plus a glass close pill (`w-10 h-10 bg-white/5 border border-white/10 rounded-full`).
-- Section headers: orange bullet for R@lly Network, zinc bullet for Your Phone, both with `tracking-[0.2em] text-[10px] font-black` labels (drop the horizontal divider lines).
-- R@lly Network search: dark glass input with a small pulsing orange glow dot anchored top-right.
-- R@lly Friends + Discover triggers: a 2-column grid of compact glass tiles (`h-16 bg-white/[0.03] border border-white/10 rounded-[1.25rem]` with name + orange count chip). Tapping expands the existing Collapsible content directly below the grid full-width.
-- Quick-Add no-match: orange-glow glass row (same component as the ContactsTab quick-add).
-- Your Phone hero "Sync Contacts": full-width gradient glass card (`bg-gradient-to-br from-[#F47A19]/10 to-transparent border border-[#F47A19]/20 rounded-[2rem] p-5`) with a `w-14 h-14 rounded-2xl bg-[#F47A19] shadow-xl shadow-[#F47A19]/20` icon tile, white black title, zinc subline, trailing chevron pill.
-- "From Your Phone" list collapsible: compact dark glass trigger row with orange count chip; expanded rows match the new contact-row style.
-- Web Import (web-only): single compact row with `VCF • CSV • XLS` micro caption on the right; existing Tabs content untouched on expand.
-- Sticky batch-invite bar: orange button on `bg-black/60 backdrop-blur-xl` with safe-area padding.
+### New: `src/components/contacts/ContactRowSkeleton.tsx`
+Reusable frosted-glass pulse row matching the live contact row geometry (avatar + 2 text lines + trailing action chip). Adaptive tokens:
+- `bg-white/60 dark:bg-white/[0.03]`
+- `border-black/[0.04] dark:border-white/[0.06]`
+- Uses `animate-pulse` + inner shimmer gradient for premium feel
+- Accepts `count` prop (default 4) to stamp multiple rows without layout jump
 
-## Out of scope
+### `src/components/squads/ContactsTab.tsx`
+Preserve existing layout, just confirm/lock the already-applied adaptive tokens + add skeletons:
+- Main island: `bg-white/70 dark:bg-[#0F0F12]` with `border-black/[0.05] dark:border-white/[0.08]`
+- Both search bars keep their split-purpose semantics (R@lly network vs synced device) — confirm collapsibles are **closed by default**
+- Search focus rings: `focus-visible:ring-2 focus-visible:ring-[#F47A19]` (already in place — verify)
+- Section bullets: solid `bg-[#F47A19] shadow-[0_0_8px_rgba(244,122,25,0.7)]`
+- **New:** while `isLoading` / `isSyncing` is true, render `<ContactRowSkeleton count={5} />` in place of the row map
+- '+ ADD' trigger: `shadow-[0_4px_20px_rgba(244,122,25,0.35)] hover:shadow-[0_6px_28px_rgba(244,122,25,0.5)]`
 
-- No edits to `src/pages/Squads.tsx` (the orange header band already matches the prototype).
-- No changes to `SmartPasteContacts`, `CSVContactImport`, `VCFContactImport`, `ContactSmartSearch`.
-- No data/query/RLS changes; no new hooks.
-- No new dependencies.
+### `src/components/contacts/AddPeopleSheet.tsx`
+Preserve dual split-search architecture and 2-column grid:
+- Sheet shell: `bg-white/80 dark:bg-[#121214] border-t border-black/[0.08] dark:border-white/15 backdrop-blur-2xl`
+- **R@lly Network** search bar — accordion collapsed by default; orange focus ring; on search-in-flight render 4× `<ContactRowSkeleton />`
+- **From Your Phone** collapsible — closed by default; on `requestContacts()` / sync-in-flight render 6× `<ContactRowSkeleton />` instead of empty/jumping list
+- Web Import row + sticky batch-invite footer keep adaptive fills + orange aura `shadow-[0_4px_20px_rgba(244,122,25,0.35)]`
+- All Capacitor-only paths stay behind `if (isNative)` so web build is identical
 
-## Validation
+---
 
-- Open `/squads` → Contacts tab on the 390px viewport. Confirm the dark glass island, premium typography, and orange accent system render cleanly over the light Squads shell.
-- Tap "Add People" → confirm the new cinematic sheet matches the chosen prototype's hierarchy (drag handle, title block, R@lly Network grid, Your Phone hero, Web Import row).
-- Friends/Discover/Phone-list collapsibles still expand and search/sync/batch-invite still work end-to-end.
-- Safe-area padding holds on iOS viewport heights; 44px touch targets preserved.
+## Web compatibility guardrails (verified, no changes needed)
+- `capacitor.config.ts` `useLovableLiveReload` opt-in stays intact — web preview untouched
+- All Capacitor plugin calls remain inside `Capacitor.isNativePlatform()` blocks
+- `sw.js` UA bailout for WKWebView untouched
+- ThemeProvider already defaults to `'light'`, so the new orange splash/statusbar align with first paint
+
+---
+
+## File-change summary
+| File | Change |
+|---|---|
+| `capacitor.config.ts` | Bundle ID + brand-orange splash/statusbar |
+| `scripts/ios-setup.sh` | `UIBackgroundModes` injection |
+| `src/App.tsx` | `/demo` route |
+| `src/components/contacts/ContactRowSkeleton.tsx` | **NEW** adaptive skeleton |
+| `src/components/squads/ContactsTab.tsx` | Skeleton wiring on loading states |
+| `src/components/contacts/AddPeopleSheet.tsx` | Skeleton wiring on R@lly + Phone search states |
+
+Approve and I'll execute the full sweep in one pass.

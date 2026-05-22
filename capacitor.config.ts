@@ -7,7 +7,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 const useLovableLiveReload = process.env.CAP_LIVE_RELOAD === '1';
 
 const config: CapacitorConfig = {
-  appId: 'app.lovable.30a08aa7cdeb4250a60c0605f836113c',
+  appId: 'com.bravoboyz.rally',
   appName: 'R@lly',
   webDir: 'dist',
   ...(useLovableLiveReload ? {
@@ -22,12 +22,12 @@ const config: CapacitorConfig = {
       // We hide the splash programmatically once auth resolves
       // (see src/lib/nativeBootstrap.ts) to prevent a white flash.
       launchAutoHide: false,
-      backgroundColor: '#0F172A',
+      backgroundColor: '#F47A19',
       showSpinner: false,
     },
     StatusBar: {
-      style: 'DARK',
-      backgroundColor: '#0F172A',
+      style: 'LIGHT',
+      backgroundColor: '#F47A19',
       overlaysWebView: true,
     },
     Keyboard: {
