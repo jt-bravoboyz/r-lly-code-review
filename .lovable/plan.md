@@ -1,65 +1,72 @@
-## Plan
+# Contacts UI Cleanup Plan
 
-### 1. Replace fetch-then-merge with native upsert in `src/hooks/useUserContacts.tsx`
+## What's chaotic today
 
-The current `useUpsertUserContacts` mutation does a SELECT-then-UPDATE/INSERT loop. Since the DB already has unique constraints `user_contacts_owner_phone_unique (owner_id, phone)` and `user_contacts_owner_email_unique (owner_id, email)`, we can collapse it to two `.upsert()` calls.
+Three separate surfaces all do the same job, with different layouts and styling:
 
-Replace the body of `mutationFn` (after the `normalized` filter) with:
+| Surface | What it shows |
+|---|---|
+| **Squads → Contacts tab** (`ContactsTab.tsx`) | Search + `AddPeopleSheet` button + 4 huge collapsible cards (R@lly Friends, Squad Members, Phone Contacts, Cloud Contacts) + R@lly Search card + Quick Add row |
+| **"Invite from Contacts" button** (`ContactInviteDialog`) | Search + Quick Add + unified flat list + Import Options collapsible |
+| **AddPeopleSheet** (the "Add People" pill) | Search + R@lly Friends list + Quick Add + Import Options collapsible |
 
-```ts
-const rows = normalized.map(c => ({
-  owner_id: profile.id,
-  name: c.name,
-  phone: c.phone,
-  email: c.email,
-  source: c.source,
-  last_synced_at: new Date().toISOString(),
-}));
+Visual noise sources:
+- Every section is a white card with a colored icon circle, bold heading, subtitle, and a chevron — even when there are 0 items
+- 4 nested collapsibles stack tall white cards on the Contacts tab
+- Two entry points ("Add People" pill + "Invite from Contacts" button) open two different sheets that do ~90% the same thing
+- Native already has direct contact sync, so most "Import Options" are dead weight
 
-const withPhone = rows.filter(c => c.phone !== null);
-const emailOnly = rows.filter(c => c.phone === null && c.email !== null);
+## Proposed direction: one search, one flat list
 
-let allData: any[] = [];
+Collapse all three into a **single clean pattern** used everywhere:
 
-if (withPhone.length > 0) {
-  const { data, error } = await supabase
-    .from('user_contacts')
-    .upsert(withPhone, { onConflict: 'owner_id,phone', ignoreDuplicates: true })
-    .select();
-  if (error) throw error;
-  if (data) allData = allData.concat(data);
-}
-
-if (emailOnly.length > 0) {
-  const { data, error } = await supabase
-    .from('user_contacts')
-    .upsert(emailOnly, { onConflict: 'owner_id,email', ignoreDuplicates: true })
-    .select();
-  if (error) throw error;
-  if (data) allData = allData.concat(data);
-}
-
-return allData;
+```text
+┌─────────────────────────────────────┐
+│ 🔍  Search name, handle, number…    │   ← single search, no card chrome
+├─────────────────────────────────────┤
+│ R@LLY FRIENDS                       │   ← tiny uppercase section label
+│  • Avatar  Name              [Zap]  │      (no card, no chevron, no icon circle)
+│  • Avatar  Name              [Zap]  │
+│                                     │
+│ FROM YOUR PHONE                     │
+│  • Avatar  Name · 555-1234   [+]    │
+│  • Avatar  Name · 555-5678   [+]    │
+│                                     │
+│ OTHER CONTACTS                      │
+│  • Avatar  Name · email      [+]    │
+└─────────────────────────────────────┘
+[ Sync iPhone Contacts ]   (subtle, footer)
 ```
 
-Removes ~80 lines of merge logic. `ignoreDuplicates: true` matches your snippet — re-syncs skip rows that already exist instead of bumping `last_synced_at`. (Note: this is a behavior shift from today's merge — flag if you'd rather keep `merge-duplicates` to refresh names/source.)
+Key moves:
+1. **Drop the per-section Cards + icon circles + chevrons.** Replace with flat uppercase section labels (matches the style already used inside `AddPeopleSheet` for "R@lly Friends"). Sections only render when they have items.
+2. **Single flat alphabetized list** for phone + cloud contacts merged (dedup by phone/email — `ContactInviteDialog` already does this; reuse the logic).
+3. **One entry point**, not two. Remove either the "Invite from Contacts" button or the "Add People" pill from Squads → Contacts and keep just one. Recommendation: keep `AddPeopleSheet` as the universal sheet (it's already used in multiple places) and delete the redundant `ContactInviteDialog` invocation from Squads.
+4. **Multi-select + bottom action bar** (port the nice pattern from `ContactInviteDialog`: tap rows to select, sticky "R@lly N Contacts" button at bottom). This replaces the per-row `[Zap]` / `[+]` buttons on the Contacts tab.
+5. **Hide "Import Options" by default on native** (already done in `AddPeopleSheet`). On native, the only secondary action shown is a single "Sync iPhone Contacts" button at the bottom. The VCF / Quick Paste / CSV trio stays web-only.
+6. **Squad Members section: remove entirely** from the Contacts tab. Squad members already live one tab away under "Squads" — duplicating them here is the single biggest cause of visual stacking.
+7. **R@lly Search results** (people you can friend-request) get folded into the same flat list under a `R@LLY MEMBERS` section that only appears while typing 2+ chars. No separate card.
+8. **Search-first empty state**: when the list is collapsed because of search with no matches, show only the orange Quick Add row — nothing else. This is the cleanest invite path.
 
-Also update the `mem://architecture/contact-sync-architecture` memory to reflect the new strategy.
+## Files to change
 
-### 2. Hide web-only import paths on native in `src/components/contacts/AddPeopleSheet.tsx`
+- `src/components/squads/ContactsTab.tsx` — strip the 4 Card+Collapsible blocks; reuse the flat search-list pattern; remove Squad Members section; remove the duplicate "Invite from Contacts" button at top of Squads `contacts` tab (drop the `<Button>` and `ContactInviteDialog` from `src/pages/Squads.tsx`).
+- `src/components/contacts/AddPeopleSheet.tsx` — promote to the canonical multi-select sheet: merge in `ContactInviteDialog`'s unified-list + sticky-CTA pattern, keep the native gate for Import Options.
+- `src/pages/Squads.tsx` — remove the standalone "Invite from Contacts" button and `ContactInviteDialog` import; the Contacts tab itself already exposes Add People.
+- `src/components/contacts/ContactInviteDialog.tsx` — either delete (preferred) or keep as a thin re-export of the unified sheet. I'd recommend delete and update any remaining callers.
 
-Compute `const isNative = Capacitor.isNativePlatform();` once at the top of the component, then on native:
+## Visual rules (apply everywhere)
 
-- Skip rendering the `<Tabs>` block (Contact Card / Quick Paste / CSV) entirely.
-- Keep on native: search input, R@lly Friends list, Quick Add, Cloud `ContactSmartSearch`, and the "Phone / Computer Contacts" device-sync button.
-- On web: leave everything as-is.
+- No nested cards. One outer surface (sheet/dialog), flat content inside.
+- Section headers: `text-xs font-semibold uppercase tracking-wider text-muted-foreground px-1` — no icons, no chevrons, no counts.
+- Row: 40px avatar + name (sm, medium) + subline (xs, muted) + trailing action. No background unless selected (`bg-primary/10 ring-1 ring-primary/30`).
+- Sticky bottom action bar inside the sheet for batch invite.
+- Empty sections simply don't render — no "0 connected" placeholders.
 
-Also tighten the device button label on native to "Sync iPhone Contacts" (drop the "Phone / Computer" web framing).
+## Out of scope
 
-### Files touched
+- No backend, RLS, or data-model changes.
+- Friend-request logic, upsert logic, and native contact sync all stay as-is.
+- No new icons or palette tokens — uses existing R@lly Orange (`#F47A19`) and muted/primary tokens.
 
-- `src/hooks/useUserContacts.tsx` — rewrite upsert path
-- `src/components/contacts/AddPeopleSheet.tsx` — gate Tabs block behind `!isNative`
-- `mem://architecture/contact-sync-architecture` — update memory
-
-No DB, RLS, or edge function changes.
+Reply with **approve** to implement, or tell me which pieces you'd tweak (e.g. keep Squad Members, keep both entry points, prefer single-select over multi-select).
