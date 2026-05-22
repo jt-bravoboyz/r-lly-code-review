@@ -203,7 +203,7 @@ export function AddPeopleSheet() {
       <SheetTrigger asChild>
         <button
           type="button"
-          className="h-12 px-5 bg-[#F47A19] rounded-2xl text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-[#F47A19]/30 active:scale-95 transition-transform inline-flex items-center gap-2 shrink-0"
+          className="h-12 px-5 bg-[#F47A19] rounded-2xl text-white font-black text-xs uppercase tracking-wider shadow-[0_4px_20px_rgba(244,122,25,0.35)] hover:shadow-[0_6px_28px_rgba(244,122,25,0.5)] active:scale-95 transition-all inline-flex items-center gap-2 shrink-0"
         >
           <UserPlus className="h-4 w-4" />
           Add
@@ -248,7 +248,7 @@ export function AddPeopleSheet() {
                 value={networkQuery}
                 onChange={(e) => setNetworkQuery(e.target.value)}
                 style={noZoomInputStyle}
-                className="pl-11 pr-10 h-14 rounded-2xl bg-black/[0.04] dark:bg-white/[0.03] border-black/[0.06] dark:border-white/10 text-base text-zinc-900 dark:text-white placeholder:text-zinc-500 dark:placeholder:text-zinc-600 font-bold focus-visible:ring-1 focus-visible:ring-[#F47A19]/50 focus-visible:border-[#F47A19]/50"
+                className="pl-11 pr-10 h-14 rounded-2xl bg-black/[0.04] dark:bg-white/[0.03] border-black/[0.06] dark:border-white/10 text-base text-zinc-900 dark:text-white placeholder:text-zinc-500 dark:placeholder:text-zinc-600 font-bold focus-visible:ring-2 focus-visible:ring-[#F47A19] focus-visible:border-[#F47A19] transition-colors"
               />
               <span className="absolute right-4 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-[#F47A19] shadow-[0_0_8px_#F47A19] animate-pulse" />
             </div>
@@ -372,7 +372,7 @@ export function AddPeopleSheet() {
           {/* ─────────── Section 2 · YOUR PHONE ─────────── */}
           <section className="space-y-4">
             <div className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-zinc-400 dark:bg-zinc-600" />
+              <span className="w-1.5 h-1.5 rounded-full bg-[#F47A19] shadow-[0_0_8px_rgba(244,122,25,0.7)]" />
               <h3 className="text-zinc-600 dark:text-zinc-500 text-[10px] font-black uppercase tracking-[0.2em] font-montserrat">
                 Your Phone
               </h3>
@@ -386,7 +386,7 @@ export function AddPeopleSheet() {
                 value={phoneQuery}
                 onChange={(e) => setPhoneQuery(e.target.value)}
                 style={noZoomInputStyle}
-                className="pl-11 h-14 rounded-2xl bg-black/[0.04] dark:bg-white/[0.03] border-black/[0.06] dark:border-white/10 text-base text-zinc-900 dark:text-white placeholder:text-zinc-500 dark:placeholder:text-zinc-600 font-bold focus-visible:ring-1 focus-visible:ring-[#F47A19]/50 focus-visible:border-[#F47A19]/50"
+                className="pl-11 h-14 rounded-2xl bg-black/[0.04] dark:bg-white/[0.03] border-black/[0.06] dark:border-white/10 text-base text-zinc-900 dark:text-white placeholder:text-zinc-500 dark:placeholder:text-zinc-600 font-bold focus-visible:ring-2 focus-visible:ring-[#F47A19] focus-visible:border-[#F47A19] transition-colors"
               />
             </div>
 
@@ -539,7 +539,7 @@ export function AddPeopleSheet() {
           <div className="sticky bottom-0 px-7 pt-3 pb-[max(env(safe-area-inset-bottom),16px)] bg-white/85 dark:bg-[#121214]/95 backdrop-blur-xl border-t border-black/[0.06] dark:border-white/10 animate-in slide-in-from-bottom duration-200">
             <Button
               onClick={handleBatchInvite}
-              className="w-full h-12 rounded-2xl gap-2 font-black font-montserrat uppercase tracking-wider text-sm bg-[#F47A19] hover:bg-[#F47A19]/90 text-white shadow-xl shadow-[#F47A19]/30"
+              className="w-full h-12 rounded-2xl gap-2 font-black font-montserrat uppercase tracking-wider text-sm bg-[#F47A19] hover:bg-[#F47A19]/90 text-white shadow-[0_4px_20px_rgba(244,122,25,0.35)] hover:shadow-[0_6px_28px_rgba(244,122,25,0.5)] transition-all"
             >
               <MessageCircle className="h-4 w-4" />
               R@lly {selectedCount} {selectedCount === 1 ? 'Contact' : 'Contacts'}

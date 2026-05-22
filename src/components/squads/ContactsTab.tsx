@@ -49,7 +49,9 @@ const SectionLabel = ({
     <span
       className={cn(
         'w-1.5 h-1.5 rounded-full',
-        accent ? 'bg-[#F47A19] shadow-[0_0_8px_#F47A19]' : 'bg-zinc-400 dark:bg-zinc-600'
+        accent
+          ? 'bg-[#F47A19] shadow-[0_0_10px_#F47A19]'
+          : 'bg-[#F47A19] shadow-[0_0_8px_rgba(244,122,25,0.7)]'
       )}
     />
     <p className="text-[10px] font-black font-montserrat text-zinc-600 dark:text-zinc-500 uppercase tracking-[0.2em]">
@@ -204,7 +206,7 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{ fontSize: '16px' }}
-              className="pl-10 h-12 bg-black/[0.04] dark:bg-white/5 border border-black/[0.06] dark:border-white/10 rounded-2xl text-zinc-900 dark:text-white placeholder:text-zinc-500 focus-visible:ring-1 focus-visible:ring-[#F47A19]/40 focus-visible:border-[#F47A19]/40"
+              className="pl-10 h-12 bg-black/[0.04] dark:bg-white/5 border border-black/[0.06] dark:border-white/10 rounded-2xl text-zinc-900 dark:text-white placeholder:text-zinc-500 focus-visible:ring-2 focus-visible:ring-[#F47A19] focus-visible:border-[#F47A19] transition-colors"
             />
           </div>
           <AddPeopleSheet />
@@ -411,7 +413,7 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
       {selectedCount > 0 && (
         <div className="sticky bottom-0 left-0 right-0 px-2 pb-[max(env(safe-area-inset-bottom),12px)] pt-3 animate-in slide-in-from-bottom-2 duration-200">
           <Button
-            className="w-full rounded-2xl h-12 text-sm font-black font-montserrat uppercase tracking-wider bg-[#F47A19] hover:bg-[#F47A19]/90 text-white shadow-xl shadow-[#F47A19]/30"
+            className="w-full rounded-2xl h-12 text-sm font-black font-montserrat uppercase tracking-wider bg-[#F47A19] hover:bg-[#F47A19]/90 text-white shadow-[0_4px_20px_rgba(244,122,25,0.35)] hover:shadow-[0_6px_28px_rgba(244,122,25,0.5)] transition-all"
             onClick={handleSendSelected}
           >
             <MessageCircle className="h-4 w-4 mr-2" />
