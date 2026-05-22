@@ -59,6 +59,37 @@ export async function initNativeShell(opts: {
   } catch (err) {
     console.warn('App deep-link listener failed', err);
   }
+
+  // Android hardware back button: close the top-most sheet/dialog if open,
+  // otherwise pop the router history. Only the root route exits the app.
+  try {
+    App.addListener('backButton', ({ canGoBack }) => {
+      // If a Radix overlay (Dialog/Sheet/Drawer/AlertDialog) is open, close it.
+      const openOverlay = document.querySelector(
+        '[data-state="open"][role="dialog"], [data-state="open"][role="alertdialog"]'
+      );
+      if (openOverlay) {
+        // Prefer the close button if present (preserves animations).
+        const closeBtn = openOverlay.querySelector<HTMLElement>(
+          '[data-radix-collection-item][aria-label="Close"], button[aria-label="Close"], [data-dismiss]'
+        );
+        if (closeBtn) {
+          closeBtn.click();
+        } else {
+          // Fallback: dispatch Escape, which Radix overlays listen for.
+          document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+        }
+        return;
+      }
+      if (canGoBack) {
+        window.history.back();
+      } else {
+        App.exitApp();
+      }
+    });
+  } catch (err) {
+    console.warn('App backButton listener failed', err);
+  }
 }
 
 /** Hide the iOS splash screen — call once auth state has resolved so the
