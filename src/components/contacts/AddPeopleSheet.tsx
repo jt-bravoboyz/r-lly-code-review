@@ -248,7 +248,7 @@ export function AddPeopleSheet() {
                 value={networkQuery}
                 onChange={(e) => setNetworkQuery(e.target.value)}
                 style={noZoomInputStyle}
-                className="pl-11 pr-10 h-14 rounded-2xl bg-black/[0.04] dark:bg-white/[0.03] border-black/[0.06] dark:border-white/10 text-base text-zinc-900 dark:text-white placeholder:text-zinc-500 dark:placeholder:text-zinc-600 font-bold focus-visible:ring-1 focus-visible:ring-[#F47A19]/50 focus-visible:border-[#F47A19]/50"
+                className="pl-11 pr-10 h-14 rounded-2xl bg-black/[0.04] dark:bg-white/[0.03] border-black/[0.06] dark:border-white/10 text-base text-zinc-900 dark:text-white placeholder:text-zinc-500 dark:placeholder:text-zinc-600 font-bold focus-visible:ring-2 focus-visible:ring-[#F47A19] focus-visible:border-[#F47A19] transition-colors"
               />
               <span className="absolute right-4 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-[#F47A19] shadow-[0_0_8px_#F47A19] animate-pulse" />
             </div>
