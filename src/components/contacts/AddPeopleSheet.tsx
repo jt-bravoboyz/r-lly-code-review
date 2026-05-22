@@ -501,7 +501,7 @@ export function AddPeopleSheet() {
                 </CollapsibleTrigger>
                 <CollapsibleContent className="pt-2 data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
                   <Tabs defaultValue="vcf" className="w-full">
-                    <TabsList className="w-full grid grid-cols-3 bg-white/[0.03] border border-white/10">
+                    <TabsList className="w-full grid grid-cols-3 bg-black/[0.04] dark:bg-white/[0.03] border border-black/[0.06] dark:border-white/10">
                       <TabsTrigger value="vcf" className="gap-1 text-xs font-bold data-[state=active]:bg-[#F47A19] data-[state=active]:text-white">
                         <FileUp className="h-3.5 w-3.5" />
                         Card
