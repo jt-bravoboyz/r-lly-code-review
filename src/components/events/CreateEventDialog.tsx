@@ -342,44 +342,64 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent ref={scrollContainerRef} className="max-h-[90vh] overflow-y-auto scrollbar-hide p-0 border-0 bg-transparent shadow-none [&>button]:hidden">
+      <DialogContent
+        ref={scrollContainerRef}
+        hideCloseButton
+        className="create-rally-scroll p-0 border-0 bg-transparent shadow-none gap-0 max-w-lg w-full top-0 left-0 translate-x-0 translate-y-0 sm:top-[50%] sm:left-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-[90vh] overflow-y-auto scrollbar-hide rounded-none sm:rounded-2xl"
+      >
         <ErrorBoundary name="CreateEventDialog">
-        <div className="rally-create-glow-wrapper">
-          <div className="rally-create-inner p-6 space-y-5">
-            {/* Header */}
-            <div className="text-center space-y-1.5 pt-1">
-              <h2 className="text-xl font-bold tracking-tight text-foreground font-montserrat">
+        <div className="rally-create-glow-wrapper min-h-full sm:min-h-0">
+          <div
+            className="rally-create-inner px-6 pt-6 space-y-5 pb-[calc(env(safe-area-inset-bottom)+8.5rem)]"
+            style={{ paddingTop: 'max(env(safe-area-inset-top), 1.25rem)' }}
+          >
+            {/* Header — Apple-quiet */}
+            <div className="text-center space-y-1 pt-1">
+              <h2 className="text-[22px] font-bold tracking-tight text-foreground font-montserrat">
                 Create a R@lly
               </h2>
-              <p className="text-xs text-muted-foreground/70 font-montserrat tracking-wide">
-                Set up your R@lly in under 30 seconds.
+              <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground/60 font-montserrat">
+                Nights That Matter · Built in seconds
               </p>
             </div>
 
-            <nav className="flex items-center justify-center gap-3 text-[10px] font-montserrat uppercase tracking-[0.2em] sticky top-0 z-10 py-2 bg-background/95 backdrop-blur-md -mx-6 px-6">
-              {(['essentials', 'details', 'review'] as const).map((section, i) => (
-                <span key={section} className="flex items-center gap-3">
-                  {i > 0 && <span className="text-primary/20">·</span>}
+            {/* Segmented control — sliding orange pill */}
+            <nav
+              className="sticky top-0 z-20 -mx-6 px-6 py-3 bg-background/70 backdrop-blur-2xl backdrop-saturate-150 border-b border-border/40"
+              style={{ WebkitBackdropFilter: 'saturate(150%) blur(24px)' }}
+            >
+              <div className="relative grid grid-cols-3 gap-1 p-1 rounded-full bg-muted/50 dark:bg-white/[0.04] border border-border/40">
+                <div
+                  className="absolute top-1 bottom-1 left-1 rounded-full bg-primary shadow-[0_4px_18px_-4px_hsl(27_91%_53%/0.5)] transition-transform duration-300 ease-out"
+                  style={{
+                    width: 'calc((100% - 0.5rem) / 3)',
+                    transform: `translateX(calc(${
+                      activeSection === 'essentials' ? 0 : activeSection === 'details' ? 100 : 200
+                    }% + ${activeSection === 'essentials' ? 0 : activeSection === 'details' ? 0.25 : 0.5}rem))`,
+                  }}
+                />
+                {(['essentials', 'details', 'review'] as const).map((section) => (
                   <button
+                    key={section}
                     type="button"
                     onClick={() => {
                       setActiveSection(section);
-                      if (section === 'details') setOptionalOpen(true);
                       const ref = section === 'essentials' ? essentialsRef : section === 'details' ? detailsRef : reviewRef;
                       ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     }}
                     className={cn(
-                      "transition-all duration-300 cursor-pointer hover:text-primary/80",
+                      'relative z-10 h-9 rounded-full text-[11px] uppercase tracking-[0.16em] font-semibold font-montserrat transition-colors duration-200',
                       activeSection === section
-                        ? "text-primary font-semibold drop-shadow-[0_0_6px_hsl(27_91%_53%/0.4)]"
-                        : "text-muted-foreground/50"
+                        ? 'text-primary-foreground'
+                        : 'text-muted-foreground hover:text-foreground'
                     )}
                   >
                     {section === 'essentials' ? 'Essentials' : section === 'details' ? 'Details' : 'Review'}
                   </button>
-                </span>
-              ))}
+                ))}
+              </div>
             </nav>
+
         
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
