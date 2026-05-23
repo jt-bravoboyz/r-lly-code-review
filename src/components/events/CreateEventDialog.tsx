@@ -538,30 +538,34 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
             </div>
 
             <div ref={reviewRef}>
-            {/* Advanced options - collapsed by default */}
+            {/* Advanced options — premium glass disclosure */}
             <Collapsible open={optionalOpen} onOpenChange={setOptionalOpen}>
               <CollapsibleTrigger asChild>
-                <Button variant="ghost" size="sm" type="button" className="w-full justify-between text-muted-foreground text-xs">
-                  Optional details
-                  <ChevronDown className="h-3.5 w-3.5" />
-                </Button>
+                <button
+                  type="button"
+                  className="group w-full flex items-center justify-between gap-3 px-4 py-3.5 rounded-2xl bg-background/50 dark:bg-white/[0.03] border border-border/50 backdrop-blur-xl hover:bg-background/70 transition-all"
+                >
+                  <div className="flex flex-col items-start">
+                    <span className="text-[15px] font-semibold text-foreground font-montserrat">Add the extras</span>
+                    <span className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground/70 font-montserrat">Dress code · Songs · Flyer · Cover</span>
+                  </div>
+                  <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform duration-300", optionalOpen && "rotate-180")} />
+                </button>
               </CollapsibleTrigger>
-              <CollapsibleContent className="space-y-4 pt-2">
+              <CollapsibleContent className="space-y-3 pt-3 pl-1">
                 <FormField
                   control={form.control}
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Description</FormLabel>
+                      <FormLabel className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground font-montserrat">Description</FormLabel>
                       <FormControl>
-                        <Textarea placeholder="What's the plan?" {...field} />
+                        <Textarea placeholder="What's the plan?" className="rally-field min-h-[88px] py-3" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-
-                {/* Bar Hop Mode removed from creation — now available only in After R@lly */}
 
                 {/* Cover Charge */}
                 <FormField
@@ -569,24 +573,24 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
                   name="cover_charge"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="flex items-center gap-1">
+                      <FormLabel className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground font-montserrat flex items-center gap-1.5">
                         <DollarSign className="h-3.5 w-3.5" />
-                        Cover Charge ($)
+                        Cover Charge
                       </FormLabel>
                       <FormControl>
-                        <Input type="number" step="0.01" min="0" placeholder="0.00" className="rally-create-input" {...field} />
+                        <Input type="number" step="0.01" min="0" placeholder="0.00" className="rally-field" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
-                {/* Dress Code */}
+                {/* Dress Code — glass row */}
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between py-2">
-                    <div className="flex flex-col">
-                      <Label htmlFor="dress-code-toggle" className="text-sm">Dress Code</Label>
-                      <span className="text-xs text-muted-foreground">Set the vibe for the night</span>
+                  <div className="rally-row">
+                    <div className="flex flex-col min-w-0">
+                      <Label htmlFor="dress-code-toggle" className="text-[15px] font-semibold text-foreground">Dress Code</Label>
+                      <span className="text-[12px] text-muted-foreground">Set the vibe for the night</span>
                     </div>
                     <Switch
                       id="dress-code-toggle"
@@ -603,17 +607,17 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
                         {...form.register('dress_code')}
                         maxLength={50}
                         placeholder="e.g. Black Tie, All White, Casual"
-                        className="rally-create-input"
+                        className="rally-field"
                       />
                     </div>
                   )}
                 </div>
 
-                {/* Song Rec's */}
-                <div className="flex items-center justify-between py-2">
-                  <div className="flex flex-col">
-                    <Label htmlFor="song-recs-toggle" className="text-sm">Song Rec's</Label>
-                    <span className="text-xs text-muted-foreground">Let friends drop song recommendations for the night</span>
+                {/* Song Rec's — glass row */}
+                <div className="rally-row">
+                  <div className="flex flex-col min-w-0">
+                    <Label htmlFor="song-recs-toggle" className="text-[15px] font-semibold text-foreground">Song Rec's</Label>
+                    <span className="text-[12px] text-muted-foreground">Let friends drop song recommendations</span>
                   </div>
                   <Switch
                     id="song-recs-toggle"
@@ -621,6 +625,8 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
                     onCheckedChange={(v) => form.setValue('song_recs_enabled', v)}
                   />
                 </div>
+
+
 
                 {/* Staged media picker — files held locally until submit */}
                 <StagedMediaPicker stagedFiles={stagedMedia} onChange={setStagedMedia} />
