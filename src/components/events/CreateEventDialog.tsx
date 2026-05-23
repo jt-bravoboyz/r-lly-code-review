@@ -808,7 +808,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
               </button>
             </div>
 
-            <div className="hidden">
+            <div>
 
 
             {failedUploads.length > 0 && !isUploading && (
