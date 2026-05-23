@@ -776,35 +776,40 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
               </div>
             )}
 
-            <div className="pt-6">
-            <Button 
-              type="submit" 
-              className="w-full gradient-primary"
-              aria-busy={createEvent.isPending || joinEvent.isPending || isUploading || isSubmittingRef.current}
-              disabled={createEvent.isPending || joinEvent.isPending || isUploading || isSubmittingRef.current}
+            {/* Sticky premium action bar */}
+            <div
+              className="fixed sm:absolute left-0 right-0 bottom-0 z-30 px-5 pt-4 bg-background/80 backdrop-blur-2xl border-t border-border/40"
+              style={{
+                paddingBottom: 'max(env(safe-area-inset-bottom), 1rem)',
+                WebkitBackdropFilter: 'saturate(150%) blur(28px)',
+              }}
             >
-              {isUploading ? (
-                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> {uploadStatus}</>
-              ) : createEvent.isPending || joinEvent.isPending ? (
-                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Creating...</>
-              ) : (
-                'Create R@lly'
-              )}
-            </Button>
+              <Button
+                type="submit"
+                className="w-full h-12 rounded-full gradient-primary text-base font-bold font-montserrat shadow-[0_8px_28px_-8px_hsl(27_91%_53%/0.55)]"
+                aria-busy={createEvent.isPending || joinEvent.isPending || isUploading || isSubmittingRef.current}
+                disabled={createEvent.isPending || joinEvent.isPending || isUploading || isSubmittingRef.current}
+              >
+                {isUploading ? (
+                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> {uploadStatus}</>
+                ) : createEvent.isPending || joinEvent.isPending ? (
+                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Creating…</>
+                ) : (
+                  'Create R@lly'
+                )}
+              </Button>
 
-            {form.formState.isValid && (
-              <p className="text-xs text-success font-medium text-center mt-1">
-                Ready to rally.
-              </p>
-            )}
+              <button
+                type="button"
+                onClick={() => { setOpen(false); navigate('/join'); }}
+                className="block w-full text-center text-[12px] text-muted-foreground hover:text-foreground transition-colors mt-2"
+              >
+                Got an invite code? <span className="text-primary font-medium">Join a R@lly →</span>
+              </button>
+            </div>
 
-            <button
-              type="button"
-              onClick={() => { setOpen(false); navigate('/join'); }}
-              className="block w-full text-center text-[12px] text-muted-foreground hover:text-foreground transition-colors mt-2"
-            >
-              Got an invite code? <span className="text-primary font-medium">Join a R@lly →</span>
-            </button>
+            <div className="hidden">
+
 
             {failedUploads.length > 0 && !isUploading && (
               <Button
