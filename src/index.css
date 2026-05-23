@@ -32,9 +32,11 @@
   }
 
   /* iOS Safari/WKWebView auto-zooms when an input has font-size < 16px.
-     Floor every form control at 16px to keep the viewport stable. */
+     Floor every form control at 16px to keep the viewport stable.
+     !important is required so Tailwind utilities like `text-sm` can't lower it. */
   input, textarea, select {
-    font-size: max(16px, 1em);
+    font-size: 16px !important;
+    line-height: 1.4;
   }
 
 
