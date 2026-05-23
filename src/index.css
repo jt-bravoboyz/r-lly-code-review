@@ -267,7 +267,70 @@
     background: hsl(220 20% 9% / 0.8) !important;
   }
 
-  /* Timeline Slider - Orange to Purple gradient */
+  /* ── Premium unified field token for Create R@lly + future forms ───────── */
+  .rally-field {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-height: 48px;
+    padding: 12px 14px;
+    background: hsl(var(--background) / 0.55) !important;
+    border: 1px solid hsl(var(--border) / 0.6) !important;
+    border-radius: 14px !important;
+    box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.04);
+    color: hsl(var(--foreground));
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  }
+  .rally-field::placeholder { color: hsl(var(--muted-foreground) / 0.7); }
+  .rally-field:hover { border-color: hsl(var(--border)) !important; }
+  .rally-field:focus,
+  .rally-field:focus-within,
+  .rally-field:focus-visible {
+    outline: none !important;
+    border-color: hsl(27 91% 53% / 0.55) !important;
+    box-shadow:
+      0 0 0 4px hsl(27 91% 53% / 0.18),
+      inset 0 1px 0 hsl(0 0% 100% / 0.06) !important;
+    background: hsl(var(--background) / 0.75) !important;
+  }
+  .dark .rally-field {
+    background: hsl(220 20% 8% / 0.55) !important;
+    border-color: hsl(0 0% 100% / 0.08) !important;
+  }
+
+  /* Glass "row" used for toggle/list items in Create R@lly */
+  .rally-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 16px;
+    background: hsl(var(--background) / 0.5);
+    border: 1px solid hsl(var(--border) / 0.5);
+    border-radius: 14px;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    transition: background 0.2s ease, border-color 0.2s ease;
+  }
+  .rally-row:hover { background: hsl(var(--background) / 0.65); }
+
+  /* Keep focused inputs above the keyboard inside Create R@lly. */
+  .create-rally-scroll {
+    scroll-padding-top: 96px;
+    scroll-padding-bottom: 40vh;
+  }
+  .create-rally-scroll input,
+  .create-rally-scroll textarea,
+  .create-rally-scroll select,
+  .create-rally-scroll [role="combobox"],
+  .create-rally-scroll [data-form-item] {
+    scroll-margin-top: 96px;
+    scroll-margin-bottom: 40vh;
+  }
+
+
   .timeline-slider-track {
     background: linear-gradient(
       to right,
