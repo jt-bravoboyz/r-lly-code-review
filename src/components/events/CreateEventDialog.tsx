@@ -342,44 +342,64 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent ref={scrollContainerRef} className="max-h-[90vh] overflow-y-auto scrollbar-hide p-0 border-0 bg-transparent shadow-none [&>button]:hidden">
+      <DialogContent
+        ref={scrollContainerRef}
+        hideCloseButton
+        className="create-rally-scroll p-0 border-0 bg-transparent shadow-none gap-0 max-w-lg w-full top-0 left-0 translate-x-0 translate-y-0 sm:top-[50%] sm:left-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-[90vh] overflow-y-auto scrollbar-hide rounded-none sm:rounded-2xl"
+      >
         <ErrorBoundary name="CreateEventDialog">
-        <div className="rally-create-glow-wrapper">
-          <div className="rally-create-inner p-6 space-y-5">
-            {/* Header */}
-            <div className="text-center space-y-1.5 pt-1">
-              <h2 className="text-xl font-bold tracking-tight text-foreground font-montserrat">
+        <div className="rally-create-glow-wrapper min-h-full sm:min-h-0">
+          <div
+            className="rally-create-inner px-6 pt-6 space-y-5 pb-[calc(env(safe-area-inset-bottom)+8.5rem)]"
+            style={{ paddingTop: 'max(env(safe-area-inset-top), 1.25rem)' }}
+          >
+            {/* Header — Apple-quiet */}
+            <div className="text-center space-y-1 pt-1">
+              <h2 className="text-[22px] font-bold tracking-tight text-foreground font-montserrat">
                 Create a R@lly
               </h2>
-              <p className="text-xs text-muted-foreground/70 font-montserrat tracking-wide">
-                Set up your R@lly in under 30 seconds.
+              <p className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground/60 font-montserrat">
+                Nights That Matter · Built in seconds
               </p>
             </div>
 
-            <nav className="flex items-center justify-center gap-3 text-[10px] font-montserrat uppercase tracking-[0.2em] sticky top-0 z-10 py-2 bg-background/95 backdrop-blur-md -mx-6 px-6">
-              {(['essentials', 'details', 'review'] as const).map((section, i) => (
-                <span key={section} className="flex items-center gap-3">
-                  {i > 0 && <span className="text-primary/20">·</span>}
+            {/* Segmented control — sliding orange pill */}
+            <nav
+              className="sticky top-0 z-20 -mx-6 px-6 py-3 bg-background/70 backdrop-blur-2xl backdrop-saturate-150 border-b border-border/40"
+              style={{ WebkitBackdropFilter: 'saturate(150%) blur(24px)' }}
+            >
+              <div className="relative grid grid-cols-3 gap-1 p-1 rounded-full bg-muted/50 dark:bg-white/[0.04] border border-border/40">
+                <div
+                  className="absolute top-1 bottom-1 left-1 rounded-full bg-primary shadow-[0_4px_18px_-4px_hsl(27_91%_53%/0.5)] transition-transform duration-300 ease-out"
+                  style={{
+                    width: 'calc((100% - 0.5rem) / 3)',
+                    transform: `translateX(calc(${
+                      activeSection === 'essentials' ? 0 : activeSection === 'details' ? 100 : 200
+                    }% + ${activeSection === 'essentials' ? 0 : activeSection === 'details' ? 0.25 : 0.5}rem))`,
+                  }}
+                />
+                {(['essentials', 'details', 'review'] as const).map((section) => (
                   <button
+                    key={section}
                     type="button"
                     onClick={() => {
                       setActiveSection(section);
-                      if (section === 'details') setOptionalOpen(true);
                       const ref = section === 'essentials' ? essentialsRef : section === 'details' ? detailsRef : reviewRef;
                       ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     }}
                     className={cn(
-                      "transition-all duration-300 cursor-pointer hover:text-primary/80",
+                      'relative z-10 h-9 rounded-full text-[11px] uppercase tracking-[0.16em] font-semibold font-montserrat transition-colors duration-200',
                       activeSection === section
-                        ? "text-primary font-semibold drop-shadow-[0_0_6px_hsl(27_91%_53%/0.4)]"
-                        : "text-muted-foreground/50"
+                        ? 'text-primary-foreground'
+                        : 'text-muted-foreground hover:text-foreground'
                     )}
                   >
                     {section === 'essentials' ? 'Essentials' : section === 'details' ? 'Details' : 'Review'}
                   </button>
-                </span>
-              ))}
+                ))}
+              </div>
             </nav>
+
         
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -518,30 +538,34 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
             </div>
 
             <div ref={reviewRef}>
-            {/* Advanced options - collapsed by default */}
+            {/* Advanced options — premium glass disclosure */}
             <Collapsible open={optionalOpen} onOpenChange={setOptionalOpen}>
               <CollapsibleTrigger asChild>
-                <Button variant="ghost" size="sm" type="button" className="w-full justify-between text-muted-foreground text-xs">
-                  Optional details
-                  <ChevronDown className="h-3.5 w-3.5" />
-                </Button>
+                <button
+                  type="button"
+                  className="group w-full flex items-center justify-between gap-3 px-4 py-3.5 rounded-2xl bg-background/50 dark:bg-white/[0.03] border border-border/50 backdrop-blur-xl hover:bg-background/70 transition-all"
+                >
+                  <div className="flex flex-col items-start">
+                    <span className="text-[15px] font-semibold text-foreground font-montserrat">Add the extras</span>
+                    <span className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground/70 font-montserrat">Dress code · Songs · Flyer · Cover</span>
+                  </div>
+                  <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform duration-300", optionalOpen && "rotate-180")} />
+                </button>
               </CollapsibleTrigger>
-              <CollapsibleContent className="space-y-4 pt-2">
+              <CollapsibleContent className="space-y-3 pt-3 pl-1">
                 <FormField
                   control={form.control}
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Description</FormLabel>
+                      <FormLabel className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground font-montserrat">Description</FormLabel>
                       <FormControl>
-                        <Textarea placeholder="What's the plan?" {...field} />
+                        <Textarea placeholder="What's the plan?" className="rally-field min-h-[88px] py-3" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-
-                {/* Bar Hop Mode removed from creation — now available only in After R@lly */}
 
                 {/* Cover Charge */}
                 <FormField
@@ -549,24 +573,24 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
                   name="cover_charge"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="flex items-center gap-1">
+                      <FormLabel className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground font-montserrat flex items-center gap-1.5">
                         <DollarSign className="h-3.5 w-3.5" />
-                        Cover Charge ($)
+                        Cover Charge
                       </FormLabel>
                       <FormControl>
-                        <Input type="number" step="0.01" min="0" placeholder="0.00" className="rally-create-input" {...field} />
+                        <Input type="number" step="0.01" min="0" placeholder="0.00" className="rally-field" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
-                {/* Dress Code */}
+                {/* Dress Code — glass row */}
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between py-2">
-                    <div className="flex flex-col">
-                      <Label htmlFor="dress-code-toggle" className="text-sm">Dress Code</Label>
-                      <span className="text-xs text-muted-foreground">Set the vibe for the night</span>
+                  <div className="rally-row">
+                    <div className="flex flex-col min-w-0">
+                      <Label htmlFor="dress-code-toggle" className="text-[15px] font-semibold text-foreground">Dress Code</Label>
+                      <span className="text-[12px] text-muted-foreground">Set the vibe for the night</span>
                     </div>
                     <Switch
                       id="dress-code-toggle"
@@ -583,17 +607,17 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
                         {...form.register('dress_code')}
                         maxLength={50}
                         placeholder="e.g. Black Tie, All White, Casual"
-                        className="rally-create-input"
+                        className="rally-field"
                       />
                     </div>
                   )}
                 </div>
 
-                {/* Song Rec's */}
-                <div className="flex items-center justify-between py-2">
-                  <div className="flex flex-col">
-                    <Label htmlFor="song-recs-toggle" className="text-sm">Song Rec's</Label>
-                    <span className="text-xs text-muted-foreground">Let friends drop song recommendations for the night</span>
+                {/* Song Rec's — glass row */}
+                <div className="rally-row">
+                  <div className="flex flex-col min-w-0">
+                    <Label htmlFor="song-recs-toggle" className="text-[15px] font-semibold text-foreground">Song Rec's</Label>
+                    <span className="text-[12px] text-muted-foreground">Let friends drop song recommendations</span>
                   </div>
                   <Switch
                     id="song-recs-toggle"
@@ -601,6 +625,8 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
                     onCheckedChange={(v) => form.setValue('song_recs_enabled', v)}
                   />
                 </div>
+
+
 
                 {/* Staged media picker — files held locally until submit */}
                 <StagedMediaPicker stagedFiles={stagedMedia} onChange={setStagedMedia} />
@@ -750,35 +776,40 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
               </div>
             )}
 
-            <div className="pt-6">
-            <Button 
-              type="submit" 
-              className="w-full gradient-primary"
-              aria-busy={createEvent.isPending || joinEvent.isPending || isUploading || isSubmittingRef.current}
-              disabled={createEvent.isPending || joinEvent.isPending || isUploading || isSubmittingRef.current}
+            {/* Sticky premium action bar */}
+            <div
+              className="fixed sm:absolute left-0 right-0 bottom-0 z-30 px-5 pt-4 bg-background/80 backdrop-blur-2xl border-t border-border/40"
+              style={{
+                paddingBottom: 'max(env(safe-area-inset-bottom), 1rem)',
+                WebkitBackdropFilter: 'saturate(150%) blur(28px)',
+              }}
             >
-              {isUploading ? (
-                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> {uploadStatus}</>
-              ) : createEvent.isPending || joinEvent.isPending ? (
-                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Creating...</>
-              ) : (
-                'Create R@lly'
-              )}
-            </Button>
+              <Button
+                type="submit"
+                className="w-full h-12 rounded-full gradient-primary text-base font-bold font-montserrat shadow-[0_8px_28px_-8px_hsl(27_91%_53%/0.55)]"
+                aria-busy={createEvent.isPending || joinEvent.isPending || isUploading || isSubmittingRef.current}
+                disabled={createEvent.isPending || joinEvent.isPending || isUploading || isSubmittingRef.current}
+              >
+                {isUploading ? (
+                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> {uploadStatus}</>
+                ) : createEvent.isPending || joinEvent.isPending ? (
+                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Creating…</>
+                ) : (
+                  'Create R@lly'
+                )}
+              </Button>
 
-            {form.formState.isValid && (
-              <p className="text-xs text-success font-medium text-center mt-1">
-                Ready to rally.
-              </p>
-            )}
+              <button
+                type="button"
+                onClick={() => { setOpen(false); navigate('/join'); }}
+                className="block w-full text-center text-[12px] text-muted-foreground hover:text-foreground transition-colors mt-2"
+              >
+                Got an invite code? <span className="text-primary font-medium">Join a R@lly →</span>
+              </button>
+            </div>
 
-            <button
-              type="button"
-              onClick={() => { setOpen(false); navigate('/join'); }}
-              className="block w-full text-center text-[12px] text-muted-foreground hover:text-foreground transition-colors mt-2"
-            >
-              Got an invite code? <span className="text-primary font-medium">Join a R@lly →</span>
-            </button>
+            <div>
+
 
             {failedUploads.length > 0 && !isUploading && (
               <Button
