@@ -2040,8 +2040,9 @@
 body.native input,
 body.native textarea,
 body.native select {
-  /* Forces ≥16px on form inputs so iOS WKWebView won't auto-zoom on focus. */
-  font-size: max(16px, 1rem);
+  /* Hard floor — iOS WKWebView will auto-zoom on focus otherwise. */
+  font-size: 16px !important;
+  line-height: 1.4;
 }
 body.native {
   /* Match background so rubber-band overscroll doesn't reveal white edges. */
