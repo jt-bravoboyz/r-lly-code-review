@@ -159,6 +159,22 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
     return () => container.removeEventListener('scroll', handleScroll);
   }, [open, handleScroll]);
 
+  // Measure the sticky action bar so the scroll container reserves matching space
+  useEffect(() => {
+    if (!open) return;
+    const bar = actionBarRef.current;
+    const container = scrollContainerRef.current;
+    if (!bar || !container) return;
+    const apply = () => {
+      const h = bar.getBoundingClientRect().height;
+      container.style.setProperty('--rally-action-bar-h', `${Math.ceil(h)}px`);
+    };
+    apply();
+    const ro = new ResizeObserver(apply);
+    ro.observe(bar);
+    return () => ro.disconnect();
+  }, [open]);
+
   const form = useForm<EventFormData>({
     resolver: zodResolver(eventSchema),
     defaultValues: {
