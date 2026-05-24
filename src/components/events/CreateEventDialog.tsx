@@ -363,11 +363,12 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
         ref={scrollContainerRef}
         hideCloseButton
         className="create-rally-scroll p-0 border-0 bg-transparent shadow-none gap-0 max-w-lg w-full top-0 left-0 translate-x-0 translate-y-0 sm:top-[50%] sm:left-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-[90vh] overflow-y-auto scrollbar-hide rounded-none sm:rounded-2xl"
+        style={{ scrollPaddingBottom: 'calc(var(--rally-action-bar-h, 12rem) + env(safe-area-inset-bottom) + 24px)' }}
       >
         <ErrorBoundary name="CreateEventDialog">
         <div className="rally-create-glow-wrapper min-h-full sm:min-h-0">
           <div
-            className="rally-create-inner px-6 pt-6 space-y-5 pb-[calc(env(safe-area-inset-bottom)+8.5rem)]"
+            className="rally-create-inner px-6 pt-6 space-y-5 pb-[calc(env(safe-area-inset-bottom)+var(--rally-action-bar-h,12rem)+1.5rem)]"
             style={{ paddingTop: 'max(env(safe-area-inset-top), 1.25rem)' }}
           >
             {/* Header — Apple-quiet */}
