@@ -93,6 +93,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
   const detailsRef = useRef<HTMLDivElement>(null);
   const reviewRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const actionBarRef = useRef<HTMLDivElement>(null);
   const [selectedSquads, setSelectedSquads] = useState<Squad[]>([]);
   const [selectedFriendIds, setSelectedFriendIds] = useState<string[]>([]);
   const [flyerTheme, setFlyerTheme] = useState<FlyerThemeKey>(DEFAULT_FLYER_THEME);
