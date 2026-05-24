@@ -93,6 +93,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
   const detailsRef = useRef<HTMLDivElement>(null);
   const reviewRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const actionBarRef = useRef<HTMLDivElement>(null);
   const [selectedSquads, setSelectedSquads] = useState<Squad[]>([]);
   const [selectedFriendIds, setSelectedFriendIds] = useState<string[]>([]);
   const [flyerTheme, setFlyerTheme] = useState<FlyerThemeKey>(DEFAULT_FLYER_THEME);
@@ -157,6 +158,22 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
     container.addEventListener('scroll', handleScroll, { passive: true });
     return () => container.removeEventListener('scroll', handleScroll);
   }, [open, handleScroll]);
+
+  // Measure the sticky action bar so the scroll container reserves matching space
+  useEffect(() => {
+    if (!open) return;
+    const bar = actionBarRef.current;
+    const container = scrollContainerRef.current;
+    if (!bar || !container) return;
+    const apply = () => {
+      const h = bar.getBoundingClientRect().height;
+      container.style.setProperty('--rally-action-bar-h', `${Math.ceil(h)}px`);
+    };
+    apply();
+    const ro = new ResizeObserver(apply);
+    ro.observe(bar);
+    return () => ro.disconnect();
+  }, [open]);
 
   const form = useForm<EventFormData>({
     resolver: zodResolver(eventSchema),
@@ -346,11 +363,12 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
         ref={scrollContainerRef}
         hideCloseButton
         className="create-rally-scroll p-0 border-0 bg-transparent shadow-none gap-0 max-w-lg w-full top-0 left-0 translate-x-0 translate-y-0 sm:top-[50%] sm:left-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-[90vh] overflow-y-auto scrollbar-hide rounded-none sm:rounded-2xl"
+        style={{ scrollPaddingBottom: 'calc(var(--rally-action-bar-h, 12rem) + env(safe-area-inset-bottom) + 24px)' }}
       >
         <ErrorBoundary name="CreateEventDialog">
         <div className="rally-create-glow-wrapper min-h-full sm:min-h-0">
           <div
-            className="rally-create-inner px-6 pt-6 space-y-5 pb-[calc(env(safe-area-inset-bottom)+8.5rem)]"
+            className="rally-create-inner px-6 pt-6 space-y-5 pb-[calc(env(safe-area-inset-bottom)+var(--rally-action-bar-h,12rem)+1.5rem)]"
             style={{ paddingTop: 'max(env(safe-area-inset-top), 1.25rem)' }}
           >
             {/* Header — Apple-quiet */}
@@ -778,6 +796,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
 
             {/* Sticky premium action bar */}
             <div
+              ref={actionBarRef}
               className="fixed sm:absolute left-0 right-0 bottom-0 z-30 px-5 pt-4 bg-background/80 backdrop-blur-2xl border-t border-border/40"
               style={{
                 paddingBottom: 'max(env(safe-area-inset-bottom), 1rem)',
