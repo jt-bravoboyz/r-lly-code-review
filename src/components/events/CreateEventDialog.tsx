@@ -796,6 +796,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
 
             {/* Sticky premium action bar */}
             <div
+              ref={actionBarRef}
               className="fixed sm:absolute left-0 right-0 bottom-0 z-30 px-5 pt-4 bg-background/80 backdrop-blur-2xl border-t border-border/40"
               style={{
                 paddingBottom: 'max(env(safe-area-inset-bottom), 1rem)',
