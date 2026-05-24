@@ -159,21 +159,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
     return () => container.removeEventListener('scroll', handleScroll);
   }, [open, handleScroll]);
 
-  // Measure the sticky action bar so the scroll container reserves matching space
-  useEffect(() => {
-    if (!open) return;
-    const bar = actionBarRef.current;
-    const container = scrollContainerRef.current;
-    if (!bar || !container) return;
-    const apply = () => {
-      const h = bar.getBoundingClientRect().height;
-      container.style.setProperty('--rally-action-bar-h', `${Math.ceil(h)}px`);
-    };
-    apply();
-    const ro = new ResizeObserver(apply);
-    ro.observe(bar);
-    return () => ro.disconnect();
-  }, [open]);
+  // Action bar is now a flex sibling of the scroll area; no measurement needed.
 
   const form = useForm<EventFormData>({
     resolver: zodResolver(eventSchema),
@@ -362,13 +348,16 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
       <DialogContent
         ref={scrollContainerRef}
         hideCloseButton
-        className="create-rally-scroll p-0 border-0 bg-transparent shadow-none gap-0 max-w-lg w-full top-0 left-0 translate-x-0 translate-y-0 sm:top-[50%] sm:left-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-[90vh] overflow-y-auto scrollbar-hide rounded-none sm:rounded-2xl"
-        style={{ scrollPaddingBottom: 'calc(var(--rally-action-bar-h, 12rem) + env(safe-area-inset-bottom) + 24px)' }}
+        className="p-0 border-0 bg-transparent shadow-none gap-0 max-w-lg w-full top-0 left-0 translate-x-0 translate-y-0 sm:top-[50%] sm:left-[50%] sm:translate-x-[-50%] sm:translate-y-[-50%] h-[100dvh] sm:h-auto max-h-[100dvh] sm:max-h-[90vh] overflow-hidden rounded-none sm:rounded-2xl flex flex-col"
       >
         <ErrorBoundary name="CreateEventDialog">
-        <div className="rally-create-glow-wrapper min-h-full sm:min-h-0">
+        <div className="rally-create-glow-wrapper flex flex-col flex-1 min-h-0">
           <div
-            className="rally-create-inner px-6 pt-6 space-y-5 pb-[calc(env(safe-area-inset-bottom)+var(--rally-action-bar-h,12rem)+1.5rem)]"
+            className="flex-1 min-h-0 overflow-y-auto create-rally-scroll scrollbar-hide"
+            style={{ scrollPaddingBottom: 'calc(env(safe-area-inset-bottom) + 1.5rem)' }}
+          >
+          <div
+            className="rally-create-inner px-6 pt-6 space-y-5 pb-[calc(env(safe-area-inset-bottom)+1.5rem)]"
             style={{ paddingTop: 'max(env(safe-area-inset-top), 1.25rem)' }}
           >
             {/* Header — Apple-quiet */}
@@ -420,7 +409,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
 
         
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form id="create-rally-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div ref={essentialsRef} className="space-y-4">
             <p className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground/60 font-montserrat -mb-2">Essentials</p>
             <FormField
@@ -794,38 +783,6 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
               </div>
             )}
 
-            {/* Sticky premium action bar */}
-            <div
-              ref={actionBarRef}
-              className="fixed sm:absolute left-0 right-0 bottom-0 z-30 px-5 pt-4 bg-background/80 backdrop-blur-2xl border-t border-border/40"
-              style={{
-                paddingBottom: 'max(env(safe-area-inset-bottom), 1rem)',
-                WebkitBackdropFilter: 'saturate(150%) blur(28px)',
-              }}
-            >
-              <Button
-                type="submit"
-                className="w-full h-12 rounded-full gradient-primary text-base font-bold font-montserrat shadow-[0_8px_28px_-8px_hsl(27_91%_53%/0.55)]"
-                aria-busy={createEvent.isPending || joinEvent.isPending || isUploading || isSubmittingRef.current}
-                disabled={createEvent.isPending || joinEvent.isPending || isUploading || isSubmittingRef.current}
-              >
-                {isUploading ? (
-                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> {uploadStatus}</>
-                ) : createEvent.isPending || joinEvent.isPending ? (
-                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Creating…</>
-                ) : (
-                  'Create R@lly'
-                )}
-              </Button>
-
-              <button
-                type="button"
-                onClick={() => { setOpen(false); navigate('/join'); }}
-                className="block w-full text-center text-[12px] text-muted-foreground hover:text-foreground transition-colors mt-2"
-              >
-                Got an invite code? <span className="text-primary font-medium">Join a R@lly →</span>
-              </button>
-            </div>
 
             <div>
 
@@ -871,6 +828,41 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
             </div>
           </form>
         </Form>
+          </div>
+          </div>
+
+          {/* Sticky premium action bar — flex sibling so it truly pins to dialog bottom */}
+          <div
+            ref={actionBarRef}
+            className="shrink-0 z-30 px-5 pt-4 bg-background/80 backdrop-blur-2xl border-t border-border/40"
+            style={{
+              paddingBottom: 'max(env(safe-area-inset-bottom), 1rem)',
+              WebkitBackdropFilter: 'saturate(150%) blur(28px)',
+            }}
+          >
+            <Button
+              type="submit"
+              form="create-rally-form"
+              className="w-full h-12 rounded-full gradient-primary text-base font-bold font-montserrat shadow-[0_8px_28px_-8px_hsl(27_91%_53%/0.55)]"
+              aria-busy={createEvent.isPending || joinEvent.isPending || isUploading || isSubmittingRef.current}
+              disabled={createEvent.isPending || joinEvent.isPending || isUploading || isSubmittingRef.current}
+            >
+              {isUploading ? (
+                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> {uploadStatus}</>
+              ) : createEvent.isPending || joinEvent.isPending ? (
+                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Creating…</>
+              ) : (
+                'Create R@lly'
+              )}
+            </Button>
+
+            <button
+              type="button"
+              onClick={() => { setOpen(false); navigate('/join'); }}
+              className="block w-full text-center text-[12px] text-muted-foreground hover:text-foreground transition-colors mt-2"
+            >
+              Got an invite code? <span className="text-primary font-medium">Join a R@lly →</span>
+            </button>
           </div>
         </div>
         </ErrorBoundary>
