@@ -475,9 +475,10 @@ export function EventPhotoFeed({ eventId, isHost, eventStatus, eventUpdatedAt }:
                 <>
                   {photo.thumbnail_url ? (
                     <img
-                      src={photo.thumbnail_url}
+                      src={getOptimizedImageUrl(photo.thumbnail_url, { width: 600 })}
                       alt=""
                       loading="lazy"
+                      decoding="async"
                       className={`w-full h-full object-cover transition-all duration-300 ${
                         selectMode && isSelected ? 'scale-95 brightness-75' : 'group-hover:scale-105 group-active:scale-95'
                       }`}
