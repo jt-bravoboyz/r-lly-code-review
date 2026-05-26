@@ -505,13 +505,15 @@ export function EventPhotoFeed({ eventId, isHost, eventStatus, eventUpdatedAt }:
                 </>
               ) : (
                 <img
-                  src={photo.url}
+                  src={getOptimizedImageUrl(photo.url, { width: 600 })}
                   alt=""
                   className={`w-full h-full object-cover transition-all duration-300 ${
                     selectMode && isSelected ? 'scale-95 brightness-75' : 'group-hover:scale-105 group-active:scale-95'
                   }`}
                   loading="lazy"
+                  decoding="async"
                 />
+
               )}
 
               {/* Selection checkbox (visible in select mode, photos only) */}
