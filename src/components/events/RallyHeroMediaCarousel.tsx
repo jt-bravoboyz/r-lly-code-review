@@ -217,11 +217,14 @@ export function RallyHeroMediaCarousel({ eventId, canManage = false }: RallyHero
                     />
                   ) : (
                     <img
-                      src={item.url}
+                      src={getOptimizedImageUrl(item.url, { width: 1080, quality: 80 })}
                       alt=""
                       className="w-full h-full object-cover"
-                      loading="lazy"
+                      loading="eager"
+                      decoding="async"
+                      fetchPriority="high"
                     />
+
                   )}
                 </div>
               </CarouselItem>
