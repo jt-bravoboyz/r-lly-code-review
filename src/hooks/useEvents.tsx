@@ -298,19 +298,36 @@ export function useEventByInviteCode(inviteCode: string | undefined) {
     queryKey: ['event-invite', inviteCode],
     queryFn: async () => {
       if (!inviteCode) return null;
+      // Use SECURITY DEFINER RPC so prospective joiners (who aren't yet
+      // attendees/invitees) can read just the safe preview fields without
+      // needing broad SELECT access on the events table.
       const { data, error } = await supabase
-        .from('events')
-        .select(`
-          *,
-          creator:profiles!events_creator_id_fkey(id, display_name, avatar_url),
-          attendees:event_attendees(count)
-        `)
-        .eq('invite_code', inviteCode.toUpperCase())
-        .maybeSingle();
-      
+        .rpc('get_event_preview_by_invite_code', { invite_code_param: inviteCode.toUpperCase() });
+
       if (error) throw error;
-      return data;
+      const row = (data as any[] | null)?.[0];
+      if (!row) return null;
+      return {
+        id: row.id,
+        title: row.title,
+        description: row.description,
+        start_time: row.start_time,
+        location_name: row.location_name,
+        is_barhop: row.is_barhop,
+        is_quick_rally: row.is_quick_rally,
+        invite_code: row.invite_code,
+        creator_id: row.creator_id,
+        cover_charge: row.cover_charge,
+        invite_code_expires_at: row.invite_code_expires_at,
+        creator: {
+          id: row.creator_id,
+          display_name: row.creator_display_name,
+          avatar_url: row.creator_avatar_url,
+        },
+        attendees: [{ count: Number(row.attendee_count) || 0 }],
+      } as any;
     },
     enabled: !!inviteCode && inviteCode.length >= 4
   });
+
 }
