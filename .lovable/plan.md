@@ -1,71 +1,46 @@
-## What's broken
+## What's actually broken
 
-On native, `executeGoogleSignIn` (and `executeAppleSignIn`) in `src/pages/Auth.tsx` calls:
+The last security pass tightened `profiles` RLS down to "users can only view their own row" and never added Data-API grants on the `safe_profiles` / `safe_profiles_with_connection` views. That single change explains all three symptoms:
 
-```ts
-lovable.auth.signInWithOAuth('google', { redirect_uri: 'https://rlly.cloud' })
-```
+1. **Caroline tapping your profile shows nothing** — `PublicProfileSheet` queries `safe_profiles_with_connection`. The view has no `GRANT SELECT` to `authenticated`, and even if it did, the underlying `profiles` SELECT policy now denies all rows except your own. So the query returns null and the sheet renders the empty state.
 
-Inside the Capacitor WKWebView this does two harmful things:
+2. **People in shared events don't appear as friends** — `useRallyFriends` resolves connected profile IDs and then calls `from('safe_profiles').select(...).in('id', ids)`. Same root cause: no grant + restrictive RLS on the base table → returns `[]`, so the friends list is empty.
 
-1. `@lovable.dev/cloud-auth-js` detects we are NOT in an iframe, so it runs `window.location.href = brokerUrl?...`. That navigates the entire native WebView away from the bundled `dist/` app to `oauth.lovable.app`. The user sees a white screen / Safari‑in‑WebView and the app shell is gone.
-2. Even if Google completes, the broker redirects to `https://rlly.cloud/...`. Because we have **no Universal Link / `apple-app-site-association`** wired up (Info.plist has no Associated Domains entry) and **no custom URL scheme** registered (no `CFBundleURLTypes` block), the redirect just keeps the WebView on rlly.cloud. The Supabase session is established on the web origin, not in the native app, so the user appears stuck on the auth screen.
-
-Web (`rlly.cloud`, `rallyboyz.lovable.app`) is unaffected — only native is broken.
+3. **JT's past/upcoming R@llies missing** — `useMyEvents` joins `creator:profiles!events_creator_id_fkey(...)`. With other users' profile rows now denied, the embedded resource silently nulls out, and (combined with the new tightened `events` SELECT policy) any row JT lost attendee/creator linkage to disappears. We will verify against JT's actual rows after the fix; the policy/grant repair below is the prerequisite.
 
 ## Plan
 
-### 1. Detect native and route OAuth through an in‑app browser (frontend)
+### 1. Restore safe public-profile reads
+New migration:
 
-Edit `src/pages/Auth.tsx` `executeGoogleSignIn` / `executeAppleSignIn`:
+- Add an RLS policy on `public.profiles` so any signed-in user can read rows (row-level open, column-level protected by the views):
 
-- If `Capacitor.isNativePlatform()`:
-  - Pass `redirect_uri: 'https://rlly.cloud/auth/return'` (Universal Link target — see step 3) to `lovable.auth.signInWithOAuth`.
-  - Wrap the call so the broker URL is opened with `@capacitor/browser` (`Browser.open({ url, presentationStyle: 'popover' })`) instead of `window.location.href`. The simplest path: temporarily set `window.open` to delegate to `Browser.open` for the duration of the call, OR build the broker URL ourselves and open it directly (skip the SDK's `window.location.href` branch).
-- If not native: keep current web behavior unchanged.
+  ```sql
+  CREATE POLICY "Authenticated users can view profiles"
+  ON public.profiles FOR SELECT TO authenticated
+  USING (auth.uid() IS NOT NULL);
+  ```
 
-Add a `src/lib/nativeOAuth.ts` helper that encapsulates this so `Auth.tsx` stays clean and the web bundle tree‑shakes the Capacitor imports.
+  PII columns (`email`, `phone`, etc.) stay hidden because the app only reads through `safe_profiles*` views, which exclude them.
 
-### 2. Handle the OAuth return inside the native shell (frontend)
+- Grant Data-API access to both views:
 
-Extend the existing `App.addListener('appUrlOpen', …)` in `src/lib/nativeBootstrap.ts`:
+  ```sql
+  GRANT SELECT ON public.safe_profiles TO authenticated, anon;
+  GRANT SELECT ON public.safe_profiles_with_connection TO authenticated;
+  ```
 
-- When the incoming URL path is `/auth/return` (or contains `access_token` / `refresh_token` / `code` in the fragment/query), call `Browser.close()` and:
-  - Hash flow: parse `access_token` + `refresh_token` from `url.hash`, call `supabase.auth.setSession({ access_token, refresh_token })`.
-  - PKCE/code flow: call `supabase.auth.exchangeCodeForSession(url.search)`.
-- After session is set, route the user to `/` (or pending join code) via the existing `onDeepLink` callback.
+  (`safe_profiles` keeps `anon` so unauthenticated invite previews keep working; the "with_connection" variant stays auth-only.)
 
-### 3. iOS native config (Universal Links)
+### 2. Audit direct `profiles` reads
+After the policy change, raw `profiles` is still column-readable. Sweep the client for any place we still select sensitive columns directly (`email`, `phone`, `referred_by` lookups) from other users and either move them through `safe_profiles` or a SECURITY DEFINER RPC. Initial targets: `useRallyFriends`, `useMyEvents` (the embedded `creator:profiles!…` resource — switch to selecting only `id, display_name, avatar_url` which is already safe).
 
-- Add an **Associated Domains** entitlement to the iOS target: `applinks:rlly.cloud` (and optionally `applinks:rallyboyz.lovable.app`).
-  - File: create `ios/App/App/App.entitlements` and reference it from `project.pbxproj` (`CODE_SIGN_ENTITLEMENTS`).
-- Host an `apple-app-site-association` (AASA) JSON at `https://rlly.cloud/.well-known/apple-app-site-association` (served as `application/json`, no extension, no redirects) that grants `com.bravoboyz.rally` paths `/auth/return*` and `/join/*`. We'll place it in `public/.well-known/apple-app-site-association` so Vite serves it and the published `rlly.cloud` picks it up.
-- (Android, if/when needed) add an `intent-filter` with `autoVerify="true"` + Digital Asset Links JSON. Out of scope for this fix unless you want Android done in the same pass.
+### 3. Verify JT specifically
+Once the above lands, re-query JT's `event_attendees` and `events.creator_id` rows to confirm he now sees past/upcoming. If any are still missing, the second-order cause is the new `events` SELECT policy combined with stale attendee linkage — we will repair the linkage rather than re-loosen the policy.
 
-### 4. Verify
+### 4. Update `@security-memory`
+Record the invariant: "Profile rows are row-level readable to any authenticated user; PII is hidden by querying `safe_profiles*` views only — never select PII columns from raw `profiles` for other users."
 
-- Build → `npx cap sync ios` → run on a real device or simulator with the latest TestFlight build.
-- Tap "Continue with Google" → SFSafariViewController opens → Google login → returns to `rlly.cloud/auth/return#access_token=…` → iOS opens the app → `appUrlOpen` fires → session set → user lands on Home.
-- Repeat for Apple Sign In (still required by App Store guidelines whenever Google is present).
-- Confirm web Google login on `rlly.cloud` and the Lovable preview still works (unchanged code path).
-
-## Technical notes
-
-- We deliberately keep `redirect_uri` pointed at an `https://` URL (Universal Link), not a custom scheme. Lovable's OAuth broker whitelists `rlly.cloud` and lovable.app domains; custom schemes are not accepted by the broker.
-- `@capacitor/browser` is already a transitive dep of Capacitor; if missing we'll `bun add @capacitor/browser` and `npx cap sync`.
-- Info.plist already has `NSPhotoLibraryUsageDescription` etc.; no new privacy strings needed.
-- The AASA file must be reachable over HTTPS with no redirects, content-type `application/json`. Confirm `rlly.cloud` Cloudflare/host doesn't redirect `/.well-known/*`.
-
-## Files to change
-
-- `src/pages/Auth.tsx` — branch OAuth handlers on `Capacitor.isNativePlatform()`.
-- `src/lib/nativeOAuth.ts` *(new)* — opens broker URL via `@capacitor/browser`.
-- `src/lib/nativeBootstrap.ts` — handle `/auth/return` in `appUrlOpen` and call `supabase.auth.setSession` / `exchangeCodeForSession`, then `Browser.close()`.
-- `public/.well-known/apple-app-site-association` *(new)* — AASA payload.
-- `ios/App/App/App.entitlements` *(new)* + `ios/App/App.xcodeproj/project.pbxproj` — Associated Domains entitlement `applinks:rlly.cloud`.
-
-## Out of scope (call out if you want it included)
-
-- Android Universal Links / Digital Asset Links.
-- Migrating away from the hardcoded `redirect_uri: 'https://rlly.cloud'` on web (works today).
-- Any visual changes to the Auth screen.
+## Out of scope
+- No changes to the recently-tightened `events`, `receipts`, `chat-images`, or `split_guest_tokens` policies unless step 3 proves we need them.
+- No UI changes.
