@@ -2,6 +2,7 @@ import { Camera, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useRallyMedia, useDeleteRallyMedia } from '@/hooks/useRallyMedia';
 import { RallyMediaUpload } from './RallyMediaUpload';
+import { getOptimizedImageUrl } from '@/lib/imageOptimization';
 
 interface RallyMediaSectionProps {
   eventId: string;
