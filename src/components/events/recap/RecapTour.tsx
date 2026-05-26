@@ -5,6 +5,7 @@ import { useConfetti } from '@/hooks/useConfetti';
 import { cn } from '@/lib/utils';
 import { RecapMediaTile, type RecapMediaItem } from './RecapMediaTile';
 import { getRecapCloser } from './recapClosers';
+import { getOptimizedImageUrl } from '@/lib/imageOptimization';
 
 interface RecapTourProps {
   eventId: string;
