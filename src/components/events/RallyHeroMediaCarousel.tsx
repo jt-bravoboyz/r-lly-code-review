@@ -286,7 +286,7 @@ export function RallyHeroMediaCarousel({ eventId, canManage = false }: RallyHero
                       {photos.map((p, idx) => (
                         <div key={p.id} className="flex items-center gap-2 rounded-lg border p-2">
                           <div className="h-12 w-12 rounded overflow-hidden bg-muted flex-shrink-0">
-                            <img src={p.url} alt="" className="w-full h-full object-cover" />
+                            <img src={getOptimizedImageUrl(p.url, { width: 96 })} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-xs text-muted-foreground truncate">Photo {idx + 1}</p>
