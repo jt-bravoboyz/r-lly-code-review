@@ -2,7 +2,7 @@
   "applinks": {
     "details": [
       {
-        "appIDs": ["com.bravoboyz.rally"],
+        "appIDs": ["Y2LST9547H.com.bravoboyz.rally"],
         "components": [
           { "/": "/auth/return", "comment": "OAuth return from Lovable broker" },
           { "/": "/auth/return*", "comment": "OAuth return with query/fragment" },
