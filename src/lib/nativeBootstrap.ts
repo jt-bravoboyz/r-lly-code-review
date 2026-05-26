@@ -48,12 +48,24 @@ export async function initNativeShell(opts: {
   }
 
   // Deep links: rlly.cloud/join/:code → /join/:code inside the app.
+  // Also handles OAuth return at rlly.cloud/auth/return#access_token=...
   try {
-    App.addListener('appUrlOpen', (event) => {
+    App.addListener('appUrlOpen', async (event) => {
       try {
         const url = new URL(event.url);
-        // Universal links + custom scheme both come through here.
         const path = url.pathname + url.search + url.hash;
+
+        // OAuth return from the Lovable broker.
+        if (url.pathname === '/auth/return' || url.hash.includes('access_token=') || url.searchParams.has('code')) {
+          try {
+            const { Browser } = await import('@capacitor/browser');
+            await Browser.close();
+          } catch {/* noop */}
+          await handleOAuthReturn(url);
+          opts.onDeepLink?.('/');
+          return;
+        }
+
         if (path && path !== '/') {
           opts.onDeepLink?.(path);
         }
