@@ -459,9 +459,22 @@ export default function Auth() {
     }
   };
 
+  const executeNativeOAuth = async (provider: 'google' | 'apple') => {
+    // Lazy-load so the web bundle never pulls in @capacitor/browser.
+    const [{ Capacitor }, { nativeSignInWithOAuth }] = await Promise.all([
+      import('@capacitor/core'),
+      import('@/lib/nativeOAuth'),
+    ]);
+    if (!Capacitor.isNativePlatform()) return false;
+    localStorage.setItem('rally-has-account', 'true');
+    await nativeSignInWithOAuth(provider);
+    return true;
+  };
+
   const executeGoogleSignIn = async () => {
     setIsLoading(true);
     try {
+      if (await executeNativeOAuth('google')) return;
       const result = await lovable.auth.signInWithOAuth('google', {
         redirect_uri: 'https://rlly.cloud',
       });
@@ -488,6 +501,7 @@ export default function Auth() {
   const executeAppleSignIn = async () => {
     setIsLoading(true);
     try {
+      if (await executeNativeOAuth('apple')) return;
       const result = await lovable.auth.signInWithOAuth('apple', {
         redirect_uri: 'https://rlly.cloud',
       });
