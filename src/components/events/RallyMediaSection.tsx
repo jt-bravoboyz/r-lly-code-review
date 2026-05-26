@@ -48,7 +48,7 @@ export function RallyMediaSection({ eventId, canManage }: RallyMediaSectionProps
                 key={p.id}
                 className="relative aspect-square rounded-md overflow-hidden bg-muted group"
               >
-                <img src={p.url} alt="" className="w-full h-full object-cover" loading="lazy" />
+                <img src={getOptimizedImageUrl(p.url, { width: 400 })} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
                 <button
                   onClick={() => handleDelete(p.id)}
                   className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
