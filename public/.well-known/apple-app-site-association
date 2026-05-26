@@ -1,0 +1,14 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["com.bravoboyz.rally"],
+        "components": [
+          { "/": "/auth/return", "comment": "OAuth return from Lovable broker" },
+          { "/": "/auth/return*", "comment": "OAuth return with query/fragment" },
+          { "/": "/join/*", "comment": "R@lly join invite links" }
+        ]
+      }
+    ]
+  }
+}
