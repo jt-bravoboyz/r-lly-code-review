@@ -205,7 +205,7 @@ export function RallyHeroMediaCarousel({ eventId, canManage = false }: RallyHero
                         }
                       }}
                       src={item.url}
-                      poster={(item as any).thumbnail_url || undefined}
+                      poster={(item as any).thumbnail_url ? getOptimizedImageUrl((item as any).thumbnail_url, { width: 1080, quality: 80 }) : undefined}
                       className="w-full h-full object-cover"
                       autoPlay
                       loop
