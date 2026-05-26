@@ -1,52 +1,71 @@
-# Fix: Create R@lly action bar floating mid-dialog
+## What's broken
 
-## Problem (confirmed in preview)
+On native, `executeGoogleSignIn` (and `executeAppleSignIn`) in `src/pages/Auth.tsx` calls:
 
-On mobile (414×896) and web, the sticky "Create R@lly" action bar renders **in the middle of the dialog**, with the Friends / Squads lists appearing *below* it. The "Add the extras" card sits directly under the bar too.
-
-Root cause: the bar uses `fixed sm:absolute` but is nested inside `.rally-create-inner` → `.rally-create-glow-wrapper` → Radix `DialogContent`. Radix applies a `transform` to position the dialog, and the glow wrapper / inner have their own transforms/filters. Per CSS spec, `position: fixed` is captured by the nearest transformed ancestor, so the bar pins to the top of that ancestor instead of the viewport. `sm:absolute` has no positioned ancestor either. The runtime `--rally-action-bar-h` padding correctly reserves space, but the bar itself is misplaced — so padding doesn't help.
-
-## Fix
-
-Stop using `fixed`/`absolute`. Restructure `DialogContent` into a true **flex column** where the action bar is a normal flex sibling pinned to the bottom of the dialog frame, and only the middle section scrolls.
-
-### Changes in `src/components/events/CreateEventDialog.tsx`
-
-1. **DialogContent** becomes a non-scrolling flex column:
-   - Remove `overflow-y-auto` and `create-rally-scroll` from `DialogContent`.
-   - Add `flex flex-col` and keep `h-[100dvh] sm:h-auto sm:max-h-[90vh]`.
-   - Drop the inline `scrollPaddingBottom` style (moves to the inner scroller).
-
-2. **Middle section** (new wrapper around the form fields) gets the scroll:
-   - Wrap the existing `.rally-create-inner` content in a `flex-1 min-h-0 overflow-y-auto create-rally-scroll scrollbar-hide` div.
-   - Move `scrollPaddingBottom: 'calc(env(safe-area-inset-bottom) + 1.5rem)'` here.
-   - Remove the giant `pb-[calc(... var(--rally-action-bar-h) ...)]` — no longer needed, the bar is a sibling, not an overlay.
-   - Keep `paddingTop: max(env(safe-area-inset-top), 1.25rem)` on the inner.
-
-3. **Action bar** becomes a normal flex child at the end:
-   - Move the action-bar `<div>` (lines 798–828) **out of** `.rally-create-inner` and place it as the last child of `DialogContent`, after the scroll wrapper.
-   - Replace `fixed sm:absolute left-0 right-0 bottom-0 z-30` with `shrink-0 z-30` (and keep the glass styling).
-   - Keep `paddingBottom: max(env(safe-area-inset-bottom), 1rem)` for iOS home-indicator clearance.
-
-4. **Cleanup** (no longer needed once layout is correct):
-   - Remove the `ResizeObserver` effect that sets `--rally-action-bar-h` and the `actionBarRef`. (Optional — can leave the ref if other code reads it, but the CSS custom property is unused.)
-   - The segmented control's `sticky top-0` stays — it now sticks inside the scroll wrapper, which is exactly what we want.
-
-### Resulting structure
-
-```text
-DialogContent (flex flex-col, h-[100dvh] sm:h-auto)
-├── ErrorBoundary
-│   └── rally-create-glow-wrapper (flex flex-col, flex-1, min-h-0)
-│       ├── scroll-wrapper (flex-1, min-h-0, overflow-y-auto)
-│       │   └── rally-create-inner (form fields, sticky segmented nav)
-│       └── action-bar (shrink-0, glass strip, Create R@lly button)
+```ts
+lovable.auth.signInWithOAuth('google', { redirect_uri: 'https://rlly.cloud' })
 ```
 
-This makes the bar a *real* bottom-pinned element on every device — no transform-capture, no padding gymnastics — and the scroll area naturally ends right above it.
+Inside the Capacitor WKWebView this does two harmful things:
 
-### Out of scope
+1. `@lovable.dev/cloud-auth-js` detects we are NOT in an iframe, so it runs `window.location.href = brokerUrl?...`. That navigates the entire native WebView away from the bundled `dist/` app to `oauth.lovable.app`. The user sees a white screen / Safari‑in‑WebView and the app shell is gone.
+2. Even if Google completes, the broker redirects to `https://rlly.cloud/...`. Because we have **no Universal Link / `apple-app-site-association`** wired up (Info.plist has no Associated Domains entry) and **no custom URL scheme** registered (no `CFBundleURLTypes` block), the redirect just keeps the WebView on rlly.cloud. The Supabase session is established on the web origin, not in the native app, so the user appears stuck on the auth screen.
 
-- No business logic, validation, or form behavior changes.
-- No changes to `index.css` (the `.create-rally-scroll` / iOS-zoom rules stay).
-- No changes to other dialogs.
+Web (`rlly.cloud`, `rallyboyz.lovable.app`) is unaffected — only native is broken.
+
+## Plan
+
+### 1. Detect native and route OAuth through an in‑app browser (frontend)
+
+Edit `src/pages/Auth.tsx` `executeGoogleSignIn` / `executeAppleSignIn`:
+
+- If `Capacitor.isNativePlatform()`:
+  - Pass `redirect_uri: 'https://rlly.cloud/auth/return'` (Universal Link target — see step 3) to `lovable.auth.signInWithOAuth`.
+  - Wrap the call so the broker URL is opened with `@capacitor/browser` (`Browser.open({ url, presentationStyle: 'popover' })`) instead of `window.location.href`. The simplest path: temporarily set `window.open` to delegate to `Browser.open` for the duration of the call, OR build the broker URL ourselves and open it directly (skip the SDK's `window.location.href` branch).
+- If not native: keep current web behavior unchanged.
+
+Add a `src/lib/nativeOAuth.ts` helper that encapsulates this so `Auth.tsx` stays clean and the web bundle tree‑shakes the Capacitor imports.
+
+### 2. Handle the OAuth return inside the native shell (frontend)
+
+Extend the existing `App.addListener('appUrlOpen', …)` in `src/lib/nativeBootstrap.ts`:
+
+- When the incoming URL path is `/auth/return` (or contains `access_token` / `refresh_token` / `code` in the fragment/query), call `Browser.close()` and:
+  - Hash flow: parse `access_token` + `refresh_token` from `url.hash`, call `supabase.auth.setSession({ access_token, refresh_token })`.
+  - PKCE/code flow: call `supabase.auth.exchangeCodeForSession(url.search)`.
+- After session is set, route the user to `/` (or pending join code) via the existing `onDeepLink` callback.
+
+### 3. iOS native config (Universal Links)
+
+- Add an **Associated Domains** entitlement to the iOS target: `applinks:rlly.cloud` (and optionally `applinks:rallyboyz.lovable.app`).
+  - File: create `ios/App/App/App.entitlements` and reference it from `project.pbxproj` (`CODE_SIGN_ENTITLEMENTS`).
+- Host an `apple-app-site-association` (AASA) JSON at `https://rlly.cloud/.well-known/apple-app-site-association` (served as `application/json`, no extension, no redirects) that grants `com.bravoboyz.rally` paths `/auth/return*` and `/join/*`. We'll place it in `public/.well-known/apple-app-site-association` so Vite serves it and the published `rlly.cloud` picks it up.
+- (Android, if/when needed) add an `intent-filter` with `autoVerify="true"` + Digital Asset Links JSON. Out of scope for this fix unless you want Android done in the same pass.
+
+### 4. Verify
+
+- Build → `npx cap sync ios` → run on a real device or simulator with the latest TestFlight build.
+- Tap "Continue with Google" → SFSafariViewController opens → Google login → returns to `rlly.cloud/auth/return#access_token=…` → iOS opens the app → `appUrlOpen` fires → session set → user lands on Home.
+- Repeat for Apple Sign In (still required by App Store guidelines whenever Google is present).
+- Confirm web Google login on `rlly.cloud` and the Lovable preview still works (unchanged code path).
+
+## Technical notes
+
+- We deliberately keep `redirect_uri` pointed at an `https://` URL (Universal Link), not a custom scheme. Lovable's OAuth broker whitelists `rlly.cloud` and lovable.app domains; custom schemes are not accepted by the broker.
+- `@capacitor/browser` is already a transitive dep of Capacitor; if missing we'll `bun add @capacitor/browser` and `npx cap sync`.
+- Info.plist already has `NSPhotoLibraryUsageDescription` etc.; no new privacy strings needed.
+- The AASA file must be reachable over HTTPS with no redirects, content-type `application/json`. Confirm `rlly.cloud` Cloudflare/host doesn't redirect `/.well-known/*`.
+
+## Files to change
+
+- `src/pages/Auth.tsx` — branch OAuth handlers on `Capacitor.isNativePlatform()`.
+- `src/lib/nativeOAuth.ts` *(new)* — opens broker URL via `@capacitor/browser`.
+- `src/lib/nativeBootstrap.ts` — handle `/auth/return` in `appUrlOpen` and call `supabase.auth.setSession` / `exchangeCodeForSession`, then `Browser.close()`.
+- `public/.well-known/apple-app-site-association` *(new)* — AASA payload.
+- `ios/App/App/App.entitlements` *(new)* + `ios/App/App.xcodeproj/project.pbxproj` — Associated Domains entitlement `applinks:rlly.cloud`.
+
+## Out of scope (call out if you want it included)
+
+- Android Universal Links / Digital Asset Links.
+- Migrating away from the hardcoded `redirect_uri: 'https://rlly.cloud'` on web (works today).
+- Any visual changes to the Auth screen.
