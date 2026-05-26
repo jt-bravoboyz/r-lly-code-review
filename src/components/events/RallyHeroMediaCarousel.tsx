@@ -383,7 +383,7 @@ export function RallyHeroMediaCarousel({ eventId, canManage = false }: RallyHero
             </button>
           </div>
           {viewerType === 'photo' && (
-            <img src={viewerUrl} alt="" className="w-full h-full object-contain" onClick={e => e.stopPropagation()} />
+            <img src={getOptimizedImageUrl(viewerUrl, { width: 1600, quality: 85, resize: 'contain' })} alt="" className="w-full h-full object-contain" onClick={e => e.stopPropagation()} decoding="async" fetchPriority="high" />
           )}
           {viewerType === 'video' && (
             <video
