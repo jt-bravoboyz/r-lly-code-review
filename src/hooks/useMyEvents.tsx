@@ -26,56 +26,19 @@ export function useMyEvents() {
     queryFn: async (): Promise<CategorizedEvents> => {
       if (!userId) return EMPTY;
 
-      // Get user's profile
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('user_id', userId)
-        .maybeSingle();
-
-      if (profileError) {
-        console.error('[useMyEvents] profile lookup failed', profileError);
-        throw profileError;
-      }
-      if (!profile) return EMPTY;
-
-      // Get events user is attending
-      const { data: attendedRows, error: attendedError } = await supabase
-        .from('event_attendees')
-        .select('event_id')
-        .eq('profile_id', profile.id);
-
-      if (attendedError) {
-        console.error('[useMyEvents] event_attendees lookup failed', attendedError);
-        throw attendedError;
-      }
-
-      const attendedEventIds = Array.from(
-        new Set((attendedRows ?? []).map((a) => a.event_id).filter(Boolean))
-      );
-
-      const selectClause = `
-        *,
-        creator:profiles!events_creator_id_fkey(id, display_name, avatar_url),
-        attendees:event_attendees(count)
-      ` as const;
-
-      let query = supabase
+      // Rely on the `events` SELECT RLS policy to scope rows to:
+      // creator OR cohost OR attendee OR pending/accepted invitee.
+      // The previous client-side `.or('creator_id.eq.X,id.in.(...)')` filter
+      // had a PostgREST comma-collision bug that silently returned zero rows
+      // for users with attended events (e.g. JT).
+      const { data: events, error } = await supabase
         .from('events')
-        .select(selectClause)
+        .select(`
+          *,
+          creator:profiles!events_creator_id_fkey(id, display_name, avatar_url),
+          attendees:event_attendees(count)
+        `)
         .order('start_time', { ascending: false });
-
-      if (attendedEventIds.length > 0) {
-        // Union: events I created OR events I'm attending
-        query = query.or(
-          `creator_id.eq.${profile.id},id.in.(${attendedEventIds.join(',')})`
-        );
-      } else {
-        // No attendance — fall back to events I created
-        query = query.eq('creator_id', profile.id);
-      }
-
-      const { data: events, error } = await query;
 
       if (error) {
         console.error('[useMyEvents] events fetch failed', error);
