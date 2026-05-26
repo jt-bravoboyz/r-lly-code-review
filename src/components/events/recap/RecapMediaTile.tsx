@@ -1,6 +1,7 @@
 import { forwardRef } from 'react';
 import { FileVideo, Play } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getOptimizedImageUrl } from '@/lib/imageOptimization';
 
 export interface RecapMediaItem {
   id: string;
