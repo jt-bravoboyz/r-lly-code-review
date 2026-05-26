@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { downloadPhoto } from '@/lib/downloadMedia';
 import { ensurePhotoPermission } from './PhotoPermissionDialog';
 import { useHaptics } from '@/hooks/useHaptics';
+import { getOptimizedImageUrl } from '@/lib/imageOptimization';
 
 interface RallyHeroMediaCarouselProps {
   eventId: string;
