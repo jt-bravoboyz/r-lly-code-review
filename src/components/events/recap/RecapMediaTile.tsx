@@ -42,9 +42,10 @@ export const RecapMediaTile = forwardRef<HTMLDivElement, RecapMediaTileProps>(
         {isVideo ? (
           media.thumbnail_url ? (
             <img
-              src={media.thumbnail_url}
+              src={getOptimizedImageUrl(media.thumbnail_url, { width: 600 })}
               alt=""
               loading="lazy"
+              decoding="async"
               className="w-full h-full object-cover"
             />
           ) : (
@@ -54,9 +55,10 @@ export const RecapMediaTile = forwardRef<HTMLDivElement, RecapMediaTileProps>(
           )
         ) : (
           <img
-            src={media.url}
+            src={getOptimizedImageUrl(media.url, { width: 600 })}
             alt=""
             loading="lazy"
+            decoding="async"
             className="w-full h-full object-cover"
           />
         )}
