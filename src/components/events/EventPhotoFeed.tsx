@@ -671,10 +671,13 @@ export function EventPhotoFeed({ eventId, isHost, eventStatus, eventUpdatedAt }:
               )
             ) : (
               <img
-                src={photos[viewerIndex].url}
+                src={getOptimizedImageUrl(photos[viewerIndex].url, { width: 1600, quality: 85, resize: 'contain' })}
                 alt=""
                 className="max-w-full max-h-full object-contain rounded-lg"
+                decoding="async"
+                fetchPriority="high"
               />
+
             )}
           </div>
 
