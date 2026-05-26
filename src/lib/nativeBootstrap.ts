@@ -98,8 +98,16 @@ export async function initNativeShell(opts: {
         const url = new URL(event.url);
         const path = url.pathname + url.search + url.hash;
 
-        // OAuth return from the Lovable broker.
-        if (url.pathname === '/auth/return' || url.hash.includes('access_token=') || url.searchParams.has('code')) {
+        // OAuth return from the Lovable broker — matches:
+        //   - universal link:   https://rlly.cloud/auth/return?code=...
+        //   - custom scheme:    com.bravoboyz.rally://auth/return?code=...
+        //   - implicit flow:    any URL with #access_token= in the hash
+        const isOAuthCallback =
+          url.protocol === 'com.bravoboyz.rally:' ||
+          url.pathname === '/auth/return' ||
+          url.hash.includes('access_token=') ||
+          url.searchParams.has('code');
+        if (isOAuthCallback) {
           try {
             const { Browser } = await import('@capacitor/browser');
             await Browser.close();

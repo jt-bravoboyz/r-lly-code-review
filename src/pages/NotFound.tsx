@@ -5,6 +5,21 @@ const NotFound = () => {
   const location = useLocation();
 
   useEffect(() => {
+    // If this page loaded with OAuth tokens in the URL (the broker may redirect
+    // to a path that doesn't exactly match /auth/return), bridge them back to
+    // the native app via the custom URL scheme so appUrlOpen fires.
+    const hash = window.location.hash;
+    const params = new URLSearchParams(window.location.search);
+    const hasOAuthTokens =
+      hash.includes('access_token=') ||
+      params.has('code') ||
+      params.has('access_token');
+
+    if (hasOAuthTokens) {
+      window.location.href = `com.bravoboyz.rally://auth/return${window.location.search}${window.location.hash}`;
+      return;
+    }
+
     console.error("404 Error: User attempted to access non-existent route:", location.pathname);
   }, [location.pathname]);
 

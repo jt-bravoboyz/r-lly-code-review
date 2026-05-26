@@ -51,6 +51,20 @@ export default function ReturningAuth() {
   
   const isForgotPassword = authMode === 'forgot-password';
 
+  // If this page loaded with OAuth tokens from the Lovable broker, bridge them
+  // back to the native app via the custom URL scheme so appUrlOpen fires.
+  useEffect(() => {
+    const hash = window.location.hash;
+    const params = new URLSearchParams(window.location.search);
+    const hasOAuthTokens =
+      hash.includes('access_token=') ||
+      params.has('code') ||
+      params.has('access_token');
+    if (hasOAuthTokens) {
+      window.location.href = `com.bravoboyz.rally://auth/return${window.location.search}${window.location.hash}`;
+    }
+  }, []);
+
   // Animate content in
   useEffect(() => {
     const timer = setTimeout(() => setShowContent(true), 100);
