@@ -215,7 +215,7 @@ export function RecapTour({
               {heroPhoto.type === 'video' ? (
                 <video
                   src={heroPhoto.url}
-                  poster={heroPhoto.thumbnail_url || undefined}
+                  poster={heroPhoto.thumbnail_url ? getOptimizedImageUrl(heroPhoto.thumbnail_url, { width: 1080, quality: 80 }) : undefined}
                   autoPlay
                   muted
                   loop
@@ -224,8 +224,10 @@ export function RecapTour({
                 />
               ) : (
                 <img
-                  src={heroPhoto.url}
+                  src={getOptimizedImageUrl(heroPhoto.url, { width: 1080, quality: 80 })}
                   alt="Shot of the Night"
+                  decoding="async"
+                  fetchPriority="high"
                   className="w-full aspect-[4/5] object-cover rounded-2xl ring-2 ring-primary/40 shadow-2xl"
                 />
               )}
