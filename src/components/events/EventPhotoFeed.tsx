@@ -17,6 +17,7 @@ import { usePublicProfile } from '@/contexts/PublicProfileContext';
 import { useVideoThumbnailBackfill } from '@/hooks/useVideoThumbnailBackfill';
 import { Capacitor } from '@capacitor/core';
 import { openExternalLink } from '@/lib/nativeLinks';
+import { getOptimizedImageUrl } from '@/lib/imageOptimization';
 
 const MAX_PHOTOS_PER_EVENT = 500;
 const MAX_VIDEOS_PER_EVENT = 5;
@@ -474,9 +475,10 @@ export function EventPhotoFeed({ eventId, isHost, eventStatus, eventUpdatedAt }:
                 <>
                   {photo.thumbnail_url ? (
                     <img
-                      src={photo.thumbnail_url}
+                      src={getOptimizedImageUrl(photo.thumbnail_url, { width: 600 })}
                       alt=""
                       loading="lazy"
+                      decoding="async"
                       className={`w-full h-full object-cover transition-all duration-300 ${
                         selectMode && isSelected ? 'scale-95 brightness-75' : 'group-hover:scale-105 group-active:scale-95'
                       }`}
@@ -503,13 +505,15 @@ export function EventPhotoFeed({ eventId, isHost, eventStatus, eventUpdatedAt }:
                 </>
               ) : (
                 <img
-                  src={photo.url}
+                  src={getOptimizedImageUrl(photo.url, { width: 600 })}
                   alt=""
                   className={`w-full h-full object-cover transition-all duration-300 ${
                     selectMode && isSelected ? 'scale-95 brightness-75' : 'group-hover:scale-105 group-active:scale-95'
                   }`}
                   loading="lazy"
+                  decoding="async"
                 />
+
               )}
 
               {/* Selection checkbox (visible in select mode, photos only) */}
@@ -667,10 +671,13 @@ export function EventPhotoFeed({ eventId, isHost, eventStatus, eventUpdatedAt }:
               )
             ) : (
               <img
-                src={photos[viewerIndex].url}
+                src={getOptimizedImageUrl(photos[viewerIndex].url, { width: 1600, quality: 85, resize: 'contain' })}
                 alt=""
                 className="max-w-full max-h-full object-contain rounded-lg"
+                decoding="async"
+                fetchPriority="high"
               />
+
             )}
           </div>
 

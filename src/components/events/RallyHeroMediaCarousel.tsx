@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { downloadPhoto } from '@/lib/downloadMedia';
 import { ensurePhotoPermission } from './PhotoPermissionDialog';
 import { useHaptics } from '@/hooks/useHaptics';
+import { getOptimizedImageUrl } from '@/lib/imageOptimization';
 
 interface RallyHeroMediaCarouselProps {
   eventId: string;
@@ -204,7 +205,7 @@ export function RallyHeroMediaCarousel({ eventId, canManage = false }: RallyHero
                         }
                       }}
                       src={item.url}
-                      poster={(item as any).thumbnail_url || undefined}
+                      poster={(item as any).thumbnail_url ? getOptimizedImageUrl((item as any).thumbnail_url, { width: 1080, quality: 80 }) : undefined}
                       className="w-full h-full object-cover"
                       autoPlay
                       loop
@@ -216,11 +217,14 @@ export function RallyHeroMediaCarousel({ eventId, canManage = false }: RallyHero
                     />
                   ) : (
                     <img
-                      src={item.url}
+                      src={getOptimizedImageUrl(item.url, { width: 1080, quality: 80 })}
                       alt=""
                       className="w-full h-full object-cover"
-                      loading="lazy"
+                      loading="eager"
+                      decoding="async"
+                      fetchPriority="high"
                     />
+
                   )}
                 </div>
               </CarouselItem>
@@ -282,7 +286,7 @@ export function RallyHeroMediaCarousel({ eventId, canManage = false }: RallyHero
                       {photos.map((p, idx) => (
                         <div key={p.id} className="flex items-center gap-2 rounded-lg border p-2">
                           <div className="h-12 w-12 rounded overflow-hidden bg-muted flex-shrink-0">
-                            <img src={p.url} alt="" className="w-full h-full object-cover" />
+                            <img src={getOptimizedImageUrl(p.url, { width: 96 })} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-xs text-muted-foreground truncate">Photo {idx + 1}</p>
@@ -379,7 +383,7 @@ export function RallyHeroMediaCarousel({ eventId, canManage = false }: RallyHero
             </button>
           </div>
           {viewerType === 'photo' && (
-            <img src={viewerUrl} alt="" className="w-full h-full object-contain" onClick={e => e.stopPropagation()} />
+            <img src={getOptimizedImageUrl(viewerUrl, { width: 1600, quality: 85, resize: 'contain' })} alt="" className="w-full h-full object-contain" onClick={e => e.stopPropagation()} decoding="async" fetchPriority="high" />
           )}
           {viewerType === 'video' && (
             <video

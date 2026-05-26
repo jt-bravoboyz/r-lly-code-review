@@ -1,44 +1,41 @@
-## What I verified
+## Why it's slow
 
-At the database level, JT (profile `536e4694…`) actually has plenty to show:
-- **16 attended events**, including 2 upcoming (Taniya's Tequila Sunset on Jun 3 and Alessandra's Beach Party on Jun 20) and 14 past.
-- **7 created events**, mostly in the past.
+Both **Gallery** and **R@lly Recap** render `<img src={photo.url}>` pointing at the raw Storage object (`/storage/v1/object/public/rally-media/...`). Phone photos are 3–8 MB JPEGs, so a 4-tile grid is downloading 12–30 MB to paint 400px squares — the skeleton sits there until each full original finishes.
 
-I confirmed the migrations from the last two turns are applied:
-- `profiles` has the restored `Authenticated users can view profiles` SELECT policy.
-- `safe_profiles` and `safe_profiles_with_connection` both have `GRANT SELECT TO authenticated`.
-- The new `events` SELECT policy correctly includes creators, cohosts, attendees, invitees, and admins — JT qualifies on all his rows.
-- `events.creator_id` → `profiles.id` FK exists, so the embedded `creator:profiles!events_creator_id_fkey(...)` join in `useMyEvents` is valid.
+Supabase Storage exposes a built-in image transform endpoint (`/storage/v1/render/image/public/...?width=...&quality=...`) that returns a resized, re-encoded JPEG from the same bucket — no migration, no new infra, no new upload pipeline.
 
-So this is **not a fresh data/RLS bug**. JT's rows are reachable. Two likely client-side culprits remain:
+## Fix
 
-1. **`useMyEvents` swallows errors.** The hook does `if (error) throw error` but only on the second branch; the first `.from('event_attendees').select('event_id')` and the `.from('profiles').select('id').single()` calls ignore their `error` field. If either returned a transient error during the bad-RLS window, the hook would have cached `{ current: [], upcoming: [], past: [] }` and there's nothing visible to debug.
-2. **Cache key is not scoped to user.** `queryKey: ['my-events-categorized']` doesn't include the auth user id. If JT's React-Query cache (or any persisted cache layer / SW on the native iOS shell) held an empty result from the broken window, it will keep serving `[]` until the bundle is fully reloaded.
+1. **Add `src/lib/imageOptimization.ts`** — one tiny helper `getOptimizedImageUrl(url, { width, quality, resize })` that rewrites `/object/public/` → `/render/image/public/` and appends `width` + `quality=75` + `resize=cover`. Non-Supabase URLs pass through.
 
-## Plan
+2. **Use the helper at every gallery / recap image site** (surgical, no logic changes):
 
-Pure frontend changes in `src/hooks/useMyEvents.tsx`. No DB, no UI redesign.
+   - `src/components/events/EventPhotoFeed.tsx`
+     - tile photo (line ~506) → `width: 600`
+     - tile video thumbnail (line ~477) → `width: 600`
+     - full-screen viewer (line ~670) → `width: 1600, quality: 85`
+   - `src/components/events/RallyHeroMediaCarousel.tsx`
+     - hero carousel photo (line ~219) → `width: 1080`
+     - video poster (line ~207) → `width: 1080`
+     - edit-sheet 48×48 thumbs (line ~285) → `width: 96`
+     - full-screen viewer (line ~382) → `width: 1600, quality: 85`
+   - `src/components/events/RallyMediaSection.tsx` (line 50) → `width: 600`
+   - `src/components/events/recap/RecapTour.tsx`
+     - hero photo (line 226) → `width: 1080`
+     - video poster (line 217) → `width: 1080`
+   - `src/components/events/recap/RecapMediaTile.tsx`
+     - photo (line 56) → `width: 600`
+     - video thumbnail (line 44) → `width: 600`
 
-1. **Scope the query key to the user**
-   - Change `queryKey: ['my-events-categorized']` → `queryKey: ['my-events-categorized', user?.id]`.
-   - Pull `user.id` from the hook scope (fetch once via `supabase.auth.getUser()` and use it in both the key and the body) so any stale empty cache from the previous RLS state is invalidated automatically.
+3. **Add `decoding="async"` + `fetchPriority="low"`** to every gallery `<img>` so they don't compete with first paint. Hero/featured/viewer get `fetchPriority="high"`.
 
-2. **Stop silently dropping errors**
-   - Check `error` on the `profiles` lookup, the `event_attendees` lookup, and the created-events branch. Throw on real errors instead of returning `{ current: [], upcoming: [], past: [] }`.
-   - This makes future regressions surface as a visible loading/error state instead of a silent "no events" empty card — and lets us see them in runtime logs.
+## Out of scope
 
-3. **Always include created events, not just as a fallback**
-   - Today, the hook only queries `creator_id` events if `attendedEventIds` is empty. For JT this isn't the problem (he's attending all his own events too), but the `.or(...)` path is fragile when `attendedEventIds` is very long — switch to a single union query: fetch attended event ids, then fetch events with `.or('creator_id.eq.<id>,id.in.(...)')` only when the list is non-empty, and otherwise fall back to creator-only. Keep the existing categorization logic.
+- No DB or storage changes (bucket is already public).
+- No edits to the upload pipeline — existing files benefit immediately.
+- Video files unchanged (recap shows `<img>` thumbnails for them, which will also be transformed).
+- No new dependencies.
 
-4. **Tell JT to fully reload the app once**
-   - After this ships, the new query key forces a refetch. On the iOS native shell, ask JT to fully close + reopen the app (or pull-to-refresh) so the new JS bundle loads. No code workaround can override an old cached bundle that's still running on his device.
+## Expected impact
 
-## What I am NOT doing
-
-- No DB migrations. The data and policies are correct.
-- No changes to `events`, `profiles`, or storage RLS.
-- No changes to the Index/PastRallies UI.
-
-## If this doesn't fix it
-
-The next step would be to have JT reproduce in the web preview while signed in as himself, then read `network` + `console` for the actual PostgREST response on `/rest/v1/events?select=*,creator:...,attendees:event_attendees(count)&or=(...)`. That will tell us definitively whether the server is returning `[]` or whether the client is dropping rows.
+Typical gallery tile drops from ~5 MB → ~40 KB. The gray skeletons should resolve almost instantly on first paint.
