@@ -5,8 +5,51 @@
  * web build because the only entry-point call returns immediately).
  */
 import { Capacitor } from '@capacitor/core';
+import { supabase } from '@/integrations/supabase/client';
+import { NATIVE_OAUTH_STATE_KEY } from '@/lib/nativeOAuth';
 
 let initialized = false;
+
+/**
+ * Parse tokens / code from a Universal Link return from the Lovable OAuth
+ * broker and hand them to Supabase so the native app becomes signed in.
+ */
+async function handleOAuthReturn(url: URL): Promise<void> {
+  // Verify CSRF state if present.
+  try {
+    const expected = sessionStorage.getItem(NATIVE_OAUTH_STATE_KEY);
+    const got = url.searchParams.get('state') || new URLSearchParams(url.hash.replace(/^#/, '')).get('state');
+    if (expected && got && expected !== got) {
+      console.warn('OAuth state mismatch — ignoring');
+      return;
+    }
+    sessionStorage.removeItem(NATIVE_OAUTH_STATE_KEY);
+  } catch {/* noop */}
+
+  // Implicit/hash flow: #access_token=...&refresh_token=...
+  if (url.hash.includes('access_token=')) {
+    const params = new URLSearchParams(url.hash.replace(/^#/, ''));
+    const access_token = params.get('access_token');
+    const refresh_token = params.get('refresh_token');
+    if (access_token && refresh_token) {
+      const { error } = await supabase.auth.setSession({ access_token, refresh_token });
+      if (error) console.warn('setSession failed', error);
+      return;
+    }
+  }
+
+  // PKCE/code flow.
+  const code = url.searchParams.get('code');
+  if (code) {
+    try {
+      // exchangeCodeForSession accepts the full query string.
+      const { error } = await supabase.auth.exchangeCodeForSession(url.search.replace(/^\?/, '') || code);
+      if (error) console.warn('exchangeCodeForSession failed', error);
+    } catch (err) {
+      console.warn('exchangeCodeForSession threw', err);
+    }
+  }
+}
 
 export async function initNativeShell(opts: {
   /** Called when a deep link arrives; receives the in-app path to navigate to. */
