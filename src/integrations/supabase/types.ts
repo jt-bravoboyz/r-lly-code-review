@@ -4688,6 +4688,10 @@ export type Database = {
           status: string
         }[]
       }
+      has_pending_or_accepted_invite: {
+        Args: { _event_id: string; _user_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -4726,6 +4730,10 @@ export type Database = {
       }
       is_connected_via_squad: {
         Args: { target_profile_id: string }
+        Returns: boolean
+      }
+      is_event_creator: {
+        Args: { _event_id: string; _user_id: string }
         Returns: boolean
       }
       is_event_host_or_cohost: {
