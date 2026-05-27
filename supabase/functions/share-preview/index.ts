@@ -49,6 +49,17 @@ Deno.serve(async (req) => {
 
   if (!to) return new Response('Missing `to`', { status: 400, headers: corsHeaders });
 
+  // Real browsers get an instant 302 to the clean target URL. Only crawlers
+  // need the full OG HTML page below.
+  const ua = req.headers.get('user-agent') ?? '';
+  const isCrawler = /bot|crawl|spider|slack|facebook|twitter|discord|telegram|whatsapp|applebot|linkedinbot|preview|unfurl/i.test(ua);
+  if (!isCrawler) {
+    return new Response(null, {
+      status: 302,
+      headers: { ...corsHeaders, location: to },
+    });
+  }
+
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   const projectId = (supabaseUrl.match(/https:\/\/([^.]+)\./)?.[1]) ?? '';
   const fallbackOgImage = `${supabaseUrl}/storage/v1/object/public/event_flyers/_system/og-fallback.png`;
