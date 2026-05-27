@@ -86,8 +86,9 @@ export function InviteToEventDialog({
     [existingAttendeeIds, existingInviteIds, eventInvites]
   );
 
-  // All shares route through buildRallyShareUrl → crawler-aware share-preview
-  // edge function so iMessage/Slack render the themed flyer instead of generic OG.
+  // `shareLink` = crawler-aware edge-function URL (used only for web clipboard
+  // copy so pasted previews unfurl). `cleanShareLink` = clean rlly.cloud URL
+  // for native share sheets and SMS drafts so users see the pretty link.
   const shareLink = inviteCode
     ? buildRallyShareUrl(
         { eventId, inviteCode },
@@ -95,7 +96,14 @@ export function InviteToEventDialog({
       )
     : buildRallyShareUrl({ eventId, inviteCode: null });
 
-  const smsPreview = `You're locked in for "${eventTitle}". Claim your spot 🔥 ${shareLink}`;
+  const cleanShareLink = inviteCode
+    ? buildRallyShareUrlClean(
+        { eventId, inviteCode },
+        { referrerId: profile?.id ?? null }
+      )
+    : buildRallyShareUrlClean({ eventId, inviteCode: null });
+
+  const smsPreview = `You're locked in for "${eventTitle}". Claim your spot 🔥 ${cleanShareLink}`;
 
 
   // Influence threshold: 10+ unique invites in history
