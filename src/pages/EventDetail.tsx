@@ -4,7 +4,7 @@ import { Capacitor } from '@capacitor/core';
 import { Share2 } from 'lucide-react';
 import { getPublicName } from '@/lib/identity';
 
-import { buildRallyShareUrl } from '@/lib/shareUrls';
+import { buildRallyShareUrl, buildRallyShareUrlClean } from '@/lib/shareUrls';
 import { useParams, Navigate, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { getEventTypeLabel, getEventTypeEmoji, getEventTypeVibe } from '@/lib/eventTypes';
