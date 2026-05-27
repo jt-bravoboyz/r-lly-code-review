@@ -633,12 +633,13 @@ export default function EventDetail() {
                     className="flex-1 w-full h-12 flex items-center justify-center gap-1.5 text-center font-bold text-sm px-4 rounded-xl bg-card border border-border text-card-foreground shadow-sm hover:bg-accent/10 backdrop-blur-md transition-all"
                     onClick={async () => {
                       const url = buildRallyShareUrl({ eventId: event.id, inviteCode: event.invite_code }, { referrerId: profile?.id });
+                      const cleanUrl = buildRallyShareUrlClean({ eventId: event.id, inviteCode: event.invite_code }, { referrerId: profile?.id });
                       trackEvent('invite_link_copied', { event_id: event.id });
                       if (Capacitor.isNativePlatform()) {
                         const shared = await shareContent({
                           title: event.title,
                           text: `Join me at ${event.title} on R@lly`,
-                          url,
+                          url: cleanUrl,
                           successToast: 'Link copied!',
                         });
                         if (shared) {
