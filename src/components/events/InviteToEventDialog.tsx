@@ -156,7 +156,7 @@ export function InviteToEventDialog({
         await shareContent({
           title: `Join ${eventTitle}`,
           text: `You're locked in for "${eventTitle}". Claim your spot 🔥`,
-          url: shareLink,
+          url: cleanShareLink,
         });
       } catch {
         handleCopyLink();
