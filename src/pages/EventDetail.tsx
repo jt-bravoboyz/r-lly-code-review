@@ -681,6 +681,13 @@ export default function EventDetail() {
                 </Button>
               }
             />
+            <InviteFriendsSheet
+              open={inviteFriendsOpen}
+              onOpenChange={setInviteFriendsOpen}
+              eventId={event.id}
+              eventTitle={event.title}
+              existingAttendeeIds={event.attendees?.map(a => a.profile?.id).filter(Boolean) as string[] || []}
+            />
           </div>
 
           {event.description && (
