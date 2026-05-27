@@ -53,25 +53,25 @@ export function InviteAlertCard({ notification }: InviteAlertCardProps) {
 
   return (
     <Card
-      className={`rounded-xl backdrop-blur-xl border-l-4 border-l-primary transition-all duration-300 ${
+      className={`rounded-2xl backdrop-blur-xl border-l-4 border-l-primary transition-all duration-300 ${
         notification.read
           ? 'bg-card/60 border-white/10'
-          : 'bg-card/70 border-primary/15 shadow-[0_0_20px_hsl(27_91%_53%/0.08)]'
+          : 'bg-gradient-to-br from-primary/[0.10] via-card/70 to-card/60 border-primary/30 shadow-[0_0_30px_rgba(244,122,25,0.35)]'
       }`}
       style={{ WebkitBackdropFilter: 'blur(20px)' }}
     >
       <CardContent className="p-4">
         <div className="flex items-start gap-3">
-          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0 border border-primary/20">
+          <div className="w-11 h-11 min-w-[44px] rounded-full bg-primary/15 flex items-center justify-center shrink-0 border border-primary/30 shadow-[0_0_12px_rgba(244,122,25,0.25)]">
             <Icon className="h-5 w-5 text-primary" />
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
-              <p className={`font-semibold text-sm ${notification.read ? 'text-foreground' : 'text-primary'}`}>
+              <p className={`font-bold text-sm font-montserrat ${notification.read ? 'text-foreground' : 'text-primary'}`}>
                 {notification.title}
               </p>
               {!notification.read && (
-                <span className="w-2 h-2 rounded-full bg-primary shrink-0 mt-1.5 shadow-[0_0_6px_hsl(27_91%_53%/0.5)]" />
+                <span className="w-2 h-2 rounded-full bg-primary shrink-0 mt-1.5 shadow-[0_0_8px_rgba(244,122,25,0.7)]" />
               )}
             </div>
             {notification.body && (
@@ -89,7 +89,7 @@ export function InviteAlertCard({ notification }: InviteAlertCardProps) {
               <div className="flex gap-2 mt-3">
                 <Button
                   size="sm"
-                  className="h-9 rounded-full bg-primary text-primary-foreground hover:bg-primary/90"
+                  className="min-h-[44px] px-5 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold font-montserrat shadow-[0_0_20px_rgba(244,122,25,0.4)]"
                   disabled={respondToFriendRequest.isPending || markFriendRequestRead.isPending}
                   onClick={() => handleFriendResponse('accepted')}
                 >
@@ -98,7 +98,7 @@ export function InviteAlertCard({ notification }: InviteAlertCardProps) {
                 <Button
                   size="sm"
                   variant="outline"
-                  className="h-9 rounded-full"
+                  className="min-h-[44px] px-5 rounded-full font-bold font-montserrat border-primary/30 hover:bg-primary/5"
                   disabled={respondToFriendRequest.isPending || markFriendRequestRead.isPending}
                   onClick={() => handleFriendResponse('declined')}
                 >
@@ -110,7 +110,7 @@ export function InviteAlertCard({ notification }: InviteAlertCardProps) {
                 <Button
                   size="sm"
                   onClick={handleViewInvite}
-                  className="gap-1.5"
+                  className="gap-1.5 min-h-[44px] px-5 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold font-montserrat shadow-[0_0_20px_rgba(244,122,25,0.4)]"
                 >
                   <ExternalLink className="h-3.5 w-3.5" />
                   View Invite
