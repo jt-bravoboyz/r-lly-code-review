@@ -124,10 +124,15 @@ export function usePushNotifications() {
             { duration: 7000 }
           );
           try {
-            const { App } = await import('@capacitor/app');
-            await App.openUrl({ url: 'app-settings:' });
+            const { Browser } = await import('@capacitor/browser');
+            await Browser.open({ url: 'app-settings:' });
           } catch {
-            /* noop — deep link best-effort */
+            try {
+              // Last-resort fallback for environments without @capacitor/browser
+              window.open('app-settings:', '_self');
+            } catch {
+              /* noop */
+            }
           }
           return false;
         }
