@@ -119,7 +119,8 @@ export function SquadInviteDialog({ squadId, squadName, trigger }: SquadInviteDi
 
       if (error) throw error;
 
-      setInvitedUserIds(prev => new Set(prev).add(targetProfileId));
+      setOptimisticInvited(prev => new Set(prev).add(targetProfileId));
+      queryClient.invalidateQueries({ queryKey: ['squad-invites', squadId] });
       toast.success('Invite sent!');
     } catch (error: any) {
       console.error('Error inviting user:', error);
