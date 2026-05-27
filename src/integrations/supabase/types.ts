@@ -4462,6 +4462,7 @@ export type Database = {
       }
     }
     Functions: {
+      accept_squad_invite: { Args: { p_squad_id: string }; Returns: Json }
       admin_user_directory: {
         Args: never
         Returns: {
@@ -4600,6 +4601,7 @@ export type Database = {
         }
       }
       current_profile_id: { Args: never; Returns: string }
+      decline_squad_invite: { Args: { p_squad_id: string }; Returns: Json }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean

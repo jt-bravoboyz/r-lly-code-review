@@ -1,14 +1,18 @@
+import { useState } from 'react';
 import { Users, Calendar, ExternalLink, UserPlus } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useMarkFriendRequestNotificationsRead, useMarkNotificationRead } from '@/hooks/useNotifications';
 import { formatDistanceToNow } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import type { Tables } from '@/integrations/supabase/types';
 import { useRespondToFriendRequest } from '@/hooks/useFriendships';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 type Notification = Tables<'notifications'>;
+
 
 interface InviteAlertCardProps {
   notification: Notification;
@@ -19,6 +23,8 @@ export function InviteAlertCard({ notification }: InviteAlertCardProps) {
   const markFriendRequestRead = useMarkFriendRequestNotificationsRead();
   const respondToFriendRequest = useRespondToFriendRequest();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [isResponding, setIsResponding] = useState(false);
 
   const data = notification.data as Record<string, any> | null;
   const isSquadInvite = notification.type === 'squad_invite';
@@ -49,7 +55,33 @@ export function InviteAlertCard({ notification }: InviteAlertCardProps) {
     }
   };
 
+  const handleSquadResponse = async (response: 'accepted' | 'declined') => {
+    if (!data?.squad_id) return;
+    setIsResponding(true);
+    try {
+      const rpc = response === 'accepted' ? 'accept_squad_invite' : 'decline_squad_invite';
+      const { data: result, error } = await supabase.rpc(rpc as any, { p_squad_id: data.squad_id });
+      if (error) throw error;
+      if (result && typeof result === 'object' && 'error' in result) {
+        throw new Error((result as any).error);
+      }
+      if (response === 'accepted') {
+        toast.success('You joined the squad! 🎉');
+      } else {
+        toast.info('Squad invite declined');
+      }
+      markRead.mutate(notification.id);
+      queryClient.invalidateQueries({ queryKey: ['squads'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    } catch (error: any) {
+      toast.error(error.message || 'Could not process invite');
+    } finally {
+      setIsResponding(false);
+    }
+  };
+
   const Icon = isFriendRequest ? UserPlus : isSquadInvite ? Users : Calendar;
+
 
   return (
     <Card
@@ -105,6 +137,26 @@ export function InviteAlertCard({ notification }: InviteAlertCardProps) {
                   Decline
                 </Button>
               </div>
+            ) : isSquadInvite && !notification.read && data?.squad_id ? (
+              <div className="flex gap-2 mt-3">
+                <Button
+                  size="sm"
+                  className="min-h-[44px] px-5 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold font-montserrat shadow-[0_0_20px_rgba(244,122,25,0.4)]"
+                  disabled={isResponding}
+                  onClick={() => handleSquadResponse('accepted')}
+                >
+                  Accept
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="min-h-[44px] px-5 rounded-full font-bold font-montserrat border-primary/30 hover:bg-primary/5"
+                  disabled={isResponding}
+                  onClick={() => handleSquadResponse('declined')}
+                >
+                  Decline
+                </Button>
+              </div>
             ) : !isFriendRequest ? (
               <div className="mt-3">
                 <Button
@@ -117,6 +169,7 @@ export function InviteAlertCard({ notification }: InviteAlertCardProps) {
                 </Button>
               </div>
             ) : null}
+
           </div>
         </div>
       </CardContent>

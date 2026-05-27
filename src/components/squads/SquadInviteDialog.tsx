@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { shareContent, copyToClipboard } from '@/lib/nativeShare';
 import { getPublicName } from '@/lib/identity';
 import { PUBLIC_APP_URL } from '@/lib/appUrl';
@@ -14,7 +14,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useAllProfiles } from '@/hooks/useSquads';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+
 
 interface SquadInviteDialogProps {
   squadId: string;
@@ -30,11 +32,67 @@ export function SquadInviteDialog({ squadId, squadName, trigger }: SquadInviteDi
   const [copied, setCopied] = useState(false);
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
   const [userSearch, setUserSearch] = useState('');
-  const [invitedUserIds, setInvitedUserIds] = useState<Set<string>>(new Set());
+  const [optimisticInvited, setOptimisticInvited] = useState<Set<string>>(new Set());
   const { profile } = useAuth();
   const { data: allProfiles } = useAllProfiles();
+  const queryClient = useQueryClient();
 
   const baseUrl = PUBLIC_APP_URL;
+
+  // Persistent invite state pulled from the DB so badges survive close/reopen
+  const { data: existingInvites } = useQuery({
+    queryKey: ['squad-invites', squadId, profile?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('squad_invites')
+        .select('contact_value, invite_type, status')
+        .eq('squad_id', squadId)
+        .eq('invited_by', profile!.id);
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: open && !!profile?.id,
+  });
+
+  const invitedProfileIds = useMemo(() => {
+    const s = new Set<string>();
+    (existingInvites ?? []).forEach((inv) => {
+      if (inv.invite_type === 'in_app' && inv.contact_value?.startsWith('profile:')) {
+        s.add(inv.contact_value.slice('profile:'.length));
+      }
+    });
+    optimisticInvited.forEach((id) => s.add(id));
+    return s;
+  }, [existingInvites, optimisticInvited]);
+
+  const invitedEmails = useMemo(() => {
+    const s = new Set<string>();
+    (existingInvites ?? []).forEach((inv) => {
+      if (
+        inv.invite_type === 'email' &&
+        inv.contact_value &&
+        inv.contact_value !== 'link-share' &&
+        inv.contact_value !== 'native-share'
+      ) {
+        s.add(inv.contact_value.toLowerCase());
+      }
+    });
+    return s;
+  }, [existingInvites]);
+
+  const invitedPhones = useMemo(() => {
+    const s = new Set<string>();
+    (existingInvites ?? []).forEach((inv) => {
+      if (inv.invite_type === 'sms' && inv.contact_value) {
+        s.add(inv.contact_value.replace(/[^\d]/g, '').slice(-10));
+      }
+    });
+    return s;
+  }, [existingInvites]);
+
+  const emailAlreadyInvited = email.trim() && invitedEmails.has(email.trim().toLowerCase());
+  const phoneAlreadyInvited =
+    phone.trim() && invitedPhones.has(phone.replace(/[^\d]/g, '').slice(-10));
 
   const filteredProfiles = useMemo(() => {
     if (!allProfiles || !profile?.id) return [];
@@ -44,6 +102,7 @@ export function SquadInviteDialog({ squadId, squadName, trigger }: SquadInviteDi
       return (p.display_name || '').toLowerCase().includes(userSearch.toLowerCase());
     });
   }, [allProfiles, profile?.id, userSearch]);
+
 
   const handleInviteUser = async (targetProfileId: string) => {
     if (!profile?.id) return;
@@ -60,7 +119,8 @@ export function SquadInviteDialog({ squadId, squadName, trigger }: SquadInviteDi
 
       if (error) throw error;
 
-      setInvitedUserIds(prev => new Set(prev).add(targetProfileId));
+      setOptimisticInvited(prev => new Set(prev).add(targetProfileId));
+      queryClient.invalidateQueries({ queryKey: ['squad-invites', squadId] });
       toast.success('Invite sent!');
     } catch (error: any) {
       console.error('Error inviting user:', error);
@@ -203,7 +263,7 @@ export function SquadInviteDialog({ squadId, squadName, trigger }: SquadInviteDi
   };
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setInvitedUserIds(new Set()); setUserSearch(''); } }}>
+    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setOptimisticInvited(new Set()); setUserSearch(''); } }}>
       <DialogTrigger asChild>
         {trigger || (
           <Button variant="outline" size="sm" className="gap-2">
@@ -252,7 +312,7 @@ export function SquadInviteDialog({ squadId, squadName, trigger }: SquadInviteDi
                   <p className="text-sm text-muted-foreground text-center py-6">No users found</p>
                 )}
                 {filteredProfiles.map((p) => {
-                  const alreadyInvited = invitedUserIds.has(p.id);
+                  const alreadyInvited = invitedProfileIds.has(p.id);
                   return (
                     <div key={p.id} className="flex items-center justify-between py-2 px-2 rounded-lg hover:bg-muted/50">
                       <div className="flex items-center gap-2.5">
@@ -292,14 +352,20 @@ export function SquadInviteDialog({ squadId, squadName, trigger }: SquadInviteDi
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
+              {emailAlreadyInvited && (
+                <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                  <Check className="h-3 w-3 text-primary" /> Already invited via email
+                </p>
+              )}
             </div>
             <Button
               onClick={() => handleSendInvite('email')}
               disabled={isLoading || !email.trim()}
+              variant={emailAlreadyInvited ? 'outline' : 'default'}
               className="w-full gap-2"
             >
               <Send className="h-4 w-4" />
-              {isLoading ? 'Sending...' : 'Send Email Invite'}
+              {isLoading ? 'Sending...' : emailAlreadyInvited ? 'Re-send Email Invite' : 'Send Email Invite'}
             </Button>
           </TabsContent>
 
@@ -313,16 +379,23 @@ export function SquadInviteDialog({ squadId, squadName, trigger }: SquadInviteDi
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
               />
+              {phoneAlreadyInvited && (
+                <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                  <Check className="h-3 w-3 text-primary" /> Already invited via SMS
+                </p>
+              )}
             </div>
             <Button
               onClick={() => handleSendInvite('sms')}
               disabled={isLoading || !phone.trim()}
+              variant={phoneAlreadyInvited ? 'outline' : 'default'}
               className="w-full gap-2"
             >
               <Send className="h-4 w-4" />
-              {isLoading ? 'Sending...' : 'Send SMS Invite'}
+              {isLoading ? 'Sending...' : phoneAlreadyInvited ? 'Re-send SMS Invite' : 'Send SMS Invite'}
             </Button>
           </TabsContent>
+
         </Tabs>
 
         <div className="relative">

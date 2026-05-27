@@ -1,74 +1,119 @@
-## R@lly Social Blueprint — Phase 1
+# Plan — Native Push, Persistent Squad Invites, Inline Squad Accept
 
-Connecting 1:1 DMs, social discovery, and consolidated alerts into the existing 5-tab shell. No new tabs, no new top-level pages.
+## 1. Native push notifications (`src/hooks/usePushNotifications.tsx`)
 
-## What's already in place (reusing, not rebuilding)
-
-- `chats` / `chat_participants` / `messages` tables + `UnifiedChat` component with typing presence, reactions, and read receipts. Both `event_id` and `squad_id` are nullable, so the same schema can hold DMs.
-- `friendships` table + `useFriendships` hooks + `friend_request` notifications + `InviteAlertCard` already render orange-glass accept/decline cards in `/notifications`.
-- `Squads` page already has a Tabs shell (Squads / Contacts) — DMs slot in as a third pill.
-- `BottomNav` already renders unread badge counters via `useNotifications`.
-
-## 1. DMs inside the Squads tab
-
-### Schema (single migration)
-
-- Allow chats where `event_id IS NULL AND squad_id IS NULL` and `is_group = false` (DM rows). Add a generated `dm_key text` column = `LEAST(p1,p2) || ':' || GREATEST(p1,p2)` derived from `chat_participants`, plus a partial unique index so each pair has at most one DM chat.
-- Add nullable `read_at timestamptz` to `chat_participants` for per-user read-receipt cursor (group reads continue to use `message_reads`; for DMs we use this single cursor — fast and cheap).
-- New RPC `get_or_create_dm_chat(p_other_profile_id uuid) returns uuid` — SECURITY DEFINER. Requires `auth.uid()` resolves to a profile, refuses self-DM, locks on the alphabetical composite key, inserts the chat row + both `chat_participants` rows, returns the chat id (idempotent).
-- New RPC `list_my_dm_chats()` returning `chat_id, other_profile_id, other_display_name, other_avatar_url, last_message_text, last_message_at, unread_count`. SECURITY DEFINER, scoped to caller.
-- RLS additions on `messages` and `chats`: DM participants (rows in `chat_participants` for that chat) can SELECT/INSERT messages where `chat_id` belongs to a DM chat. Existing event/squad policies stay intact.
-- Realtime: add `chats`, `chat_participants` to `supabase_realtime` publication (messages already there).
-
-### Frontend
-
-- New `src/hooks/useDirectMessages.tsx`: `useMyDmChats()` (calls `list_my_dm_chats`) + `useOpenDmChat(otherProfileId)` (calls `get_or_create_dm_chat`) + `useMarkDmRead(chatId)` (updates `chat_participants.read_at = now()`).
-- `Squads.tsx`: change `TabsList` from `grid-cols-2` to `grid-cols-3` — pills become **Squads / Messages / Contacts** with the existing premium glass pill treatment. New `<TabsContent value="messages">` renders a `DmList` component with last-message preview, relative timestamp, unread orange dot, and avatar.
-- New `src/components/chat/DirectMessageSheet.tsx`: a `Sheet` (slide-up drawer, `side="bottom"`, `h-[92dvh]`) wrapping `UnifiedChat` with `chatType="dm"`. Opens on:
-  1. Tap of a DM row in the Messages sub-tab.
-  2. Tap of "Message" CTA on `PublicProfileSheet` / `ProfileTapWrapper` profile card.
-- Add `chatType: 'dm'` to `src/components/chat/unified/types.ts` so the storage path and read-tracking hook can branch.
-- Typing presence + delivery already work via Supabase channels in `UnifiedChat` (per-`chatId` broadcast channel). Read receipts: extend `useMessageReads` to also write `chat_participants.read_at` on DM open and on every visible message in the DM path.
-
-## 2. "People You May Know" in the Contacts sub-tab
-
-- New RPC `get_people_you_may_know(p_limit int default 20)`: returns up to N profiles you are **not** friends with, sorted by mutual-friend count, with `mutual_count`, `mutual_sample_names[]` (top 2 names) for the caption. Excludes self, already-pending/accepted friendships, and blocked.
-- New `src/components/contacts/PeopleYouMayKnowCarousel.tsx`: horizontal `overflow-x-auto snap-x` strip rendered at the top of `ContactsTab`. Each card shows avatar, display name, micro-caption `Friends with JT and 2 others`, single-tap **+ Add** that calls `useRequestFriend` (already exists) and morphs to "Request sent" on success.
-
-## 3. Alerts tab consolidation
-
-The alerts page (`/notifications`) already pulls friend_request into `inviteNotifications` and renders `InviteAlertCard`. Two refinements:
-
-- Promote friend-request `InviteAlertCard` to a slightly stronger orange-glass treatment (already orange — tighten ring + `shadow-[0_0_30px_rgba(244,122,25,0.35)]` and ensure Accept/Ignore are 44px touch targets) — pure styling pass, no logic change.
-- New notification type `dm_message` emitted by an `AFTER INSERT` trigger on `messages` when `chat_id` is a DM (event_id IS NULL AND squad_id IS NULL). Title = sender display name, body = first 80 chars, `data.chat_id` + `data.sender_profile_id`. Tapping it opens the `DirectMessageSheet`. Dedupe key = `dm:<chat_id>` so multiple incoming texts collapse into one alert row.
-- `useNotifications` already aggregates `chat_unread` types into the BottomNav badge — extend the type list to include `dm_message`, so the bottom-nav indicator naturally lights up for unread DMs.
-
-## File touch list
-
+### A. Hydrate `isSubscribed` from DB on mount (native)
+Add a `useEffect` keyed on `profile?.id`. When `isNative()` and `profile?.id` are both truthy, query:
+```ts
+supabase.from('push_subscriptions')
+  .select('endpoint')
+  .eq('profile_id', profile.id)
+  .like('endpoint', `capacitor:${Capacitor.getPlatform()}:%`)
+  .limit(1).maybeSingle()
 ```
-supabase/migrations/<ts>_dm_chats_and_pymk.sql   (new)
-src/hooks/useDirectMessages.tsx                  (new)
-src/components/chat/DirectMessageSheet.tsx       (new)
-src/components/contacts/PeopleYouMayKnowCarousel.tsx (new)
-src/components/chat/unified/types.ts             (add 'dm')
-src/components/chat/unified/useMessageReads.ts   (DM read cursor)
-src/pages/Squads.tsx                             (3-col tabs + Messages tab)
-src/components/squads/ContactsTab.tsx            (mount PYMK carousel)
-src/components/notifications/InviteAlertCard.tsx (orange-glass polish)
-src/pages/Notifications.tsx                      (route dm_message taps to sheet)
-src/hooks/useNotifications.tsx                   (include dm_message in unread)
-src/components/profile/PublicProfileSheet.tsx    (wire "Message" button → DM sheet)
+If a row exists, `setIsSubscribed(true)`. This replaces the existing "leave as best-effort" comment so the toggle reflects reality after app relaunch.
+
+### B. 4.5s graceful APNs fallback
+Refactor the `tokenPromise` block in `subscribe()`:
+- Wrap APNs `registration` / `registrationError` listeners in a promise that resolves with a real token, but races against `setTimeout(4500)`.
+- On timeout: do NOT reject. Instead save a sentinel row with endpoint `capacitor:ios:realtime-fallback:{profile.id}`, `p256dh='realtime'`, `auth='realtime'`, then `setIsSubscribed(true)` + `toast.success('Notifications enabled (in-app)')` and `return true`.
+- On success: keep the existing token-based path.
+- Clear the timeout in both branches to avoid late fires.
+
+### C. Recover from denied iOS permission
+When `perm.receive === 'denied'`:
+```ts
+toast.error('Go to iPhone Settings → R@lly → Notifications and turn on Allow Notifications', { duration: 7000 });
+try {
+  const { App } = await import('@capacitor/app');
+  await App.openUrl({ url: 'app-settings:' });
+} catch { /* noop */ }
+return false;
 ```
+
+## 2. APNs delivery in `supabase/functions/send-push-notification/index.ts`
+
+### Routing in the `subscriptions.map` loop
+Replace the unconditional `sendWebPush` call with:
+```ts
+subscriptions.map((sub) => {
+  if (sub.endpoint.startsWith('capacitor:') && sub.endpoint.includes('realtime')) {
+    return Promise.resolve(true);            // in-app realtime handles it
+  }
+  if (sub.endpoint.startsWith('capacitor:ios:')) {
+    const token = sub.endpoint.slice('capacitor:ios:'.length);
+    return sendApnsNotification(token, { title, body, data, tag });
+  }
+  if (sub.endpoint.startsWith('capacitor:android:')) {
+    return Promise.resolve(false);           // FCM not yet wired
+  }
+  return sendWebPush(sub, ...);
+})
+```
+
+### New `sendApnsNotification(deviceToken, payload)`
+- Read `APNS_PRIVATE_KEY` (PEM p8 contents), `APNS_KEY_ID`, `APNS_TEAM_ID` via `Deno.env.get`. If any are missing, log and return `false` (do not throw — web path still works).
+- Build ES256 JWT: header `{ alg:'ES256', kid: APNS_KEY_ID, typ:'JWT' }`, payload `{ iss: APNS_TEAM_ID, iat: now }`. Cache the JWT in module scope for ~50 min to stay under Apple's 60-min cap.
+- Import the p8 with `crypto.subtle.importKey('pkcs8', …, ECDSA P-256, ['sign'])`. Reuse the existing `base64UrlEncode` helper.
+- `POST https://api.push.apple.com/3/device/{deviceToken}` with headers:
+  - `authorization: bearer {jwt}`
+  - `apns-topic: com.bravoboyz.rally`
+  - `apns-push-type: alert`
+  - `apns-priority: 10`
+  - `content-type: application/json`
+- Body: `{ aps: { alert: { title, body }, sound: 'default', badge: 1 }, data: payload.data ?? {} }`.
+- Return `true` on HTTP 200; otherwise log status + response text and return `false`.
+
+### Secrets the user must add (call out after the plan is approved)
+`APNS_PRIVATE_KEY`, `APNS_KEY_ID`, `APNS_TEAM_ID` (Team `Y2LST9547H`). I will request these via `add_secret` immediately before deploying the edge change so APNs starts working as soon as the keys land. The web path keeps working in the meantime.
+
+## 3. Persistent "Sent" badges in `src/components/squads/SquadInviteDialog.tsx`
+
+- Replace the local-only `invitedUserIds` Set seeding with a real query on dialog open. Use `react-query` (`useQuery` keyed on `['squad-invites', squadId]`) that fires when `open === true && profile?.id`:
+  ```ts
+  supabase.from('squad_invites')
+    .select('contact_value, invite_type, status')
+    .eq('squad_id', squadId)
+    .eq('invited_by', profile.id)
+  ```
+- Derive three memoized sets from the query result:
+  - `invitedProfileIds`: rows where `invite_type='in_app'` and `contact_value` starts with `profile:` → strip prefix.
+  - `invitedEmails` / `invitedPhones`: rows where `invite_type='email'|'sms'` and `contact_value` isn't `link-share`/`native-share`.
+- Initialize component state from `invitedProfileIds`. When `handleInviteUser` succeeds, optimistically add to the Set AND `queryClient.invalidateQueries(['squad-invites', squadId])`.
+- Keep the existing reset-on-close behavior, but the next open will refetch so state survives.
+- In the Email / SMS tabs, when the typed value matches a row in `invitedEmails` / `invitedPhones`, show a small muted line under the input: "Already invited via email" / "Already invited via SMS" and tint the Send button as a secondary `Re-send` (still allowed).
+
+## 4. Inline Accept/Decline on Squad invite alert cards
+
+### New RPC (migration) — `accept_squad_invite(p_squad_id uuid)`
+SECURITY DEFINER, search_path = public. Behavior:
+1. Resolve caller `profile_id` from `auth.uid()`; error if none.
+2. Verify a pending row exists: `squad_invites` where `squad_id = p_squad_id` AND `status = 'pending'` AND `expires_at > now()` AND (`contact_value = 'profile:' || caller_profile_id` OR caller's email/phone matches a sms/email invite). Error `not_invited` otherwise.
+3. `INSERT INTO squad_members (squad_id, profile_id, role) VALUES (p_squad_id, caller_profile_id, 'member') ON CONFLICT DO NOTHING`.
+4. `UPDATE squad_invites SET status='accepted' WHERE squad_id = p_squad_id AND (contact_value = 'profile:' || caller_profile_id OR id matches the matching row)`.
+5. Return `jsonb_build_object('success', true, 'squad_id', p_squad_id)`.
+
+Also add `decline_squad_invite(p_squad_id uuid)` that updates matching pending invites to `status='declined'` for the caller. Keeps RLS intact (no policy widening on `squad_members`).
+
+`GRANT EXECUTE ON FUNCTION public.accept_squad_invite(uuid) TO authenticated;` and same for decline.
+
+### `src/components/notifications/InviteAlertCard.tsx`
+- Add `handleSquadResponse(response: 'accepted'|'declined')` that calls `supabase.rpc('accept_squad_invite'|'decline_squad_invite', { p_squad_id: data.squad_id })`.
+- On accept: `toast.success("You joined the squad! 🎉")`, then `queryClient.invalidateQueries({ queryKey: ['squads'] })` and `['notifications']`, mark read.
+- On decline: `toast.info('Squad invite declined')`, mark read.
+- Render block: when `isSquadInvite && !notification.read && data?.squad_id`, show the same Accept/Decline button pair as friend requests (using `handleSquadResponse`). Fall back to the existing "View Invite" button only when no `squad_id` is present (legacy notifications).
+- Inject `useQueryClient` + a small `useState` for `isResponding` so buttons disable while the RPC is in flight.
 
 ## Verification
 
-- DM open from a profile card → row appears in Squads → Messages → tap reopens sheet with history.
-- Two browsers, two accounts: text → recipient sees orange dot in Messages list + unread badge on bottom nav + `dm_message` row in `/notifications`; typing dots animate live; read receipt clears badge after opening.
-- PYMK strip surfaces a mutual friend with correct caption; Add → row disappears next refresh and recipient gets a `friend_request` alert card.
-- No regression in existing event/squad chats (same `UnifiedChat`, same RLS scopes).
+- **Native push UI**: Reopen the app on a device that previously enabled push → toggle shows "Enabled". Toggle off → row is removed and shows "Disabled" on next launch.
+- **APNs timeout fallback**: With APNs intentionally broken (e.g. dev simulator), tapping Enable shows the in-app success toast within ~5s and creates a `realtime-fallback` row.
+- **Permission denied**: Deny iOS prompt → toast + Settings deep link opens.
+- **APNs delivery**: After secrets are set, trigger any notification path (friend request, rally start) → device receives a banner.
+- **Squad invite badges**: Invite a user, close + reopen the dialog → user still shows `Sent ✓`. Type an already-invited email → muted note appears.
+- **Inline squad accept**: Receive a squad invite → Accept directly from `/notifications`, confirm `squad_members` row created and the squad appears in the Squads tab without navigating to `/join-squad`.
 
-## Out of scope (separate follow-ups)
-
-- DM media attachments beyond what `UnifiedChat` already supports.
-- Block / mute UX (table can be added later; PYMK + DM RPCs already leave a clean spot for it).
-- Push-notification fan-out for DMs (the trigger writes a `notifications` row; the existing push pipeline already mirrors notifications — confirm during verification, no new code expected).
+## Out of scope
+- FCM/Android push delivery (stubbed `false` for now).
+- Reworking the standalone `/join-squad` page.
+- Migrating existing legacy `event_invite`/`rally_invite` cards to inline accept.

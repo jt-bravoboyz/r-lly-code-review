@@ -113,6 +113,103 @@ async function sendWebPush(
   }
 }
 
+// =========================
+// APNs (Apple Push) delivery
+// =========================
+
+let cachedApnsJwt: { token: string; iat: number } | null = null;
+
+function pemToPkcs8Bytes(pem: string): Uint8Array {
+  const b64 = pem
+    .replace(/-----BEGIN [^-]+-----/g, '')
+    .replace(/-----END [^-]+-----/g, '')
+    .replace(/\s+/g, '');
+  const binary = atob(b64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+
+async function getApnsJwt(keyId: string, teamId: string, privateKeyPem: string): Promise<string> {
+  const now = Math.floor(Date.now() / 1000);
+  if (cachedApnsJwt && now - cachedApnsJwt.iat < 50 * 60) {
+    return cachedApnsJwt.token;
+  }
+  const header = { alg: 'ES256', kid: keyId, typ: 'JWT' };
+  const payload = { iss: teamId, iat: now };
+  const headerB64 = base64UrlEncode(new TextEncoder().encode(JSON.stringify(header)));
+  const payloadB64 = base64UrlEncode(new TextEncoder().encode(JSON.stringify(payload)));
+  const unsigned = `${headerB64}.${payloadB64}`;
+
+  const keyBytes = pemToPkcs8Bytes(privateKeyPem);
+  const cryptoKey = await crypto.subtle.importKey(
+    'pkcs8',
+    keyBytes,
+    { name: 'ECDSA', namedCurve: 'P-256' },
+    false,
+    ['sign']
+  );
+  const signature = await crypto.subtle.sign(
+    { name: 'ECDSA', hash: 'SHA-256' },
+    cryptoKey,
+    new TextEncoder().encode(unsigned)
+  );
+  const token = `${unsigned}.${base64UrlEncode(signature)}`;
+  cachedApnsJwt = { token, iat: now };
+  return token;
+}
+
+async function sendApnsNotification(
+  deviceToken: string,
+  payload: { title: string; body: string; data?: Record<string, unknown>; tag?: string }
+): Promise<boolean> {
+  try {
+    const keyId = Deno.env.get('APNS_KEY_ID');
+    const teamId = Deno.env.get('APNS_TEAM_ID');
+    const privateKey = Deno.env.get('APNS_PRIVATE_KEY');
+    const topic = Deno.env.get('APNS_TOPIC') ?? 'com.bravoboyz.rally';
+
+    if (!keyId || !teamId || !privateKey) {
+      console.warn('APNs not configured (missing APNS_KEY_ID/APNS_TEAM_ID/APNS_PRIVATE_KEY) — skipping native push');
+      return false;
+    }
+
+    const jwt = await getApnsJwt(keyId, teamId, privateKey);
+
+    const body = JSON.stringify({
+      aps: {
+        alert: { title: payload.title, body: payload.body },
+        sound: 'default',
+        badge: 1,
+      },
+      data: payload.data ?? {},
+    });
+
+    const response = await fetch(`https://api.push.apple.com/3/device/${deviceToken}`, {
+      method: 'POST',
+      headers: {
+        'authorization': `bearer ${jwt}`,
+        'apns-topic': topic,
+        'apns-push-type': 'alert',
+        'apns-priority': '10',
+        'content-type': 'application/json',
+      },
+      body,
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      console.error('APNs send failed:', response.status, text);
+      return false;
+    }
+    return true;
+  } catch (err: any) {
+    console.error('APNs send error:', err?.message ?? err);
+    return false;
+  }
+}
+
+
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -328,17 +425,32 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log(`Found ${subscriptions.length} subscriptions`);
 
-    // Send push to each subscription
+    // Send push to each subscription — route by endpoint prefix
+    const pushPayload = { title: payload.title, body: payload.body, data: payload.data, tag: payload.tag };
     const results = await Promise.all(
-      subscriptions.map((sub) =>
-        sendWebPush(
+      subscriptions.map((sub) => {
+        const endpoint: string = sub.endpoint ?? '';
+        if (endpoint.startsWith('capacitor:') && endpoint.includes('realtime')) {
+          // Realtime fallback — Supabase realtime delivers in-app; no push needed
+          return Promise.resolve(true);
+        }
+        if (endpoint.startsWith('capacitor:ios:')) {
+          const token = endpoint.slice('capacitor:ios:'.length);
+          return sendApnsNotification(token, pushPayload);
+        }
+        if (endpoint.startsWith('capacitor:android:')) {
+          // FCM not wired yet
+          return Promise.resolve(false);
+        }
+        return sendWebPush(
           { endpoint: sub.endpoint, p256dh: sub.p256dh, auth: sub.auth },
-          { title: payload.title, body: payload.body, data: payload.data, tag: payload.tag },
+          pushPayload,
           vapidPublicKey,
           vapidPrivateKey
-        )
-      )
+        );
+      })
     );
+
 
     const successCount = results.filter(Boolean).length;
     console.log(`Sent ${successCount}/${subscriptions.length} push notifications`);
