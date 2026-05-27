@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { SquadChatSheet } from '@/components/chat/SquadChatSheet';
 import { SquadInviteDialog } from '@/components/squads/SquadInviteDialog';
+import { SquadPendingInvitesCard } from '@/components/squads/SquadPendingInvitesCard';
 import { QuickRallyDialog } from '@/components/events/QuickRallyDialog';
 import { SquadSettingsDialog } from '@/components/squads/SquadSettingsDialog';
 import { GroupPhotoCropperDialog } from '@/components/squads/GroupPhotoCropperDialog';
