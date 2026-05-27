@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.create_event(text, text, text, timestamptz, text, double precision, double precision, boolean, numeric, boolean, text, boolean, text, text, boolean) FROM PUBLIC, anon;
