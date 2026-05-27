@@ -137,6 +137,26 @@ export function InviteAlertCard({ notification }: InviteAlertCardProps) {
                   Decline
                 </Button>
               </div>
+            ) : isSquadInvite && !notification.read && data?.squad_id ? (
+              <div className="flex gap-2 mt-3">
+                <Button
+                  size="sm"
+                  className="min-h-[44px] px-5 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold font-montserrat shadow-[0_0_20px_rgba(244,122,25,0.4)]"
+                  disabled={isResponding}
+                  onClick={() => handleSquadResponse('accepted')}
+                >
+                  Accept
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="min-h-[44px] px-5 rounded-full font-bold font-montserrat border-primary/30 hover:bg-primary/5"
+                  disabled={isResponding}
+                  onClick={() => handleSquadResponse('declined')}
+                >
+                  Decline
+                </Button>
+              </div>
             ) : !isFriendRequest ? (
               <div className="mt-3">
                 <Button
@@ -149,6 +169,7 @@ export function InviteAlertCard({ notification }: InviteAlertCardProps) {
                 </Button>
               </div>
             ) : null}
+
           </div>
         </div>
       </CardContent>
