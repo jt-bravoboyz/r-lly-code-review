@@ -209,8 +209,8 @@ export default function Index() {
               ))}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground italic text-center py-4 font-montserrat">
-              The night is young—no live R@llys yet. Start the movement.
+            <p className="text-xs text-muted-foreground italic text-center py-1.5 font-montserrat">
+              The night is young—no live R@llys yet.
             </p>
           )}
         </section>
