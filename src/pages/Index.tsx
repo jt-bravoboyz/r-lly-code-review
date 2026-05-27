@@ -150,7 +150,7 @@ export default function Index() {
         {/* Ready to Rally Section - Bold & Vibrant */}
         <section className="space-y-5">
           <div className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary" />
+            <Flag className="h-5 w-5 text-[#F47A19] fill-[#F47A19]" />
             <h2 className="text-2xl font-bold font-montserrat tracking-tight animate-text-shimmer bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">
               Ready to R@lly?
             </h2>
