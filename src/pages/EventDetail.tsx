@@ -940,18 +940,7 @@ export default function EventDetail() {
           </section>
         )}
 
-        {/* Split Check — host card (always available pre-completion) + attendee "Pay your share" CTA */}
-        {!isCompleted && (
-          <SplitCheckSection
-            eventId={event.id}
-            creatorId={(event as any).creator_id}
-            canManage={canManage}
-            profileId={profile?.id}
-            onRequestPayment={() => setShowRequestPayment(true)}
-            onOpenPay={(rid) => setPayRequestId(rid)}
-            onOpenPayoutSetup={() => navigate('/profile')}
-          />
-        )}
+        {/* Split Check / Request Payment intentionally hidden — R@lly Tabs not yet released */}
 
         {!isCompleted && isScheduled && isAttending && hasCompletedJoinFlow && (
           <Button
