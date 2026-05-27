@@ -695,40 +695,25 @@ export default function EventDetail() {
             <p className="text-muted-foreground">{event.description}</p>
           )}
 
-          <div className="space-y-1 text-sm">
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-primary" />
-              <span>{format(new Date(event.start_time), 'EEEE, MMMM d · h:mm a')}</span>
-              {canManage && event.status !== 'completed' && (
-                <EditEventTimeDialog
-                  eventId={event.id}
-                  eventTitle={event.title}
-                  currentStartTime={event.start_time}
-                  currentEndTime={event.end_time}
-                  attendeeProfileIds={(event.attendees ?? []).map((a: any) => a.profile?.id ?? a.profile_id).filter(Boolean)}
-                  currentProfileId={activeProfile?.id}
-                />
-              )}
+          {/* Host edit affordances (kept invisible when not manager) */}
+          {canManage && event.status !== 'completed' && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <EditEventTimeDialog
+                eventId={event.id}
+                eventTitle={event.title}
+                currentStartTime={event.start_time}
+                currentEndTime={event.end_time}
+                attendeeProfileIds={(event.attendees ?? []).map((a: any) => a.profile?.id ?? a.profile_id).filter(Boolean)}
+                currentProfileId={activeProfile?.id}
+              />
+              <EditEventLocationDialog
+                eventId={event.id}
+                currentLocationName={event.location_name}
+                currentLat={event.location_lat}
+                currentLng={event.location_lng}
+              />
             </div>
-            
-            <div className="flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-primary" />
-              <span>{event.location_name || 'No location set'}</span>
-              {canManage && (
-                <EditEventLocationDialog
-                  eventId={event.id}
-                  currentLocationName={event.location_name}
-                  currentLat={event.location_lat}
-                  currentLng={event.location_lng}
-                />
-              )}
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-primary" />
-              <span>{attendeeCount} attending</span>
-            </div>
-          </div>
+          )}
 
           {/* Location Map Preview - Show if event has coordinates */}
           {event.location_lat && event.location_lng && !(isAfterRally && event.is_barhop) && (
@@ -736,7 +721,7 @@ export default function EventDetail() {
               lat={event.location_lat}
               lng={event.location_lng}
               name={event.location_name || undefined}
-              address={event.location_name || undefined}
+              address={undefined}
               height="h-40"
               interactive={true}
               showDirections={true}
