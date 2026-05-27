@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -29,6 +30,7 @@ export function PeopleYouMayKnowCarousel() {
   const { profile } = useAuth();
   const { data: friendships = [] } = useFriendships();
   const requestFriend = useRequestFriend();
+  const [optimisticSent, setOptimisticSent] = useState<Set<string>>(new Set());
 
   const { data = [], isLoading } = useQuery({
     queryKey: ['pymk', profile?.id],
@@ -56,7 +58,7 @@ export function PeopleYouMayKnowCarousel() {
         <div className="flex gap-3 px-4 sm:px-0 pb-1">
           {data.map((row) => {
             const state = getFriendshipState(row.profile_id, friendships, profile?.id);
-            const sent = state.state === 'pending_outgoing';
+            const sent = state.state === 'pending_outgoing' || optimisticSent.has(row.profile_id);
             const friends = state.state === 'accepted';
             const disabled = sent || friends || requestFriend.isPending;
             const caption = captionFor(row);
@@ -83,17 +85,27 @@ export function PeopleYouMayKnowCarousel() {
                   size="sm"
                   disabled={disabled}
                   onClick={async () => {
+                    setOptimisticSent((prev) => {
+                      const next = new Set(prev);
+                      next.add(row.profile_id);
+                      return next;
+                    });
                     try {
                       await requestFriend.mutateAsync(row.profile_id);
                       toast.success('Request sent');
                     } catch (e: any) {
+                      setOptimisticSent((prev) => {
+                        const next = new Set(prev);
+                        next.delete(row.profile_id);
+                        return next;
+                      });
                       toast.error(e?.message || 'Could not send request');
                     }
                   }}
                   className={
                     sent || friends
-                      ? 'h-8 w-full rounded-full text-[11px] font-black uppercase tracking-wider bg-black/5 dark:bg-white/5 text-zinc-500'
-                      : 'h-8 w-full rounded-full text-[11px] font-black uppercase tracking-wider bg-[#F47A19] text-white hover:bg-[#F47A19]/90 shadow-lg shadow-[#F47A19]/20'
+                      ? 'h-9 min-h-[36px] w-full rounded-full text-[11px] font-black uppercase tracking-wider bg-[#F47A19]/12 text-[#F47A19] border border-[#F47A19]/30 transition-all'
+                      : 'h-9 min-h-[36px] w-full rounded-full text-[11px] font-black uppercase tracking-wider bg-[#F47A19] text-white hover:bg-[#F47A19]/90 shadow-lg shadow-[#F47A19]/30 transition-all'
                   }
                 >
                   {friends ? (
@@ -101,7 +113,9 @@ export function PeopleYouMayKnowCarousel() {
                       <Check className="h-3.5 w-3.5 mr-1" /> Friends
                     </>
                   ) : sent ? (
-                    'Requested'
+                    <>
+                      <Check className="h-3.5 w-3.5 mr-1" /> Requested
+                    </>
                   ) : (
                     <>
                       <UserPlus className="h-3.5 w-3.5 mr-1" /> Add
