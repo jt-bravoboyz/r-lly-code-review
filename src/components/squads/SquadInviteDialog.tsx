@@ -32,11 +32,67 @@ export function SquadInviteDialog({ squadId, squadName, trigger }: SquadInviteDi
   const [copied, setCopied] = useState(false);
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
   const [userSearch, setUserSearch] = useState('');
-  const [invitedUserIds, setInvitedUserIds] = useState<Set<string>>(new Set());
+  const [optimisticInvited, setOptimisticInvited] = useState<Set<string>>(new Set());
   const { profile } = useAuth();
   const { data: allProfiles } = useAllProfiles();
+  const queryClient = useQueryClient();
 
   const baseUrl = PUBLIC_APP_URL;
+
+  // Persistent invite state pulled from the DB so badges survive close/reopen
+  const { data: existingInvites } = useQuery({
+    queryKey: ['squad-invites', squadId, profile?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('squad_invites')
+        .select('contact_value, invite_type, status')
+        .eq('squad_id', squadId)
+        .eq('invited_by', profile!.id);
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: open && !!profile?.id,
+  });
+
+  const invitedProfileIds = useMemo(() => {
+    const s = new Set<string>();
+    (existingInvites ?? []).forEach((inv) => {
+      if (inv.invite_type === 'in_app' && inv.contact_value?.startsWith('profile:')) {
+        s.add(inv.contact_value.slice('profile:'.length));
+      }
+    });
+    optimisticInvited.forEach((id) => s.add(id));
+    return s;
+  }, [existingInvites, optimisticInvited]);
+
+  const invitedEmails = useMemo(() => {
+    const s = new Set<string>();
+    (existingInvites ?? []).forEach((inv) => {
+      if (
+        inv.invite_type === 'email' &&
+        inv.contact_value &&
+        inv.contact_value !== 'link-share' &&
+        inv.contact_value !== 'native-share'
+      ) {
+        s.add(inv.contact_value.toLowerCase());
+      }
+    });
+    return s;
+  }, [existingInvites]);
+
+  const invitedPhones = useMemo(() => {
+    const s = new Set<string>();
+    (existingInvites ?? []).forEach((inv) => {
+      if (inv.invite_type === 'sms' && inv.contact_value) {
+        s.add(inv.contact_value.replace(/[^\d]/g, '').slice(-10));
+      }
+    });
+    return s;
+  }, [existingInvites]);
+
+  const emailAlreadyInvited = email.trim() && invitedEmails.has(email.trim().toLowerCase());
+  const phoneAlreadyInvited =
+    phone.trim() && invitedPhones.has(phone.replace(/[^\d]/g, '').slice(-10));
 
   const filteredProfiles = useMemo(() => {
     if (!allProfiles || !profile?.id) return [];
@@ -46,6 +102,7 @@ export function SquadInviteDialog({ squadId, squadName, trigger }: SquadInviteDi
       return (p.display_name || '').toLowerCase().includes(userSearch.toLowerCase());
     });
   }, [allProfiles, profile?.id, userSearch]);
+
 
   const handleInviteUser = async (targetProfileId: string) => {
     if (!profile?.id) return;
