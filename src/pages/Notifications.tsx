@@ -97,6 +97,11 @@ export default function Notifications() {
       return;
     }
 
+    if (notification.type === 'dm_message' && data?.sender_profile_id) {
+      openDm({ otherProfileId: data.sender_profile_id, chatId: data.chat_id });
+      return;
+    }
+
     if (notification.type === 'split_check_request') {
       // Standalone R@lly Tab (no event_id) → deep-link to the tabs ledger or guest pay page
       if (!data?.event_id) {
