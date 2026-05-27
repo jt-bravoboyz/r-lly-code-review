@@ -23,6 +23,8 @@ export function InviteAlertCard({ notification }: InviteAlertCardProps) {
   const markFriendRequestRead = useMarkFriendRequestNotificationsRead();
   const respondToFriendRequest = useRespondToFriendRequest();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [isResponding, setIsResponding] = useState(false);
 
   const data = notification.data as Record<string, any> | null;
   const isSquadInvite = notification.type === 'squad_invite';
@@ -53,7 +55,33 @@ export function InviteAlertCard({ notification }: InviteAlertCardProps) {
     }
   };
 
+  const handleSquadResponse = async (response: 'accepted' | 'declined') => {
+    if (!data?.squad_id) return;
+    setIsResponding(true);
+    try {
+      const rpc = response === 'accepted' ? 'accept_squad_invite' : 'decline_squad_invite';
+      const { data: result, error } = await supabase.rpc(rpc as any, { p_squad_id: data.squad_id });
+      if (error) throw error;
+      if (result && typeof result === 'object' && 'error' in result) {
+        throw new Error((result as any).error);
+      }
+      if (response === 'accepted') {
+        toast.success('You joined the squad! 🎉');
+      } else {
+        toast.info('Squad invite declined');
+      }
+      markRead.mutate(notification.id);
+      queryClient.invalidateQueries({ queryKey: ['squads'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    } catch (error: any) {
+      toast.error(error.message || 'Could not process invite');
+    } finally {
+      setIsResponding(false);
+    }
+  };
+
   const Icon = isFriendRequest ? UserPlus : isSquadInvite ? Users : Calendar;
+
 
   return (
     <Card
