@@ -603,7 +603,7 @@ export default function EventDetail() {
               {/* Date/Time isolation card + invite cluster */}
               <div className="mt-2 space-y-3">
                 {/* Prominent Date & Time — solid isolation barrier for theme-proof contrast */}
-                <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-2xl border border-white/30 dark:border-zinc-800 shadow-xl p-4 rounded-2xl flex items-center gap-4">
+                <div className="bg-background/80 dark:bg-zinc-900/80 backdrop-blur-2xl border border-white/20 dark:border-zinc-800/50 shadow-xl p-4 rounded-2xl flex items-center gap-4">
                   <div className="flex flex-col items-center justify-center rounded-xl bg-[#F47A19] px-3 py-2 min-w-[64px] shadow-md">
                     <span className="text-[10px] font-black uppercase tracking-[0.18em] text-white leading-none">
                       {format(new Date(event.start_time), 'MMM')}
@@ -613,14 +613,14 @@ export default function EventDetail() {
                     </span>
                   </div>
                   <div className="flex flex-col justify-center min-w-0 flex-1">
-                    <span className="text-zinc-900 dark:text-white font-black text-xl tracking-wider uppercase font-montserrat leading-tight">
+                    <span className="text-foreground font-black text-xl tracking-wider uppercase font-montserrat leading-tight">
                       {format(new Date(event.start_time), 'EEEE')}
                     </span>
                     <span className="text-[#F47A19] font-black text-xl font-montserrat leading-tight">
                       {format(new Date(event.start_time), 'h:mm a')}
                     </span>
                     {event.location_name && (
-                      <span className="text-zinc-700 dark:text-zinc-300 font-bold text-base truncate mt-0.5">
+                      <span className="text-muted-foreground font-semibold text-base truncate mt-0.5">
                         {event.location_name}
                       </span>
                     )}
@@ -630,7 +630,7 @@ export default function EventDetail() {
                 <div className="flex items-stretch gap-2.5">
                   <button
                     type="button"
-                    className="flex-1 w-full justify-center text-center font-bold h-12 inline-flex items-center gap-1.5 text-sm px-3 rounded-2xl bg-card border border-border text-card-foreground hover:bg-card/80 transition shadow-sm"
+                    className="flex-1 w-full h-12 flex items-center justify-center gap-1.5 text-center font-bold text-sm px-4 rounded-xl bg-card border border-border text-card-foreground shadow-sm hover:bg-accent/10 backdrop-blur-md transition-all"
                     onClick={async () => {
                       const url = buildRallyShareUrl({ eventId: event.id, inviteCode: event.invite_code }, { referrerId: profile?.id });
                       trackEvent('invite_link_copied', { event_id: event.id });
@@ -665,7 +665,7 @@ export default function EventDetail() {
                   <button
                     type="button"
                     onClick={() => setInviteFriendsOpen(true)}
-                    className="flex-1 w-full justify-center text-center font-bold h-12 inline-flex items-center gap-1.5 text-sm px-3 rounded-2xl bg-card border border-border text-card-foreground hover:bg-card/80 transition shadow-sm font-montserrat"
+                    className="flex-1 w-full h-12 flex items-center justify-center gap-1.5 text-center font-bold text-sm px-4 rounded-xl bg-card border border-border text-card-foreground shadow-sm hover:bg-accent/10 backdrop-blur-md transition-all font-montserrat"
                   >
                     <UserPlus className="h-4 w-4 text-primary" />
                     Invite Friends
