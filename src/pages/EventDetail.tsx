@@ -601,7 +601,7 @@ export default function EventDetail() {
                 </div>
               )}
               {/* Frosted metadata + invite cluster */}
-              <div className="ev-frost px-3 py-3 mt-2 space-y-3">
+              <div className="ev-frost px-3 py-3 mt-2 space-y-3 bg-background/40 dark:bg-black/40 backdrop-blur-xl border border-foreground/10 rounded-2xl shadow-sm">
                 {/* Prominent Date & Time */}
                 <div className="flex items-stretch gap-3">
                   <div className="flex flex-col items-center justify-center rounded-xl bg-primary/15 border border-primary/25 px-3 py-2 min-w-[64px] shadow-sm">
@@ -629,7 +629,7 @@ export default function EventDetail() {
                 <div className="flex items-center gap-2.5 flex-wrap">
                   <button
                     type="button"
-                    className="inline-flex items-center gap-1.5 text-xs font-medium pl-2.5 pr-3 py-1.5 rounded-full bg-background/40 backdrop-blur-md border border-white/10 dark:border-black/10 hover:bg-background/55 transition shadow-sm text-foreground"
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold pl-2.5 pr-3 py-1.5 rounded-full bg-background/70 dark:bg-black/55 backdrop-blur-xl border border-foreground/15 hover:bg-background/85 dark:hover:bg-black/70 transition shadow-sm text-foreground"
                     onClick={async () => {
                       const url = buildRallyShareUrl({ eventId: event.id, inviteCode: event.invite_code }, { referrerId: profile?.id });
                       trackEvent('invite_link_copied', { event_id: event.id });
@@ -659,12 +659,12 @@ export default function EventDetail() {
                     ) : (
                       <Link2 className="h-3.5 w-3.5 opacity-80" />
                     )}
-                    {linkCopied ? 'Shared' : Capacitor.isNativePlatform() ? 'Share invite' : 'Copy invite link'}
+                    {linkCopied ? 'Sent' : 'Send invite link'}
                   </button>
                   <button
                     type="button"
                     onClick={() => setInviteFriendsOpen(true)}
-                    className="inline-flex items-center gap-1.5 text-xs font-bold font-montserrat min-h-[44px] pl-3 pr-4 py-2 rounded-full bg-primary text-primary-foreground shadow-[0_0_20px_rgba(244,122,25,0.4)] hover:bg-primary/90 transition active:scale-95"
+                    className="inline-flex items-center gap-1.5 text-xs font-bold font-montserrat min-h-[44px] pl-3 pr-4 py-2 rounded-full bg-primary text-primary-foreground border border-primary-foreground/20 shadow-[0_0_20px_rgba(244,122,25,0.45)] hover:bg-primary/90 transition active:scale-95"
                   >
                     <UserPlus className="h-3.5 w-3.5" />
                     Invite Friends
