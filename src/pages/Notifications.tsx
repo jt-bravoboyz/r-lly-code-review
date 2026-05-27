@@ -16,10 +16,11 @@ import { MiniFounderGem } from '@/components/badges/MiniFounderGem';
 import { useMarkFriendRequestNotificationsRead } from '@/hooks/useNotifications';
 import { usePublicProfile } from '@/contexts/PublicProfileContext';
 import { useRespondToFriendRequest } from '@/hooks/useFriendships';
+import { useDirectMessage } from '@/contexts/DirectMessageContext';
 import { toast } from 'sonner';
 
 const INVITE_TYPES = ['squad_invite', 'rally_invite', 'event_invite', 'friend_request'];
-const ACTIONABLE_TYPES = [...INVITE_TYPES, 'friend_request', 'rally_started', 'squad_chat_unread', 'rally_chat_unread', 'chat_unread'];
+const ACTIONABLE_TYPES = [...INVITE_TYPES, 'friend_request', 'rally_started', 'squad_chat_unread', 'rally_chat_unread', 'chat_unread', 'dm_message'];
 
 export default function Notifications() {
   const { profile, loading: authLoading } = useAuth();
@@ -31,6 +32,7 @@ export default function Notifications() {
   const markFriendRequestRead = useMarkFriendRequestNotificationsRead();
   const navigate = useNavigate();
   const { openProfile } = usePublicProfile();
+  const { openDm } = useDirectMessage();
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const { inviteNotifications, regularNotifications } = useMemo(() => {
@@ -67,6 +69,8 @@ export default function Notifications() {
         return <UserPlus className="h-5 w-5 text-green-500" />;
       case 'friend_request':
         return <UserPlus className="h-5 w-5 text-primary" />;
+      case 'dm_message':
+        return <MessageCircle className="h-5 w-5 text-primary" />;
       default:
         return <Bell className="h-5 w-5 text-primary" />;
     }
@@ -90,6 +94,11 @@ export default function Notifications() {
 
     if (notification.type === 'friend_request' && data?.requester_profile_id) {
       openProfile(data.requester_profile_id);
+      return;
+    }
+
+    if (notification.type === 'dm_message' && data?.sender_profile_id) {
+      openDm({ otherProfileId: data.sender_profile_id, chatId: data.chat_id });
       return;
     }
 

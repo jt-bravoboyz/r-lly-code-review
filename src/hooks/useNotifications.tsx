@@ -72,6 +72,8 @@ export function useNotifications() {
             });
           } else if (alertType === 'event_invite' || alertType === 'rally_invite' || alertType === 'rally_started' || alertType === 'friend_request') {
             toast.info(newNotif.title, { description: newNotif.body || undefined });
+          } else if (alertType === 'dm_message') {
+            toast.info(newNotif.title || 'New message', { description: newNotif.body || undefined });
           }
         }
       )
@@ -210,7 +212,14 @@ export function useDeleteNotification() {
 
 export function useUnreadCount() {
   const { data: notifications } = useNotifications();
+  // Explicitly includes dm_message rows so the BottomNav badge lights up
+  // for unread direct messages in the same totals as invites/alerts.
   return notifications?.filter(n => !n.read).length || 0;
+}
+
+export function useDmUnreadCount() {
+  const { data: notifications } = useNotifications();
+  return notifications?.filter(n => !n.read && n.type === 'dm_message').length || 0;
 }
 
 export function useMarkAllNotificationsRead() {

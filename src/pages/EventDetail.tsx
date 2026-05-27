@@ -57,6 +57,7 @@ import { useBarHopStopsRealtime } from '@/hooks/useBarHopStopsRealtime';
 import { LocationMapPreview } from '@/components/location/LocationMapPreview';
 import { FirstTimeWelcomeDialog } from '@/components/events/FirstTimeWelcomeDialog';
 import { InviteToEventDialog } from '@/components/events/InviteToEventDialog';
+import { InviteFriendsSheet } from '@/components/events/InviteFriendsSheet';
 import { AfterRallyOptInDialog } from '@/components/events/AfterRallyOptInDialog';
 import { SafetyCloseoutDialog } from '@/components/events/SafetyCloseoutDialog';
 import { EndRallyDialog } from '@/components/events/EndRallyDialog';
@@ -166,6 +167,7 @@ export default function EventDetail() {
   const [showRequestPayment, setShowRequestPayment] = useState(false);
   const [payRequestId, setPayRequestId] = useState<string | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [inviteFriendsOpen, setInviteFriendsOpen] = useState(false);
 
   const [showRideshareDrawer, setShowRideshareDrawer] = useState(false);
   const [joinFlowDismissedForSession, setJoinFlowDismissedForSession] = useState(false);
@@ -619,6 +621,14 @@ export default function EventDetail() {
                     )}
                     {linkCopied ? 'Copied' : 'Copy invite link'}
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => setInviteFriendsOpen(true)}
+                    className="inline-flex items-center gap-1.5 text-xs font-bold font-montserrat min-h-[44px] pl-3 pr-4 py-2 rounded-full bg-primary text-primary-foreground shadow-[0_0_20px_rgba(244,122,25,0.4)] hover:bg-primary/90 transition active:scale-95"
+                  >
+                    <UserPlus className="h-3.5 w-3.5" />
+                    Invite Friends
+                  </button>
                   {(event as any).invite_code_expires_at && (() => {
                     const expiresAt = new Date((event as any).invite_code_expires_at as string).getTime();
                     const expired = expiresAt < Date.now();
@@ -670,6 +680,13 @@ export default function EventDetail() {
                   <UserPlus className="h-5 w-5" />
                 </Button>
               }
+            />
+            <InviteFriendsSheet
+              open={inviteFriendsOpen}
+              onOpenChange={setInviteFriendsOpen}
+              eventId={event.id}
+              eventTitle={event.title}
+              existingAttendeeIds={event.attendees?.map(a => a.profile?.id).filter(Boolean) as string[] || []}
             />
           </div>
 
