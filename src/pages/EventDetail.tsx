@@ -601,7 +601,7 @@ export default function EventDetail() {
                 </div>
               )}
               {/* Frosted metadata + invite cluster */}
-              <div className="ev-frost px-3 py-3 mt-2 space-y-3">
+              <div className="ev-frost px-3 py-3 mt-2 space-y-3 bg-background/40 dark:bg-black/40 backdrop-blur-xl border border-foreground/10 rounded-2xl shadow-sm">
                 {/* Prominent Date & Time */}
                 <div className="flex items-stretch gap-3">
                   <div className="flex flex-col items-center justify-center rounded-xl bg-primary/15 border border-primary/25 px-3 py-2 min-w-[64px] shadow-sm">
