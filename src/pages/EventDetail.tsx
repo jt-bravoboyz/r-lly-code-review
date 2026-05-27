@@ -167,6 +167,7 @@ export default function EventDetail() {
   const [showRequestPayment, setShowRequestPayment] = useState(false);
   const [payRequestId, setPayRequestId] = useState<string | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [inviteFriendsOpen, setInviteFriendsOpen] = useState(false);
 
   const [showRideshareDrawer, setShowRideshareDrawer] = useState(false);
   const [joinFlowDismissedForSession, setJoinFlowDismissedForSession] = useState(false);
