@@ -917,7 +917,7 @@ export default function EventDetail() {
         {!isCompleted && isScheduled && isAttending && hasCompletedJoinFlow && (
           <Button
             variant="outline"
-            className="w-full font-montserrat font-bold"
+            className="w-full font-montserrat font-bold bg-card text-card-foreground border-border hover:bg-card/80"
             onClick={() => setShowTransportSelector(true)}
           >
             <Settings2 className="h-5 w-5 mr-2" />
