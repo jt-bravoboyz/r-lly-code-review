@@ -601,17 +601,52 @@ export default function EventDetail() {
                 </div>
               )}
               {/* Frosted metadata + invite cluster */}
-              <div className="ev-frost px-3 py-2.5 mt-2 space-y-2">
-                <p className="text-xs text-muted-foreground">
-                  {format(new Date(event.start_time), 'EEEE')} · {format(new Date(event.start_time), 'h:mm a')}{event.location_name ? ` · ${event.location_name}` : ''}
-                </p>
+              <div className="ev-frost px-3 py-3 mt-2 space-y-3">
+                {/* Prominent Date & Time */}
+                <div className="flex items-stretch gap-3">
+                  <div className="flex flex-col items-center justify-center rounded-xl bg-primary/15 border border-primary/25 px-3 py-2 min-w-[64px] shadow-sm">
+                    <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary leading-none">
+                      {format(new Date(event.start_time), 'MMM')}
+                    </span>
+                    <span className="text-2xl font-extrabold text-foreground font-montserrat leading-none mt-1">
+                      {format(new Date(event.start_time), 'd')}
+                    </span>
+                  </div>
+                  <div className="flex flex-col justify-center min-w-0 flex-1">
+                    <span className="text-sm font-bold uppercase tracking-wide text-foreground font-montserrat">
+                      {format(new Date(event.start_time), 'EEEE')}
+                    </span>
+                    <span className="text-xl font-extrabold text-foreground font-montserrat leading-tight">
+                      {format(new Date(event.start_time), 'h:mm a')}
+                    </span>
+                    {event.location_name && (
+                      <span className="text-xs text-muted-foreground truncate mt-0.5">
+                        {event.location_name}
+                      </span>
+                    )}
+                  </div>
+                </div>
                 <div className="flex items-center gap-2.5 flex-wrap">
                   <button
                     type="button"
                     className="inline-flex items-center gap-1.5 text-xs font-medium pl-2.5 pr-3 py-1.5 rounded-full bg-background/40 backdrop-blur-md border border-white/10 dark:border-black/10 hover:bg-background/55 transition shadow-sm text-foreground"
-                    onClick={() => {
-                      copyToClipboard(buildRallyShareUrl({ eventId: event.id, inviteCode: event.invite_code }, { referrerId: profile?.id }));
+                    onClick={async () => {
+                      const url = buildRallyShareUrl({ eventId: event.id, inviteCode: event.invite_code }, { referrerId: profile?.id });
                       trackEvent('invite_link_copied', { event_id: event.id });
+                      if (Capacitor.isNativePlatform()) {
+                        const shared = await shareContent({
+                          title: event.title,
+                          text: `Join me at ${event.title} on R@lly`,
+                          url,
+                          successToast: 'Link copied!',
+                        });
+                        if (shared) {
+                          setLinkCopied(true);
+                          window.setTimeout(() => setLinkCopied(false), 1200);
+                        }
+                        return;
+                      }
+                      copyToClipboard(url);
                       toast.success('Link copied!');
                       setLinkCopied(true);
                       window.setTimeout(() => setLinkCopied(false), 1200);
@@ -619,10 +654,12 @@ export default function EventDetail() {
                   >
                     {linkCopied ? (
                       <Check className="h-3.5 w-3.5 opacity-80" />
+                    ) : Capacitor.isNativePlatform() ? (
+                      <Share2 className="h-3.5 w-3.5 opacity-80" />
                     ) : (
                       <Link2 className="h-3.5 w-3.5 opacity-80" />
                     )}
-                    {linkCopied ? 'Copied' : 'Copy invite link'}
+                    {linkCopied ? 'Shared' : Capacitor.isNativePlatform() ? 'Share invite' : 'Copy invite link'}
                   </button>
                   <button
                     type="button"
