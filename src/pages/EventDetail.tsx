@@ -659,7 +659,7 @@ export default function EventDetail() {
                     ) : (
                       <Link2 className="h-3.5 w-3.5 opacity-80" />
                     )}
-                    {linkCopied ? 'Shared' : Capacitor.isNativePlatform() ? 'Share invite' : 'Copy invite link'}
+                    {linkCopied ? 'Sent' : 'Send invite link'}
                   </button>
                   <button
                     type="button"
