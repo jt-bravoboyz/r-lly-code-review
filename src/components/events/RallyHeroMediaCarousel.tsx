@@ -121,7 +121,7 @@ export function RallyHeroMediaCarousel({ eventId, canManage = false }: RallyHero
       return (
         <Sheet open={editOpen} onOpenChange={setEditOpen}>
           <SheetTrigger asChild>
-            <Button variant="outline" size="sm" className="w-full">
+            <Button variant="outline" size="sm" className="w-full bg-card text-card-foreground border-border hover:bg-card/80">
               <Pencil className="h-4 w-4 mr-2" /> Add Media
             </Button>
           </SheetTrigger>

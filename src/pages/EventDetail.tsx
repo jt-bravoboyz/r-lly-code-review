@@ -501,12 +501,13 @@ export default function EventDetail() {
       <Header afterRallyMode={showAfterRallyTheme} />
       
       <main className="container py-6 space-y-6 relative z-10">
-        {/* Back Button */}
-        <Button variant="ghost" size="sm" asChild>
-          <Link to="/events">
-            <ArrowLeft className="h-4 w-4 mr-2" /> Back to Events
-          </Link>
-        </Button>
+        {/* Back Button — adaptive glass for colorful flyers */}
+        <Link
+          to="/events"
+          className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full bg-foreground/[0.08] dark:bg-black/30 border border-foreground/10 text-foreground backdrop-blur-sm text-sm font-medium hover:bg-foreground/[0.12] transition"
+        >
+          <ArrowLeft className="h-4 w-4" /> Back to Events
+        </Link>
 
         {/* Hero Media Carousel - above title */}
         <RallyHeroMediaCarousel eventId={event.id} canManage={canManage} />
@@ -694,40 +695,25 @@ export default function EventDetail() {
             <p className="text-muted-foreground">{event.description}</p>
           )}
 
-          <div className="space-y-1 text-sm">
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-primary" />
-              <span>{format(new Date(event.start_time), 'EEEE, MMMM d · h:mm a')}</span>
-              {canManage && event.status !== 'completed' && (
-                <EditEventTimeDialog
-                  eventId={event.id}
-                  eventTitle={event.title}
-                  currentStartTime={event.start_time}
-                  currentEndTime={event.end_time}
-                  attendeeProfileIds={(event.attendees ?? []).map((a: any) => a.profile?.id ?? a.profile_id).filter(Boolean)}
-                  currentProfileId={activeProfile?.id}
-                />
-              )}
+          {/* Host edit affordances (kept invisible when not manager) */}
+          {canManage && event.status !== 'completed' && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <EditEventTimeDialog
+                eventId={event.id}
+                eventTitle={event.title}
+                currentStartTime={event.start_time}
+                currentEndTime={event.end_time}
+                attendeeProfileIds={(event.attendees ?? []).map((a: any) => a.profile?.id ?? a.profile_id).filter(Boolean)}
+                currentProfileId={activeProfile?.id}
+              />
+              <EditEventLocationDialog
+                eventId={event.id}
+                currentLocationName={event.location_name}
+                currentLat={event.location_lat}
+                currentLng={event.location_lng}
+              />
             </div>
-            
-            <div className="flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-primary" />
-              <span>{event.location_name || 'No location set'}</span>
-              {canManage && (
-                <EditEventLocationDialog
-                  eventId={event.id}
-                  currentLocationName={event.location_name}
-                  currentLat={event.location_lat}
-                  currentLng={event.location_lng}
-                />
-              )}
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-primary" />
-              <span>{attendeeCount} attending</span>
-            </div>
-          </div>
+          )}
 
           {/* Location Map Preview - Show if event has coordinates */}
           {event.location_lat && event.location_lng && !(isAfterRally && event.is_barhop) && (
@@ -735,7 +721,7 @@ export default function EventDetail() {
               lat={event.location_lat}
               lng={event.location_lng}
               name={event.location_name || undefined}
-              address={event.location_name || undefined}
+              address={undefined}
               height="h-40"
               interactive={true}
               showDirections={true}
@@ -746,31 +732,33 @@ export default function EventDetail() {
           {event.creator && (
             <div className="flex items-center justify-between pt-2">
               <div className="flex items-center gap-3">
-                <Avatar
-                  className="cursor-pointer"
-                  onClick={() => { const id = (event as any).creator_id ?? event.creator?.id; id && openProfile(id); }}
-                  aria-label={`View ${event.creator.display_name || 'host'}'s profile`}
-                >
-                  <AvatarImage src={event.creator.avatar_url || undefined} />
-                  <AvatarFallback>
-                    {event.creator.display_name?.charAt(0)?.toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
+                <div className="relative">
+                  <Avatar
+                    className="cursor-pointer h-12 w-12 ring-2 ring-[#F47A19]/30"
+                    onClick={() => { const id = (event as any).creator_id ?? event.creator?.id; id && openProfile(id); }}
+                    aria-label={`View ${event.creator.display_name || 'host'}'s profile`}
+                  >
+                    <AvatarImage src={event.creator.avatar_url || undefined} />
+                    <AvatarFallback>
+                      {event.creator.display_name?.charAt(0)?.toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span
+                    aria-label="Host"
+                    className="absolute -bottom-0.5 -right-0.5 h-5 w-5 rounded-full bg-[#F47A19] ring-2 ring-background flex items-center justify-center shadow-md"
+                  >
+                    <Crown className="h-3 w-3 text-white" strokeWidth={2.5} />
+                  </span>
+                </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Hosted by</p>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => { const id = (event as any).creator_id ?? event.creator?.id; id && openProfile(id); }}
-                      className="font-medium hover:underline text-left"
-                    >
-                      {event.creator.display_name}
-                    </button>
-                    <Badge variant="secondary" className="text-[10px]">
-                      <Crown className="h-2.5 w-2.5 mr-1" />
-                      Host
-                    </Badge>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => { const id = (event as any).creator_id ?? event.creator?.id; id && openProfile(id); }}
+                    className="font-medium hover:underline text-left"
+                  >
+                    {event.creator.display_name}
+                  </button>
                 </div>
               </div>
               {isCreator && event.attendees && (
@@ -929,7 +917,7 @@ export default function EventDetail() {
         {!isCompleted && isScheduled && isAttending && hasCompletedJoinFlow && (
           <Button
             variant="outline"
-            className="w-full font-montserrat font-bold"
+            className="w-full font-montserrat font-bold bg-card text-card-foreground border-border hover:bg-card/80"
             onClick={() => setShowTransportSelector(true)}
           >
             <Settings2 className="h-5 w-5 mr-2" />
@@ -1014,9 +1002,9 @@ export default function EventDetail() {
           <DDDropoffButton eventId={event.id} />
         )}
 
-        {/* Tabs for Details, Chat, Tracking, Rides — hidden on completed events */}
+        {/* Tabs for Details, Photos, Chat — Track & Rides intentionally hidden */}
         {!isCompleted && <Tabs defaultValue="details" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="details">Details</TabsTrigger>
             <TabsTrigger value="photos" className="flex items-center gap-1">
               <Camera className="h-3.5 w-3.5" />
@@ -1026,11 +1014,6 @@ export default function EventDetail() {
               <MessageCircle className="h-3.5 w-3.5" />
               Chat
             </TabsTrigger>
-            <TabsTrigger value="tracking" className="flex items-center gap-1">
-              <Navigation className="h-3.5 w-3.5" />
-              Track
-            </TabsTrigger>
-            <TabsTrigger value="rides" className={isSimpleMode ? 'opacity-50' : ''}>Rides</TabsTrigger>
           </TabsList>
 
           <TabsContent value="details" className="space-y-4 mt-4">

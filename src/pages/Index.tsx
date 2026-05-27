@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Zap, ArrowRight, Plus, Bell, Sparkles, Clock, Calendar, History, KeyRound } from 'lucide-react';
+import { Zap, ArrowRight, Plus, Bell, Flag, Clock, Calendar, History, KeyRound } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -150,7 +150,7 @@ export default function Index() {
         {/* Ready to Rally Section - Bold & Vibrant */}
         <section className="space-y-5">
           <div className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary" />
+            <Flag className="h-5 w-5 text-[#F47A19] fill-[#F47A19]" />
             <h2 className="text-2xl font-bold font-montserrat tracking-tight animate-text-shimmer bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">
               Ready to R@lly?
             </h2>
@@ -209,8 +209,8 @@ export default function Index() {
               ))}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground italic text-center py-4 font-montserrat">
-              The night is young—no live R@llys yet. Start the movement.
+            <p className="text-xs text-muted-foreground italic text-center py-1.5 font-montserrat">
+              The night is young—no live R@llys yet.
             </p>
           )}
         </section>
@@ -219,7 +219,7 @@ export default function Index() {
         <section className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-primary" />
+              <Calendar className="h-5 w-5 text-[#F47A19] fill-[#F47A19]/15" />
               <h3 className="text-xl font-bold font-montserrat animate-text-shimmer bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">Upcoming</h3>
             </div>
             <Button variant="ghost" size="sm" asChild className="text-primary hover:text-primary/80 font-bold font-montserrat hover:bg-primary/10">
@@ -263,7 +263,7 @@ export default function Index() {
         <section className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <History className="h-5 w-5 text-muted-foreground" />
+              <History className="h-5 w-5 text-[#F47A19]" />
               <h3 className="text-xl font-bold font-montserrat animate-text-shimmer bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">Past R@llies</h3>
             </div>
             <Button variant="ghost" size="sm" asChild className="text-primary hover:text-primary/80 font-bold font-montserrat hover:bg-primary/10">
