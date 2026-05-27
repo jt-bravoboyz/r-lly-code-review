@@ -335,6 +335,28 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
     }
   };
 
+  const onInvalid = (errors: Record<string, any>) => {
+    const order = ['title', 'event_type', 'date', 'time', 'location_name', 'cover_charge', 'dress_code'] as const;
+    const first = (order.find((k) => errors[k]) ?? Object.keys(errors)[0]) as string | undefined;
+    const friendly: Record<string, string> = {
+      title: 'Give your R@lly a title (3+ characters)',
+      date: 'Pick a date for your R@lly',
+      time: 'Pick a start time',
+      event_type: 'Pick an event type',
+      location_name: 'Add a location',
+    };
+    const msg = (first && (friendly[first] || (errors[first]?.message as string))) || 'Fill in the highlighted fields to create your R@lly';
+    toast.error(msg);
+    if (first && ['title', 'event_type', 'date', 'time', 'location_name'].includes(first)) {
+      setActiveSection('essentials');
+      essentialsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      setActiveSection('details');
+      detailsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    try { if (first) form.setFocus(first as any); } catch {}
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
