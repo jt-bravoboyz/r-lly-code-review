@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { shareContent, copyToClipboard } from '@/lib/nativeShare';
 import { getPublicName } from '@/lib/identity';
-import { buildRallyShareUrl } from '@/lib/shareUrls';
+import { buildRallyShareUrl, buildRallyShareUrlClean } from '@/lib/shareUrls';
 
 import {
   UserPlus,
