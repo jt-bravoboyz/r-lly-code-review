@@ -1,60 +1,42 @@
-# Fix: Create R@lly form won't submit (silent validation failure)
+## Problem
 
-## What's happening
+Mia Abbott (and likely others) hits `new row violates row-level security policy for table "events"` when creating an event. Confirmed in Postgres logs today at 15:41 UTC.
 
-In `src/components/events/CreateEventDialog.tsx`, the form uses Zod with required `title`, `date`, and `time` fields, and the submit button is a flex sibling **outside** the scrolling form area, wired in via `form="create-rally-form"`.
-
-```ts
-<form id="create-rally-form" onSubmit={form.handleSubmit(onSubmit)}>
+The `events` INSERT policy requires:
+```
+creator_id IN (SELECT id FROM profiles WHERE user_id = auth.uid())
 ```
 
-`form.handleSubmit(onSubmit)` is called with **no error handler**. When validation fails (e.g. user skipped Date or Time, or title is < 3 chars), react-hook-form silently:
+The client sends `creator_id: profile.id` from `useAuth`. If `profile` is null/stale on her device (sign-in race, account switch, slow profile fetch, OAuth retry), the wrong (or no) id is sent and Postgres rejects the insert as "permission denied."
 
-- Blocks `onSubmit` from running (so no toast, no network call, no spinner — looks "dead").
-- Sets `errors` on the matching `FormMessage`, which lives deep in the scroll area and is almost always off-screen when the user is tapping the sticky bottom button.
+## Fix
 
-Result: tap "Create R@lly" → nothing happens → user assumes the app is broken. This matches "form won't submit, everyone, no error message," and explains why the DB shows no new events for ~6 days even though no backend changed.
+Replace the direct client INSERT with a `SECURITY DEFINER` RPC `create_event(...)` that:
 
-## The fix (UI-only, surgical)
+1. Resolves the caller's profile from `auth.uid()` server-side.
+2. Rejects if no session / no profile (clear error message).
+3. Inserts the event with `creator_id = <resolved profile id>` — impossible for the client to send a wrong id.
+4. Returns the full event row.
 
-Add an `onInvalid` handler to `form.handleSubmit` that:
+This matches the existing pattern used for `request_join_event`.
 
-1. **Toasts the first missing field** in plain language, e.g. _"Pick a date for your R@lly"_, _"Pick a start time"_, _"Title needs at least 3 characters"_, _"Add a location"_.
-2. **Jumps the user to the right section** by calling `setActiveSection('essentials' | 'details')` and scrolling the relevant section ref into view inside `scrollContainerRef`.
-3. **Focuses the first invalid field** via `form.setFocus(firstErrorKey)` so the inline `FormMessage` is visible.
+### Migration
 
-Pseudocode (replaces line 412 wiring):
+Create function `public.create_event(p_title text, p_description text, p_event_type text, p_start_time timestamptz, p_location_name text, p_location_lat double precision, p_location_lng double precision, p_is_barhop bool, p_cover_charge numeric, p_split_check bool, p_dress_code text, p_song_recs_enabled bool, p_flyer_theme text, p_flyer_custom_image_url text, p_is_quick_rally bool default false) returns public.events` — SECURITY DEFINER, search_path=public. Looks up profile, raises a friendly exception if missing, inserts, returns row.
 
-```ts
-const onInvalid = (errors: FieldErrors<EventFormData>) => {
-  const order: (keyof EventFormData)[] = ['title','date','time','location_name','event_type'];
-  const first = order.find(k => errors[k]) ?? (Object.keys(errors)[0] as keyof EventFormData);
-  const msg = errors[first]?.message as string | undefined;
-  toast.error(msg || 'Fill in the highlighted fields to create your R@lly');
-  // jump to the right anchor + focus
-  if (['title','date','time','location_name','event_type'].includes(first as string)) {
-    setActiveSection('essentials');
-    essentialsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  } else {
-    setActiveSection('details');
-    detailsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
-  try { form.setFocus(first as any); } catch {}
-};
+Grant EXECUTE to `authenticated`.
 
-<form id="create-rally-form" onSubmit={form.handleSubmit(onSubmit, onInvalid)}>
-```
+### Frontend
 
-Also apply the same `onInvalid` pattern to **`src/components/events/QuickRallyDialog.tsx`** so the Quick R@lly path has the same safety net.
+Update `useCreateEvent` in `src/hooks/useEvents.tsx` to call `supabase.rpc('create_event', { ... })` instead of `from('events').insert(...)`. Keep the same success-side effects (invalidate queries, award points, analytics).
 
-## Out of scope
+Update both `CreateEventDialog.tsx` and `QuickRallyDialog.tsx`:
+- Stop passing `creator_id` (server derives it).
+- On error, surface the server message (e.g. "Your profile isn't ready yet — give it a sec and try again") instead of the generic "Permission denied".
 
-- No DB / RLS / schema changes (insert path itself is fine — `useCreateEvent` already toasts on real errors).
-- No redesign of the form, fields, or button styling.
-- No changes to media upload, invites, or the join-after-create flow.
+No RLS policy changes — the existing INSERT policy stays as a defense-in-depth check, which the SECURITY DEFINER function naturally satisfies.
 
-## How we'll verify
+### Verification
 
-1. Open Create R@lly, leave Date and Time blank, tap Create → expect toast "Pick a date for your R@lly", scroll snaps to Essentials, Date field is focused.
-2. Fill everything correctly → event still creates and navigates to `/events/:id` (existing happy path untouched).
-3. Repeat in Quick R@lly dialog.
+- Re-run a create as Mia (or via SQL impersonating her user) and confirm an event row is inserted with `creator_id = 82d4faee-…`.
+- Confirm existing flows (chat auto-create trigger, attendee auto-join, points award) still fire.
