@@ -4,10 +4,11 @@ import { useAllMySquads, Squad } from '@/hooks/useSquads';
 import { SquadCard } from '@/components/squads/SquadCard';
 import { CreateSquadDialog } from '@/components/squads/CreateSquadDialog';
 import { ContactsTab } from '@/components/squads/ContactsTab';
+import { DirectMessagesList } from '@/components/chat/DirectMessagesList';
 import { Header } from '@/components/layout/Header';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, Sparkles, Contact } from 'lucide-react';
+import { Users, Sparkles, Contact, MessageCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import rallyLogo from '@/assets/rally-logo.png';
 
@@ -45,13 +46,17 @@ export default function Squads() {
 
       <main className="px-4 py-6 relative z-10">
         <Tabs defaultValue="squads" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-6 bg-white/80 backdrop-blur-sm rounded-xl p-1">
+          <TabsList className="grid w-full grid-cols-3 mb-6 bg-white/80 backdrop-blur-sm rounded-xl p-1">
             <TabsTrigger value="squads" className="rounded-lg font-montserrat data-[state=active]:bg-primary data-[state=active]:text-white">
-              <Users className="h-4 w-4 mr-2" />
+              <Users className="h-4 w-4 mr-1.5" />
               Squads
             </TabsTrigger>
+            <TabsTrigger value="messages" className="rounded-lg font-montserrat data-[state=active]:bg-primary data-[state=active]:text-white">
+              <MessageCircle className="h-4 w-4 mr-1.5" />
+              DMs
+            </TabsTrigger>
             <TabsTrigger value="contacts" className="rounded-lg font-montserrat data-[state=active]:bg-primary data-[state=active]:text-white">
-              <Contact className="h-4 w-4 mr-2" />
+              <Contact className="h-4 w-4 mr-1.5" />
               Contacts
             </TabsTrigger>
           </TabsList>
@@ -100,6 +105,17 @@ export default function Squads() {
                 </CardContent>
               </Card>
             )}
+          </TabsContent>
+
+          <TabsContent value="messages" className="space-y-4 animate-fade-in">
+            <div>
+              <h2 className="text-xl font-bold text-foreground font-montserrat flex items-center gap-2">
+                <MessageCircle className="h-5 w-5 text-primary" />
+                Direct Messages
+              </h2>
+              <p className="text-sm text-muted-foreground">Private 1-on-1 convos with your R@lly Friends</p>
+            </div>
+            <DirectMessagesList />
           </TabsContent>
 
           <TabsContent value="contacts" className="animate-fade-in">

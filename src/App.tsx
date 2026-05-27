@@ -17,6 +17,7 @@ import { AppEntry } from "@/components/AppEntry";
 import { NativeBootstrap } from "@/components/NativeBootstrap";
 import { PhotoPermissionDialog } from "@/components/events/PhotoPermissionDialog";
 import { PublicProfileProvider } from "@/contexts/PublicProfileContext";
+import { DirectMessageProvider } from "@/contexts/DirectMessageContext";
 import { ConnectionStatusBanner } from "@/components/layout/ConnectionStatusBanner";
 import Index from "./pages/Index";
 import ReturningAuth from "./pages/ReturningAuth";
@@ -56,6 +57,7 @@ const App = () => (
             <TierUpProvider>
               <TooltipProvider>
                 <PublicProfileProvider>
+                <DirectMessageProvider>
                 <ConnectionStatusBanner />
                 <Toaster />
                 <Sonner />
@@ -102,6 +104,7 @@ const App = () => (
                     </Routes>
                   </TutorialProvider>
                 </BrowserRouter>
+                </DirectMessageProvider>
                 </PublicProfileProvider>
               </TooltipProvider>
             </TierUpProvider>

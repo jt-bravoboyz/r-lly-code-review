@@ -153,18 +153,21 @@ export type Database = {
           id: string
           joined_at: string | null
           profile_id: string
+          read_at: string | null
         }
         Insert: {
           chat_id: string
           id?: string
           joined_at?: string | null
           profile_id: string
+          read_at?: string | null
         }
         Update: {
           chat_id?: string
           id?: string
           joined_at?: string | null
           profile_id?: string
+          read_at?: string | null
         }
         Relationships: [
           {
@@ -207,6 +210,7 @@ export type Database = {
       chats: {
         Row: {
           created_at: string | null
+          dm_key: string | null
           event_id: string | null
           id: string
           is_group: boolean | null
@@ -216,6 +220,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          dm_key?: string | null
           event_id?: string | null
           id?: string
           is_group?: boolean | null
@@ -225,6 +230,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          dm_key?: string | null
           event_id?: string | null
           id?: string
           is_group?: boolean | null
@@ -4694,6 +4700,20 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      get_or_create_dm_chat: {
+        Args: { p_other_profile_id: string }
+        Returns: string
+      }
+      get_people_you_may_know: {
+        Args: { p_limit?: number }
+        Returns: {
+          avatar_url: string
+          display_name: string
+          mutual_count: number
+          mutual_sample_names: string[]
+          profile_id: string
+        }[]
+      }
       get_profile_access_summary: {
         Args: { p_days?: number; p_profile_id: string }
         Returns: {
@@ -4855,6 +4875,18 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      list_my_dm_chats: {
+        Args: never
+        Returns: {
+          chat_id: string
+          last_message_at: string
+          last_message_text: string
+          other_avatar_url: string
+          other_display_name: string
+          other_profile_id: string
+          unread_count: number
+        }[]
       }
       log_profile_access: {
         Args: { p_accessed_fields?: string[]; p_accessed_profile_id: string }
