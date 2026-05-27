@@ -732,31 +732,33 @@ export default function EventDetail() {
           {event.creator && (
             <div className="flex items-center justify-between pt-2">
               <div className="flex items-center gap-3">
-                <Avatar
-                  className="cursor-pointer"
-                  onClick={() => { const id = (event as any).creator_id ?? event.creator?.id; id && openProfile(id); }}
-                  aria-label={`View ${event.creator.display_name || 'host'}'s profile`}
-                >
-                  <AvatarImage src={event.creator.avatar_url || undefined} />
-                  <AvatarFallback>
-                    {event.creator.display_name?.charAt(0)?.toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
+                <div className="relative">
+                  <Avatar
+                    className="cursor-pointer h-12 w-12 ring-2 ring-[#F47A19]/30"
+                    onClick={() => { const id = (event as any).creator_id ?? event.creator?.id; id && openProfile(id); }}
+                    aria-label={`View ${event.creator.display_name || 'host'}'s profile`}
+                  >
+                    <AvatarImage src={event.creator.avatar_url || undefined} />
+                    <AvatarFallback>
+                      {event.creator.display_name?.charAt(0)?.toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span
+                    aria-label="Host"
+                    className="absolute -bottom-0.5 -right-0.5 h-5 w-5 rounded-full bg-[#F47A19] ring-2 ring-background flex items-center justify-center shadow-md"
+                  >
+                    <Crown className="h-3 w-3 text-white" strokeWidth={2.5} />
+                  </span>
+                </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Hosted by</p>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => { const id = (event as any).creator_id ?? event.creator?.id; id && openProfile(id); }}
-                      className="font-medium hover:underline text-left"
-                    >
-                      {event.creator.display_name}
-                    </button>
-                    <Badge variant="secondary" className="text-[10px]">
-                      <Crown className="h-2.5 w-2.5 mr-1" />
-                      Host
-                    </Badge>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => { const id = (event as any).creator_id ?? event.creator?.id; id && openProfile(id); }}
+                    className="font-medium hover:underline text-left"
+                  >
+                    {event.creator.display_name}
+                  </button>
                 </div>
               </div>
               {isCreator && event.attendees && (
