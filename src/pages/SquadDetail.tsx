@@ -582,7 +582,15 @@ export default function SquadDetail() {
             </div>
           </div>
 
+          {isOwner && (
+            <>
+              <Separator />
+              <SquadPendingInvitesCard squadId={squad.id} />
+            </>
+          )}
+
           <Separator />
+
 
           {/* Squad Gallery */}
           <div>
