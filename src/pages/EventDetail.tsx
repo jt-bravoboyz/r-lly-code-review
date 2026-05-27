@@ -1032,13 +1032,21 @@ export default function EventDetail() {
 
         {/* Tabs for Details, Photos, Chat — Track & Rides intentionally hidden */}
         {!isCompleted && <Tabs defaultValue="details" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="details">Details</TabsTrigger>
-            <TabsTrigger value="photos" className="flex items-center gap-1">
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="details" className="text-[11px] sm:text-xs">Details</TabsTrigger>
+            <TabsTrigger value="tracking" className="flex items-center gap-1 text-[11px] sm:text-xs">
+              <MapPin className="h-3.5 w-3.5" />
+              Track
+            </TabsTrigger>
+            <TabsTrigger value="rides" className="flex items-center gap-1 text-[11px] sm:text-xs">
+              <Car className="h-3.5 w-3.5" />
+              Rides
+            </TabsTrigger>
+            <TabsTrigger value="photos" className="flex items-center gap-1 text-[11px] sm:text-xs">
               <Camera className="h-3.5 w-3.5" />
               Photos
             </TabsTrigger>
-            <TabsTrigger value="chat" className="flex items-center gap-1">
+            <TabsTrigger value="chat" className="flex items-center gap-1 text-[11px] sm:text-xs">
               <MessageCircle className="h-3.5 w-3.5" />
               Chat
             </TabsTrigger>
