@@ -26,6 +26,22 @@ export function buildRallyShareUrl(
   return `${previewBase()}?${sp.toString()}`;
 }
 
+/** Clean human-readable share URL for direct sending via native share sheet or SMS.
+ *  Uses rlly.cloud directly — the share-preview function will 302 browsers to
+ *  this URL anyway, so no OG preview is lost. */
+export function buildRallyShareUrlClean(
+  params: { eventId: string; inviteCode?: string | null },
+  opts: ShareLinkOptions = {},
+): string {
+  const base = params.inviteCode
+    ? `${PUBLIC_APP_URL}/join/${params.inviteCode}`
+    : `${PUBLIC_APP_URL}/events/${params.eventId}`;
+  const sp = new URLSearchParams();
+  if (opts.referrerId) sp.set('r', opts.referrerId);
+  const qs = sp.toString();
+  return qs ? `${base}?${qs}` : base;
+}
+
 /** Public standalone Tab share link. */
 export function buildTabShareUrl(
   params: { requestId: string; payToken?: string | null },

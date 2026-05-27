@@ -49,6 +49,17 @@ Deno.serve(async (req) => {
 
   if (!to) return new Response('Missing `to`', { status: 400, headers: corsHeaders });
 
+  // Real browsers get an instant 302 to the clean target URL. Only crawlers
+  // need the full OG HTML page below.
+  const ua = req.headers.get('user-agent') ?? '';
+  const isCrawler = /bot|crawl|spider|slack|facebook|twitter|discord|telegram|whatsapp|applebot|linkedinbot|preview|unfurl/i.test(ua);
+  if (!isCrawler) {
+    return new Response(null, {
+      status: 302,
+      headers: { ...corsHeaders, location: to },
+    });
+  }
+
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   const projectId = (supabaseUrl.match(/https:\/\/([^.]+)\./)?.[1]) ?? '';
   const fallbackOgImage = `${supabaseUrl}/storage/v1/object/public/event_flyers/_system/og-fallback.png`;
@@ -116,7 +127,7 @@ Deno.serve(async (req) => {
 <meta name="twitter:title" content="${escapeHtml(title)}" />
 <meta name="twitter:description" content="${escapeHtml(description)}" />
 <meta name="twitter:image" content="${escapeHtml(ogImage)}" />
-<meta http-equiv="refresh" content="1; url=${escapeHtml(to)}" />
+<meta http-equiv="refresh" content="0; url=${escapeHtml(to)}" />
 </head><body><main><h1>${escapeHtml(title)}</h1><p>${escapeHtml(description)}</p><p><a href="${escapeHtml(to)}">Open this R@lly</a></p></main></body></html>`;
 
   const headers = new Headers(corsHeaders);
