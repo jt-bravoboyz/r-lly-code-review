@@ -12,6 +12,8 @@ import { Badge } from '@/components/ui/badge';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { SquadChatSheet } from '@/components/chat/SquadChatSheet';
 import { SquadInviteDialog } from '@/components/squads/SquadInviteDialog';
+import { SquadPendingInvitesCard } from '@/components/squads/SquadPendingInvitesCard';
+import { QuickRallyDialog } from '@/components/events/QuickRallyDialog';
 import { SquadSettingsDialog } from '@/components/squads/SquadSettingsDialog';
 import { GroupPhotoCropperDialog } from '@/components/squads/GroupPhotoCropperDialog';
 import { getSquadIcon, type SquadSymbol } from '@/components/squads/SquadSymbolPicker';
@@ -492,13 +494,15 @@ export default function SquadDetail() {
                 </Button>
               }
             />
-            <Button
-              className="gap-2 bg-primary hover:bg-primary/90 col-span-2"
-              onClick={handleQuickRally}
-            >
-              <Zap className="h-4 w-4" />
-              Quick R@lly with Squad
-            </Button>
+            <QuickRallyDialog
+              preselectedSquad={squad as any}
+              trigger={
+                <Button className="gap-2 bg-primary hover:bg-primary/90 col-span-2 w-full">
+                  <Zap className="h-4 w-4" />
+                  Quick R@lly with Squad
+                </Button>
+              }
+            />
           </div>
 
           <Separator />
@@ -578,7 +582,15 @@ export default function SquadDetail() {
             </div>
           </div>
 
+          {isOwner && (
+            <>
+              <Separator />
+              <SquadPendingInvitesCard squadId={squad.id} />
+            </>
+          )}
+
           <Separator />
+
 
           {/* Squad Gallery */}
           <div>

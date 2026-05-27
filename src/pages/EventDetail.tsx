@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { copyToClipboard } from '@/lib/nativeShare';
+import { copyToClipboard, shareContent } from '@/lib/nativeShare';
+import { Capacitor } from '@capacitor/core';
+import { Share2 } from 'lucide-react';
 import { getPublicName } from '@/lib/identity';
 
 import { buildRallyShareUrl } from '@/lib/shareUrls';
@@ -599,17 +601,52 @@ export default function EventDetail() {
                 </div>
               )}
               {/* Frosted metadata + invite cluster */}
-              <div className="ev-frost px-3 py-2.5 mt-2 space-y-2">
-                <p className="text-xs text-muted-foreground">
-                  {format(new Date(event.start_time), 'EEEE')} · {format(new Date(event.start_time), 'h:mm a')}{event.location_name ? ` · ${event.location_name}` : ''}
-                </p>
+              <div className="ev-frost px-3 py-3 mt-2 space-y-3">
+                {/* Prominent Date & Time */}
+                <div className="flex items-stretch gap-3">
+                  <div className="flex flex-col items-center justify-center rounded-xl bg-primary/15 border border-primary/25 px-3 py-2 min-w-[64px] shadow-sm">
+                    <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary leading-none">
+                      {format(new Date(event.start_time), 'MMM')}
+                    </span>
+                    <span className="text-2xl font-extrabold text-foreground font-montserrat leading-none mt-1">
+                      {format(new Date(event.start_time), 'd')}
+                    </span>
+                  </div>
+                  <div className="flex flex-col justify-center min-w-0 flex-1">
+                    <span className="text-sm font-bold uppercase tracking-wide text-foreground font-montserrat">
+                      {format(new Date(event.start_time), 'EEEE')}
+                    </span>
+                    <span className="text-xl font-extrabold text-foreground font-montserrat leading-tight">
+                      {format(new Date(event.start_time), 'h:mm a')}
+                    </span>
+                    {event.location_name && (
+                      <span className="text-xs text-muted-foreground truncate mt-0.5">
+                        {event.location_name}
+                      </span>
+                    )}
+                  </div>
+                </div>
                 <div className="flex items-center gap-2.5 flex-wrap">
                   <button
                     type="button"
                     className="inline-flex items-center gap-1.5 text-xs font-medium pl-2.5 pr-3 py-1.5 rounded-full bg-background/40 backdrop-blur-md border border-white/10 dark:border-black/10 hover:bg-background/55 transition shadow-sm text-foreground"
-                    onClick={() => {
-                      copyToClipboard(buildRallyShareUrl({ eventId: event.id, inviteCode: event.invite_code }, { referrerId: profile?.id }));
+                    onClick={async () => {
+                      const url = buildRallyShareUrl({ eventId: event.id, inviteCode: event.invite_code }, { referrerId: profile?.id });
                       trackEvent('invite_link_copied', { event_id: event.id });
+                      if (Capacitor.isNativePlatform()) {
+                        const shared = await shareContent({
+                          title: event.title,
+                          text: `Join me at ${event.title} on R@lly`,
+                          url,
+                          successToast: 'Link copied!',
+                        });
+                        if (shared) {
+                          setLinkCopied(true);
+                          window.setTimeout(() => setLinkCopied(false), 1200);
+                        }
+                        return;
+                      }
+                      copyToClipboard(url);
                       toast.success('Link copied!');
                       setLinkCopied(true);
                       window.setTimeout(() => setLinkCopied(false), 1200);
@@ -617,10 +654,12 @@ export default function EventDetail() {
                   >
                     {linkCopied ? (
                       <Check className="h-3.5 w-3.5 opacity-80" />
+                    ) : Capacitor.isNativePlatform() ? (
+                      <Share2 className="h-3.5 w-3.5 opacity-80" />
                     ) : (
                       <Link2 className="h-3.5 w-3.5 opacity-80" />
                     )}
-                    {linkCopied ? 'Copied' : 'Copy invite link'}
+                    {linkCopied ? 'Shared' : Capacitor.isNativePlatform() ? 'Share invite' : 'Copy invite link'}
                   </button>
                   <button
                     type="button"
@@ -901,18 +940,7 @@ export default function EventDetail() {
           </section>
         )}
 
-        {/* Split Check — host card (always available pre-completion) + attendee "Pay your share" CTA */}
-        {!isCompleted && (
-          <SplitCheckSection
-            eventId={event.id}
-            creatorId={(event as any).creator_id}
-            canManage={canManage}
-            profileId={profile?.id}
-            onRequestPayment={() => setShowRequestPayment(true)}
-            onOpenPay={(rid) => setPayRequestId(rid)}
-            onOpenPayoutSetup={() => navigate('/profile')}
-          />
-        )}
+        {/* Split Check / Request Payment intentionally hidden — R@lly Tabs not yet released */}
 
         {!isCompleted && isScheduled && isAttending && hasCompletedJoinFlow && (
           <Button
@@ -1004,13 +1032,21 @@ export default function EventDetail() {
 
         {/* Tabs for Details, Photos, Chat — Track & Rides intentionally hidden */}
         {!isCompleted && <Tabs defaultValue="details" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="details">Details</TabsTrigger>
-            <TabsTrigger value="photos" className="flex items-center gap-1">
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="details" className="text-[11px] sm:text-xs">Details</TabsTrigger>
+            <TabsTrigger value="tracking" className="flex items-center gap-1 text-[11px] sm:text-xs">
+              <MapPin className="h-3.5 w-3.5" />
+              Track
+            </TabsTrigger>
+            <TabsTrigger value="rides" className="flex items-center gap-1 text-[11px] sm:text-xs">
+              <Car className="h-3.5 w-3.5" />
+              Rides
+            </TabsTrigger>
+            <TabsTrigger value="photos" className="flex items-center gap-1 text-[11px] sm:text-xs">
               <Camera className="h-3.5 w-3.5" />
               Photos
             </TabsTrigger>
-            <TabsTrigger value="chat" className="flex items-center gap-1">
+            <TabsTrigger value="chat" className="flex items-center gap-1 text-[11px] sm:text-xs">
               <MessageCircle className="h-3.5 w-3.5" />
               Chat
             </TabsTrigger>
@@ -1432,33 +1468,7 @@ export default function EventDetail() {
       {/* Cover Charge Dialog - rendered by useCoverChargeGate */}
       {coverDialog}
 
-      {/* Split Check request dialog (host) */}
-      {canManage && profile && (
-        <RequestPaymentDialog
-          open={showRequestPayment}
-          onOpenChange={setShowRequestPayment}
-          eventId={event.id}
-          attendees={(event.attendees ?? []).map((a: any) => ({
-            id: a.id,
-            profile_id: a.profile?.id ?? a.profile_id,
-            display_name: a.profile?.display_name ?? a.display_name,
-          })).filter((a: any) => a.profile_id)}
-        />
-      )}
-
-      {/* Attendee pay-your-share dialog (opens via inline CTA or ?pay= deep link from notifications) */}
-      {profile && payRequestId && (
-        <PaySplitShareDialog
-          open={!!payRequestId}
-          onOpenChange={(v) => { if (!v) setPayRequestId(null); }}
-          requestId={payRequestId}
-          profileId={profile.id}
-          savedToken={(profile as any).fluid_pay_token ?? null}
-          savedCardLast4={(profile as any).fluid_pay_card_last4 ?? null}
-          savedCardBrand={(profile as any).fluid_pay_card_brand ?? null}
-          onPaid={() => setPayRequestId(null)}
-        />
-      )}
+      {/* Split Check / Request Payment dialogs intentionally disabled — R@lly Tabs not yet released */}
 
       {/* Rideshare Drawer - departure flow */}
       {profile && (
