@@ -1468,33 +1468,7 @@ export default function EventDetail() {
       {/* Cover Charge Dialog - rendered by useCoverChargeGate */}
       {coverDialog}
 
-      {/* Split Check request dialog (host) */}
-      {canManage && profile && (
-        <RequestPaymentDialog
-          open={showRequestPayment}
-          onOpenChange={setShowRequestPayment}
-          eventId={event.id}
-          attendees={(event.attendees ?? []).map((a: any) => ({
-            id: a.id,
-            profile_id: a.profile?.id ?? a.profile_id,
-            display_name: a.profile?.display_name ?? a.display_name,
-          })).filter((a: any) => a.profile_id)}
-        />
-      )}
-
-      {/* Attendee pay-your-share dialog (opens via inline CTA or ?pay= deep link from notifications) */}
-      {profile && payRequestId && (
-        <PaySplitShareDialog
-          open={!!payRequestId}
-          onOpenChange={(v) => { if (!v) setPayRequestId(null); }}
-          requestId={payRequestId}
-          profileId={profile.id}
-          savedToken={(profile as any).fluid_pay_token ?? null}
-          savedCardLast4={(profile as any).fluid_pay_card_last4 ?? null}
-          savedCardBrand={(profile as any).fluid_pay_card_brand ?? null}
-          onPaid={() => setPayRequestId(null)}
-        />
-      )}
+      {/* Split Check / Request Payment dialogs intentionally disabled — R@lly Tabs not yet released */}
 
       {/* Rideshare Drawer - departure flow */}
       {profile && (
