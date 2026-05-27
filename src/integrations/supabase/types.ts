@@ -4534,6 +4534,65 @@ export type Database = {
           total_cents: number
         }[]
       }
+      create_event: {
+        Args: {
+          p_cover_charge?: number
+          p_description?: string
+          p_dress_code?: string
+          p_event_type?: string
+          p_flyer_custom_image_url?: string
+          p_flyer_theme?: string
+          p_is_barhop?: boolean
+          p_is_quick_rally?: boolean
+          p_location_lat?: number
+          p_location_lng?: number
+          p_location_name?: string
+          p_song_recs_enabled?: boolean
+          p_split_check?: boolean
+          p_start_time?: string
+          p_title: string
+        }
+        Returns: {
+          after_rally_invited_ids: string[]
+          after_rally_location_lat: number | null
+          after_rally_location_lng: number | null
+          after_rally_location_name: string | null
+          after_rally_stealth: boolean
+          cover_charge: number | null
+          created_at: string | null
+          creator_id: string
+          description: string | null
+          dress_code: string | null
+          end_time: string | null
+          event_type: string
+          flyer_custom_image_url: string | null
+          flyer_og_generated_at: string | null
+          flyer_og_url: string | null
+          flyer_theme: string
+          id: string
+          image_url: string | null
+          invite_code: string | null
+          invite_code_expires_at: string | null
+          invite_code_rotated_at: string | null
+          is_barhop: boolean | null
+          is_quick_rally: boolean | null
+          location_lat: number | null
+          location_lng: number | null
+          location_name: string | null
+          song_recs_enabled: boolean
+          split_check: boolean | null
+          start_time: string
+          status: string | null
+          title: string
+          updated_at: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "events"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       current_profile_id: { Args: never; Returns: string }
       delete_email: {
         Args: { message_id: number; queue_name: string }
