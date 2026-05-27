@@ -330,7 +330,18 @@ export const QuickRallyDialog = forwardRef<HTMLButtonElement, QuickRallyDialogPr
           </DialogHeader>
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col min-h-0 flex-1">
+            <form onSubmit={form.handleSubmit(onSubmit, (errors) => {
+              const order = ['title', 'location_name', 'event_type'] as const;
+              const first = (order.find((k) => (errors as any)[k]) ?? Object.keys(errors)[0]) as string | undefined;
+              const friendly: Record<string, string> = {
+                title: 'Give your R@lly a title',
+                location_name: 'Add a location',
+                event_type: 'Pick an event type',
+              };
+              const msg = (first && (friendly[first] || ((errors as any)[first]?.message as string))) || 'Fill in the highlighted fields';
+              toast.error(msg);
+              try { if (first) form.setFocus(first as any); } catch {}
+            })} className="flex flex-col min-h-0 flex-1">
               <div className="flex-1 overflow-y-auto px-6 pb-4 space-y-4">
               <FormField
                 control={form.control}
