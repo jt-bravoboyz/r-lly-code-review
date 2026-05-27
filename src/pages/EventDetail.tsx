@@ -664,7 +664,7 @@ export default function EventDetail() {
                   <button
                     type="button"
                     onClick={() => setInviteFriendsOpen(true)}
-                    className="inline-flex items-center gap-1.5 text-xs font-bold font-montserrat min-h-[44px] pl-3 pr-4 py-2 rounded-full bg-primary text-primary-foreground shadow-[0_0_20px_rgba(244,122,25,0.4)] hover:bg-primary/90 transition active:scale-95"
+                    className="inline-flex items-center gap-1.5 text-xs font-bold font-montserrat min-h-[44px] pl-3 pr-4 py-2 rounded-full bg-primary text-primary-foreground border border-primary-foreground/20 shadow-[0_0_20px_rgba(244,122,25,0.45)] hover:bg-primary/90 transition active:scale-95"
                   >
                     <UserPlus className="h-3.5 w-3.5" />
                     Invite Friends
