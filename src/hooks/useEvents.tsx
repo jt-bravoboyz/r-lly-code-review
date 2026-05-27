@@ -187,15 +187,31 @@ export function useCreateEvent() {
 
   return useMutation({
     mutationFn: async (event: EventInsert & { is_quick_rally?: boolean }) => {
-      const { data, error } = await supabase
-        .from('events')
-        .insert(event)
-        .select()
-        .single();
-      
+      // Use SECURITY DEFINER RPC so creator_id is derived from auth.uid()
+      // server-side. Eliminates RLS "permission denied" failures caused by a
+      // stale/missing client-side profile during sign-in races.
+      const { data, error } = await supabase.rpc('create_event' as any, {
+        p_title: event.title,
+        p_description: (event as any).description ?? null,
+        p_event_type: (event as any).event_type ?? 'rally',
+        p_start_time: event.start_time,
+        p_location_name: (event as any).location_name ?? null,
+        p_location_lat: (event as any).location_lat ?? null,
+        p_location_lng: (event as any).location_lng ?? null,
+        p_is_barhop: (event as any).is_barhop ?? false,
+        p_cover_charge: (event as any).cover_charge ?? 0,
+        p_split_check: (event as any).split_check ?? false,
+        p_dress_code: (event as any).dress_code ?? null,
+        p_song_recs_enabled: (event as any).song_recs_enabled ?? false,
+        p_flyer_theme: (event as any).flyer_theme ?? 'rally_dynamic',
+        p_flyer_custom_image_url: (event as any).flyer_custom_image_url ?? null,
+        p_is_quick_rally: (event as any).is_quick_rally ?? false,
+      });
+
       if (error) throw error;
-      return data;
+      return data as Event;
     },
+
     onSuccess: async (data) => {
       queryClient.invalidateQueries({ queryKey: ['events'] });
       trackEvent('event_created', { event_id: data.id, event_type: data.event_type, is_barhop: data.is_barhop });
