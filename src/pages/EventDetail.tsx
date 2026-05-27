@@ -1002,9 +1002,9 @@ export default function EventDetail() {
           <DDDropoffButton eventId={event.id} />
         )}
 
-        {/* Tabs for Details, Chat, Tracking, Rides — hidden on completed events */}
+        {/* Tabs for Details, Photos, Chat — Track & Rides intentionally hidden */}
         {!isCompleted && <Tabs defaultValue="details" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="details">Details</TabsTrigger>
             <TabsTrigger value="photos" className="flex items-center gap-1">
               <Camera className="h-3.5 w-3.5" />
@@ -1014,11 +1014,6 @@ export default function EventDetail() {
               <MessageCircle className="h-3.5 w-3.5" />
               Chat
             </TabsTrigger>
-            <TabsTrigger value="tracking" className="flex items-center gap-1">
-              <Navigation className="h-3.5 w-3.5" />
-              Track
-            </TabsTrigger>
-            <TabsTrigger value="rides" className={isSimpleMode ? 'opacity-50' : ''}>Rides</TabsTrigger>
           </TabsList>
 
           <TabsContent value="details" className="space-y-4 mt-4">
