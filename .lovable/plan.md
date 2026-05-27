@@ -1,42 +1,37 @@
-## Problem
+## Why Mia still can't create an event
 
-Mia Abbott (and likely others) hits `new row violates row-level security policy for table "events"` when creating an event. Confirmed in Postgres logs today at 15:41 UTC.
+The server-side fix is already live:
+- `public.create_event(...)` SECURITY DEFINER RPC exists and is correct.
+- `useCreateEvent` in `src/hooks/useEvents.tsx` calls the RPC (no direct `events` insert remains anywhere in `src/`).
 
-The `events` INSERT policy requires:
-```
-creator_id IN (SELECT id FROM profiles WHERE user_id = auth.uid())
-```
+But the Postgres logs show Mia's latest failure (16:30 UTC, after the migration) was still a direct `POST /rest/v1/events` from the iOS native app. Translation: **her installed app is running the pre-fix JavaScript bundle.** The RPC fix can't help a client that doesn't call it.
 
-The client sends `creator_id: profile.id` from `useAuth`. If `profile` is null/stale on her device (sign-in race, account switch, slow profile fetch, OAuth retry), the wrong (or no) id is sent and Postgres rejects the insert as "permission denied."
+So the remaining work is distribution + a small defensive guard.
 
-## Fix
+## Plan
 
-Replace the direct client INSERT with a `SECURITY DEFINER` RPC `create_event(...)` that:
+### 1. Ship the fix to users
 
-1. Resolves the caller's profile from `auth.uid()` server-side.
-2. Rejects if no session / no profile (clear error message).
-3. Inserts the event with `creator_id = <resolved profile id>` — impossible for the client to send a wrong id.
-4. Returns the full event row.
+- **Web (`rallyboyz.lovable.app` / `rlly.cloud`)** — publish the current preview so the new `useCreateEvent` (RPC-based) is what browsers download. Until republished, web users on the published domain are still on the broken bundle.
+- **Native iOS** — the Capacitor build embeds the JS bundle. A new TestFlight / App Store build is required for Mia (and other native users) to pick up the RPC call. Until then, native users will keep hitting the RLS 403.
 
-This matches the existing pattern used for `request_join_event`.
+These two steps alone unblock Mia.
 
-### Migration
+### 2. Defensive safety net (small code change)
 
-Create function `public.create_event(p_title text, p_description text, p_event_type text, p_start_time timestamptz, p_location_name text, p_location_lat double precision, p_location_lng double precision, p_is_barhop bool, p_cover_charge numeric, p_split_check bool, p_dress_code text, p_song_recs_enabled bool, p_flyer_theme text, p_flyer_custom_image_url text, p_is_quick_rally bool default false) returns public.events` — SECURITY DEFINER, search_path=public. Looks up profile, raises a friendly exception if missing, inserts, returns row.
+Even after publishing, an old cached bundle could linger. To make this category of bug self-healing instead of a silent 403:
 
-Grant EXECUTE to `authenticated`.
+- **Tighten the `events` INSERT RLS policy** so a direct insert fails with a clear, branded message instead of a generic permission error. Replace the current check with one that always returns false for anon/authenticated direct inserts (the SECURITY DEFINER RPC bypasses RLS, so it's unaffected). Optional — keep the current policy if we'd rather not touch RLS.
+- **In `useCreateEvent`'s `onError`**, detect the legacy 403 / RLS message and show a toast like _"Please update R@lly to the latest version to create events"_ instead of a raw error. This makes the failure mode obvious next time.
 
-### Frontend
+No schema changes, no new tables, no new functions.
 
-Update `useCreateEvent` in `src/hooks/useEvents.tsx` to call `supabase.rpc('create_event', { ... })` instead of `from('events').insert(...)`. Keep the same success-side effects (invalidate queries, award points, analytics).
+### 3. Verify
 
-Update both `CreateEventDialog.tsx` and `QuickRallyDialog.tsx`:
-- Stop passing `creator_id` (server derives it).
-- On error, surface the server message (e.g. "Your profile isn't ready yet — give it a sec and try again") instead of the generic "Permission denied".
+- After publish, watch `edge_logs` for `POST /rest/v1/rpc/create_event` from Mia's user agent and confirm 200.
+- Confirm a row lands in `events` with `creator_id = 82d4faee-…`.
+- Confirm the chat auto-create trigger and attendee auto-join still fire (existing triggers, untouched).
 
-No RLS policy changes — the existing INSERT policy stays as a defense-in-depth check, which the SECURITY DEFINER function naturally satisfies.
+## Out of scope
 
-### Verification
-
-- Re-run a create as Mia (or via SQL impersonating her user) and confirm an event row is inserted with `creator_id = 82d4faee-…`.
-- Confirm existing flows (chat auto-create trigger, attendee auto-join, points award) still fire.
+- The unrelated errors in the logs (`split_check_targets` / `split_check_requests` infinite recursion, `rly_user_activity_badges` 403) are real but separate — flagging them but not fixing here unless you want me to.

@@ -208,9 +208,25 @@ export function useCreateEvent() {
         p_is_quick_rally: (event as any).is_quick_rally ?? false,
       });
 
-      if (error) throw error;
+      if (error) {
+        // Detect stale clients still doing a direct INSERT (which RLS rejects)
+        // or hitting the old "permission denied" path, and surface an
+        // actionable message so users know to update.
+        const msg = (error as any)?.message || '';
+        const code = (error as any)?.code || '';
+        if (
+          code === '42501' ||
+          /row-level security|permission denied/i.test(msg)
+        ) {
+          throw new Error(
+            "Please update R@lly to the latest version to create events. Pull to refresh or reinstall if the issue persists."
+          );
+        }
+        throw error;
+      }
       return data as Event;
     },
+
 
     onSuccess: async (data) => {
       queryClient.invalidateQueries({ queryKey: ['events'] });
