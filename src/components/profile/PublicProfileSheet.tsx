@@ -14,6 +14,7 @@ import {
   useRespondToFriendRequest,
   getFriendshipState,
 } from '@/hooks/useFriendships';
+import { useDirectMessage } from '@/contexts/DirectMessageContext';
 import { getPublicName } from '@/lib/identity';
 import { toast } from 'sonner';
 
@@ -29,6 +30,7 @@ export function PublicProfileSheet({ profileId, open, onOpenChange }: PublicProf
   const { data: friendships = [] } = useFriendships();
   const requestFriend = useRequestFriend();
   const respondFriend = useRespondToFriendRequest();
+  const { openDm } = useDirectMessage();
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['public-profile', profileId],
@@ -224,11 +226,19 @@ export function PublicProfileSheet({ profileId, open, onOpenChange }: PublicProf
             {/* Action buttons */}
             <div className="flex gap-2 pt-2">
               {friendButton()}
-              {friendState.state === 'accepted' && (
+              {friendState.state === 'accepted' && profileId && (
                 <Button
                   variant="outline"
-                  className="flex-1"
-                  onClick={() => toast.info('Direct messaging coming soon')}
+                  className="flex-1 min-h-[44px]"
+                  onClick={() => {
+                    const other = {
+                      id: profileId,
+                      display_name: (data as any)?.display_name ?? null,
+                      avatar_url: (data as any)?.avatar_url ?? null,
+                    };
+                    onOpenChange(false);
+                    openDm({ otherProfileId: profileId, otherProfile: other });
+                  }}
                 >
                   <MessageCircle className="h-4 w-4 mr-2" />
                   Message

@@ -15,6 +15,7 @@ import { usePhoneContacts } from '@/hooks/usePhoneContacts';
 import { useUserContacts } from '@/hooks/useUserContacts';
 import { AddPeopleSheet } from '@/components/contacts/AddPeopleSheet';
 import { ContactRowSkeleton } from '@/components/contacts/ContactRowSkeleton';
+import { PeopleYouMayKnowCarousel } from '@/components/contacts/PeopleYouMayKnowCarousel';
 import { cn } from '@/lib/utils';
 
 import {
@@ -223,6 +224,7 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
           )}
         >
           <div className="space-y-5 pb-4">
+            {!q && <PeopleYouMayKnowCarousel />}
             {/* Quick Add when search has no matches */}
             {noMatches && (
               <button
