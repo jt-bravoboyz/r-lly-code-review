@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { copyToClipboard } from '@/lib/nativeShare';
+import { copyToClipboard, shareContent } from '@/lib/nativeShare';
+import { Capacitor } from '@capacitor/core';
+import { Share2 } from 'lucide-react';
 import { getPublicName } from '@/lib/identity';
 
 import { buildRallyShareUrl } from '@/lib/shareUrls';
