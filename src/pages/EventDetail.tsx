@@ -501,12 +501,13 @@ export default function EventDetail() {
       <Header afterRallyMode={showAfterRallyTheme} />
       
       <main className="container py-6 space-y-6 relative z-10">
-        {/* Back Button */}
-        <Button variant="ghost" size="sm" asChild>
-          <Link to="/events">
-            <ArrowLeft className="h-4 w-4 mr-2" /> Back to Events
-          </Link>
-        </Button>
+        {/* Back Button — adaptive glass for colorful flyers */}
+        <Link
+          to="/events"
+          className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full bg-foreground/[0.08] dark:bg-black/30 border border-foreground/10 text-foreground backdrop-blur-sm text-sm font-medium hover:bg-foreground/[0.12] transition"
+        >
+          <ArrowLeft className="h-4 w-4" /> Back to Events
+        </Link>
 
         {/* Hero Media Carousel - above title */}
         <RallyHeroMediaCarousel eventId={event.id} canManage={canManage} />
