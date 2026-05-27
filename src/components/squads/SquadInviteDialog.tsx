@@ -352,14 +352,20 @@ export function SquadInviteDialog({ squadId, squadName, trigger }: SquadInviteDi
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
+              {emailAlreadyInvited && (
+                <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                  <Check className="h-3 w-3 text-primary" /> Already invited via email
+                </p>
+              )}
             </div>
             <Button
               onClick={() => handleSendInvite('email')}
               disabled={isLoading || !email.trim()}
+              variant={emailAlreadyInvited ? 'outline' : 'default'}
               className="w-full gap-2"
             >
               <Send className="h-4 w-4" />
-              {isLoading ? 'Sending...' : 'Send Email Invite'}
+              {isLoading ? 'Sending...' : emailAlreadyInvited ? 'Re-send Email Invite' : 'Send Email Invite'}
             </Button>
           </TabsContent>
 
@@ -373,16 +379,23 @@ export function SquadInviteDialog({ squadId, squadName, trigger }: SquadInviteDi
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
               />
+              {phoneAlreadyInvited && (
+                <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                  <Check className="h-3 w-3 text-primary" /> Already invited via SMS
+                </p>
+              )}
             </div>
             <Button
               onClick={() => handleSendInvite('sms')}
               disabled={isLoading || !phone.trim()}
+              variant={phoneAlreadyInvited ? 'outline' : 'default'}
               className="w-full gap-2"
             >
               <Send className="h-4 w-4" />
-              {isLoading ? 'Sending...' : 'Send SMS Invite'}
+              {isLoading ? 'Sending...' : phoneAlreadyInvited ? 'Re-send SMS Invite' : 'Send SMS Invite'}
             </Button>
           </TabsContent>
+
         </Tabs>
 
         <div className="relative">
