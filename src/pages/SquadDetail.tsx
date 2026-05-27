@@ -493,13 +493,15 @@ export default function SquadDetail() {
                 </Button>
               }
             />
-            <Button
-              className="gap-2 bg-primary hover:bg-primary/90 col-span-2"
-              onClick={handleQuickRally}
-            >
-              <Zap className="h-4 w-4" />
-              Quick R@lly with Squad
-            </Button>
+            <QuickRallyDialog
+              preselectedSquad={squad as any}
+              trigger={
+                <Button className="gap-2 bg-primary hover:bg-primary/90 col-span-2 w-full">
+                  <Zap className="h-4 w-4" />
+                  Quick R@lly with Squad
+                </Button>
+              }
+            />
           </div>
 
           <Separator />
