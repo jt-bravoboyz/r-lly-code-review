@@ -684,22 +684,6 @@ export default function EventDetail() {
                         className={`text-[10px] font-semibold tracking-wide uppercase px-2 py-0.5 rounded-full ${
                           expired
                             ? 'bg-destructive/15 text-destructive'
-                            : 'bg-background/60 text-muted-foreground border border-foreground/10'
-                        }`}
-                      >
-                        {expired ? 'Expired' : `Expires in ${hoursLeft}h`}
-                      </span>
-                    );
-                  })()}
-                  {(event as any).invite_code_expires_at && (() => {
-                    const expiresAt = new Date((event as any).invite_code_expires_at as string).getTime();
-                    const expired = expiresAt < Date.now();
-                    const hoursLeft = Math.max(0, Math.round((expiresAt - Date.now()) / 3600000));
-                    return (
-                      <span
-                        className={`text-[10px] font-semibold tracking-wide uppercase px-2 py-0.5 rounded-full ${
-                          expired
-                            ? 'bg-destructive/15 text-destructive'
                             : 'bg-background/40 text-muted-foreground border border-white/10 dark:border-black/10'
                         }`}
                       >
