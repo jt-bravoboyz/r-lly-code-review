@@ -263,7 +263,7 @@ export function SquadInviteDialog({ squadId, squadName, trigger }: SquadInviteDi
   };
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setInvitedUserIds(new Set()); setUserSearch(''); } }}>
+    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setOptimisticInvited(new Set()); setUserSearch(''); } }}>
       <DialogTrigger asChild>
         {trigger || (
           <Button variant="outline" size="sm" className="gap-2">
