@@ -1,41 +1,60 @@
-## Why it's slow
+# Fix: Create R@lly form won't submit (silent validation failure)
 
-Both **Gallery** and **R@lly Recap** render `<img src={photo.url}>` pointing at the raw Storage object (`/storage/v1/object/public/rally-media/...`). Phone photos are 3–8 MB JPEGs, so a 4-tile grid is downloading 12–30 MB to paint 400px squares — the skeleton sits there until each full original finishes.
+## What's happening
 
-Supabase Storage exposes a built-in image transform endpoint (`/storage/v1/render/image/public/...?width=...&quality=...`) that returns a resized, re-encoded JPEG from the same bucket — no migration, no new infra, no new upload pipeline.
+In `src/components/events/CreateEventDialog.tsx`, the form uses Zod with required `title`, `date`, and `time` fields, and the submit button is a flex sibling **outside** the scrolling form area, wired in via `form="create-rally-form"`.
 
-## Fix
+```ts
+<form id="create-rally-form" onSubmit={form.handleSubmit(onSubmit)}>
+```
 
-1. **Add `src/lib/imageOptimization.ts`** — one tiny helper `getOptimizedImageUrl(url, { width, quality, resize })` that rewrites `/object/public/` → `/render/image/public/` and appends `width` + `quality=75` + `resize=cover`. Non-Supabase URLs pass through.
+`form.handleSubmit(onSubmit)` is called with **no error handler**. When validation fails (e.g. user skipped Date or Time, or title is < 3 chars), react-hook-form silently:
 
-2. **Use the helper at every gallery / recap image site** (surgical, no logic changes):
+- Blocks `onSubmit` from running (so no toast, no network call, no spinner — looks "dead").
+- Sets `errors` on the matching `FormMessage`, which lives deep in the scroll area and is almost always off-screen when the user is tapping the sticky bottom button.
 
-   - `src/components/events/EventPhotoFeed.tsx`
-     - tile photo (line ~506) → `width: 600`
-     - tile video thumbnail (line ~477) → `width: 600`
-     - full-screen viewer (line ~670) → `width: 1600, quality: 85`
-   - `src/components/events/RallyHeroMediaCarousel.tsx`
-     - hero carousel photo (line ~219) → `width: 1080`
-     - video poster (line ~207) → `width: 1080`
-     - edit-sheet 48×48 thumbs (line ~285) → `width: 96`
-     - full-screen viewer (line ~382) → `width: 1600, quality: 85`
-   - `src/components/events/RallyMediaSection.tsx` (line 50) → `width: 600`
-   - `src/components/events/recap/RecapTour.tsx`
-     - hero photo (line 226) → `width: 1080`
-     - video poster (line 217) → `width: 1080`
-   - `src/components/events/recap/RecapMediaTile.tsx`
-     - photo (line 56) → `width: 600`
-     - video thumbnail (line 44) → `width: 600`
+Result: tap "Create R@lly" → nothing happens → user assumes the app is broken. This matches "form won't submit, everyone, no error message," and explains why the DB shows no new events for ~6 days even though no backend changed.
 
-3. **Add `decoding="async"` + `fetchPriority="low"`** to every gallery `<img>` so they don't compete with first paint. Hero/featured/viewer get `fetchPriority="high"`.
+## The fix (UI-only, surgical)
+
+Add an `onInvalid` handler to `form.handleSubmit` that:
+
+1. **Toasts the first missing field** in plain language, e.g. _"Pick a date for your R@lly"_, _"Pick a start time"_, _"Title needs at least 3 characters"_, _"Add a location"_.
+2. **Jumps the user to the right section** by calling `setActiveSection('essentials' | 'details')` and scrolling the relevant section ref into view inside `scrollContainerRef`.
+3. **Focuses the first invalid field** via `form.setFocus(firstErrorKey)` so the inline `FormMessage` is visible.
+
+Pseudocode (replaces line 412 wiring):
+
+```ts
+const onInvalid = (errors: FieldErrors<EventFormData>) => {
+  const order: (keyof EventFormData)[] = ['title','date','time','location_name','event_type'];
+  const first = order.find(k => errors[k]) ?? (Object.keys(errors)[0] as keyof EventFormData);
+  const msg = errors[first]?.message as string | undefined;
+  toast.error(msg || 'Fill in the highlighted fields to create your R@lly');
+  // jump to the right anchor + focus
+  if (['title','date','time','location_name','event_type'].includes(first as string)) {
+    setActiveSection('essentials');
+    essentialsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } else {
+    setActiveSection('details');
+    detailsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  try { form.setFocus(first as any); } catch {}
+};
+
+<form id="create-rally-form" onSubmit={form.handleSubmit(onSubmit, onInvalid)}>
+```
+
+Also apply the same `onInvalid` pattern to **`src/components/events/QuickRallyDialog.tsx`** so the Quick R@lly path has the same safety net.
 
 ## Out of scope
 
-- No DB or storage changes (bucket is already public).
-- No edits to the upload pipeline — existing files benefit immediately.
-- Video files unchanged (recap shows `<img>` thumbnails for them, which will also be transformed).
-- No new dependencies.
+- No DB / RLS / schema changes (insert path itself is fine — `useCreateEvent` already toasts on real errors).
+- No redesign of the form, fields, or button styling.
+- No changes to media upload, invites, or the join-after-create flow.
 
-## Expected impact
+## How we'll verify
 
-Typical gallery tile drops from ~5 MB → ~40 KB. The gray skeletons should resolve almost instantly on first paint.
+1. Open Create R@lly, leave Date and Time blank, tap Create → expect toast "Pick a date for your R@lly", scroll snaps to Essentials, Date field is focused.
+2. Fill everything correctly → event still creates and navigates to `/events/:id` (existing happy path untouched).
+3. Repeat in Quick R@lly dialog.
