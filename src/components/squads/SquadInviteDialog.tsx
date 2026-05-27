@@ -312,7 +312,7 @@ export function SquadInviteDialog({ squadId, squadName, trigger }: SquadInviteDi
                   <p className="text-sm text-muted-foreground text-center py-6">No users found</p>
                 )}
                 {filteredProfiles.map((p) => {
-                  const alreadyInvited = invitedUserIds.has(p.id);
+                  const alreadyInvited = invitedProfileIds.has(p.id);
                   return (
                     <div key={p.id} className="flex items-center justify-between py-2 px-2 rounded-lg hover:bg-muted/50">
                       <div className="flex items-center gap-2.5">
