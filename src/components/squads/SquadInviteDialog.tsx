@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { shareContent, copyToClipboard } from '@/lib/nativeShare';
 import { getPublicName } from '@/lib/identity';
 import { PUBLIC_APP_URL } from '@/lib/appUrl';
@@ -14,7 +14,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useAllProfiles } from '@/hooks/useSquads';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+
 
 interface SquadInviteDialogProps {
   squadId: string;
