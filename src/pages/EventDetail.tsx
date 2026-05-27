@@ -603,29 +603,27 @@ export default function EventDetail() {
               {/* Date/Time isolation card + invite cluster */}
               <div className="mt-2 space-y-3">
                 {/* Prominent Date & Time — solid isolation barrier for theme-proof contrast */}
-                <div className="bg-background/95 dark:bg-zinc-950/90 backdrop-blur-2xl border border-foreground/15 shadow-xl p-4 rounded-2xl">
-                  <div className="flex items-stretch gap-3">
-                    <div className="flex flex-col items-center justify-center rounded-xl bg-primary/15 border border-primary/30 px-3 py-2 min-w-[64px] shadow-sm">
-                      <span className="text-[10px] font-black uppercase tracking-[0.18em] text-primary leading-none">
-                        {format(new Date(event.start_time), 'MMM')}
+                <div className="bg-zinc-900/80 dark:bg-black/80 backdrop-blur-3xl border border-zinc-800 dark:border-zinc-700/50 p-4 rounded-2xl shadow-2xl flex items-center gap-4">
+                  <div className="flex flex-col items-center justify-center rounded-xl bg-[#F47A19] px-3 py-2 min-w-[64px] shadow-md">
+                    <span className="text-[10px] font-black uppercase tracking-[0.18em] text-white leading-none">
+                      {format(new Date(event.start_time), 'MMM')}
+                    </span>
+                    <span className="text-2xl font-black text-white font-montserrat leading-none mt-1">
+                      {format(new Date(event.start_time), 'd')}
+                    </span>
+                  </div>
+                  <div className="flex flex-col justify-center min-w-0 flex-1">
+                    <span className="text-white font-black text-xl tracking-wider uppercase font-montserrat leading-tight">
+                      {format(new Date(event.start_time), 'EEEE')}
+                    </span>
+                    <span className="text-[#F47A19] font-black text-xl font-montserrat leading-tight">
+                      {format(new Date(event.start_time), 'h:mm a')}
+                    </span>
+                    {event.location_name && (
+                      <span className="text-zinc-300 dark:text-zinc-200 font-semibold text-base truncate mt-0.5">
+                        {event.location_name}
                       </span>
-                      <span className="text-2xl font-black text-foreground font-montserrat leading-none mt-1">
-                        {format(new Date(event.start_time), 'd')}
-                      </span>
-                    </div>
-                    <div className="flex flex-col justify-center min-w-0 flex-1">
-                      <span className="text-foreground font-black text-xl tracking-wider uppercase font-montserrat leading-tight">
-                        {format(new Date(event.start_time), 'EEEE')}
-                      </span>
-                      <span className="text-[#F47A19] font-black text-xl font-montserrat leading-tight">
-                        {format(new Date(event.start_time), 'h:mm a')}
-                      </span>
-                      {event.location_name && (
-                        <span className="text-muted-foreground font-bold text-sm truncate mt-0.5">
-                          {event.location_name}
-                        </span>
-                      )}
-                    </div>
+                    )}
                   </div>
                 </div>
 
