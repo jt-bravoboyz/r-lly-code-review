@@ -600,36 +600,39 @@ export default function EventDetail() {
                   )}
                 </div>
               )}
-              {/* Frosted metadata + invite cluster */}
-              <div className="ev-frost px-3 py-3 mt-2 space-y-3 bg-background/40 dark:bg-black/40 backdrop-blur-xl border border-foreground/10 rounded-2xl shadow-sm">
-                {/* Prominent Date & Time */}
-                <div className="flex items-stretch gap-3">
-                  <div className="flex flex-col items-center justify-center rounded-xl bg-primary/15 border border-primary/25 px-3 py-2 min-w-[64px] shadow-sm">
-                    <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary leading-none">
-                      {format(new Date(event.start_time), 'MMM')}
-                    </span>
-                    <span className="text-2xl font-extrabold text-foreground font-montserrat leading-none mt-1">
-                      {format(new Date(event.start_time), 'd')}
-                    </span>
-                  </div>
-                  <div className="flex flex-col justify-center min-w-0 flex-1">
-                    <span className="text-sm font-bold uppercase tracking-wide text-foreground font-montserrat">
-                      {format(new Date(event.start_time), 'EEEE')}
-                    </span>
-                    <span className="text-xl font-extrabold text-foreground font-montserrat leading-tight">
-                      {format(new Date(event.start_time), 'h:mm a')}
-                    </span>
-                    {event.location_name && (
-                      <span className="text-xs text-muted-foreground truncate mt-0.5">
-                        {event.location_name}
+              {/* Date/Time isolation card + invite cluster */}
+              <div className="mt-2 space-y-3">
+                {/* Prominent Date & Time — solid isolation barrier for theme-proof contrast */}
+                <div className="bg-background/95 dark:bg-zinc-950/90 backdrop-blur-2xl border border-foreground/15 shadow-xl p-4 rounded-2xl">
+                  <div className="flex items-stretch gap-3">
+                    <div className="flex flex-col items-center justify-center rounded-xl bg-primary/15 border border-primary/30 px-3 py-2 min-w-[64px] shadow-sm">
+                      <span className="text-[10px] font-black uppercase tracking-[0.18em] text-primary leading-none">
+                        {format(new Date(event.start_time), 'MMM')}
                       </span>
-                    )}
+                      <span className="text-2xl font-black text-foreground font-montserrat leading-none mt-1">
+                        {format(new Date(event.start_time), 'd')}
+                      </span>
+                    </div>
+                    <div className="flex flex-col justify-center min-w-0 flex-1">
+                      <span className="text-foreground font-black text-xl tracking-wider uppercase font-montserrat leading-tight">
+                        {format(new Date(event.start_time), 'EEEE')}
+                      </span>
+                      <span className="text-[#F47A19] font-black text-xl font-montserrat leading-tight">
+                        {format(new Date(event.start_time), 'h:mm a')}
+                      </span>
+                      {event.location_name && (
+                        <span className="text-muted-foreground font-bold text-sm truncate mt-0.5">
+                          {event.location_name}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2.5 flex-wrap">
+
+                <div className="flex items-stretch gap-2.5">
                   <button
                     type="button"
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold pl-2.5 pr-3 py-1.5 rounded-full bg-background/70 dark:bg-black/55 backdrop-blur-xl border border-foreground/15 hover:bg-background/85 dark:hover:bg-black/70 transition shadow-sm text-foreground"
+                    className="flex-1 w-full justify-center text-center font-bold h-12 inline-flex items-center gap-1.5 text-sm px-3 rounded-2xl bg-card border border-border text-card-foreground hover:bg-card/80 transition shadow-sm"
                     onClick={async () => {
                       const url = buildRallyShareUrl({ eventId: event.id, inviteCode: event.invite_code }, { referrerId: profile?.id });
                       trackEvent('invite_link_copied', { event_id: event.id });
@@ -653,22 +656,25 @@ export default function EventDetail() {
                     }}
                   >
                     {linkCopied ? (
-                      <Check className="h-3.5 w-3.5 opacity-80" />
+                      <Check className="h-4 w-4" />
                     ) : Capacitor.isNativePlatform() ? (
-                      <Share2 className="h-3.5 w-3.5 opacity-80" />
+                      <Share2 className="h-4 w-4" />
                     ) : (
-                      <Link2 className="h-3.5 w-3.5 opacity-80" />
+                      <Link2 className="h-4 w-4" />
                     )}
                     {linkCopied ? 'Sent' : 'Send invite link'}
                   </button>
                   <button
                     type="button"
                     onClick={() => setInviteFriendsOpen(true)}
-                    className="inline-flex items-center gap-1.5 text-xs font-bold font-montserrat min-h-[44px] pl-3 pr-4 py-2 rounded-full bg-primary text-primary-foreground border border-primary-foreground/20 shadow-[0_0_20px_rgba(244,122,25,0.45)] hover:bg-primary/90 transition active:scale-95"
+                    className="flex-1 w-full justify-center text-center font-bold h-12 inline-flex items-center gap-1.5 text-sm px-3 rounded-2xl bg-card border border-border text-card-foreground hover:bg-card/80 transition shadow-sm font-montserrat"
                   >
-                    <UserPlus className="h-3.5 w-3.5" />
+                    <UserPlus className="h-4 w-4 text-primary" />
                     Invite Friends
                   </button>
+                </div>
+
+                <div className="flex items-center gap-2.5 flex-wrap">
                   {(event as any).invite_code_expires_at && (() => {
                     const expiresAt = new Date((event as any).invite_code_expires_at as string).getTime();
                     const expired = expiresAt < Date.now();
