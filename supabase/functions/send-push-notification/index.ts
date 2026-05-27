@@ -425,17 +425,32 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log(`Found ${subscriptions.length} subscriptions`);
 
-    // Send push to each subscription
+    // Send push to each subscription — route by endpoint prefix
+    const pushPayload = { title: payload.title, body: payload.body, data: payload.data, tag: payload.tag };
     const results = await Promise.all(
-      subscriptions.map((sub) =>
-        sendWebPush(
+      subscriptions.map((sub) => {
+        const endpoint: string = sub.endpoint ?? '';
+        if (endpoint.startsWith('capacitor:') && endpoint.includes('realtime')) {
+          // Realtime fallback — Supabase realtime delivers in-app; no push needed
+          return Promise.resolve(true);
+        }
+        if (endpoint.startsWith('capacitor:ios:')) {
+          const token = endpoint.slice('capacitor:ios:'.length);
+          return sendApnsNotification(token, pushPayload);
+        }
+        if (endpoint.startsWith('capacitor:android:')) {
+          // FCM not wired yet
+          return Promise.resolve(false);
+        }
+        return sendWebPush(
           { endpoint: sub.endpoint, p256dh: sub.p256dh, auth: sub.auth },
-          { title: payload.title, body: payload.body, data: payload.data, tag: payload.tag },
+          pushPayload,
           vapidPublicKey,
           vapidPrivateKey
-        )
-      )
+        );
+      })
     );
+
 
     const successCount = results.filter(Boolean).length;
     console.log(`Sent ${successCount}/${subscriptions.length} push notifications`);
