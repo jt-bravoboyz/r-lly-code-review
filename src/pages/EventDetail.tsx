@@ -629,8 +629,6 @@ export default function EventDetail() {
                     <UserPlus className="h-3.5 w-3.5" />
                     Invite Friends
                   </button>
-                  {/* original Copy button closes above; this block adds the prominent Invite Friends CTA */}
-                  <span className="hidden">__INVITE_FRIENDS_INSERTED__</span>
                   {(event as any).invite_code_expires_at && (() => {
                     const expiresAt = new Date((event as any).invite_code_expires_at as string).getTime();
                     const expired = expiresAt < Date.now();
