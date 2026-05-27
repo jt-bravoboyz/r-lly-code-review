@@ -629,7 +629,7 @@ export default function EventDetail() {
                 <div className="flex items-center gap-2.5 flex-wrap">
                   <button
                     type="button"
-                    className="inline-flex items-center gap-1.5 text-xs font-medium pl-2.5 pr-3 py-1.5 rounded-full bg-background/40 backdrop-blur-md border border-white/10 dark:border-black/10 hover:bg-background/55 transition shadow-sm text-foreground"
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold pl-2.5 pr-3 py-1.5 rounded-full bg-background/70 dark:bg-black/55 backdrop-blur-xl border border-foreground/15 hover:bg-background/85 dark:hover:bg-black/70 transition shadow-sm text-foreground"
                     onClick={async () => {
                       const url = buildRallyShareUrl({ eventId: event.id, inviteCode: event.invite_code }, { referrerId: profile?.id });
                       trackEvent('invite_link_copied', { event_id: event.id });
