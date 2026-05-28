@@ -13,29 +13,24 @@ export interface RecapMediaItem {
 interface RecapMediaTileProps {
   media: RecapMediaItem;
   className?: string;
-  /** Render as an aspect-square grid cell (default). When false, uses natural ratio. */
+  /** Kept for API compatibility — no longer forces aspect-square. */
   square?: boolean;
 }
 
 /**
- * Photo/video-aware media tile. Videos display their stored thumbnail when
- * available; otherwise they fall back to a branded placeholder (NEVER a
- * `<video>` element — mobile Safari/Chrome refuses to render a poster
- * frame from `preload="metadata"`, leaving a blank rectangle).
- *
- * The opportunistic backfill in `useVideoThumbnailBackfill` will fill the
- * thumbnail in over time, swapping the placeholder for a real frame.
+ * Photo/video-aware media tile. Images render uncropped via `object-contain`
+ * on a matte backdrop so the true composition is preserved. Videos show their
+ * stored thumbnail when available, otherwise a branded placeholder.
  */
 export const RecapMediaTile = forwardRef<HTMLDivElement, RecapMediaTileProps>(
-  ({ media, className, square = true }, ref) => {
+  ({ media, className }, ref) => {
     const isVideo = media.type === 'video';
 
     return (
       <div
         ref={ref}
         className={cn(
-          'relative overflow-hidden bg-muted',
-          square && 'aspect-square',
+          'relative overflow-hidden rounded-xl bg-black/20 backdrop-blur-sm',
           className,
         )}
       >
@@ -46,10 +41,10 @@ export const RecapMediaTile = forwardRef<HTMLDivElement, RecapMediaTileProps>(
               alt=""
               loading="lazy"
               decoding="async"
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain"
             />
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-muted via-muted/80 to-muted/60 flex items-center justify-center">
+            <div className="w-full h-full min-h-[120px] bg-gradient-to-br from-muted via-muted/80 to-muted/60 flex items-center justify-center">
               <FileVideo className="h-7 w-7 text-muted-foreground/60" />
             </div>
           )
@@ -59,7 +54,7 @@ export const RecapMediaTile = forwardRef<HTMLDivElement, RecapMediaTileProps>(
             alt=""
             loading="lazy"
             decoding="async"
-            className="w-full h-full object-cover"
+            className="w-full h-full object-contain"
           />
         )}
 
