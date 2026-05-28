@@ -23,7 +23,11 @@ export function getOptimizedImageUrl(
     if (width) u.searchParams.set('width', String(Math.round(width)));
     if (height) u.searchParams.set('height', String(Math.round(height)));
     u.searchParams.set('quality', String(quality));
-    u.searchParams.set('resize', resize);
+    // Supabase's transformer only crops sanely when BOTH dimensions are set.
+    // With a single dimension + `resize=cover` it locks the other axis to the
+    // source's pixel size, producing a stretched/squashed image. Only attach
+    // `resize` when both width and height are present.
+    if (width && height) u.searchParams.set('resize', resize);
     return u.toString();
   } catch {
     return url;
