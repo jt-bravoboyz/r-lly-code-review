@@ -228,7 +228,7 @@ export function RecapTour({
                   alt="Shot of the Night"
                   decoding="async"
                   fetchPriority="high"
-                  className="w-full aspect-[4/5] object-cover rounded-2xl ring-2 ring-primary/40 shadow-2xl"
+                  className="w-full aspect-[3/4] object-cover object-[center_30%] rounded-2xl ring-2 ring-primary/40 shadow-2xl"
                 />
               )}
               <div className="absolute inset-0 rounded-2xl bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
