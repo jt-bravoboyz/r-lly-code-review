@@ -19,15 +19,26 @@ export function getOptimizedImageUrl(
       '/storage/v1/object/public/',
       '/storage/v1/render/image/public/',
     );
-    const { width, height, quality = 75, resize = 'cover' } = opts;
-    if (width) u.searchParams.set('width', String(Math.round(width)));
-    if (height) u.searchParams.set('height', String(Math.round(height)));
+    const { width, height, quality = 75, resize } = opts;
+    // Supabase's transformer leaves the unset axis at the source's pixel size
+    // (producing a stretched image) unless BOTH width and height are passed.
+    // When the caller only specifies one dimension, pad the other with a
+    // generous bounding box and force `resize=contain` so the image scales
+    // proportionally instead of being squashed.
+    let effWidth = width;
+    let effHeight = height;
+    let effResize = resize ?? 'cover';
+    if (width && !height) {
+      effHeight = width * 4;
+      effResize = 'contain';
+    } else if (height && !width) {
+      effWidth = height * 4;
+      effResize = 'contain';
+    }
+    if (effWidth) u.searchParams.set('width', String(Math.round(effWidth)));
+    if (effHeight) u.searchParams.set('height', String(Math.round(effHeight)));
     u.searchParams.set('quality', String(quality));
-    // Supabase's transformer only crops sanely when BOTH dimensions are set.
-    // With a single dimension + `resize=cover` it locks the other axis to the
-    // source's pixel size, producing a stretched/squashed image. Only attach
-    // `resize` when both width and height are present.
-    if (width && height) u.searchParams.set('resize', resize);
+    if (effWidth || effHeight) u.searchParams.set('resize', effResize);
     return u.toString();
   } catch {
     return url;
