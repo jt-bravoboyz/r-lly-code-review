@@ -6,7 +6,11 @@
         "components": [
           { "/": "/auth/return", "comment": "OAuth return from Lovable broker" },
           { "/": "/auth/return*", "comment": "OAuth return with query/fragment" },
-          { "/": "/join/*", "comment": "R@lly join invite links" }
+          { "/": "/join/*", "comment": "R@lly event invite links (with invite code)" },
+          { "/": "/join-squad/*", "comment": "Squad invite links" },
+          { "/": "/events/*", "comment": "R@lly event pages (no invite code fallback)" },
+          { "/": "/tabs/*", "comment": "Tab share links" },
+          { "/": "/tab/pay/*", "comment": "Tab pay links" }
         ]
       }
     ]
