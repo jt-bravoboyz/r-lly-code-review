@@ -174,7 +174,7 @@ export function RecapTour({
                   className="rounded-xl overflow-hidden ring-1 ring-white/10 animate-fade-in"
                   style={{ animationDelay: `${i * 100}ms` }}
                 >
-                  <RecapMediaTile media={media} />
+                  <RecapMediaTile media={media} focalClass="object-[center_25%]" />
                 </div>
               ))}
             </div>
