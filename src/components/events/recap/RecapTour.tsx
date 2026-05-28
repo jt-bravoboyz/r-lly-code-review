@@ -319,7 +319,7 @@ export function RecapTour({
                 <span className="text-2xl">{closer.emoji}</span>
               </div>
               <p className="text-white font-bold font-montserrat text-lg">{closer.title}</p>
-              <p className="text-white/30 text-xs font-montserrat uppercase tracking-widest">
+              <p className="text-white/80 text-xs font-montserrat uppercase tracking-widest">
                 {closer.subtitle}
               </p>
             </div>
