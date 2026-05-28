@@ -688,7 +688,7 @@ export default function Profile() {
                 <div className="flex items-center gap-3">
                   <CreditCard className="h-5 w-5 text-primary" />
                   <div className="text-left">
-                    <span className="font-medium">R@lly Tabs</span>
+                    <span className="font-medium">R@lly Wallet</span>
                     <p className="text-xs text-muted-foreground">
                       Split checks, hosted & owed
                     </p>
