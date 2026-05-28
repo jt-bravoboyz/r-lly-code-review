@@ -103,13 +103,13 @@ export function RecapTimeline({
                 controls
                 playsInline
                 preload="none"
-                className="w-full aspect-[4/5] object-cover rounded-2xl ring-2 ring-primary/30 shadow-lg bg-gradient-to-br from-muted via-muted/80 to-muted/60"
+                className="w-full aspect-[3/4] object-cover object-[center_30%] rounded-2xl ring-2 ring-primary/30 shadow-lg bg-gradient-to-br from-muted via-muted/80 to-muted/60"
               />
             ) : (
               <img
                 src={hero.url}
                 alt="Shot of the Night"
-                className="w-full aspect-[4/5] object-cover rounded-2xl ring-2 ring-primary/30 shadow-lg"
+                className="w-full aspect-[3/4] object-cover object-[center_30%] rounded-2xl ring-2 ring-primary/30 shadow-lg"
               />
             )}
             <div className="absolute inset-0 rounded-2xl bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
@@ -131,12 +131,13 @@ export function RecapTimeline({
               Photo Bundle
             </h3>
           </div>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="columns-3 gap-2 [column-fill:_balance]">
             {displayPhotos.slice(1).map((media) => (
               <RecapMediaTile
                 key={media.id}
                 media={media}
-                className="rounded-xl ring-1 ring-border/30"
+                square={false}
+                className="mb-2 break-inside-avoid rounded-xl ring-1 ring-border/30"
               />
             ))}
           </div>

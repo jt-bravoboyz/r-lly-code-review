@@ -13,22 +13,39 @@ export interface RecapMediaItem {
 interface RecapMediaTileProps {
   media: RecapMediaItem;
   className?: string;
-  /** Render as an aspect-square grid cell (default). When false, uses natural ratio. */
+  /**
+   * When true (default), tile is forced to aspect-square with face-aware
+   * cropping. When false, tile renders at the media's natural aspect ratio
+   * (ideal for masonry / columns layouts).
+   */
   square?: boolean;
+  /**
+   * Object-position for square crops. Defaults to `center 25%` so faces
+   * (which typically sit in the upper third of selfies & group shots)
+   * survive the square crop instead of getting chopped off.
+   */
+  focalClass?: string;
 }
 
 /**
- * Photo/video-aware media tile. Videos display their stored thumbnail when
- * available; otherwise they fall back to a branded placeholder (NEVER a
- * `<video>` element — mobile Safari/Chrome refuses to render a poster
- * frame from `preload="metadata"`, leaving a blank rectangle).
+ * Photo/video-aware media tile.
  *
- * The opportunistic backfill in `useVideoThumbnailBackfill` will fill the
- * thumbnail in over time, swapping the placeholder for a real frame.
+ * - `square` mode: forces 1:1 with face-aware `object-position` so portrait
+ *   phone photos don't look "zoomed in" with heads cut off.
+ * - Natural mode: renders at intrinsic aspect ratio for masonry grids.
+ *
+ * Videos display their stored thumbnail when available; otherwise they fall
+ * back to a branded placeholder (NEVER a `<video>` element — mobile
+ * Safari/Chrome refuses to render a poster frame from `preload="metadata"`).
  */
 export const RecapMediaTile = forwardRef<HTMLDivElement, RecapMediaTileProps>(
-  ({ media, className, square = true }, ref) => {
+  ({ media, className, square = true, focalClass = 'object-[center_25%]' }, ref) => {
     const isVideo = media.type === 'video';
+    const imgClasses = cn(
+      'block w-full',
+      square ? 'h-full object-cover' : 'h-auto',
+      square && focalClass,
+    );
 
     return (
       <div
@@ -46,10 +63,15 @@ export const RecapMediaTile = forwardRef<HTMLDivElement, RecapMediaTileProps>(
               alt=""
               loading="lazy"
               decoding="async"
-              className="w-full h-full object-cover"
+              className={imgClasses}
             />
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-muted via-muted/80 to-muted/60 flex items-center justify-center">
+            <div
+              className={cn(
+                'w-full bg-gradient-to-br from-muted via-muted/80 to-muted/60 flex items-center justify-center',
+                square ? 'h-full' : 'aspect-square',
+              )}
+            >
               <FileVideo className="h-7 w-7 text-muted-foreground/60" />
             </div>
           )
@@ -59,7 +81,7 @@ export const RecapMediaTile = forwardRef<HTMLDivElement, RecapMediaTileProps>(
             alt=""
             loading="lazy"
             decoding="async"
-            className="w-full h-full object-cover"
+            className={imgClasses}
           />
         )}
 
