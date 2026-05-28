@@ -261,7 +261,17 @@ export default function EventDetail() {
   // Available to any signed-in viewer so designers/hosts can review without swapping accounts.
   const previewRecap = typeof window !== 'undefined'
     && new URLSearchParams(window.location.search).get('previewRecap') === '1';
-  const isCompleted = isCompletedRaw || isStealthExcluded || previewRecap;
+  // Treat events whose end_time (or +4h fallback window) is in the past as completed,
+  // even if no host explicitly ended them — otherwise navigating to a past R@lly
+  // would render the live UI against stale data and look broken.
+  const endTimeMs = event
+    ? (event.end_time
+        ? new Date(event.end_time).getTime()
+        : new Date(event.start_time).getTime() + 4 * 60 * 60 * 1000)
+    : null;
+  const isPastByTime = endTimeMs !== null && Date.now() > endTimeMs;
+  const isCancelled = event?.status === 'cancelled';
+  const isCompleted = isCompletedRaw || isStealthExcluded || previewRecap || (isPastByTime && !isCancelled);
   
   const hasTransportModeForEvent = Boolean(myAttendee?.arrival_transport_mode);
   const hasRidePlan =
