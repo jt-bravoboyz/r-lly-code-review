@@ -220,7 +220,7 @@ export default function Index() {
               <h3 className="text-xl font-bold font-montserrat animate-text-shimmer bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent">Upcoming</h3>
             </div>
             <Button variant="ghost" size="sm" asChild className="text-primary hover:text-primary/80 font-bold font-montserrat hover:bg-primary/10">
-              <Link to="/events" className="flex items-center gap-1">
+              <Link to="/rallies/upcoming" className="flex items-center gap-1">
                 See All
                 <ArrowRight className="h-4 w-4" />
               </Link>
