@@ -271,7 +271,7 @@ export function RecapTimeline({
         </div>
         <div className="space-y-1">
           <p className="text-lg font-bold font-montserrat text-primary">{closer.emoji} {closer.title}</p>
-          <p className="text-xs font-bold text-foreground font-montserrat uppercase tracking-wide">
+          <p className="text-xs font-bold text-foreground font-montserrat uppercase tracking-wide text-zinc-300">
             {closer.subtitle}
           </p>
           <p className="text-[11px] text-muted-foreground">
