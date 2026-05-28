@@ -183,6 +183,29 @@ export function getFlyerTheme(key: string | null | undefined): FlyerTheme {
 }
 
 /**
+ * Per-theme button accent colors. Replaces R@lly Orange on the event-detail
+ * primary CTAs / date tile / Suggest icons for themes where orange clashes.
+ * `button` is the solid fill, `buttonFg` is the foreground/text on top.
+ */
+export const FLYER_BUTTON_ACCENT: Record<FlyerThemeKey, { button: string; buttonFg: string }> = {
+  rally_dynamic:  { button: '#F47A19', buttonFg: '#FFFFFF' }, // keep orange
+  tequila_sunset: { button: '#F47A19', buttonFg: '#FFFFFF' }, // keep orange
+  midnight_disco: { button: '#7C5CFF', buttonFg: '#FFFFFF' }, // purple
+  garden_party:   { button: '#F4A6B8', buttonFg: '#3A2A1F' }, // light pink
+  neon_warehouse: { button: '#3DDC84', buttonFg: '#0A1A12' }, // green
+  sunday_brunch:  { button: '#B07A9E', buttonFg: '#FFFFFF' }, // mauve
+  golden_hour:    { button: '#F47A19', buttonFg: '#FFFFFF' }, // keep orange
+  game_day:       { button: '#F47A19', buttonFg: '#FFFFFF' }, // keep orange
+  beach_club:     { button: '#5EC4E6', buttonFg: '#0B3A4A' }, // light blue
+};
+
+export function getFlyerButtonAccent(key: string | null | undefined): { button: string; buttonFg: string } {
+  if (key && key in FLYER_BUTTON_ACCENT) return FLYER_BUTTON_ACCENT[key as FlyerThemeKey];
+  return FLYER_BUTTON_ACCENT[DEFAULT_FLYER_THEME];
+}
+
+
+/**
  * Satori-safe title fitter.
  * Satori does not implement CSS `word-break` / `overflow-wrap` like browsers,
  * so we hard-split long titles into at most `maxLines` lines of `maxCharsPerLine`,
