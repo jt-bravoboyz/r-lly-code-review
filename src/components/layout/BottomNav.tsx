@@ -43,7 +43,7 @@ export function BottomNav() {
 
               <div
                 className={cn(
-                  "p-3 rounded-2xl transition-all duration-300 relative",
+                  "p-2 rounded-2xl transition-all duration-300 relative",
                   isTutorialTarget
                     ? "bg-[#F47A19] shadow-[0_0_16px_rgba(244,122,25,0.55)] animate-pulse"
                     : isActive
