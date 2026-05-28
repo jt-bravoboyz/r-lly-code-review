@@ -153,6 +153,31 @@ export function RecapTimeline({
         </section>
       )}
 
+      {/* Premium empty state — no media yet */}
+      {galleryPhotos.length === 0 && (
+        <section className="relative overflow-hidden rounded-2xl border border-border/40 bg-card/60 backdrop-blur-xl p-8 text-center shadow-[0_8px_32px_hsl(0_0%_0%/0.08)]">
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/[0.06] via-transparent to-primary/[0.04]" />
+          <div className="relative space-y-3">
+            <div className="mx-auto w-14 h-14 rounded-2xl bg-primary/15 border border-primary/20 flex items-center justify-center">
+              <ImageIcon className="h-6 w-6 text-primary" strokeWidth={2} />
+            </div>
+            <h3 className="text-base font-bold font-montserrat text-foreground">No photos uploaded yet</h3>
+            <p className="text-xs text-muted-foreground font-montserrat max-w-[260px] mx-auto leading-relaxed">
+              The crew didn't drop any memories from this R@lly. Open the event and tap the camera to start the recap.
+            </p>
+          </div>
+        </section>
+      )}
+
+      {/* Rogue timeline empty fallback — only when there are also no photos to anchor the recap */}
+      {galleryPhotos.length === 0 && rogueTimeline.length === 0 && awards.length === 0 && (
+        <section className="rounded-2xl border border-border/30 bg-card/40 backdrop-blur-xl p-6 text-center">
+          <p className="text-xs text-muted-foreground font-montserrat italic">
+            No rogue moments, awards, or chat highlights logged. The night stays a mystery.
+          </p>
+        </section>
+      )}
+
       {/* Rogue Timeline — with inline tap-to-react */}
       {rogueTimeline.length > 0 && (
         <section className="rounded-2xl bg-[#0e0e1a] px-4 py-6 space-y-4">
