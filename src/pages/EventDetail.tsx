@@ -691,7 +691,7 @@ export default function EventDetail() {
                     onClick={() => setInviteFriendsOpen(true)}
                     className="flex-1 w-full h-12 flex items-center justify-center gap-1.5 text-center font-bold text-sm px-4 rounded-xl bg-card border border-border text-card-foreground shadow-sm hover:bg-accent/10 backdrop-blur-md transition-all font-montserrat"
                   >
-                    <UserPlus className="h-4 w-4 text-primary" />
+                    <UserPlus className="h-4 w-4" style={{ color: 'var(--theme-button)' }} />
                     Invite Friends
                   </button>
                 </div>
