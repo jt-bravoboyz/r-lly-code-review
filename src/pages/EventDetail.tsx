@@ -614,11 +614,20 @@ export default function EventDetail() {
               <div className="mt-2 space-y-3">
                 {/* Prominent Date & Time — solid isolation barrier for theme-proof contrast */}
                 <div className="bg-background/80 dark:bg-zinc-900/80 backdrop-blur-2xl border border-white/20 dark:border-zinc-800/50 shadow-xl p-4 rounded-2xl flex items-center gap-4">
-                  <div className="flex flex-col items-center justify-center rounded-xl bg-[#F47A19] px-3 py-2 min-w-[64px] shadow-md">
-                    <span className="text-[10px] font-black uppercase tracking-[0.18em] text-white leading-none">
+                  <div
+                    className="flex flex-col items-center justify-center rounded-xl px-3 py-2 min-w-[64px] shadow-md"
+                    style={{ background: 'var(--theme-button)' }}
+                  >
+                    <span
+                      className="text-[10px] font-black uppercase tracking-[0.18em] leading-none"
+                      style={{ color: 'var(--theme-button-fg)' }}
+                    >
                       {format(new Date(event.start_time), 'MMM')}
                     </span>
-                    <span className="text-2xl font-black text-white font-montserrat leading-none mt-1">
+                    <span
+                      className="text-2xl font-black font-montserrat leading-none mt-1"
+                      style={{ color: 'var(--theme-button-fg)' }}
+                    >
                       {format(new Date(event.start_time), 'd')}
                     </span>
                   </div>
@@ -626,9 +635,13 @@ export default function EventDetail() {
                     <span className="text-foreground font-black text-xl tracking-wider uppercase font-montserrat leading-tight">
                       {format(new Date(event.start_time), 'EEEE')}
                     </span>
-                    <span className="text-[#F47A19] font-black text-xl font-montserrat leading-tight">
+                    <span
+                      className="font-black text-xl font-montserrat leading-tight"
+                      style={{ color: 'var(--theme-button)' }}
+                    >
                       {format(new Date(event.start_time), 'h:mm a')}
                     </span>
+
                     {event.location_name && (
                       <span className="text-muted-foreground font-semibold text-base truncate mt-0.5">
                         {event.location_name}
