@@ -942,6 +942,7 @@ export type Database = {
           split_check: boolean | null
           start_time: string
           status: string | null
+          tabs_activated: boolean
           title: string
           updated_at: string | null
         }
@@ -976,6 +977,7 @@ export type Database = {
           split_check?: boolean | null
           start_time: string
           status?: string | null
+          tabs_activated?: boolean
           title: string
           updated_at?: string | null
         }
@@ -1010,6 +1012,7 @@ export type Database = {
           split_check?: boolean | null
           start_time?: string
           status?: string | null
+          tabs_activated?: boolean
           title?: string
           updated_at?: string | null
         }
@@ -4590,6 +4593,7 @@ export type Database = {
           split_check: boolean | null
           start_time: string
           status: string | null
+          tabs_activated: boolean
           title: string
           updated_at: string | null
         }
@@ -4692,6 +4696,7 @@ export type Database = {
           split_check: boolean | null
           start_time: string
           status: string | null
+          tabs_activated: boolean
           title: string
           updated_at: string | null
         }[]
@@ -4868,6 +4873,7 @@ export type Database = {
           split_check: boolean | null
           start_time: string
           status: string | null
+          tabs_activated: boolean
           title: string
           updated_at: string | null
         }[]
@@ -5043,6 +5049,7 @@ export type Database = {
           split_check: boolean | null
           start_time: string
           status: string | null
+          tabs_activated: boolean
           title: string
           updated_at: string | null
         }

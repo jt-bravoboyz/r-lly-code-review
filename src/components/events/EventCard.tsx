@@ -18,6 +18,7 @@ interface EventCardProps {
     location_name: string | null;
     is_barhop: boolean | null;
     split_check?: boolean | null;
+    tabs_activated?: boolean | null;
     cover_charge?: number | null;
     
     creator?: {
@@ -83,7 +84,7 @@ export const EventCard = forwardRef<HTMLAnchorElement, EventCardProps>(
                           Bar Hop
                         </span>
                       )}
-                      {event.split_check && (
+                      {event.split_check && event.tabs_activated === true && (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/15 text-primary text-[10px] font-bold border border-primary/20 shadow-sm">
                           <Receipt className="h-3 w-3" />
                           Split
