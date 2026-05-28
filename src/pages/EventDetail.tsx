@@ -784,8 +784,6 @@ export default function EventDetail() {
             </div>
           )}
 
-          {/* Location Map Preview - Show if event has coordinates */}
-          {event.location_lat && event.location_lng && !(isAfterRally && event.is_barhop) && (
             <LocationMapPreview
               lat={event.location_lat}
               lng={event.location_lng}
@@ -794,6 +792,9 @@ export default function EventDetail() {
               height="h-40"
               interactive={true}
               showDirections={true}
+              markerColor={getFlyerButtonAccent((event as any).flyer_theme).button}
+            />
+
             />
           )}
 
