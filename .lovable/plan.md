@@ -1,15 +1,22 @@
-# Delete Two Events
+## Why the recap never loads
 
-Delete the following two events and all their related data (attendees, bar-hop stops, chat messages, media, etc.) via a migration that uses `DELETE FROM events WHERE id IN (...)` — cascading foreign keys will clean up child rows.
+The `useEvent` hook fetches every event detail page through the `get_event_safe` Postgres function. That function declares `RETURNS SETOF events` and hand-lists each column in its `SELECT`. The recent "Split badge" migration added a new `tabs_activated` column to `public.events`, but `get_event_safe` was never updated. Postgres now refuses to run it:
 
-## Targets
+```
+ERROR: structure of query does not match function result type
+DETAIL: Number of returned columns (32) does not match expected column count (33).
+```
 
-1. **`R@LLY`** — `f4316445-8dad-4d89-82a1-e054dd78cf91` (scheduled, 2026-05-28)
-2. **`Mid-Summer Brunch`** (currently open in your preview) — `2f58e0da-0ef7-4793-9dc6-5627131ba73a` (scheduled, 2026-06-20)
+`useEvent` throws, `event` is `null`, and `EventDetail` hits its `if (!event) return <Navigate to="/events" />` guard — so tapping any past R@lly bounces straight back to the events list before the Recap can render.
 
-Note: there's also a `Mid-Summer Brunch 🌷` (dcd42a15…) — that one will NOT be touched. Confirm before I proceed if you actually meant that flower one instead.
+## Fix
 
-## Steps
+Run a migration that replaces `public.get_event_safe(uuid)` with the same body plus `e.tabs_activated` appended to the final `SELECT` list (preserving column order). No other behavior changes.
 
-1. Run a Supabase migration: `DELETE FROM public.events WHERE id IN ('f4316445-8dad-4d89-82a1-e054dd78cf91', '2f58e0da-0ef7-4793-9dc6-5627131ba73a');`
-2. No code changes required — the events list queries will refresh automatically.
+### Verification
+
+1. Re-run `SELECT * FROM public.get_event_safe('<any-event-id>')` — should return one row, no error.
+2. In the preview, open Past R@llies → tap a past event → confirm the R@lly Recap (tour overlay, then timeline) mounts instead of redirecting to `/events`.
+3. Spot-check an upcoming and a live event detail page still load normally.
+
+No frontend changes required.
