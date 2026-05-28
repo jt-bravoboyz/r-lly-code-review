@@ -174,7 +174,7 @@ export function RecapTour({
                   className="rounded-xl overflow-hidden ring-1 ring-white/10 animate-fade-in"
                   style={{ animationDelay: `${i * 100}ms` }}
                 >
-                  <RecapMediaTile media={media} />
+                  <RecapMediaTile media={media} focalClass="object-[center_25%]" />
                 </div>
               ))}
             </div>
@@ -196,7 +196,7 @@ export function RecapTour({
                 muted
                 loop
                 playsInline
-                className="w-full aspect-[4/5] object-cover rounded-2xl ring-2 ring-primary/40 shadow-2xl bg-black"
+                className="w-full aspect-[3/4] object-cover object-[center_30%] rounded-2xl ring-2 ring-primary/40 shadow-2xl bg-black"
               />
               <div className="absolute inset-0 rounded-2xl bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
               <div className="absolute bottom-4 left-4 right-4">
@@ -220,7 +220,7 @@ export function RecapTour({
                   muted
                   loop
                   playsInline
-                  className="w-full aspect-[4/5] object-cover rounded-2xl ring-2 ring-primary/40 shadow-2xl bg-black"
+                  className="w-full aspect-[3/4] object-cover object-[center_30%] rounded-2xl ring-2 ring-primary/40 shadow-2xl bg-black"
                 />
               ) : (
                 <img
@@ -228,7 +228,7 @@ export function RecapTour({
                   alt="Shot of the Night"
                   decoding="async"
                   fetchPriority="high"
-                  className="w-full aspect-[4/5] object-cover rounded-2xl ring-2 ring-primary/40 shadow-2xl"
+                  className="w-full aspect-[3/4] object-cover object-[center_30%] rounded-2xl ring-2 ring-primary/40 shadow-2xl"
                 />
               )}
               <div className="absolute inset-0 rounded-2xl bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
