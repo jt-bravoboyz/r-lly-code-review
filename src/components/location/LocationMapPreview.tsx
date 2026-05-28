@@ -35,7 +35,6 @@ interface LocationMapPreviewProps {
   }, ref) {
     const pinColor = markerColor || RALLY_MARKER_COLORS.orange;
 
-  }, ref) {
     const { token, isLoading, error } = useMapboxToken();
     const { resolvedTheme } = useTheme();
     const mapContainer = useRef<HTMLDivElement>(null);
