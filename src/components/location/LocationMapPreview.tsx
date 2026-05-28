@@ -22,7 +22,9 @@ interface LocationMapPreviewProps {
   markerColor?: string;
 }
 
+export const LocationMapPreview = forwardRef<HTMLDivElement, LocationMapPreviewProps>(
   function LocationMapPreview({
+
     lat,
     lng,
     name,
