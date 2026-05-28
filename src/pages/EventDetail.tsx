@@ -1160,7 +1160,7 @@ export default function EventDetail() {
               <Card className="border-l-2 border-l-primary">
                 <CardHeader className="pb-2">
                   <div className="flex items-center gap-2">
-                    <Shirt className="h-3.5 w-3.5 text-primary" />
+                    <Shirt className="h-3.5 w-3.5" style={{ color: 'var(--theme-button)' }} />
                     <CardTitle className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">
                       Dress Code
                     </CardTitle>
