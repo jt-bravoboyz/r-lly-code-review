@@ -22,7 +22,6 @@ interface LocationMapPreviewProps {
   markerColor?: string;
 }
 
-export const LocationMapPreview = forwardRef<HTMLDivElement, LocationMapPreviewProps>(
   function LocationMapPreview({
     lat,
     lng,
@@ -32,6 +31,10 @@ export const LocationMapPreview = forwardRef<HTMLDivElement, LocationMapPreviewP
     height = "h-32",
     interactive = false,
     showDirections = true,
+    markerColor,
+  }, ref) {
+    const pinColor = markerColor || RALLY_MARKER_COLORS.orange;
+
   }, ref) {
     const { token, isLoading, error } = useMapboxToken();
     const { resolvedTheme } = useTheme();
