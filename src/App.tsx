@@ -43,6 +43,7 @@ import SplitCheckHome from "./pages/SplitCheckHome";
 import SplitGuestPay from "./pages/SplitGuestPay";
 import Friends from "./pages/Friends";
 import PastRallies from "./pages/PastRallies";
+import UpcomingRallies from "./pages/UpcomingRallies";
 import Demo from "./pages/Demo";
 
 
