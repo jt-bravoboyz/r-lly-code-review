@@ -14,15 +14,14 @@ interface RecapMediaTileProps {
   media: RecapMediaItem;
   className?: string;
   /**
-   * When true (default), tile is forced to aspect-square with face-aware
-   * cropping. When false, tile renders at the media's natural aspect ratio
-   * (ideal for masonry / columns layouts).
+   * When true (default), tile is forced to aspect-square while fitting the
+   * full media inside the frame. When false, tile renders at the media's
+   * natural aspect ratio (ideal for masonry / columns layouts).
    */
   square?: boolean;
   /**
-   * Object-position for square crops. Defaults to `center 25%` so faces
-   * (which typically sit in the upper third of selfies & group shots)
-   * survive the square crop instead of getting chopped off.
+   * Object-position hook retained for callers that still need crop-aware
+   * positioning, but square recap tiles now use object-contain by default.
    */
   focalClass?: string;
 }
@@ -30,8 +29,8 @@ interface RecapMediaTileProps {
 /**
  * Photo/video-aware media tile.
  *
- * - `square` mode: forces 1:1 with face-aware `object-position` so portrait
- *   phone photos don't look "zoomed in" with heads cut off.
+  * - `square` mode: forces 1:1 while using `object-contain` so portrait
+  *   phone photos show fully inside the even Facebook-style grid.
  * - Natural mode: renders at intrinsic aspect ratio for masonry grids.
  *
  * Videos display their stored thumbnail when available; otherwise they fall
@@ -41,9 +40,12 @@ interface RecapMediaTileProps {
 export const RecapMediaTile = forwardRef<HTMLDivElement, RecapMediaTileProps>(
   ({ media, className, square = true, focalClass = 'object-[center_25%]' }, ref) => {
     const isVideo = media.type === 'video';
+    const imageSrc = isVideo
+      ? media.thumbnail_url ? getOptimizedImageUrl(media.thumbnail_url, { width: 600 }) : null
+      : getOptimizedImageUrl(media.url, { width: 600 });
     const imgClasses = cn(
-      'block w-full',
-      square ? 'h-full object-cover' : 'h-auto',
+      'relative z-10 block w-full',
+      square ? 'h-full object-contain' : 'h-auto',
       square && focalClass,
     );
 
@@ -56,10 +58,20 @@ export const RecapMediaTile = forwardRef<HTMLDivElement, RecapMediaTileProps>(
           className,
         )}
       >
+        {square && imageSrc && (
+          <img
+            src={imageSrc}
+            alt=""
+            aria-hidden="true"
+            loading="lazy"
+            decoding="async"
+            className="absolute inset-0 h-full w-full scale-125 object-cover blur-xl opacity-35"
+          />
+        )}
         {isVideo ? (
           media.thumbnail_url ? (
             <img
-              src={getOptimizedImageUrl(media.thumbnail_url, { width: 600 })}
+              src={imageSrc || undefined}
               alt=""
               loading="lazy"
               decoding="async"
