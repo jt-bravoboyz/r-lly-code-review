@@ -88,9 +88,6 @@ export default function Index() {
       {/* Name setup for Apple/OAuth users */}
       <IdentitySetupDialog />
       
-      {/* Founding Member testing banner */}
-      <FoundingMemberBanner />
-      
       {/* Modern gradient header */}
       <header className="sticky top-0 z-40 bg-primary backdrop-blur-xl border-b border-white/[0.12] shadow-[0_4px_30px_hsl(22,90%,52%/0.15)]" style={{ WebkitBackdropFilter: 'blur(20px)' }}>
         <div style={{ height: 'env(safe-area-inset-top, 1.5rem)' }} />
