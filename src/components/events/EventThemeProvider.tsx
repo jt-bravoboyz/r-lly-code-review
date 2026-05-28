@@ -1,5 +1,6 @@
 import { ReactNode, useMemo } from 'react';
-import { getFlyerTheme, type FlyerThemeKey } from '@/lib/flyerThemes';
+import { getFlyerTheme, getFlyerButtonAccent, type FlyerThemeKey } from '@/lib/flyerThemes';
+
 
 interface EventThemeProviderProps {
   themeKey: string | null | undefined;
