@@ -2262,10 +2262,21 @@ body.native {
   color: var(--theme-accent);
 }
 
-/* Themed primary action glow on the JOIN button area */
-.event-themed .btn-gradient-primary {
-  box-shadow: var(--theme-glow), 0 8px 24px -10px rgba(0,0,0,0.4);
+/* Themed primary action — recolors btn-gradient-primary / gradient-primary
+   per flyer theme (Join R@lly, Request Ride, other CTAs). */
+.event-themed .btn-gradient-primary,
+.event-themed .gradient-primary {
+  background: linear-gradient(180deg, var(--theme-button) 0%, var(--theme-button) 100%) !important;
+  color: var(--theme-button-fg) !important;
+  box-shadow:
+    0 8px 24px -6px var(--theme-button-glow),
+    inset 0 1px 0 rgba(255,255,255,0.18) !important;
 }
+.event-themed .btn-gradient-primary:hover,
+.event-themed .gradient-primary:hover {
+  filter: brightness(1.08);
+}
+
 
 /* Title gradient utility — apply to the event title <h1>. */
 .event-themed-title {
