@@ -40,8 +40,11 @@ interface RecapMediaTileProps {
 export const RecapMediaTile = forwardRef<HTMLDivElement, RecapMediaTileProps>(
   ({ media, className, square = true, focalClass = 'object-[center_25%]' }, ref) => {
     const isVideo = media.type === 'video';
+    const imageSrc = isVideo
+      ? media.thumbnail_url ? getOptimizedImageUrl(media.thumbnail_url, { width: 600 }) : null
+      : getOptimizedImageUrl(media.url, { width: 600 });
     const imgClasses = cn(
-      'block w-full',
+      'relative z-10 block w-full',
       square ? 'h-full object-contain' : 'h-auto',
       square && focalClass,
     );
@@ -50,15 +53,25 @@ export const RecapMediaTile = forwardRef<HTMLDivElement, RecapMediaTileProps>(
       <div
         ref={ref}
         className={cn(
-          'relative overflow-hidden bg-gradient-to-br from-muted via-card to-muted/70',
+          'relative overflow-hidden bg-muted',
           square && 'aspect-square',
           className,
         )}
       >
+        {square && imageSrc && (
+          <img
+            src={imageSrc}
+            alt=""
+            aria-hidden="true"
+            loading="lazy"
+            decoding="async"
+            className="absolute inset-0 h-full w-full scale-125 object-cover blur-xl opacity-35"
+          />
+        )}
         {isVideo ? (
           media.thumbnail_url ? (
             <img
-              src={getOptimizedImageUrl(media.thumbnail_url, { width: 600 })}
+              src={imageSrc || undefined}
               alt=""
               loading="lazy"
               decoding="async"
