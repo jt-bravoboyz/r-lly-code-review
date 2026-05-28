@@ -220,7 +220,7 @@ export function RecapTour({
                   muted
                   loop
                   playsInline
-                  className="w-full aspect-[4/5] object-cover rounded-2xl ring-2 ring-primary/40 shadow-2xl bg-black"
+                  className="w-full aspect-[3/4] object-cover object-[center_30%] rounded-2xl ring-2 ring-primary/40 shadow-2xl bg-black"
                 />
               ) : (
                 <img
