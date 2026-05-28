@@ -18,6 +18,7 @@ interface EventCardProps {
     location_name: string | null;
     is_barhop: boolean | null;
     split_check?: boolean | null;
+    tabs_activated?: boolean | null;
     cover_charge?: number | null;
     
     creator?: {
