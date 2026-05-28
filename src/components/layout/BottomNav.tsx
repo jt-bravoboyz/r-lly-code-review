@@ -19,7 +19,7 @@ export function BottomNav() {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 pb-[env(safe-area-inset-bottom)] bg-card/90 backdrop-blur-xl border-t border-border/60 shadow-[0_-4px_24px_hsl(0_0%_0%/0.06)] dark:bg-card/80 dark:border-white/[0.08] dark:shadow-[0_-8px_32px_hsl(0_0%_0%/0.4),inset_0_1px_0_hsl(0_0%_100%/0.06)]" style={{ WebkitBackdropFilter: 'blur(20px)' }}>
-      <div className="flex h-16 items-center justify-around px-1">
+      <div className="grid h-16 grid-cols-5 items-center px-1">
         {navItems.map(({ path, icon: Icon, label, tutorialId }) => {
           const isActive = location.pathname === path || 
             (path !== '/' && location.pathname.startsWith(path));
@@ -32,19 +32,20 @@ export function BottomNav() {
               to={path}
               data-tutorial={tutorialId}
               className={cn(
-                "flex flex-col items-center gap-1 px-2 py-2 text-[11px] font-medium transition-all duration-300 rounded-2xl",
+                "flex flex-col items-center justify-center gap-1 w-full h-full px-2 py-2 text-[11px] font-medium transition-colors duration-300 rounded-2xl",
                 isTutorialTarget
-                  ? "bg-[#F47A19] text-white shadow-[0_0_16px_rgba(244,122,25,0.55)] animate-pulse scale-110"
+                  ? "text-white"
                   : isActive 
-                    ? "text-primary scale-105" 
-                    : "text-muted-foreground hover:text-foreground hover:scale-105"
+                    ? "text-primary" 
+                    : "text-muted-foreground hover:text-foreground"
               )}
             >
+
               <div
                 className={cn(
                   "p-3 rounded-2xl transition-all duration-300 relative",
                   isTutorialTarget
-                    ? "bg-transparent"
+                    ? "bg-[#F47A19] shadow-[0_0_16px_rgba(244,122,25,0.55)] animate-pulse"
                     : isActive
                       ? "bg-gradient-to-br from-primary to-primary/80 shadow-lg shadow-primary/30"
                       : "bg-transparent hover:bg-white/[0.06]"
