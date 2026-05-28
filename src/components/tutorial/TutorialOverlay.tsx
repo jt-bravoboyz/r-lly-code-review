@@ -226,11 +226,26 @@ export function TutorialOverlay() {
           )}
 
           {/* Target hint for action steps */}
-          {!isCompletionStep && currentStep.targetSelector && (
+          {!isCompletionStep && currentStep.targetSelector && !targetMissing && (
             <div className="flex items-center gap-2 text-white/50 text-sm">
               <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
               <span>Locate and tap the highlighted element</span>
             </div>
+          )}
+
+          {/* Fallback when the target element can't be found */}
+          {!isCompletionStep && currentStep.targetSelector && targetMissing && (
+            <Button
+              onClick={() => completeAction(currentStep.requiredAction)}
+              className="w-full h-12 rounded-full font-bold text-base mt-2"
+              style={{
+                background: 'linear-gradient(135deg, #FF6A00 0%, #FF8C42 100%)',
+                color: '#FFFFFF',
+              }}
+            >
+              CONTINUE
+              <ChevronRight className="h-5 w-5 ml-1" />
+            </Button>
           )}
         </div>
       </div>
