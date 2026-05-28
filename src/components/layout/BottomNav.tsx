@@ -45,7 +45,7 @@ export function BottomNav() {
                 className={cn(
                   "p-3 rounded-2xl transition-all duration-300 relative",
                   isTutorialTarget
-                    ? "bg-transparent"
+                    ? "bg-[#F47A19] shadow-[0_0_16px_rgba(244,122,25,0.55)] animate-pulse"
                     : isActive
                       ? "bg-gradient-to-br from-primary to-primary/80 shadow-lg shadow-primary/30"
                       : "bg-transparent hover:bg-white/[0.06]"
