@@ -114,11 +114,11 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     id: 'profile-intro',
     title: 'YOUR PROFILE',
     command: 'SETUP YOUR DOSSIER',
-    instruction: 'Add your photo. Set your home address. Manage preferences.\n\nSetting your home address powers R@lly Home safety.\n\nTap Profile.',
+    instruction: 'Add your photo. Set your home address. Manage preferences.\n\nSetting your home address powers R@lly Home safety.\n\nTap your avatar in the top-right.',
     targetSelector: '[data-tutorial="nav-profile"]',
     requiredAction: 'navigate',
     targetRoute: '/profile',
-    position: 'top',
+    position: 'bottom',
   },
   {
     id: 'badges-intro',

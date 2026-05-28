@@ -17,11 +17,13 @@ export function TutorialOverlay() {
     skipTutorial 
   } = useTutorial();
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
+  const [targetMissing, setTargetMissing] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
   // Find and highlight target element
   useEffect(() => {
+    setTargetMissing(false);
     if (!isActive || !currentStep?.targetSelector) {
       setTargetRect(null);
       return;
@@ -31,6 +33,9 @@ export function TutorialOverlay() {
       const target = document.querySelector(currentStep.targetSelector!);
       if (target) {
         setTargetRect(target.getBoundingClientRect());
+        setTargetMissing(false);
+      } else {
+        setTargetRect(null);
       }
     };
 
@@ -39,9 +44,17 @@ export function TutorialOverlay() {
     observer.observe(document.body, { childList: true, subtree: true });
     window.addEventListener('resize', findTarget);
 
+    // Safety net: if target never appears within 2.5s, show fallback continue
+    const missingTimer = setTimeout(() => {
+      if (!document.querySelector(currentStep.targetSelector!)) {
+        setTargetMissing(true);
+      }
+    }, 2500);
+
     return () => {
       observer.disconnect();
       window.removeEventListener('resize', findTarget);
+      clearTimeout(missingTimer);
     };
   }, [isActive, currentStep]);
 
@@ -213,11 +226,26 @@ export function TutorialOverlay() {
           )}
 
           {/* Target hint for action steps */}
-          {!isCompletionStep && currentStep.targetSelector && (
+          {!isCompletionStep && currentStep.targetSelector && !targetMissing && (
             <div className="flex items-center gap-2 text-white/50 text-sm">
               <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
               <span>Locate and tap the highlighted element</span>
             </div>
+          )}
+
+          {/* Fallback when the target element can't be found */}
+          {!isCompletionStep && currentStep.targetSelector && targetMissing && (
+            <Button
+              onClick={() => completeAction(currentStep.requiredAction)}
+              className="w-full h-12 rounded-full font-bold text-base mt-2"
+              style={{
+                background: 'linear-gradient(135deg, #FF6A00 0%, #FF8C42 100%)',
+                color: '#FFFFFF',
+              }}
+            >
+              CONTINUE
+              <ChevronRight className="h-5 w-5 ml-1" />
+            </Button>
           )}
         </div>
       </div>
