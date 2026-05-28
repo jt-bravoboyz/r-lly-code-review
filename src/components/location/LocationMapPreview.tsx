@@ -168,12 +168,14 @@ export const LocationMapPreview = forwardRef<HTMLDivElement, LocationMapPreviewP
                     openMapsDirections({ lat, lng });
                   }
                 }}
+                data-themed-directions
                 className="shrink-0 h-7 text-xs inline-flex items-center justify-center rounded-md font-medium bg-secondary text-secondary-foreground hover:bg-secondary/80 px-3"
               >
                 <Navigation className="h-3 w-3 mr-1" />
                 Directions
               </a>
             )}
+
           </div>
         </div>
       </div>
