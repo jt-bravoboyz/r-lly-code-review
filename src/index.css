@@ -2277,6 +2277,17 @@ body.native {
   filter: brightness(1.08);
 }
 
+/* Themed Directions pill inside Location map preview */
+.event-themed [data-themed-directions] {
+  background: var(--theme-button) !important;
+  color: var(--theme-button-fg) !important;
+  border-color: transparent !important;
+}
+.event-themed [data-themed-directions]:hover {
+  filter: brightness(1.08);
+}
+
+
 
 /* Title gradient utility — apply to the event title <h1>. */
 .event-themed-title {
