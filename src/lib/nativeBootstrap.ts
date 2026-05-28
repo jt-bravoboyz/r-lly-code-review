@@ -102,8 +102,10 @@ export async function initNativeShell(opts: {
         //   - universal link:   https://rlly.cloud/auth/return?code=...
         //   - custom scheme:    com.bravoboyz.rally://auth/return?code=...
         //   - implicit flow:    any URL with #access_token= in the hash
+        // NOTE: do NOT use `url.protocol === 'com.bravoboyz.rally:'` as a
+        // catch-all — custom-scheme deep links (e.g. com.bravoboyz.rally://join/CODE)
+        // also arrive here and must be routed to their path, not treated as OAuth.
         const isOAuthCallback =
-          url.protocol === 'com.bravoboyz.rally:' ||
           url.pathname === '/auth/return' ||
           url.hash.includes('access_token=') ||
           url.searchParams.has('code');

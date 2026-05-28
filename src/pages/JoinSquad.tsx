@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { Capacitor } from '@capacitor/core';
 import { Users, Check, X, ArrowLeft, Loader2 } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { BottomNav } from '@/components/layout/BottomNav';
@@ -36,6 +37,19 @@ export default function JoinSquad() {
   const [isLoading, setIsLoading] = useState(true);
   const [isJoining, setIsJoining] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Custom scheme fallback: if Universal Links didn't intercept this URL,
+  // bounce mobile Safari directly into the native app.
+  useEffect(() => {
+    if (!code) return;
+    if (Capacitor.isNativePlatform()) return;
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    if (!isIOS) return;
+    const timer = setTimeout(() => {
+      window.location.href = `com.bravoboyz.rally://join-squad/${code}`;
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [code]);
 
   useEffect(() => {
     async function fetchInvite() {

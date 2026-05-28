@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { Capacitor } from '@capacitor/core';
 import { Users, Check, Zap, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -54,6 +55,21 @@ export default function JoinRally() {
   const [savingSafetyChoice, setSavingSafetyChoice] = useState(false);
   const [hasMadeSafetyChoice, setHasMadeSafetyChoice] = useState(false);
   const { ensurePaid, dialog: coverDialog } = useCoverChargeGate(event, profile);
+
+  // If Universal Links aren't intercepting this URL (provisioning / AASA cache issues),
+  // fall back to the custom URL scheme so the native app still opens directly.
+  // This fires in mobile Safari only — inside the native app Capacitor.isNativePlatform()
+  // is true so we skip it, and on desktop nothing happens.
+  useEffect(() => {
+    if (!code) return;
+    if (Capacitor.isNativePlatform()) return;
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    if (!isIOS) return;
+    const timer = setTimeout(() => {
+      window.location.href = `com.bravoboyz.rally://join/${code}`;
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [code]);
 
   const fetchEvent = async (inviteCode: string) => {
     if (!inviteCode || inviteCode.length < 4) return;
