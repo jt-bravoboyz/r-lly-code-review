@@ -17,11 +17,13 @@ export function TutorialOverlay() {
     skipTutorial 
   } = useTutorial();
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
+  const [targetMissing, setTargetMissing] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
   // Find and highlight target element
   useEffect(() => {
+    setTargetMissing(false);
     if (!isActive || !currentStep?.targetSelector) {
       setTargetRect(null);
       return;
@@ -31,6 +33,9 @@ export function TutorialOverlay() {
       const target = document.querySelector(currentStep.targetSelector!);
       if (target) {
         setTargetRect(target.getBoundingClientRect());
+        setTargetMissing(false);
+      } else {
+        setTargetRect(null);
       }
     };
 
@@ -39,9 +44,17 @@ export function TutorialOverlay() {
     observer.observe(document.body, { childList: true, subtree: true });
     window.addEventListener('resize', findTarget);
 
+    // Safety net: if target never appears within 2.5s, show fallback continue
+    const missingTimer = setTimeout(() => {
+      if (!document.querySelector(currentStep.targetSelector!)) {
+        setTargetMissing(true);
+      }
+    }, 2500);
+
     return () => {
       observer.disconnect();
       window.removeEventListener('resize', findTarget);
+      clearTimeout(missingTimer);
     };
   }, [isActive, currentStep]);
 
