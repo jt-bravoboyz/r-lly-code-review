@@ -26,24 +26,15 @@ export function useMyEvents() {
     queryFn: async (): Promise<CategorizedEvents> => {
       if (!userId) return EMPTY;
 
-      // Resolve current profile id + set of event_ids the user actually attends,
+      // Resolve current profile id + the set of event_ids the user actually attends,
       // so the Past list is strictly: events I hosted OR events I joined.
-      const [{ data: profile }, { data: attendeeRows }] = await Promise.all([
-        supabase.from('profiles').select('id').eq('user_id', userId).maybeSingle(),
-        supabase
-          .from('event_attendees')
-          .select('event_id')
-          .in(
-            'profile_id',
-            // subquery fallback handled below
-            []
-          ),
-      ]);
-
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', userId)
+        .maybeSingle();
       const profileId = profile?.id ?? null;
 
-      // Re-fetch attendee rows now that we have the profile id (the parallel call
-      // above is a no-op placeholder to keep latency low when profile is cached).
       let myAttendedEventIds = new Set<string>();
       if (profileId) {
         const { data: rows } = await supabase
