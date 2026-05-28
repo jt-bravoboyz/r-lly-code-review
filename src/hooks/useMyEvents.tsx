@@ -85,7 +85,7 @@ export function useMyEvents() {
       return {
         current,
         upcoming,
-        past: past.slice(0, 10),
+        past,
       };
     },
   });
