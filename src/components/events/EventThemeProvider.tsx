@@ -88,12 +88,27 @@ export function EventThemeProvider({ themeKey, disabled, children }: EventThemeP
   const accentSoft = buildAccentSoft(accent, ink);
   const inkStrong = mode === 'light' ? '#0B0F1A' : '#FFFFFF';
 
+  // Per-theme button color (user-curated; replaces hardcoded R@lly Orange on
+  // event-detail CTAs / date tile / Suggest icons).
+  const { button, buttonFg } = getFlyerButtonAccent(themeKey as FlyerThemeKey);
+  const buttonRgb = hexToRgb(button);
+  const buttonGlow = buttonRgb
+    ? `rgba(${buttonRgb.r}, ${buttonRgb.g}, ${buttonRgb.b}, 0.35)`
+    : 'rgba(244,122,25,0.35)';
+  const buttonSoft = buttonRgb
+    ? `rgba(${buttonRgb.r}, ${buttonRgb.g}, ${buttonRgb.b}, 0.16)`
+    : 'rgba(244,122,25,0.16)';
+
   const cssVars: React.CSSProperties = {
     // Theme tokens consumable by descendants
     ['--theme-accent' as any]: accent,
     ['--theme-accent-2' as any]: accent2,
     ['--theme-accent-3' as any]: accent3,
     ['--theme-accent-soft' as any]: accentSoft,
+    ['--theme-button' as any]: button,
+    ['--theme-button-fg' as any]: buttonFg,
+    ['--theme-button-glow' as any]: buttonGlow,
+    ['--theme-button-soft' as any]: buttonSoft,
     ['--theme-ink' as any]: ink,
     ['--theme-ink-strong' as any]: inkStrong,
     ['--theme-meta' as any]: meta,
@@ -103,6 +118,7 @@ export function EventThemeProvider({ themeKey, disabled, children }: EventThemeP
     ['--theme-title-gradient' as any]: theme.titleGradient,
     ['--theme-scrim' as any]: theme.archTint,
   };
+
 
   return (
     <div
