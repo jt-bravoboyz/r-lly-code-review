@@ -1,27 +1,30 @@
-# Photo Bundle → Instagram-style Uniform Square Grid
+# Fix: Source Photos Distorted by Image Optimizer
 
-Goal: every recap photo sits in a perfect square cell, full image visible (letterboxed), no cropping of faces.
+## Root cause
 
-## Changes
+`src/lib/imageOptimization.ts` rewrites Supabase storage URLs onto the on-the-fly render endpoint with `resize=cover` as the default. Callers like `RecapMediaTile` only pass `width: 600` (no height). Supabase's transformer then sets the new width to 600 but **keeps the original pixel height**, producing a horizontally squashed image.
 
-### 1. `src/components/events/recap/RecapTimeline.tsx`
-- Remove any dynamic/masonry/columns logic in the photo bundle section.
-- Force grid wrapper to: `grid grid-cols-3 gap-2`.
+Verified against this event's first photo:
+- Source: `1206 × 1841` (natural portrait)
+- Optimized (`?width=600&quality=75&resize=cover`): `600 × 1841` — distorted
 
-### 2. `src/components/events/recap/RecapTour.tsx`
-- In the `gallery` step, remove any masonry/columns logic.
-- Force grid wrapper to: `grid grid-cols-3 gap-2`.
-- Remove any leftover `focalClass` props passed to `RecapMediaTile`.
+That's why the recap grid still looks wrong even with `object-contain` and a square frame: the underlying JPEG itself is stretched.
 
-### 3. `src/components/events/recap/RecapMediaTile.tsx`
-- Square mode container: `aspect-square w-full rounded-xl overflow-hidden relative bg-zinc-900/40 backdrop-blur-sm`.
-- Inner `<img>` (and video poster/thumbnail img): `object-contain w-full h-full` — no `object-cover`, no focal offsets.
-- Keep the existing blurred backdrop layer behind the contained image so portrait letterbox bars feel themed (still using `object-cover` on that background-only layer is fine since it's purely decorative).
-- Keep video play badge, selection ring, and overlays untouched.
+## Fix
 
-## Out of scope
-- Hero video and Best Photo Spotlight steps in `RecapTour.tsx` stay as-is (already `aspect-[3/4] object-contain` from prior fix).
-- No business logic, data, or animation changes.
+Edit `src/lib/imageOptimization.ts`:
+
+1. Only attach `resize` when **both** `width` and `height` are provided. If only one dimension is set, omit `resize` so the transformer scales proportionally.
+2. Keep current behavior for callers that explicitly pass both dimensions (e.g. featured hero crops).
+
+That single change makes every recap tile fetch a proportionally-scaled 600px-wide JPEG (~600×916 for portraits, ~600×400 for landscapes), which then sits perfectly letterboxed inside the square `object-contain` tile.
 
 ## Verify
-- Open `/events/681e53e8-c8e5-43c0-a1cf-04861e4f2322` recap → Photo Bundle and Tour gallery step both render an even 3-col square grid with full vertical photos visible inside each tile.
+
+- Re-fetch the same URL with `?width=600&quality=75` (no resize) and confirm dimensions are proportional.
+- Reload `/events/681e53e8-c8e5-43c0-a1cf-04861e4f2322` recap. Faces should look natural inside the Instagram square grid.
+
+## Out of scope
+
+- No layout, component, or RecapMediaTile changes — last turn's grid + `object-contain` is correct once the source is no longer distorted.
+- No upload-side changes; originals in storage are fine.
