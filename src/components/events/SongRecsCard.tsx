@@ -56,7 +56,7 @@ export function SongRecsCard({ eventId, isParticipant, currentProfileId }: Props
             className="w-full flex items-center justify-between p-4 text-left"
           >
             <div className="flex items-center gap-2">
-              <Music2 className="h-3.5 w-3.5 text-primary" />
+              <Music2 className="h-3.5 w-3.5" style={{ color: 'var(--theme-button)' }} />
               <span className="text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">
                 Song Rec's
               </span>
