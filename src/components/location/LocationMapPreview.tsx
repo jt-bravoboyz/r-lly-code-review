@@ -18,6 +18,8 @@ interface LocationMapPreviewProps {
   height?: string;
   interactive?: boolean;
   showDirections?: boolean;
+  /** Optional override for the map pin color (defaults to R@lly Orange). */
+  markerColor?: string;
 }
 
 export const LocationMapPreview = forwardRef<HTMLDivElement, LocationMapPreviewProps>(
