@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { shareContent, copyToClipboard } from '@/lib/nativeShare';
-import { Camera, Share2, ShieldCheck } from 'lucide-react';
+import { Camera, Share2, ShieldCheck, ImageIcon } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
