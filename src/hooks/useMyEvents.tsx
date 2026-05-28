@@ -26,11 +26,35 @@ export function useMyEvents() {
     queryFn: async (): Promise<CategorizedEvents> => {
       if (!userId) return EMPTY;
 
+      // Resolve current profile id + set of event_ids the user actually attends,
+      // so the Past list is strictly: events I hosted OR events I joined.
+      const [{ data: profile }, { data: attendeeRows }] = await Promise.all([
+        supabase.from('profiles').select('id').eq('user_id', userId).maybeSingle(),
+        supabase
+          .from('event_attendees')
+          .select('event_id')
+          .in(
+            'profile_id',
+            // subquery fallback handled below
+            []
+          ),
+      ]);
+
+      const profileId = profile?.id ?? null;
+
+      // Re-fetch attendee rows now that we have the profile id (the parallel call
+      // above is a no-op placeholder to keep latency low when profile is cached).
+      let myAttendedEventIds = new Set<string>();
+      if (profileId) {
+        const { data: rows } = await supabase
+          .from('event_attendees')
+          .select('event_id')
+          .eq('profile_id', profileId);
+        myAttendedEventIds = new Set((rows || []).map((r: any) => r.event_id));
+      }
+
       // Rely on the `events` SELECT RLS policy to scope rows to:
       // creator OR cohost OR attendee OR pending/accepted invitee.
-      // The previous client-side `.or('creator_id.eq.X,id.in.(...)')` filter
-      // had a PostgREST comma-collision bug that silently returned zero rows
-      // for users with attended events (e.g. JT).
       const { data: events, error } = await supabase
         .from('events')
         .select(`
@@ -71,7 +95,11 @@ export function useMyEvents() {
         } else if (isUpcoming) {
           upcoming.push(event);
         } else if (isPast) {
-          past.push(event);
+          // Strict gate: only include past events the user actually participated in
+          // (hosted or attended). Invites / cohost-only / admin views are excluded.
+          const isHost = profileId && event.creator_id === profileId;
+          const didAttend = myAttendedEventIds.has(event.id);
+          if (isHost || didAttend) past.push(event);
         }
       });
 
