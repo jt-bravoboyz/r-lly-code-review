@@ -17,7 +17,6 @@ import { useUnreadCount } from '@/hooks/useNotifications';
 import { usePendingInvites, useInviteRealtime } from '@/hooks/useEventInvites';
 import { useRallyOnboarding } from '@/contexts/RallyOnboardingContext';
 import { IdentitySetupDialog } from '@/components/profile/NameSetupDialog';
-import { FoundingMemberBanner } from '@/components/onboarding/FoundingMemberBanner';
 import rallyLogo from '@/assets/rally-logo.png';
 import { MiniFounderGem } from '@/components/badges/MiniFounderGem';
 import { WelcomeBackOverlay } from '@/components/WelcomeBackOverlay';
