@@ -38,7 +38,7 @@ interface RecapMediaTileProps {
  * Safari/Chrome refuses to render a poster frame from `preload="metadata"`).
  */
 export const RecapMediaTile = forwardRef<HTMLDivElement, RecapMediaTileProps>(
-  ({ media, className, square = true, focalClass = 'object-[center_25%]' }, ref) => {
+  ({ media, className, square = true }, ref) => {
     const isVideo = media.type === 'video';
     const imageSrc = isVideo
       ? media.thumbnail_url ? getOptimizedImageUrl(media.thumbnail_url, { width: 600 }) : null
@@ -46,15 +46,16 @@ export const RecapMediaTile = forwardRef<HTMLDivElement, RecapMediaTileProps>(
     const imgClasses = cn(
       'relative z-10 block w-full',
       square ? 'h-full object-contain' : 'h-auto',
-      square && focalClass,
     );
 
     return (
       <div
         ref={ref}
         className={cn(
-          'relative overflow-hidden bg-muted',
-          square && 'aspect-square',
+          'relative overflow-hidden',
+          square
+            ? 'aspect-square w-full rounded-xl bg-zinc-900/40 backdrop-blur-sm'
+            : 'bg-muted',
           className,
         )}
       >
