@@ -5,10 +5,11 @@ import { useMyDmChats } from '@/hooks/useDirectMessages';
 import { useDirectMessage } from '@/contexts/DirectMessageContext';
 
 export function DirectMessagesList() {
-  const { data = [], isLoading } = useMyDmChats();
+  const { data = [], isPending } = useMyDmChats();
   const { openDm } = useDirectMessage();
 
-  if (isLoading) {
+  // Only show skeleton on the very first fetch with no cached data.
+  if (isPending && data.length === 0) {
     return (
       <div className="space-y-3">
         {[1, 2, 3].map((i) => (

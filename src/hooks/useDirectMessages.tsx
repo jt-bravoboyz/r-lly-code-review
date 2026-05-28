@@ -26,7 +26,11 @@ export function useMyDmChats() {
       return (data || []) as DmChatRow[];
     },
     enabled: !!profile?.id,
-    staleTime: 1000 * 15,
+    staleTime: 1000 * 60 * 5, // 5 min — realtime channel below invalidates on new msgs
+    gcTime: 1000 * 60 * 30,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    placeholderData: (prev) => prev ?? ([] as DmChatRow[]),
   });
 
   // Refresh on any new message
