@@ -196,7 +196,7 @@ export function RecapTour({
                 muted
                 loop
                 playsInline
-                className="w-full aspect-[4/5] object-cover rounded-2xl ring-2 ring-primary/40 shadow-2xl bg-black"
+                className="w-full aspect-[3/4] object-cover object-[center_30%] rounded-2xl ring-2 ring-primary/40 shadow-2xl bg-black"
               />
               <div className="absolute inset-0 rounded-2xl bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
               <div className="absolute bottom-4 left-4 right-4">
