@@ -46,7 +46,7 @@ export const RecapMediaTile = forwardRef<HTMLDivElement, RecapMediaTileProps>(
               alt=""
               loading="lazy"
               decoding="async"
-              className="w-full h-full object-contain"
+              className="w-full h-full object-cover"
             />
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-muted via-muted/80 to-muted/60 flex items-center justify-center">
@@ -59,7 +59,7 @@ export const RecapMediaTile = forwardRef<HTMLDivElement, RecapMediaTileProps>(
             alt=""
             loading="lazy"
             decoding="async"
-            className="w-full h-full object-contain"
+            className="w-full h-full object-cover"
           />
         )}
 
