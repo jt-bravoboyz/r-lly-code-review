@@ -379,9 +379,19 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
             style={{ scrollPaddingBottom: 'calc(env(safe-area-inset-bottom) + 1.5rem)' }}
           >
           <div
-            className="rally-create-inner px-6 pt-6 space-y-5 pb-[calc(env(safe-area-inset-bottom)+1.5rem)]"
+            className="rally-create-inner relative px-6 pt-6 space-y-5 pb-[calc(env(safe-area-inset-bottom)+1.5rem)]"
             style={{ paddingTop: 'max(env(safe-area-inset-top), 1.25rem)' }}
           >
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              aria-label="Close"
+              className="absolute left-3 z-30 inline-flex items-center justify-center h-10 w-10 rounded-full bg-muted/60 dark:bg-white/[0.08] backdrop-blur-xl ring-1 ring-border/40 dark:ring-white/[0.12] text-foreground/80 hover:text-foreground hover:bg-muted active:scale-95 transition"
+              style={{ top: 'max(env(safe-area-inset-top), 0.75rem)' }}
+            >
+              <X className="h-5 w-5" strokeWidth={2.25} />
+            </button>
+
             {/* Header — Apple-quiet */}
             <div className="text-center space-y-1 pt-1">
               <h2 className="text-[22px] font-bold tracking-tight text-foreground font-montserrat">
