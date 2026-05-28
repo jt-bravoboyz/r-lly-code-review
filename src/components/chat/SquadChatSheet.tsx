@@ -27,7 +27,7 @@ export function SquadChatSheet({
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full sm:max-w-md p-0 flex flex-col [&>button]:hidden">
-        <SheetHeader className="p-4 border-b">
+        <SheetHeader className="p-4 border-b" style={{ paddingTop: 'max(env(safe-area-inset-top), 1rem)' }}>
           <SheetTitle className="flex items-center gap-2">
             <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => onOpenChange(false)}>
               <ArrowLeft className="h-5 w-5" />

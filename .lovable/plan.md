@@ -1,18 +1,10 @@
-## Goal
-Make the "See All" link in the Upcoming section on Home open a full list of upcoming R@llies, instead of routing to the placeholder `/events` (R@lly Feed coming soon) page.
+## Fix squad chat header clipped under iOS status bar
 
-## Changes
+The `SquadChatSheet` header (back arrow + squad name) sits flush at the top of the screen, so on iPhones the notch/status bar covers it (as shown in the screenshot — "Co..." gets clipped by the Dynamic Island).
 
-1. **Create `src/pages/UpcomingRallies.tsx`** — Mirrors `PastRallies.tsx` structure:
-   - Sticky orange glass header with back arrow + `Calendar` icon + title "Upcoming R@llies".
-   - Pulls `categorized.upcoming` from `useMyEvents()`.
-   - Loading skeletons, empty state ("No R@llies on deck — start one and rally your squad."), and full list rendered with `EventCard`.
-   - Includes `BottomNav`.
+### Change
 
-2. **`src/App.tsx`** — Register new route `/rallies/upcoming` → `<UpcomingRallies />` (lazy import next to `PastRallies`).
+**`src/components/chat/SquadChatSheet.tsx`** — add safe-area top inset to the `SheetHeader`:
+- Update the header's className to include top padding using `env(safe-area-inset-top)` with a sensible minimum, e.g. inline style `paddingTop: 'max(env(safe-area-inset-top), 1rem)'` (keeping existing `p-4` for horizontal/bottom).
 
-3. **`src/pages/Index.tsx`** (line 223) — Change the Upcoming "See All" link from `/events` to `/rallies/upcoming`.
-
-## Out of scope
-- `/events` route stays as-is (still shows R@lly Feed coming soon for the bottom nav tab).
-- No changes to `useMyEvents` or `EventCard`.
+That's the only change — no logic, routing, or other UI affected. Other chat surfaces (DirectMessageSheet, EventChat) aren't in scope unless you want me to audit them too.
