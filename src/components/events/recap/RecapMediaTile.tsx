@@ -46,10 +46,10 @@ export const RecapMediaTile = forwardRef<HTMLDivElement, RecapMediaTileProps>(
               alt=""
               loading="lazy"
               decoding="async"
-              className={cn(square ? 'w-full h-full object-cover' : 'w-full h-auto object-cover')}
+              className="w-full h-full object-cover"
             />
           ) : (
-            <div className={cn('bg-gradient-to-br from-muted via-muted/80 to-muted/60 flex items-center justify-center', square ? 'w-full h-full' : 'w-full aspect-video')}>
+            <div className="w-full h-full bg-gradient-to-br from-muted via-muted/80 to-muted/60 flex items-center justify-center">
               <FileVideo className="h-7 w-7 text-muted-foreground/60" />
             </div>
           )
@@ -59,7 +59,7 @@ export const RecapMediaTile = forwardRef<HTMLDivElement, RecapMediaTileProps>(
             alt=""
             loading="lazy"
             decoding="async"
-            className={cn(square ? 'w-full h-full object-cover' : 'w-full h-auto object-cover')}
+            className="w-full h-full object-cover"
           />
         )}
 

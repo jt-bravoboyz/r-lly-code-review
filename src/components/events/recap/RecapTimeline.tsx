@@ -131,13 +131,12 @@ export function RecapTimeline({
               Photo Bundle
             </h3>
           </div>
-          <div className="columns-2 md:columns-3 gap-4 space-y-4">
+          <div className="grid grid-cols-3 gap-2">
             {displayPhotos.slice(1).map((media) => (
               <RecapMediaTile
                 key={media.id}
                 media={media}
-                square={false}
-                className="rounded-xl ring-1 ring-border/30 break-inside-avoid mb-4"
+                className="rounded-xl ring-1 ring-border/30"
               />
             ))}
           </div>
