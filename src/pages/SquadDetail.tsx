@@ -350,35 +350,37 @@ export default function SquadDetail() {
   };
 
   return (
-    <div className="min-h-[100dvh] bg-gradient-to-b from-background to-muted pb-bottom-nav">
+    <div className="min-h-[100dvh] bg-gradient-to-b from-background to-muted pb-bottom-nav overflow-x-hidden">
       {/* Header */}
       <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-md border-b">
         <div className="h-safe-top" />
         <div className="flex items-center gap-3 p-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/squads')}>
+          <Button variant="ghost" size="icon" className="shrink-0" onClick={() => navigate('/squads')}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <div className="flex items-center gap-3 flex-1">
-            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
               <Icon className="h-5 w-5 text-primary" />
             </div>
-            <div>
-              <h1 className="font-bold font-montserrat">{squad.name}</h1>
-              <p className="text-xs text-muted-foreground">
+            <div className="min-w-0">
+              <h1 className="font-bold font-montserrat truncate">{squad.name}</h1>
+              <p className="text-xs text-muted-foreground truncate">
                 {allMembers.length} member{allMembers.length !== 1 ? 's' : ''}
               </p>
             </div>
           </div>
           {isOwner && (
-            <SquadSettingsDialog
-              squadId={squad.id}
-              squadName={squad.name}
-              groupPhotoUrl={displayGroupPhotoUrl || squad.group_photo_url || null}
-              members={allMembers}
-              onPhotoChange={() => fileInputRef.current?.click()}
-            />
+            <div className="shrink-0">
+              <SquadSettingsDialog
+                squadId={squad.id}
+                squadName={squad.name}
+                groupPhotoUrl={displayGroupPhotoUrl || squad.group_photo_url || null}
+                members={allMembers}
+                onPhotoChange={() => fileInputRef.current?.click()}
+              />
+            </div>
           )}
-          <Button variant="ghost" size="icon" onClick={handleRefreshSquad} disabled={refreshing}>
+          <Button variant="ghost" size="icon" className="shrink-0" onClick={handleRefreshSquad} disabled={refreshing}>
             <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
           </Button>
         </div>
