@@ -727,7 +727,7 @@ export default function SquadDetail() {
             </>
           )}
         </div>
-      </ScrollArea>
+      </div>
 
       {/* Squad Chat Sheet */}
       <SquadChatSheet
