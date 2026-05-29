@@ -354,23 +354,23 @@ export default function SquadDetail() {
       {/* Header */}
       <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-md border-b">
         <div className="h-safe-top" />
-        <div className="flex items-center gap-3 p-4">
+        <div className="flex items-center gap-2 p-3 min-w-0">
           <Button variant="ghost" size="icon" className="shrink-0" onClick={() => navigate('/squads')}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <div className="flex items-center gap-3 flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-1 min-w-0">
             <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
               <Icon className="h-5 w-5 text-primary" />
             </div>
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <h1 className="font-bold font-montserrat truncate">{squad.name}</h1>
               <p className="text-xs text-muted-foreground truncate">
                 {allMembers.length} member{allMembers.length !== 1 ? 's' : ''}
               </p>
             </div>
           </div>
-          {isOwner && (
-            <div className="shrink-0">
+          <div className="flex items-center gap-1 shrink-0">
+            {isOwner && (
               <SquadSettingsDialog
                 squadId={squad.id}
                 squadName={squad.name}
@@ -378,15 +378,15 @@ export default function SquadDetail() {
                 members={allMembers}
                 onPhotoChange={() => fileInputRef.current?.click()}
               />
-            </div>
-          )}
-          <Button variant="ghost" size="icon" className="shrink-0" onClick={handleRefreshSquad} disabled={refreshing}>
-            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-          </Button>
+            )}
+            <Button variant="ghost" size="icon" className="shrink-0" onClick={handleRefreshSquad} disabled={refreshing}>
+              <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+            </Button>
+          </div>
         </div>
       </div>
 
-      <ScrollArea className="h-[calc(100vh-140px)]">
+      <div className="h-[calc(100vh-140px)] overflow-y-auto overflow-x-hidden">
         <div className="p-4 space-y-6">
           {/* Group Photo Section — Premium Photo Card */}
           <div className="flex justify-center">
