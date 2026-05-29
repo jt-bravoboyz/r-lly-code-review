@@ -1,0 +1,1 @@
+DROP TRIGGER IF EXISTS trg_notify_squad_invite ON public.squad_invites;

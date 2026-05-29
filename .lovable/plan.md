@@ -1,20 +1,32 @@
 ## Problem
 
-The `profile-intro` tutorial step targets `[data-tutorial="nav-profile"]`, but that element was removed when the bottom nav was restructured (now: Home, R@lly, Alerts, Wallet, Squads — no Profile tab). Profile is only reachable via the avatar in the header (top-left). With no element matching the selector, the highlight cutout never renders and the step never completes — users are stuck until they hit "Skip Training".
+Squad invitees see **two** identical alerts in their Alerts tab for a single invite. Two `AFTER INSERT` triggers exist on `public.squad_invites`, both invoking the same `notify_on_squad_invite()` function:
+
+- `trg_notify_squad_invite` — created in migration `20260329225922`, redefined in `20260329231511`
+- `trg_notify_on_squad_invite` — created later in `20260329235547` (a rename that never dropped the original)
+
+Each insert into `squad_invites` therefore inserts two rows into `notifications` with `type = 'squad_invite'` for the same recipient.
 
 ## Fix
 
-1. **`src/components/layout/Header.tsx`** — Add `data-tutorial="nav-profile"` to the `<Link to="/profile">` avatar element so the tutorial highlight has something to anchor to.
+One migration that drops the duplicate trigger and keeps the canonical one:
 
-2. **`src/hooks/useTutorial.tsx`** — In the `profile-intro` step:
-   - Change `position` from `'top'` to `'bottom'` so the command card doesn't cover the header avatar it's pointing at.
-   - Update the instruction line from "Tap Profile." to "Tap your avatar in the top-left." so the cue matches the new location.
+```sql
+-- Remove the duplicate squad-invite notification trigger.
+-- Keep trg_notify_on_squad_invite (the newer, current name); drop the old one.
+DROP TRIGGER IF EXISTS trg_notify_squad_invite ON public.squad_invites;
+```
 
-3. **Safety net** — In `src/components/tutorial/TutorialOverlay.tsx`, when a step has a `targetSelector` but no element is found after a short delay (e.g. 2s), render a fallback **"Skip this step"** / **"Continue"** button on the command card so a missing/renamed selector can never trap users again. (Today there's no recovery — only the global Skip Training.)
+No changes to:
+- `notify_on_squad_invite()` function (still correct)
+- Client code (no client-side notification insert exists for squad invites)
+- `send-event-notification` edge function (only fires push, doesn't write to `notifications` for this type)
 
-No other steps need changes; all other `data-tutorial` selectors (`nav-home`, `nav-events`, `nav-squads`, `nav-notifications`) still exist in `BottomNav.tsx`.
+## Verification
+
+After the migration, sending a new squad invite should produce exactly one row in `public.notifications` for the recipient and one card in the Alerts tab. Existing duplicate notifications already in users' inboxes are left in place (not retroactively cleaned up) — let me know if you want a one-shot cleanup query as well.
 
 ## Out of scope
 
-- Re-adding a Profile tab to the bottom nav (would conflict with the current 5-tab layout that includes Wallet).
-- Rewriting the tutorial flow itself.
+- Push-notification de-dup (separate codepath, already keyed).
+- Changing invite copy/UI.
