@@ -33,9 +33,9 @@ export function SquadPendingInvitesCard({ squadId }: SquadPendingInvitesCardProp
     staleTime: 30_000,
   });
 
-  // Fetch display names for any profile-typed invites
+  // Fetch display names for any profile-typed invites (contact_value starts with "profile:")
   const profileIds = invites
-    .filter((i) => i.invite_type === 'profile')
+    .filter((i) => i.contact_value?.startsWith('profile:'))
     .map((i) => i.contact_value.replace(/^profile:/, ''))
     .filter(Boolean);
 
@@ -70,7 +70,7 @@ export function SquadPendingInvitesCard({ squadId }: SquadPendingInvitesCardProp
       </h2>
       <div className="space-y-2">
         {invites.map((invite) => {
-          const isProfile = invite.invite_type === 'profile';
+          const isProfile = invite.contact_value?.startsWith('profile:');
           const isEmail = invite.invite_type === 'email';
           const profileId = isProfile ? invite.contact_value.replace(/^profile:/, '') : null;
           const profileInfo = profileId ? profileMap[profileId] : null;
