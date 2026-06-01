@@ -14,7 +14,7 @@ interface PushPayload {
   tag?: string;
 }
 
-// Base64 URL encoding helper
+// Base64 URL encoding/decoding helpers
 function base64UrlEncode(input: Uint8Array | ArrayBuffer): string {
   const bytes = input instanceof Uint8Array ? input : new Uint8Array(input);
   let binary = '';
@@ -22,6 +22,112 @@ function base64UrlEncode(input: Uint8Array | ArrayBuffer): string {
     binary += String.fromCharCode(bytes[i]);
   }
   return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function base64UrlDecode(s: string): Uint8Array {
+  s = s.replace(/-/g, '+').replace(/_/g, '/');
+  while (s.length % 4) s += '=';
+  const binary = atob(s);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+
+function concatBytes(...arrays: Uint8Array[]): Uint8Array {
+  const total = arrays.reduce((n, a) => n + a.length, 0);
+  const out = new Uint8Array(total);
+  let offset = 0;
+  for (const a of arrays) { out.set(a, offset); offset += a.length; }
+  return out;
+}
+
+// HMAC-SHA-256 helper
+async function hmac256(key: Uint8Array, data: Uint8Array): Promise<Uint8Array> {
+  const k = await crypto.subtle.importKey(
+    'raw', key, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
+  );
+  return new Uint8Array(await crypto.subtle.sign('HMAC', k, data));
+}
+
+// HKDF-Expand (single block, len ≤ 32) per RFC 5869
+async function hkdfExpand(prk: Uint8Array, info: Uint8Array, len: number): Promise<Uint8Array> {
+  return (await hmac256(prk, concatBytes(info, new Uint8Array([1])))).slice(0, len);
+}
+
+/**
+ * Encrypt a Web Push payload per RFC 8291 (aes128gcm content encoding).
+ * Returns the full encrypted body including the RFC 8291 header.
+ */
+async function encryptWebPushPayload(
+  p256dhB64: string,
+  authB64: string,
+  plaintext: Uint8Array,
+): Promise<Uint8Array> {
+  const RS = 4096; // record size (standard)
+
+  const receiverPub = base64UrlDecode(p256dhB64);
+  const authSecret = base64UrlDecode(authB64);
+
+  // Random 16-byte salt
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+
+  // Ephemeral sender key pair (P-256)
+  const senderKeys = await crypto.subtle.generateKey(
+    { name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveBits']
+  );
+  const senderPub = new Uint8Array(
+    await crypto.subtle.exportKey('raw', senderKeys.publicKey)
+  ); // 65 bytes, uncompressed
+
+  // ECDH shared secret
+  const receiverKey = await crypto.subtle.importKey(
+    'raw', receiverPub, { name: 'ECDH', namedCurve: 'P-256' }, false, []
+  );
+  const ecdhSecret = new Uint8Array(
+    await crypto.subtle.deriveBits({ name: 'ECDH', public: receiverKey }, senderKeys.privateKey, 256)
+  );
+
+  // RFC 8291 §3.3 key agreement
+  // PRK_key = HMAC-SHA-256(auth_secret, ecdh_secret)
+  const prkKey = await hmac256(authSecret, ecdhSecret);
+
+  // auth_info = "WebPush: info\x00" || receiver_pub (65 B) || sender_pub (65 B)
+  const authInfo = concatBytes(
+    new TextEncoder().encode('WebPush: info\x00'),
+    receiverPub,
+    senderPub,
+  );
+
+  // IKM = HKDF-Expand(PRK_key, auth_info, 32)
+  const ikm = await hkdfExpand(prkKey, authInfo, 32);
+
+  // PRK = HMAC-SHA-256(salt, IKM)
+  const prk = await hmac256(salt, ikm);
+
+  // CEK = HKDF-Expand(PRK, "Content-Encoding: aes128gcm\x00", 16)
+  const cek = await hkdfExpand(prk, new TextEncoder().encode('Content-Encoding: aes128gcm\x00'), 16);
+
+  // NONCE = HKDF-Expand(PRK, "Content-Encoding: nonce\x00", 12)
+  const nonce = await hkdfExpand(prk, new TextEncoder().encode('Content-Encoding: nonce\x00'), 12);
+
+  // Pad plaintext: content || 0x02 delimiter || 0x00 padding to (RS - 16) bytes
+  const paddedLen = RS - 16; // room for AES-GCM tag
+  const padded = new Uint8Array(paddedLen);
+  const copyLen = Math.min(plaintext.length, paddedLen - 1);
+  padded.set(plaintext.slice(0, copyLen));
+  padded[copyLen] = 0x02; // delimiter (no padding flag)
+
+  // AES-128-GCM encrypt → RS bytes (content + 16-byte tag)
+  const aesKey = await crypto.subtle.importKey('raw', cek, { name: 'AES-GCM' }, false, ['encrypt']);
+  const encrypted = new Uint8Array(
+    await crypto.subtle.encrypt({ name: 'AES-GCM', iv: nonce, tagLength: 128 }, aesKey, padded)
+  );
+
+  // RFC 8291 §2 header: salt (16) || rs (4 BE) || idlen (1=65) || sender_pub (65)
+  const rsBytes = new Uint8Array(4);
+  new DataView(rsBytes.buffer).setUint32(0, RS, false);
+
+  return concatBytes(salt, rsBytes, new Uint8Array([65]), senderPub, encrypted);
 }
 
 // Create JWT for VAPID authentication
@@ -62,53 +168,52 @@ async function createVapidJwt(
   return `${unsignedToken}.${base64UrlEncode(signature)}`;
 }
 
-// Send web push notification
+// Send web push notification with proper RFC 8291 payload encryption
 async function sendWebPush(
   subscription: { endpoint: string; p256dh: string; auth: string },
   payload: { title: string; body: string; data?: Record<string, unknown>; tag?: string },
   vapidPublicKey: string,
-  vapidPrivateKey: string
+  vapidPrivateKey: string,
 ): Promise<boolean> {
   try {
     const endpointUrl = new URL(subscription.endpoint);
     const audience = `${endpointUrl.protocol}//${endpointUrl.host}`;
 
-    // For now, we'll use a simpler approach - call the push endpoint directly
-    // with the encrypted payload using the Web Push protocol
-    const pushPayload = JSON.stringify({
+    const plaintext = new TextEncoder().encode(JSON.stringify({
       title: payload.title,
       body: payload.body,
-      data: payload.data || {},
-      tag: payload.tag || 'rally-notification'
-    });
+      data: payload.data ?? {},
+      tag: payload.tag ?? 'rally-notification',
+    }));
 
-    // Create VAPID authorization header
+    // Encrypt payload per RFC 8291 (aes128gcm)
+    const encrypted = await encryptWebPushPayload(subscription.p256dh, subscription.auth, plaintext);
+
+    // VAPID authorization
     const jwt = await createVapidJwt(audience, 'mailto:support@rallyapp.com', vapidPrivateKey);
-    const vapidHeader = `vapid t=${jwt}, k=${vapidPublicKey}`;
 
-    // Send the push (note: in production, you'd encrypt the payload properly)
     const response = await fetch(subscription.endpoint, {
       method: 'POST',
       headers: {
-        'Authorization': vapidHeader,
+        'Authorization': `vapid t=${jwt}, k=${vapidPublicKey}`,
         'Content-Type': 'application/octet-stream',
         'Content-Encoding': 'aes128gcm',
         'TTL': '86400',
         'Urgency': 'high',
       },
-      body: new TextEncoder().encode(pushPayload)
+      body: encrypted,
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Push failed:', response.status, errorText);
+      console.error('Web push failed:', response.status, errorText);
       return false;
     }
 
-    console.log('Push notification sent to:', subscription.endpoint.substring(0, 50) + '...');
+    console.log('Web push sent to:', subscription.endpoint.substring(0, 50) + '...');
     return true;
   } catch (error: any) {
-    console.error('Failed to send push notification:', error.message);
+    console.error('Failed to send web push:', error.message);
     return false;
   }
 }

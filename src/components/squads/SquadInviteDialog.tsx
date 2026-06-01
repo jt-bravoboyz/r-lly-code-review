@@ -247,16 +247,11 @@ export function SquadInviteDialog({ squadId, squadName, trigger }: SquadInviteDi
 
       const inviteLink = `${baseUrl}/join-squad/${code}`;
 
-      if ((true /* shareContent */)) {
-        await shareContent({
-          title: `Join my squad on R@lly`,
-          text: `Join "${squadName}" on R@lly! Use code: ${code}`,
-          url: inviteLink,
-        });
-      } else {
-        await copyToClipboard(inviteLink);
-        toast.success('Link copied!');
-      }
+      await shareContent({
+        title: `Join my squad on R@lly`,
+        text: `Join "${squadName}" on R@lly! Use code: ${code}`,
+        url: inviteLink,
+      });
     } catch (error) {
       console.error('Error sharing:', error);
     }

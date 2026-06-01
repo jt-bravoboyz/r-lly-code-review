@@ -151,17 +151,13 @@ export function InviteToEventDialog({
   };
 
   const handleShare = async () => {
-    if ((true /* shareContent */)) {
-      try {
-        await shareContent({
-          title: `Join ${eventTitle}`,
-          text: `You're locked in for "${eventTitle}". Claim your spot 🔥`,
-          url: cleanShareLink,
-        });
-      } catch {
-        handleCopyLink();
-      }
-    } else {
+    try {
+      await shareContent({
+        title: `Join ${eventTitle}`,
+        text: `You're locked in for "${eventTitle}". Claim your spot 🔥`,
+        url: cleanShareLink,
+      });
+    } catch {
       handleCopyLink();
     }
   };
