@@ -120,12 +120,12 @@ export function useRallyHomePrompt(
     attendee.going_home_at === null &&
     attendee.after_rally_opted_in === true;
 
-  // Re-confirmation for Bar Hop: ask everyone at every transition point —
-  // someone may want to leave after any stop regardless of their earlier
-  // answer or whether they already have a plan. The outer canPrompt guard
-  // (isParticipating, hasArrivedSafely) keeps it from firing for people
-  // already en route or safely home.
+  // Re-confirmation for Bar Hop: at each transition point, ask anyone who
+  // hasn't made a decision yet (undecided) or who previously said no —
+  // they may want to leave after this stop. Skip people who already have
+  // a plan (DD, ride booked, destination set) since they've decided.
   const needsBarHopReconfirmation =
+    !hasPlanSet &&
     attendee.event?.is_barhop === true &&
     isBarHopTransitionPoint;
 
