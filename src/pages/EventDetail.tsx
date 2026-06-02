@@ -46,6 +46,7 @@ import { LiveUpdates } from '@/components/events/LiveUpdates';
 import { RallyHomeButton } from '@/components/home/RallyHomeButton';
 import { SafetyTracker } from '@/components/home/SafetyTracker';
 import { HostSafetyDashboard } from '@/components/home/HostSafetyDashboard';
+import { HomeStatusRing } from '@/components/home/HomeStatusRing';
 import { DDArrivedButton } from '@/components/home/DDArrivedButton';
 import { DDDropoffButton } from '@/components/rides/DDDropoffButton';
 import { useIsDD } from '@/hooks/useDDManagement';
