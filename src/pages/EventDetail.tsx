@@ -1177,7 +1177,7 @@ export default function EventDetail() {
             {/* Section 1 — Your Status */}
             {isAttending && (
               <section className="space-y-3">
-                <h3 className="font-montserrat font-bold text-lg">Your Status</h3>
+                <h3 className="font-montserrat font-bold text-lg text-foreground">Your Status</h3>
                 <RallyHomeButton
                   eventId={event.id}
                   eventStatus={event.status}
