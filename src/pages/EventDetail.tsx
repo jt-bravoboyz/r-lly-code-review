@@ -943,34 +943,8 @@ export default function EventDetail() {
           </Card>
         )}
 
-        {/* R@lly Home Button - Only show during live events for attendees */}
-        {!isCompleted && (isLiveEvent || isAfterRally) && isAttending && (
-          <section className="space-y-4">
-            <RallyHomeButton 
-              eventId={event.id}
-              eventStatus={event.status}
-              eventTitle={event.title}
-              eventLocationName={event.location_name || undefined}
-              eventLocationLat={event.location_lat || undefined}
-              eventLocationLng={event.location_lng || undefined}
-              trigger={
-                <Card className="bg-gradient-to-r from-primary to-primary/85 border-0 shadow-lg cursor-pointer hover:shadow-xl transition-shadow">
-                  <CardContent className="p-4 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-12 h-12 rounded-full bg-primary-foreground/20 flex items-center justify-center ${showAfterRallyTheme ? 'shadow-[0_0_14px_rgba(255,255,255,0.5)] animate-[home-glow_3s_ease-in-out_infinite]' : ''}`}>
-                        <Home className={`h-6 w-6 ${showAfterRallyTheme ? 'text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.7)]' : 'text-primary-foreground'}`} />
-                      </div>
-                      <div>
-                        <h3 className="font-bold text-primary-foreground text-lg font-montserrat">R@lly Home</h3>
-                        <p className="text-primary-foreground/80 text-sm font-montserrat">Let your crew know you're heading out</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              }
-            />
-          </section>
-        )}
+        {/* R@lly Home trigger card moved into the R@lly Home tab below */}
+
 
         {/* Split Check / Request Payment intentionally hidden — R@lly Tabs not yet released */}
 
