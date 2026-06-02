@@ -509,6 +509,11 @@ export default function SquadDetail() {
 
           <Separator />
 
+          {/* R@lly Home */}
+          <SquadRallyHomeCard squadId={squad.id} squadName={squad.name} isOwner={isOwner} />
+
+          <Separator />
+
           {/* Members Section */}
           <div>
             <h2 className="font-semibold mb-3 flex items-center gap-2">
