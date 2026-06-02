@@ -102,6 +102,7 @@ const App = () => (
                       <Route path="/rallies/upcoming" element={<UpcomingRallies />} />
                       <Route path="/rallies/past" element={<PastRallies />} />
                       <Route path="/demo" element={<Demo />} />
+                      <Route path="/demo/rally-home" element={<DemoRallyHome />} />
                       <Route path="*" element={<NotFound />} />
 
                     </Routes>
