@@ -1,33 +1,31 @@
-## Goal
+## Restyle "How are you getting here?" modal to match R@lly Home family
 
-Add a **read-only preview route** at `/demo/rally-home` that renders every visual state of the R@lly Home card stack so you can see all the renderings without needing a live event in the database.
+The transport-mode modal (`src/components/events/TransportModeSelector.tsx`) currently uses a left-aligned header and small outline tiles, which clashes with the rest of the R@lly Home prompts (e.g. `SafetyChoiceModal`, `RallyHomeButton` entry cards) that use a centered header with a primary/10 icon badge, bold Montserrat title, and consistent rounded glass tiles.
 
-## What you'll see on the page
+### Changes (UI only, in `TransportModeSelector.tsx`)
 
-Stacked, mobile-width column (max-w-md, like the real EventDetail), each state labeled with a small caption:
+1. **Header — match `SafetyChoiceModal`**
+   - Center the header.
+   - Add a circular `bg-primary/10` badge (size 16) above the title containing a `Car` icon in `text-primary`.
+   - Title: `text-xl font-bold font-montserrat`, centered.
+   - Description: `text-base text-muted-foreground`, centered. Keep copy "Helps your host plan a safe night."
 
-1. **Entry trigger card** — orange gradient "R@lly Home / Let your crew know you're heading out" (the exact card from `EventDetail.tsx` lines 957-969)
-2. **After R@lly entry trigger** — same card with the glow ring + drop-shadow variant (`showAfterRallyTheme=true`)
-3. **"I've Arrived Safely" button** — green full-width pill (RallyHomeButton state when `isGoingHome && !hasArrived`)
-4. **"Arrived Safely ✓" disabled state** — green muted pill (when `hasArrived`)
-5. **"Start Heading Home Now" state** — destination-set state with the RidePlanCard preview underneath
-6. **After R@lly banner** — gradient purple banner ("After R@lly Mode / Next stop: …") from EventDetail lines 922-944
-7. **SafetyTracker** card (renders as-is with a stub event id — falls back to its empty/loading state gracefully)
-8. **HostSafetyDashboard** card (host view)
+2. **Option tiles — unify with R@lly Home tile styling**
+   - Keep 2-column grid, but bump each tile to `h-24`, `rounded-2xl`, `border border-border/60`, `bg-card/60 backdrop-blur-xl`, subtle shadow, with `ring-2 ring-primary bg-primary/5` on selected.
+   - Icon size `h-7 w-7`, label `text-sm font-semibold font-montserrat`.
+   - Keep the five existing modes and their colors; no behavior changes.
+   - "Public Transit" stays as the lone tile on the last row, left-aligned in the grid (current behavior).
 
-For states 1-6 we render **static replicas** of the JSX (no hooks, no DB) so every variant shows regardless of auth/event data. For 7-8 we mount the real components with a fake event id so you see their empty-state visuals.
+3. **Skip control — match family**
+   - Replace the ghost `Skip for now` button with centered muted text link styled like the helper line under `SafetyChoiceModal` ("You can change this later in the Rally"): `text-sm text-muted-foreground text-center pt-2 cursor-pointer hover:text-foreground`. Keep the same onSkip/onOpenChange handlers.
 
-## Files
+4. **DialogContent**
+   - Add `hideCloseButton`, `onPointerDownOutside={(e) => e.preventDefault()}`, and `onEscapeKeyDown={(e) => e.preventDefault()}` to match the locked-in feel of `SafetyChoiceModal` (this is a safety prompt and shouldn't dismiss on stray taps).
+   - Keep `max-w-sm`.
 
-- **Create** `src/pages/DemoRallyHome.tsx` — the preview page (mobile-padded, BottomNav optional, labeled sections)
-- **Edit** `src/App.tsx` — add `<Route path="/demo/rally-home" element={<DemoRallyHome />} />` (lazy-loaded like the other pages)
+### Out of scope
+- No changes to `RidesharePickerSheet`, no DB/schema changes, no logic changes in `handleSelect`/`finishSelection`, no copy changes beyond what's listed.
+- No changes to other R@lly Home dialogs.
 
-## Out of scope
-
-- No changes to `RallyHomeButton`, `SafetyTracker`, `HostSafetyDashboard`, `RidePlanCard`, or `EventDetail`
-- No DB migrations, no auth changes
-- Not linked from the nav — accessible only by typing `/demo/rally-home`. Easy to remove later.
-
-## After build
-
-I'll navigate the preview to `/demo/rally-home` and screenshot it so you can review all states in one shot.
+### Verification
+- Navigate `/demo/rally-home` (or trigger via event page) and visually confirm the modal mirrors `SafetyChoiceModal` styling on mobile (757px viewport).

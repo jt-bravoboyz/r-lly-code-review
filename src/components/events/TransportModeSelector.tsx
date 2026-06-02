@@ -66,44 +66,54 @@ export function TransportModeSelector({ open, onOpenChange, eventId, profileId, 
   return (
     <>
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm">
-        <DialogHeader>
-          <DialogTitle className="font-montserrat">How are you getting here?</DialogTitle>
-          <DialogDescription className="text-sm">
+      <DialogContent
+        className="max-w-sm"
+        hideCloseButton
+        onPointerDownOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => e.preventDefault()}
+      >
+        <DialogHeader className="text-center">
+          <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-2">
+            <Car className="h-8 w-8 text-primary" />
+          </div>
+          <DialogTitle className="text-xl font-bold font-montserrat">
+            How are you getting here?
+          </DialogTitle>
+          <DialogDescription className="text-base">
             Helps your host plan a safe night.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid grid-cols-2 gap-3 pt-2">
+        <div className="grid grid-cols-2 gap-3 pt-4">
           {TRANSPORT_MODES.map((mode) => {
             const Icon = mode.icon;
             return (
-              <Button
+              <button
                 key={mode.value}
-                variant="outline"
-                className={cn(
-                  'h-20 flex-col gap-1.5 transition-all',
-                  selected === mode.value && 'ring-2 ring-primary bg-primary/5'
-                )}
+                type="button"
                 disabled={saving}
                 onClick={() => handleSelect(mode.value)}
+                className={cn(
+                  'h-24 rounded-2xl border border-border/60 bg-card/60 backdrop-blur-xl shadow-sm',
+                  'flex flex-col items-center justify-center gap-2 transition-all',
+                  'hover:bg-accent disabled:opacity-60 disabled:cursor-not-allowed',
+                  selected === mode.value && 'ring-2 ring-primary bg-primary/5'
+                )}
               >
-                <Icon className={cn('h-6 w-6', mode.color)} />
-                <span className="text-xs font-medium">{mode.label}</span>
-              </Button>
+                <Icon className={cn('h-7 w-7', mode.color)} />
+                <span className="text-sm font-semibold font-montserrat">{mode.label}</span>
+              </button>
             );
           })}
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="text-muted-foreground"
+        <p
+          className="text-sm text-muted-foreground text-center pt-2 cursor-pointer hover:text-foreground transition-colors"
           onClick={() => {
             onSkip?.();
             onOpenChange(false);
           }}
         >
           Skip for now
-        </Button>
+        </p>
       </DialogContent>
     </Dialog>
     <RidesharePickerSheet
