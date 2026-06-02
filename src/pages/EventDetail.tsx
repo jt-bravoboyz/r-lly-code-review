@@ -59,7 +59,7 @@ import { useBarHopStopsRealtime } from '@/hooks/useBarHopStopsRealtime';
 import { LocationMapPreview } from '@/components/location/LocationMapPreview';
 import { FirstTimeWelcomeDialog } from '@/components/events/FirstTimeWelcomeDialog';
 import { InviteToEventDialog } from '@/components/events/InviteToEventDialog';
-import { InviteFriendsSheet } from '@/components/events/InviteFriendsSheet';
+
 import { AfterRallyOptInDialog } from '@/components/events/AfterRallyOptInDialog';
 import { SafetyCloseoutDialog } from '@/components/events/SafetyCloseoutDialog';
 import { EndRallyDialog } from '@/components/events/EndRallyDialog';
@@ -171,7 +171,7 @@ export default function EventDetail() {
   const [showRequestPayment, setShowRequestPayment] = useState(false);
   const [payRequestId, setPayRequestId] = useState<string | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
-  const [inviteFriendsOpen, setInviteFriendsOpen] = useState(false);
+  
 
   const [showRideshareDrawer, setShowRideshareDrawer] = useState(false);
   const [joinFlowDismissedForSession, setJoinFlowDismissedForSession] = useState(false);
@@ -688,14 +688,6 @@ export default function EventDetail() {
                     )}
                     {linkCopied ? 'Sent' : 'Send invite link'}
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setInviteFriendsOpen(true)}
-                    className="flex-1 w-full h-12 flex items-center justify-center gap-1.5 text-center font-bold text-sm px-4 rounded-xl bg-card border border-border text-card-foreground shadow-sm hover:bg-accent/10 backdrop-blur-md transition-all font-montserrat"
-                  >
-                    <UserPlus className="h-4 w-4" style={{ color: 'var(--theme-button)' }} />
-                    Invite Friends
-                  </button>
                 </div>
 
                 <div className="flex items-center gap-2.5 flex-wrap">
@@ -746,17 +738,14 @@ export default function EventDetail() {
               inviteCode={event.invite_code}
               existingAttendeeIds={event.attendees?.map(a => a.profile?.id).filter(Boolean) as string[] || []}
               trigger={
-                <Button variant="ghost" size="icon">
-                  <UserPlus className="h-5 w-5" />
-                </Button>
+                <button
+                  type="button"
+                  className="flex-1 w-full h-12 flex items-center justify-center gap-1.5 text-center font-bold text-sm px-4 rounded-xl bg-card border border-border text-card-foreground shadow-sm hover:bg-accent/10 backdrop-blur-md transition-all font-montserrat"
+                >
+                  <UserPlus className="h-4 w-4" style={{ color: 'var(--theme-button)' }} />
+                  Invite Friends
+                </button>
               }
-            />
-            <InviteFriendsSheet
-              open={inviteFriendsOpen}
-              onOpenChange={setInviteFriendsOpen}
-              eventId={event.id}
-              eventTitle={event.title}
-              existingAttendeeIds={event.attendees?.map(a => a.profile?.id).filter(Boolean) as string[] || []}
             />
           </div>
 
