@@ -1316,7 +1316,7 @@ export default function EventDetail() {
             {/* Section 3 — Everyone's Status */}
             {isAttending && (isLiveEvent || isAfterRally) && (
               <section className="space-y-3">
-                <h3 className="font-montserrat font-bold text-lg">Everyone's Status</h3>
+                <h3 className="font-montserrat font-bold text-lg text-foreground">Everyone's Status</h3>
                 <HomeStatusRing eventId={event.id} canManage={canManage} />
                 {canManage && (
                   <HostSafetyDashboard
