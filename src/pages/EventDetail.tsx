@@ -1177,7 +1177,7 @@ export default function EventDetail() {
             {/* Section 1 — Your Status */}
             {isAttending && (
               <section className="space-y-3">
-                <h3 className="font-montserrat font-bold text-lg">Your Status</h3>
+                <h3 className="font-montserrat font-bold text-lg text-foreground">Your Status</h3>
                 <RallyHomeButton
                   eventId={event.id}
                   eventStatus={event.status}
@@ -1192,7 +1192,7 @@ export default function EventDetail() {
             {/* Section 2 — Getting Around */}
             {isAttending && (
               <section className="space-y-4">
-                <h3 className="font-montserrat font-bold text-lg">Getting Around</h3>
+                <h3 className="font-montserrat font-bold text-lg text-foreground">Getting Around</h3>
 
                 {/* Live Tracking (live / after rally only) */}
                 {(isLiveEvent || isAfterRally) && (
@@ -1316,7 +1316,7 @@ export default function EventDetail() {
             {/* Section 3 — Everyone's Status */}
             {isAttending && (isLiveEvent || isAfterRally) && (
               <section className="space-y-3">
-                <h3 className="font-montserrat font-bold text-lg">Everyone's Status</h3>
+                <h3 className="font-montserrat font-bold text-lg text-foreground">Everyone's Status</h3>
                 <HomeStatusRing eventId={event.id} canManage={canManage} />
                 {canManage && (
                   <HostSafetyDashboard
