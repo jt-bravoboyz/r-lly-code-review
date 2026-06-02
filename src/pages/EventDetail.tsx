@@ -59,7 +59,7 @@ import { useBarHopStopsRealtime } from '@/hooks/useBarHopStopsRealtime';
 import { LocationMapPreview } from '@/components/location/LocationMapPreview';
 import { FirstTimeWelcomeDialog } from '@/components/events/FirstTimeWelcomeDialog';
 import { InviteToEventDialog } from '@/components/events/InviteToEventDialog';
-import { InviteFriendsSheet } from '@/components/events/InviteFriendsSheet';
+
 import { AfterRallyOptInDialog } from '@/components/events/AfterRallyOptInDialog';
 import { SafetyCloseoutDialog } from '@/components/events/SafetyCloseoutDialog';
 import { EndRallyDialog } from '@/components/events/EndRallyDialog';
