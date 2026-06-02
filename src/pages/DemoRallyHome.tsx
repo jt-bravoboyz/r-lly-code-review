@@ -53,20 +53,21 @@ export default function DemoRallyHome() {
 
         {/* 3. I've arrived button */}
         <Label>3. In transit — "I've Arrived Safely"</Label>
-        <Button className="w-full bg-green-500 hover:bg-green-600 rounded-full font-montserrat h-14 text-lg">
+        <button className="w-full rounded-full font-montserrat h-14 text-lg text-white inline-flex items-center justify-center" style={{ backgroundColor: '#22c55e' }}>
           <CheckCircle2 className="h-5 w-5 mr-2" />
           I've Arrived Safely
-        </Button>
+        </button>
 
         {/* 4. Arrived */}
         <Label>4. Arrived state (disabled)</Label>
-        <Button
+        <button
           disabled
-          className="w-full bg-green-500/20 text-green-700 rounded-full font-montserrat h-14 text-lg cursor-default"
+          className="w-full rounded-full font-montserrat h-14 text-lg cursor-default inline-flex items-center justify-center"
+          style={{ backgroundColor: 'rgba(34,197,94,0.2)', color: '#15803d' }}
         >
           <CheckCircle2 className="h-5 w-5 mr-2" />
           Arrived Safely ✓
-        </Button>
+        </button>
 
         {/* 5. Destination set — start heading home */}
         <Label>5. Destination set — Start Heading Home</Label>
