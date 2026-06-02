@@ -34,14 +34,18 @@ export function useRallyHomePrompt(
     queryFn: async () => {
       if (!eventId || !profileId) return null;
 
-      // Get attendee data
+      // Get attendee data — include plan fields so we don't re-prompt
+      // someone who already set a ride plan or destination
       const { data: attendeeData, error: attendeeError } = await supabase
         .from('event_attendees')
         .select(`
-          going_home_at, 
+          going_home_at,
           arrived_safely,
           after_rally_opted_in,
           is_dd,
+          needs_ride,
+          location_prompt_shown,
+          destination_name,
           not_participating_rally_home_confirmed,
           dd_dropoff_confirmed_at
         `)
@@ -68,6 +72,9 @@ export function useRallyHomePrompt(
         dd_dropoff_confirmed_at: (attendeeData as any).dd_dropoff_confirmed_at ?? null,
         after_rally_opted_in: (attendeeData as any).after_rally_opted_in,
         is_dd: (attendeeData as any).is_dd,
+        needs_ride: (attendeeData as any).needs_ride ?? false,
+        location_prompt_shown: (attendeeData as any).location_prompt_shown ?? false,
+        destination_name: (attendeeData as any).destination_name ?? null,
         event: eventData,
       };
     },
@@ -89,9 +96,20 @@ export function useRallyHomePrompt(
   const isParticipating = !!attendee.going_home_at && !hasArrivedSafely;
   const isDD = attendee.is_dd || false;
 
-  // Undecided: neither participating nor confirmed not participating
-  const isUndecided = 
-    attendee.going_home_at === null && 
+  // A "plan" is set when the user has made any deliberate safety decision:
+  // became a DD, signed up for a ride, went through the safety-choice flow,
+  // or pre-set a destination. Any of these means they know what they're doing
+  // and should not be prompted again.
+  const hasPlanSet =
+    !!attendee.is_dd ||
+    !!attendee.needs_ride ||
+    !!attendee.location_prompt_shown ||
+    !!(attendee.after_rally_opted_in && attendee.destination_name);
+
+  // Undecided: no plan set, not yet departing, and hasn't explicitly opted out
+  const isUndecided =
+    !hasPlanSet &&
+    attendee.going_home_at === null &&
     attendee.not_participating_rally_home_confirmed === null;
 
   // Re-confirmation for After R@lly: fire once when the attendee opts into
