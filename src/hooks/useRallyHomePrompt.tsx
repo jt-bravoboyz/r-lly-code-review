@@ -94,20 +94,10 @@ export function useRallyHomePrompt(
     attendee.going_home_at === null && 
     attendee.not_participating_rally_home_confirmed === null;
 
-  // Re-confirmation for After R@lly (from DB - attendee opted in to after rally)
-  const needsAfterRallyReconfirmation = 
-    attendee.not_participating_rally_home_confirmed === true &&
-    attendee.going_home_at === null &&
-    attendee.after_rally_opted_in === true;
-
-  // Re-confirmation for Bar Hop (UI-layer only, triggered at transition points)
-  const needsBarHopReconfirmation = 
-    attendee.not_participating_rally_home_confirmed === true &&
-    attendee.going_home_at === null &&
-    attendee.event?.is_barhop === true &&
-    isBarHopTransitionPoint;
-
-  const needsReconfirmation = needsAfterRallyReconfirmation || needsBarHopReconfirmation;
+  // Once a user explicitly says "not participating" we respect that for the
+  // entire event — no re-prompting at after-rally or bar-hop transitions.
+  // If they change their mind they can tap the R@lly Home button themselves.
+  const needsReconfirmation = false;
 
   // Can prompt if undecided OR needs re-confirmation
   // But never prompt if already arrived safely or actively participating
