@@ -26,6 +26,7 @@ import { usePublicProfile } from '@/contexts/PublicProfileContext';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
+import { SquadRallyHomeCard } from '@/components/home/SquadRallyHomeCard';
 import {
   AlertDialog,
   AlertDialogAction,
