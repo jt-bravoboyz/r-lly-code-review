@@ -119,6 +119,23 @@ export async function initNativeShell(opts: {
           return;
         }
 
+        // Live Activity widget button actions — these arrive as custom-scheme
+        // URLs tapped directly from the Lock Screen / Dynamic Island.
+        // Route them to the event page with an ?action= query param so
+        // EventDetail can auto-trigger the appropriate safety action.
+        //   com.bravoboyz.rally://rally-home/heading-home?eventId=XXX
+        //   com.bravoboyz.rally://rally-home/arrived?eventId=XXX
+        //   com.bravoboyz.rally://rally-home/im-in?eventId=XXX
+        //   com.bravoboyz.rally://rally-home/open?eventId=XXX
+        if (url.pathname.startsWith('/rally-home/')) {
+          const action  = url.pathname.replace('/rally-home/', '');
+          const eventId = url.searchParams.get('eventId');
+          if (eventId) {
+            opts.onDeepLink?.(`/events/${eventId}?rallyHomeAction=${action}`);
+          }
+          return;
+        }
+
         if (path && path !== '/') {
           opts.onDeepLink?.(path);
         }
