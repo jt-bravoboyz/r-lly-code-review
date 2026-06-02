@@ -311,11 +311,16 @@ export function useUpdateSafetyStatus() {
   const confirmNotParticipating = async (eventId: string) => {
     if (!profile?.id) throw new Error('Not authenticated');
 
+    // Also reset after_rally_opted_in so needsAfterRallyReconfirmation becomes
+    // false immediately. Without this, anyone who pre-set a destination (which
+    // sets after_rally_opted_in = true) and then opted out would be re-prompted
+    // in an infinite loop because the reconfirmation condition stayed true.
     const { error } = await supabase
       .from('event_attendees')
       .update({
         going_home_at: null,
         not_participating_rally_home_confirmed: true,
+        after_rally_opted_in: false,
       } as any)
       .eq('event_id', eventId)
       .eq('profile_id', profile.id);
