@@ -120,10 +120,12 @@ export function useRallyHomePrompt(
     attendee.going_home_at === null &&
     attendee.after_rally_opted_in === true;
 
-  // Re-confirmation for Bar Hop: fire once at each UI-layer transition point.
+  // Re-confirmation for Bar Hop: ask everyone at every transition point —
+  // someone may want to leave after any stop regardless of their earlier
+  // answer or whether they already have a plan. The outer canPrompt guard
+  // (isParticipating, hasArrivedSafely) keeps it from firing for people
+  // already en route or safely home.
   const needsBarHopReconfirmation =
-    attendee.not_participating_rally_home_confirmed === true &&
-    attendee.going_home_at === null &&
     attendee.event?.is_barhop === true &&
     isBarHopTransitionPoint;
 
