@@ -45,6 +45,7 @@ import Friends from "./pages/Friends";
 import PastRallies from "./pages/PastRallies";
 import UpcomingRallies from "./pages/UpcomingRallies";
 import Demo from "./pages/Demo";
+import DemoRallyHome from "./pages/DemoRallyHome";
 
 
 const queryClient = new QueryClient();
