@@ -2141,6 +2141,172 @@ export type Database = {
           },
         ]
       }
+      rally_home_participants: {
+        Row: {
+          arrived_at: string | null
+          arrived_safely: boolean
+          created_at: string
+          destination_lat: number | null
+          destination_lng: number | null
+          destination_name: string | null
+          going_home_at: string | null
+          id: string
+          is_dd: boolean
+          needs_ride: boolean
+          not_participating_confirmed: boolean | null
+          opted_out: boolean
+          profile_id: string
+          session_id: string
+        }
+        Insert: {
+          arrived_at?: string | null
+          arrived_safely?: boolean
+          created_at?: string
+          destination_lat?: number | null
+          destination_lng?: number | null
+          destination_name?: string | null
+          going_home_at?: string | null
+          id?: string
+          is_dd?: boolean
+          needs_ride?: boolean
+          not_participating_confirmed?: boolean | null
+          opted_out?: boolean
+          profile_id: string
+          session_id: string
+        }
+        Update: {
+          arrived_at?: string | null
+          arrived_safely?: boolean
+          created_at?: string
+          destination_lat?: number | null
+          destination_lng?: number | null
+          destination_name?: string | null
+          going_home_at?: string | null
+          id?: string
+          is_dd?: boolean
+          needs_ride?: boolean
+          not_participating_confirmed?: boolean | null
+          opted_out?: boolean
+          profile_id?: string
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rally_home_participants_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rally_home_participants_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rally_home_participants_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rally_home_participants_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles_with_connection"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rally_home_participants_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "rally_home_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rally_home_sessions: {
+        Row: {
+          created_at: string
+          created_by: string
+          ended_at: string | null
+          event_id: string | null
+          id: string
+          name: string | null
+          squad_id: string
+          started_at: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          ended_at?: string | null
+          event_id?: string | null
+          id?: string
+          name?: string | null
+          squad_id: string
+          started_at?: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          ended_at?: string | null
+          event_id?: string | null
+          id?: string
+          name?: string | null
+          squad_id?: string
+          started_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rally_home_sessions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rally_home_sessions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rally_home_sessions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rally_home_sessions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles_with_connection"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rally_home_sessions_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rally_home_sessions_squad_id_fkey"
+            columns: ["squad_id"]
+            isOneToOne: false
+            referencedRelation: "squads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rally_media: {
         Row: {
           created_at: string
