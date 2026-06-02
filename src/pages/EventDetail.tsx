@@ -1002,27 +1002,24 @@ export default function EventDetail() {
         {/* Safety Tracker, HostSafetyDashboard, DDArrivedButton, DDDropoffButton moved into R@lly Home tab below */}
 
 
-        {/* Tabs for Details, Photos, Chat — Track & Rides intentionally hidden */}
-        {!isCompleted && <Tabs defaultValue="details" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+        {/* Tabs: Details · R@lly Home · Photos · Chat */}
+        {!isCompleted && <Tabs defaultValue={isAfterRally ? 'rally-home' : 'details'} className="w-full">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="details" className="text-[11px] sm:text-xs">Details</TabsTrigger>
-            <TabsTrigger value="tracking" className="flex items-center gap-1 text-[11px] sm:text-xs">
-              <MapPin className="h-3.5 w-3.5" />
-              Track
-            </TabsTrigger>
-            <TabsTrigger value="rides" className="flex items-center gap-1 text-[11px] sm:text-xs">
-              <Car className="h-3.5 w-3.5" />
-              Rides
+            <TabsTrigger value="rally-home" className="flex items-center gap-1 text-[11px] sm:text-xs">
+              <Home className="h-3 w-3" />
+              R@lly Home
             </TabsTrigger>
             <TabsTrigger value="photos" className="flex items-center gap-1 text-[11px] sm:text-xs">
-              <Camera className="h-3.5 w-3.5" />
+              <Camera className="h-3 w-3" />
               Photos
             </TabsTrigger>
             <TabsTrigger value="chat" className="flex items-center gap-1 text-[11px] sm:text-xs">
-              <MessageCircle className="h-3.5 w-3.5" />
+              <MessageCircle className="h-3 w-3" />
               Chat
             </TabsTrigger>
           </TabsList>
+
 
           <TabsContent value="details" className="space-y-4 mt-4">
             {/* Bar Hop Mode Toggle - Only for event managers, only in After R@lly */}
