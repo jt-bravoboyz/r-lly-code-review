@@ -1192,7 +1192,7 @@ export default function EventDetail() {
             {/* Section 2 — Getting Around */}
             {isAttending && (
               <section className="space-y-4">
-                <h3 className="font-montserrat font-bold text-lg">Getting Around</h3>
+                <h3 className="font-montserrat font-bold text-lg text-foreground">Getting Around</h3>
 
                 {/* Live Tracking (live / after rally only) */}
                 {(isLiveEvent || isAfterRally) && (
