@@ -999,42 +999,8 @@ export default function EventDetail() {
           />
         )}
 
-        {/* Safety Tracker + Host Safety Dashboard - only show when R@lly Home is active */}
-        {!isCompleted && isAfterRally ? (
-          <div className="space-y-3">
-            <SafetyTracker eventId={event.id} />
-            {canManage && (
-              <HostSafetyDashboard 
-                eventId={event.id}
-                isAfterRally={isAfterRally}
-                onRequestRide={() => setShowRideshareDrawer(true)}
-                onCompleteRally={async () => {
-                  try {
-                    await completeRally.mutateAsync(event.id);
-                    setShowRallyComplete(true);
-                  } catch (error: any) {
-                    toast.error(error.message || 'Failed to complete rally');
-                  }
-                }}
-              />
-            )}
-          </div>
-        ) : !isSimpleMode && (isLiveEvent || isScheduled) && isAttending ? (
-          <div className="rounded-xl bg-muted/40 px-4 py-3">
-            <p className="text-sm font-medium text-muted-foreground">R@lly Home activates when the night wraps up.</p>
-            <p className="text-xs text-muted-foreground/70 mt-0.5">It activates when you hit R@lly Home or when the host ends the R@lly.</p>
-          </div>
-        ) : null}
+        {/* Safety Tracker, HostSafetyDashboard, DDArrivedButton, DDDropoffButton moved into R@lly Home tab below */}
 
-        {/* DD Arrived Button - For designated drivers to confirm their own arrival */}
-        {!isCompleted && isDD && (isLiveEvent || isAfterRally) && (
-          <DDArrivedButton eventId={event.id} />
-        )}
-
-        {/* DD Dropoff Button - For DDs to confirm passenger dropoffs */}
-        {!isCompleted && isDD && (isLiveEvent || isAfterRally) && (
-          <DDDropoffButton eventId={event.id} />
-        )}
 
         {/* Tabs for Details, Photos, Chat — Track & Rides intentionally hidden */}
         {!isCompleted && <Tabs defaultValue="details" className="w-full">
