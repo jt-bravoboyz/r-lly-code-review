@@ -6,7 +6,6 @@ import { cn } from '@/lib/utils';
 
 interface HomeStatusRingProps {
   eventId: string;
-  canManage: boolean;
 }
 
 export function HomeStatusRing({ eventId }: HomeStatusRingProps) {
