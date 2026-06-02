@@ -96,7 +96,7 @@ export function InviteFriendsSheet({
           </div>
         </div>
 
-        <ScrollArea className="flex-1 px-2">
+        <ScrollArea className="flex-1 px-1">
           <div className="space-y-1 py-2 pb-6">
             {isLoading ? (
               <p className="text-center text-sm text-muted-foreground py-8">Loading friends…</p>
@@ -112,9 +112,9 @@ export function InviteFriendsSheet({
                 return (
                   <div
                     key={friend.id}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-white/[0.04] transition-colors"
+                    className="flex items-center gap-2 px-2 py-2.5 min-w-0 rounded-2xl hover:bg-white/[0.04] transition-colors"
                   >
-                    <Avatar className="h-11 w-11 ring-1 ring-primary/20">
+                    <Avatar className="h-10 w-10 shrink-0 ring-1 ring-primary/20">
                       <AvatarImage src={friend.avatar_url || undefined} />
                       <AvatarFallback className="bg-primary/15 text-primary font-bold">
                         {friend.display_name?.charAt(0)?.toUpperCase() || '?'}
@@ -135,7 +135,7 @@ export function InviteFriendsSheet({
                       disabled={disabled}
                       onClick={() => handleInvite(friend.id)}
                       className={cn(
-                        'min-h-[44px] px-4 rounded-full font-black uppercase tracking-wider text-[11px] font-montserrat transition-all',
+                        'min-h-[44px] px-3 shrink-0 rounded-full font-black uppercase tracking-wider text-[11px] font-montserrat transition-all',
                         isAttending || alreadyInvited
                           ? 'bg-primary/12 text-primary border border-primary/30 hover:bg-primary/12'
                           : 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_0_20px_rgba(244,122,25,0.4)]'
