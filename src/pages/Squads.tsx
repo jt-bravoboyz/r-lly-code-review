@@ -4,6 +4,7 @@ import { useAllMySquads, Squad } from '@/hooks/useSquads';
 import { SquadCard } from '@/components/squads/SquadCard';
 import { CreateSquadDialog } from '@/components/squads/CreateSquadDialog';
 import { ContactsTab } from '@/components/squads/ContactsTab';
+import { PendingSquadInvites } from '@/components/squads/PendingSquadInvites';
 import { DirectMessagesList } from '@/components/chat/DirectMessagesList';
 import { Header } from '@/components/layout/Header';
 import { Card, CardContent } from '@/components/ui/card';
@@ -63,7 +64,10 @@ export default function Squads() {
 
           <TabsContent value="squads" className="space-y-6 animate-fade-in">
 
-            {/* Header with create button */}
+            {/* Pending squad invites addressed to current user */}
+            <PendingSquadInvites />
+
+
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-xl font-bold text-foreground font-montserrat flex items-center gap-2">

@@ -4707,6 +4707,20 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      get_my_pending_squad_invites: {
+        Args: never
+        Returns: {
+          created_at: string
+          expires_at: string
+          invited_by: string
+          inviter_avatar: string
+          inviter_name: string
+          squad_group_photo_url: string
+          squad_id: string
+          squad_name: string
+          squad_symbol: string
+        }[]
+      }
       get_or_create_dm_chat: {
         Args: { p_other_profile_id: string }
         Returns: string
