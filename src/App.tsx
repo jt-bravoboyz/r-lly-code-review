@@ -45,6 +45,7 @@ import Friends from "./pages/Friends";
 import PastRallies from "./pages/PastRallies";
 import UpcomingRallies from "./pages/UpcomingRallies";
 import Demo from "./pages/Demo";
+import DemoRallyHome from "./pages/DemoRallyHome";
 
 
 const queryClient = new QueryClient();
@@ -101,6 +102,7 @@ const App = () => (
                       <Route path="/rallies/upcoming" element={<UpcomingRallies />} />
                       <Route path="/rallies/past" element={<PastRallies />} />
                       <Route path="/demo" element={<Demo />} />
+                      <Route path="/demo/rally-home" element={<DemoRallyHome />} />
                       <Route path="*" element={<NotFound />} />
 
                     </Routes>
