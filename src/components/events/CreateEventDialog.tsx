@@ -286,6 +286,21 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
 
       const allMemberIds = new Set<string>(selectedFriendIds.filter(id => id !== profile.id));
 
+      // Persist explicit squad-to-rally links (source of truth for Squad → Upcoming R@llies)
+      if (selectedSquads.length > 0) {
+        const squadRows = selectedSquads.map(squad => ({
+          event_id: result.id,
+          squad_id: squad.id,
+          added_by: profile.id,
+        }));
+        const { error: squadLinkErr } = await supabase
+          .from('event_squads')
+          .insert(squadRows);
+        if (squadLinkErr) {
+          console.error('Failed to persist event_squads links:', squadLinkErr);
+        }
+      }
+
       // Auto-invite selected friends and all members from selected squads
       if (selectedSquads.length > 0) {
         selectedSquads.forEach(squad => {
@@ -300,6 +315,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
           });
         });
       }
+
 
       const uniqueMemberIds = Array.from(allMemberIds);
       if (uniqueMemberIds.length > 0) {
