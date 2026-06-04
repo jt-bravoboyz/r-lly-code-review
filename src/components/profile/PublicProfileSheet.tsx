@@ -230,20 +230,27 @@ export function PublicProfileSheet({ profileId, open, onOpenChange }: PublicProf
                 <Button
                   variant="outline"
                   className="flex-1 min-h-[44px]"
-                  onClick={() => {
+                  onClick={async () => {
                     const other = {
                       id: profileId,
                       display_name: (data as any)?.display_name ?? null,
                       avatar_url: (data as any)?.avatar_url ?? null,
                     };
-                    onOpenChange(false);
-                    openDm({ otherProfileId: profileId, otherProfile: other });
+                    try {
+                      // Open the DM first so the chat sheet mounts before this
+                      // profile sheet unmounts (otherwise the async chain races
+                      // the close transition and the DM never appears).
+                      await openDm({ otherProfileId: profileId, otherProfile: other });
+                    } finally {
+                      onOpenChange(false);
+                    }
                   }}
                 >
                   <MessageCircle className="h-4 w-4 mr-2" />
                   Message
                 </Button>
               )}
+
             </div>
           </div>
         )}
