@@ -266,7 +266,9 @@ export function LocationSearch({
   const handleSelectLocation = (result: SearchResult) => {
     setSelectedLocation(result);
     setShowResults(false);
+    setShowSavedLocations(false);
     setCustomName('');
+
     
     // Set the location immediately
     setQuery(result.name);
