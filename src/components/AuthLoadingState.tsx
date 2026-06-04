@@ -140,13 +140,8 @@ export function AuthLoadingState({
       )}
 
       {/* Center stack */}
-      <div
-        className="relative flex flex-col items-center"
-        style={{
-          opacity: 0,
-          animation: 'auth-fade-in 120ms ease-out forwards',
-        }}
-      >
+      <div className="relative flex flex-col items-center">
+
 
         <div className="relative" style={{ width: size, height: size }}>
           {/* Expanding pulse ring — centered on logo */}
@@ -220,7 +215,11 @@ export function AuthLoadingState({
               alt="R@lly"
               className="w-16 h-16 object-contain relative"
               draggable={false}
+              loading="eager"
+              decoding="sync"
+              fetchPriority="high"
             />
+
           </div>
         </div>
 
