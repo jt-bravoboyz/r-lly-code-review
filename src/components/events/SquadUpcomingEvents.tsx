@@ -23,21 +23,31 @@ interface UpcomingEvent {
 
 /**
  * Upcoming events surfaced for a squad page.
- * Definition (lightweight v1): any non-completed/cancelled event in the next
- * 14 days whose creator is a squad member. Server-side RLS still enforces
- * visibility, so non-members will simply see fewer rows.
+ * Strict filter: only rallies where this squad was explicitly tagged via the
+ * Squads selector during creation/editing (i.e. a row exists in event_squads
+ * linking this squad to the event). Member-overlap rallies are excluded.
  */
-export function SquadUpcomingEvents({ squadId, memberIds }: Props) {
+export function SquadUpcomingEvents({ squadId }: Props) {
   const navigate = useNavigate();
   const { data, isLoading } = useQuery({
-    queryKey: ['squad-upcoming-events', squadId, memberIds.length],
+    queryKey: ['squad-upcoming-events', squadId],
     queryFn: async () => {
-      if (!memberIds.length) return [] as UpcomingEvent[];
       const horizon = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
+
+      // 1) Find events this squad was explicitly invited to
+      const { data: links, error: linkErr } = await supabase
+        .from('event_squads')
+        .select('event_id')
+        .eq('squad_id', squadId);
+      if (linkErr) throw linkErr;
+      const eventIds = (links ?? []).map((r: any) => r.event_id);
+      if (eventIds.length === 0) return [] as UpcomingEvent[];
+
+      // 2) Fetch the matching upcoming, non-cancelled events
       const { data, error } = await supabase
         .from('events')
         .select('id, title, start_time, location_name, status, creator_id')
-        .in('creator_id', memberIds)
+        .in('id', eventIds)
         .gte('start_time', new Date().toISOString())
         .lte('start_time', horizon)
         .not('status', 'in', '("completed","cancelled")')
@@ -46,9 +56,10 @@ export function SquadUpcomingEvents({ squadId, memberIds }: Props) {
       if (error) throw error;
       return (data ?? []) as UpcomingEvent[];
     },
-    enabled: !!squadId && memberIds.length > 0,
+    enabled: !!squadId,
     staleTime: 1000 * 60,
   });
+
 
   return (
     <div>

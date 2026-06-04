@@ -910,6 +910,30 @@ export type Database = {
           },
         ]
       }
+      event_squads: {
+        Row: {
+          added_by: string | null
+          created_at: string
+          event_id: string
+          id: string
+          squad_id: string
+        }
+        Insert: {
+          added_by?: string | null
+          created_at?: string
+          event_id: string
+          id?: string
+          squad_id: string
+        }
+        Update: {
+          added_by?: string | null
+          created_at?: string
+          event_id?: string
+          id?: string
+          squad_id?: string
+        }
+        Relationships: []
+      }
       events: {
         Row: {
           after_rally_invited_ids: string[]
