@@ -511,7 +511,7 @@ export default function EventDetail() {
 
   return (
     <EventThemeProvider themeKey={(event as any).flyer_theme} disabled={showAfterRallyTheme}>
-    <div className={`min-h-[100dvh] pb-20 ${showAfterRallyTheme ? 'after-rally-mode' : ''}`}>
+    <div className={`min-h-[100dvh] pb-20 overflow-x-hidden ${showAfterRallyTheme ? 'after-rally-mode' : ''}`}>
       <Header afterRallyMode={showAfterRallyTheme} />
       
       <main className="container py-6 space-y-6 relative z-10">
