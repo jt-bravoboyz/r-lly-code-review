@@ -511,7 +511,7 @@ export default function EventDetail() {
 
   return (
     <EventThemeProvider themeKey={(event as any).flyer_theme} disabled={showAfterRallyTheme}>
-    <div className={`min-h-[100dvh] pb-20 ${showAfterRallyTheme ? 'after-rally-mode' : ''}`}>
+    <div className={`min-h-[100dvh] pb-20 overflow-x-hidden ${showAfterRallyTheme ? 'after-rally-mode' : ''}`}>
       <Header afterRallyMode={showAfterRallyTheme} />
       
       <main className="container py-6 space-y-6 relative z-10">
@@ -615,9 +615,9 @@ export default function EventDetail() {
               {/* Date/Time isolation card + invite cluster */}
               <div className="mt-2 space-y-3">
                 {/* Prominent Date & Time — solid isolation barrier for theme-proof contrast */}
-                <div className="bg-background/80 dark:bg-zinc-900/80 backdrop-blur-2xl border border-white/20 dark:border-zinc-800/50 shadow-xl p-4 rounded-2xl flex items-center gap-4">
+                <div className="max-w-full overflow-hidden bg-background/80 dark:bg-zinc-900/80 backdrop-blur-2xl border border-white/20 dark:border-zinc-800/50 shadow-xl p-4 rounded-2xl flex items-center gap-4">
                   <div
-                    className="flex flex-col items-center justify-center rounded-xl px-3 py-2 min-w-[64px] shadow-md"
+                    className="flex-shrink-0 flex flex-col items-center justify-center rounded-xl px-3 py-2 min-w-[64px] shadow-md"
                     style={{ background: 'var(--theme-button)' }}
                   >
                     <span
@@ -645,7 +645,17 @@ export default function EventDetail() {
                     </span>
 
                     {event.location_name && (
-                      <span className="text-muted-foreground font-semibold text-base truncate mt-0.5">
+                      <span
+                        className="text-muted-foreground font-semibold text-base mt-0.5 min-w-0"
+                        style={{
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          wordBreak: 'break-word',
+                        }}
+                      >
                         {event.location_name}
                       </span>
                     )}
