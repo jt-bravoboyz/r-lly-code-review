@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Zap, ArrowRight, Plus, Bell, Clock, Calendar, History, KeyRound } from 'lucide-react';
 import rallyFlag from '@/assets/rally-icon.png';
@@ -20,9 +20,11 @@ import { IdentitySetupDialog } from '@/components/profile/NameSetupDialog';
 import rallyLogo from '@/assets/rally-logo.png';
 import { MiniFounderGem } from '@/components/badges/MiniFounderGem';
 import { WelcomeBackOverlay } from '@/components/WelcomeBackOverlay';
+import { AuthLoadingState } from '@/components/AuthLoadingState';
 
 export default function Index() {
   const { user, profile, loading } = useAuth();
+  const [holdComplete, setHoldComplete] = useState(false);
   const { data: categorizedEvents, isLoading: eventsLoading } = useMyEvents();
   const unreadCount = useUnreadCount();
   const { data: pendingInvites } = usePendingInvites();
@@ -47,21 +49,15 @@ export default function Index() {
 
   // Production mode - require authentication
 
-  if (loading) {
+  if (loading || !holdComplete) {
     return (
-      <div className="min-h-[100dvh] flex items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-28 h-28 rounded-full bg-muted/60 dark:bg-white/[0.06] backdrop-blur-xl flex items-center justify-center shadow-2xl ring-2 ring-border/30 dark:ring-white/[0.08] animate-glass-breathe">
-            <img 
-              src={rallyLogo} 
-              alt="R@lly" 
-              className="w-16 h-16 object-contain"
-            />
-          </div>
-        </div>
-      </div>
+      <AuthLoadingState
+        authResolved={!loading}
+        onComplete={() => setHoldComplete(true)}
+      />
     );
   }
+
 
   // Require authentication
   if (!user) {
