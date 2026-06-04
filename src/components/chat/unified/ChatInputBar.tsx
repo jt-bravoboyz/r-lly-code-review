@@ -108,11 +108,11 @@ export function ChatInputBar({
           type="button"
           variant="ghost"
           size="icon"
-          className="shrink-0 h-10 w-10 rounded-full text-muted-foreground"
+          className="shrink-0 h-11 w-11 rounded-full text-muted-foreground"
           onClick={() => cameraRef.current?.click()}
           aria-label="Take photo"
         >
-          <Camera className="h-5 w-5" />
+          <Camera className="h-6 w-6" />
         </Button>
         <Button
           type="button"
