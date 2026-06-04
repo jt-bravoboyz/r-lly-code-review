@@ -414,25 +414,8 @@ export function LocationSearch({
         </div>
       ) : (
         <>
-          {/* Saved Locations Quick Access */}
-          {savedLocations.length > 0 && !query && !selectedLocation && (
-            <div className="flex flex-wrap gap-2 mb-2">
-              {savedLocations.slice(0, 4).map((saved) => (
-                <button
-                  key={saved.id}
-                  type="button"
-                  onClick={() => handleSelectSavedLocation(saved)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary/10 hover:bg-secondary/20 text-secondary text-sm font-medium transition-colors"
-                >
-                  {saved.icon === 'home' && <Home className="h-3 w-3" />}
-                  {saved.icon === 'work' && <Briefcase className="h-3 w-3" />}
-                  {saved.icon === 'heart' && <Heart className="h-3 w-3" />}
-                  {!['home', 'work', 'heart'].includes(saved.icon) && <Star className="h-3 w-3 fill-current" />}
-                  {saved.name}
-                </button>
-              ))}
-            </div>
-          )}
+          {/* Saved Locations quick-access chips removed — saved locations now appear only in the focused dropdown */}
+
 
           {/* Search input */}
           <div className="relative">
