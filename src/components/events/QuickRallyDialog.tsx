@@ -18,6 +18,8 @@ import { useAllMySquads, Squad } from '@/hooks/useSquads';
 import { useLocation } from '@/hooks/useLocation';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useConfetti } from '@/hooks/useConfetti';
 import { LocationSearch } from '@/components/location/LocationSearch';
