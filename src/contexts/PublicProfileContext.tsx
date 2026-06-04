@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useCallback, useContext, useState, ReactNode } from 'react';
 import { PublicProfileSheet } from '@/components/profile/PublicProfileSheet';
 
 interface PublicProfileContextValue {
