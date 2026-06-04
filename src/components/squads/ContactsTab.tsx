@@ -203,7 +203,7 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
         {/* Search + Add People */}
         <div className="relative z-10 flex gap-2">
           <div className="relative flex-1">
-            <Search strokeWidth={2.25} className="absolute left-3.5 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-zinc-500 pointer-events-none" />
+            <Search strokeWidth={2.25} className="absolute left-3.5 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-zinc-500 pointer-events-none z-10" />
             <Input
               placeholder="Search friends, contacts, handles…"
               value={searchQuery}
