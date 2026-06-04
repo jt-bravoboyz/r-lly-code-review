@@ -215,7 +215,11 @@ export function AuthLoadingState({
               alt="R@lly"
               className="w-16 h-16 object-contain relative"
               draggable={false}
+              loading="eager"
+              decoding="sync"
+              fetchPriority="high"
             />
+
           </div>
         </div>
 
