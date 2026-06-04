@@ -23,7 +23,7 @@ import { WelcomeBackOverlay } from '@/components/WelcomeBackOverlay';
 import { AuthLoadingState } from '@/components/AuthLoadingState';
 
 export default function Index() {
-  const { user, profile, loading } = useAuth();
+  const { user, profile, loading, hasResolvedOnce } = useAuth();
   const [holdComplete, setHoldComplete] = useState(false);
   const { data: categorizedEvents, isLoading: eventsLoading } = useMyEvents();
   const unreadCount = useUnreadCount();
@@ -49,7 +49,10 @@ export default function Index() {
 
   // Production mode - require authentication
 
-  if (loading || !holdComplete) {
+  // Only show the cinematic auth loader during the FIRST auth resolution of this
+  // session (cold start). On in-app navigation back to Home, auth is already
+  // resolved — render the dashboard immediately, no loader, no min-hold delay.
+  if (!hasResolvedOnce && (loading || !holdComplete)) {
     return (
       <AuthLoadingState
         authResolved={!loading}
@@ -57,6 +60,7 @@ export default function Index() {
       />
     );
   }
+
 
 
   // Require authentication
