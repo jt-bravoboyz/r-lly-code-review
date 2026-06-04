@@ -731,20 +731,72 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
             {rallyFriends.length > 0 && (
               <div className="space-y-2 pt-2">
                 <FormLabel>All Friends (optional)</FormLabel>
+                {(() => {
+                  const allIds = rallyFriends.map(f => f.id);
+                  const allSelected = allIds.length > 0 && allIds.every(id => selectedFriendIds.includes(id));
+                  const toggleAll = () => {
+                    if ('vibrate' in navigator) navigator.vibrate(10);
+                    setSelectedFriendIds(prev => {
+                      if (allSelected) {
+                        return prev.filter(id => !allIds.includes(id));
+                      }
+                      const merged = new Set(prev);
+                      allIds.forEach(id => merged.add(id));
+                      return Array.from(merged);
+                    });
+                  };
+                  return (
+                    <button
+                      type="button"
+                      onClick={toggleAll}
+                      className={cn(
+                        'group relative w-full flex items-center justify-between gap-3 px-4 py-3.5 rounded-2xl border transition-all duration-250 ease-spring backdrop-blur-xl',
+                        allSelected
+                          ? 'bg-primary text-primary-foreground border-primary/40 shadow-[inset_0_1px_0_0_hsl(0_0%_100%/0.25)]'
+                          : 'bg-white/[0.04] dark:bg-white/[0.04] border-white/10 hover:bg-white/[0.07]'
+                      )}
+                    >
+                      <span className="flex items-center gap-3 min-w-0">
+                        <span
+                          className={cn(
+                            'flex h-7 w-7 items-center justify-center rounded-full transition-colors',
+                            allSelected ? 'bg-white/15' : 'bg-primary/10 animate-pulse'
+                          )}
+                        >
+                          <Users
+                            className={cn('h-4 w-4', allSelected ? 'text-white' : 'text-primary')}
+                          />
+                        </span>
+                        <span className="text-sm font-semibold tracking-tight">
+                          {allSelected ? 'All Friends Invited' : 'Invite All Friends'}
+                        </span>
+                      </span>
+                      <span
+                        className={cn(
+                          'text-xs font-medium px-2 py-0.5 rounded-full',
+                          allSelected ? 'bg-white/15 text-white' : 'bg-white/[0.06] text-foreground/60'
+                        )}
+                      >
+                        {allIds.length}
+                      </span>
+                    </button>
+                  );
+                })()}
                 <ScrollArea className="h-24">
-                  <div className="flex flex-wrap gap-2 pb-2">
-                    {rallyFriends.map((friend) => {
+                  <div className="flex flex-wrap gap-2 pb-2 pt-1">
+                    {rallyFriends.map((friend, idx) => {
                       const isSelected = selectedFriendIds.includes(friend.id);
                       return (
                         <button
                           key={friend.id}
                           type="button"
                           onClick={() => toggleFriendSelection(friend.id)}
+                          style={{ transitionDelay: `${Math.min(idx * 25, 300)}ms` }}
                           className={cn(
-                            'flex items-center gap-2 px-3 py-2 rounded-full border transition-colors',
+                            'flex items-center gap-2 px-3 py-2 rounded-full border transition-all duration-200',
                             isSelected
-                              ? 'bg-primary text-primary-foreground border-primary'
-                              : 'bg-muted hover:bg-muted/80'
+                              ? 'bg-primary text-primary-foreground border-primary scale-100'
+                              : 'bg-muted hover:bg-muted/80 scale-[0.98]'
                           )}
                         >
                           <UserPlus className="h-3 w-3" />
@@ -757,6 +809,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
                 </ScrollArea>
               </div>
             )}
+
 
             {mySquads && mySquads.length > 0 ? (
               <div className="space-y-2 pt-2">
