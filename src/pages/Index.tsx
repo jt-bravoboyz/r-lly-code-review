@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Zap, ArrowRight, Plus, Bell, Clock, Calendar, History, KeyRound } from 'lucide-react';
 import rallyFlag from '@/assets/rally-icon.png';
