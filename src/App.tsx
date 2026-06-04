@@ -109,8 +109,9 @@ const App = () => (
                     </Routes>
                   </TutorialProvider>
                 </BrowserRouter>
-                </DirectMessageProvider>
                 </PublicProfileProvider>
+                </DirectMessageProvider>
+
               </TooltipProvider>
             </TierUpProvider>
           </RallyOnboardingProvider>
