@@ -160,6 +160,9 @@ export function AuthLoadingState({
             />
           )}
 
+          {/* Progress ring */}
+          <svg
+
             width={size}
             height={size}
             className="absolute inset-0"
