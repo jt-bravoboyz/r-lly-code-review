@@ -226,17 +226,6 @@ export function AuthLoadingState({
           </div>
         </div>
 
-        {/* STANDBY label */}
-        <div
-          className="mt-6 text-white/40 uppercase"
-          style={{
-            fontSize: '11px',
-            letterSpacing: '0.32em',
-            fontWeight: 500,
-          }}
-        >
-          Standby
-        </div>
       </div>
 
       {/* Keyframes */}
