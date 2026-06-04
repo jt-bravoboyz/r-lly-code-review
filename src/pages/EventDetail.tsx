@@ -614,6 +614,18 @@ export default function EventDetail() {
               )}
               {/* Date/Time isolation card + invite cluster */}
               <div className="mt-2 space-y-3">
+                {canManage && event.status !== 'completed' && (
+                  <div className="flex justify-end">
+                    <EditEventTimeDialog
+                      eventId={event.id}
+                      eventTitle={event.title}
+                      currentStartTime={event.start_time}
+                      currentEndTime={event.end_time}
+                      attendeeProfileIds={(event.attendees ?? []).map((a: any) => a.profile?.id ?? a.profile_id).filter(Boolean)}
+                      currentProfileId={activeProfile?.id}
+                    />
+                  </div>
+                )}
                 {/* Prominent Date & Time — solid isolation barrier for theme-proof contrast */}
                 <div className="max-w-full overflow-hidden bg-background/80 dark:bg-zinc-900/80 backdrop-blur-2xl border border-white/20 dark:border-zinc-800/50 shadow-xl p-4 rounded-2xl flex items-center gap-4">
                   <div
@@ -742,17 +754,9 @@ export default function EventDetail() {
             <p className="text-muted-foreground">{event.description}</p>
           )}
 
-          {/* Host edit affordances (kept invisible when not manager) */}
+
           {canManage && event.status !== 'completed' && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <EditEventTimeDialog
-                eventId={event.id}
-                eventTitle={event.title}
-                currentStartTime={event.start_time}
-                currentEndTime={event.end_time}
-                attendeeProfileIds={(event.attendees ?? []).map((a: any) => a.profile?.id ?? a.profile_id).filter(Boolean)}
-                currentProfileId={activeProfile?.id}
-              />
+            <div className="flex justify-end mb-2">
               <EditEventLocationDialog
                 eventId={event.id}
                 currentLocationName={event.location_name}
