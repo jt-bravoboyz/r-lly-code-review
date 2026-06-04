@@ -20,14 +20,91 @@
 
     <link rel="icon" type="image/svg+xml" href="/logo.svg" />
     <link rel="apple-touch-icon" href="/rally-icon-192-v6.png" />
+    <link rel="preload" as="image" href="/rally-icon-192-v6.png" fetchpriority="high" />
     <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#F47A19" />
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <style>
+      #rally-boot-splash {
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        background: #000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 1;
+        transition: opacity 250ms ease-out;
+      }
+      #rally-boot-splash::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at 50% 50%, rgba(244,122,25,0.12) 0%, transparent 60%);
+        pointer-events: none;
+      }
+      #rally-boot-splash .rally-boot-stage {
+        position: relative;
+        width: 132px;
+        height: 132px;
+      }
+      #rally-boot-splash .rally-boot-ring {
+        position: absolute;
+        inset: 0;
+        border-radius: 9999px;
+        border: 1.5px solid #F47A19;
+      }
+      #rally-boot-splash .rally-boot-logo-wrap {
+        position: absolute;
+        inset: 8px;
+        border-radius: 9999px;
+        background: rgba(255,255,255,0.06);
+        box-shadow: inset 0 0 16px rgba(244,122,25,0.2), 0 25px 50px -12px rgba(0,0,0,0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+      #rally-boot-splash .rally-boot-logo {
+        width: 64px;
+        height: 64px;
+        object-fit: contain;
+      }
+      @media (prefers-reduced-motion: no-preference) {
+        #rally-boot-splash .rally-boot-ring {
+          animation: rally-boot-pulse 1.8s ease-out infinite;
+        }
+        #rally-boot-splash .rally-boot-logo-wrap {
+          animation: rally-boot-breathe 2.2s ease-in-out infinite;
+        }
+        @keyframes rally-boot-pulse {
+          0%   { transform: scale(1);   opacity: 0.8; }
+          100% { transform: scale(2.5); opacity: 0; }
+        }
+        @keyframes rally-boot-breathe {
+          0%, 100% { transform: scale(0.96); }
+          50%      { transform: scale(1.04); }
+        }
+      }
+      body.rally-booted #rally-boot-splash {
+        opacity: 0;
+        pointer-events: none;
+      }
+    </style>
   </head>
 
   <body>
+    <div id="rally-boot-splash" aria-hidden="true">
+      <div class="rally-boot-stage">
+        <div class="rally-boot-ring"></div>
+        <div class="rally-boot-logo-wrap">
+          <img class="rally-boot-logo" src="/rally-icon-192-v6.png" alt="" />
+        </div>
+      </div>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
