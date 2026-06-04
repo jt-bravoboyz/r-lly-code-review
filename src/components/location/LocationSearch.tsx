@@ -110,8 +110,10 @@ export function LocationSearch({
     function handleClickOutside(event: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
         setShowResults(false);
+        setShowSavedLocations(false);
       }
     }
+
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
