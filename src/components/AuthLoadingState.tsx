@@ -217,8 +217,9 @@ export function AuthLoadingState({
               draggable={false}
               loading="eager"
               decoding="sync"
-              fetchPriority="high"
+              {...({ fetchpriority: 'high' } as Record<string, string>)}
             />
+
 
           </div>
         </div>
