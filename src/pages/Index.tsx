@@ -24,6 +24,7 @@ import { AuthLoadingState } from '@/components/AuthLoadingState';
 
 export default function Index() {
   const { user, profile, loading } = useAuth();
+  const [holdComplete, setHoldComplete] = useState(false);
   const { data: categorizedEvents, isLoading: eventsLoading } = useMyEvents();
   const unreadCount = useUnreadCount();
   const { data: pendingInvites } = usePendingInvites();
