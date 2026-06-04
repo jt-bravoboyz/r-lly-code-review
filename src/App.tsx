@@ -58,8 +58,9 @@ const App = () => (
           <RallyOnboardingProvider>
             <TierUpProvider>
               <TooltipProvider>
-                <PublicProfileProvider>
                 <DirectMessageProvider>
+                <PublicProfileProvider>
+
                 <ConnectionStatusBanner />
                 <Toaster />
                 <Sonner />
