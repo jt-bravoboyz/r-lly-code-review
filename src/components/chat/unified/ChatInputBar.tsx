@@ -103,26 +103,26 @@ export function ChatInputBar({
         </div>
       )}
 
-      <div className="flex items-end gap-1.5">
+      <div className="flex items-center gap-3">
         <Button
           type="button"
           variant="ghost"
           size="icon"
-          className="shrink-0 h-10 w-10 rounded-full text-muted-foreground"
+          className="shrink-0 h-11 w-11 rounded-full text-muted-foreground"
           onClick={() => cameraRef.current?.click()}
           aria-label="Take photo"
         >
-          <Camera className="h-5 w-5" />
+          <Camera className="h-6 w-6" />
         </Button>
         <Button
           type="button"
           variant="ghost"
           size="icon"
-          className="shrink-0 h-10 w-10 rounded-full text-muted-foreground"
+          className="shrink-0 h-11 w-11 rounded-full text-muted-foreground"
           onClick={() => galleryRef.current?.click()}
           aria-label="Pick photo"
         >
-          <ImageIcon className="h-5 w-5" />
+          <ImageIcon className="h-6 w-6" />
         </Button>
 
         <div className="flex-1 relative">

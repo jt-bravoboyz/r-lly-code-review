@@ -84,14 +84,14 @@ export function VoiceDictationButton({ onTranscript, onListeningChange }: Props)
       type="button"
       variant="ghost"
       size="icon"
-      className={`shrink-0 h-10 w-10 rounded-full transition-all ${
+      className={`shrink-0 h-11 w-11 rounded-full transition-all ${
         listening ? 'bg-primary/20 text-primary' : 'text-muted-foreground'
       }`}
       onClick={() => (listening ? stop() : start())}
       aria-label={listening ? 'Stop dictation' : 'Start voice input'}
     >
       <Mic
-        className={`h-5 w-5 ${listening ? 'animate-pulse' : ''}`}
+        className={`h-6 w-6 ${listening ? 'animate-pulse' : ''}`}
       />
       {listening && (
         <span className="absolute inset-0 rounded-full ring-2 ring-primary/40 animate-ping" />
