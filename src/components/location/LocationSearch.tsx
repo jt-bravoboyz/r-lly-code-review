@@ -110,8 +110,10 @@ export function LocationSearch({
     function handleClickOutside(event: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
         setShowResults(false);
+        setShowSavedLocations(false);
       }
     }
+
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
@@ -248,6 +250,7 @@ export function LocationSearch({
     onChange(inputValue);
     setSelectedLocation(null);
     setShowCustomNameInput(false);
+    if (inputValue.length > 0) setShowSavedLocations(false);
 
     if (searchTimeout.current) {
       clearTimeout(searchTimeout.current);
@@ -258,11 +261,14 @@ export function LocationSearch({
     }, 300);
   };
 
+
   // Handle location selection - always select first, then allow rename
   const handleSelectLocation = (result: SearchResult) => {
     setSelectedLocation(result);
     setShowResults(false);
+    setShowSavedLocations(false);
     setCustomName('');
+
     
     // Set the location immediately
     setQuery(result.name);
@@ -414,25 +420,8 @@ export function LocationSearch({
         </div>
       ) : (
         <>
-          {/* Saved Locations Quick Access */}
-          {savedLocations.length > 0 && !query && !selectedLocation && (
-            <div className="flex flex-wrap gap-2 mb-2">
-              {savedLocations.slice(0, 4).map((saved) => (
-                <button
-                  key={saved.id}
-                  type="button"
-                  onClick={() => handleSelectSavedLocation(saved)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary/10 hover:bg-secondary/20 text-secondary text-sm font-medium transition-colors"
-                >
-                  {saved.icon === 'home' && <Home className="h-3 w-3" />}
-                  {saved.icon === 'work' && <Briefcase className="h-3 w-3" />}
-                  {saved.icon === 'heart' && <Heart className="h-3 w-3" />}
-                  {!['home', 'work', 'heart'].includes(saved.icon) && <Star className="h-3 w-3 fill-current" />}
-                  {saved.name}
-                </button>
-              ))}
-            </div>
-          )}
+          {/* Saved Locations quick-access chips removed — saved locations now appear only in the focused dropdown */}
+
 
           {/* Search input */}
           <div className="relative">
@@ -444,7 +433,7 @@ export function LocationSearch({
               onChange={(e) => handleInputChange(e.target.value)}
               onFocus={() => {
                 if (results.length > 0) setShowResults(true);
-                else if (!query && savedLocations.length > 0) setShowSavedLocations(true);
+                else if (!query && !selectedLocation && savedLocations.length > 0) setShowSavedLocations(true);
               }}
             />
             {isSearching && (
@@ -458,6 +447,8 @@ export function LocationSearch({
                   onChange('');
                   setResults([]);
                   setSelectedLocation(null);
+                  setShowResults(false);
+                  if (savedLocations.length > 0) setShowSavedLocations(true);
                 }}
                 className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
               >
@@ -467,7 +458,8 @@ export function LocationSearch({
           </div>
 
           {/* Saved Locations Dropdown */}
-          {showSavedLocations && savedLocations.length > 0 && !showResults && (
+          {showSavedLocations && savedLocations.length > 0 && !showResults && !selectedLocation && !query && (
+
             <div className="location-search-overlay absolute z-50 w-full mt-1 bg-popover border rounded-lg shadow-lg overflow-hidden">
               <div className="p-2 border-b bg-muted/50">
                 <p className="text-xs font-medium text-muted-foreground">Saved Locations</p>
