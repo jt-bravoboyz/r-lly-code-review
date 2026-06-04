@@ -732,27 +732,6 @@ export default function EventDetail() {
                       </span>
                     );
                   })()}
-                  {canManage && (
-                    <button
-                      type="button"
-                      className="inline-flex items-center gap-1.5 text-xs font-medium pl-2.5 pr-3 py-1.5 rounded-full border border-transparent transition shadow-sm"
-                      style={{
-                        color: 'var(--theme-accent)',
-                        background: 'var(--theme-accent-soft)',
-                      }}
-                      onClick={async () => {
-                        const { error } = await (supabase as any).rpc('rotate_event_invite_code', {
-                          _event_id: event.id,
-                          _ttl_hours: 72,
-                        });
-                        if (error) { toast.error('Could not rotate invite'); return; }
-                        toast.success('New invite link generated');
-                        queryClient.invalidateQueries({ queryKey: ['event', event.id] });
-                      }}
-                    >
-                      Rotate
-                    </button>
-                  )}
                 </div>
               </div>
 
