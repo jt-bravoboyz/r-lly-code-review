@@ -149,8 +149,17 @@ export function AuthLoadingState({
       >
 
         <div className="relative" style={{ width: size, height: size }}>
-          {/* Progress ring */}
-          <svg
+          {/* Expanding pulse ring — centered on logo */}
+          {!prefersReducedMotion && (
+            <div
+              className="absolute inset-0 rounded-full pointer-events-none"
+              style={{
+                border: `1.5px solid ${BRAND_ORANGE}`,
+                animation: 'auth-pulse-ring 1.8s ease-out infinite',
+              }}
+            />
+          )}
+
             width={size}
             height={size}
             className="absolute inset-0"
