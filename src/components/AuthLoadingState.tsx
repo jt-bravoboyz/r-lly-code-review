@@ -139,33 +139,19 @@ export function AuthLoadingState({
         </div>
       )}
 
-      {/* Expanding pulse rings */}
+      {/* Expanding pulse ring */}
       {!prefersReducedMotion && (
-        <>
-          <div
-            className="absolute left-1/2 top-1/2 rounded-full pointer-events-none"
-            style={{
-              width: size,
-              height: size,
-              marginLeft: -size / 2,
-              marginTop: -size / 2,
-              border: `1.5px solid ${BRAND_ORANGE}`,
-              animation: 'auth-pulse-ring 1.8s ease-out infinite',
-            }}
-          />
-          <div
-            className="absolute left-1/2 top-1/2 rounded-full pointer-events-none"
-            style={{
-              width: size,
-              height: size,
-              marginLeft: -size / 2,
-              marginTop: -size / 2,
-              border: `1.5px solid ${BRAND_ORANGE}`,
-              animation: 'auth-pulse-ring 1.8s ease-out infinite',
-              animationDelay: '0.9s',
-            }}
-          />
-        </>
+        <div
+          className="absolute left-1/2 top-1/2 rounded-full pointer-events-none"
+          style={{
+            width: size,
+            height: size,
+            marginLeft: -size / 2,
+            marginTop: -size / 2,
+            border: `1.5px solid ${BRAND_ORANGE}`,
+            animation: 'auth-pulse-ring 1.8s ease-out infinite',
+          }}
+        />
       )}
 
       {/* Center stack */}
