@@ -139,32 +139,30 @@ export function AuthLoadingState({
         </div>
       )}
 
-      {/* Expanding pulse ring */}
-      {!prefersReducedMotion && (
-        <div
-          className="absolute left-1/2 top-1/2 rounded-full pointer-events-none"
-          style={{
-            width: size,
-            height: size,
-            marginLeft: -size / 2,
-            marginTop: -size / 2,
-            border: `1.5px solid ${BRAND_ORANGE}`,
-            animation: 'auth-pulse-ring 1.8s ease-out infinite',
-          }}
-        />
-      )}
-
       {/* Center stack */}
       <div
         className="relative flex flex-col items-center"
         style={{
           opacity: 0,
-          animation: 'auth-fade-in 300ms ease-out forwards',
+          animation: 'auth-fade-in 120ms ease-out forwards',
         }}
       >
+
         <div className="relative" style={{ width: size, height: size }}>
+          {/* Expanding pulse ring — centered on logo */}
+          {!prefersReducedMotion && (
+            <div
+              className="absolute inset-0 rounded-full pointer-events-none"
+              style={{
+                border: `1.5px solid ${BRAND_ORANGE}`,
+                animation: 'auth-pulse-ring 1.8s ease-out infinite',
+              }}
+            />
+          )}
+
           {/* Progress ring */}
           <svg
+
             width={size}
             height={size}
             className="absolute inset-0"
