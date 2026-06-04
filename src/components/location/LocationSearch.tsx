@@ -250,6 +250,7 @@ export function LocationSearch({
     onChange(inputValue);
     setSelectedLocation(null);
     setShowCustomNameInput(false);
+    if (inputValue.length > 0) setShowSavedLocations(false);
 
     if (searchTimeout.current) {
       clearTimeout(searchTimeout.current);
@@ -259,6 +260,7 @@ export function LocationSearch({
       searchLocations(inputValue);
     }, 300);
   };
+
 
   // Handle location selection - always select first, then allow rename
   const handleSelectLocation = (result: SearchResult) => {
