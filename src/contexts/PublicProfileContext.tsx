@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useCallback, useContext, useState, ReactNode } from 'react';
 import { PublicProfileSheet } from '@/components/profile/PublicProfileSheet';
 
 interface PublicProfileContextValue {
@@ -6,7 +6,13 @@ interface PublicProfileContextValue {
   closeProfile: () => void;
 }
 
-const PublicProfileContext = createContext<PublicProfileContextValue | undefined>(undefined);
+// HMR-safe singleton: keep the same context object across hot reloads so that
+// providers mounted higher in the tree (in App.tsx) stay compatible with
+// consumers that re-import this module via HMR boundaries.
+const PublicProfileContext: React.Context<PublicProfileContextValue | undefined> =
+  ((globalThis as any).__rallyPublicProfileContext ??=
+    createContext<PublicProfileContextValue | undefined>(undefined));
+
 
 export function PublicProfileProvider({ children }: { children: ReactNode }) {
   const [profileId, setProfileId] = useState<string | null>(null);
