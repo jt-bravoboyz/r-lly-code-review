@@ -20,6 +20,8 @@ import { IdentitySetupDialog } from '@/components/profile/NameSetupDialog';
 import rallyLogo from '@/assets/rally-logo.png';
 import { MiniFounderGem } from '@/components/badges/MiniFounderGem';
 import { WelcomeBackOverlay } from '@/components/WelcomeBackOverlay';
+import { AuthLoadingState } from '@/components/AuthLoadingState';
+import { useState } from 'react';
 
 export default function Index() {
   const { user, profile, loading } = useAuth();
