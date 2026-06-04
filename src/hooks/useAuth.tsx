@@ -180,6 +180,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setProfile(null);
       }
       setLoading(false);
+      setHasResolvedOnce(true);
+
     });
 
     return () => subscription.unsubscribe();
