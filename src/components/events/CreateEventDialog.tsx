@@ -697,168 +697,171 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
               </CollapsibleContent>
             </Collapsible>
 
-            {/* Audience picker — Recently Friended → All Friends → Squads */}
-            {recentlyFriended.length > 0 && (
-              <div className="space-y-2 pt-2">
-                <FormLabel>Recently Friended</FormLabel>
-                <ScrollArea className="h-24">
-                  <div className="flex flex-wrap gap-2 pb-2">
-                    {recentlyFriended.map((friend: any) => {
-                      const isSelected = selectedFriendIds.includes(friend.profile_id);
-                      return (
-                        <button
-                          key={friend.profile_id}
-                          type="button"
-                          onClick={() => toggleFriendSelection(friend.profile_id)}
-                          className={cn(
-                            'flex items-center gap-2 px-3 py-2 rounded-full border transition-colors',
-                            isSelected
-                              ? 'bg-primary text-primary-foreground border-primary'
-                              : 'bg-primary/10 hover:bg-primary/20 border-primary/30'
-                          )}
-                        >
-                          <UserPlus className="h-3 w-3" />
-                          <span className="text-sm font-medium">{friend.display_name || 'R@lly Friend'}</span>
-                          {isSelected && <Check className="h-3 w-3" />}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </ScrollArea>
-              </div>
-            )}
+            {/* Send Invites */}
+            <div className="space-y-4 pt-5">
+              <p className="text-[15px] font-semibold text-foreground font-montserrat">Send Invites</p>
 
-            {rallyFriends.length > 0 && (
-              <div className="space-y-2 pt-2">
-                <FormLabel>All Friends (optional)</FormLabel>
-                {(() => {
-                  const allIds = rallyFriends.map(f => f.id);
-                  const allSelected = allIds.length > 0 && allIds.every(id => selectedFriendIds.includes(id));
-                  const toggleAll = () => {
-                    if ('vibrate' in navigator) navigator.vibrate(10);
-                    setSelectedFriendIds(prev => {
-                      if (allSelected) {
-                        return prev.filter(id => !allIds.includes(id));
-                      }
-                      const merged = new Set(prev);
-                      allIds.forEach(id => merged.add(id));
-                      return Array.from(merged);
-                    });
-                  };
-                  return (
-                    <button
-                      type="button"
-                      onClick={toggleAll}
-                      className={cn(
-                        'group relative w-full flex items-center justify-between gap-3 px-4 py-3.5 rounded-2xl border transition-all duration-250 ease-spring backdrop-blur-xl',
-                        allSelected
-                          ? 'bg-primary text-primary-foreground border-primary/40 shadow-[inset_0_1px_0_0_hsl(0_0%_100%/0.25)]'
-                          : 'bg-white/[0.04] dark:bg-white/[0.04] border-white/10 hover:bg-white/[0.07]'
-                      )}
-                    >
-                      <span className="flex items-center gap-3 min-w-0">
-                        <span
-                          className={cn(
-                            'flex h-7 w-7 items-center justify-center rounded-full transition-colors',
-                            allSelected ? 'bg-white/15' : 'bg-primary/10 animate-pulse'
-                          )}
-                        >
-                          <Users
-                            className={cn('h-4 w-4', allSelected ? 'text-white' : 'text-primary')}
-                          />
-                        </span>
-                        <span className="text-sm font-semibold tracking-tight">
-                          {allSelected ? 'All Friends Invited' : 'Invite All Friends'}
-                        </span>
-                      </span>
-                      <span
+              {rallyFriends.length > 0 && (
+                <div className="space-y-2">
+                  {(() => {
+                    const allIds = rallyFriends.map(f => f.id);
+                    const allSelected = allIds.length > 0 && allIds.every(id => selectedFriendIds.includes(id));
+                    const toggleAll = () => {
+                      if ('vibrate' in navigator) navigator.vibrate(10);
+                      setSelectedFriendIds(prev => {
+                        if (allSelected) {
+                          return prev.filter(id => !allIds.includes(id));
+                        }
+                        const merged = new Set(prev);
+                        allIds.forEach(id => merged.add(id));
+                        return Array.from(merged);
+                      });
+                    };
+                    return (
+                      <button
+                        type="button"
+                        onClick={toggleAll}
                         className={cn(
-                          'text-xs font-medium px-2 py-0.5 rounded-full',
-                          allSelected ? 'bg-white/15 text-white' : 'bg-white/[0.06] text-foreground/60'
+                          'group relative w-full flex items-center justify-between gap-3 px-4 py-3.5 rounded-2xl border transition-all duration-250 ease-spring backdrop-blur-xl',
+                          allSelected
+                            ? 'bg-primary text-primary-foreground border-primary/40 shadow-[inset_0_1px_0_0_hsl(0_0%_100%/0.25)]'
+                            : 'bg-white/[0.04] dark:bg-white/[0.04] border-white/10 hover:bg-white/[0.07]'
                         )}
                       >
-                        {allIds.length}
-                      </span>
-                    </button>
-                  );
-                })()}
-                <ScrollArea className="h-24">
-                  <div className="flex flex-wrap gap-2 pb-2 pt-1">
-                    {rallyFriends.map((friend, idx) => {
-                      const isSelected = selectedFriendIds.includes(friend.id);
-                      return (
-                        <button
-                          key={friend.id}
-                          type="button"
-                          onClick={() => toggleFriendSelection(friend.id)}
-                          style={{ transitionDelay: `${Math.min(idx * 25, 300)}ms` }}
+                        <span className="flex items-center gap-3 min-w-0">
+                          <span
+                            className={cn(
+                              'flex h-7 w-7 items-center justify-center rounded-full transition-colors',
+                              allSelected ? 'bg-white/15' : 'bg-primary/10 animate-pulse'
+                            )}
+                          >
+                            <Users
+                              className={cn('h-4 w-4', allSelected ? 'text-white' : 'text-primary')}
+                            />
+                          </span>
+                          <span className="text-sm font-semibold tracking-tight">
+                            {allSelected ? 'All Friends Invited' : 'Invite All Friends'}
+                          </span>
+                        </span>
+                        <span
                           className={cn(
-                            'flex items-center gap-2 px-3 py-2 rounded-full border transition-all duration-200',
-                            isSelected
-                              ? 'bg-primary text-primary-foreground border-primary scale-100'
-                              : 'bg-muted hover:bg-muted/80 scale-[0.98]'
+                            'text-xs font-medium px-2 py-0.5 rounded-full',
+                            allSelected ? 'bg-white/15 text-white' : 'bg-white/[0.06] text-foreground/60'
                           )}
                         >
-                          <UserPlus className="h-3 w-3" />
-                          <span className="text-sm font-medium">{friend.display_name || 'R@lly Friend'}</span>
-                          {isSelected && <Check className="h-3 w-3" />}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </ScrollArea>
-              </div>
-            )}
+                          {allIds.length}
+                        </span>
+                      </button>
+                    );
+                  })()}
+                  <FormLabel>All Friends</FormLabel>
+                  <ScrollArea className="h-24">
+                    <div className="flex flex-wrap gap-2 pb-2 pt-1">
+                      {rallyFriends.map((friend, idx) => {
+                        const isSelected = selectedFriendIds.includes(friend.id);
+                        return (
+                          <button
+                            key={friend.id}
+                            type="button"
+                            onClick={() => toggleFriendSelection(friend.id)}
+                            style={{ transitionDelay: `${Math.min(idx * 25, 300)}ms` }}
+                            className={cn(
+                              'flex items-center gap-2 px-3 py-2 rounded-full border transition-all duration-200',
+                              isSelected
+                                ? 'bg-primary text-primary-foreground border-primary scale-100'
+                                : 'bg-muted hover:bg-muted/80 scale-[0.98]'
+                            )}
+                          >
+                            <UserPlus className="h-3 w-3" />
+                            <span className="text-sm font-medium">{friend.display_name || 'R@lly Friend'}</span>
+                            {isSelected && <Check className="h-3 w-3" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </ScrollArea>
+                </div>
+              )}
 
+              {recentlyFriended.length > 0 && (
+                <div className="space-y-2 pt-2">
+                  <FormLabel>Recently Added</FormLabel>
+                  <ScrollArea className="h-24">
+                    <div className="flex flex-wrap gap-2 pb-2">
+                      {recentlyFriended.map((friend: any) => {
+                        const isSelected = selectedFriendIds.includes(friend.profile_id);
+                        return (
+                          <button
+                            key={friend.profile_id}
+                            type="button"
+                            onClick={() => toggleFriendSelection(friend.profile_id)}
+                            className={cn(
+                              'flex items-center gap-2 px-3 py-2 rounded-full border transition-colors',
+                              isSelected
+                                ? 'bg-primary text-primary-foreground border-primary'
+                                : 'bg-primary/10 hover:bg-primary/20 border-primary/30'
+                            )}
+                          >
+                            <UserPlus className="h-3 w-3" />
+                            <span className="text-sm font-medium">{friend.display_name || 'R@lly Friend'}</span>
+                            {isSelected && <Check className="h-3 w-3" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </ScrollArea>
+                </div>
+              )}
 
-            {mySquads && mySquads.length > 0 ? (
-              <div className="space-y-2 pt-2">
-                <FormLabel>Invite Squads (optional)</FormLabel>
-                <ScrollArea className="h-24">
-                  <div className="flex flex-wrap gap-2 pb-2">
-                    {mySquads.map((squad) => {
-                      const isSelected = selectedSquads.some(s => s.id === squad.id);
-                      return (
-                        <button
-                          key={squad.id}
-                          type="button"
-                          onClick={() => toggleSquadSelection(squad)}
-                          className={cn(
-                            'flex items-center gap-2 px-3 py-2 rounded-full border transition-colors',
-                            isSelected
-                              ? 'bg-primary text-primary-foreground border-primary'
-                              : 'bg-muted hover:bg-muted/80'
-                          )}
-                        >
-                          <Users className="h-3 w-3" />
-                          <span className="text-sm font-medium">{squad.name}</span>
-                          {isSelected && <Check className="h-3 w-3" />}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </ScrollArea>
-                {!hasAudience && (
-                  <p className="text-xs text-muted-foreground">
-                    You can invite people now or after the R@lly is created.
-                  </p>
-                )}
-              </div>
-            ) : (
-              <div className="mt-2 rounded-lg border border-primary/20 bg-primary/10 p-3">
-                <div className="flex gap-3">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
-                    <Users className="h-4 w-4" />
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-sm font-semibold text-foreground">No squads yet.</p>
-                    <p className="text-xs leading-relaxed text-muted-foreground">
-                      Create the R@lly first, then invite people by contact, phone number, or share link.
+              {mySquads && mySquads.length > 0 ? (
+                <div className="space-y-2 pt-2">
+                  <FormLabel>Squads</FormLabel>
+                  <ScrollArea className="h-24">
+                    <div className="flex flex-wrap gap-2 pb-2">
+                      {mySquads.map((squad) => {
+                        const isSelected = selectedSquads.some(s => s.id === squad.id);
+                        return (
+                          <button
+                            key={squad.id}
+                            type="button"
+                            onClick={() => toggleSquadSelection(squad)}
+                            className={cn(
+                              'flex items-center gap-2 px-3 py-2 rounded-full border transition-colors',
+                              isSelected
+                                ? 'bg-primary text-primary-foreground border-primary'
+                                : 'bg-muted hover:bg-muted/80'
+                            )}
+                          >
+                            <Users className="h-3 w-3" />
+                            <span className="text-sm font-medium">{squad.name}</span>
+                            {isSelected && <Check className="h-3 w-3" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </ScrollArea>
+                  {!hasAudience && (
+                    <p className="text-xs text-muted-foreground">
+                      You can invite people now or after the R@lly is created.
                     </p>
+                  )}
+                </div>
+              ) : (
+                <div className="mt-2 rounded-lg border border-primary/20 bg-primary/10 p-3">
+                  <div className="flex gap-3">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
+                      <Users className="h-4 w-4" />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-semibold text-foreground">No squads yet.</p>
+                      <p className="text-xs leading-relaxed text-muted-foreground">
+                        Create the R@lly first, then invite people by contact, phone number, or share link.
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
             </div>
 
             {isUploading && (
