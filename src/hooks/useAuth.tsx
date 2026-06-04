@@ -10,6 +10,8 @@ interface AuthContextType {
   session: Session | null;
   profile: Profile | null;
   loading: boolean;
+  /** True after the very first auth resolution (success or failure) in this React tree's lifetime. */
+  hasResolvedOnce: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, displayName: string, phone?: string, referredBy?: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -23,6 +25,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [hasResolvedOnce, setHasResolvedOnce] = useState(false);
+
 
   // Prevent race conditions when users switch accounts quickly.
   const currentUserIdRef = useRef<string | null>(null);
@@ -159,6 +163,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setProfile(null);
         }
         setLoading(false);
+        setHasResolvedOnce(true);
+
       }
     );
 
@@ -174,6 +180,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setProfile(null);
       }
       setLoading(false);
+      setHasResolvedOnce(true);
+
     });
 
     return () => subscription.unsubscribe();
@@ -225,7 +233,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, profile, loading, signIn, signUp, signOut, refreshProfile }}>
+    <AuthContext.Provider value={{ user, session, profile, loading, hasResolvedOnce, signIn, signUp, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );
