@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useState, ReactNode } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useState, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { DirectMessageSheet } from '@/components/chat/DirectMessageSheet';
 import { useOpenDmChat } from '@/hooks/useDirectMessages';
@@ -17,7 +17,13 @@ interface DirectMessageContextValue {
   closeDm: () => void;
 }
 
-const DirectMessageContext = createContext<DirectMessageContextValue | undefined>(undefined);
+// HMR-safe singleton: keep the same context object across hot reloads so the
+// provider mounted in App.tsx stays compatible with consumers re-imported via
+// HMR (otherwise useDirectMessage() falls through to the warning fallback).
+const DirectMessageContext: React.Context<DirectMessageContextValue | undefined> =
+  ((globalThis as any).__rallyDirectMessageContext ??=
+    createContext<DirectMessageContextValue | undefined>(undefined));
+
 
 export function DirectMessageProvider({ children }: { children: ReactNode }) {
   const [chatId, setChatId] = useState<string | null>(null);
