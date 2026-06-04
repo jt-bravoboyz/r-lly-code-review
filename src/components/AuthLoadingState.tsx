@@ -34,6 +34,20 @@ export function AuthLoadingState({
     return () => mql.removeEventListener?.('change', handler);
   }, []);
 
+  // Hand off from the inline HTML boot splash to React's cinematic loader.
+  // The splash is identical visually, so fading it out the moment React mounts
+  // creates a seamless transition with zero flash.
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    document.body.classList.add('rally-booted');
+    const splash = document.getElementById('rally-boot-splash');
+    const removeTimer = window.setTimeout(() => {
+      splash?.parentNode?.removeChild(splash);
+    }, 400);
+    return () => window.clearTimeout(removeTimer);
+  }, []);
+
+
   // Drive progress ring with ease-out cubic toward a moving target.
   useEffect(() => {
     let raf = 0;
