@@ -86,6 +86,18 @@ export function LocationSearch({
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const customNameInputRef = useRef<HTMLInputElement>(null);
+
+  // Delay focusing the rename input until after the panel animates in,
+  // so the iOS keyboard doesn't fire mid-transition and shove the layout.
+  useEffect(() => {
+    if (!showCustomNameInput) return;
+    const t = setTimeout(() => {
+      customNameInputRef.current?.focus();
+    }, 50);
+    return () => clearTimeout(t);
+  }, [showCustomNameInput]);
+
 
   // Get user's current location for proximity bias
   useEffect(() => {
