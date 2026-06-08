@@ -1711,8 +1711,8 @@
   animation: ripple 0.6s ease-out;
 }
 
-/* Glow pulse on hover */
-@keyframes glow-pulse {
+/* Glow pulse on hover — separate keyframe so it does not override after-rally purple glow-pulse */
+@keyframes hover-glow-pulse {
   0%, 100% {
     box-shadow: 0 0 20px hsl(var(--primary) / 0.3);
   }
@@ -1722,7 +1722,7 @@
 }
 
 .hover-glow:hover {
-  animation: glow-pulse 1.5s ease-in-out infinite;
+  animation: hover-glow-pulse 1.5s ease-in-out infinite;
 }
 
 /* Entrance animations for cards */
