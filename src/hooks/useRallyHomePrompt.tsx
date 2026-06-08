@@ -5,6 +5,8 @@ import { useAuth } from './useAuth';
 interface PromptStatus {
   isUndecided: boolean;
   needsReconfirmation: boolean;
+  needsAfterRallyReconfirmation: boolean;
+  needsBarHopReconfirmation: boolean;
   canPrompt: boolean;
   isParticipating: boolean;
   hasArrivedSafely: boolean;
@@ -85,6 +87,8 @@ export function useRallyHomePrompt(
     return {
       isUndecided: false,
       needsReconfirmation: false,
+      needsAfterRallyReconfirmation: false,
+      needsBarHopReconfirmation: false,
       canPrompt: false,
       isParticipating: false,
       hasArrivedSafely: false,
@@ -138,6 +142,8 @@ export function useRallyHomePrompt(
   return {
     isUndecided,
     needsReconfirmation,
+    needsAfterRallyReconfirmation,
+    needsBarHopReconfirmation,
     canPrompt,
     isParticipating,
     hasArrivedSafely,
