@@ -324,7 +324,22 @@ export default function EventDetail() {
   
   // R@lly Home prompt status for current user
   const myPromptStatus = useMyRallyHomePrompt(id);
-  
+
+  useEffect(() => {
+    if (!myPromptStatus) return;
+
+    const { needsAfterRallyReconfirmation, needsBarHopReconfirmation } = myPromptStatus;
+
+    if (needsAfterRallyReconfirmation || needsBarHopReconfirmation) {
+      if (!rallyHomeAskedRef.current && !showRallyHomeDialog) {
+        rallyHomeAskedRef.current = true;
+        if (typeof window !== 'undefined' && id) {
+          sessionStorage.setItem(`rally_home_asked_${id}`, '1');
+        }
+        setShowRallyHomeDialog(true);
+      }
+    }
+  }, [myPromptStatus, showRallyHomeDialog, id]);
 
   // Show After R@lly opt-in dialog when event is in after_rally status
   // Dialog shows on NORMAL screen - user must opt-in to see purple theme
