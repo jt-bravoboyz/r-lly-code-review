@@ -145,6 +145,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const resolvedRef = useRef(false);
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
@@ -164,11 +165,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         setLoading(false);
         setHasResolvedOnce(true);
+        resolvedRef.current = true;
 
       }
     );
 
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (resolvedRef.current) return;
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {

@@ -70,8 +70,10 @@ export function AuthLoadingState({
   }, [authResolved, minHoldMs]);
 
   // Handle completion: enforce min hold, then flash, then fade out.
+  const completionTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   useEffect(() => {
     if (!authResolved) return;
+    const timers = completionTimersRef.current;
     const elapsed = Date.now() - mountTimeRef.current;
     const remaining = Math.max(0, minHoldMs - elapsed);
     const t1 = setTimeout(() => {
@@ -82,16 +84,14 @@ export function AuthLoadingState({
         const t3 = setTimeout(() => {
           onComplete?.();
         }, 260);
-        // store cleanup via closure
-        (t1 as unknown as { _t3?: number })._t3 = t3 as unknown as number;
+        timers.push(t3);
       }, 150);
-      (t1 as unknown as { _t2?: number })._t2 = t2 as unknown as number;
+      timers.push(t2);
     }, remaining);
+    timers.push(t1);
     return () => {
-      clearTimeout(t1);
-      const inner = t1 as unknown as { _t2?: number; _t3?: number };
-      if (inner._t2) clearTimeout(inner._t2);
-      if (inner._t3) clearTimeout(inner._t3);
+      timers.forEach((t) => clearTimeout(t));
+      timers.length = 0;
     };
   }, [authResolved, minHoldMs, onComplete]);
 
