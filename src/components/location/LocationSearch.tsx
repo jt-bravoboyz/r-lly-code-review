@@ -394,10 +394,10 @@ export function LocationSearch({
           </div>
           <div className="flex gap-2">
             <Input
+              ref={customNameInputRef}
               placeholder="Name this place (e.g., Mike's House)"
               value={customName}
               onChange={(e) => setCustomName(e.target.value)}
-              autoFocus
             />
             <Button 
               type="button"
