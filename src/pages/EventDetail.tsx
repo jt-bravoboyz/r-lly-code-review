@@ -323,7 +323,7 @@ export default function EventDetail() {
   }, [shouldAutoStartJoinFlow, hasCompletedJoinFlow, showTransportSelector, showSafetyChoice, showRidesSelection, showLocationSharingModal]);
   
   // R@lly Home prompt status for current user
-  const myPromptStatus = useMyRallyHomePrompt(id);
+  const myPromptStatus = useMyRallyHomePrompt(id, isBarHopTransitionPoint);
 
   useEffect(() => {
     if (!myPromptStatus) return;

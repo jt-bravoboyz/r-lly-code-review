@@ -41,7 +41,6 @@ import AdminDashboard from "./pages/AdminDashboard";
 import Unsubscribe from "./pages/Unsubscribe";
 import SplitCheckHome from "./pages/SplitCheckHome";
 import SplitGuestPay from "./pages/SplitGuestPay";
-import Friends from "./pages/Friends";
 import PastRallies from "./pages/PastRallies";
 import UpcomingRallies from "./pages/UpcomingRallies";
 import Demo from "./pages/Demo";
@@ -101,7 +100,6 @@ const App = () => (
                       <Route path="/tab/pay/:requestId" element={<SplitGuestPay />} />
                       <Route path="/rallies/past" element={<PastRallies />} />
                       <Route path="/rallies/upcoming" element={<UpcomingRallies />} />
-                      <Route path="/rallies/past" element={<PastRallies />} />
                       <Route path="/demo" element={<Demo />} />
                       {import.meta.env.DEV && <Route path="/demo/rally-home" element={<DemoRallyHome />} />}
                       <Route path="*" element={<NotFound />} />

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -68,6 +68,7 @@ export function RallyHomeButton({ eventId, trigger, eventStatus, autoOpen, onAut
   // Use the safety status hook
   const { data: myStatus, refetch: refetchStatus } = useMyAttendeeStatus(eventId);
   const { confirmNotParticipating } = useUpdateSafetyStatus();
+  const autoOpenHandledRef = useRef(false);
   const { notifyGoingHome, notifyArrivedSafe, notifyCarGroupRallyHome } = useSafetyNotifications();
 
   // Fetch user's squads
@@ -129,21 +130,28 @@ export function RallyHomeButton({ eventId, trigger, eventStatus, autoOpen, onAut
   // OR explicitly chose DD/rider. This prevents re-prompting on every R@lly Home click.
   const hasRidePlan = !!(myStatus?.is_dd || myStatus?.needs_ride || myStatus?.location_prompt_shown);
 
-  // Auto-open when autoOpen prop is set
+  // Auto-open when autoOpen prop is set.
+  // Gates on myStatus being loaded (undefined = still fetching) to avoid
+  // reading stale all-false values and incorrectly opening the safety choice modal.
+  // autoOpenHandledRef ensures it fires exactly once per mount.
   useEffect(() => {
-    if (autoOpen && !isGoingHome && !hasArrived && !notParticipating) {
-      if (hasDestinationSet && isEventOver) {
-        // Already has destination, no need to show dialog
-      } else if (hasRidePlan && !hasDestinationSet) {
-        // Has ride plan but no destination - open destination dialog
-        setOpen(true);
-      } else if (!hasRidePlan) {
-        // No ride plan at all - show safety choice
-        setShowSafetyChoice(true);
-      }
-      onAutoOpenComplete?.();
+    if (!autoOpen || autoOpenHandledRef.current) return;
+    if (myStatus === undefined) return; // still loading from DB
+    autoOpenHandledRef.current = true;
+
+    if (isGoingHome || hasArrived || notParticipating) return;
+
+    if (hasDestinationSet && isEventOver) {
+      // Already has destination, no need to show dialog
+    } else if (hasRidePlan && !hasDestinationSet) {
+      // Has ride plan but no destination — open destination dialog
+      setOpen(true);
+    } else if (!hasRidePlan) {
+      // No ride plan at all — show safety choice
+      setShowSafetyChoice(true);
     }
-  }, [autoOpen]);
+    onAutoOpenComplete?.();
+  }, [autoOpen, myStatus, isGoingHome, hasArrived, notParticipating, hasRidePlan, hasDestinationSet, isEventOver, onAutoOpenComplete]);
 
   // Fetch event attendees for "selected" option
   useEffect(() => {
