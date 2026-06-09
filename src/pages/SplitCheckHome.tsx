@@ -76,7 +76,7 @@ export default function SplitCheckHome() {
     if (requestIds.length) {
       const { data: reqs } = await supabase
         .from('split_check_requests')
-        .select('id, event_id, host_id, total_cents, created_at')
+        .select('id, event_id, host_id, total_cents, created_at, title')
         .in('id', requestIds);
       requestsMap = new Map((reqs ?? []).map((r) => [r.id, r]));
 
