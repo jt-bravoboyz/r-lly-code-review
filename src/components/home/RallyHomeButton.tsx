@@ -272,6 +272,7 @@ export function RallyHomeButton({ eventId, trigger, eventStatus, autoOpen, onAut
         notifyGoingHome(eventId);
         // Notify car group members
         notifyCarGroupRallyHome(eventId);
+        onHeadingHomeStart?.(finalAddress);
         
         const visibilityMessage = visibility === 'none' 
           ? 'Your destination is private' 
