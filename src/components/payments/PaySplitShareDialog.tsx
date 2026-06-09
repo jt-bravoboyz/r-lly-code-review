@@ -336,5 +336,28 @@ export function PaySplitShareDialog({ open, onOpenChange, requestId, profileId, 
         </AlertDialog>
       </DialogContent>
     </Dialog>
+
+    {target?.id && (
+      <TabPaySheet
+        open={showTabPay}
+        onOpenChange={(o) => {
+          setShowTabPay(o);
+          if (!o) onOpenChange(false);
+        }}
+        splitTargetId={target.id}
+        splitRequestId={requestId}
+        eventId={request.event_id ?? null}
+        payeeId={request.host_id}
+        payerId={profileId}
+        amountCents={amountCents}
+        eventTitle={eventTitle}
+        onSettled={() => {
+          onPaid?.();
+          setShowTabPay(false);
+          onOpenChange(false);
+        }}
+      />
+    )}
+    </>
   );
 }
