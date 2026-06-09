@@ -539,7 +539,8 @@ export function StartTabDialog({ open, onOpenChange, onCreated }: Props) {
             <Button onClick={() => { onCreated?.(); onOpenChange(false); }} className="w-full rounded-full">Done</Button>
           </div>
         )}
-      </DialogContent>
-    </Dialog>
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 }
