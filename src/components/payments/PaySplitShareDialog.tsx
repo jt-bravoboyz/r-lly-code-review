@@ -35,18 +35,38 @@ export function PaySplitShareDialog({ open, onOpenChange, requestId, profileId, 
   const { isSimulated } = useFluidPay();
   const [request, setRequest] = useState<any>(null);
   const [target, setTarget] = useState<any>(null);
+  const [eventTitle, setEventTitle] = useState<string>('R@lly Tab');
+  const [payee, setPayee] = useState<{ display_name: string | null; venmo_handle: string | null; cashapp_handle: string | null; paypal_handle: string | null } | null>(null);
   const [computedTotal, setComputedTotal] = useState<number>(0);
   const [busy, setBusy] = useState(false);
   const [mismatch, setMismatch] = useState<{ from: number; to: number } | null>(null);
   const [confirmDecline, setConfirmDecline] = useState(false);
+  const [step, setStep] = useState<'select' | 'card'>('select');
+  const [showTabPay, setShowTabPay] = useState(false);
 
   useEffect(() => {
     if (!open) return;
+    setStep('select');
+    setShowTabPay(false);
     (async () => {
       const { data: r } = await supabase.from('split_check_requests').select('*').eq('id', requestId).maybeSingle();
       const { data: t } = await supabase.from('split_check_targets').select('*').eq('request_id', requestId).eq('profile_id', profileId).maybeSingle();
       setRequest(r); setTarget(t);
       if (r?.mode === 'itemized') refreshItemized();
+      if (r?.created_by) {
+        const { data: p } = await supabase
+          .from('profiles')
+          .select('display_name, venmo_handle, cashapp_handle, paypal_handle')
+          .eq('id', r.created_by)
+          .maybeSingle();
+        setPayee(p as any);
+      }
+      if (r?.event_id) {
+        const { data: e } = await supabase.from('events').select('title').eq('id', r.event_id).maybeSingle();
+        setEventTitle((e?.title as string) || 'R@lly Tab');
+      } else {
+        setEventTitle('R@lly Tab');
+      }
     })();
   }, [open, requestId, profileId]);
 
