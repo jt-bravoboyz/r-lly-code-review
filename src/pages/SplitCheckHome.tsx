@@ -248,7 +248,7 @@ export default function SplitCheckHome() {
       <main className="max-w-2xl mx-auto px-4 pt-4 space-y-4">
         <div>
           <h1 className="text-2xl font-extrabold font-montserrat">
-            R<span className="text-primary">@</span>lly Tabs
+            R<span className="text-primary">@</span>lly Wallet
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             You owe <span className="font-semibold text-foreground">{fmtUSD(totalOwe)}</span> total
