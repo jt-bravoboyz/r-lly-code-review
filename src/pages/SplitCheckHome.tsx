@@ -13,7 +13,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { TabPaySheet } from '@/components/payments/TabPaySheet';
 import { PaySplitShareDialog } from '@/components/payments/PaySplitShareDialog';
 import { SettlementConfirmCard } from '@/components/payments/SettlementConfirmCard';
-import { NewSplitSheet } from '@/components/payments/NewSplitSheet';
+import { StartTabDialog } from '@/components/payments/StartTabDialog';
+import { SplitCheckSettlementPanel } from '@/components/events/SplitCheckSettlementPanel';
 import { useTabSettlements, type TabSettlement } from '@/hooks/useTabSettlements';
 
 interface OwedRow {
@@ -55,7 +56,7 @@ export default function SplitCheckHome() {
   const [payTarget, setPayTarget] = useState<OwedRow | null>(null);
   const [tabPayOpen, setTabPayOpen] = useState(false);
   const [cardOpen, setCardOpen] = useState(false);
-  const [newSplitOpen, setNewSplitOpen] = useState(false);
+  const [startTabOpen, setStartTabOpen] = useState(false);
 
   const refetch = async () => {
     if (!meId) return;
@@ -143,7 +144,7 @@ export default function SplitCheckHome() {
     // ── OWED TO YOU ──
     const { data: myReqs } = await supabase
       .from('split_check_requests')
-      .select('id, event_id, total_cents, created_at, status, mode, title')
+      .select('id, event_id, host_id, total_cents, created_at, status, mode, title')
       .eq('host_id', meId)
       .order('created_at', { ascending: false });
 
@@ -225,6 +226,26 @@ export default function SplitCheckHome() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [meId]);
 
+  // Live updates when a target I owe changes (paid / settled / confirmed)
+  useEffect(() => {
+    if (!meId) return;
+    const channel = supabase
+      .channel(`split-targets-${meId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'split_check_targets', filter: `profile_id=eq.${meId}` },
+        () => refetch()
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'tab_settlements', filter: `payer_id=eq.${meId}` },
+        () => refetch()
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [meId]);
+
   const totalOwe = useMemo(
     () => owe.filter((r) => r.p2pStatus !== 'confirmed' && r.status !== 'paid')
       .reduce((s, r) => s + r.shareCents, 0),
@@ -247,7 +268,7 @@ export default function SplitCheckHome() {
       <main className="max-w-2xl mx-auto px-4 pt-4 space-y-4">
         <div>
           <h1 className="text-2xl font-extrabold font-montserrat">
-            R<span className="text-primary">@</span>lly Tabs
+            R<span className="text-primary">@</span>lly Wallet
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             You owe <span className="font-semibold text-foreground">{fmtUSD(totalOwe)}</span> total
@@ -303,7 +324,7 @@ export default function SplitCheckHome() {
               <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
             ) : owedRequests.length === 0 ? (
               <Card className="p-6 text-center text-sm text-muted-foreground">
-                No tabs — start one from any event
+                No tabs yet — start one below
               </Card>
             ) : (
               owedRequests.map((r) => <OwedRequestCard key={r.id} request={r} onChanged={refetch} />)
@@ -338,19 +359,21 @@ export default function SplitCheckHome() {
 
 
       <button
-        onClick={() => setNewSplitOpen(true)}
-        aria-label="New split"
-        className="fixed right-4 z-40 h-14 px-5 rounded-full bg-primary text-primary-foreground font-black uppercase tracking-wider font-montserrat text-sm shadow-[0_10px_30px_rgba(244,122,25,0.45)] flex items-center gap-2 active:scale-95 transition-transform"
+        onClick={() => setStartTabOpen(true)}
+        aria-label="New tab"
+        className="fixed right-5 z-40 h-14 pl-3 pr-5 rounded-full bg-primary text-primary-foreground font-bold font-montserrat text-sm shadow-[0_10px_30px_rgba(244,122,25,0.45)] flex items-center gap-2 active:scale-95 transition-transform"
         style={{ bottom: 'calc(env(safe-area-inset-bottom) + 80px)' }}
       >
-        <Plus className="h-5 w-5" strokeWidth={3} />
-        New Split
+        <span className="h-9 w-9 rounded-full bg-white/15 flex items-center justify-center">
+          <Plus className="h-5 w-5 text-white" strokeWidth={3} />
+        </span>
+        New Tab
       </button>
 
-      <NewSplitSheet
-        open={newSplitOpen}
-        onOpenChange={setNewSplitOpen}
-        onCreated={refetch}
+      <StartTabDialog
+        open={startTabOpen}
+        onOpenChange={setStartTabOpen}
+        onCreated={() => { refetch(); setStartTabOpen(false); }}
       />
 
       <BottomNav />
@@ -428,6 +451,12 @@ function OwedRequestCard({ request: r, onChanged }: { request: any; onChanged: (
                   onDispute={async (id, note) => { await disputeSettlement(id, note); onChanged(); }}
                 />
               ))}
+            </div>
+          )}
+
+          {r.event_id && (
+            <div className="pt-2 border-t">
+              <SplitCheckSettlementPanel eventId={r.event_id} hostProfileId={r.host_id ?? ''} />
             </div>
           )}
         </CollapsibleContent>

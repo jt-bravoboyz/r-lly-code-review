@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { copyToClipboard } from '@/lib/nativeShare';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -259,26 +259,32 @@ export function StartTabDialog({ open, onOpenChange, onCreated }: Props) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md max-h-[90dvh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent
+        side="bottom"
+        className="p-0 rounded-t-3xl border-t border-border/60 bg-background max-h-[92dvh] flex flex-col"
+      >
+        <SheetHeader className="px-5 pt-5 pb-2 text-left">
+          <SheetTitle className="flex items-center gap-2 font-montserrat">
             {(step === 'review' || step === 'people' || step === 'manual') && (
               <button onClick={() => setStep('capture')} className="-ml-1 p-1 rounded-full hover:bg-muted">
                 <ArrowLeft className="h-4 w-4" />
               </button>
             )}
-            Start a R@lly Tab
-          </DialogTitle>
-          <DialogDescription>
+            Start a R<span className="text-primary">@</span>lly Tab
+          </SheetTitle>
+          <SheetDescription>
             {step === 'capture' && 'Snap your receipt — we split it line by line.'}
             {step === 'parsing' && 'Reading your receipt…'}
             {step === 'review' && 'Confirm the line items, tax and tip.'}
             {step === 'people' && 'Pick who claims items from this tab.'}
             {step === 'manual' && 'Quick split — divide a total evenly.'}
             {step === 'links' && 'Send these pay links to your guests:'}
-          </DialogDescription>
-        </DialogHeader>
+          </SheetDescription>
+        </SheetHeader>
+
+        <div className="flex-1 overflow-y-auto px-5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)]">
+
 
         {step === 'capture' && (
           <div className="space-y-4 py-2">
@@ -533,7 +539,8 @@ export function StartTabDialog({ open, onOpenChange, onCreated }: Props) {
             <Button onClick={() => { onCreated?.(); onOpenChange(false); }} className="w-full rounded-full">Done</Button>
           </div>
         )}
-      </DialogContent>
-    </Dialog>
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 }
