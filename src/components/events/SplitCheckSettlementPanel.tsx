@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useSplitCheck } from '@/hooks/useSplitCheck';
 import { useMerchantAccount } from '@/hooks/useMerchantAccount';
+import { useAuth } from '@/hooks/useAuth';
+import { useTabSettlements, type TabSettlement } from '@/hooks/useTabSettlements';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -19,6 +21,40 @@ import {
 import { Bell, RefreshCw, Loader2, AlertCircle, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { RefundConfirmDialog } from '@/components/payments/RefundConfirmDialog';
+import { SettlementConfirmCard } from '@/components/payments/SettlementConfirmCard';
+
+const METHOD_LABEL: Record<string, string> = {
+  venmo: 'Venmo',
+  cashapp: 'CashApp',
+  paypal: 'PayPal',
+  card: 'Card',
+  other: 'Other',
+};
+
+function P2PStatusBadge({ s }: { s: TabSettlement }) {
+  if (s.status === 'sent') {
+    return (
+      <Badge className="text-[10px] bg-amber-500/15 text-amber-600 border border-amber-500/30 hover:bg-amber-500/15">
+        Sent via {METHOD_LABEL[s.method] ?? s.method} · Confirming
+      </Badge>
+    );
+  }
+  if (s.status === 'confirmed') {
+    return (
+      <Badge className="text-[10px] bg-emerald-500/15 text-emerald-600 border border-emerald-500/30 hover:bg-emerald-500/15">
+        Confirmed via {METHOD_LABEL[s.method] ?? s.method} ✓
+      </Badge>
+    );
+  }
+  if (s.status === 'disputed') {
+    return (
+      <Badge className="text-[10px] bg-red-500/15 text-red-600 border border-red-500/30 hover:bg-red-500/15">
+        Disputed · Follow up
+      </Badge>
+    );
+  }
+  return null;
+}
 
 interface Props {
   eventId: string;
