@@ -57,8 +57,9 @@ export function SplashScreen({ onComplete, duration = 5000 }: SplashScreenProps)
     ? (atGlow > 0 ? 0.6 + Math.sin(atGlow * Math.PI) * 0.3 : easeOutCubic(ph(elapsed, 3.0, 3.5)) * 0.6)
     : 0;
 
-  // "R" and "lly." fade in as "@" arrives
-  const rllyOpacity = easeOutCubic(ph(elapsed, 3.3, 3.6));
+  // "R" and "lly." fade in only after "@" lands so the reserved inline slot
+  // never reads as a visible gap during the swoop.
+  const rllyOpacity = easeOutCubic(ph(elapsed, 3.52, 3.72));
 
   // ─── EXIT (4.4 – 5.0s) ───
   const exitProgress = ph(elapsed, 4.4, 4.9);
@@ -130,21 +131,26 @@ export function SplashScreen({ onComplete, duration = 5000 }: SplashScreenProps)
           Set.
         </h1>
 
-        {/* "R@lly." — "@" swoops in, rest fades. Rendered as one inline word
-            with zero word/letter spacing so the brand reads as a single unit. */}
+        {/* "R@lly." — "@" swoops in, rest fades. The wordmark is locked
+            into an inline-flex row so JSX whitespace can never render as gaps. */}
         <h1
           className="font-montserrat font-extrabold text-6xl sm:text-7xl"
           style={{
             minHeight: "1.2em",
-            letterSpacing: "-0.02em",
+            display: "inline-flex",
+            alignItems: "baseline",
+            gap: 0,
+            letterSpacing: 0,
             wordSpacing: 0,
             whiteSpace: "nowrap",
           }}
         >
           <span
             style={{
+              display: "inline-block",
               color: "rgba(255, 255, 255, 0.95)",
               opacity: rllyOpacity,
+              lineHeight: 1,
             }}
           >R</span>
           <span
@@ -152,7 +158,9 @@ export function SplashScreen({ onComplete, duration = 5000 }: SplashScreenProps)
               display: "inline-block",
               color: "#F47A19",
               opacity: atOpacity,
-              margin: "0 -0.04em",
+              margin: "0 -0.14em 0 -0.1em",
+              lineHeight: 1,
+              transformOrigin: "center 55%",
               transform: atProgress < 1
                 ? `translate(${atX}px, ${atY}px) scale(${atScale})`
                 : "none",
@@ -163,8 +171,10 @@ export function SplashScreen({ onComplete, duration = 5000 }: SplashScreenProps)
           >@</span>
           <span
             style={{
+              display: "inline-block",
               color: "rgba(255, 255, 255, 0.95)",
               opacity: rllyOpacity,
+              lineHeight: 1,
             }}
           >lly.</span>
         </h1>

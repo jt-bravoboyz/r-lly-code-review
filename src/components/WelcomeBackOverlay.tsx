@@ -70,10 +70,10 @@ export function WelcomeBackOverlay() {
         aria-hidden="true"
       >
         <h1
-          className="font-montserrat font-extrabold text-6xl tracking-tight"
-          style={{ color: 'rgba(255,255,255,0.95)' }}
+          className="font-montserrat font-extrabold text-6xl"
+          style={{ color: 'rgba(255,255,255,0.95)', letterSpacing: 0, whiteSpace: 'nowrap' }}
         >
-          R<span style={{ color: '#F47A19' }}>@</span>lly
+          R<span style={{ color: '#F47A19', margin: '0 -0.14em 0 -0.1em' }}>@</span>lly
         </h1>
       </div>
     );
@@ -88,7 +88,7 @@ export function WelcomeBackOverlay() {
 
   const eyebrowOpacity = easeOutCubic(ph(elapsed, 0.15, 0.4));
 
-  const rllyOpacity = easeOutCubic(ph(elapsed, 0.35, 0.6));
+  const rllyOpacity = easeOutCubic(ph(elapsed, 0.72, 0.9));
 
   const atProgress = easeOutCubic(ph(elapsed, 0.4, 0.75));
   const atX = 80 * (1 - atProgress);
@@ -161,11 +161,24 @@ export function WelcomeBackOverlay() {
         </span>
 
         <h1
-          className="font-montserrat font-extrabold text-6xl sm:text-7xl tracking-tight"
-          style={{ minHeight: '1.2em' }}
+          className="font-montserrat font-extrabold text-6xl sm:text-7xl"
+          style={{
+            minHeight: '1.2em',
+            display: 'inline-flex',
+            alignItems: 'baseline',
+            gap: 0,
+            letterSpacing: 0,
+            wordSpacing: 0,
+            whiteSpace: 'nowrap',
+          }}
         >
           <span
-            style={{ color: 'rgba(255, 255, 255, 0.95)', opacity: rllyOpacity }}
+            style={{
+              display: 'inline-block',
+              color: 'rgba(255, 255, 255, 0.95)',
+              opacity: rllyOpacity,
+              lineHeight: 1,
+            }}
           >
             R
           </span>
@@ -174,6 +187,9 @@ export function WelcomeBackOverlay() {
               display: 'inline-block',
               color: '#F47A19',
               opacity: atOpacity,
+              margin: '0 -0.14em 0 -0.1em',
+              lineHeight: 1,
+              transformOrigin: 'center 55%',
               transform:
                 atProgress < 1
                   ? `translate(${atX}px, ${atY}px) scale(${atScale})`
@@ -187,7 +203,12 @@ export function WelcomeBackOverlay() {
             @
           </span>
           <span
-            style={{ color: 'rgba(255, 255, 255, 0.95)', opacity: rllyOpacity }}
+            style={{
+              display: 'inline-block',
+              color: 'rgba(255, 255, 255, 0.95)',
+              opacity: rllyOpacity,
+              lineHeight: 1,
+            }}
           >
             lly.
           </span>
