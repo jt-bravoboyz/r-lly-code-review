@@ -1154,6 +1154,14 @@ export default function EventDetail() {
                   onTransitionPoint={() => {
                     setIsBarHopTransitionPoint(true);
                     setTimeout(() => setIsBarHopTransitionPoint(false), 1000);
+                    const stops: any[] = (event as any).stops ?? [];
+                    const currentIdx = stops.findIndex((s: any) => s.is_current);
+                    const idx = currentIdx >= 0 ? currentIdx : 0;
+                    updateToBarHop({
+                      currentStopNumber: idx + 1,
+                      totalStops: stops.length,
+                      nextStopName: stops[idx + 1]?.name,
+                    });
                   }}
                 />
 
