@@ -13,7 +13,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { TabPaySheet } from '@/components/payments/TabPaySheet';
 import { PaySplitShareDialog } from '@/components/payments/PaySplitShareDialog';
 import { SettlementConfirmCard } from '@/components/payments/SettlementConfirmCard';
-import { NewSplitSheet } from '@/components/payments/NewSplitSheet';
+import { StartTabDialog } from '@/components/payments/StartTabDialog';
+import { SplitCheckSettlementPanel } from '@/components/events/SplitCheckSettlementPanel';
 import { useTabSettlements, type TabSettlement } from '@/hooks/useTabSettlements';
 
 interface OwedRow {
