@@ -46,9 +46,13 @@ interface RallyHomeButtonProps {
   eventLocationName?: string;
   eventLocationLat?: number;
   eventLocationLng?: number;
+  onHeadingHomeStart?: (destination: string) => void;
+  onArrived?: () => void;
+  externalAction?: 'heading-home' | 'arrived' | null;
+  onExternalActionHandled?: () => void;
 }
 
-export function RallyHomeButton({ eventId, trigger, eventStatus, autoOpen, onAutoOpenComplete, eventTitle, eventLocationName, eventLocationLat, eventLocationLng }: RallyHomeButtonProps) {
+export function RallyHomeButton({ eventId, trigger, eventStatus, autoOpen, onAutoOpenComplete, eventTitle, eventLocationName, eventLocationLat, eventLocationLng, onHeadingHomeStart, onArrived, externalAction, onExternalActionHandled }: RallyHomeButtonProps) {
   const [showInitialChoice, setShowInitialChoice] = useState(false); // kept for handleNotParticipating
   const [showChangePlan, setShowChangePlan] = useState(false);
   const [showSafetyChoice, setShowSafetyChoice] = useState(false);
