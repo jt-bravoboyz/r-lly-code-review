@@ -1563,7 +1563,26 @@ export default function EventDetail() {
       {/* Cover Charge Dialog - rendered by useCoverChargeGate */}
       {coverDialog}
 
-      {/* Split Check / Request Payment dialogs intentionally disabled — R@lly Tabs not yet released */}
+      {/* Request Payment dialog (host) */}
+      {canManage && event.attendees && (
+        <RequestPaymentDialog
+          open={showRequestPayment}
+          onOpenChange={setShowRequestPayment}
+          eventId={event.id}
+          attendees={event.attendees as any}
+        />
+      )}
+
+      {/* Pay split share dialog (attendee) */}
+      {payRequestId && activeProfile?.id && (
+        <PaySplitShareDialog
+          open={!!payRequestId}
+          onOpenChange={(v) => { if (!v) setPayRequestId(null); }}
+          requestId={payRequestId}
+          profileId={activeProfile.id}
+          onPaid={() => setPayRequestId(null)}
+        />
+      )}
 
       {/* Rideshare Drawer - departure flow */}
       {profile && (
