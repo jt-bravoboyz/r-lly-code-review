@@ -277,7 +277,7 @@ export function StartTabDialog({ open, onOpenChange, onCreated }: Props) {
                 <ArrowLeft className="h-4 w-4" />
               </button>
             )}
-            Start a R<span className="text-primary">@</span>lly Tab
+            Start a R<span className="text-primary" style={{ display: 'inline-block' }}>@</span>lly Tab
           </SheetTitle>
           <SheetDescription>
             {step === 'capture' && 'Snap your receipt — we split it line by line.'}

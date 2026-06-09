@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { Header } from '@/components/layout/Header';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -266,54 +265,70 @@ export default function SplitCheckHome() {
     <div className="relative min-h-[100dvh] bg-background pb-bottom-nav">
       <Header />
       <main className="max-w-2xl mx-auto px-4 pt-4 space-y-4">
-        <div>
-          <h1 className="text-2xl font-extrabold font-montserrat">
-            R<span className="text-primary">@</span>lly Wallet
+        {/* Page header with summary banner */}
+        <div className="rounded-2xl bg-card/60 border border-white/10 backdrop-blur-xl px-5 py-4"
+          style={{ WebkitBackdropFilter: 'blur(20px)' }}>
+          <h1 className="text-2xl font-extrabold font-montserrat tracking-tight">
+            R<span className="text-primary" style={{ display: 'inline-block' }}>@</span>lly Wallet
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            You owe <span className="font-semibold text-foreground">{fmtUSD(totalOwe)}</span> total
-            {' · '}
-            <span className="font-semibold text-foreground">{fmtUSD(totalOwed)}</span> owed to you
-          </p>
+          <div className="flex items-center gap-3 mt-3">
+            <div className="flex-1 rounded-xl bg-amber-500/10 border border-amber-500/20 px-3 py-2 text-center">
+              <p className="text-[10px] uppercase tracking-widest text-amber-500/80 font-montserrat font-semibold">You Owe</p>
+              <p className="text-lg font-black font-montserrat tabular-nums text-amber-500">{fmtUSD(totalOwe)}</p>
+            </div>
+            <div className="flex-1 rounded-xl bg-emerald-500/10 border border-emerald-500/20 px-3 py-2 text-center">
+              <p className="text-[10px] uppercase tracking-widest text-emerald-500/80 font-montserrat font-semibold">Owed to You</p>
+              <p className="text-lg font-black font-montserrat tabular-nums text-emerald-500">{fmtUSD(totalOwed)}</p>
+            </div>
+          </div>
         </div>
 
         <Tabs defaultValue="owe" className="w-full">
-          <TabsList className="grid grid-cols-2 w-full">
-            <TabsTrigger value="owe">You Owe</TabsTrigger>
-            <TabsTrigger value="owed">Owed to You</TabsTrigger>
+          <TabsList className="grid grid-cols-2 w-full bg-card/60 border border-white/10 rounded-xl">
+            <TabsTrigger value="owe" className="rounded-lg font-montserrat font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-[0_0_12px_rgba(244,122,25,0.4)]">You Owe</TabsTrigger>
+            <TabsTrigger value="owed" className="rounded-lg font-montserrat font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-[0_0_12px_rgba(244,122,25,0.4)]">Owed to You</TabsTrigger>
           </TabsList>
 
           <TabsContent value="owe" className="space-y-2 mt-4">
             {loading ? (
               <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
             ) : owe.length === 0 ? (
-              <Card className="p-6 text-center text-sm text-muted-foreground">
-                You're all square — no open tabs
-              </Card>
+              <div className="rounded-2xl bg-card/40 border border-white/10 p-8 text-center">
+                <p className="text-2xl mb-2">🎉</p>
+                <p className="text-sm font-semibold text-foreground">You're all square</p>
+                <p className="text-xs text-muted-foreground mt-1">No open tabs</p>
+              </div>
             ) : (
               owe.map((row) => {
                 const isClosed = row.p2pStatus === 'confirmed' || row.status === 'paid';
                 const isSent = row.p2pStatus === 'sent' || row.status === 'settled';
                 return (
-                  <Card key={row.targetId} className="p-4 flex items-center gap-3">
-                    <Avatar className="h-10 w-10">
+                  <div key={row.targetId}
+                    className="rounded-2xl bg-card/60 border border-white/10 backdrop-blur-xl p-4 flex items-center gap-3"
+                    style={{ WebkitBackdropFilter: 'blur(16px)' }}
+                  >
+                    <Avatar className="h-11 w-11 ring-1 ring-primary/20 shrink-0">
                       {row.creatorAvatar && <AvatarImage src={row.creatorAvatar} />}
-                      <AvatarFallback>{row.creatorName.slice(0, 1).toUpperCase()}</AvatarFallback>
+                      <AvatarFallback className="bg-primary/15 text-primary font-bold">
+                        {row.creatorName.slice(0, 1).toUpperCase()}
+                      </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold truncate">{row.creatorName}</p>
+                      <p className="text-sm font-bold font-montserrat truncate">{row.creatorName}</p>
                       <p className="text-xs text-muted-foreground truncate">{row.eventTitle}</p>
-                      <div className="mt-1">{statusBadge(row)}</div>
+                      <div className="mt-1.5">{statusBadge(row)}</div>
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="text-base font-bold font-montserrat tabular-nums">{fmtUSD(row.shareCents)}</p>
+                      <p className="text-base font-black font-montserrat tabular-nums">{fmtUSD(row.shareCents)}</p>
                       {!isClosed && !isSent && (
-                        <Button size="sm" className="mt-1 h-8 px-3" onClick={() => handlePay(row)}>
+                        <Button size="sm"
+                          className="mt-1.5 h-8 px-4 rounded-full text-xs font-black uppercase tracking-wider font-montserrat bg-primary shadow-[0_0_16px_rgba(244,122,25,0.35)] hover:bg-primary/90"
+                          onClick={() => handlePay(row)}>
                           Pay
                         </Button>
                       )}
                     </div>
-                  </Card>
+                  </div>
                 );
               })
             )}
@@ -323,9 +338,11 @@ export default function SplitCheckHome() {
             {loading ? (
               <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
             ) : owedRequests.length === 0 ? (
-              <Card className="p-6 text-center text-sm text-muted-foreground">
-                No tabs yet — start one below
-              </Card>
+              <div className="rounded-2xl bg-card/40 border border-white/10 p-8 text-center">
+                <p className="text-2xl mb-2">🧾</p>
+                <p className="text-sm font-semibold text-foreground">No tabs yet</p>
+                <p className="text-xs text-muted-foreground mt-1">Tap "New Tab" to split a check with your crew</p>
+              </div>
             ) : (
               owedRequests.map((r) => <OwedRequestCard key={r.id} request={r} onChanged={refetch} />)
             )}
@@ -387,18 +404,19 @@ function OwedRequestCard({ request: r, onChanged }: { request: any; onChanged: (
   const date = r.startTime ? new Date(r.startTime).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '';
 
   return (
-    <Card className="p-4 space-y-3">
+    <div className="rounded-2xl bg-card/60 border border-white/10 backdrop-blur-xl p-4 space-y-3"
+      style={{ WebkitBackdropFilter: 'blur(16px)' }}>
       <Collapsible open={open} onOpenChange={setOpen}>
         <CollapsibleTrigger className="w-full text-left flex items-center gap-3">
-          <div className="h-10 w-10 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
+          <div className="h-11 w-11 rounded-2xl bg-primary/15 flex items-center justify-center shrink-0 shadow-[0_0_16px_rgba(244,122,25,0.2)]">
             <Receipt className="h-5 w-5 text-primary" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold truncate">{r.eventTitle}</p>
+            <p className="text-sm font-bold font-montserrat truncate">{r.eventTitle}</p>
             <p className="text-xs text-muted-foreground">{date}</p>
           </div>
           <div className="text-right shrink-0">
-            <p className="text-base font-bold font-montserrat tabular-nums">{fmtUSD(r.total_cents ?? 0)}</p>
+            <p className="text-base font-black font-montserrat tabular-nums">{fmtUSD(r.total_cents ?? 0)}</p>
             <p className="text-[10px] text-muted-foreground">
               {fmtUSD(r.collectedCents)} in · {fmtUSD(r.pendingCents)} open
             </p>
@@ -461,6 +479,6 @@ function OwedRequestCard({ request: r, onChanged }: { request: any; onChanged: (
           )}
         </CollapsibleContent>
       </Collapsible>
-    </Card>
+    </div>
   );
 }

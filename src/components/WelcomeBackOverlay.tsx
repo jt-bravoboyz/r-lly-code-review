@@ -73,7 +73,7 @@ export function WelcomeBackOverlay() {
           className="font-montserrat font-extrabold text-6xl"
           style={{ color: 'rgba(255,255,255,0.95)', letterSpacing: 0, whiteSpace: 'nowrap' }}
         >
-          R<span style={{ color: '#F47A19', margin: '0 -0.14em 0 -0.1em' }}>@</span>lly
+          R<span style={{ color: '#F47A19', display: 'inline-block' }}>@</span>lly
         </h1>
       </div>
     );
