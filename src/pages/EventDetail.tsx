@@ -345,6 +345,25 @@ export default function EventDetail() {
     }
   }, [myPromptStatus, showRallyHomeDialog, id]);
 
+  // Start Live Activity when the event is active / after rally
+  useEffect(() => {
+    if (!event || (!isAttending && !isCreator)) return;
+    if (event.status === 'active' || event.status === 'live' || event.status === 'after_rally') {
+      const count = event.attendees?.length ?? 0;
+      startEventActivity(count);
+    }
+  }, [event?.status, isAttending, isCreator, startEventActivity]);
+
+  // Handle widget deep link actions (?rallyHomeAction=heading-home|arrived)
+  useEffect(() => {
+    const action = searchParams.get('rallyHomeAction') as 'heading-home' | 'arrived' | null;
+    if (!action) return;
+    setWidgetAction(action);
+    const next = new URLSearchParams(searchParams);
+    next.delete('rallyHomeAction');
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
+
   // Show After R@lly opt-in dialog when event is in after_rally status
   // Dialog shows on NORMAL screen - user must opt-in to see purple theme
   // Always show if user hasn't opted in yet (no sessionStorage blocking)
