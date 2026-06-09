@@ -165,8 +165,14 @@ export function PaySplitShareDialog({ open, onOpenChange, requestId, profileId, 
 
   const fmt = (c: number) => `$${(c / 100).toFixed(2)}`;
 
+  const hasAnyHandle = !!(payee?.venmo_handle || payee?.cashapp_handle || payee?.paypal_handle);
+  const payeeName = payee?.display_name || 'Host';
+  // Skip selection step entirely when payee has no handles
+  const effectiveStep: 'select' | 'card' = !hasAnyHandle ? 'card' : step;
+
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!busy) onOpenChange(v); }}>
+    <>
+    <Dialog open={open && !showTabPay} onOpenChange={(v) => { if (!busy) onOpenChange(v); }}>
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle>Pay your share</DialogTitle></DialogHeader>
 
@@ -187,19 +193,71 @@ export function PaySplitShareDialog({ open, onOpenChange, requestId, profileId, 
           <p className="text-xs text-muted-foreground">{request.mode === 'itemized' ? 'Includes proportional tax & tip' : 'Your share'}</p>
         </div>
 
-        {savedToken ? (
-          <Button className="w-full h-12" disabled={busy || amountCents === 0 || target?.status === 'paid' || target?.status === 'declined'}
-            onClick={() => pay(savedToken, savedCardBrand ?? 'card', savedCardLast4 ?? '', false)}>
-            {busy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
-            {target?.status === 'paid' ? 'Already paid' : `One-Tap Pay $${(amountCents/100).toFixed(2)}`}
-          </Button>
-        ) : (
-          <FluidPayCardForm
-            amountCents={amountCents}
-            onTokenize={pay}
-            externalDisabled={busy || amountCents === 0 || target?.status === 'paid' || target?.status === 'declined'}
-          />
+        {effectiveStep === 'select' && hasAnyHandle && target?.status !== 'paid' && target?.status !== 'declined' && (
+          <div className="space-y-3 pt-1">
+            <p className="text-sm font-semibold font-montserrat">How do you want to pay?</p>
+            <button
+              type="button"
+              onClick={() => { if (amountCents > 0 && target?.id) setShowTabPay(true); }}
+              disabled={amountCents === 0 || !target?.id}
+              className="w-full text-left rounded-2xl border border-primary/30 bg-primary/[0.06] hover:bg-primary/[0.10] active:scale-[0.99] transition p-4 flex items-center gap-3 disabled:opacity-50"
+            >
+              <div className="h-11 w-11 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
+                <Send className="h-5 w-5 text-primary" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold font-montserrat">Send via Venmo, CashApp, or PayPal</p>
+                <p className="text-xs text-muted-foreground">Opens your payment app — quick and free</p>
+              </div>
+            </button>
+            <button
+              type="button"
+              onClick={() => setStep('card')}
+              className="w-full text-left rounded-2xl border border-border bg-card hover:bg-card/80 active:scale-[0.99] transition p-4 flex items-center gap-3"
+            >
+              <div className="h-11 w-11 rounded-full bg-muted flex items-center justify-center shrink-0">
+                <CreditCard className="h-5 w-5" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold font-montserrat">Pay by card</p>
+                <p className="text-xs text-muted-foreground">Visa, Mastercard — processed securely</p>
+              </div>
+            </button>
+          </div>
         )}
+
+        {effectiveStep === 'card' && (
+          <>
+            {!hasAnyHandle && payee && (
+              <p className="text-xs text-muted-foreground text-center">
+                {payeeName} hasn't set up payment handles yet.
+              </p>
+            )}
+            {savedToken ? (
+              <Button className="w-full h-12" disabled={busy || amountCents === 0 || target?.status === 'paid' || target?.status === 'declined'}
+                onClick={() => pay(savedToken, savedCardBrand ?? 'card', savedCardLast4 ?? '', false)}>
+                {busy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+                {target?.status === 'paid' ? 'Already paid' : `One-Tap Pay $${(amountCents/100).toFixed(2)}`}
+              </Button>
+            ) : (
+              <FluidPayCardForm
+                amountCents={amountCents}
+                onTokenize={pay}
+                externalDisabled={busy || amountCents === 0 || target?.status === 'paid' || target?.status === 'declined'}
+              />
+            )}
+            {hasAnyHandle && (
+              <button
+                type="button"
+                onClick={() => setStep('select')}
+                className="w-full text-center text-xs text-muted-foreground underline-offset-4 hover:underline py-1"
+              >
+                ← Back to payment options
+              </button>
+            )}
+          </>
+        )}
+
 
         {target && target.status !== 'paid' && target.status !== 'declined' && (
           <Button
