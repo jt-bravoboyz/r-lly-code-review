@@ -1212,7 +1212,12 @@ export default function EventDetail() {
                   eventLocationName={event.location_name || undefined}
                   eventLocationLat={event.location_lat || undefined}
                   eventLocationLng={event.location_lng || undefined}
+                  onHeadingHomeStart={(destination) => updateToHeadingHome(destination)}
+                  onArrived={() => endActivity()}
+                  externalAction={widgetAction}
+                  onExternalActionHandled={() => setWidgetAction(null)}
                 />
+
               </section>
             )}
 
