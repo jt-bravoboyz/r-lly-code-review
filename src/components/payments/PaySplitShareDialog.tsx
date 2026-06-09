@@ -53,11 +53,11 @@ export function PaySplitShareDialog({ open, onOpenChange, requestId, profileId, 
       const { data: t } = await supabase.from('split_check_targets').select('*').eq('request_id', requestId).eq('profile_id', profileId).maybeSingle();
       setRequest(r); setTarget(t);
       if (r?.mode === 'itemized') refreshItemized();
-      if (r?.created_by) {
+      if (r?.host_id) {
         const { data: p } = await supabase
           .from('profiles')
           .select('display_name, venmo_handle, cashapp_handle, paypal_handle')
-          .eq('id', r.created_by)
+          .eq('id', r.host_id)
           .maybeSingle();
         setPayee(p as any);
       }
