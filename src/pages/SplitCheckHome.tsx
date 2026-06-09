@@ -208,7 +208,7 @@ export default function SplitCheckHome() {
       })) as TabSettlement[];
       return {
         ...r,
-        eventTitle: event?.title ?? 'R@lly Tab',
+        eventTitle: event?.title ?? r.title ?? 'R@lly Tab',
         startTime: event?.start_time ?? r.created_at,
         targets: enrichedTargets,
         collectedCents: collected,
