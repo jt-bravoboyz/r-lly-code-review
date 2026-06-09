@@ -7,12 +7,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ChevronDown, Loader2, Receipt } from 'lucide-react';
+import { ChevronDown, Loader2, Receipt, Plus } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { TabPaySheet } from '@/components/payments/TabPaySheet';
 import { PaySplitShareDialog } from '@/components/payments/PaySplitShareDialog';
 import { SettlementConfirmCard } from '@/components/payments/SettlementConfirmCard';
+import { NewSplitSheet } from '@/components/payments/NewSplitSheet';
 import { useTabSettlements, type TabSettlement } from '@/hooks/useTabSettlements';
 
 interface OwedRow {
@@ -54,6 +55,7 @@ export default function SplitCheckHome() {
   const [payTarget, setPayTarget] = useState<OwedRow | null>(null);
   const [tabPayOpen, setTabPayOpen] = useState(false);
   const [cardOpen, setCardOpen] = useState(false);
+  const [newSplitOpen, setNewSplitOpen] = useState(false);
 
   const refetch = async () => {
     if (!meId) return;
@@ -74,7 +76,7 @@ export default function SplitCheckHome() {
     if (requestIds.length) {
       const { data: reqs } = await supabase
         .from('split_check_requests')
-        .select('id, event_id, host_id, total_cents, created_at')
+        .select('id, event_id, host_id, total_cents, created_at, title')
         .in('id', requestIds);
       requestsMap = new Map((reqs ?? []).map((r) => [r.id, r]));
 
@@ -126,7 +128,7 @@ export default function SplitCheckHome() {
         targetId: t.id,
         requestId: t.request_id,
         eventId: req?.event_id ?? null,
-        eventTitle: ev?.title ?? 'R@lly Tab',
+        eventTitle: ev?.title ?? req?.title ?? 'R@lly Tab',
         shareCents: t.share_cents ?? 0,
         status: t.status,
         creatorId: req?.host_id ?? '',
@@ -141,7 +143,7 @@ export default function SplitCheckHome() {
     // ── OWED TO YOU ──
     const { data: myReqs } = await supabase
       .from('split_check_requests')
-      .select('id, event_id, total_cents, created_at, status, mode')
+      .select('id, event_id, total_cents, created_at, status, mode, title')
       .eq('host_id', meId)
       .order('created_at', { ascending: false });
 
@@ -206,7 +208,7 @@ export default function SplitCheckHome() {
       })) as TabSettlement[];
       return {
         ...r,
-        eventTitle: event?.title ?? 'R@lly Tab',
+        eventTitle: event?.title ?? r.title ?? 'R@lly Tab',
         startTime: event?.start_time ?? r.created_at,
         targets: enrichedTargets,
         collectedCents: collected,
@@ -333,6 +335,23 @@ export default function SplitCheckHome() {
           onPaid={() => { setCardOpen(false); setPayTarget(null); refetch(); }}
         />
       )}
+
+
+      <button
+        onClick={() => setNewSplitOpen(true)}
+        aria-label="New split"
+        className="fixed right-4 z-40 h-14 px-5 rounded-full bg-primary text-primary-foreground font-black uppercase tracking-wider font-montserrat text-sm shadow-[0_10px_30px_rgba(244,122,25,0.45)] flex items-center gap-2 active:scale-95 transition-transform"
+        style={{ bottom: 'calc(env(safe-area-inset-bottom) + 80px)' }}
+      >
+        <Plus className="h-5 w-5" strokeWidth={3} />
+        New Split
+      </button>
+
+      <NewSplitSheet
+        open={newSplitOpen}
+        onOpenChange={setNewSplitOpen}
+        onCreated={refetch}
+      />
 
       <BottomNav />
     </div>
