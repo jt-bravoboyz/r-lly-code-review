@@ -130,21 +130,29 @@ export function SplashScreen({ onComplete, duration = 5000 }: SplashScreenProps)
           Set.
         </h1>
 
-        {/* "R@lly." — "@" swoops in, rest fades */}
+        {/* "R@lly." — "@" swoops in, rest fades. Rendered as one inline word
+            with zero word/letter spacing so the brand reads as a single unit. */}
         <h1
-          className="font-montserrat font-extrabold text-6xl sm:text-7xl tracking-tight"
-          style={{ minHeight: "1.2em" }}
+          className="font-montserrat font-extrabold text-6xl sm:text-7xl"
+          style={{
+            minHeight: "1.2em",
+            letterSpacing: "-0.02em",
+            wordSpacing: 0,
+            whiteSpace: "nowrap",
+          }}
         >
           <span
             style={{
               color: "rgba(255, 255, 255, 0.95)",
               opacity: rllyOpacity,
             }}
-          >R</span><span
+          >R</span>
+          <span
             style={{
               display: "inline-block",
               color: "#F47A19",
               opacity: atOpacity,
+              margin: "0 -0.04em",
               transform: atProgress < 1
                 ? `translate(${atX}px, ${atY}px) scale(${atScale})`
                 : "none",
@@ -152,7 +160,8 @@ export function SplashScreen({ onComplete, duration = 5000 }: SplashScreenProps)
                 ? `0 0 ${12 + atGlowIntensity * 30}px rgba(244, 122, 25, ${atGlowIntensity * 0.65}), 0 0 ${25 + atGlowIntensity * 45}px rgba(244, 122, 25, ${atGlowIntensity * 0.3})`
                 : "none",
             }}
-          >@</span><span
+          >@</span>
+          <span
             style={{
               color: "rgba(255, 255, 255, 0.95)",
               opacity: rllyOpacity,
