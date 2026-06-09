@@ -140,10 +140,7 @@ export function SplashScreen({ onComplete, duration = 5000 }: SplashScreenProps)
               color: "rgba(255, 255, 255, 0.95)",
               opacity: rllyOpacity,
             }}
-          >
-            R
-          </span>
-          <span
+          >R</span><span
             style={{
               display: "inline-block",
               color: "#F47A19",
@@ -155,17 +152,12 @@ export function SplashScreen({ onComplete, duration = 5000 }: SplashScreenProps)
                 ? `0 0 ${12 + atGlowIntensity * 30}px rgba(244, 122, 25, ${atGlowIntensity * 0.65}), 0 0 ${25 + atGlowIntensity * 45}px rgba(244, 122, 25, ${atGlowIntensity * 0.3})`
                 : "none",
             }}
-          >
-            @
-          </span>
-          <span
+          >@</span><span
             style={{
               color: "rgba(255, 255, 255, 0.95)",
               opacity: rllyOpacity,
             }}
-          >
-            lly.
-          </span>
+          >lly.</span>
         </h1>
       </div>
     </div>
