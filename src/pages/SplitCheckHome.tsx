@@ -128,7 +128,7 @@ export default function SplitCheckHome() {
         targetId: t.id,
         requestId: t.request_id,
         eventId: req?.event_id ?? null,
-        eventTitle: ev?.title ?? 'R@lly Tab',
+        eventTitle: ev?.title ?? req?.title ?? 'R@lly Tab',
         shareCents: t.share_cents ?? 0,
         status: t.status,
         creatorId: req?.host_id ?? '',
