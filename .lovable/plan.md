@@ -1,56 +1,52 @@
-## Goal
+## Why receipt scanning fails
 
-Make the R@lly logo appear literally as soon as the screen comes — on the browser's first paint, before React mounts, before `main.tsx` even runs.
+The console shows the upload to the `receipts` storage bucket is rejected with `403 — new row violates row-level security policy`. Because the upload fails, the signed URL is never created and `parse-receipt` never runs — that's why every snapped receipt comes back with "Could not read receipt".
 
-## Why the current setup feels delayed
+The existing `receipts` bucket has three policies (`receipts host upload/read/delete`) that all require the **first folder segment of the path to be an `event_id` the user hosts**. That works for the event flow (`ReceiptUploader` uploads to `${eventId}/${draftId}/...`), but the new **standalone tab** flow in `StartTabDialog` uploads to:
 
-Even with preloading, the full chain today is:
-1. Browser parses `index.html`
-2. Browser downloads + parses `main.tsx` and its module graph (React, providers, etc.)
-3. React mounts `App` → renders `Index` → renders `AuthLoadingState`
-4. Only then does the logo + ring paint
+```
+{profile.id}/tabs/{uuid}.{ext}
+```
 
-On a cold load (especially in dev / first visit), steps 1–3 can take 200–600ms of blank screen. No amount of image preloading inside React fixes that — the JS itself has to boot.
+That path's first segment is a user id, not an event id, so RLS blocks it. No standalone tab can ever attach a receipt photo.
 
-## The fix: inline boot splash in `index.html`
+## Fix
 
-Render a minimal static version of the activation screen directly inside `<body>` so it paints on the very first frame using only HTML + inline CSS + an already-cached image from `/public`.
+Add storage RLS policies on the `receipts` bucket that allow an authenticated user to upload / read / delete objects whose **first path segment is their own `auth.uid()` and second segment is `tabs`** — i.e. exactly the path shape `StartTabDialog` writes. This leaves the existing event-host policies untouched, so the event receipt flow continues to work.
 
-### What gets added to `index.html`
+### SQL (single migration)
 
-1. **Inline `<style>` in `<head>`** with:
-   - `#rally-boot-splash` styles: fixed full-screen, black background, flex-centered
-   - Keyframes for the pulse ring and logo breathe
-   - A `body.rally-booted #rally-boot-splash` rule that fades it out
+```sql
+create policy "receipts owner tabs upload"
+on storage.objects for insert to authenticated
+with check (
+  bucket_id = 'receipts'
+  and (storage.foldername(name))[1] = auth.uid()::text
+  and (storage.foldername(name))[2] = 'tabs'
+);
 
-2. **`<link rel="preload" as="image" href="/rally-icon-192-v6.png" fetchpriority="high">`** so the logo bitmap is requested in parallel with the HTML parse (the asset already lives in `public/`).
+create policy "receipts owner tabs read"
+on storage.objects for select to authenticated
+using (
+  bucket_id = 'receipts'
+  and (storage.foldername(name))[1] = auth.uid()::text
+  and (storage.foldername(name))[2] = 'tabs'
+);
 
-3. **Inline `#rally-boot-splash` markup inside `<body>`** (before `<div id="root">`):
-   - Wrapper div
-   - Pulse ring div (orange border, infinite scale animation)
-   - Logo `<img src="/rally-icon-192-v6.png">` with the same breathing animation
+create policy "receipts owner tabs delete"
+on storage.objects for delete to authenticated
+using (
+  bucket_id = 'receipts'
+  and (storage.foldername(name))[1] = auth.uid()::text
+  and (storage.foldername(name))[2] = 'tabs'
+);
+```
 
-### How React tears it down
+No client code changes needed — the existing `StartTabDialog` path already matches this shape, and `parse-receipt` consumes a signed URL so it does not need a separate read policy.
 
-`src/components/AuthLoadingState.tsx` already controls when the loading state ends. When its `fadingOut` step fires, it adds `document.body.classList.add('rally-booted')`. The inline CSS fades the splash out over ~250ms and then `display: none` so it's gone from the layer stack.
+## Verification
 
-Because React's `AuthLoadingState` paints in the same spot with the same visual language (logo + orange ring), the handoff is invisible — the user sees one continuous activation moment.
-
-## Technical details
-
-- **Asset choice:** use `/rally-icon-192-v6.png` (already in `public/`, already preloaded by the manifest, already used as the apple-touch-icon — guaranteed cached on repeat visits).
-- **No JS in the splash:** purely HTML + CSS so it works before any script executes.
-- **No layout shift:** splash is `position: fixed; inset: 0; z-index: 100` matching `AuthLoadingState`.
-- **Reduced motion:** wrap the keyframe animations in `@media (prefers-reduced-motion: no-preference)`.
-- **Cleanup:** `AuthLoadingState`'s existing `onComplete` callback adds `rally-booted` to `<body>`; after the 250ms fade, a tiny inline script removes the splash node entirely to free the layer.
-
-## Files to change
-
-- `index.html` — add preload link, inline `<style>`, inline `#rally-boot-splash` markup
-- `src/components/AuthLoadingState.tsx` — on `fadingOut`, add `rally-booted` class to `<body>`; on unmount, remove the inline splash node if still present
-
-## What stays the same
-
-- The cinematic React `AuthLoadingState` (rings, beams, progress) — unchanged
-- Auth logic, routing, `useAuth`, `Index.tsx` flow — untouched
-- Brand orange, logo asset, motion language — identical
+After the migration:
+1. Open R@lly Wallet → New Tab → Snap a receipt.
+2. Expect: upload succeeds, "Reading your receipt…" resolves, line items populate the review step.
+3. Existing event-attached receipt uploads (`ReceiptUploader`) continue to work unchanged.
