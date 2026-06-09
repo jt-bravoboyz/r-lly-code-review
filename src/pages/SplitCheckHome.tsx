@@ -453,6 +453,12 @@ function OwedRequestCard({ request: r, onChanged }: { request: any; onChanged: (
               ))}
             </div>
           )}
+
+          {r.event_id && r.host_id && (
+            <div className="pt-2 border-t">
+              <SplitCheckSettlementPanel eventId={r.event_id} hostProfileId={r.host_id} />
+            </div>
+          )}
         </CollapsibleContent>
       </Collapsible>
     </Card>
