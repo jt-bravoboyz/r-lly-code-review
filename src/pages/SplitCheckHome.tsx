@@ -336,6 +336,23 @@ export default function SplitCheckHome() {
         />
       )}
 
+
+      <button
+        onClick={() => setNewSplitOpen(true)}
+        aria-label="New split"
+        className="fixed right-4 z-40 h-14 px-5 rounded-full bg-primary text-primary-foreground font-black uppercase tracking-wider font-montserrat text-sm shadow-[0_10px_30px_rgba(244,122,25,0.45)] flex items-center gap-2 active:scale-95 transition-transform"
+        style={{ bottom: 'calc(env(safe-area-inset-bottom) + 80px)' }}
+      >
+        <Plus className="h-5 w-5" strokeWidth={3} />
+        New Split
+      </button>
+
+      <NewSplitSheet
+        open={newSplitOpen}
+        onOpenChange={setNewSplitOpen}
+        onCreated={refetch}
+      />
+
       <BottomNav />
     </div>
   );
