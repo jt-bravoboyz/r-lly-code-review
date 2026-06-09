@@ -966,7 +966,32 @@ export default function EventDetail() {
         {/* R@lly Home trigger card moved into the R@lly Home tab below */}
 
 
-        {/* Split Check / Request Payment intentionally hidden — R@lly Tabs not yet released */}
+        {/* Split Check — Request Payment (host) + attendee unpaid CTA */}
+        {!isCompleted && (
+          <div className="space-y-3">
+            {canManage && (isLive || isAfterRally) && (
+              <Button
+                variant="outline"
+                className="w-full font-montserrat font-bold bg-card text-card-foreground border-border hover:bg-card/80"
+                onClick={() => setShowRequestPayment(true)}
+              >
+                <Receipt className="h-5 w-5 mr-2" />
+                Request Payment from Attendees
+              </Button>
+            )}
+            {isAttending && activeProfile?.id && (
+              <SplitCheckSection
+                eventId={event.id}
+                creatorId={event.creator?.id ?? ''}
+                canManage={canManage}
+                profileId={activeProfile.id}
+                onRequestPayment={() => setShowRequestPayment(true)}
+                onOpenPay={(requestId) => setPayRequestId(requestId)}
+                onOpenPayoutSetup={() => {}}
+              />
+            )}
+          </div>
+        )}
 
         {!isCompleted && isScheduled && isAttending && hasCompletedJoinFlow && (
           <Button
