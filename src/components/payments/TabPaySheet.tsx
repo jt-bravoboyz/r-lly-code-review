@@ -188,6 +188,11 @@ export function TabPaySheet({
       .update({ status: 'settled' })
       .eq('id', splitTargetId);
 
+    // Fire-and-forget: push the payee a heads-up so they can confirm.
+    supabase.functions
+      .invoke('notify-settlement-sent', { body: { settlementId: confirmFor.settlementId } })
+      .catch((e) => console.warn('[TabPaySheet] notify-settlement-sent failed', e));
+
     setConfirmBusy(false);
     setConfirmFor(null);
     onSettled();
