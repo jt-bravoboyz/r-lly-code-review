@@ -1,16 +1,14 @@
 ## Plan
 
-**Receipt upload bug — root cause confirmed**
-The storage policy requires the first folder segment to equal `auth.uid()`, but the upload uses `profile.id`. They don't always match, so storage rejects with RLS error before OCR can run.
+Fix the visible spacing issue in the animated `R@lly` splash text by keeping the brand word as one cohesive inline unit instead of visually separating `R`, `@`, and `lly`.
 
-**Fix (single small edit in `src/components/payments/StartTabDialog.tsx`, inside `handleFile`):**
-- Call `supabase.auth.getUser()` at the top of the upload try-block.
-- If no user, show a sign-in toast, return to `capture` step, abort.
-- Build the upload path as `${user.id}/tabs/${crypto.randomUUID()}.${ext}` so it matches the active storage policy.
-- Leave the signed URL flow and `parse-receipt` invocation unchanged.
+## Changes
 
-**Already done (no work needed):**
-- `StartTabDialog` is already converted from `Dialog` to `Sheet`.
-- `SplashScreen` already renders `R@lly.` with no whitespace between the split spans, fixing the brand-name spacing issue.
+- Update `src/components/SplashScreen.tsx` so the final `R@lly.` line uses a stable inline layout with no browser-inserted visual gaps.
+- Keep the existing animation behavior: `@` still swoops in, while `R` and `lly.` fade in.
+- Remove/override tight tracking on the final brand word so Montserrat does not create odd optical spacing around the `@` symbol.
+- Preserve the current timing, colors, glow, and exit animation.
 
-No other files change.
+## Validation
+
+- Check the splash screen visually in the preview and confirm `R@lly` reads as a connected brand name with no weird spaces.
