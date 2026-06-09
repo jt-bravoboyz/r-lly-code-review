@@ -88,7 +88,7 @@ export function WelcomeBackOverlay() {
 
   const eyebrowOpacity = easeOutCubic(ph(elapsed, 0.15, 0.4));
 
-  const rllyOpacity = easeOutCubic(ph(elapsed, 0.35, 0.6));
+  const rllyOpacity = easeOutCubic(ph(elapsed, 0.72, 0.9));
 
   const atProgress = easeOutCubic(ph(elapsed, 0.4, 0.75));
   const atX = 80 * (1 - atProgress);
