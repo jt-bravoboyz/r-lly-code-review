@@ -304,7 +304,7 @@ export default function SplitCheckHome() {
               <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
             ) : owedRequests.length === 0 ? (
               <Card className="p-6 text-center text-sm text-muted-foreground">
-                No tabs — start one from any event
+                No tabs yet — start one below
               </Card>
             ) : (
               owedRequests.map((r) => <OwedRequestCard key={r.id} request={r} onChanged={refetch} />)
