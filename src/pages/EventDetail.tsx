@@ -78,6 +78,7 @@ import { RogueAutoPoll } from '@/components/events/RogueAutoPoll';
 import { useRogueAlerts } from '@/hooks/useRogueAlerts';
 import { RallyRecapScreen } from '@/components/events/RallyRecapScreen';
 import { useMyRallyHomePrompt } from '@/hooks/useRallyHomePrompt';
+import { useLiveActivity } from '@/hooks/useLiveActivity';
 import { PendingJoinRequests } from '@/components/events/PendingJoinRequests';
 import { TransportModeSelector } from '@/components/events/TransportModeSelector';
 import { useCoverChargeGate } from '@/hooks/useCoverChargeGate';
