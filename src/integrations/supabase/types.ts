@@ -1977,6 +1977,7 @@ export type Database = {
           avatar_url: string | null
           badges: string[] | null
           bio: string | null
+          cashapp_handle: string | null
           created_at: string | null
           current_lat: number | null
           current_lng: number | null
@@ -1999,18 +2000,22 @@ export type Database = {
           location_sharing_enabled: boolean | null
           needs_name_setup: boolean
           nickname: string | null
+          paypal_handle: string | null
           phone: string | null
           policies_accepted_at: string | null
+          preferred_settlement: string | null
           referred_by: string | null
           reward_points: number | null
           updated_at: string | null
           user_id: string
+          venmo_handle: string | null
           walkthrough_completed: boolean
         }
         Insert: {
           avatar_url?: string | null
           badges?: string[] | null
           bio?: string | null
+          cashapp_handle?: string | null
           created_at?: string | null
           current_lat?: number | null
           current_lng?: number | null
@@ -2033,18 +2038,22 @@ export type Database = {
           location_sharing_enabled?: boolean | null
           needs_name_setup?: boolean
           nickname?: string | null
+          paypal_handle?: string | null
           phone?: string | null
           policies_accepted_at?: string | null
+          preferred_settlement?: string | null
           referred_by?: string | null
           reward_points?: number | null
           updated_at?: string | null
           user_id: string
+          venmo_handle?: string | null
           walkthrough_completed?: boolean
         }
         Update: {
           avatar_url?: string | null
           badges?: string[] | null
           bio?: string | null
+          cashapp_handle?: string | null
           created_at?: string | null
           current_lat?: number | null
           current_lng?: number | null
@@ -2067,12 +2076,15 @@ export type Database = {
           location_sharing_enabled?: boolean | null
           needs_name_setup?: boolean
           nickname?: string | null
+          paypal_handle?: string | null
           phone?: string | null
           policies_accepted_at?: string | null
+          preferred_settlement?: string | null
           referred_by?: string | null
           reward_points?: number | null
           updated_at?: string | null
           user_id?: string
+          venmo_handle?: string | null
           walkthrough_completed?: boolean
         }
         Relationships: [
@@ -3980,6 +3992,144 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      tab_settlements: {
+        Row: {
+          amount_cents: number
+          app_returned_at: string | null
+          auto_confirm_at: string | null
+          confirmed_at: string | null
+          created_at: string
+          dispute_note: string | null
+          disputed_at: string | null
+          event_id: string | null
+          id: string
+          link_opened_at: string | null
+          marked_sent_at: string | null
+          method: string
+          payee_id: string
+          payer_id: string
+          split_request_id: string | null
+          split_target_id: string | null
+          status: string
+        }
+        Insert: {
+          amount_cents: number
+          app_returned_at?: string | null
+          auto_confirm_at?: string | null
+          confirmed_at?: string | null
+          created_at?: string
+          dispute_note?: string | null
+          disputed_at?: string | null
+          event_id?: string | null
+          id?: string
+          link_opened_at?: string | null
+          marked_sent_at?: string | null
+          method: string
+          payee_id: string
+          payer_id: string
+          split_request_id?: string | null
+          split_target_id?: string | null
+          status?: string
+        }
+        Update: {
+          amount_cents?: number
+          app_returned_at?: string | null
+          auto_confirm_at?: string | null
+          confirmed_at?: string | null
+          created_at?: string
+          dispute_note?: string | null
+          disputed_at?: string | null
+          event_id?: string | null
+          id?: string
+          link_opened_at?: string | null
+          marked_sent_at?: string | null
+          method?: string
+          payee_id?: string
+          payer_id?: string
+          split_request_id?: string | null
+          split_target_id?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tab_settlements_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tab_settlements_payee_id_fkey"
+            columns: ["payee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tab_settlements_payee_id_fkey"
+            columns: ["payee_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tab_settlements_payee_id_fkey"
+            columns: ["payee_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tab_settlements_payee_id_fkey"
+            columns: ["payee_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles_with_connection"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tab_settlements_payer_id_fkey"
+            columns: ["payer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tab_settlements_payer_id_fkey"
+            columns: ["payer_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tab_settlements_payer_id_fkey"
+            columns: ["payer_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tab_settlements_payer_id_fkey"
+            columns: ["payer_id"]
+            isOneToOne: false
+            referencedRelation: "safe_profiles_with_connection"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tab_settlements_split_request_id_fkey"
+            columns: ["split_request_id"]
+            isOneToOne: false
+            referencedRelation: "split_check_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tab_settlements_split_target_id_fkey"
+            columns: ["split_target_id"]
+            isOneToOne: false
+            referencedRelation: "split_check_targets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_contacts: {
         Row: {
