@@ -341,6 +341,8 @@ export function RallyHomeButton({ eventId, trigger, eventStatus, autoOpen, onAut
       
       // Send notification to host/cohosts/squad
       notifyArrivedSafe(eventId);
+      onArrived?.();
+      
       
       toast.success('You made it! 🎉', {
         description: 'Your squad knows you arrived safely',
