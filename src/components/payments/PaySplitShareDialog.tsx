@@ -12,11 +12,12 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, ArrowRight } from 'lucide-react';
+import { Loader2, ArrowRight, CreditCard, Send } from 'lucide-react';
 import { simulatePayment } from '@/lib/paymentService';
 import { FluidPayCardForm } from './FluidPayCardForm';
 import { useFluidPay } from '@/hooks/useFluidPay';
 import { ClaimItemsView } from './ClaimItemsView';
+import { TabPaySheet } from './TabPaySheet';
 import { toast } from 'sonner';
 
 interface Props {
