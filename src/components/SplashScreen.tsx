@@ -57,8 +57,9 @@ export function SplashScreen({ onComplete, duration = 5000 }: SplashScreenProps)
     ? (atGlow > 0 ? 0.6 + Math.sin(atGlow * Math.PI) * 0.3 : easeOutCubic(ph(elapsed, 3.0, 3.5)) * 0.6)
     : 0;
 
-  // "R" and "lly." fade in as "@" arrives
-  const rllyOpacity = easeOutCubic(ph(elapsed, 3.3, 3.6));
+  // "R" and "lly." fade in only after "@" lands so the reserved inline slot
+  // never reads as a visible gap during the swoop.
+  const rllyOpacity = easeOutCubic(ph(elapsed, 3.52, 3.72));
 
   // ─── EXIT (4.4 – 5.0s) ───
   const exitProgress = ph(elapsed, 4.4, 4.9);
