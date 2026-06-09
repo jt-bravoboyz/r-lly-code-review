@@ -1441,6 +1441,10 @@ export default function EventDetail() {
           autoOpen={true}
           onAutoOpenComplete={() => setShowRallyHomeDialog(false)}
           trigger={<></>}
+          onHeadingHomeStart={(destination) => updateToHeadingHome(destination)}
+          onArrived={() => endActivity()}
+          externalAction={widgetAction}
+          onExternalActionHandled={() => setWidgetAction(null)}
         />
       )}
 
