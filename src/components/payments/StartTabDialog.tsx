@@ -99,8 +99,14 @@ export function StartTabDialog({ open, onOpenChange, onCreated }: Props) {
     setStep('parsing');
 
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error('Please sign in to upload a receipt');
+        setStep('capture');
+        return;
+      }
       const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
-      const path = `${profile.id}/tabs/${crypto.randomUUID()}.${ext}`;
+      const path = `${user.id}/tabs/${crypto.randomUUID()}.${ext}`;
       const { error: upErr } = await supabase.storage.from('receipts').upload(path, file, {
         contentType: file.type, upsert: false,
       });
