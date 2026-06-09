@@ -226,6 +226,26 @@ export default function SplitCheckHome() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [meId]);
 
+  // Live updates when a target I owe changes (paid / settled / confirmed)
+  useEffect(() => {
+    if (!meId) return;
+    const channel = supabase
+      .channel(`split-targets-${meId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'split_check_targets', filter: `profile_id=eq.${meId}` },
+        () => refetch()
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'tab_settlements', filter: `payer_id=eq.${meId}` },
+        () => refetch()
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [meId]);
+
   const totalOwe = useMemo(
     () => owe.filter((r) => r.p2pStatus !== 'confirmed' && r.status !== 'paid')
       .reduce((s, r) => s + r.shareCents, 0),
