@@ -55,6 +55,7 @@ export default function SplitCheckHome() {
   const [payTarget, setPayTarget] = useState<OwedRow | null>(null);
   const [tabPayOpen, setTabPayOpen] = useState(false);
   const [cardOpen, setCardOpen] = useState(false);
+  const [newSplitOpen, setNewSplitOpen] = useState(false);
 
   const refetch = async () => {
     if (!meId) return;
