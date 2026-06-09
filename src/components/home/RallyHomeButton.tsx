@@ -46,9 +46,13 @@ interface RallyHomeButtonProps {
   eventLocationName?: string;
   eventLocationLat?: number;
   eventLocationLng?: number;
+  onHeadingHomeStart?: (destination: string) => void;
+  onArrived?: () => void;
+  externalAction?: 'heading-home' | 'arrived' | null;
+  onExternalActionHandled?: () => void;
 }
 
-export function RallyHomeButton({ eventId, trigger, eventStatus, autoOpen, onAutoOpenComplete, eventTitle, eventLocationName, eventLocationLat, eventLocationLng }: RallyHomeButtonProps) {
+export function RallyHomeButton({ eventId, trigger, eventStatus, autoOpen, onAutoOpenComplete, eventTitle, eventLocationName, eventLocationLat, eventLocationLng, onHeadingHomeStart, onArrived, externalAction, onExternalActionHandled }: RallyHomeButtonProps) {
   const [showInitialChoice, setShowInitialChoice] = useState(false); // kept for handleNotParticipating
   const [showChangePlan, setShowChangePlan] = useState(false);
   const [showSafetyChoice, setShowSafetyChoice] = useState(false);
@@ -268,6 +272,7 @@ export function RallyHomeButton({ eventId, trigger, eventStatus, autoOpen, onAut
         notifyGoingHome(eventId);
         // Notify car group members
         notifyCarGroupRallyHome(eventId);
+        onHeadingHomeStart?.(finalAddress);
         
         const visibilityMessage = visibility === 'none' 
           ? 'Your destination is private' 
@@ -336,6 +341,8 @@ export function RallyHomeButton({ eventId, trigger, eventStatus, autoOpen, onAut
       
       // Send notification to host/cohosts/squad
       notifyArrivedSafe(eventId);
+      onArrived?.();
+      
       
       toast.success('You made it! 🎉', {
         description: 'Your squad knows you arrived safely',
@@ -347,6 +354,140 @@ export function RallyHomeButton({ eventId, trigger, eventStatus, autoOpen, onAut
       setIsLoading(false);
     }
   };
+
+  const handleStartJourney = async () => {
+    if (!profile?.id) return;
+    setIsLoading(true);
+
+    try {
+      const { error } = await supabase
+        .from('event_attendees')
+        .update({
+          going_home_at: new Date().toISOString(),
+        } as any)
+        .eq('event_id', eventId)
+        .eq('profile_id', profile.id);
+
+      if (error) throw error;
+
+      await refetchStatus();
+
+      // Now notify that we're heading home
+      notifyGoingHome(eventId);
+      // Notify car group members
+      notifyCarGroupRallyHome(eventId);
+      onHeadingHomeStart?.((myStatus as any)?.destination_name ?? '');
+
+      // DD Departure Alert: if user is DD, notify all accepted passengers
+      if (myStatus?.is_dd) {
+        try {
+          const { data: myRides } = await supabase
+            .from('rides')
+            .select('id')
+            .eq('event_id', eventId)
+            .eq('driver_id', profile.id)
+            .in('status', ['active', 'full', 'paused']);
+
+          if (myRides && myRides.length > 0) {
+            const rideIds = myRides.map((r: any) => r.id);
+            const { data: passengers } = await supabase
+              .from('ride_passengers')
+              .select('passenger_id')
+              .in('ride_id', rideIds)
+              .in('status', ['accepted', 'confirmed']);
+
+            if (passengers && passengers.length > 0) {
+              const passengerIds = passengers.map((p: any) => p.passenger_id).filter((id: string) => id !== profile.id);
+              if (passengerIds.length > 0) {
+                await supabase.functions.invoke('send-event-notification', {
+                  body: {
+                    type: 'dd_departure',
+                    eventId,
+                    targetProfileIds: passengerIds,
+                    excludeProfileId: profile.id,
+                    title: '🚗 Your DD is heading out!',
+                    body: `${getPrivateName(profile as any)} is heading out! Get ready.`,
+                    data: { event_id: eventId, url: `/events/${eventId}` },
+                  },
+                });
+              }
+            }
+          }
+        } catch (ddErr) {
+          console.error('DD departure alert failed:', ddErr);
+        }
+      }
+
+      // Squad notify
+      if (notifySquad && selectedSquadId) {
+        try {
+          const { data: members } = await supabase
+            .from('squad_members')
+            .select('profile_id')
+            .eq('squad_id', selectedSquadId);
+          const { data: squad } = await supabase
+            .from('squads')
+            .select('owner_id')
+            .eq('id', selectedSquadId)
+            .maybeSingle();
+
+          const memberIds = [
+            ...(members || []).map((m: any) => m.profile_id),
+            ...(squad?.owner_id ? [squad.owner_id] : []),
+          ].filter((id: string) => id !== profile.id);
+
+          if (memberIds.length > 0) {
+            await supabase.functions.invoke('send-event-notification', {
+              body: {
+                type: 'going_home',
+                eventId,
+                targetProfileIds: memberIds,
+                excludeProfileId: profile.id,
+                title: '🏠 Squad member heading home',
+                body: `${getPrivateName(profile as any)} is heading home safely`,
+                data: { event_id: eventId, url: `/events/${eventId}` },
+              },
+            });
+          }
+        } catch (squadErr) {
+          console.error('Squad notify failed:', squadErr);
+        }
+      }
+
+      const destinationName = (myStatus as any)?.destination_name || 'your destination';
+      toast.success(`You're heading to ${destinationName}!`, {
+        description: 'Safe travels! 🏠',
+        action: {
+          label: 'Get Directions',
+          onClick: () => {
+            openDirections(buildMapsUrl({ address: destinationName }));
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('Something went wrong');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Respond to widget deep link actions
+  useEffect(() => {
+    if (!externalAction || myStatus === undefined) return;
+    if (externalAction === 'arrived' && isGoingHome && !hasArrived) {
+      handleArrived();
+      onExternalActionHandled?.();
+    } else if (externalAction === 'heading-home') {
+      if (hasDestinationSet && isEventOver) {
+        handleStartJourney();
+      } else {
+        setOpen(true);
+      }
+      onExternalActionHandled?.();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [externalAction, myStatus, isGoingHome, hasArrived, hasDestinationSet, isEventOver]);
 
   const togglePersonSelection = (profileId: string) => {
     setSelectedPeople(prev => 
@@ -394,121 +535,7 @@ export function RallyHomeButton({ eventId, trigger, eventStatus, autoOpen, onAut
   if (hasDestinationSet && !isGoingHome && !hasArrived && !notParticipating) {
     if (isEventOver) {
       // Event is over - show "Start Heading Home Now" button
-      const handleStartJourney = async () => {
-        if (!profile?.id) return;
-        setIsLoading(true);
-        
-        try {
-          const { error } = await supabase
-            .from('event_attendees')
-            .update({
-              going_home_at: new Date().toISOString(),
-            } as any)
-            .eq('event_id', eventId)
-            .eq('profile_id', profile.id);
 
-          if (error) throw error;
-
-          await refetchStatus();
-          
-          // Now notify that we're heading home
-          notifyGoingHome(eventId);
-          // Notify car group members
-          notifyCarGroupRallyHome(eventId);
-
-          // DD Departure Alert: if user is DD, notify all accepted passengers
-          if (myStatus?.is_dd) {
-            try {
-              const { data: myRides } = await supabase
-                .from('rides')
-                .select('id')
-                .eq('event_id', eventId)
-                .eq('driver_id', profile.id)
-                .in('status', ['active', 'full', 'paused']);
-              
-              if (myRides && myRides.length > 0) {
-                const rideIds = myRides.map((r: any) => r.id);
-                const { data: passengers } = await supabase
-                  .from('ride_passengers')
-                  .select('passenger_id')
-                  .in('ride_id', rideIds)
-                  .in('status', ['accepted', 'confirmed']);
-                
-                if (passengers && passengers.length > 0) {
-                  const passengerIds = passengers.map((p: any) => p.passenger_id).filter((id: string) => id !== profile.id);
-                  if (passengerIds.length > 0) {
-                    await supabase.functions.invoke('send-event-notification', {
-                      body: {
-                        type: 'dd_departure',
-                        eventId,
-                        targetProfileIds: passengerIds,
-                        excludeProfileId: profile.id,
-                        title: '🚗 Your DD is heading out!',
-                        body: `${getPrivateName(profile as any)} is heading out! Get ready.`,
-                        data: { event_id: eventId, url: `/events/${eventId}` },
-                      },
-                    });
-                  }
-                }
-              }
-            } catch (ddErr) {
-              console.error('DD departure alert failed:', ddErr);
-            }
-          }
-
-          // Squad notify
-          if (notifySquad && selectedSquadId) {
-            try {
-              const { data: members } = await supabase
-                .from('squad_members')
-                .select('profile_id')
-                .eq('squad_id', selectedSquadId);
-              const { data: squad } = await supabase
-                .from('squads')
-                .select('owner_id')
-                .eq('id', selectedSquadId)
-                .maybeSingle();
-              
-              const memberIds = [
-                ...(members || []).map((m: any) => m.profile_id),
-                ...(squad?.owner_id ? [squad.owner_id] : []),
-              ].filter((id: string) => id !== profile.id);
-
-              if (memberIds.length > 0) {
-                await supabase.functions.invoke('send-event-notification', {
-                  body: {
-                    type: 'going_home',
-                    eventId,
-                    targetProfileIds: memberIds,
-                    excludeProfileId: profile.id,
-                    title: '🏠 Squad member heading home',
-                    body: `${getPrivateName(profile as any)} is heading home safely`,
-                    data: { event_id: eventId, url: `/events/${eventId}` },
-                  },
-                });
-              }
-            } catch (squadErr) {
-              console.error('Squad notify failed:', squadErr);
-            }
-          }
-          
-          const destinationName = (myStatus as any)?.destination_name || 'your destination';
-          toast.success(`You're heading to ${destinationName}!`, {
-            description: 'Safe travels! 🏠',
-            action: {
-              label: 'Get Directions',
-              onClick: () => {
-                openDirections(buildMapsUrl({ address: destinationName }));
-              }
-            }
-          });
-        } catch (error) {
-          console.error('Error:', error);
-          toast.error('Something went wrong');
-        } finally {
-          setIsLoading(false);
-        }
-      };
       
       return (
         <Button

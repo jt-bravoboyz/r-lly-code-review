@@ -78,6 +78,7 @@ import { RogueAutoPoll } from '@/components/events/RogueAutoPoll';
 import { useRogueAlerts } from '@/hooks/useRogueAlerts';
 import { RallyRecapScreen } from '@/components/events/RallyRecapScreen';
 import { useMyRallyHomePrompt } from '@/hooks/useRallyHomePrompt';
+import { useLiveActivity } from '@/hooks/useLiveActivity';
 import { PendingJoinRequests } from '@/components/events/PendingJoinRequests';
 import { TransportModeSelector } from '@/components/events/TransportModeSelector';
 import { useCoverChargeGate } from '@/hooks/useCoverChargeGate';
@@ -115,6 +116,9 @@ export default function EventDetail() {
   const { data: eventDDs } = useEventDDs(id);
   const { data: cohosts } = useCohosts(id);
   useBarHopStopsRealtime(id); // Real-time updates for bar hop stops
+  const { startEventActivity, updateToBarHop, updateToHeadingHome, endActivity } =
+    useLiveActivity({ eventId: id ?? '', eventName: event?.title ?? '' });
+  const [widgetAction, setWidgetAction] = useState<'heading-home' | 'arrived' | null>(null);
   const { latestAlert, dismissAlert, goRogue, submitReaction, reactions, hasGoneRogue, alerts: rogueAlerts, pendingCount, showAlertById } = useRogueAlerts(id);
   const joinEvent = useJoinEvent();
   const leaveEvent = useLeaveEvent();
@@ -340,6 +344,25 @@ export default function EventDetail() {
       }
     }
   }, [myPromptStatus, showRallyHomeDialog, id]);
+
+  // Start Live Activity when the event is active / after rally
+  useEffect(() => {
+    if (!event || (!isAttending && !isCreator)) return;
+    if (event.status === 'active' || event.status === 'live' || event.status === 'after_rally') {
+      const count = event.attendees?.length ?? 0;
+      startEventActivity(count);
+    }
+  }, [event?.status, isAttending, isCreator, startEventActivity]);
+
+  // Handle widget deep link actions (?rallyHomeAction=heading-home|arrived)
+  useEffect(() => {
+    const action = searchParams.get('rallyHomeAction') as 'heading-home' | 'arrived' | null;
+    if (!action) return;
+    setWidgetAction(action);
+    const next = new URLSearchParams(searchParams);
+    next.delete('rallyHomeAction');
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   // Show After R@lly opt-in dialog when event is in after_rally status
   // Dialog shows on NORMAL screen - user must opt-in to see purple theme
@@ -1131,6 +1154,14 @@ export default function EventDetail() {
                   onTransitionPoint={() => {
                     setIsBarHopTransitionPoint(true);
                     setTimeout(() => setIsBarHopTransitionPoint(false), 1000);
+                    const stops: any[] = (event as any).stops ?? [];
+                    const currentIdx = stops.findIndex((s: any) => s.is_current);
+                    const idx = currentIdx >= 0 ? currentIdx : 0;
+                    updateToBarHop({
+                      currentStopNumber: idx + 1,
+                      totalStops: stops.length,
+                      nextStopName: stops[idx + 1]?.name,
+                    });
                   }}
                 />
 
@@ -1181,7 +1212,12 @@ export default function EventDetail() {
                   eventLocationName={event.location_name || undefined}
                   eventLocationLat={event.location_lat || undefined}
                   eventLocationLng={event.location_lng || undefined}
+                  onHeadingHomeStart={(destination) => updateToHeadingHome(destination)}
+                  onArrived={() => endActivity()}
+                  externalAction={widgetAction}
+                  onExternalActionHandled={() => setWidgetAction(null)}
                 />
+
               </section>
             )}
 
@@ -1405,6 +1441,10 @@ export default function EventDetail() {
           autoOpen={true}
           onAutoOpenComplete={() => setShowRallyHomeDialog(false)}
           trigger={<></>}
+          onHeadingHomeStart={(destination) => updateToHeadingHome(destination)}
+          onArrived={() => endActivity()}
+          externalAction={widgetAction}
+          onExternalActionHandled={() => setWidgetAction(null)}
         />
       )}
 
