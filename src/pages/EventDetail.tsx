@@ -9,7 +9,7 @@ import { useParams, Navigate, Link, useNavigate, useSearchParams } from 'react-r
 import { useQueryClient } from '@tanstack/react-query';
 import { getEventTypeLabel, getEventTypeEmoji, getEventTypeVibe } from '@/lib/eventTypes';
 import { trackEvent } from '@/lib/analytics';
-import { ArrowLeft, Calendar, MapPin, Users, Beer, Check, X, MessageCircle, Navigation, Home, Plus, Zap, Crown, UserPlus, Car, Play, Moon, PartyPopper, Link2, CheckCircle2, Camera, Settings2, Shirt } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Users, Beer, Check, X, MessageCircle, Navigation, Home, Plus, Zap, Crown, UserPlus, Car, Play, Moon, PartyPopper, Link2, CheckCircle2, Camera, Settings2, Shirt, Receipt } from 'lucide-react';
 import { format } from 'date-fns';
 import { Header } from '@/components/layout/Header';
 import { BottomNav } from '@/components/layout/BottomNav';
@@ -966,7 +966,32 @@ export default function EventDetail() {
         {/* R@lly Home trigger card moved into the R@lly Home tab below */}
 
 
-        {/* Split Check / Request Payment intentionally hidden — R@lly Tabs not yet released */}
+        {/* Split Check — Request Payment (host) + attendee unpaid CTA */}
+        {!isCompleted && (
+          <div className="space-y-3">
+            {canManage && (isLive || isAfterRally) && (
+              <Button
+                variant="outline"
+                className="w-full font-montserrat font-bold bg-card text-card-foreground border-border hover:bg-card/80"
+                onClick={() => setShowRequestPayment(true)}
+              >
+                <Receipt className="h-5 w-5 mr-2" />
+                Request Payment from Attendees
+              </Button>
+            )}
+            {isAttending && activeProfile?.id && (
+              <SplitCheckSection
+                eventId={event.id}
+                creatorId={event.creator?.id ?? ''}
+                canManage={canManage}
+                profileId={activeProfile.id}
+                onRequestPayment={() => setShowRequestPayment(true)}
+                onOpenPay={(requestId) => setPayRequestId(requestId)}
+                onOpenPayoutSetup={() => {}}
+              />
+            )}
+          </div>
+        )}
 
         {!isCompleted && isScheduled && isAttending && hasCompletedJoinFlow && (
           <Button
@@ -1538,7 +1563,26 @@ export default function EventDetail() {
       {/* Cover Charge Dialog - rendered by useCoverChargeGate */}
       {coverDialog}
 
-      {/* Split Check / Request Payment dialogs intentionally disabled — R@lly Tabs not yet released */}
+      {/* Request Payment dialog (host) */}
+      {canManage && event.attendees && (
+        <RequestPaymentDialog
+          open={showRequestPayment}
+          onOpenChange={setShowRequestPayment}
+          eventId={event.id}
+          attendees={event.attendees as any}
+        />
+      )}
+
+      {/* Pay split share dialog (attendee) */}
+      {payRequestId && activeProfile?.id && (
+        <PaySplitShareDialog
+          open={!!payRequestId}
+          onOpenChange={(v) => { if (!v) setPayRequestId(null); }}
+          requestId={payRequestId}
+          profileId={activeProfile.id}
+          onPaid={() => setPayRequestId(null)}
+        />
+      )}
 
       {/* Rideshare Drawer - departure flow */}
       {profile && (

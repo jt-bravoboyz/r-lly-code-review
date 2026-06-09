@@ -12,11 +12,12 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, ArrowRight } from 'lucide-react';
+import { Loader2, ArrowRight, CreditCard, Send } from 'lucide-react';
 import { simulatePayment } from '@/lib/paymentService';
 import { FluidPayCardForm } from './FluidPayCardForm';
 import { useFluidPay } from '@/hooks/useFluidPay';
 import { ClaimItemsView } from './ClaimItemsView';
+import { TabPaySheet } from './TabPaySheet';
 import { toast } from 'sonner';
 
 interface Props {
@@ -34,18 +35,38 @@ export function PaySplitShareDialog({ open, onOpenChange, requestId, profileId, 
   const { isSimulated } = useFluidPay();
   const [request, setRequest] = useState<any>(null);
   const [target, setTarget] = useState<any>(null);
+  const [eventTitle, setEventTitle] = useState<string>('R@lly Tab');
+  const [payee, setPayee] = useState<{ display_name: string | null; venmo_handle: string | null; cashapp_handle: string | null; paypal_handle: string | null } | null>(null);
   const [computedTotal, setComputedTotal] = useState<number>(0);
   const [busy, setBusy] = useState(false);
   const [mismatch, setMismatch] = useState<{ from: number; to: number } | null>(null);
   const [confirmDecline, setConfirmDecline] = useState(false);
+  const [step, setStep] = useState<'select' | 'card'>('select');
+  const [showTabPay, setShowTabPay] = useState(false);
 
   useEffect(() => {
     if (!open) return;
+    setStep('select');
+    setShowTabPay(false);
     (async () => {
       const { data: r } = await supabase.from('split_check_requests').select('*').eq('id', requestId).maybeSingle();
       const { data: t } = await supabase.from('split_check_targets').select('*').eq('request_id', requestId).eq('profile_id', profileId).maybeSingle();
       setRequest(r); setTarget(t);
       if (r?.mode === 'itemized') refreshItemized();
+      if (r?.host_id) {
+        const { data: p } = await supabase
+          .from('profiles')
+          .select('display_name, venmo_handle, cashapp_handle, paypal_handle')
+          .eq('id', r.host_id)
+          .maybeSingle();
+        setPayee(p as any);
+      }
+      if (r?.event_id) {
+        const { data: e } = await supabase.from('events').select('title').eq('id', r.event_id).maybeSingle();
+        setEventTitle((e?.title as string) || 'R@lly Tab');
+      } else {
+        setEventTitle('R@lly Tab');
+      }
     })();
   }, [open, requestId, profileId]);
 
@@ -144,8 +165,14 @@ export function PaySplitShareDialog({ open, onOpenChange, requestId, profileId, 
 
   const fmt = (c: number) => `$${(c / 100).toFixed(2)}`;
 
+  const hasAnyHandle = !!(payee?.venmo_handle || payee?.cashapp_handle || payee?.paypal_handle);
+  const payeeName = payee?.display_name || 'Host';
+  // Skip selection step entirely when payee has no handles
+  const effectiveStep: 'select' | 'card' = !hasAnyHandle ? 'card' : step;
+
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!busy) onOpenChange(v); }}>
+    <>
+    <Dialog open={open && !showTabPay} onOpenChange={(v) => { if (!busy) onOpenChange(v); }}>
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle>Pay your share</DialogTitle></DialogHeader>
 
@@ -166,19 +193,71 @@ export function PaySplitShareDialog({ open, onOpenChange, requestId, profileId, 
           <p className="text-xs text-muted-foreground">{request.mode === 'itemized' ? 'Includes proportional tax & tip' : 'Your share'}</p>
         </div>
 
-        {savedToken ? (
-          <Button className="w-full h-12" disabled={busy || amountCents === 0 || target?.status === 'paid' || target?.status === 'declined'}
-            onClick={() => pay(savedToken, savedCardBrand ?? 'card', savedCardLast4 ?? '', false)}>
-            {busy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
-            {target?.status === 'paid' ? 'Already paid' : `One-Tap Pay $${(amountCents/100).toFixed(2)}`}
-          </Button>
-        ) : (
-          <FluidPayCardForm
-            amountCents={amountCents}
-            onTokenize={pay}
-            externalDisabled={busy || amountCents === 0 || target?.status === 'paid' || target?.status === 'declined'}
-          />
+        {effectiveStep === 'select' && hasAnyHandle && target?.status !== 'paid' && target?.status !== 'declined' && (
+          <div className="space-y-3 pt-1">
+            <p className="text-sm font-semibold font-montserrat">How do you want to pay?</p>
+            <button
+              type="button"
+              onClick={() => { if (amountCents > 0 && target?.id) setShowTabPay(true); }}
+              disabled={amountCents === 0 || !target?.id}
+              className="w-full text-left rounded-2xl border border-primary/30 bg-primary/[0.06] hover:bg-primary/[0.10] active:scale-[0.99] transition p-4 flex items-center gap-3 disabled:opacity-50"
+            >
+              <div className="h-11 w-11 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
+                <Send className="h-5 w-5 text-primary" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold font-montserrat">Send via Venmo, CashApp, or PayPal</p>
+                <p className="text-xs text-muted-foreground">Opens your payment app — quick and free</p>
+              </div>
+            </button>
+            <button
+              type="button"
+              onClick={() => setStep('card')}
+              className="w-full text-left rounded-2xl border border-border bg-card hover:bg-card/80 active:scale-[0.99] transition p-4 flex items-center gap-3"
+            >
+              <div className="h-11 w-11 rounded-full bg-muted flex items-center justify-center shrink-0">
+                <CreditCard className="h-5 w-5" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold font-montserrat">Pay by card</p>
+                <p className="text-xs text-muted-foreground">Visa, Mastercard — processed securely</p>
+              </div>
+            </button>
+          </div>
         )}
+
+        {effectiveStep === 'card' && (
+          <>
+            {!hasAnyHandle && payee && (
+              <p className="text-xs text-muted-foreground text-center">
+                {payeeName} hasn't set up payment handles yet.
+              </p>
+            )}
+            {savedToken ? (
+              <Button className="w-full h-12" disabled={busy || amountCents === 0 || target?.status === 'paid' || target?.status === 'declined'}
+                onClick={() => pay(savedToken, savedCardBrand ?? 'card', savedCardLast4 ?? '', false)}>
+                {busy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+                {target?.status === 'paid' ? 'Already paid' : `One-Tap Pay $${(amountCents/100).toFixed(2)}`}
+              </Button>
+            ) : (
+              <FluidPayCardForm
+                amountCents={amountCents}
+                onTokenize={pay}
+                externalDisabled={busy || amountCents === 0 || target?.status === 'paid' || target?.status === 'declined'}
+              />
+            )}
+            {hasAnyHandle && (
+              <button
+                type="button"
+                onClick={() => setStep('select')}
+                className="w-full text-center text-xs text-muted-foreground underline-offset-4 hover:underline py-1"
+              >
+                ← Back to payment options
+              </button>
+            )}
+          </>
+        )}
+
 
         {target && target.status !== 'paid' && target.status !== 'declined' && (
           <Button
@@ -257,5 +336,28 @@ export function PaySplitShareDialog({ open, onOpenChange, requestId, profileId, 
         </AlertDialog>
       </DialogContent>
     </Dialog>
+
+    {target?.id && (
+      <TabPaySheet
+        open={showTabPay}
+        onOpenChange={(o) => {
+          setShowTabPay(o);
+          if (!o) onOpenChange(false);
+        }}
+        splitTargetId={target.id}
+        splitRequestId={requestId}
+        eventId={request.event_id ?? null}
+        payeeId={request.host_id}
+        payerId={profileId}
+        amountCents={amountCents}
+        eventTitle={eventTitle}
+        onSettled={() => {
+          onPaid?.();
+          setShowTabPay(false);
+          onOpenChange(false);
+        }}
+      />
+    )}
+    </>
   );
 }

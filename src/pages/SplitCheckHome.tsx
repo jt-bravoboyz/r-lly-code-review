@@ -1,15 +1,418 @@
+import { useEffect, useMemo, useState } from 'react';
+import { Header } from '@/components/layout/Header';
 import { BottomNav } from '@/components/layout/BottomNav';
-import { ComingSoonScreen } from '@/components/common/ComingSoonScreen';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { ChevronDown, Loader2, Receipt } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { TabPaySheet } from '@/components/payments/TabPaySheet';
+import { PaySplitShareDialog } from '@/components/payments/PaySplitShareDialog';
+import { SettlementConfirmCard } from '@/components/payments/SettlementConfirmCard';
+import { useTabSettlements, type TabSettlement } from '@/hooks/useTabSettlements';
+
+interface OwedRow {
+  targetId: string;
+  requestId: string;
+  eventId: string | null;
+  eventTitle: string;
+  shareCents: number;
+  status: string;
+  creatorId: string;
+  creatorName: string;
+  creatorAvatar: string | null;
+  hasHandles: boolean;
+  p2pStatus: string | null;
+}
+
+function fmtUSD(cents: number) {
+  return `$${(cents / 100).toFixed(2)}`;
+}
+
+function statusBadge(target: OwedRow) {
+  if (target.p2pStatus === 'confirmed' || target.status === 'paid') {
+    return <Badge className="bg-emerald-500/15 text-emerald-600 border border-emerald-500/30">Confirmed ✓</Badge>;
+  }
+  if (target.p2pStatus === 'sent' || target.status === 'settled') {
+    return <Badge className="bg-blue-500/15 text-blue-600 border border-blue-500/30">Sent · Confirming</Badge>;
+  }
+  return <Badge className="bg-amber-500/15 text-amber-600 border border-amber-500/30">Pending</Badge>;
+}
 
 export default function SplitCheckHome() {
+  const { profile } = useAuth();
+  const meId = profile?.id ?? null;
+
+  const [loading, setLoading] = useState(true);
+  const [owe, setOwe] = useState<OwedRow[]>([]);
+  const [owedRequests, setOwedRequests] = useState<any[]>([]);
+
+  const [payTarget, setPayTarget] = useState<OwedRow | null>(null);
+  const [tabPayOpen, setTabPayOpen] = useState(false);
+  const [cardOpen, setCardOpen] = useState(false);
+
+  const refetch = async () => {
+    if (!meId) return;
+    setLoading(true);
+
+    // ── YOU OWE ──
+    const { data: myTargets } = await supabase
+      .from('split_check_targets')
+      .select('id, request_id, share_cents, status')
+      .eq('profile_id', meId)
+      .in('status', ['pending', 'settled']);
+
+    const requestIds = Array.from(new Set((myTargets ?? []).map((t) => t.request_id)));
+    let requestsMap = new Map<string, any>();
+    let eventsMap = new Map<string, any>();
+    let creatorsMap = new Map<string, any>();
+
+    if (requestIds.length) {
+      const { data: reqs } = await supabase
+        .from('split_check_requests')
+        .select('id, event_id, host_id, total_cents, created_at')
+        .in('id', requestIds);
+      requestsMap = new Map((reqs ?? []).map((r) => [r.id, r]));
+
+      const eventIds = Array.from(new Set((reqs ?? []).map((r) => r.event_id).filter(Boolean))) as string[];
+      if (eventIds.length) {
+        const { data: evs } = await supabase.from('events').select('id, title').in('id', eventIds);
+        eventsMap = new Map((evs ?? []).map((e) => [e.id, e]));
+      }
+
+      const creatorIds = Array.from(new Set((reqs ?? []).map((r) => r.host_id).filter(Boolean))) as string[];
+      if (creatorIds.length) {
+        const { data: profs } = await supabase
+          .from('safe_profiles')
+          .select('id, display_name, avatar_url')
+          .in('id', creatorIds);
+        creatorsMap = new Map((profs ?? []).map((p: any) => [p.id, p]));
+        const { data: handles } = await supabase
+          .from('profiles')
+          .select('id, venmo_handle, cashapp_handle, paypal_handle')
+          .in('id', creatorIds);
+        for (const h of handles ?? []) {
+          const prev = creatorsMap.get(h.id) ?? {};
+          creatorsMap.set(h.id, { ...prev, ...h });
+        }
+      }
+    }
+
+    // P2P settlements where I am payer (for "You Owe" status)
+    const targetIds = (myTargets ?? []).map((t) => t.id);
+    let p2pByTarget = new Map<string, string>();
+    if (targetIds.length) {
+      const { data: settles } = await supabase
+        .from('tab_settlements')
+        .select('split_target_id, status, created_at')
+        .in('split_target_id', targetIds)
+        .order('created_at', { ascending: false });
+      for (const s of settles ?? []) {
+        if (s.split_target_id && !p2pByTarget.has(s.split_target_id)) {
+          p2pByTarget.set(s.split_target_id, s.status);
+        }
+      }
+    }
+
+    const oweRows: OwedRow[] = (myTargets ?? []).map((t) => {
+      const req = requestsMap.get(t.request_id);
+      const creator = creatorsMap.get(req?.host_id);
+      const ev = req?.event_id ? eventsMap.get(req.event_id) : null;
+      return {
+        targetId: t.id,
+        requestId: t.request_id,
+        eventId: req?.event_id ?? null,
+        eventTitle: ev?.title ?? 'R@lly Tab',
+        shareCents: t.share_cents ?? 0,
+        status: t.status,
+        creatorId: req?.host_id ?? '',
+        creatorName: creator?.display_name ?? 'Someone',
+        creatorAvatar: creator?.avatar_url ?? null,
+        hasHandles: !!(creator?.venmo_handle || creator?.cashapp_handle || creator?.paypal_handle),
+        p2pStatus: p2pByTarget.get(t.id) ?? null,
+      };
+    });
+    setOwe(oweRows);
+
+    // ── OWED TO YOU ──
+    const { data: myReqs } = await supabase
+      .from('split_check_requests')
+      .select('id, event_id, total_cents, created_at, status, mode')
+      .eq('host_id', meId)
+      .order('created_at', { ascending: false });
+
+    const myReqIds = (myReqs ?? []).map((r) => r.id);
+    let owedTargets: any[] = [];
+    let owedSettlements: any[] = [];
+    let owedEvents = new Map<string, any>();
+    let payerProfiles = new Map<string, any>();
+    if (myReqIds.length) {
+      const { data: ts } = await supabase
+        .from('split_check_targets')
+        .select('id, request_id, profile_id, share_cents, status')
+        .in('request_id', myReqIds);
+      owedTargets = ts ?? [];
+
+      const { data: ss } = await supabase
+        .from('tab_settlements')
+        .select('*')
+        .in('split_request_id', myReqIds)
+        .order('created_at', { ascending: false });
+      owedSettlements = ss ?? [];
+
+      const evIds = Array.from(new Set((myReqs ?? []).map((r) => r.event_id).filter(Boolean))) as string[];
+      if (evIds.length) {
+        const { data: evs } = await supabase.from('events').select('id, title, start_time').in('id', evIds);
+        owedEvents = new Map((evs ?? []).map((e) => [e.id, e]));
+      }
+      const payerIds = Array.from(
+        new Set([
+          ...owedTargets.map((t) => t.profile_id),
+          ...owedSettlements.map((s) => s.payer_id),
+        ].filter(Boolean))
+      );
+      if (payerIds.length) {
+        const { data: ps } = await supabase.from('safe_profiles').select('id, display_name, avatar_url').in('id', payerIds);
+        payerProfiles = new Map((ps ?? []).map((p: any) => [p.id, p]));
+      }
+    }
+
+    const owedReqs = (myReqs ?? []).map((r) => {
+      const ts = owedTargets.filter((t) => t.request_id === r.id);
+      const ss = owedSettlements.filter((s) => s.split_request_id === r.id);
+      const settlementByTarget = new Map<string, any>();
+      for (const s of ss) {
+        if (s.split_target_id && !settlementByTarget.has(s.split_target_id)) {
+          settlementByTarget.set(s.split_target_id, s);
+        }
+      }
+      const enrichedTargets = ts.map((t) => ({
+        ...t,
+        payer: payerProfiles.get(t.profile_id),
+        p2p: settlementByTarget.get(t.id) ?? null,
+      }));
+      const collected = ts
+        .filter((t) => t.status === 'paid' || (settlementByTarget.get(t.id)?.status === 'confirmed'))
+        .reduce((s, t) => s + (t.share_cents ?? 0), 0);
+      const pending = Math.max(0, (r.total_cents ?? 0) - collected);
+      const event = r.event_id ? owedEvents.get(r.event_id) : null;
+      const sentToMe = ss.filter((s) => s.status === 'sent').map((s) => ({
+        ...s,
+        payer: payerProfiles.get(s.payer_id) ?? null,
+      })) as TabSettlement[];
+      return {
+        ...r,
+        eventTitle: event?.title ?? 'R@lly Tab',
+        startTime: event?.start_time ?? r.created_at,
+        targets: enrichedTargets,
+        collectedCents: collected,
+        pendingCents: pending,
+        sentToMe,
+      };
+    });
+    setOwedRequests(owedReqs);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    refetch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [meId]);
+
+  const totalOwe = useMemo(
+    () => owe.filter((r) => r.p2pStatus !== 'confirmed' && r.status !== 'paid')
+      .reduce((s, r) => s + r.shareCents, 0),
+    [owe]
+  );
+  const totalOwed = useMemo(
+    () => owedRequests.reduce((s, r) => s + (r.pendingCents ?? 0), 0),
+    [owedRequests]
+  );
+
+  const handlePay = (row: OwedRow) => {
+    setPayTarget(row);
+    if (row.hasHandles) setTabPayOpen(true);
+    else setCardOpen(true);
+  };
+
   return (
-    <div className="relative min-h-[100dvh] overflow-hidden bg-background pb-bottom-nav">
-      <ComingSoonScreen
-        tag="Classified — Tier 03"
-        title={<>R<span className="text-primary">@</span>LLY WALLET</>}
-        subtitle="Split the check. Pay the cover. All in one place."
-      />
+    <div className="relative min-h-[100dvh] bg-background pb-bottom-nav">
+      <Header />
+      <main className="max-w-2xl mx-auto px-4 pt-4 space-y-4">
+        <div>
+          <h1 className="text-2xl font-extrabold font-montserrat">
+            R<span className="text-primary">@</span>lly Tabs
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            You owe <span className="font-semibold text-foreground">{fmtUSD(totalOwe)}</span> total
+            {' · '}
+            <span className="font-semibold text-foreground">{fmtUSD(totalOwed)}</span> owed to you
+          </p>
+        </div>
+
+        <Tabs defaultValue="owe" className="w-full">
+          <TabsList className="grid grid-cols-2 w-full">
+            <TabsTrigger value="owe">You Owe</TabsTrigger>
+            <TabsTrigger value="owed">Owed to You</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="owe" className="space-y-2 mt-4">
+            {loading ? (
+              <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+            ) : owe.length === 0 ? (
+              <Card className="p-6 text-center text-sm text-muted-foreground">
+                You're all square — no open tabs
+              </Card>
+            ) : (
+              owe.map((row) => {
+                const isClosed = row.p2pStatus === 'confirmed' || row.status === 'paid';
+                const isSent = row.p2pStatus === 'sent' || row.status === 'settled';
+                return (
+                  <Card key={row.targetId} className="p-4 flex items-center gap-3">
+                    <Avatar className="h-10 w-10">
+                      {row.creatorAvatar && <AvatarImage src={row.creatorAvatar} />}
+                      <AvatarFallback>{row.creatorName.slice(0, 1).toUpperCase()}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold truncate">{row.creatorName}</p>
+                      <p className="text-xs text-muted-foreground truncate">{row.eventTitle}</p>
+                      <div className="mt-1">{statusBadge(row)}</div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="text-base font-bold font-montserrat tabular-nums">{fmtUSD(row.shareCents)}</p>
+                      {!isClosed && !isSent && (
+                        <Button size="sm" className="mt-1 h-8 px-3" onClick={() => handlePay(row)}>
+                          Pay
+                        </Button>
+                      )}
+                    </div>
+                  </Card>
+                );
+              })
+            )}
+          </TabsContent>
+
+          <TabsContent value="owed" className="space-y-3 mt-4">
+            {loading ? (
+              <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+            ) : owedRequests.length === 0 ? (
+              <Card className="p-6 text-center text-sm text-muted-foreground">
+                No tabs — start one from any event
+              </Card>
+            ) : (
+              owedRequests.map((r) => <OwedRequestCard key={r.id} request={r} onChanged={refetch} />)
+            )}
+          </TabsContent>
+        </Tabs>
+      </main>
+
+      {payTarget && meId && (
+        <TabPaySheet
+          open={tabPayOpen}
+          onOpenChange={(o) => { setTabPayOpen(o); if (!o) { setPayTarget(null); refetch(); } }}
+          splitTargetId={payTarget.targetId}
+          splitRequestId={payTarget.requestId}
+          eventId={payTarget.eventId}
+          payeeId={payTarget.creatorId}
+          payerId={meId}
+          amountCents={payTarget.shareCents}
+          eventTitle={payTarget.eventTitle}
+          onSettled={() => { setTabPayOpen(false); setPayTarget(null); refetch(); }}
+        />
+      )}
+      {payTarget && meId && (
+        <PaySplitShareDialog
+          open={cardOpen}
+          onOpenChange={(o) => { setCardOpen(o); if (!o) { setPayTarget(null); refetch(); } }}
+          requestId={payTarget.requestId}
+          profileId={meId}
+          onPaid={() => { setCardOpen(false); setPayTarget(null); refetch(); }}
+        />
+      )}
+
       <BottomNav />
     </div>
+  );
+}
+
+function OwedRequestCard({ request: r, onChanged }: { request: any; onChanged: () => void }) {
+  const [open, setOpen] = useState(false);
+  const { confirmSettlement, disputeSettlement } = useTabSettlements(r.id);
+  const date = r.startTime ? new Date(r.startTime).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '';
+
+  return (
+    <Card className="p-4 space-y-3">
+      <Collapsible open={open} onOpenChange={setOpen}>
+        <CollapsibleTrigger className="w-full text-left flex items-center gap-3">
+          <div className="h-10 w-10 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
+            <Receipt className="h-5 w-5 text-primary" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold truncate">{r.eventTitle}</p>
+            <p className="text-xs text-muted-foreground">{date}</p>
+          </div>
+          <div className="text-right shrink-0">
+            <p className="text-base font-bold font-montserrat tabular-nums">{fmtUSD(r.total_cents ?? 0)}</p>
+            <p className="text-[10px] text-muted-foreground">
+              {fmtUSD(r.collectedCents)} in · {fmtUSD(r.pendingCents)} open
+            </p>
+          </div>
+          <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${open ? 'rotate-180' : ''}`} />
+        </CollapsibleTrigger>
+
+        <CollapsibleContent className="pt-3 space-y-2">
+          {r.targets.map((t: any) => {
+            const isPaid = t.status === 'paid' || t.p2p?.status === 'confirmed';
+            const isSent = t.p2p?.status === 'sent' || t.status === 'settled';
+            const isDisputed = t.p2p?.status === 'disputed';
+            return (
+              <div key={t.id} className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-2 min-w-0">
+                  <Avatar className="h-6 w-6">
+                    {t.payer?.avatar_url && <AvatarImage src={t.payer.avatar_url} />}
+                    <AvatarFallback className="text-[9px]">
+                      {(t.payer?.display_name ?? '?').slice(0, 1).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="truncate">{t.payer?.display_name ?? 'Someone'}</span>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="text-xs tabular-nums text-muted-foreground">{fmtUSD(t.share_cents ?? 0)}</span>
+                  {isDisputed ? (
+                    <Badge className="text-[10px] bg-red-500/15 text-red-600 border border-red-500/30">Disputed</Badge>
+                  ) : isPaid ? (
+                    <Badge className="text-[10px] bg-emerald-500/15 text-emerald-600 border border-emerald-500/30">Paid</Badge>
+                  ) : isSent ? (
+                    <Badge className="text-[10px] bg-blue-500/15 text-blue-600 border border-blue-500/30">Sent</Badge>
+                  ) : (
+                    <Badge className="text-[10px] bg-amber-500/15 text-amber-600 border border-amber-500/30">Pending</Badge>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+
+          {r.sentToMe?.length > 0 && (
+            <div className="space-y-2 pt-2 border-t">
+              <p className="text-[11px] uppercase tracking-[0.06em] font-semibold text-muted-foreground">
+                Waiting for your confirmation
+              </p>
+              {r.sentToMe.map((s: TabSettlement) => (
+                <SettlementConfirmCard
+                  key={s.id}
+                  settlement={s}
+                  onConfirm={async (id) => { await confirmSettlement(id); onChanged(); }}
+                  onDispute={async (id, note) => { await disputeSettlement(id, note); onChanged(); }}
+                />
+              ))}
+            </div>
+          )}
+        </CollapsibleContent>
+      </Collapsible>
+    </Card>
   );
 }
