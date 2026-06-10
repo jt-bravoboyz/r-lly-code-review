@@ -3,6 +3,13 @@ import App from "./App.tsx";
 import "./index.css";
 import rallyLogo from "@/assets/rally-logo.png";
 
+const dismissBootSplash = () => {
+  document.body.classList.add("rally-booted");
+  window.setTimeout(() => {
+    document.getElementById("rally-boot-splash")?.remove();
+  }, 400);
+};
+
 // Preload the R@lly logo immediately so the auth loading state renders it instantly.
 (() => {
   const link = document.createElement("link");
@@ -33,3 +40,4 @@ import rallyLogo from "@/assets/rally-logo.png";
 })();
 
 createRoot(document.getElementById("root")!).render(<App />);
+requestAnimationFrame(dismissBootSplash);
