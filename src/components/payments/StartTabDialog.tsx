@@ -406,10 +406,26 @@ export function StartTabDialog({ open, onOpenChange, onCreated }: Props) {
               <div className="flex justify-between font-bold pt-1 border-t border-primary/20"><span>Total</span><span className="tabular-nums">${centsToDollars(itemizedTotalCents)}</span></div>
             </div>
 
-            <Button onClick={() => setStep('people')} disabled={items.length === 0 || subtotalCents <= 0 || !title.trim()}
-              className="w-full rounded-full h-11 font-semibold">
-              Next — pick who's on this tab
-            </Button>
+            {(() => {
+              const missing = !title.trim()
+                ? "Add a tab name to continue"
+                : items.length === 0
+                  ? "Add at least one line item"
+                  : subtotalCents <= 0
+                    ? "Enter a price on your items"
+                    : null;
+              return (
+                <>
+                  {missing && (
+                    <p className="text-[12px] text-muted-foreground text-center -mb-1">{missing}</p>
+                  )}
+                  <Button onClick={() => setStep('people')} disabled={!!missing}
+                    className="w-full rounded-full h-11 font-semibold">
+                    {missing ?? "Next — pick who's on this tab"}
+                  </Button>
+                </>
+              );
+            })()}
           </div>
         )}
 
