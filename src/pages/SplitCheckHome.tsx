@@ -13,8 +13,10 @@ import { TabPaySheet } from '@/components/payments/TabPaySheet';
 import { PaySplitShareDialog } from '@/components/payments/PaySplitShareDialog';
 import { SettlementConfirmCard } from '@/components/payments/SettlementConfirmCard';
 import { StartTabDialog } from '@/components/payments/StartTabDialog';
+import { SetupWalletDialog } from '@/components/payments/SetupWalletDialog';
 import { SplitCheckSettlementPanel } from '@/components/events/SplitCheckSettlementPanel';
 import { useTabSettlements, type TabSettlement } from '@/hooks/useTabSettlements';
+import { useMerchantAccount } from '@/hooks/useMerchantAccount';
 
 interface OwedRow {
   targetId: string;
@@ -56,6 +58,14 @@ export default function SplitCheckHome() {
   const [tabPayOpen, setTabPayOpen] = useState(false);
   const [cardOpen, setCardOpen] = useState(false);
   const [startTabOpen, setStartTabOpen] = useState(false);
+  const [setupWalletOpen, setSetupWalletOpen] = useState(false);
+  const { account: merchantAccount } = useMerchantAccount(meId);
+
+  const handleNewTab = () => {
+    const ready = merchantAccount?.status === 'active' && merchantAccount.payouts_enabled;
+    if (ready) setStartTabOpen(true);
+    else setSetupWalletOpen(true);
+  };
 
   const refetch = async () => {
     if (!meId) return;
@@ -379,7 +389,7 @@ export default function SplitCheckHome() {
 
 
       <button
-        onClick={() => setStartTabOpen(true)}
+        onClick={handleNewTab}
         aria-label="New tab"
         className="fixed right-5 z-40 h-14 pl-3 pr-5 rounded-full bg-primary text-primary-foreground font-bold font-montserrat text-sm shadow-[0_10px_30px_rgba(244,122,25,0.45)] flex items-center gap-2 active:scale-95 transition-transform"
         style={{ bottom: 'calc(env(safe-area-inset-bottom) + 80px)' }}
@@ -389,6 +399,12 @@ export default function SplitCheckHome() {
         </span>
         New Tab
       </button>
+
+      <SetupWalletDialog
+        open={setupWalletOpen}
+        onOpenChange={setSetupWalletOpen}
+        onActivated={() => setStartTabOpen(true)}
+      />
 
       <StartTabDialog
         open={startTabOpen}
