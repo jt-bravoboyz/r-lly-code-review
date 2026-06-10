@@ -389,7 +389,7 @@ export default function SplitCheckHome() {
 
 
       <button
-        onClick={() => setStartTabOpen(true)}
+        onClick={handleNewTab}
         aria-label="New tab"
         className="fixed right-5 z-40 h-14 pl-3 pr-5 rounded-full bg-primary text-primary-foreground font-bold font-montserrat text-sm shadow-[0_10px_30px_rgba(244,122,25,0.45)] flex items-center gap-2 active:scale-95 transition-transform"
         style={{ bottom: 'calc(env(safe-area-inset-bottom) + 80px)' }}
@@ -399,6 +399,12 @@ export default function SplitCheckHome() {
         </span>
         New Tab
       </button>
+
+      <SetupWalletDialog
+        open={setupWalletOpen}
+        onOpenChange={setSetupWalletOpen}
+        onActivated={() => setStartTabOpen(true)}
+      />
 
       <StartTabDialog
         open={startTabOpen}
