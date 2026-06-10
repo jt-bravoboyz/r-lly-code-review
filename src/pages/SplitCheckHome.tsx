@@ -13,8 +13,10 @@ import { TabPaySheet } from '@/components/payments/TabPaySheet';
 import { PaySplitShareDialog } from '@/components/payments/PaySplitShareDialog';
 import { SettlementConfirmCard } from '@/components/payments/SettlementConfirmCard';
 import { StartTabDialog } from '@/components/payments/StartTabDialog';
+import { SetupWalletDialog } from '@/components/payments/SetupWalletDialog';
 import { SplitCheckSettlementPanel } from '@/components/events/SplitCheckSettlementPanel';
 import { useTabSettlements, type TabSettlement } from '@/hooks/useTabSettlements';
+import { useMerchantAccount } from '@/hooks/useMerchantAccount';
 
 interface OwedRow {
   targetId: string;
