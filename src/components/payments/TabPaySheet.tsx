@@ -86,7 +86,7 @@ export function TabPaySheet({
     (async () => {
       const { data } = await supabase
         .from('profiles')
-        .select('display_name, venmo_handle, cashapp_handle, paypal_handle, preferred_settlement')
+        .select('display_name, venmo_handle, cashapp_handle, paypal_handle, apple_cash_handle, preferred_settlement')
         .eq('id', payeeId)
         .maybeSingle();
       if (cancelled) return;
