@@ -1,4 +1,4 @@
-export type SettlementMethod = 'venmo' | 'cashapp' | 'paypal';
+export type SettlementMethod = 'venmo' | 'cashapp' | 'paypal' | 'apple_cash';
 
 /**
  * Strip a leading "@" or "$" prefix so the value can be safely embedded in URLs.
@@ -23,9 +23,26 @@ export function buildSettlementLink(
       return `https://cash.app/${h}/${amt}`;
     case 'paypal':
       return `https://paypal.me/${h}/${amt}`;
+    case 'apple_cash':
+      // No deep link pre-fills Apple Cash; we open iMessage to the recipient
+      // and the user sends Apple Cash manually from inside Messages.
+      return `sms:${h}`;
   }
 }
 
 export function getMethodLabel(method: SettlementMethod): string {
-  return { venmo: 'Venmo', cashapp: 'CashApp', paypal: 'PayPal' }[method];
+  return {
+    venmo: 'Venmo',
+    cashapp: 'CashApp',
+    paypal: 'PayPal',
+    apple_cash: 'Apple Cash',
+  }[method];
+}
+
+/**
+ * True when the deep link only opens a destination (no pre-filled amount),
+ * so the UI must show a manual-send overlay with copyable amount.
+ */
+export function methodRequiresManualSend(method: SettlementMethod): boolean {
+  return method === 'apple_cash';
 }
