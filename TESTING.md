@@ -1,5 +1,12 @@
 # Testing Guide
 
+## The rule
+
+Every new feature that adds logic to src/lib/ or src/hooks/ MUST include a corresponding test file. This is enforced by CI — coverage below threshold fails the build.
+
+If you add src/lib/foo.ts, you must add src/lib/foo.test.ts.
+If your change is purely UI with no extractable logic, document that in the PR template checklist.
+
 ## Stack
 - **Vitest** (`jsdom` env, globals on, setup at `src/test/setup.ts`).
 - **Coverage** via `@vitest/coverage-v8` (scoped to `src/lib` and `src/hooks`).
