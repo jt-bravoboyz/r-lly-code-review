@@ -115,6 +115,22 @@ export function PaymentMethodSection() {
           </div>
 
           <div className="space-y-1.5">
+            <Label htmlFor="apple-cash-handle">Apple Cash</Label>
+            <Input
+              id="apple-cash-handle"
+              value={appleCash}
+              onChange={(e) => setAppleCash(e.target.value)}
+              placeholder="+1 (678) 555-1234 or Apple ID email"
+              autoCapitalize="none"
+              autoCorrect="off"
+              inputMode="text"
+            />
+            <p className="text-[11px] text-muted-foreground">
+              Your phone number or Apple ID that friends use to send you Apple Cash in iMessage
+            </p>
+          </div>
+
+          <div className="space-y-1.5">
             <Label>Show this first</Label>
             <Select value={preferred} onValueChange={(v) => setPreferred(v as SettlementPref)}>
               <SelectTrigger>
@@ -124,6 +140,7 @@ export function PaymentMethodSection() {
                 <SelectItem value="venmo">Venmo</SelectItem>
                 <SelectItem value="cashapp">CashApp</SelectItem>
                 <SelectItem value="paypal">PayPal</SelectItem>
+                <SelectItem value="apple_cash">Apple Cash</SelectItem>
                 <SelectItem value="card">Card only</SelectItem>
               </SelectContent>
             </Select>
