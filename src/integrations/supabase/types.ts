@@ -1974,6 +1974,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          apple_cash_handle: string | null
           avatar_url: string | null
           badges: string[] | null
           bio: string | null
@@ -2012,6 +2013,7 @@ export type Database = {
           walkthrough_completed: boolean
         }
         Insert: {
+          apple_cash_handle?: string | null
           avatar_url?: string | null
           badges?: string[] | null
           bio?: string | null
@@ -2050,6 +2052,7 @@ export type Database = {
           walkthrough_completed?: boolean
         }
         Update: {
+          apple_cash_handle?: string | null
           avatar_url?: string | null
           badges?: string[] | null
           bio?: string | null

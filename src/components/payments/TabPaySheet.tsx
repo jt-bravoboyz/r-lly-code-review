@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Loader2, Check } from 'lucide-react';
+import { Loader2, Check, Copy, MessageCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
@@ -9,9 +9,11 @@ import { cn } from '@/lib/utils';
 import {
   buildSettlementLink,
   getMethodLabel,
+  methodRequiresManualSend,
   type SettlementMethod,
 } from '@/lib/settlementLinks';
 import { useSettlementReturn } from '@/hooks/useSettlementReturn';
+import { copyToClipboard } from '@/lib/nativeShare';
 
 interface TabPaySheetProps {
   open: boolean;
@@ -31,10 +33,11 @@ interface PayeeProfile {
   venmo_handle: string | null;
   cashapp_handle: string | null;
   paypal_handle: string | null;
+  apple_cash_handle: string | null;
   preferred_settlement: SettlementMethod | 'card' | null;
 }
 
-const METHODS: SettlementMethod[] = ['venmo', 'cashapp', 'paypal'];
+const METHODS: SettlementMethod[] = ['venmo', 'cashapp', 'paypal', 'apple_cash'];
 
 function formatDollars(cents: number) {
   return `$${(cents / 100).toFixed(2)}`;
@@ -62,6 +65,13 @@ export function TabPaySheet({
     method: SettlementMethod;
   } | null>(null);
   const [confirmBusy, setConfirmBusy] = useState(false);
+  // Manual-send overlay state (Apple Cash and any future copy-then-send methods)
+  const [manualSend, setManualSend] = useState<{
+    settlementId: string;
+    method: SettlementMethod;
+    handle: string;
+    url: string;
+  } | null>(null);
 
   const { startWatching, stopWatching } = useSettlementReturn((settlementId) => {
     // appStateChange fires while the sheet is closed — open confirm dialog.
@@ -76,7 +86,7 @@ export function TabPaySheet({
     (async () => {
       const { data } = await supabase
         .from('profiles')
-        .select('display_name, venmo_handle, cashapp_handle, paypal_handle, preferred_settlement')
+        .select('display_name, venmo_handle, cashapp_handle, paypal_handle, apple_cash_handle, preferred_settlement')
         .eq('id', payeeId)
         .maybeSingle();
       if (cancelled) return;
@@ -154,8 +164,32 @@ export function TabPaySheet({
     const url = buildSettlementLink(selected, handle, amountDollars, note);
 
     setSending(false);
+
+    if (methodRequiresManualSend(selected)) {
+      // Apple Cash: no pre-filled amount possible. Show overlay with copyable
+      // amount and an "Open iMessage" button instead of auto-navigating.
+      setManualSend({ settlementId: inserted.id, method: selected, handle, url });
+      return;
+    }
+
     onOpenChange(false);
     // Slight delay so the sheet close transition begins before navigation.
+    setTimeout(() => {
+      window.location.href = url;
+    }, 80);
+  }
+
+  async function handleCopyAmount() {
+    const ok = await copyToClipboard(amountDollars.toFixed(2));
+    if (ok) toast.success(`Copied ${amountLabel}`);
+    else toast.error('Could not copy amount');
+  }
+
+  function handleOpenManualLink() {
+    if (!manualSend) return;
+    const url = manualSend.url;
+    setManualSend(null);
+    onOpenChange(false);
     setTimeout(() => {
       window.location.href = url;
     }, 80);
@@ -294,6 +328,13 @@ export function TabPaySheet({
                 })}
               </div>
 
+              {selected && methodRequiresManualSend(selected) && (
+                <div className="rounded-2xl border border-primary/20 bg-primary/[0.06] px-4 py-3 text-xs text-foreground/80">
+                  Apple Cash is sent through iMessage — we'll open Messages
+                  for you with the amount ready to copy.
+                </div>
+              )}
+
               <Button
                 onClick={handleSend}
                 disabled={!selected || sending}
@@ -315,6 +356,53 @@ export function TabPaySheet({
               </button>
             </div>
           )}
+        </SheetContent>
+      </Sheet>
+
+      {/* Manual-send overlay (Apple Cash): no pre-filled amount, just copy+open */}
+      <Sheet
+        open={!!manualSend}
+        onOpenChange={(o) => { if (!o) setManualSend(null); }}
+      >
+        <SheetContent
+          side="bottom"
+          className="rounded-t-3xl border-t border-white/10 bg-background/95 backdrop-blur-xl px-5 pb-8 pt-5"
+        >
+          <SheetHeader className="text-left space-y-1">
+            <SheetTitle className="font-[Montserrat] text-xl font-bold">
+              Send {manualSend ? getMethodLabel(manualSend.method) : ''} to {payeeName}
+            </SheetTitle>
+            <p className="text-sm text-muted-foreground break-all">
+              {manualSend?.handle}
+            </p>
+          </SheetHeader>
+
+          <div className="mt-5 space-y-4">
+            <div className="rounded-2xl border border-primary/30 bg-primary/[0.08] px-4 py-5 flex items-center justify-between gap-3">
+              <div className="font-[Montserrat] font-extrabold text-4xl text-primary tracking-tight tabular-nums">
+                {amountLabel}
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleCopyAmount}
+                className="h-10 rounded-full px-4 font-semibold"
+              >
+                <Copy className="h-4 w-4 mr-1.5" /> Copy
+              </Button>
+            </div>
+
+            <Button
+              onClick={handleOpenManualLink}
+              className="w-full h-12 rounded-full bg-primary text-primary-foreground font-[Montserrat] font-bold text-base hover:bg-primary/90"
+            >
+              <MessageCircle className="h-5 w-5 mr-2" /> Open iMessage
+            </Button>
+
+            <p className="text-xs text-center text-muted-foreground px-2">
+              Send this exact amount as Apple Cash in iMessage.
+            </p>
+          </div>
         </SheetContent>
       </Sheet>
 
@@ -362,7 +450,10 @@ export function TabPaySheet({
 
 function handleFor(p: PayeeProfile, m: SettlementMethod): string | null {
   const raw =
-    m === 'venmo' ? p.venmo_handle : m === 'cashapp' ? p.cashapp_handle : p.paypal_handle;
+    m === 'venmo' ? p.venmo_handle
+      : m === 'cashapp' ? p.cashapp_handle
+      : m === 'paypal' ? p.paypal_handle
+      : p.apple_cash_handle;
   const trimmed = raw?.trim();
   return trimmed ? trimmed : null;
 }
