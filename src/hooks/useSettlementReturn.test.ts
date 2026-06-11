@@ -20,7 +20,7 @@ beforeEach(() => {
   removeMock.mockClear();
 });
 
-describe('useSettlementReturn', () => {
+describe('useSettlementReturn — appStateChange path', () => {
   it('does not call onReturn before startWatching', () => {
     const cb = vi.fn();
     renderHook(() => useSettlementReturn(cb));
@@ -62,5 +62,61 @@ describe('useSettlementReturn', () => {
     });
     listeners.forEach(l => l({ isActive: true }));
     expect(cb).not.toHaveBeenCalled();
+  });
+});
+
+// ---- Control-function + visibility path --------------------------------
+
+function setVisibility(state: 'visible' | 'hidden') {
+  Object.defineProperty(document, 'visibilityState', {
+    configurable: true,
+    get: () => state,
+  });
+  document.dispatchEvent(new Event('visibilitychange'));
+}
+
+describe('useSettlementReturn — startWatching/stopWatching + visibility', () => {
+  it('startWatching arms the pending id (verified via visibilitychange)', () => {
+    const cb = vi.fn();
+    const { result } = renderHook(() => useSettlementReturn(cb));
+    act(() => result.current.startWatching('settle-vis'));
+    act(() => setVisibility('visible'));
+    expect(cb).toHaveBeenCalledWith('settle-vis');
+  });
+
+  it('stopWatching clears the pending id (no fire on visibility)', () => {
+    const cb = vi.fn();
+    const { result } = renderHook(() => useSettlementReturn(cb));
+    act(() => {
+      result.current.startWatching('settle-x');
+      result.current.stopWatching();
+    });
+    act(() => setVisibility('visible'));
+    expect(cb).not.toHaveBeenCalled();
+  });
+
+  it('does not fire on visibility=hidden even when armed', () => {
+    const cb = vi.fn();
+    const { result } = renderHook(() => useSettlementReturn(cb));
+    act(() => result.current.startWatching('s'));
+    act(() => setVisibility('hidden'));
+    expect(cb).not.toHaveBeenCalled();
+  });
+
+  it('visibility fire clears the pending id (only fires once)', () => {
+    const cb = vi.fn();
+    const { result } = renderHook(() => useSettlementReturn(cb));
+    act(() => result.current.startWatching('s'));
+    act(() => setVisibility('visible'));
+    act(() => setVisibility('visible'));
+    expect(cb).toHaveBeenCalledTimes(1);
+  });
+
+  it('startWatching exposes a stable callback identity across renders', () => {
+    const cb = vi.fn();
+    const { result, rerender } = renderHook(() => useSettlementReturn(cb));
+    const first = result.current.startWatching;
+    rerender();
+    expect(result.current.startWatching).toBe(first);
   });
 });
