@@ -65,6 +65,13 @@ export function TabPaySheet({
     method: SettlementMethod;
   } | null>(null);
   const [confirmBusy, setConfirmBusy] = useState(false);
+  // Manual-send overlay state (Apple Cash and any future copy-then-send methods)
+  const [manualSend, setManualSend] = useState<{
+    settlementId: string;
+    method: SettlementMethod;
+    handle: string;
+    url: string;
+  } | null>(null);
 
   const { startWatching, stopWatching } = useSettlementReturn((settlementId) => {
     // appStateChange fires while the sheet is closed — open confirm dialog.
