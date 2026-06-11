@@ -33,10 +33,11 @@ interface PayeeProfile {
   venmo_handle: string | null;
   cashapp_handle: string | null;
   paypal_handle: string | null;
+  apple_cash_handle: string | null;
   preferred_settlement: SettlementMethod | 'card' | null;
 }
 
-const METHODS: SettlementMethod[] = ['venmo', 'cashapp', 'paypal'];
+const METHODS: SettlementMethod[] = ['venmo', 'cashapp', 'paypal', 'apple_cash'];
 
 function formatDollars(cents: number) {
   return `$${(cents / 100).toFixed(2)}`;
