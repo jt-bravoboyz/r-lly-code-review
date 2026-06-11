@@ -112,15 +112,9 @@ Deno.serve(async (req) => {
           { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
-    } else {
-      // Standalone: host must have an active sub-merchant to actually collect funds
-      const { data: ma } = await admin.from("merchant_accounts")
-        .select("status, payouts_enabled")
-        .eq("profile_id", profile.id).maybeSingle();
-      if (!ma || ma.status !== "active" || !ma.payouts_enabled) {
-        return new Response(JSON.stringify({ error: "payouts_not_enabled" }), { status: 412, headers: corsHeaders });
-      }
     }
+    // Note: Split Check / R@lly Tabs use P2P settlement (Venmo, CashApp, PayPal, Apple Cash).
+    // No Fluid Pay sub-merchant is required for standalone tabs.
 
     const profileTargets = Array.from(new Set(body.target_profile_ids));
     const guestTargets = body.guest_targets;
