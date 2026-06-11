@@ -403,7 +403,10 @@ export function TabPaySheet({
 
 function handleFor(p: PayeeProfile, m: SettlementMethod): string | null {
   const raw =
-    m === 'venmo' ? p.venmo_handle : m === 'cashapp' ? p.cashapp_handle : p.paypal_handle;
+    m === 'venmo' ? p.venmo_handle
+      : m === 'cashapp' ? p.cashapp_handle
+      : m === 'paypal' ? p.paypal_handle
+      : p.apple_cash_handle;
   const trimmed = raw?.trim();
   return trimmed ? trimmed : null;
 }
