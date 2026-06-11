@@ -37,6 +37,15 @@ describe('buildSettlementLink', () => {
     const url = buildSettlementLink('cashapp', 'name with space', 5, 'n');
     expect(url).toBe('https://cash.app/name%20with%20space/5.00');
   });
+
+  it('builds an Apple Cash link as an sms: deep link with encoded handle', () => {
+    expect(buildSettlementLink('apple_cash', '+16785551234', 12.5, 'ignored')).toBe(
+      'sms:%2B16785551234'
+    );
+    expect(buildSettlementLink('apple_cash', 'jordan@icloud.com', 7, 'ignored')).toBe(
+      'sms:jordan%40icloud.com'
+    );
+  });
 });
 
 describe('getMethodLabel', () => {
@@ -44,5 +53,15 @@ describe('getMethodLabel', () => {
     expect(getMethodLabel('venmo')).toBe('Venmo');
     expect(getMethodLabel('cashapp')).toBe('CashApp');
     expect(getMethodLabel('paypal')).toBe('PayPal');
+    expect(getMethodLabel('apple_cash')).toBe('Apple Cash');
+  });
+});
+
+describe('methodRequiresManualSend', () => {
+  it('is true only for apple_cash (no pre-filled amount deep link)', () => {
+    expect(methodRequiresManualSend('apple_cash')).toBe(true);
+    expect(methodRequiresManualSend('venmo')).toBe(false);
+    expect(methodRequiresManualSend('cashapp')).toBe(false);
+    expect(methodRequiresManualSend('paypal')).toBe(false);
   });
 });
