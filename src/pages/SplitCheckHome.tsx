@@ -56,13 +56,9 @@ export default function SplitCheckHome() {
   const [tabPayOpen, setTabPayOpen] = useState(false);
   const [cardOpen, setCardOpen] = useState(false);
   const [startTabOpen, setStartTabOpen] = useState(false);
-  const [setupWalletOpen, setSetupWalletOpen] = useState(false);
-  const { account: merchantAccount } = useMerchantAccount(meId);
 
   const handleNewTab = () => {
-    const ready = merchantAccount?.status === 'active' && merchantAccount.payouts_enabled;
-    if (ready) setStartTabOpen(true);
-    else setSetupWalletOpen(true);
+    setStartTabOpen(true);
   };
 
   const refetch = async () => {
