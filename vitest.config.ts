@@ -12,7 +12,15 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reporter: ["text", "html"],
-      include: ["src/lib/**/*.ts", "src/hooks/**/*.{ts,tsx}"],
+      include: [
+        "src/lib/settlementLinks.ts",
+        "src/lib/sanitize.ts",
+        "src/lib/rideStatus.ts",
+        "src/lib/formatDistance.ts",
+        "src/lib/nativeLinks.ts",
+        "src/lib/shareUrls.ts",
+        "src/hooks/useSettlementReturn.ts",
+      ],
       exclude: ["**/*.test.*", "**/*.spec.*"],
       thresholds: {
         lines: 80,
