@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Loader2, Check } from 'lucide-react';
+import { Loader2, Check, Copy, MessageCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
@@ -9,9 +9,11 @@ import { cn } from '@/lib/utils';
 import {
   buildSettlementLink,
   getMethodLabel,
+  methodRequiresManualSend,
   type SettlementMethod,
 } from '@/lib/settlementLinks';
 import { useSettlementReturn } from '@/hooks/useSettlementReturn';
+import { copyToClipboard } from '@/lib/nativeShare';
 
 interface TabPaySheetProps {
   open: boolean;
