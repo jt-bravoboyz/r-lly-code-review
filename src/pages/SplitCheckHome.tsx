@@ -394,12 +394,6 @@ export default function SplitCheckHome() {
         New Tab
       </button>
 
-      <SetupWalletDialog
-        open={setupWalletOpen}
-        onOpenChange={setSetupWalletOpen}
-        onActivated={() => setStartTabOpen(true)}
-      />
-
       <StartTabDialog
         open={startTabOpen}
         onOpenChange={setStartTabOpen}
