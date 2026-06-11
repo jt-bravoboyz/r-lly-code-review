@@ -164,8 +164,32 @@ export function TabPaySheet({
     const url = buildSettlementLink(selected, handle, amountDollars, note);
 
     setSending(false);
+
+    if (methodRequiresManualSend(selected)) {
+      // Apple Cash: no pre-filled amount possible. Show overlay with copyable
+      // amount and an "Open iMessage" button instead of auto-navigating.
+      setManualSend({ settlementId: inserted.id, method: selected, handle, url });
+      return;
+    }
+
     onOpenChange(false);
     // Slight delay so the sheet close transition begins before navigation.
+    setTimeout(() => {
+      window.location.href = url;
+    }, 80);
+  }
+
+  async function handleCopyAmount() {
+    const ok = await copyToClipboard(amountDollars.toFixed(2));
+    if (ok) toast.success(`Copied ${amountLabel}`);
+    else toast.error('Could not copy amount');
+  }
+
+  function handleOpenManualLink() {
+    if (!manualSend) return;
+    const url = manualSend.url;
+    setManualSend(null);
+    onOpenChange(false);
     setTimeout(() => {
       window.location.href = url;
     }, 80);
