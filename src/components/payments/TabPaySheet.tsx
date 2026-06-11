@@ -359,6 +359,53 @@ export function TabPaySheet({
         </SheetContent>
       </Sheet>
 
+      {/* Manual-send overlay (Apple Cash): no pre-filled amount, just copy+open */}
+      <Sheet
+        open={!!manualSend}
+        onOpenChange={(o) => { if (!o) setManualSend(null); }}
+      >
+        <SheetContent
+          side="bottom"
+          className="rounded-t-3xl border-t border-white/10 bg-background/95 backdrop-blur-xl px-5 pb-8 pt-5"
+        >
+          <SheetHeader className="text-left space-y-1">
+            <SheetTitle className="font-[Montserrat] text-xl font-bold">
+              Send {manualSend ? getMethodLabel(manualSend.method) : ''} to {payeeName}
+            </SheetTitle>
+            <p className="text-sm text-muted-foreground break-all">
+              {manualSend?.handle}
+            </p>
+          </SheetHeader>
+
+          <div className="mt-5 space-y-4">
+            <div className="rounded-2xl border border-primary/30 bg-primary/[0.08] px-4 py-5 flex items-center justify-between gap-3">
+              <div className="font-[Montserrat] font-extrabold text-4xl text-primary tracking-tight tabular-nums">
+                {amountLabel}
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleCopyAmount}
+                className="h-10 rounded-full px-4 font-semibold"
+              >
+                <Copy className="h-4 w-4 mr-1.5" /> Copy
+              </Button>
+            </div>
+
+            <Button
+              onClick={handleOpenManualLink}
+              className="w-full h-12 rounded-full bg-primary text-primary-foreground font-[Montserrat] font-bold text-base hover:bg-primary/90"
+            >
+              <MessageCircle className="h-5 w-5 mr-2" /> Open iMessage
+            </Button>
+
+            <p className="text-xs text-center text-muted-foreground px-2">
+              Send this exact amount as Apple Cash in iMessage.
+            </p>
+          </div>
+        </SheetContent>
+      </Sheet>
+
       <Sheet
         open={!!confirmFor}
         onOpenChange={(o) => {
