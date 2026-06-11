@@ -13,10 +13,8 @@ import { TabPaySheet } from '@/components/payments/TabPaySheet';
 import { PaySplitShareDialog } from '@/components/payments/PaySplitShareDialog';
 import { SettlementConfirmCard } from '@/components/payments/SettlementConfirmCard';
 import { StartTabDialog } from '@/components/payments/StartTabDialog';
-import { SetupWalletDialog } from '@/components/payments/SetupWalletDialog';
 import { SplitCheckSettlementPanel } from '@/components/events/SplitCheckSettlementPanel';
 import { useTabSettlements, type TabSettlement } from '@/hooks/useTabSettlements';
-import { useMerchantAccount } from '@/hooks/useMerchantAccount';
 
 interface OwedRow {
   targetId: string;
@@ -58,13 +56,9 @@ export default function SplitCheckHome() {
   const [tabPayOpen, setTabPayOpen] = useState(false);
   const [cardOpen, setCardOpen] = useState(false);
   const [startTabOpen, setStartTabOpen] = useState(false);
-  const [setupWalletOpen, setSetupWalletOpen] = useState(false);
-  const { account: merchantAccount } = useMerchantAccount(meId);
 
   const handleNewTab = () => {
-    const ready = merchantAccount?.status === 'active' && merchantAccount.payouts_enabled;
-    if (ready) setStartTabOpen(true);
-    else setSetupWalletOpen(true);
+    setStartTabOpen(true);
   };
 
   const refetch = async () => {
@@ -399,12 +393,6 @@ export default function SplitCheckHome() {
         </span>
         New Tab
       </button>
-
-      <SetupWalletDialog
-        open={setupWalletOpen}
-        onOpenChange={setSetupWalletOpen}
-        onActivated={() => setStartTabOpen(true)}
-      />
 
       <StartTabDialog
         open={startTabOpen}
