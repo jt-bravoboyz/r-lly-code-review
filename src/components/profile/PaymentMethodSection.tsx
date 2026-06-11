@@ -9,7 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 
-type SettlementPref = 'venmo' | 'cashapp' | 'paypal' | 'card';
+type SettlementPref = 'venmo' | 'cashapp' | 'paypal' | 'apple_cash' | 'card';
 
 export function PaymentMethodSection() {
   const { user } = useAuth();
@@ -18,6 +18,7 @@ export function PaymentMethodSection() {
   const [venmo, setVenmo] = useState('');
   const [cashapp, setCashapp] = useState('');
   const [paypal, setPaypal] = useState('');
+  const [appleCash, setAppleCash] = useState('');
   const [preferred, setPreferred] = useState<SettlementPref | ''>('');
 
   useEffect(() => {
@@ -25,13 +26,14 @@ export function PaymentMethodSection() {
     (async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('venmo_handle, cashapp_handle, paypal_handle, preferred_settlement')
+        .select('venmo_handle, cashapp_handle, paypal_handle, apple_cash_handle, preferred_settlement')
         .eq('user_id', user.id)
         .maybeSingle();
       if (!error && data) {
         setVenmo(data.venmo_handle ?? '');
         setCashapp(data.cashapp_handle ?? '');
         setPaypal(data.paypal_handle ?? '');
+        setAppleCash((data as any).apple_cash_handle ?? '');
         setPreferred((data.preferred_settlement as SettlementPref | null) ?? '');
       }
       setLoading(false);
@@ -47,8 +49,9 @@ export function PaymentMethodSection() {
         venmo_handle: venmo.trim() || null,
         cashapp_handle: cashapp.trim() || null,
         paypal_handle: paypal.trim() || null,
+        apple_cash_handle: appleCash.trim() || null,
         preferred_settlement: preferred || null,
-      })
+      } as any)
       .eq('user_id', user.id);
     setSaving(false);
     if (error) {
