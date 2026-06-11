@@ -328,6 +328,13 @@ export function TabPaySheet({
                 })}
               </div>
 
+              {selected && methodRequiresManualSend(selected) && (
+                <div className="rounded-2xl border border-primary/20 bg-primary/[0.06] px-4 py-3 text-xs text-foreground/80">
+                  Apple Cash is sent through iMessage — we'll open Messages
+                  for you with the amount ready to copy.
+                </div>
+              )}
+
               <Button
                 onClick={handleSend}
                 disabled={!selected || sending}
