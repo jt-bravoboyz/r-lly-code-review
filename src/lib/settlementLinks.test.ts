@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { buildSettlementLink, getMethodLabel } from './settlementLinks';
+import {
+  buildSettlementLink,
+  getMethodLabel,
+  methodRequiresManualSend,
+} from './settlementLinks';
 
 describe('buildSettlementLink', () => {
   it('builds a Venmo deep link with pay txn, cleaned @handle, amount, and encoded note', () => {
