@@ -30,10 +30,9 @@ export function BottomNav() {
             <Link
               key={path}
               to={path}
-              data-tutorial={tutorialId}
               className={cn(
-                "flex flex-col items-center justify-center gap-0.5 w-full h-full px-2 py-1 text-[11px] font-medium transition-colors duration-300 rounded-2xl",
-                isTutorialTarget
+                "flex flex-col items-center justify-center gap-0.5 w-full h-full px-2 py-1 text-[11px] font-medium transition-colors duration-300 rounded-2xl"
+              , isTutorialTarget
                   ? "text-white"
                   : isActive 
                     ? "text-primary" 
@@ -42,6 +41,7 @@ export function BottomNav() {
             >
 
               <div
+                data-tutorial={tutorialId}
                 className={cn(
                   "p-2 rounded-2xl transition-all duration-300 relative",
                   isTutorialTarget
