@@ -30,7 +30,7 @@ import { TierBadgeIcon } from '@/components/badges/TierBadgeIcon';
 import { ActivityBadgeIcon } from '@/components/badges/ActivityBadgeIcon';
 import { getBadgeMeta } from '@/lib/badges';
 import { PaymentMethodSection } from '@/components/profile/PaymentMethodSection';
-import { PayoutSettingsSection } from '@/components/profile/PayoutSettingsSection';
+
 
 // Helper to format phone for display
 function formatPhoneForDisplay(phone: string): string {
@@ -603,7 +603,7 @@ export default function Profile() {
 
         {/* Payments */}
         <PaymentMethodSection />
-        <PayoutSettingsSection />
+        
 
         {/* Settings */}
         <Card className="card-rally">
