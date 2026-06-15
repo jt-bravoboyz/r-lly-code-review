@@ -133,17 +133,17 @@ export function TutorialOverlay() {
           top = Math.max(margin, Math.min(top, vh - height - margin));
           return (
             <>
-              {/* Bright pulsing glow behind the target — makes it look lit up */}
+              {/* Outer ambient glow behind the target */}
               <div
                 className="absolute pointer-events-none rounded-2xl"
                 style={{
-                  left: left - 24,
-                  top: top - 24,
-                  width: width + 48,
-                  height: height + 48,
+                  left: left - 32,
+                  top: top - 32,
+                  width: width + 64,
+                  height: height + 64,
                   background:
-                    'radial-gradient(circle, rgba(244,122,25,0.55) 0%, rgba(244,122,25,0.25) 40%, transparent 70%)',
-                  filter: 'blur(12px)',
+                    'radial-gradient(circle, rgba(244,122,25,0.45) 0%, rgba(244,122,25,0.15) 45%, transparent 70%)',
+                  filter: 'blur(16px)',
                   animation: 'tutorial-breathe 1.8s ease-in-out infinite',
                 }}
               />
@@ -156,15 +156,25 @@ export function TutorialOverlay() {
                   width,
                   height,
                   boxShadow:
-                    '0 0 0 9999px rgba(0,0,0,0.8), 0 0 24px 4px rgba(244,122,25,0.9), inset 0 0 18px rgba(244,122,25,0.6)',
+                    '0 0 0 9999px rgba(0,0,0,0.85), 0 0 28px 6px rgba(244,122,25,0.95), inset 0 0 24px 4px rgba(255,200,140,0.75)',
                   animation: 'tutorial-breathe 1.8s ease-in-out infinite',
                 }}
               >
+                {/* Inner light layer — makes the button look like it's glowing from within */}
+                <div
+                  className="absolute inset-0 rounded-lg pointer-events-none"
+                  style={{
+                    background:
+                      'radial-gradient(circle at center, rgba(255,240,200,0.85) 0%, rgba(244,122,25,0.55) 40%, rgba(244,122,25,0.15) 70%, transparent 100%)',
+                    mixBlendMode: 'screen',
+                    animation: 'tutorial-breathe 1.8s ease-in-out infinite',
+                  }}
+                />
                 <div className="absolute inset-0 border-2 border-primary rounded-lg animate-ping opacity-60" />
               </div>
               <style>{`@keyframes tutorial-breathe {
-                0%, 100% { opacity: 0.85; transform: scale(1); }
-                50% { opacity: 1; transform: scale(1.04); }
+                0%, 100% { opacity: 0.9; transform: scale(1); }
+                50% { opacity: 1; transform: scale(1.03); }
               }`}</style>
             </>
           );
