@@ -119,7 +119,7 @@ export function TutorialOverlay() {
     <div className="fixed inset-0 z-[100]" onClick={handleOverlayClick}>
       {/* Dark overlay with cutout for target */}
       <div className="absolute inset-0 bg-black/80">
-        {targetRect && (() => {
+        {targetRect && !currentStep.targetSelector?.startsWith('[data-tutorial="nav-') && (() => {
           const pad = 8;
           const margin = 16;
           const vw = window.innerWidth;
