@@ -17,44 +17,74 @@ export function BottomNav() {
   const totalUnread = useUnreadCount();
   const { isActive: tutorialActive, currentStep } = useTutorial();
 
+  const navTargetsNav = tutorialActive && !!currentStep?.targetSelector?.startsWith('[data-tutorial="nav-');
+
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 pb-[env(safe-area-inset-bottom)] bg-card/90 backdrop-blur-xl border-t border-border/60 shadow-[0_-4px_24px_hsl(0_0%_0%/0.06)] dark:bg-card/80 dark:border-white/[0.08] dark:shadow-[0_-8px_32px_hsl(0_0%_0%/0.4),inset_0_1px_0_hsl(0_0%_100%/0.06)]" style={{ WebkitBackdropFilter: 'blur(20px)' }}>
+    <nav
+      className={cn(
+        "fixed bottom-0 left-0 right-0 pb-[env(safe-area-inset-bottom)] bg-card/90 backdrop-blur-xl border-t border-border/60 shadow-[0_-4px_24px_hsl(0_0%_0%/0.06)] dark:bg-card/80 dark:border-white/[0.08] dark:shadow-[0_-8px_32px_hsl(0_0%_0%/0.4),inset_0_1px_0_hsl(0_0%_100%/0.06)]",
+        navTargetsNav ? "z-[120]" : "z-50"
+      )}
+      style={{ WebkitBackdropFilter: 'blur(20px)' }}
+    >
       <div className="grid h-16 grid-cols-5 items-center px-1">
         {navItems.map(({ path, icon: Icon, label, tutorialId }) => {
-          const isActive = location.pathname === path || 
+          const isActive = location.pathname === path ||
             (path !== '/' && location.pathname.startsWith(path));
 
           const isTutorialTarget = tutorialActive && currentStep?.targetSelector === `[data-tutorial="${tutorialId}"]`;
-          
+          const isDimmed = navTargetsNav && !isTutorialTarget;
+
           return (
             <Link
               key={path}
               to={path}
               className={cn(
-                "flex flex-col items-center justify-center gap-0.5 w-full h-full px-2 py-1 text-[11px] font-medium transition-colors duration-300 rounded-2xl"
-              , isTutorialTarget
-                  ? "text-white"
-                  : isActive 
-                    ? "text-primary" 
+                "flex flex-col items-center justify-center gap-0.5 w-full h-full px-2 py-1 text-[11px] font-medium rounded-2xl transition-[opacity,color] duration-[250ms] ease-out",
+                isDimmed && "opacity-30",
+                isTutorialTarget
+                  ? "text-foreground opacity-100"
+                  : isActive
+                    ? "text-primary"
                     : "text-muted-foreground hover:text-foreground"
               )}
             >
-
               <div
                 data-tutorial={tutorialId}
                 className={cn(
                   "p-2 rounded-2xl transition-all duration-300 relative",
-                  isTutorialTarget
-                    ? "bg-[#F47A19] shadow-[0_0_16px_rgba(244,122,25,0.55)] animate-pulse"
-                    : isActive
-                      ? "bg-gradient-to-br from-primary to-primary/80 shadow-lg shadow-primary/30"
-                      : "bg-transparent hover:bg-white/[0.06]"
+                  isActive && !isTutorialTarget && "bg-gradient-to-br from-primary to-primary/80 shadow-lg shadow-primary/30",
+                  !isActive && !isTutorialTarget && "bg-transparent hover:bg-white/[0.06]"
                 )}
+                style={
+                  isTutorialTarget
+                    ? {
+                        background:
+                          'radial-gradient(circle at center, rgba(244,122,25,0.55) 0%, rgba(244,122,25,0.25) 55%, rgba(244,122,25,0) 80%)',
+                        boxShadow:
+                          'inset 0 0 18px 2px rgba(244,122,25,0.55), 0 0 24px 4px rgba(244,122,25,0.45)',
+                      }
+                    : undefined
+                }
               >
+                {isTutorialTarget && (
+                  <>
+                    <span
+                      aria-hidden
+                      className="pointer-events-none absolute inset-0 rounded-2xl border-2 border-[#F47A19]"
+                      style={{ animation: 'nav-pulse-ring 1.8s ease-out infinite' }}
+                    />
+                    <span
+                      aria-hidden
+                      className="pointer-events-none absolute inset-0 rounded-2xl border-2 border-[#F47A19]"
+                      style={{ animation: 'nav-pulse-ring 1.8s ease-out infinite', animationDelay: '0.6s' }}
+                    />
+                  </>
+                )}
                 <Icon
                   className={cn(
-                    "h-5 w-5 transition-all",
-                    isTutorialTarget ? "text-white" : isActive ? "text-white" : "text-current"
+                    "h-5 w-5 transition-all relative",
+                    isTutorialTarget ? "text-[#F47A19]" : isActive ? "text-white" : "text-current"
                   )}
                   strokeWidth={isActive || isTutorialTarget ? 2.5 : 2}
                 />
@@ -73,12 +103,19 @@ export function BottomNav() {
               </div>
               <span className={cn(
                 "transition-all",
-                isTutorialTarget ? "font-bold text-white" : isActive ? "font-bold text-primary" : "font-medium"
+                isTutorialTarget ? "font-bold text-foreground" : isActive ? "font-bold text-primary" : "font-medium"
               )}>{label}</span>
             </Link>
           );
         })}
       </div>
+      {navTargetsNav && (
+        <style>{`@keyframes nav-pulse-ring {
+          0% { transform: scale(1); opacity: 0.85; }
+          80% { transform: scale(1.7); opacity: 0; }
+          100% { transform: scale(1.7); opacity: 0; }
+        }`}</style>
+      )}
     </nav>
   );
 }
