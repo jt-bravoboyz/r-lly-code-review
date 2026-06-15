@@ -66,6 +66,7 @@ export function TutorialOverlay() {
     return () => {
       observer.disconnect();
       window.removeEventListener('resize', findTarget);
+      window.removeEventListener('scroll', findTarget, true);
       clearTimeout(missingTimer);
     };
   }, [isActive, currentStep]);
