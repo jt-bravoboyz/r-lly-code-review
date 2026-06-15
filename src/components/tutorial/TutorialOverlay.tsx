@@ -119,21 +119,58 @@ export function TutorialOverlay() {
     <div className="fixed inset-0 z-[100]" onClick={handleOverlayClick}>
       {/* Dark overlay with cutout for target */}
       <div className="absolute inset-0 bg-black/80">
-        {targetRect && (
-          <div
-            className="absolute bg-transparent border-2 border-primary rounded-lg shadow-[0_0_0_9999px_rgba(0,0,0,0.8)] animate-pulse"
-            style={{
-              left: targetRect.left - 8,
-              top: targetRect.top - 8,
-              width: targetRect.width + 16,
-              height: targetRect.height + 16,
-            }}
-          >
-            {/* Pulsing ring effect */}
-            <div className="absolute inset-0 border-2 border-primary rounded-lg animate-ping opacity-50" />
-          </div>
-        )}
+        {targetRect && (() => {
+          const pad = 8;
+          const margin = 16;
+          const vw = window.innerWidth;
+          const vh = window.innerHeight;
+          const width = targetRect.width + pad * 2;
+          const height = targetRect.height + pad * 2;
+          let left = targetRect.left - pad;
+          let top = targetRect.top - pad;
+          // Clamp inside viewport so the ring is fully visible
+          left = Math.max(margin, Math.min(left, vw - width - margin));
+          top = Math.max(margin, Math.min(top, vh - height - margin));
+          return (
+            <>
+              {/* Bright pulsing glow behind the target — makes it look lit up */}
+              <div
+                className="absolute pointer-events-none rounded-2xl"
+                style={{
+                  left: left - 24,
+                  top: top - 24,
+                  width: width + 48,
+                  height: height + 48,
+                  background:
+                    'radial-gradient(circle, rgba(244,122,25,0.55) 0%, rgba(244,122,25,0.25) 40%, transparent 70%)',
+                  filter: 'blur(12px)',
+                  animation: 'tutorial-breathe 1.8s ease-in-out infinite',
+                }}
+              />
+              {/* Spotlight cutout + ring */}
+              <div
+                className="absolute bg-transparent border-2 border-primary rounded-lg shadow-[0_0_0_9999px_rgba(0,0,0,0.8)]"
+                style={{
+                  left,
+                  top,
+                  width,
+                  height,
+                  boxShadow:
+                    '0 0 0 9999px rgba(0,0,0,0.8), 0 0 24px 4px rgba(244,122,25,0.9), inset 0 0 18px rgba(244,122,25,0.6)',
+                  animation: 'tutorial-breathe 1.8s ease-in-out infinite',
+                }}
+              >
+                <div className="absolute inset-0 border-2 border-primary rounded-lg animate-ping opacity-60" />
+              </div>
+              <style>{`@keyframes tutorial-breathe {
+                0%, 100% { opacity: 0.85; transform: scale(1); }
+                50% { opacity: 1; transform: scale(1.04); }
+              }`}</style>
+            </>
+          );
+        })()}
       </div>
+
 
       {/* Skip button */}
       <button
