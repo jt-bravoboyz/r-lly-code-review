@@ -29,9 +29,20 @@ export function TutorialOverlay() {
       return;
     }
 
+    let didScroll = false;
     const findTarget = () => {
       const target = document.querySelector(currentStep.targetSelector!);
       if (target) {
+        // Scroll target fully into view once so the spotlight ring isn't clipped
+        if (!didScroll) {
+          didScroll = true;
+          (target as HTMLElement).scrollIntoView({ block: 'center', behavior: 'smooth' });
+          // Re-measure after scroll settles
+          setTimeout(() => {
+            const t = document.querySelector(currentStep.targetSelector!);
+            if (t) setTargetRect(t.getBoundingClientRect());
+          }, 350);
+        }
         setTargetRect(target.getBoundingClientRect());
         setTargetMissing(false);
       } else {
@@ -43,6 +54,7 @@ export function TutorialOverlay() {
     const observer = new MutationObserver(findTarget);
     observer.observe(document.body, { childList: true, subtree: true });
     window.addEventListener('resize', findTarget);
+    window.addEventListener('scroll', findTarget, true);
 
     // Safety net: if target never appears within 2.5s, show fallback continue
     const missingTimer = setTimeout(() => {
