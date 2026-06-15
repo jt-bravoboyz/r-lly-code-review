@@ -12,7 +12,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Settings, LogOut, MapPin, Award, Camera, Users, Home, Shield, Pencil, Save, X, FileText, ChevronRight, Navigation, Phone, Mail, CreditCard, Contact, CheckCircle2, Send, Star, History } from 'lucide-react';
+import { Settings, LogOut, MapPin, Award, Camera, Users, Home, Shield, Pencil, Save, X, FileText, ChevronRight, Navigation, Phone, Mail, CreditCard, Contact, CheckCircle2, Send, Star, History, RotateCcw } from 'lucide-react';
+import { useTutorial } from '@/hooks/useTutorial';
 import { usePhoneContacts } from '@/hooks/usePhoneContacts';
 import { ContactSyncButton } from '@/components/contacts/ContactSyncButton';
 import { ContactInviteDialog } from '@/components/contacts/ContactInviteDialog';
@@ -58,6 +59,7 @@ function normalizePhoneNumber(phone: string): string {
 }
 
 export default function Profile() {
+  const { startTutorial } = useTutorial();
   const [isEditing, setIsEditing] = useState(false);
   const [editBio, setEditBio] = useState('');
   const [editName, setEditName] = useState(''); // legacy display_name (kept for fallback save)
@@ -586,6 +588,24 @@ export default function Profile() {
           </div>
           <ChevronRight className="h-5 w-5 text-muted-foreground" />
         </button>
+
+        {/* Restart Walkthrough */}
+        <button
+          onClick={() => {
+            localStorage.removeItem('rally-tutorial-complete');
+            localStorage.removeItem('rally-walkthrough-seen');
+            navigate('/');
+            setTimeout(() => startTutorial(), 300);
+          }}
+          className="w-full flex items-center justify-between py-3 px-4 bg-muted/50 rounded-xl hover:bg-muted transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <RotateCcw className="h-5 w-5 text-primary" />
+            <span className="font-medium">Restart Walkthrough</span>
+          </div>
+          <ChevronRight className="h-5 w-5 text-muted-foreground" />
+        </button>
+
 
         {/* Admin Panel Link - only visible for admins */}
         {isAdmin && (
