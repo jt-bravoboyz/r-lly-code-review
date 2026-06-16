@@ -25,22 +25,28 @@ export function TutorialOverlay() {
   // Find and highlight target element
   useEffect(() => {
     setTargetMissing(false);
-    if (!isActive || !currentStep?.targetSelector) {
+    // For create-rally, fall back to the first scan target so the spotlight ring renders
+    // over the Create Event card and visibly lifts it above the dark backdrop.
+    const selector =
+      currentStep?.targetSelector ??
+      (currentStep?.id === 'create-rally' ? currentStep?.scanTargets?.[0] : undefined);
+    if (!isActive || !selector) {
       setTargetRect(null);
       return;
     }
 
+    const isCreateRally = currentStep?.id === 'create-rally';
     let didScroll = false;
     const findTarget = () => {
-      const target = document.querySelector(currentStep.targetSelector!);
+      const target = document.querySelector(selector);
       if (target) {
-        // Scroll target fully into view once so the spotlight ring isn't clipped
-        if (!didScroll) {
+        // For create-rally the page is already scrolled to top by the route effect —
+        // centering pushes the card behind the coach modal, so skip scrollIntoView.
+        if (!didScroll && !isCreateRally) {
           didScroll = true;
           (target as HTMLElement).scrollIntoView({ block: 'center', behavior: 'smooth' });
-          // Re-measure after scroll settles
           setTimeout(() => {
-            const t = document.querySelector(currentStep.targetSelector!);
+            const t = document.querySelector(selector);
             if (t) setTargetRect(t.getBoundingClientRect());
           }, 350);
         }
@@ -57,9 +63,8 @@ export function TutorialOverlay() {
     window.addEventListener('resize', findTarget);
     window.addEventListener('scroll', findTarget, true);
 
-    // Safety net: if target never appears within 2.5s, show fallback continue
     const missingTimer = setTimeout(() => {
-      if (!document.querySelector(currentStep.targetSelector!)) {
+      if (!document.querySelector(selector)) {
         setTargetMissing(true);
       }
     }, 2500);
