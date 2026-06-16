@@ -299,7 +299,6 @@ export function TutorialOverlay() {
 
           {/* Inline illustration mockups */}
           {currentStep.illustration === 'safety-dashboard' && <SafetyDashboardPreview />}
-          {currentStep.illustration === 'create-rally' && <CreateRallyPreview />}
 
           {/* Action button for completion steps */}
           {isCompletionStep && (
