@@ -103,7 +103,13 @@ export function SetupWalletDialog({ open, onOpenChange, onActivated }: Props) {
             )}
           </div>
           <h2 className="text-[22px] font-bold tracking-tight font-montserrat leading-tight">
-            {isActive ? "You're set." : isPending ? 'Verifying your wallet…' : 'Set up your R@lly Wallet'}
+            {isActive ? (
+              "You're set."
+            ) : isPending ? (
+              'Verifying your wallet…'
+            ) : (
+              <>Set up your R<span className="text-primary" style={{ display: 'inline-block' }}>@</span>lly Tab</>
+            )}
           </h2>
           <p className="text-[13.5px] text-muted-foreground leading-snug mt-1.5">
             {isActive

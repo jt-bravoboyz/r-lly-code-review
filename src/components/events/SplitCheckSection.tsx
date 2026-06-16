@@ -52,7 +52,7 @@ export function SplitCheckSection({
         <Card className="card-rally">
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center justify-between">
-              <span>Split Check</span>
+              <span>R<span className="text-primary" style={{ display: 'inline-block' }}>@</span>lly Tab</span>
               <Button size="sm" onClick={onRequestPayment}>Request Payment</Button>
             </CardTitle>
           </CardHeader>

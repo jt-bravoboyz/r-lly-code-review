@@ -276,7 +276,7 @@ export default function SplitCheckHome() {
             <span className="inline-flex items-baseline gap-0 whitespace-nowrap" style={{ letterSpacing: 0, wordSpacing: 0 }}>
               <span>R</span><span className="text-primary">@</span><span>lly</span>
             </span>{' '}
-            Wallet
+            Tab
           </h1>
           <div className="flex items-center gap-3 mt-3">
             <div className="flex-1 rounded-xl bg-amber-500/10 border border-amber-500/20 px-3 py-2 text-center">

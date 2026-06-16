@@ -708,9 +708,9 @@ export default function Profile() {
                 <div className="flex items-center gap-3">
                   <CreditCard className="h-5 w-5 text-primary" />
                   <div className="text-left">
-                    <span className="font-medium">R@lly Wallet</span>
+                    <span className="font-medium">R<span className="text-primary" style={{ display: 'inline-block' }}>@</span>lly Tab</span>
                     <p className="text-xs text-muted-foreground">
-                      Split checks, hosted & owed
+                      Tabs, hosted & owed
                     </p>
                   </div>
                 </div>
