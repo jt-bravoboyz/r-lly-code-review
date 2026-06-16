@@ -348,6 +348,46 @@ export default function SplitCheckHome() {
           </div>
         </div>
 
+        {showHandlesBanner && (
+          <div
+            className="relative rounded-2xl bg-card/60 border border-white/10 backdrop-blur-xl px-4 py-3 flex items-center gap-3 transition-all duration-200 ease-out"
+            style={{
+              WebkitBackdropFilter: 'blur(20px)',
+              opacity: bannerMounted ? 1 : 0,
+              transform: bannerMounted ? 'translateY(0)' : 'translateY(-8px)',
+            }}
+          >
+            <div className="h-10 w-10 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
+              <Wallet className="h-5 w-5 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0 pr-2">
+              <p className="text-sm font-semibold font-montserrat truncate">
+                Add a payment handle so friends can pay you back
+              </p>
+              <p className="text-xs text-muted-foreground truncate">
+                Venmo, CashApp, PayPal, or Apple Cash
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSetupHandlesOpen(true)}
+              className="text-primary font-montserrat font-semibold text-sm px-2 py-2 shrink-0"
+            >
+              Set Up
+            </button>
+            <button
+              type="button"
+              onClick={dismissBanner}
+              aria-label="Dismiss"
+              className="absolute -top-2 -right-2 h-11 w-11 flex items-center justify-center"
+            >
+              <span className="h-7 w-7 rounded-full bg-card border border-white/10 flex items-center justify-center shadow-sm">
+                <X className="h-3.5 w-3.5 text-muted-foreground" />
+              </span>
+            </button>
+          </div>
+        )}
+
         <Tabs defaultValue="owe" className="w-full">
           <TabsList className="grid grid-cols-2 w-full bg-card/60 border border-white/10 rounded-xl">
             <TabsTrigger value="owe" className="rounded-lg font-montserrat font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-[0_0_12px_rgba(244,122,25,0.4)]">You Owe</TabsTrigger>
