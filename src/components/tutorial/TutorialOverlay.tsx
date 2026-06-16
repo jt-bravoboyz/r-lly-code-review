@@ -3,7 +3,6 @@ import { useTutorial } from '@/hooks/useTutorial';
 import { Button } from '@/components/ui/button';
 import { ChevronRight, X, Target, Shield } from 'lucide-react';
 import { SafetyDashboardPreview } from './SafetyDashboardPreview';
-import CreateRallyPreview from './CreateRallyPreview';
 
 import { LiveStatusPreview } from './LiveStatusPreview';
 import { BadgeLadderPreview } from './BadgeLadderPreview';
@@ -76,11 +75,19 @@ export function TutorialOverlay() {
   // Handle navigation steps
   useEffect(() => {
     if (!currentStep?.targetRoute) return;
-    
+
+    if (currentStep.requiredAction === 'complete') {
+      // Auto-navigate INTO the route on step entry, but only if not already there
+      if (location.pathname !== currentStep.targetRoute) {
+        navigate(currentStep.targetRoute);
+      }
+      return;
+    }
+
     if (location.pathname === currentStep.targetRoute) {
       completeAction('navigate');
     }
-  }, [location.pathname, currentStep, completeAction]);
+  }, [location.pathname, currentStep, completeAction, navigate]);
 
   // Sequential scan highlight across real DOM targets (e.g., bottom nav)
   useEffect(() => {
@@ -300,7 +307,6 @@ export function TutorialOverlay() {
 
           {/* Inline illustration mockups */}
           {currentStep.illustration === 'safety-dashboard' && <SafetyDashboardPreview />}
-          {currentStep.illustration === 'create-rally' && <CreateRallyPreview />}
 
           {/* Action button for completion steps */}
           {isCompletionStep && (
