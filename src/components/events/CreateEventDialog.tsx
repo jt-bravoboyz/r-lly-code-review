@@ -586,31 +586,35 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
             <FormField
               control={form.control}
               name="location_name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Location</FormLabel>
-                  <FormControl>
-                    <LocationSearch
-                      value={field.value || ''}
-                      onChange={field.onChange}
-                      onLocationSelect={(loc) => {
-                        field.onChange(loc.name);
-                        form.setValue('location_lat', loc.lat);
-                        form.setValue('location_lng', loc.lng);
-                      }}
-                      placeholder="Search venue, restaurant, or address..."
-                      allowCustomName={true}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              render={({ field }) => {
+                const isBarHopType = form.watch('event_type') === 'bar_hop';
+                return (
+                  <FormItem>
+                    <FormLabel>{isBarHopType ? 'Where are we meeting first?' : 'Location'}</FormLabel>
+                    <FormControl>
+                      <LocationSearch
+                        value={field.value || ''}
+                        onChange={field.onChange}
+                        onLocationSelect={(loc) => {
+                          field.onChange(loc.name);
+                          form.setValue('location_lat', loc.lat);
+                          form.setValue('location_lng', loc.lng);
+                        }}
+                        placeholder={isBarHopType ? 'Starting spot (optional)…' : 'Search venue, restaurant, or address...'}
+                        allowCustomName={true}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                );
+              }}
             />
 
             </div>
 
             <div ref={reviewRef}>
-            {/* Advanced options — premium glass disclosure */}
+            {/* Advanced options — hidden for Bar Hop type since the stop list is the point */}
+            {form.watch('event_type') !== 'bar_hop' && (
             <Collapsible open={optionalOpen} onOpenChange={setOptionalOpen}>
               <CollapsibleTrigger asChild>
                 <button
