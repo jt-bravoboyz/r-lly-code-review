@@ -1,64 +1,80 @@
-Update the `.rally-scan-hero` CSS rule in `src/index.css` to make the Create Event button render at full brightness during Step 3 of the walkthrough.
+## Problem
+On Step 3 of the tutorial walkthrough, the Create Event button has the hero halo applied but its colors appear washed-out compared to the real Home screen. The white card,1201, peach icon tile, orange + icon, and near-black label text all look muted as if a dark overlay is bleeding through.
 
-Current state of the rule (lines 2353-2367):
-- `z-index: 60`
-- `opacity: 1 !important`
-- `transform: scale(1.06) translateY(-4px)`
-- Complex `filter` with multiple drop-shadows
-- `animation: rallyHeroBreath 1800ms ease-in-out infinite`
+## Solution
+Add new CSS rules below the existing `.rally-scan-hero` block in the global stylesheet. These rules force the hero element and its children to render with explicit, opaque brand colors and remove any inherited blur/brightness/saturation filters.
 
-The backdrop overlay (`rally-backdrop-deep` at line 2418) applies `bg-black/88` but does not carry its own z-index — the spotlight mechanism in TutorialOverlay.tsx creates the cutout separately.
+### File to modify
+- `src/index.css` — append new rules after the existing `.rally-scan-hero::after` block (after line ~2378)
 
-The issue is that the Create Event card’s content (white background, + icon, text) is dimmed despite the `rally-scan-hero` class being applied. The current rule only forces `opacity: 1` on the root element, but parent opacity/filter rules or stacking context issues can still suppress child visibility.
-
-**Change:**
-
-Replace the `.rally-scan-hero` ruleset (lines 2353-2367) with:
-
+### Rules to add (exact CSS)
 ```css
+/* Force the hero element itself to render with a pure white card background */
 .rally-scan-hero {
-  position: relative;
-  z-index: 70;
-  opacity: 1 !important;
-  isolation: isolate;
-  filter: drop-shadow(0 0 24px rgba(244, 122, 25, 0.85))
-          drop-shadow(0 0 48px rgba(244, 122, 25, 0.45));
-  animation: rallyHeroBreath 1800ms ease-in-out infinite;
-  transition: all 400ms ease-out;
+  background-color: #FFFFFF !important;
+  border-color: #FFFFFF !important;
 }
 
-.rally-scan-hero,
-.rally-scan-hero * {
-  opacity: 1 !important;
-  visibility: visible !important;
+/* Force any image, icon container, or background inside the hero element to render at full color */
+.rally-scan-hero > *,
+.rally-scan-hero > * > *,
+.rally-scan-hero > * > * > * {
+  filter: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
-.rally-scan-hero::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: inherit;
-  z-index: -1;
-  border-radius: inherit;
-  pointer-events: none;
+/* Force the inner icon tile (the peach/cream rounded square holding the + icon) to render at brand color */
+.rally-scan-hero [class*="bg-orange"],
+.rally-scan-hero [class*="bg-[#F"],
+.rally-scan-hero [class*="bg-amber"],
+.rally-scan-hero [class*="bg-peach"] {
+  background-color: #FFEDD5 !important;
+}
+
+/* Force the + icon (orange) to render at full brand orange */
+.rally-scan-hero svg,
+.rally-scan-hero [class*="text-orange"],
+.rally-scan-hero [class*="text-[#F4"] {
+  color: #F47A19 !important;
+  fill: #F47A19 !important;
+  stroke: #F47A19 !important;
+}
+
+/* Force the "Create Event" text label to render at full near-black */
+.rally-scan-hero [class*="text-foreground"],
+.rally-scan-hero [class*="text-black"],
+.rally-scan-hero [class*="text-slate"],
+.rally-scan-hero [class*="text-gray-9"],
+.rally-scan-hero [class*="text-zinc-9"],
+.rally-scan-hero h1,
+.rally-scan-hero h2,
+.rally-scan-hero h3,
+.rally-scan-hero p,
+.rally-scan-hero span,
+.rally-scan-hero div {
+  color: #1F2937;
+}
+
+/* Override the global text color rule with !important specifically for the visible label text — leave SVG and orange-tinted text alone */
+.rally-scan-hero > div > span:not([class*="text-orange"]):not([class*="text-[#F4"]),
+.rally-scan-hero > div > p:not([class*="text-orange"]):not([class*="text-[#F4"]) {
+  color: #1F2937 !important;
 }
 ```
 
-**What must NOT change:**
+### Constraints
+- Do NOT modify any existing `.rally-scan-hero`, `::before`, `::after`, `@keyframes`, `.rally-scan-highlight`, `.rally-scan-settled`, or `.rally-backdrop-deep` rules.
+- Do NOT touch `TutorialOverlay.tsx`, `useTutorial.tsx`, the Create Event button component, Profile.tsx, Settings.tsx, bottom nav, or any walkthrough logic.
+- Do NOT install new packages or add console logs.
 
-- `.rally-scan-hero::before` (the halo pseudo-element) stays untouched.
-- `@keyframes rallyHeroBreath` and `@keyframes rallyHeroHalo` stay untouched.
-- `.rally-backdrop-deep` stays untouched.
-- The 1800ms breathing cycle stays unchanged.
-- `TutorialOverlay.tsx`, `useTutorial.tsx`, the Create Event button component, Profile.tsx, Settings.tsx, and the bottom nav component are not modified.
-- No new packages installed. No console logs added.
-
-**Acceptance:**
-
-- On Step 3, the Create Event card renders fully bright — white background, + icon, and text are fully readable.
-- The orange breathing halo continues its 1800ms cycle around the card.
-- The rest of the page remains dimmed by the deep backdrop.
-- Continue to Step 4 cleans up styling cleanly.
-- Step 2 nav scan works with no regressions.
-- The adjacent Quick R@lly card stays dimmed and untouched.
+### Acceptance criteria
+- Step 3: Create Event card background is pure opaque white (`#FFFFFF`).
+- Inner icon tile is peach/cream (`#FFEDD5`).
+- `+` icon is fully orange (`#F47A19`).
+- "Create Event" label text is near-black (`#1F2937`) and fully readable.
+- Orange breathing halo continues its 1800ms cycle unchanged.
+- Quick R@lly card next to it stays dimmed.
+- Continue to Step 4 cleans up cleanly with no leftover overrides.
+- Step 2 nav scan still works correctly.
 - No TypeScript or console errors.
