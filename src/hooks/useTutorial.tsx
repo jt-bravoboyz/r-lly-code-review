@@ -11,12 +11,13 @@ export interface TutorialStep {
   targetSelector?: string;
   requiredAction: 'tap' | 'navigate' | 'scroll' | 'complete';
   targetRoute?: string;
-  position?: 'top' | 'bottom' | 'center';
+  position?: 'top' | 'bottom' | 'center' | 'above-nav';
   ctaButton?: {
     label: string;
     route: string;
   };
-  illustration?: 'safety-dashboard' | 'command-center' | 'create-rally' | 'inside-rally' | 'split-check';
+  illustration?: 'safety-dashboard' | 'create-rally' | 'inside-rally' | 'split-check';
+  scanTargets?: string[];
 }
 
 const TUTORIAL_STEPS: TutorialStep[] = [
