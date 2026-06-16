@@ -81,7 +81,11 @@ export function TutorialOverlay() {
       if (location.pathname !== currentStep.targetRoute) {
         navigate(currentStep.targetRoute);
       }
-      return;
+      // Scroll to top after the route renders, so scan targets are in view
+      const scrollTimer = setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 120);
+      return () => clearTimeout(scrollTimer);
     }
 
     if (location.pathname === currentStep.targetRoute) {
