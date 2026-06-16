@@ -200,12 +200,13 @@ export function TutorialOverlay() {
 
   const progress = ((currentStepIndex + 1) / totalSteps) * 100;
   const isCompletionStep = currentStep.requiredAction === 'complete';
+  const isCreateRally = currentStep.id === 'create-rally';
   const positionClass = currentStep.position === 'top' 
     ? 'top-20' 
     : currentStep.position === 'bottom' 
       ? 'bottom-32' 
       : currentStep.position === 'above-nav'
-        ? 'bottom-[100px]'
+        ? (isCreateRally ? 'bottom-24' : 'bottom-[100px]')
         : 'top-1/2 -translate-y-1/2';
   const hasScan = !!currentStep.scanTargets?.length;
 
@@ -254,17 +255,21 @@ export function TutorialOverlay() {
                   animation: 'tutorial-breathe 1.8s ease-in-out infinite',
                 }}
               >
-                {/* Inner light layer — makes the button look like it's glowing from within */}
-                <div
-                  className="absolute inset-0 rounded-lg pointer-events-none"
-                  style={{
-                    background:
-                      'radial-gradient(circle at center, rgba(255,240,200,0.85) 0%, rgba(244,122,25,0.55) 40%, rgba(244,122,25,0.15) 70%, transparent 100%)',
-                    mixBlendMode: 'screen',
-                    animation: 'tutorial-breathe 1.8s ease-in-out infinite',
-                  }}
-                />
-                <div className="absolute inset-0 border-2 border-primary rounded-lg animate-ping opacity-60" />
+                {/* Inner light layer — skipped for create-rally so the card content stays readable */}
+                {!isCreateRally && (
+                  <>
+                    <div
+                      className="absolute inset-0 rounded-lg pointer-events-none"
+                      style={{
+                        background:
+                          'radial-gradient(circle at center, rgba(255,240,200,0.85) 0%, rgba(244,122,25,0.55) 40%, rgba(244,122,25,0.15) 70%, transparent 100%)',
+                        mixBlendMode: 'screen',
+                        animation: 'tutorial-breathe 1.8s ease-in-out infinite',
+                      }}
+                    />
+                    <div className="absolute inset-0 border-2 border-primary rounded-lg animate-ping opacity-60" />
+                  </>
+                )}
               </div>
               <style>{`@keyframes tutorial-breathe {
                 0%, 100% { opacity: 0.9; transform: scale(1); }
