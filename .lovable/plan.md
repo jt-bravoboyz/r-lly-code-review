@@ -1,22 +1,64 @@
-## Plan
+Update the `.rally-scan-hero` CSS rule in `src/index.css` to make the Create Event button render at full brightness during Step 3 of the walkthrough.
 
-**Goal:** Step 3 — make the real "Create Event" card fully readable (icon + label visible, not washed out by the spotlight), keep the coach modal from covering it, and update the body copy.
+Current state of the rule (lines 2353-2367):
+- `z-index: 60`
+- `opacity: 1 !important`
+- `transform: scale(1.06) translateY(-4px)`
+- Complex `filter` with multiple drop-shadows
+- `animation: rallyHeroBreath 1800ms ease-in-out infinite`
 
-### Changes
+The backdrop overlay (`rally-backdrop-deep` at line 2418) applies `bg-black/88` but does not carry its own z-index — the spotlight mechanism in TutorialOverlay.tsx creates the cutout separately.
 
-1. **Update Step 3 body copy** (`src/hooks/useTutorial.tsx`)
-   - Replace the `create-rally` step's `instruction` with:
-     > "Tap it. Name it. Drop a Location and Time. Dress code, song recs, the vibe — all yours. Then send out the invites."
+The issue is that the Create Event card’s content (white background, + icon, text) is dimmed despite the `rally-scan-hero` class being applied. The current rule only forces `opacity: 1` on the root element, but parent opacity/filter rules or stacking context issues can still suppress child visibility.
 
-2. **Stop washing out the card** (`src/components/tutorial/TutorialOverlay.tsx`)
-   - For the `create-rally` step, skip the inner radial-gradient + `animate-ping` layers that currently sit inside the spotlight box. Those layers (mixBlendMode: screen) are what's flooding the card in orange and hiding the Plus icon and "Create Event" label.
-   - Keep just the outer ambient glow, the dark cutout, and the orange ring around the card so the real card content reads clearly.
-   - Keep the existing lifted hero glow on the card itself.
+**Change:**
 
-3. **Make the coach modal compact for Step 3** (`src/components/tutorial/TutorialOverlay.tsx`)
-   - Step 3 modal is too tall and overlaps the highlighted card on 390x645 screens.
-   - Tighten only the Step 3 card: reduced padding, smaller title, smaller body, smaller Continue button — so it fits comfortably between the highlighted card and the bottom nav without covering the card.
-   - Pin Step 3 modal to `bottom-24` so it sits just above the nav, leaving room above for the spotlight.
+Replace the `.rally-scan-hero` ruleset (lines 2353-2367) with:
 
-### Out of scope
-- No changes to other steps, no changes to the Home page, no backend changes.
+```css
+.rally-scan-hero {
+  position: relative;
+  z-index: 70;
+  opacity: 1 !important;
+  isolation: isolate;
+  filter: drop-shadow(0 0 24px rgba(244, 122, 25, 0.85))
+          drop-shadow(0 0 48px rgba(244, 122, 25, 0.45));
+  animation: rallyHeroBreath 1800ms ease-in-out infinite;
+  transition: all 400ms ease-out;
+}
+
+.rally-scan-hero,
+.rally-scan-hero * {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.rally-scan-hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: inherit;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+}
+```
+
+**What must NOT change:**
+
+- `.rally-scan-hero::before` (the halo pseudo-element) stays untouched.
+- `@keyframes rallyHeroBreath` and `@keyframes rallyHeroHalo` stay untouched.
+- `.rally-backdrop-deep` stays untouched.
+- The 1800ms breathing cycle stays unchanged.
+- `TutorialOverlay.tsx`, `useTutorial.tsx`, the Create Event button component, Profile.tsx, Settings.tsx, and the bottom nav component are not modified.
+- No new packages installed. No console logs added.
+
+**Acceptance:**
+
+- On Step 3, the Create Event card renders fully bright — white background, + icon, and text are fully readable.
+- The orange breathing halo continues its 1800ms cycle around the card.
+- The rest of the page remains dimmed by the deep backdrop.
+- Continue to Step 4 cleans up styling cleanly.
+- Step 2 nav scan works with no regressions.
+- The adjacent Quick R@lly card stays dimmed and untouched.
+- No TypeScript or console errors.
