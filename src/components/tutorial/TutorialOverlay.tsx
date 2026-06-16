@@ -249,8 +249,6 @@ export function TutorialOverlay() {
 
           {/* Inline illustration mockups */}
           {currentStep.illustration === 'safety-dashboard' && <SafetyDashboardPreview />}
-          {currentStep.illustration === 'live-status' && <LiveStatusPreview />}
-          {currentStep.illustration === 'badge-ladder' && <BadgeLadderPreview />}
 
           {/* Action button for completion steps */}
           {isCompletionStep && (
