@@ -1,24 +1,22 @@
 ## Plan
 
-1. **Fix Step 3 target visibility**
-   - Stop using the generic target scroll behavior for the create-rally step, because centering the target puts the Create Event card behind the walkthrough modal.
-   - Keep Home scrolled to the top for Step 3 so the Create Event card stays in the first visible action row.
+**Goal:** Step 3 — make the real "Create Event" card fully readable (icon + label visible, not washed out by the spotlight), keep the coach modal from covering it, and update the body copy.
 
-2. **Move the Step 3 modal out of the target’s way**
-   - Add a Step 3-specific compact bottom coach card style so it sits lower and takes less vertical space on mobile.
-   - Keep the modal above the bottom nav, but reduce its height enough that the Create Event card remains visibly highlighted.
+### Changes
 
-3. **Make the real Create Event card visually break through the dark overlay**
-   - Keep the saturated lifted hero glow already added.
-   - Ensure the spotlight/cutout sits above the dark backdrop and is not visually swallowed by the modal.
+1. **Update Step 3 body copy** (`src/hooks/useTutorial.tsx`)
+   - Replace the `create-rally` step's `instruction` with:
+     > "Tap it. Name it. Drop a Location and Time. Dress code, song recs, the vibe — all yours. Then send out the invites."
 
-4. **Preserve other walkthrough steps**
-   - Leave Step 2’s bottom nav scan unchanged.
-   - Leave Steps 4, 5, 6, 7, and 8 unchanged.
-   - Keep Step 7’s SafetyDashboardPreview intact.
+2. **Stop washing out the card** (`src/components/tutorial/TutorialOverlay.tsx`)
+   - For the `create-rally` step, skip the inner radial-gradient + `animate-ping` layers that currently sit inside the spotlight box. Those layers (mixBlendMode: screen) are what's flooding the card in orange and hiding the Plus icon and "Create Event" label.
+   - Keep just the outer ambient glow, the dark cutout, and the orange ring around the card so the real card content reads clearly.
+   - Keep the existing lifted hero glow on the card itself.
 
-## Technical details
+3. **Make the coach modal compact for Step 3** (`src/components/tutorial/TutorialOverlay.tsx`)
+   - Step 3 modal is too tall and overlaps the highlighted card on 390x645 screens.
+   - Tighten only the Step 3 card: reduced padding, smaller title, smaller body, smaller Continue button — so it fits comfortably between the highlighted card and the bottom nav without covering the card.
+   - Pin Step 3 modal to `bottom-24` so it sits just above the nav, leaving room above for the spotlight.
 
-- Update only `src/components/tutorial/TutorialOverlay.tsx` and, if needed, the existing Step 3 CSS in `src/index.css`.
-- Use `currentStep.id === 'create-rally'` to scope all behavior.
-- No backend changes, no routing changes, no new components.
+### Out of scope
+- No changes to other steps, no changes to the Home page, no backend changes.

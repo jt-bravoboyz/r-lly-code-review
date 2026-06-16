@@ -48,7 +48,7 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     id: 'create-rally',
     title: 'PLAN THE MISSION',
     command: 'MISSION PLANNING',
-    instruction: "Tap Create. Name it. Drop a location. Set the time. Dress code, song recs, the vibe — all optional, all yours. Then send it. Your squad gets the call.",
+    instruction: "Tap it. Name it. Drop a Location and Time. Dress code, song recs, the vibe — all yours. Then send out the invites.",
     requiredAction: 'complete',
     position: 'above-nav',
     targetRoute: '/',
