@@ -16,7 +16,7 @@ export interface TutorialStep {
     label: string;
     route: string;
   };
-  illustration?: 'safety-dashboard' | 'create-rally' | 'inside-rally' | 'split-check';
+  illustration?: 'safety-dashboard' | 'inside-rally' | 'split-check';
   scanTargets?: string[];
 }
 
