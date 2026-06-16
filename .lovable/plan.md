@@ -1,16 +1,32 @@
-## Restart Walkthrough Button
+## Problem
 
-Add a "Restart Walkthrough" row button directly under the "View all badges & rewards" link on `/profile`.
+Several pages (Squads, Notifications, JoinRally, JoinSquad) gate their initial render on `authLoading` from `useAuth` and show a full-screen R@lly logo splash whenever that's `true`. Because `useAuth`'s `loading` flag can flip on remount/route transitions in certain scenarios (and these pages have their own per-page loaders independent of the global one), the user sees the R@lly logo screen each time they navigate to those tabs.
 
-### What to build
-- New clickable row in `src/pages/Profile.tsx`, placed immediately after the "View all badges & rewards" `<button>` block (line ~588).
-- Uses the same row styling as the badges link: `w-full flex items-center justify-between py-3 px-4 bg-muted/50 rounded-xl hover:bg-muted transition-colors`.
-- Icon: `RotateCcw` from `lucide-react`, colored `text-primary`, sized `h-5 w-5`.
-- Label: "Restart Walkthrough".
-- ChevronRight on the right, `text-muted-foreground`.
-- On click: call `startTutorial()` from `useTutorial()` (already imported/provider-wrapped), then navigate to home (`/`) so the walkthrough can run from the beginning. This resets the tutorial state (currentStepIndex = 0, isActive = true) and clears any local completion flags as needed.
+`Index.tsx` already does this correctly: it gates the full-screen `AuthLoadingState` on `!hasResolvedOnce && (loading || !holdComplete)` so the cinematic loader only fires on the very first auth resolution per session.
 
-### Files changed
-- `src/pages/Profile.tsx` — add row + import `RotateCcw`, add `startTutorial` from `useTutorial()`, and wire click handler.
+## Fix
 
-No other files needed. The `useTutorial` hook already exposes `startTutorial` which resets step index and activates the overlay. The existing `TutorialOverlay` and `TutorialProvider` handle the rest.
+Apply the same pattern everywhere else. Use `hasResolvedOnce` from `useAuth` so the big R@lly logo loader is only allowed on cold start; after that, render the page immediately (no loader, no flash).
+
+### Files to update
+
+1. **`src/pages/Squads.tsx`**
+   - Pull `hasResolvedOnce` from `useAuth()`.
+   - Change `if (authLoading)` → `if (!hasResolvedOnce && authLoading)`.
+
+2. **`src/pages/Notifications.tsx`**
+   - Same change: pull `hasResolvedOnce`, gate the logo loader on `!hasResolvedOnce && authLoading`.
+
+3. **`src/pages/JoinRally.tsx`** and **`src/pages/JoinSquad.tsx`**
+   - Same treatment for any `authLoading`-gated full-screen R@lly logo block (around the `rallyLogo` usages near the loader blocks).
+
+### Not changing
+
+- `src/pages/Index.tsx` — already correct.
+- `WelcomeBackOverlay` — once-per-session via `sessionStorage`, not per-navigation; leaving as-is.
+- Headers that show the small R@lly logo inline (Header.tsx, Notifications header, etc.) — those are not the full-screen loader.
+- Routing, auth logic, data fetching — untouched.
+
+### Result
+
+The full R@lly logo loading screen only appears on the very first auth resolution after app launch. Subsequent in-app navigation between Home, Squads, Notifications, Join pages, etc. renders the page immediately with no logo splash.

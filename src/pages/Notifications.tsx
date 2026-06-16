@@ -23,7 +23,7 @@ const INVITE_TYPES = ['squad_invite', 'rally_invite', 'event_invite', 'friend_re
 const ACTIONABLE_TYPES = [...INVITE_TYPES, 'friend_request', 'rally_started', 'squad_chat_unread', 'rally_chat_unread', 'chat_unread', 'dm_message'];
 
 export default function Notifications() {
-  const { profile, loading: authLoading } = useAuth();
+  const { profile, loading: authLoading, hasResolvedOnce } = useAuth();
   const { data: notifications, isLoading } = useNotifications();
   const markRead = useMarkNotificationRead();
   const markAllRead = useMarkAllNotificationsRead();
@@ -132,7 +132,7 @@ export default function Notifications() {
     }
   };
 
-  if (authLoading) {
+  if (!hasResolvedOnce && authLoading) {
     return (
       <div className="min-h-[100dvh] flex items-center justify-center bg-primary">
         <div className="flex flex-col items-center gap-4">
