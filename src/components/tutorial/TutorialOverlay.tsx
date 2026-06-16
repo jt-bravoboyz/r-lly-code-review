@@ -3,7 +3,6 @@ import { useTutorial } from '@/hooks/useTutorial';
 import { Button } from '@/components/ui/button';
 import { ChevronRight, X, Target, Shield } from 'lucide-react';
 import { SafetyDashboardPreview } from './SafetyDashboardPreview';
-import CreateRallyPreview from './CreateRallyPreview';
 
 import { LiveStatusPreview } from './LiveStatusPreview';
 import { BadgeLadderPreview } from './BadgeLadderPreview';
