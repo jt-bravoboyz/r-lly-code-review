@@ -114,12 +114,18 @@ export function TutorialOverlay() {
     ? 'top-20' 
     : currentStep.position === 'bottom' 
       ? 'bottom-32' 
-      : 'top-1/2 -translate-y-1/2';
+      : currentStep.position === 'above-nav'
+        ? 'bottom-[100px]'
+        : 'top-1/2 -translate-y-1/2';
+  const hasScan = !!currentStep.scanTargets?.length;
 
   return (
     <div className="fixed inset-0 z-[100]" onClick={handleOverlayClick}>
       {/* Dark overlay with cutout for target */}
-      <div className="absolute inset-0 bg-black/80">
+      <div
+        className="absolute left-0 right-0 top-0 bg-black/80"
+        style={{ bottom: hasScan ? 80 : 0 }}
+      >
         {targetRect && !currentStep.targetSelector?.startsWith('[data-tutorial="nav-') && (() => {
           const pad = 8;
           const margin = 16;
