@@ -59,8 +59,63 @@ export default function SplitCheckHome() {
   const [tabPayOpen, setTabPayOpen] = useState(false);
   const [cardOpen, setCardOpen] = useState(false);
   const [startTabOpen, setStartTabOpen] = useState(false);
+  const [setupHandlesOpen, setSetupHandlesOpen] = useState(false);
+
+  // Track current user's own payment handles (for banner + FAB gate)
+  const [hasMyHandle, setHasMyHandle] = useState<boolean | null>(null);
+  const [bannerDismissed, setBannerDismissed] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return window.localStorage.getItem(HANDLES_BANNER_DISMISSED_KEY) === '1';
+  });
+  const [bannerMounted, setBannerMounted] = useState(false);
+
+  const refetchMyHandles = async () => {
+    if (!meId) return;
+    const { data } = await supabase
+      .from('profiles')
+      .select('venmo_handle, cashapp_handle, paypal_handle, apple_cash_handle')
+      .eq('id', meId)
+      .maybeSingle();
+    const any = !!(
+      data?.venmo_handle ||
+      data?.cashapp_handle ||
+      data?.paypal_handle ||
+      (data as any)?.apple_cash_handle
+    );
+    setHasMyHandle(any);
+  };
+
+  useEffect(() => {
+    refetchMyHandles();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [meId]);
+
+  // Trigger banner enter animation on first render
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setBannerMounted(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+
+  const dismissBanner = () => {
+    try {
+      window.localStorage.setItem(HANDLES_BANNER_DISMISSED_KEY, '1');
+    } catch {}
+    setBannerDismissed(true);
+  };
+
+  const showHandlesBanner = hasMyHandle === false && !bannerDismissed;
 
   const handleNewTab = () => {
+    if (hasMyHandle === false) {
+      setSetupHandlesOpen(true);
+    } else {
+      setStartTabOpen(true);
+    }
+  };
+
+  const handleHandlesComplete = async () => {
+    await refetchMyHandles();
+    setSetupHandlesOpen(false);
     setStartTabOpen(true);
   };
 
