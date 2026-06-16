@@ -6,15 +6,18 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ChevronDown, Loader2, Receipt, Plus } from 'lucide-react';
+import { ChevronDown, Loader2, Receipt, Plus, Wallet, X } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { TabPaySheet } from '@/components/payments/TabPaySheet';
 import { PaySplitShareDialog } from '@/components/payments/PaySplitShareDialog';
 import { SettlementConfirmCard } from '@/components/payments/SettlementConfirmCard';
 import { StartTabDialog } from '@/components/payments/StartTabDialog';
+import { SetupHandlesSheet } from '@/components/payments/SetupHandlesSheet';
 import { SplitCheckSettlementPanel } from '@/components/events/SplitCheckSettlementPanel';
 import { useTabSettlements, type TabSettlement } from '@/hooks/useTabSettlements';
+
+const HANDLES_BANNER_DISMISSED_KEY = 'rally-handles-banner-dismissed';
 
 interface OwedRow {
   targetId: string;
@@ -56,8 +59,63 @@ export default function SplitCheckHome() {
   const [tabPayOpen, setTabPayOpen] = useState(false);
   const [cardOpen, setCardOpen] = useState(false);
   const [startTabOpen, setStartTabOpen] = useState(false);
+  const [setupHandlesOpen, setSetupHandlesOpen] = useState(false);
+
+  // Track current user's own payment handles (for banner + FAB gate)
+  const [hasMyHandle, setHasMyHandle] = useState<boolean | null>(null);
+  const [bannerDismissed, setBannerDismissed] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return window.localStorage.getItem(HANDLES_BANNER_DISMISSED_KEY) === '1';
+  });
+  const [bannerMounted, setBannerMounted] = useState(false);
+
+  const refetchMyHandles = async () => {
+    if (!meId) return;
+    const { data } = await supabase
+      .from('profiles')
+      .select('venmo_handle, cashapp_handle, paypal_handle, apple_cash_handle')
+      .eq('id', meId)
+      .maybeSingle();
+    const any = !!(
+      data?.venmo_handle ||
+      data?.cashapp_handle ||
+      data?.paypal_handle ||
+      (data as any)?.apple_cash_handle
+    );
+    setHasMyHandle(any);
+  };
+
+  useEffect(() => {
+    refetchMyHandles();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [meId]);
+
+  // Trigger banner enter animation on first render
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setBannerMounted(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+
+  const dismissBanner = () => {
+    try {
+      window.localStorage.setItem(HANDLES_BANNER_DISMISSED_KEY, '1');
+    } catch {}
+    setBannerDismissed(true);
+  };
+
+  const showHandlesBanner = hasMyHandle === false && !bannerDismissed;
 
   const handleNewTab = () => {
+    if (hasMyHandle === false) {
+      setSetupHandlesOpen(true);
+    } else {
+      setStartTabOpen(true);
+    }
+  };
+
+  const handleHandlesComplete = async () => {
+    await refetchMyHandles();
+    setSetupHandlesOpen(false);
     setStartTabOpen(true);
   };
 
@@ -290,6 +348,46 @@ export default function SplitCheckHome() {
           </div>
         </div>
 
+        {showHandlesBanner && (
+          <div
+            className="relative rounded-2xl bg-card/60 border border-white/10 backdrop-blur-xl px-4 py-3 flex items-center gap-3 transition-all duration-200 ease-out"
+            style={{
+              WebkitBackdropFilter: 'blur(20px)',
+              opacity: bannerMounted ? 1 : 0,
+              transform: bannerMounted ? 'translateY(0)' : 'translateY(-8px)',
+            }}
+          >
+            <div className="h-10 w-10 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
+              <Wallet className="h-5 w-5 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0 pr-2">
+              <p className="text-sm font-semibold font-montserrat truncate">
+                Add a payment handle so friends can pay you back
+              </p>
+              <p className="text-xs text-muted-foreground truncate">
+                Venmo, CashApp, PayPal, or Apple Cash
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSetupHandlesOpen(true)}
+              className="text-primary font-montserrat font-semibold text-sm px-2 py-2 shrink-0"
+            >
+              Set Up
+            </button>
+            <button
+              type="button"
+              onClick={dismissBanner}
+              aria-label="Dismiss"
+              className="absolute -top-2 -right-2 h-11 w-11 flex items-center justify-center"
+            >
+              <span className="h-7 w-7 rounded-full bg-card border border-white/10 flex items-center justify-center shadow-sm">
+                <X className="h-3.5 w-3.5 text-muted-foreground" />
+              </span>
+            </button>
+          </div>
+        )}
+
         <Tabs defaultValue="owe" className="w-full">
           <TabsList className="grid grid-cols-2 w-full bg-card/60 border border-white/10 rounded-xl">
             <TabsTrigger value="owe" className="rounded-lg font-montserrat font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-[0_0_12px_rgba(244,122,25,0.4)]">You Owe</TabsTrigger>
@@ -399,6 +497,13 @@ export default function SplitCheckHome() {
         onOpenChange={setStartTabOpen}
         onCreated={() => { refetch(); setStartTabOpen(false); }}
       />
+
+      <SetupHandlesSheet
+        open={setupHandlesOpen}
+        onOpenChange={setSetupHandlesOpen}
+        onComplete={handleHandlesComplete}
+      />
+
 
       <BottomNav />
     </div>
