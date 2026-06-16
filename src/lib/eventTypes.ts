@@ -7,6 +7,7 @@ export const EVENT_TYPES = [
   { value: 'pre_game', label: 'Pre-Game', icon: 'Flag', emoji: null, vibe: 'orange' },
   { value: 'party', label: 'Party', icon: 'PartyPopper', emoji: '🎉', vibe: 'purple' },
   { value: 'bar', label: 'Bar / Club', icon: 'Wine', emoji: '🍸', vibe: 'orange' },
+  { value: 'bar_hop', label: 'Bar Hop', icon: 'Beer', emoji: '🍻', vibe: 'orange' },
   { value: 'happy_hour', label: 'Happy Hour', icon: 'Beer', emoji: '🍺', vibe: 'orange' },
   { value: 'dinner', label: 'Dinner', icon: 'Utensils', emoji: '🍽️', vibe: 'default' },
   { value: 'brunch', label: 'Brunch', icon: 'Coffee', emoji: '🥂', vibe: 'green' },

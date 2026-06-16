@@ -31,6 +31,7 @@ import Squads from "./pages/Squads";
 import SquadDetail from "./pages/SquadDetail";
 import Achievements from "./pages/Achievements";
 import JoinRally from "./pages/JoinRally";
+import Friends from "./pages/Friends";
 import JoinSquad from "./pages/JoinSquad";
 import Legal from "./pages/Legal";
 import Settings from "./pages/Settings";
@@ -82,6 +83,7 @@ const App = () => (
                       <Route path="/events/:id" element={<EventDetail />} />
                       <Route path="/join" element={<JoinRally />} />
                       <Route path="/join/:code" element={<JoinRally />} />
+                      <Route path="/friends" element={<Friends />} />
                       <Route path="/rides" element={<Rides />} />
                       <Route path="/chat" element={<Chat />} />
                       <Route path="/profile" element={<Profile />} />

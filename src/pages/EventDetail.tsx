@@ -65,6 +65,9 @@ import { SafetyCloseoutDialog } from '@/components/events/SafetyCloseoutDialog';
 import { EndRallyDialog } from '@/components/events/EndRallyDialog';
 import { EditEventLocationDialog } from '@/components/events/EditEventLocationDialog';
 import { EditEventTimeDialog } from '@/components/events/EditEventTimeDialog';
+import { EditEventDetailsDialog } from '@/components/events/EditEventDetailsDialog';
+import { CancelDeleteEventControls } from '@/components/events/CancelDeleteEventControls';
+import { AttendeeRowMenu } from '@/components/events/AttendeeRowMenu';
 import { LocationSharingModal } from '@/components/events/LocationSharingModal';
 import { SafetyChoiceModal } from '@/components/events/SafetyChoiceModal';
 import { RidesSelectionModal } from '@/components/events/RidesSelectionModal';
@@ -607,12 +610,21 @@ export default function EventDetail() {
                   </Badge>
                 )}
               </div>
-              <h1 className="text-3xl font-bold tracking-tight event-themed-title ev-ink-strong">
-                {getEventTypeEmoji(event.event_type) && (
-                  <span className="mr-1.5" style={{ WebkitTextFillColor: 'initial' }}>{getEventTypeEmoji(event.event_type)}</span>
+              <div className="flex items-start gap-2">
+                <h1 className="text-3xl font-bold tracking-tight event-themed-title ev-ink-strong flex-1 min-w-0">
+                  {getEventTypeEmoji(event.event_type) && (
+                    <span className="mr-1.5" style={{ WebkitTextFillColor: 'initial' }}>{getEventTypeEmoji(event.event_type)}</span>
+                  )}
+                  {event.title}
+                </h1>
+                {canManage && (isScheduled || isLive) && (
+                  <EditEventDetailsDialog
+                    eventId={event.id}
+                    currentTitle={event.title}
+                    currentDescription={event.description}
+                  />
                 )}
-                {event.title}
-              </h1>
+              </div>
 
               {/* Safety completion badge */}
               {isAfterRally && safetyComplete && (
@@ -890,6 +902,19 @@ export default function EventDetail() {
           {/* Pending Join Requests - Only for hosts, right below host info */}
           {canManage && <PendingJoinRequests eventId={event.id} />}
 
+          {/* Host cancel / delete controls — scheduled status only */}
+          {canManage && isScheduled && (
+            <CancelDeleteEventControls
+              eventId={event.id}
+              eventTitle={event.title}
+              inviteCount={(event.attendees ?? []).length}
+              attendeeProfileIds={(event.attendees ?? []).map((a: any) => a.profile?.id ?? a.profile_id).filter(Boolean)}
+              currentProfileId={activeProfile?.id}
+            />
+          )}
+
+
+
 
           {/* Primary Action Bar */}
           {!isCreator && !isAttending && (
@@ -1115,6 +1140,9 @@ export default function EventDetail() {
                     {event.attendees.map((attendee) => {
                       const isDD = attendee.is_dd || eventDDs?.some(dd => dd.profile_id === attendee.profile?.id);
                       const targetId = (attendee as any).profile_id ?? attendee.profile?.id;
+                      const isThisHost = targetId === event.creator?.id;
+                      const isThisCohost = cohosts?.some(c => c.profile_id === targetId) ?? false;
+                      const canManageRow = canManage && !!targetId && !isThisHost && !isThisCohost;
                       return (
                         <ProfileTapWrapper key={attendee.id} profileId={targetId}>
                           <div className="flex flex-col items-center gap-1 relative">
@@ -1128,6 +1156,15 @@ export default function EventDetail() {
                               <div className="absolute -top-1 -right-1 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
                                 <Car className="h-3 w-3 text-primary-foreground" />
                               </div>
+                            )}
+                            {canManageRow && (
+                              <AttendeeRowMenu
+                                eventId={event.id}
+                                eventTitle={event.title}
+                                hostName={activeProfile?.display_name || 'The host'}
+                                attendeeProfileId={targetId}
+                                attendeeName={attendee.profile?.display_name || 'attendee'}
+                              />
                             )}
                             <span className="text-xs text-muted-foreground truncate max-w-16">
                               {attendee.profile?.display_name}
@@ -1168,29 +1205,31 @@ export default function EventDetail() {
             )}
 
             {/* Bar Hop Stops - Show only in After R@lly when bar hop mode is enabled */}
-            {isAfterRally && event.is_barhop && (
+            {/* Bar Hop Stops - planning (scheduled) and live After R@lly */}
+            {(isAfterRally || isScheduled) && event.is_barhop && (
               <>
-                {/* Bar Hop Controls - Host can move between stops */}
-                <BarHopControls
-                  eventId={event.id}
-                  stops={event.stops || []}
-                  canManage={canManage}
-                  hostName={activeProfile?.display_name || 'Host'}
-                  onTransitionPoint={() => {
-                    setIsBarHopTransitionPoint(true);
-                    setTimeout(() => setIsBarHopTransitionPoint(false), 1000);
-                    const stops: any[] = (event as any).stops ?? [];
-                    const currentIdx = stops.findIndex((s: any) => s.is_current);
-                    const idx = currentIdx >= 0 ? currentIdx : 0;
-                    updateToBarHop({
-                      currentStopNumber: idx + 1,
-                      totalStops: stops.length,
-                      nextStopName: stops[idx + 1]?.name,
-                    });
-                  }}
-                />
+                {isAfterRally && (
+                  <BarHopControls
+                    eventId={event.id}
+                    stops={event.stops || []}
+                    canManage={canManage}
+                    hostName={activeProfile?.display_name || 'Host'}
+                    onTransitionPoint={() => {
+                      setIsBarHopTransitionPoint(true);
+                      setTimeout(() => setIsBarHopTransitionPoint(false), 1000);
+                      const stops: any[] = (event as any).stops ?? [];
+                      const currentIdx = stops.findIndex((s: any) => s.is_current);
+                      const idx = currentIdx >= 0 ? currentIdx : 0;
+                      updateToBarHop({
+                        currentStopNumber: idx + 1,
+                        totalStops: stops.length,
+                        nextStopName: stops[idx + 1]?.name,
+                      });
+                    }}
+                  />
+                )}
 
-                {/* Full Stop Manager with reorder, remove, ETA */}
+                {/* Full Stop Manager — host can edit; attendees see read-only list */}
                 <BarHopStopManager
                   eventId={event.id}
                   stops={event.stops || []}
@@ -1199,9 +1238,9 @@ export default function EventDetail() {
               </>
             )}
 
-            {/* Bar Hop Map - Show only in After R@lly when stops have coordinates */}
-            {isAfterRally && event.is_barhop && event.stops && event.stops.length > 0 && (
-              <BarHopStopsMap 
+            {/* Bar Hop Map - render whenever stops have coordinates */}
+            {event.is_barhop && event.stops && event.stops.length > 0 && (isAfterRally || isScheduled) && (
+              <BarHopStopsMap
                 stops={event.stops}
                 eventLocation={{
                   lat: event.location_lat,

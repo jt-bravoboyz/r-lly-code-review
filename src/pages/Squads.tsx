@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { useAuth } from '@/hooks/useAuth';
 import { useAllMySquads, Squad } from '@/hooks/useSquads';
@@ -6,17 +7,47 @@ import { CreateSquadDialog } from '@/components/squads/CreateSquadDialog';
 import { ContactsTab } from '@/components/squads/ContactsTab';
 import { PendingSquadInvites } from '@/components/squads/PendingSquadInvites';
 import { DirectMessagesList } from '@/components/chat/DirectMessagesList';
+import { FriendsList } from '@/components/friends/FriendsList';
 import { Header } from '@/components/layout/Header';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, Sparkles, Contact, MessageCircle } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Users, Sparkles, Contact, MessageCircle, UserCheck } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { usePendingFriendRequestCount } from '@/hooks/usePendingFriendRequests';
 import rallyLogo from '@/assets/rally-logo.png';
+
+const VALID_TABS = ['squads', 'friends', 'messages', 'contacts'] as const;
+type TabValue = typeof VALID_TABS[number];
 
 export default function Squads() {
   const { profile, loading: authLoading, hasResolvedOnce } = useAuth();
   const { data: squads, isLoading } = useAllMySquads();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { data: pendingFriendCount = 0 } = usePendingFriendRequestCount();
+
+  const initialTab = (() => {
+    const t = searchParams.get('tab');
+    return t && (VALID_TABS as readonly string[]).includes(t) ? (t as TabValue) : 'squads';
+  })();
+  const [tab, setTab] = useState<TabValue>(initialTab);
+
+  // Sync URL tab param if changed externally
+  useEffect(() => {
+    const t = searchParams.get('tab');
+    if (t && (VALID_TABS as readonly string[]).includes(t) && t !== tab) {
+      setTab(t as TabValue);
+    }
+  }, [searchParams, tab]);
+
+  const handleTabChange = (next: string) => {
+    const v = (VALID_TABS as readonly string[]).includes(next) ? (next as TabValue) : 'squads';
+    setTab(v);
+    const params = new URLSearchParams(searchParams);
+    if (v === 'squads') params.delete('tab');
+    else params.set('tab', v);
+    setSearchParams(params, { replace: true });
+  };
 
   if (!hasResolvedOnce && authLoading) {
     return (
@@ -36,7 +67,6 @@ export default function Squads() {
 
   return (
     <div className="min-h-[100dvh] pb-bottom-nav bg-gradient-to-b from-secondary/30 via-background to-secondary/20 relative overflow-hidden">
-      {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 -right-20 w-60 h-60 bg-primary/5 rounded-full blur-3xl animate-pulse" />
         <div className="absolute top-1/2 -left-20 w-80 h-80 bg-primary/5 rounded-full blur-3xl" />
@@ -46,27 +76,33 @@ export default function Squads() {
       <Header title="Squads" icon={<Users className="h-5 w-5" strokeWidth={2.5} />} />
 
       <main className="px-4 py-6 relative z-10">
-        <Tabs defaultValue="squads" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-6 bg-white/80 backdrop-blur-sm rounded-xl p-1">
-            <TabsTrigger value="squads" className="rounded-lg font-montserrat data-[state=active]:bg-primary data-[state=active]:text-white">
-              <Users className="h-4 w-4 mr-1.5" />
+        <Tabs value={tab} onValueChange={handleTabChange} className="w-full">
+          <TabsList className="grid w-full grid-cols-4 mb-6 bg-white/80 backdrop-blur-sm rounded-xl p-1">
+            <TabsTrigger value="squads" className="rounded-lg font-montserrat text-xs data-[state=active]:bg-primary data-[state=active]:text-white">
+              <Users className="h-4 w-4 mr-1" />
               Squads
             </TabsTrigger>
-            <TabsTrigger value="messages" className="rounded-lg font-montserrat data-[state=active]:bg-primary data-[state=active]:text-white">
-              <MessageCircle className="h-4 w-4 mr-1.5" />
+            <TabsTrigger value="friends" className="relative rounded-lg font-montserrat text-xs data-[state=active]:bg-primary data-[state=active]:text-white">
+              <UserCheck className="h-4 w-4 mr-1" />
+              Friends
+              {pendingFriendCount > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center">
+                  {pendingFriendCount > 9 ? '9+' : pendingFriendCount}
+                </span>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="messages" className="rounded-lg font-montserrat text-xs data-[state=active]:bg-primary data-[state=active]:text-white">
+              <MessageCircle className="h-4 w-4 mr-1" />
               DMs
             </TabsTrigger>
-            <TabsTrigger value="contacts" className="rounded-lg font-montserrat data-[state=active]:bg-primary data-[state=active]:text-white">
-              <Contact className="h-4 w-4 mr-1.5" />
+            <TabsTrigger value="contacts" className="rounded-lg font-montserrat text-xs data-[state=active]:bg-primary data-[state=active]:text-white">
+              <Contact className="h-4 w-4 mr-1" />
               Contacts
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="squads" className="space-y-6 animate-fade-in">
-
-            {/* Pending squad invites addressed to current user */}
             <PendingSquadInvites />
-
 
             <div className="flex items-center justify-between">
               <div>
@@ -79,7 +115,6 @@ export default function Squads() {
               <CreateSquadDialog />
             </div>
 
-            {/* Squads list */}
             {isLoading ? (
               <div className="space-y-4">
                 {[1, 2, 3].map((i) => (
@@ -109,6 +144,10 @@ export default function Squads() {
                 </CardContent>
               </Card>
             )}
+          </TabsContent>
+
+          <TabsContent value="friends" className="animate-fade-in">
+            <FriendsList />
           </TabsContent>
 
           <TabsContent value="messages" className="space-y-4 animate-fade-in">
