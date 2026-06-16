@@ -902,6 +902,19 @@ export default function EventDetail() {
           {/* Pending Join Requests - Only for hosts, right below host info */}
           {canManage && <PendingJoinRequests eventId={event.id} />}
 
+          {/* Host cancel / delete controls — scheduled status only */}
+          {canManage && isScheduled && (
+            <CancelDeleteEventControls
+              eventId={event.id}
+              eventTitle={event.title}
+              inviteCount={(event.attendees ?? []).length}
+              attendeeProfileIds={(event.attendees ?? []).map((a: any) => a.profile?.id ?? a.profile_id).filter(Boolean)}
+              currentProfileId={activeProfile?.id}
+            />
+          )}
+
+
+
 
           {/* Primary Action Bar */}
           {!isCreator && !isAttending && (
