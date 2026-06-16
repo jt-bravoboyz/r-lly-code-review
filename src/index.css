@@ -2352,18 +2352,29 @@ body.native {
 /* HERO HIGHLIGHT — for single-target steps that need persistent dramatic focus */
 .rally-scan-hero {
   position: relative;
-  z-index: 60;
+  z-index: 70;
   opacity: 1 !important;
-  transform: scale(1.06) translateY(-4px);
-  transform-origin: center;
-  will-change: transform, filter;
-  filter:
-    drop-shadow(0 0 4px rgba(255, 235, 200, 0.95))
-    drop-shadow(0 0 18px rgba(255, 140, 40, 1))
-    drop-shadow(0 0 36px rgba(244, 122, 25, 0.95))
-    drop-shadow(0 14px 28px rgba(0, 0, 0, 0.55));
+  isolation: isolate;
+  filter: drop-shadow(0 0 24px rgba(244, 122, 25, 0.85))
+          drop-shadow(0 0 48px rgba(244, 122, 25, 0.45));
   animation: rallyHeroBreath 1800ms ease-in-out infinite;
-  transition: transform 400ms ease-out, filter 400ms ease-out;
+  transition: all 400ms ease-out;
+}
+
+.rally-scan-hero,
+.rally-scan-hero * {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.rally-scan-hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: inherit;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
 }
 
 .rally-scan-hero::before {
