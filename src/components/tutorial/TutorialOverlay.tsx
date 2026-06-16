@@ -250,7 +250,6 @@ export function TutorialOverlay() {
 
           {/* Inline illustration mockups */}
           {currentStep.illustration === 'safety-dashboard' && <SafetyDashboardPreview />}
-          {currentStep.illustration === 'command-center' && <CommandCenterPreview />}
 
           {/* Action button for completion steps */}
           {isCompletionStep && (
