@@ -2348,3 +2348,57 @@ body.native {
   opacity: 0.85;
   transition: all 400ms ease-out;
 }
+
+/* HERO HIGHLIGHT — for single-target steps that need persistent dramatic focus */
+.rally-scan-hero {
+  position: relative;
+  z-index: 60;
+  opacity: 1 !important;
+  filter: drop-shadow(0 0 24px rgba(244, 122, 25, 0.85))
+          drop-shadow(0 0 48px rgba(244, 122, 25, 0.45));
+  animation: rallyHeroBreath 1800ms ease-in-out infinite;
+  transition: all 400ms ease-out;
+}
+
+.rally-scan-hero::before {
+  content: '';
+  position: absolute;
+  inset: -12px;
+  border-radius: 20px;
+  background: radial-gradient(
+    circle at center,
+    rgba(244, 122, 25, 0.25) 0%,
+    rgba(244, 122, 25, 0.08) 50%,
+    transparent 80%
+  );
+  z-index: -1;
+  animation: rallyHeroHalo 1800ms ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes rallyHeroBreath {
+  0%, 100% {
+    filter: drop-shadow(0 0 24px rgba(244, 122, 25, 0.85))
+            drop-shadow(0 0 48px rgba(244, 122, 25, 0.45));
+  }
+  50% {
+    filter: drop-shadow(0 0 32px rgba(244, 122, 25, 1.0))
+            drop-shadow(0 0 64px rgba(244, 122, 25, 0.6));
+  }
+}
+
+@keyframes rallyHeroHalo {
+  0%, 100% {
+    opacity: 0.8;
+    transform: scale(1.0);
+  }
+  50% {
+    opacity: 1.0;
+    transform: scale(1.08);
+  }
+}
+
+/* DEEP BACKDROP — for Step 3's cinematic spotlight effect */
+.rally-backdrop-deep {
+  background: rgba(0, 0, 0, 0.88) !important;
+}
