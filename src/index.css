@@ -2377,6 +2377,53 @@ body.native {
   pointer-events: none;
 }
 
+.rally-scan-hero {
+  background-color: #FFFFFF !important;
+  border-color: #FFFFFF !important;
+}
+
+.rally-scan-hero > *,
+.rally-scan-hero > * > *,
+.rally-scan-hero > * > * > * {
+  filter: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.rally-scan-hero [class*="bg-orange"],
+.rally-scan-hero [class*="bg-[#F"],
+.rally-scan-hero [class*="bg-amber"],
+.rally-scan-hero [class*="bg-peach"] {
+  background-color: #FFEDD5 !important;
+}
+
+.rally-scan-hero svg,
+.rally-scan-hero [class*="text-orange"],
+.rally-scan-hero [class*="text-[#F4"] {
+  color: #F47A19 !important;
+  fill: #F47A19 !important;
+  stroke: #F47A19 !important;
+}
+
+.rally-scan-hero [class*="text-foreground"],
+.rally-scan-hero [class*="text-black"],
+.rally-scan-hero [class*="text-slate"],
+.rally-scan-hero [class*="text-gray-9"],
+.rally-scan-hero [class*="text-zinc-9"],
+.rally-scan-hero h1,
+.rally-scan-hero h2,
+.rally-scan-hero h3,
+.rally-scan-hero p,
+.rally-scan-hero span,
+.rally-scan-hero div {
+  color: #1F2937;
+}
+
+.rally-scan-hero > div > span:not([class*="text-orange"]):not([class*="text-[#F4"]),
+.rally-scan-hero > div > p:not([class*="text-orange"]):not([class*="text-[#F4"]) {
+  color: #1F2937 !important;
+}
+
 .rally-scan-hero::before {
   content: '';
   position: absolute;
