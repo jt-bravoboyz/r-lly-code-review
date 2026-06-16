@@ -310,16 +310,16 @@ export function TutorialOverlay() {
         onClick={(e) => e.stopPropagation()}
       >
         <div 
-          className="rounded-2xl p-6 border shadow-2xl max-w-md mx-auto"
+          className={`rounded-2xl border shadow-2xl max-w-md mx-auto ${isCreateRally ? 'p-4' : 'p-6'}`}
           style={{
             background: 'linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%)',
             borderColor: 'rgba(255, 106, 0, 0.3)',
           }}
         >
           {/* Mission badge */}
-          <div className="flex items-center gap-2 mb-3">
+          <div className={`flex items-center gap-2 ${isCreateRally ? 'mb-2' : 'mb-3'}`}>
             <div 
-              className="w-8 h-8 rounded-full flex items-center justify-center"
+              className={`${isCreateRally ? 'w-7 h-7' : 'w-8 h-8'} rounded-full flex items-center justify-center`}
               style={{ background: 'linear-gradient(135deg, #FF6A00 0%, #FF8C42 100%)' }}
             >
               {currentStepIndex === totalSteps - 1 ? (
@@ -337,12 +337,12 @@ export function TutorialOverlay() {
           </div>
 
           {/* Title */}
-          <h2 className="text-xl font-bold text-white mb-3 font-montserrat">
+          <h2 className={`font-bold text-white font-montserrat ${isCreateRally ? 'text-base mb-1.5' : 'text-xl mb-3'}`}>
             {currentStep.title}
           </h2>
 
           {/* Instruction */}
-          <p className="text-white/70 mb-4 leading-relaxed">
+          <p className={`text-white/70 leading-relaxed ${isCreateRally ? 'text-sm mb-3' : 'mb-4'}`}>
             {currentStep.instruction}
           </p>
 
@@ -353,7 +353,7 @@ export function TutorialOverlay() {
           {isCompletionStep && (
             <Button
               onClick={() => completeAction('complete')}
-              className="w-full h-12 rounded-full font-bold text-base group transition-all duration-300"
+              className={`w-full rounded-full font-bold group transition-all duration-300 ${isCreateRally ? 'h-10 text-sm' : 'h-12 text-base'}`}
               style={{
                 background: 'linear-gradient(135deg, #FF6A00 0%, #FF8C42 100%)',
                 color: '#FFFFFF',
