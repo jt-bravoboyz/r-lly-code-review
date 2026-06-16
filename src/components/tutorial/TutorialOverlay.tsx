@@ -3,7 +3,7 @@ import { useTutorial } from '@/hooks/useTutorial';
 import { Button } from '@/components/ui/button';
 import { ChevronRight, X, Target, Shield } from 'lucide-react';
 import { SafetyDashboardPreview } from './SafetyDashboardPreview';
-import CommandCenterPreview from './CommandCenterPreview';
+
 import { LiveStatusPreview } from './LiveStatusPreview';
 import { BadgeLadderPreview } from './BadgeLadderPreview';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -81,6 +81,52 @@ export function TutorialOverlay() {
     }
   }, [location.pathname, currentStep, completeAction]);
 
+  // Sequential scan highlight across real DOM targets (e.g., bottom nav)
+  useEffect(() => {
+    if (!isActive || !currentStep?.scanTargets?.length) return;
+    const selectors = currentStep.scanTargets;
+    const timeouts: ReturnType<typeof setTimeout>[] = [];
+    const HIGHLIGHT_MS = 800;
+    const START_DELAY = 300;
+
+    const getEl = (sel: string) => document.querySelector(sel) as HTMLElement | null;
+    const clearAll = () => {
+      selectors.forEach((sel) => {
+        const el = getEl(sel);
+        if (el) {
+          el.classList.remove('rally-scan-highlight');
+          el.classList.remove('rally-scan-settled');
+        }
+      });
+    };
+
+    selectors.forEach((sel, i) => {
+      const startAt = START_DELAY + i * HIGHLIGHT_MS;
+      timeouts.push(setTimeout(() => {
+        const el = getEl(sel);
+        if (el) el.classList.add('rally-scan-highlight');
+      }, startAt));
+      timeouts.push(setTimeout(() => {
+        const el = getEl(sel);
+        if (el) el.classList.remove('rally-scan-highlight');
+      }, startAt + HIGHLIGHT_MS));
+    });
+
+    const settleAt = START_DELAY + selectors.length * HIGHLIGHT_MS;
+    timeouts.push(setTimeout(() => {
+      selectors.forEach((sel) => {
+        const el = getEl(sel);
+        if (el) el.classList.add('rally-scan-settled');
+      });
+    }, settleAt));
+
+    return () => {
+      timeouts.forEach(clearTimeout);
+      clearAll();
+    };
+  }, [isActive, currentStep]);
+
+
   // Handle click on highlighted element
   const handleOverlayClick = useCallback((e: React.MouseEvent) => {
     if (!currentStep?.targetSelector) return;
@@ -114,12 +160,18 @@ export function TutorialOverlay() {
     ? 'top-20' 
     : currentStep.position === 'bottom' 
       ? 'bottom-32' 
-      : 'top-1/2 -translate-y-1/2';
+      : currentStep.position === 'above-nav'
+        ? 'bottom-[100px]'
+        : 'top-1/2 -translate-y-1/2';
+  const hasScan = !!currentStep.scanTargets?.length;
 
   return (
     <div className="fixed inset-0 z-[100]" onClick={handleOverlayClick}>
       {/* Dark overlay with cutout for target */}
-      <div className="absolute inset-0 bg-black/80">
+      <div
+        className="absolute left-0 right-0 top-0 bg-black/80"
+        style={{ bottom: hasScan ? 80 : 0 }}
+      >
         {targetRect && !currentStep.targetSelector?.startsWith('[data-tutorial="nav-') && (() => {
           const pad = 8;
           const margin = 16;
@@ -250,7 +302,6 @@ export function TutorialOverlay() {
 
           {/* Inline illustration mockups */}
           {currentStep.illustration === 'safety-dashboard' && <SafetyDashboardPreview />}
-          {currentStep.illustration === 'command-center' && <CommandCenterPreview />}
 
           {/* Action button for completion steps */}
           {isCompletionStep && (

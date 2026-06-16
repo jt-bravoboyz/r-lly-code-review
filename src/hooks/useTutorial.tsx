@@ -11,12 +11,13 @@ export interface TutorialStep {
   targetSelector?: string;
   requiredAction: 'tap' | 'navigate' | 'scroll' | 'complete';
   targetRoute?: string;
-  position?: 'top' | 'bottom' | 'center';
+  position?: 'top' | 'bottom' | 'center' | 'above-nav';
   ctaButton?: {
     label: string;
     route: string;
   };
-  illustration?: 'safety-dashboard' | 'command-center' | 'create-rally' | 'inside-rally' | 'split-check';
+  illustration?: 'safety-dashboard' | 'create-rally' | 'inside-rally' | 'split-check';
+  scanTargets?: string[];
 }
 
 const TUTORIAL_STEPS: TutorialStep[] = [
@@ -34,8 +35,14 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     command: 'NAVIGATION TRAINING',
     instruction: "Five buttons. One mission. Home. R@lly. Alerts. Squads. Profile. Everything you need to run the night lives down there.",
     requiredAction: 'complete',
-    position: 'center',
-    illustration: 'command-center',
+    position: 'above-nav',
+    scanTargets: [
+      '[data-tutorial="nav-home"]',
+      '[data-tutorial="nav-events"]',
+      '[data-tutorial="nav-notifications"]',
+      '[data-tutorial="nav-squads"]',
+      '[data-tutorial="nav-profile"]',
+    ],
   },
   {
     id: 'create-rally',

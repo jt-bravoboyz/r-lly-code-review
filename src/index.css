@@ -2325,3 +2325,26 @@ body.native {
    .after-rally-mode already provides its own full-screen treatment. */
 .event-themed.after-rally-mode .event-themed-backdrop { display: none; }
 
+
+/* Walkthrough scan highlight (sequential nav target glow) */
+.rally-scan-highlight {
+  position: relative;
+  z-index: 60;
+  color: #F47A19 !important;
+  filter: drop-shadow(0 0 8px rgba(244, 122, 25, 0.6));
+  transition: all 400ms ease-out;
+}
+.rally-scan-highlight::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border-radius: 12px;
+  background: rgba(244, 122, 25, 0.12);
+  z-index: -1;
+  transition: all 400ms ease-out;
+}
+.rally-scan-settled {
+  color: #F47A19 !important;
+  opacity: 0.85;
+  transition: all 400ms ease-out;
+}
