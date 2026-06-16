@@ -14,11 +14,11 @@ import { useNavigate } from 'react-router-dom';
 import rallyLogo from '@/assets/rally-logo.png';
 
 export default function Squads() {
-  const { profile, loading: authLoading } = useAuth();
+  const { profile, loading: authLoading, hasResolvedOnce } = useAuth();
   const { data: squads, isLoading } = useAllMySquads();
   const navigate = useNavigate();
 
-  if (authLoading) {
+  if (!hasResolvedOnce && authLoading) {
     return (
       <div className="min-h-[100dvh] flex items-center justify-center bg-gradient-to-br from-primary via-primary to-primary/80">
         <div className="flex flex-col items-center gap-4">

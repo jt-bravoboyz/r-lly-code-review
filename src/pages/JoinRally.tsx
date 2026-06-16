@@ -39,7 +39,7 @@ interface EventPreview {
 export default function JoinRally() {
   const { code } = useParams<{ code: string }>();
   const navigate = useNavigate();
-  const { user, profile, loading: authLoading } = useAuth();
+  const { user, profile, loading: authLoading, hasResolvedOnce } = useAuth();
   
   const [event, setEvent] = useState<EventPreview | null>(null);
   const [loading, setLoading] = useState(true);
@@ -303,7 +303,7 @@ export default function JoinRally() {
   };
 
 
-  if (authLoading) {
+  if (!hasResolvedOnce && authLoading) {
     return (
       <div className="min-h-[100dvh] flex items-center justify-center bg-background">
         <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center animate-pulse">

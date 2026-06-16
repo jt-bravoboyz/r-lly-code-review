@@ -32,7 +32,7 @@ interface SquadInvite {
 export default function JoinSquad() {
   const { code } = useParams<{ code: string }>();
   const navigate = useNavigate();
-  const { user, profile, loading: authLoading } = useAuth();
+  const { user, profile, loading: authLoading, hasResolvedOnce } = useAuth();
   const [invite, setInvite] = useState<SquadInvite | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isJoining, setIsJoining] = useState(false);
@@ -178,7 +178,7 @@ export default function JoinSquad() {
     }
   };
 
-  if (authLoading) {
+  if (!hasResolvedOnce && authLoading) {
     return (
       <div className="min-h-[100dvh] flex items-center justify-center bg-background">
         <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
