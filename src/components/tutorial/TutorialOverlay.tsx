@@ -207,7 +207,7 @@ export function TutorialOverlay() {
   return (
     <div className="fixed inset-0 z-[50]" onClick={handleOverlayClick}>
       {/* Dark overlay with cutout for target */}
-      <div className="absolute inset-0 bg-black/80">
+      <div className={`absolute inset-0 bg-black/80 ${currentStep.id === 'create-rally' ? 'rally-backdrop-deep' : ''}`}>
         {targetRect && !currentStep.targetSelector?.startsWith('[data-tutorial="nav-') && (() => {
           const pad = 8;
           const margin = 16;
