@@ -166,12 +166,9 @@ export function TutorialOverlay() {
   const hasScan = !!currentStep.scanTargets?.length;
 
   return (
-    <div className="fixed inset-0 z-[100]" onClick={handleOverlayClick}>
+    <div className="fixed inset-0 z-[50]" onClick={handleOverlayClick}>
       {/* Dark overlay with cutout for target */}
-      <div
-        className="absolute left-0 right-0 top-0 bg-black/80"
-        style={{ bottom: hasScan ? 80 : 0 }}
-      >
+      <div className="absolute inset-0 bg-black/80">
         {targetRect && !currentStep.targetSelector?.startsWith('[data-tutorial="nav-') && (() => {
           const pad = 8;
           const margin = 16;

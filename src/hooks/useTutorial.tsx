@@ -33,15 +33,15 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     id: 'command-center',
     title: 'YOUR COMMAND CENTER',
     command: 'NAVIGATION TRAINING',
-    instruction: "Five buttons. One mission. Home. R@lly. Alerts. Squads. Profile. Everything you need to run the night lives down there.",
+    instruction: "Five buttons. One mission. Home. R@lly. Alerts. Wallet. Squads. Everything you need to run the night lives down there.",
     requiredAction: 'complete',
     position: 'above-nav',
     scanTargets: [
       '[data-tutorial="nav-home"]',
       '[data-tutorial="nav-events"]',
       '[data-tutorial="nav-notifications"]',
+      '[data-tutorial="nav-tabs"]',
       '[data-tutorial="nav-squads"]',
-      '[data-tutorial="nav-profile"]',
     ],
   },
   {
