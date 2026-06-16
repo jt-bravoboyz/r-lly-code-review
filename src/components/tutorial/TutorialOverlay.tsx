@@ -81,6 +81,52 @@ export function TutorialOverlay() {
     }
   }, [location.pathname, currentStep, completeAction]);
 
+  // Sequential scan highlight across real DOM targets (e.g., bottom nav)
+  useEffect(() => {
+    if (!isActive || !currentStep?.scanTargets?.length) return;
+    const selectors = currentStep.scanTargets;
+    const timeouts: ReturnType<typeof setTimeout>[] = [];
+    const HIGHLIGHT_MS = 800;
+    const START_DELAY = 300;
+
+    const getEl = (sel: string) => document.querySelector(sel) as HTMLElement | null;
+    const clearAll = () => {
+      selectors.forEach((sel) => {
+        const el = getEl(sel);
+        if (el) {
+          el.classList.remove('rally-scan-highlight');
+          el.classList.remove('rally-scan-settled');
+        }
+      });
+    };
+
+    selectors.forEach((sel, i) => {
+      const startAt = START_DELAY + i * HIGHLIGHT_MS;
+      timeouts.push(setTimeout(() => {
+        const el = getEl(sel);
+        if (el) el.classList.add('rally-scan-highlight');
+      }, startAt));
+      timeouts.push(setTimeout(() => {
+        const el = getEl(sel);
+        if (el) el.classList.remove('rally-scan-highlight');
+      }, startAt + HIGHLIGHT_MS));
+    });
+
+    const settleAt = START_DELAY + selectors.length * HIGHLIGHT_MS;
+    timeouts.push(setTimeout(() => {
+      selectors.forEach((sel) => {
+        const el = getEl(sel);
+        if (el) el.classList.add('rally-scan-settled');
+      });
+    }, settleAt));
+
+    return () => {
+      timeouts.forEach(clearTimeout);
+      clearAll();
+    };
+  }, [isActive, currentStep]);
+
+
   // Handle click on highlighted element
   const handleOverlayClick = useCallback((e: React.MouseEvent) => {
     if (!currentStep?.targetSelector) return;
