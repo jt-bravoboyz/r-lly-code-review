@@ -1,19 +1,24 @@
-## Goal
-Make the Step 3 (create-rally) "Create Event" button dramatically "pop out" of the dark backdrop with a physical lift, larger scale, and a more saturated neon orange glow.
-
 ## Plan
 
-### 1. Enhance `.rally-scan-hero` in `src/index.css`
-Add `transform: scale(1.06) translateY(-4px)` to the base class so the button physically lifts and enlarges. Push the drop-shadow values to near-neon intensity (opacity 1.0 / 0.7) and expand radii (0 0 32px, 0 0 64px). Add a white-hot inner edge via an additional `drop-shadow` or inset glow layer so the button edge reads as hot against the 88% black backdrop.
+1. **Fix Step 3 target visibility**
+   - Stop using the generic target scroll behavior for the create-rally step, because centering the target puts the Create Event card behind the walkthrough modal.
+   - Keep Home scrolled to the top for Step 3 so the Create Event card stays in the first visible action row.
 
-### 2. Enhance `@keyframes rallyHeroBreath`
-Animate `transform: scale(1.06) translateY(-4px)` → `scale(1.10) translateY(-6px)` so the button pulses larger while I need to include `will-change: transform, filter` on `.rally-scan-hero` to keep the animation smooth.
+2. **Move the Step 3 modal out of the target’s way**
+   - Add a Step 3-specific compact bottom coach card style so it sits lower and takes less vertical space on mobile.
+   - Keep the modal above the bottom nav, but reduce its height enough that the Create Event card remains visibly highlighted.
 
-### 3. Enhance `@keyframes rallyHeroHalo`
-Increase the halo gradient opacity and scale range so the radial glow behind the button expands further and reads as a stage spotlight.
+3. **Make the real Create Event card visually break through the dark overlay**
+   - Keep the saturated lifted hero glow already added.
+   - Ensure the spotlight/cutout sits above the dark backdrop and is not visually swallowed by the modal.
 
-### 4. Verify cleanup
-Confirm that `TutorialOverlay.tsx` already removes `rally-scan-hero` on step exit and on skip — no JS changes needed.
+4. **Preserve other walkthrough steps**
+   - Leave Step 2’s bottom nav scan unchanged.
+   - Leave Steps 4, 5, 6, 7, and 8 unchanged.
+   - Keep Step 7’s SafetyDashboardPreview intact.
 
-## No other files touched
-Only `src/index.css` is modified. No TypeScript, no component logic, no regressions to Steps 1/2/4/5/6/7/8.
+## Technical details
+
+- Update only `src/components/tutorial/TutorialOverlay.tsx` and, if needed, the existing Step 3 CSS in `src/index.css`.
+- Use `currentStep.id === 'create-rally'` to scope all behavior.
+- No backend changes, no routing changes, no new components.
