@@ -50,8 +50,11 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     command: 'MISSION PLANNING',
     instruction: "Tap Create. Name it. Drop a location. Set the time. Dress code, song recs, the vibe — all optional, all yours. Then send it. Your squad gets the call.",
     requiredAction: 'complete',
-    position: 'center',
-    illustration: 'create-rally',
+    position: 'above-nav',
+    targetRoute: '/',
+    scanTargets: [
+      '[data-tutorial="create-event-button"]',
+    ],
   },
   {
     id: 'inside-rally',
