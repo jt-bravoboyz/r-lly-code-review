@@ -498,6 +498,13 @@ export default function SplitCheckHome() {
         onCreated={() => { refetch(); setStartTabOpen(false); }}
       />
 
+      <SetupHandlesSheet
+        open={setupHandlesOpen}
+        onOpenChange={setSetupHandlesOpen}
+        onComplete={handleHandlesComplete}
+      />
+
+
       <BottomNav />
     </div>
   );
