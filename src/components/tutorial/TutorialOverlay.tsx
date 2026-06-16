@@ -3,6 +3,7 @@ import { useTutorial } from '@/hooks/useTutorial';
 import { Button } from '@/components/ui/button';
 import { ChevronRight, X, Target, Shield } from 'lucide-react';
 import { SafetyDashboardPreview } from './SafetyDashboardPreview';
+import CreateRallyPreview from './CreateRallyPreview';
 
 import { LiveStatusPreview } from './LiveStatusPreview';
 import { BadgeLadderPreview } from './BadgeLadderPreview';
@@ -299,6 +300,7 @@ export function TutorialOverlay() {
 
           {/* Inline illustration mockups */}
           {currentStep.illustration === 'safety-dashboard' && <SafetyDashboardPreview />}
+          {currentStep.illustration === 'create-rally' && <CreateRallyPreview />}
 
           {/* Action button for completion steps */}
           {isCompletionStep && (
