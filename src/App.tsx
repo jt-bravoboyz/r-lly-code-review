@@ -31,6 +31,7 @@ import Squads from "./pages/Squads";
 import SquadDetail from "./pages/SquadDetail";
 import Achievements from "./pages/Achievements";
 import JoinRally from "./pages/JoinRally";
+import Friends from "./pages/Friends";
 import JoinSquad from "./pages/JoinSquad";
 import Legal from "./pages/Legal";
 import Settings from "./pages/Settings";

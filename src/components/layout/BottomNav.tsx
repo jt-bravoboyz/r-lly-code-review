@@ -3,6 +3,7 @@ import { Home, Zap, Users, Bell, Receipt } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUnreadCount } from '@/hooks/useNotifications';
 import { useTutorial } from '@/hooks/useTutorial';
+import { usePendingFriendRequestCount } from '@/hooks/usePendingFriendRequests';
 
 const navItems = [
   { path: '/', icon: Home, label: 'Home', tutorialId: 'nav-home' },
@@ -15,6 +16,7 @@ const navItems = [
 export function BottomNav() {
   const location = useLocation();
   const totalUnread = useUnreadCount();
+  const { data: pendingFriendCount = 0 } = usePendingFriendRequestCount();
   const { isActive: tutorialActive, currentStep } = useTutorial();
 
   const navTargetsNav = tutorialActive && !!currentStep?.targetSelector?.startsWith('[data-tutorial="nav-');
@@ -98,6 +100,15 @@ export function BottomNav() {
                     aria-label={`${totalUnread} unread notifications`}
                   >
                     {totalUnread > 9 ? '9+' : totalUnread}
+                  </span>
+                )}
+
+                {path === '/squads' && pendingFriendCount > 0 && (
+                  <span
+                    className="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full flex items-center justify-center text-[10px] font-bold shadow-lg bg-primary text-primary-foreground"
+                    aria-label={`${pendingFriendCount} pending friend request${pendingFriendCount === 1 ? '' : 's'}`}
+                  >
+                    {pendingFriendCount > 9 ? '9+' : pendingFriendCount}
                   </span>
                 )}
               </div>
