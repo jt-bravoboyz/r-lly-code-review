@@ -198,6 +198,8 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
       startTime.setHours(hours, minutes, 0, 0);
 
       let result;
+      const isBarHopType = data.event_type === 'bar_hop';
+      const effectiveIsBarhop = data.is_barhop || isBarHopType;
       try {
         result = await createEvent.mutateAsync({
           creator_id: profile.id,
@@ -208,16 +210,16 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
           location_name: data.location_name || null,
           location_lat: data.location_lat || null,
           location_lng: data.location_lng || null,
-          is_barhop: data.is_barhop,
-          
-          cover_charge: data.cover_charge ? parseFloat(data.cover_charge) : 0,
+          is_barhop: effectiveIsBarhop,
+
+          cover_charge: isBarHopType ? 0 : (data.cover_charge ? parseFloat(data.cover_charge) : 0),
           split_check: data.split_check,
-          dress_code: data.dress_code_enabled && data.dress_code?.trim()
+          dress_code: !isBarHopType && data.dress_code_enabled && data.dress_code?.trim()
             ? data.dress_code.trim()
             : null,
-          song_recs_enabled: data.song_recs_enabled,
-          flyer_theme: flyerTheme,
-          flyer_custom_image_url: flyerCustomUrl,
+          song_recs_enabled: isBarHopType ? false : data.song_recs_enabled,
+          flyer_theme: isBarHopType ? null : flyerTheme,
+          flyer_custom_image_url: isBarHopType ? null : flyerCustomUrl,
         } as any);
       } catch (insertErr: any) {
         console.error('[CreateEvent] insert failed', {
@@ -237,6 +239,21 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
       }
 
       await joinEvent.mutateAsync({ eventId: result.id, profileId: profile.id });
+
+      // Bar Hop type: persist starting location as the first stop
+      if (isBarHopType && data.location_name?.trim()) {
+        try {
+          await (supabase as any).from('barhop_stops').insert({
+            event_id: result.id,
+            name: `Starting point — ${data.location_name.trim()}`,
+            lat: data.location_lat ?? null,
+            lng: data.location_lng ?? null,
+            stop_order: 1,
+          });
+        } catch (stopErr) {
+          console.error('Failed to seed first barhop stop:', stopErr);
+        }
+      }
 
       // Upload staged media
       if (stagedMedia.length > 0) {
