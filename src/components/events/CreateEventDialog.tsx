@@ -733,6 +733,9 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
                 )}
               </CollapsibleContent>
             </Collapsible>
+            )}
+
+
 
             {/* Send Invites */}
             <div className="space-y-4 pt-5">
