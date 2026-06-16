@@ -94,14 +94,41 @@ export function TutorialOverlay() {
   }, [location.pathname, currentStep, completeAction, navigate]);
 
   // Sequential scan highlight across real DOM targets (e.g., bottom nav)
+  // OR persistent hero highlight for single-target steps (e.g., Create Event)
   useEffect(() => {
     if (!isActive || !currentStep?.scanTargets?.length) return;
     const selectors = currentStep.scanTargets;
     const timeouts: ReturnType<typeof setTimeout>[] = [];
-    const HIGHLIGHT_MS = 800;
-    const START_DELAY = 300;
 
     const getEl = (sel: string) => document.querySelector(sel) as HTMLElement | null;
+
+    // HERO MODE: single target gets persistent breathing halo
+    if (selectors.length === 1) {
+      const sel = selectors[0];
+      let intervalId: ReturnType<typeof setInterval> | null = null;
+      const apply = () => {
+        const el = getEl(sel);
+        if (el && !el.classList.contains('rally-scan-hero')) {
+          el.classList.add('rally-scan-hero');
+        }
+      };
+      apply();
+      // Re-apply in case the element mounts after this effect runs
+      intervalId = setInterval(apply, 200);
+      timeouts.push(setTimeout(() => {
+        if (intervalId) clearInterval(intervalId);
+      }, 3000));
+      return () => {
+        timeouts.forEach(clearTimeout);
+        if (intervalId) clearInterval(intervalId);
+        const el = getEl(sel);
+        if (el) el.classList.remove('rally-scan-hero');
+      };
+    }
+
+    // SEQUENTIAL SCAN MODE: multi-target nav scan
+    const HIGHLIGHT_MS = 800;
+    const START_DELAY = 300;
     const clearAll = () => {
       selectors.forEach((sel) => {
         const el = getEl(sel);
