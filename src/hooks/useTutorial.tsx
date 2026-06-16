@@ -16,7 +16,7 @@ export interface TutorialStep {
     label: string;
     route: string;
   };
-  illustration?: 'safety-dashboard' | 'live-status' | 'badge-ladder';
+  illustration?: 'safety-dashboard' | 'command-center' | 'create-rally' | 'inside-rally' | 'split-check';
 }
 
 const TUTORIAL_STEPS: TutorialStep[] = [
