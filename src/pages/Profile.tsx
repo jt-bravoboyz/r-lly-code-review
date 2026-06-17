@@ -592,10 +592,14 @@ export default function Profile() {
         {/* Restart Walkthrough */}
         <button
           onClick={() => {
-            localStorage.removeItem('rally-tutorial-complete');
-            localStorage.removeItem('rally-walkthrough-seen');
-            navigate('/');
-            setTimeout(() => startTutorial(), 300);
+            if (user) {
+              supabase.from('profiles')
+                .update({ walkthrough_completed: false } as any)
+                .eq('user_id', user.id)
+                .then(() => {});
+            }
+            startTutorial();
+            requestAnimationFrame(() => navigate('/'));
           }}
           className="w-full flex items-center justify-between py-3 px-4 bg-muted/50 rounded-xl hover:bg-muted transition-colors"
         >
