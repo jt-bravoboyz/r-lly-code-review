@@ -18,6 +18,7 @@ import { usePublicProfile } from '@/contexts/PublicProfileContext';
 import { useRespondToFriendRequest } from '@/hooks/useFriendships';
 import { useDirectMessage } from '@/contexts/DirectMessageContext';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 const INVITE_TYPES = ['squad_invite', 'rally_invite', 'event_invite', 'friend_request'];
 const ACTIONABLE_TYPES = [...INVITE_TYPES, 'friend_request', 'rally_started', 'squad_chat_unread', 'rally_chat_unread', 'chat_unread', 'dm_message'];
@@ -117,14 +118,30 @@ export default function Notifications() {
       return;
     }
     if (notification.type === 'attendee_removed') {
-      if (data?.event_id) {
-        navigate(`/events/${data.event_id}`);
-      } else {
+      const evId = data?.event_id;
+      if (!evId) {
         toast.error('This event no longer exists.');
+        return;
       }
-    } else if (notification.type === 'event_cancelled' && data?.event_id) {
+      (async () => {
+        const { data: ev } = await (supabase as any)
+          .from('events')
+          .select('id')
+          .eq('id', evId)
+          .maybeSingle();
+        if (ev?.id) {
+          navigate(`/events/${evId}`);
+        } else {
+          toast.error('This event no longer exists.');
+        }
+      })();
+      return;
+    }
+    if (notification.type === 'event_cancelled' && data?.event_id) {
       navigate(`/events/${data.event_id}`);
-    } else if (notification.type === 'rally_started' && data?.event_id) {
+      return;
+    }
+    if (notification.type === 'rally_started' && data?.event_id) {
       navigate(`/events/${data.event_id}`);
     } else if ((notification.type === 'squad_chat_unread' || notification.type === 'rally_chat_unread' || notification.type === 'chat_unread') && data?.chat_id) {
       if (data?.event_id) {
