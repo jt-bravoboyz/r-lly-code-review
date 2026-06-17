@@ -108,12 +108,12 @@ export default function SplitCheckPreview() {
   );
 
   return (
-    <div className="border border-white/10 bg-white/5 p-2.5 my-2.5 rounded-2xl overflow-hidden">
+    <div className="border border-white/10 bg-white/5 p-3 my-3 rounded-2xl overflow-hidden">
       <div className="text-[10.5px] font-bold tracking-widest text-white/40 mb-1.5 uppercase">
         R@LLY TAB
       </div>
 
-      <div className="relative w-full h-[190px] rounded-xl bg-[#0a0a0a] border border-white/10 overflow-hidden">
+      <div className="relative w-full h-[200px] rounded-xl bg-[#0a0a0a] border border-white/10 overflow-hidden">
         {/* Receipt */}
         <div
           className="absolute inset-2 z-10 flex flex-col transition-opacity duration-300"
@@ -128,7 +128,7 @@ export default function SplitCheckPreview() {
             return (
               <div
                 key={item.key}
-                className="flex items-center justify-between py-1 text-[10.5px] transition-opacity duration-200"
+                className="flex items-center justify-between py-1.5 text-[10.5px] transition-opacity duration-200"
                 style={{ opacity: itemRowVisible[item.key] ? 1 : 0 }}
               >
                 <div className="flex items-center gap-2 min-w-0">
@@ -217,7 +217,7 @@ export default function SplitCheckPreview() {
 
         {/* Final summary */}
         <div
-          className="absolute bottom-2 left-2 right-2 z-20 rounded-xl bg-[#F47A19]/15 border border-[#F47A19]/40 p-1.5 flex items-center justify-around transition-all duration-500"
+          className="absolute bottom-2 left-2 right-2 z-20 rounded-xl bg-[#F47A19]/15 border border-[#F47A19]/40 p-2 flex items-center justify-around transition-all duration-500"
           style={{
             opacity: summaryVisible ? 1 : 0,
             transform: summaryVisible ? 'translateY(0)' : 'translateY(8px)',
