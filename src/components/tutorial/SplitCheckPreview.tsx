@@ -217,7 +217,7 @@ export default function SplitCheckPreview() {
 
         {/* Final summary */}
         <div
-          className="absolute bottom-2 left-2 right-2 z-20 rounded-xl bg-[#F47A19]/15 border border-[#F47A19]/40 p-1.5 flex items-center justify-around transition-all duration-500"
+          className="absolute bottom-2 left-2 right-2 z-20 rounded-xl bg-[#F47A19]/15 border border-[#F47A19]/40 p-2 flex items-center justify-around transition-all duration-500"
           style={{
             opacity: summaryVisible ? 1 : 0,
             transform: summaryVisible ? 'translateY(0)' : 'translateY(8px)',
