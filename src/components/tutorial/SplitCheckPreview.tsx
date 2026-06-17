@@ -108,18 +108,18 @@ export default function SplitCheckPreview() {
   );
 
   return (
-    <div className="border border-white/10 bg-white/5 p-2.5 my-3 rounded-2xl overflow-hidden">
-      <div className="text-[10px] font-bold tracking-widest text-white/40 mb-2 uppercase">
+    <div className="border border-white/10 bg-white/5 p-2 my-2 rounded-2xl overflow-hidden">
+      <div className="text-[10px] font-bold tracking-widest text-white/40 mb-1 uppercase">
         R@LLY TAB
       </div>
 
-      <div className="relative w-full h-[210px] rounded-xl bg-[#0a0a0a] border border-white/10 overflow-hidden">
+      <div className="relative w-full h-[170px] rounded-xl bg-[#0a0a0a] border border-white/10 overflow-hidden">
         {/* Receipt */}
         <div
-          className="absolute inset-2 z-10 flex flex-col transition-opacity duration-300"
+          className="absolute inset-1.5 z-10 flex flex-col transition-opacity duration-300"
           style={{ opacity: receiptVisible ? 1 : 0 }}
         >
-          <div className="text-[9px] uppercase tracking-widest text-white/40 pb-1.5 mb-1.5 border-b border-dashed border-white/15">
+          <div className="text-[9px] uppercase tracking-widest text-white/40 pb-1 mb-1 border-b border-dashed border-white/15">
             JOHNNIE MACCRACKEN'S · TONIGHT
           </div>
 
@@ -128,12 +128,12 @@ export default function SplitCheckPreview() {
             return (
               <div
                 key={item.key}
-                className="flex items-center justify-between py-1 text-[10.5px] transition-opacity duration-200"
+                className="flex items-center justify-between py-0.5 text-[10px] transition-opacity duration-200"
                 style={{ opacity: itemRowVisible[item.key] ? 1 : 0 }}
               >
-                <div className="flex items-center gap-2 min-w-0">
-                  <div className="flex -space-x-1 w-[28px] justify-start">
-                    {placed.map((p) => avatarCircle(p, 14))}
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <div className="flex -space-x-1 w-[24px] justify-start">
+                    {placed.map((p) => avatarCircle(p, 12))}
                   </div>
                   <span className="text-white/90 font-medium truncate">
                     {itemTyped[item.key] || ''}
@@ -152,7 +152,7 @@ export default function SplitCheckPreview() {
 
         {/* Avatars row above receipt (pre-drop) */}
         <div
-          className="absolute top-0.5 left-2 right-2 z-30 flex gap-1 transition-opacity duration-300"
+          className="absolute top-0.5 left-1.5 right-1.5 z-30 flex gap-1 transition-opacity duration-300"
           style={{ opacity: avatarsRowVisible && !allLanded ? 1 : 0 }}
         >
           {(['sko', 'jt', 'nick'] as Picker[]).map((p, i) => (
@@ -165,7 +165,7 @@ export default function SplitCheckPreview() {
                 transitionDelay: `${i * 100}ms`,
               }}
             >
-              {avatarCircle(p, 14)}
+              {avatarCircle(p, 12)}
             </div>
           ))}
         </div>
@@ -173,7 +173,7 @@ export default function SplitCheckPreview() {
         {/* + NEW TAB pill */}
         {tabVisible && (
           <div
-            className="absolute bottom-2 right-2 z-30 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#F47A19] text-black text-[10px] font-bold tracking-wide shadow-[0_0_12px_rgba(244,122,25,0.5)] transition-all duration-[250ms]"
+            className="absolute bottom-1.5 right-1.5 z-30 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#F47A19] text-black text-[10px] font-bold tracking-wide shadow-[0_0_12px_rgba(244,122,25,0.5)] transition-all duration-[250ms]"
             style={{
               transform: tabRipple ? 'scale(0.94)' : 'scale(1)',
               opacity: tabVisible ? 1 : 0,
@@ -187,14 +187,14 @@ export default function SplitCheckPreview() {
         {/* Snap/Upload dialog */}
         {dialogVisible && (
           <div
-            className="absolute bottom-2 left-2 right-2 z-20 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 p-2.5 flex gap-2 transition-all duration-300"
+            className="absolute bottom-1.5 left-1.5 right-1.5 z-20 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 p-2 flex gap-2 transition-all duration-300"
             style={{
               opacity: dialogGone ? 0 : 1,
               transform: dialogGone ? 'translateY(8px)' : 'translateY(0)',
             }}
           >
             <div
-              className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-[#F47A19]/20 border border-[#F47A19]/40 text-[10px] font-bold text-[#F47A19] transition-shadow duration-200"
+              className="flex-1 flex items-center justify-center gap-1.5 py-1 rounded-lg bg-[#F47A19]/20 border border-[#F47A19]/40 text-[10px] font-bold text-[#F47A19] transition-shadow duration-200"
               style={{
                 boxShadow: snapGlow ? '0 0 14px 2px rgba(244,122,25,0.7)' : 'none',
               }}
@@ -202,7 +202,7 @@ export default function SplitCheckPreview() {
               <Camera size={12} />
               SNAP
             </div>
-            <div className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-white/5 border border-white/10 text-[10px] font-bold text-white/70">
+            <div className="flex-1 flex items-center justify-center gap-1.5 py-1 rounded-lg bg-white/5 border border-white/10 text-[10px] font-bold text-white/70">
               <Upload size={12} />
               UPLOAD
             </div>
@@ -217,7 +217,7 @@ export default function SplitCheckPreview() {
 
         {/* Final summary */}
         <div
-          className="absolute bottom-2 left-2 right-2 z-20 rounded-xl bg-[#F47A19]/15 border border-[#F47A19]/40 p-1.5 flex items-center justify-around transition-all duration-500"
+          className="absolute bottom-1.5 left-1.5 right-1.5 z-20 rounded-xl bg-[#F47A19]/15 border border-[#F47A19]/40 p-1 flex items-center justify-around transition-all duration-500"
           style={{
             opacity: summaryVisible ? 1 : 0,
             transform: summaryVisible ? 'translateY(0)' : 'translateY(8px)',
@@ -226,7 +226,7 @@ export default function SplitCheckPreview() {
         >
           {SUMMARY.map((s) => (
             <div key={s.key} className="flex flex-col items-center gap-0.5">
-              {avatarCircle(s.key, 14)}
+              {avatarCircle(s.key, 12)}
               <div className="text-[9px] font-bold text-white/90">{s.name}</div>
               <div className="text-[10px] font-bold text-[#F47A19]">{s.amount}</div>
             </div>
