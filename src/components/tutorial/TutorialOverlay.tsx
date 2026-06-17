@@ -77,6 +77,28 @@ export function TutorialOverlay() {
     };
   }, [isActive, currentStep]);
 
+  // Elevate any spotlighted target above the dim overlay (z-index lift)
+  // for the entire duration of the step. Applies whenever a step has a
+  // targetSelector — separate from the hero-mode glow which is keyed off
+  // scanTargets. Re-applies on a 200ms interval to survive remounts.
+  useEffect(() => {
+    if (!isActive || !currentStep?.targetSelector) return;
+    const sel = currentStep.targetSelector;
+    const apply = () => {
+      const el = document.querySelector(sel) as HTMLElement | null;
+      if (el && !el.classList.contains('rally-tutorial-spotlight')) {
+        el.classList.add('rally-tutorial-spotlight');
+      }
+    };
+    apply();
+    const intervalId = setInterval(apply, 200);
+    return () => {
+      clearInterval(intervalId);
+      const el = document.querySelector(sel) as HTMLElement | null;
+      if (el) el.classList.remove('rally-tutorial-spotlight');
+    };
+  }, [isActive, currentStep]);
+
   // Handle navigation steps
   useEffect(() => {
     if (!currentStep?.targetRoute) return;
