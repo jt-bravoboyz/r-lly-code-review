@@ -128,7 +128,7 @@ export default function SplitCheckPreview() {
             return (
               <div
                 key={item.key}
-                className="flex items-center justify-between py-1 text-[10.5px] transition-opacity duration-200"
+                className="flex items-center justify-between py-1.5 text-[10.5px] transition-opacity duration-200"
                 style={{ opacity: itemRowVisible[item.key] ? 1 : 0 }}
               >
                 <div className="flex items-center gap-2 min-w-0">
