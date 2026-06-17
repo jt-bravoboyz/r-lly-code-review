@@ -1,80 +1,59 @@
-## Problem
-On Step 3 of the tutorial walkthrough, the Create Event button has the hero halo applied but its colors appear washed-out compared to the real Home screen. The white card,1201, peach icon tile, orange + icon, and near-black label text all look muted as if a dark overlay is bleeding through.
+# Fix: spotlighted element appears dimmed during onboarding
 
-## Solution
-Add new CSS rules below the existing `.rally-scan-hero` block in the global stylesheet. These rules force the hero element and its children to render with explicit, opaque brand colors and remove any inherited blur/brightness/saturation filters.
+## Root cause
 
-### File to modify
-- `src/index.css` — append new rules after the existing `.rally-scan-hero::after` block (after line ~2378)
+`src/components/tutorial/TutorialOverlay.tsx` adds the `.rally-scan-hero` class (which has `z-index: 70`, lifting the target above the `z-[50]` dim overlay) — but then **clears it after 3 seconds** via `setTimeout(..., 3000)` / `clearInterval`. After 3s, the Create Event card drops back beneath the overlay's `bg-black/80` layer and looks washed out. The orange spotlight ring keeps animating (it lives inside the overlay), which is why the user sees a glowing ring around a dim button.
 
-### Rules to add (exact CSS)
+A second contributor: `.rally-scan-hero` in `src/index.css` aggressively rewrites the target's `background-color` to white and forces text colors. Even while active, this makes the card look different from its normal rendering instead of "identical, just brighter".
+
+## Fix (Option B — direct z-index elevation, no portal needed)
+
+Keep all tutorial copy, flow, step order, overlay opacity, dim coverage, bottom-nav behavior, and gating untouched. Only change layering.
+
+### 1. `src/components/tutorial/TutorialOverlay.tsx`
+
+In the hero-mode branch of the `scanTargets` effect (currently lines ~111-132):
+- Replace the `.rally-scan-hero` toggle with a new lightweight class **`.rally-tutorial-spotlight`** applied to the target.
+- Remove the `setTimeout(..., 3000)` that stops re-applying the class. Keep the 200ms `setInterval` re-apply loop (so the class survives DOM remounts) for the **entire duration of the step**; only clear it in the effect's cleanup (when the step changes or tutorial ends).
+- Also apply `.rally-tutorial-spotlight` whenever `currentStep.targetSelector` is set (so spotlight elevation works on every step that highlights an element, not just Create Event). Add a small companion effect or fold into the existing target-finder effect.
+
+### 2. `src/index.css`
+
+Add the new class — purely structural, no color rewrites:
+
 ```css
-/* Force the hero element itself to render with a pure white card background */
-.rally-scan-hero {
-  background-color: #FFFFFF !important;
-  border-color: #FFFFFF !important;
-}
-
-/* Force any image, icon container, or background inside the hero element to render at full color */
-.rally-scan-hero > *,
-.rally-scan-hero > * > *,
-.rally-scan-hero > * > * > * {
-  filter: none !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
-
-/* Force the inner icon tile (the peach/cream rounded square holding the + icon) to render at brand color */
-.rally-scan-hero [class*="bg-orange"],
-.rally-scan-hero [class*="bg-[#F"],
-.rally-scan-hero [class*="bg-amber"],
-.rally-scan-hero [class*="bg-peach"] {
-  background-color: #FFEDD5 !important;
-}
-
-/* Force the + icon (orange) to render at full brand orange */
-.rally-scan-hero svg,
-.rally-scan-hero [class*="text-orange"],
-.rally-scan-hero [class*="text-[#F4"] {
-  color: #F47A19 !important;
-  fill: #F47A19 !important;
-  stroke: #F47A19 !important;
-}
-
-/* Force the "Create Event" text label to render at full near-black */
-.rally-scan-hero [class*="text-foreground"],
-.rally-scan-hero [class*="text-black"],
-.rally-scan-hero [class*="text-slate"],
-.rally-scan-hero [class*="text-gray-9"],
-.rally-scan-hero [class*="text-zinc-9"],
-.rally-scan-hero h1,
-.rally-scan-hero h2,
-.rally-scan-hero h3,
-.rally-scan-hero p,
-.rally-scan-hero span,
-.rally-scan-hero div {
-  color: #1F2937;
-}
-
-/* Override the global text color rule with !important specifically for the visible label text — leave SVG and orange-tinted text alone */
-.rally-scan-hero > div > span:not([class*="text-orange"]):not([class*="text-[#F4"]),
-.rally-scan-hero > div > p:not([class*="text-orange"]):not([class*="text-[#F4"]) {
-  color: #1F2937 !important;
+.rally-tutorial-spotlight {
+  position: relative;
+  z-index: 60;            /* above overlay z-[50], below tutorial card */
+  isolation: isolate;     /* guarantees its own stacking context */
 }
 ```
 
-### Constraints
-- Do NOT modify any existing `.rally-scan-hero`, `::before`, `::after`, `@keyframes`, `.rally-scan-highlight`, `.rally-scan-settled`, or `.rally-backdrop-deep` rules.
-- Do NOT touch `TutorialOverlay.tsx`, `useTutorial.tsx`, the Create Event button component, Profile.tsx, Settings.tsx, bottom nav, or any walkthrough logic.
-- Do NOT install new packages or add console logs.
+Leave the existing `.rally-scan-hero` rules in place for now (still used by the breathing-glow visuals on multi-step scans). We are no longer applying it in single-target hero mode, so the white-background / text recoloring side effects disappear and the Create Event card renders identical to its normal home-screen look.
 
-### Acceptance criteria
-- Step 3: Create Event card background is pure opaque white (`#FFFFFF`).
-- Inner icon tile is peach/cream (`#FFEDD5`).
-- `+` icon is fully orange (`#F47A19`).
-- "Create Event" label text is near-black (`#1F2937`) and fully readable.
-- Orange breathing halo continues its 1800ms cycle unchanged.
-- Quick R@lly card next to it stays dimmed.
-- Continue to Step 4 cleans up cleanly with no leftover overrides.
-- Step 2 nav scan still works correctly.
-- No TypeScript or console errors.
+### 3. Verify stacking order matches spec
+
+Confirm in `TutorialOverlay.tsx`:
+- Overlay root: `z-[50]`
+- Dim layer + spotlight ring: children of overlay (inherit z-50 stacking context)
+- Spotlighted element: `z-60` via new class (above overlay)
+- Tutorial command card: already inside overlay with `pointer-events-auto`; remains visually on top because it renders after the dim/ring and the card itself is opaque. No change needed.
+- Skip Training + progress bar: already `z-10` inside overlay — unchanged.
+
+The orange ring stays inside the overlay's stacking context (z-50) but is wider than the button (pad: 8), so it visibly halos around the elevated button without being occluded.
+
+## Files touched
+
+- `src/components/tutorial/TutorialOverlay.tsx` — swap hero class for `.rally-tutorial-spotlight`, remove 3s timeout, apply on every spotlight step.
+- `src/index.css` — add `.rally-tutorial-spotlight` rule.
+
+## Out of scope (do not change)
+
+Tutorial step copy, order, count, gating, completion logic, Skip Training button, progress bar, Continue CTA routing, dim overlay opacity/color, bottom-nav tutorial dimming, home-screen layout.
+
+## Acceptance
+
+- Step 3: Create Event card renders fully bright and full-color above the dim overlay, with the orange ring around it, for the entire time the step is shown (not just the first 3 seconds).
+- Every other step that has a `targetSelector` shows its target above the dim overlay at full brightness.
+- Non-spotlighted areas remain dimmed.
+- Tapping the spotlighted element still triggers its action; Continue CTA still advances the flow.

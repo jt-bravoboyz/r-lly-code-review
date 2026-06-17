@@ -107,27 +107,24 @@ export function TutorialOverlay() {
 
     const getEl = (sel: string) => document.querySelector(sel) as HTMLElement | null;
 
-    // HERO MODE: single target gets persistent breathing halo
+    // HERO MODE: single target stays elevated above the dim overlay
+    // for the entire duration of the step (no 3s cutoff).
     if (selectors.length === 1) {
       const sel = selectors[0];
-      let intervalId: ReturnType<typeof setInterval> | null = null;
       const apply = () => {
         const el = getEl(sel);
-        if (el && !el.classList.contains('rally-scan-hero')) {
-          el.classList.add('rally-scan-hero');
+        if (el && !el.classList.contains('rally-tutorial-spotlight')) {
+          el.classList.add('rally-tutorial-spotlight');
         }
       };
       apply();
-      // Re-apply in case the element mounts after this effect runs
-      intervalId = setInterval(apply, 200);
-      timeouts.push(setTimeout(() => {
-        if (intervalId) clearInterval(intervalId);
-      }, 3000));
+      // Re-apply continuously so the class survives any remount of the target
+      const intervalId = setInterval(apply, 200);
       return () => {
         timeouts.forEach(clearTimeout);
-        if (intervalId) clearInterval(intervalId);
+        clearInterval(intervalId);
         const el = getEl(sel);
-        if (el) el.classList.remove('rally-scan-hero');
+        if (el) el.classList.remove('rally-tutorial-spotlight');
       };
     }
 
