@@ -2485,3 +2485,77 @@ body.native {
 .rally-backdrop-deep {
   background: rgba(0, 0, 0, 0.88) !important;
 }
+
+/* INSIDE R@LLY PREVIEW — converging avatars (Step 4 walkthrough) */
+@keyframes rallyAvatarConverge1 {
+  0% {
+    top: 8%;
+    left: 12%;
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.7);
+  }
+  20% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  60% {
+    top: 28%;
+    left: 18%;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    top: 38%;
+    left: 35%;
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes rallyAvatarConverge2 {
+  0% {
+    top: 18%;
+    left: 88%;
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.7);
+  }
+  20% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  60% {
+    top: 28%;
+    left: 82%;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    top: 48%;
+    left: 68%;
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes rallyAvatarConverge3 {
+  0% {
+    top: 85%;
+    left: 25%;
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.7);
+  }
+  20% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  60% {
+    top: 78%;
+    left: 38%;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    top: 65%;
+    left: 42%;
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
