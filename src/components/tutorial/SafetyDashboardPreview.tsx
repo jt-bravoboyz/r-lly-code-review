@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 const MOCK_ATTENDEES = [
   { name: 'Alex', initials: 'A', status: 'Arrived Safely', dotClass: 'bg-green-500', badgeClass: 'bg-green-100 text-green-700 border-green-200' },
   { name: 'Jordan', initials: 'J', status: 'En Route', dotClass: 'bg-orange-500', badgeClass: 'bg-orange-100 text-orange-700 border-orange-200' },
-  { name: 'Sam', initials: 'S', status: 'Opted In', dotClass: 'bg-blue-500', badgeClass: 'bg-blue-100 text-blue-700 border-blue-200' },
+  { name: 'Sam', initials: 'S', status: "Hasn't Left", dotClass: 'bg-blue-500', badgeClass: 'bg-blue-100 text-blue-700 border-blue-200' },
 ];
 
 export function SafetyDashboardPreview() {
