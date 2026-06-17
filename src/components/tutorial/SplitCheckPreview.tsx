@@ -108,7 +108,7 @@ export default function SplitCheckPreview() {
   );
 
   return (
-    <div className="border border-white/10 bg-white/5 p-2 my-2 rounded-2xl overflow-hidden">
+    <div className="border border-white/10 bg-white/5 p-2.5 my-2.5 rounded-2xl overflow-hidden">
       <div className="text-[10px] font-bold tracking-widest text-white/40 mb-1 uppercase">
         R@LLY TAB
       </div>
