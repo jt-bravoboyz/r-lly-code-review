@@ -217,7 +217,7 @@ export default function SplitCheckPreview() {
 
         {/* Final summary */}
         <div
-          className="absolute bottom-1.5 left-1.5 right-1.5 z-20 rounded-xl bg-[#F47A19]/15 border border-[#F47A19]/40 p-1 flex items-center justify-around transition-all duration-500"
+          className="absolute bottom-2 left-2 right-2 z-20 rounded-xl bg-[#F47A19]/15 border border-[#F47A19]/40 p-1.5 flex items-center justify-around transition-all duration-500"
           style={{
             opacity: summaryVisible ? 1 : 0,
             transform: summaryVisible ? 'translateY(0)' : 'translateY(8px)',
@@ -226,9 +226,9 @@ export default function SplitCheckPreview() {
         >
           {SUMMARY.map((s) => (
             <div key={s.key} className="flex flex-col items-center gap-0.5">
-              {avatarCircle(s.key, 12)}
-              <div className="text-[9px] font-bold text-white/90">{s.name}</div>
-              <div className="text-[10px] font-bold text-[#F47A19]">{s.amount}</div>
+              {avatarCircle(s.key, 14)}
+              <div className="text-[10px] font-bold text-white/90">{s.name}</div>
+              <div className="text-[10.5px] font-bold text-[#F47A19]">{s.amount}</div>
             </div>
           ))}
         </div>
