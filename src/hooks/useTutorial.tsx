@@ -81,7 +81,7 @@ const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: 'split-check',
     title: 'SPLIT THE CHECK',
-    command: 'R@LLY WALLET',
+    command: 'R@LLY TAB',
     instruction: "Snap the receipt. R@lly reads it. Your squad taps what they ordered. Done. No Math. No Drama.",
     requiredAction: 'complete',
     position: 'center',
