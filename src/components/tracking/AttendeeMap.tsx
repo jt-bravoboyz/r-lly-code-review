@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createRoot, Root } from 'react-dom/client';
+import { renderToStaticMarkup } from 'react-dom/server';
+import RallyFlagPin from './RallyFlagPin';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -221,16 +223,7 @@ export function AttendeeMap({ eventId, attendees, eventLocation }: AttendeeMapPr
     if (eventLocation?.lat && eventLocation?.lng) {
       if (!eventMarkerRef.current) {
         const el = document.createElement('div');
-        el.style.position = 'relative';
-        el.style.width = '48px';
-        el.style.height = '48px';
-        el.style.pointerEvents = 'none';
-        el.innerHTML = `
-          <div style="position:absolute;top:50%;left:50%;width:48px;height:48px;border-radius:50%;border:1px solid #F47A19;box-shadow:0 0 8px rgba(244,122,25,0.5);will-change:transform,opacity;transform:translate(-50%,-50%) scale(0.5);opacity:0;animation:rally-beacon-ring 3.6s ease-out infinite;animation-delay:0s;"></div>
-          <div style="position:absolute;top:50%;left:50%;width:48px;height:48px;border-radius:50%;border:1px solid #F47A19;box-shadow:0 0 8px rgba(244,122,25,0.5);will-change:transform,opacity;transform:translate(-50%,-50%) scale(0.5);opacity:0;animation:rally-beacon-ring 3.6s ease-out infinite;animation-delay:1.2s;"></div>
-          <div style="position:absolute;top:50%;left:50%;width:48px;height:48px;border-radius:50%;border:1px solid #F47A19;box-shadow:0 0 8px rgba(244,122,25,0.5);will-change:transform,opacity;transform:translate(-50%,-50%) scale(0.5);opacity:0;animation:rally-beacon-ring 3.6s ease-out infinite;animation-delay:2.4s;"></div>
-          <img src="/logo.svg" alt="" draggable="false" style="position:absolute;top:50%;left:50%;width:44px;height:44px;border-radius:50%;transform:translate(-50%,-50%);filter:drop-shadow(0 4px 8px rgba(0,0,0,0.35));" />
-        `;
+        el.innerHTML = renderToStaticMarkup(<RallyFlagPin />);
         eventMarkerRef.current = new mapboxgl.Marker({ element: el, anchor: 'center' })
           .setLngLat([eventLocation.lng, eventLocation.lat])
           .addTo(map);
