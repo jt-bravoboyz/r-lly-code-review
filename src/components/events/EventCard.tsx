@@ -4,6 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { getEventTypeLabel } from '@/lib/eventTypes';
+import { cn } from '@/lib/utils';
 
 interface EventCardProps {
   event: {
@@ -38,7 +39,8 @@ export const EventCard = forwardRef<HTMLAnchorElement, EventCardProps>(
     const now = new Date();
     
     // Calculate if event is truly live (not completed/cancelled and within time window)
-    const isCompleted = event.status === 'completed' || event.status === 'cancelled';
+    const isCancelled = event.status === 'cancelled';
+    const isCompleted = event.status === 'completed' || isCancelled;
     const endTime = event.end_time 
       ? new Date(event.end_time) 
       : new Date(eventDate.getTime() + 4 * 60 * 60 * 1000); // Default 4 hours
@@ -46,8 +48,11 @@ export const EventCard = forwardRef<HTMLAnchorElement, EventCardProps>(
     const isLive = !isCompleted && (isWithinTimeWindow || event.status === 'live' || event.status === 'after_rally');
     
     return (
-      <Link ref={ref} to={`/events/${event.id}`}>
-        <Card className="relative bg-card/80 dark:bg-card/50 backdrop-blur-xl border border-border/50 dark:border-white/[0.08] shadow-[0_4px_20px_hsl(0_0%_0%/0.06)] dark:shadow-[0_8px_32px_hsl(0_0%_0%/0.3)] rounded-2xl overflow-hidden group hover:shadow-[0_8px_32px_hsl(0_0%_0%/0.1)] dark:hover:shadow-[0_12px_40px_hsl(0_0%_0%/0.4)] hover:border-primary/20 dark:hover:border-white/[0.12] transition-all duration-300 hover:-translate-y-1 ripple-container" style={{ WebkitBackdropFilter: 'blur(20px)' }}>
+      <Link ref={ref} to={`/events/${event.id}`} aria-label={isCancelled ? `${event.title} (cancelled)` : event.title}>
+        <Card className={cn(
+          "relative bg-card/80 dark:bg-card/50 backdrop-blur-xl border border-border/50 dark:border-white/[0.08] shadow-[0_4px_20px_hsl(0_0%_0%/0.06)] dark:shadow-[0_8px_32px_hsl(0_0%_0%/0.3)] rounded-2xl overflow-hidden group hover:shadow-[0_8px_32px_hsl(0_0%_0%/0.1)] dark:hover:shadow-[0_12px_40px_hsl(0_0%_0%/0.4)] hover:border-primary/20 dark:hover:border-white/[0.12] transition-all duration-300 hover:-translate-y-1 ripple-container",
+          isCancelled && "grayscale-[40%]"
+        )} style={{ WebkitBackdropFilter: 'blur(20px)' }}>
           {/* Shimmer overlay on hover */}
           <div className="shimmer-overlay rounded-2xl" />
           
@@ -69,7 +74,10 @@ export const EventCard = forwardRef<HTMLAnchorElement, EventCardProps>(
               <div className="flex-1 min-w-0 space-y-1.5">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <h3 className="font-bold text-base text-card-foreground truncate font-montserrat group-hover:text-primary transition-colors">
+                    <h3 className={cn(
+                      "font-bold text-base text-card-foreground truncate font-montserrat group-hover:text-primary transition-colors",
+                      isCancelled && "opacity-50 line-through"
+                    )}>
                       {event.title}
                     </h3>
                     <div className="flex items-center gap-2 mt-1 flex-wrap">
@@ -96,7 +104,12 @@ export const EventCard = forwardRef<HTMLAnchorElement, EventCardProps>(
                           {Number(event.cover_charge).toFixed(0)}
                         </span>
                       )}
-                      {isLive && (
+                      {isCancelled && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-red-500/15 text-red-400 text-[10px] font-bold border border-red-500/25 shadow-sm">
+                          Cancelled
+                        </span>
+                      )}
+                      {isLive && !isCancelled && (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-500/15 text-green-400 text-[10px] font-bold border border-green-500/20 shadow-sm">
                           <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse shadow-sm shadow-green-500/50" />
                           LIVE

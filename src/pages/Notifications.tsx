@@ -18,6 +18,7 @@ import { usePublicProfile } from '@/contexts/PublicProfileContext';
 import { useRespondToFriendRequest } from '@/hooks/useFriendships';
 import { useDirectMessage } from '@/contexts/DirectMessageContext';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 const INVITE_TYPES = ['squad_invite', 'rally_invite', 'event_invite', 'friend_request'];
 const ACTIONABLE_TYPES = [...INVITE_TYPES, 'friend_request', 'rally_started', 'squad_chat_unread', 'rally_chat_unread', 'chat_unread', 'dm_message'];
@@ -113,6 +114,30 @@ export default function Notifications() {
         navigate(`/events/${data.event_id}?pay=${data.request_id}`);
         return;
       }
+      navigate(`/events/${data.event_id}`);
+      return;
+    }
+    if (notification.type === 'attendee_removed') {
+      const evId = data?.event_id;
+      if (!evId) {
+        toast.error('This event no longer exists.');
+        return;
+      }
+      (async () => {
+        const { data: ev } = await (supabase as any)
+          .from('events')
+          .select('id')
+          .eq('id', evId)
+          .maybeSingle();
+        if (ev?.id) {
+          navigate(`/events/${evId}`);
+        } else {
+          toast.error('This event no longer exists.');
+        }
+      })();
+      return;
+    }
+    if (notification.type === 'event_cancelled' && data?.event_id) {
       navigate(`/events/${data.event_id}`);
       return;
     }
