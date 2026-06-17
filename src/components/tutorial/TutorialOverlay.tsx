@@ -230,11 +230,21 @@ export function TutorialOverlay() {
         : 'top-1/2 -translate-y-1/2';
   const hasScan = !!currentStep.scanTargets?.length;
 
+  // Selector used for the portal-based spotlight clone. Falls back to the
+  // single scanTarget for create-rally (hero mode) so any spotlighted step
+  // gets a clean foreground render.
+  const spotlightSelector =
+    currentStep.targetSelector ??
+    (currentStep.scanTargets?.length === 1 ? currentStep.scanTargets[0] : undefined);
+  const isNavTarget = spotlightSelector?.startsWith('[data-tutorial="nav-');
+  const usePortalSpotlight = !!spotlightSelector && !isNavTarget;
+
   return (
     <div className="fixed inset-0 z-[50]" onClick={handleOverlayClick}>
-      {/* Dark overlay with cutout for target */}
+      {/* Dark overlay (no in-overlay ring when using portal — the portal
+          renders its own ring above the dim, escaping stacking contexts) */}
       <div className={`absolute inset-0 bg-black/80 ${currentStep.id === 'create-rally' ? 'rally-backdrop-deep' : ''}`}>
-        {targetRect && !currentStep.targetSelector?.startsWith('[data-tutorial="nav-') && (() => {
+        {!usePortalSpotlight && targetRect && !isNavTarget && (() => {
           const pad = 8;
           const margin = 16;
           const vw = window.innerWidth;
@@ -243,12 +253,10 @@ export function TutorialOverlay() {
           const height = targetRect.height + pad * 2;
           let left = targetRect.left - pad;
           let top = targetRect.top - pad;
-          // Clamp inside viewport so the ring is fully visible
           left = Math.max(margin, Math.min(left, vw - width - margin));
           top = Math.max(margin, Math.min(top, vh - height - margin));
           return (
             <>
-              {/* Outer ambient glow behind the target */}
               <div
                 className="absolute pointer-events-none rounded-2xl"
                 style={{
@@ -262,7 +270,6 @@ export function TutorialOverlay() {
                   animation: 'tutorial-breathe 1.8s ease-in-out infinite',
                 }}
               />
-              {/* Spotlight cutout + ring */}
               <div
                 className="absolute bg-transparent border-2 border-primary rounded-lg shadow-[0_0_0_9999px_rgba(0,0,0,0.8)]"
                 style={{
@@ -275,7 +282,6 @@ export function TutorialOverlay() {
                   animation: 'tutorial-breathe 1.8s ease-in-out infinite',
                 }}
               >
-                {/* Inner light layer — skipped for create-rally so the card content stays readable */}
                 {!isCreateRally && (
                   <>
                     <div
@@ -299,6 +305,23 @@ export function TutorialOverlay() {
           );
         })()}
       </div>
+
+      {/* Portal-based spotlight: renders a clone of the target at document.body
+          so it escapes every parent stacking context and lands fully above the
+          dim overlay at full brightness. */}
+      {usePortalSpotlight && spotlightSelector && (
+        <TutorialSpotlightPortal
+          selector={spotlightSelector}
+          interactive={currentStep.requiredAction === 'tap'}
+          onTap={() => {
+            if (currentStep.requiredAction === 'tap') {
+              completeAction('tap', spotlightSelector);
+            }
+          }}
+        />
+      )}
+
+
 
 
       {/* Skip button */}
