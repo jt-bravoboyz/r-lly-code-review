@@ -173,7 +173,7 @@ export default function SplitCheckPreview() {
         {/* + NEW TAB pill */}
         {tabVisible && (
           <div
-            className="absolute bottom-1.5 right-1.5 z-30 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#F47A19] text-black text-[10px] font-bold tracking-wide shadow-[0_0_12px_rgba(244,122,25,0.5)] transition-all duration-[250ms]"
+            className="absolute bottom-2 right-2 z-30 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#F47A19] text-black text-[10.5px] font-bold tracking-wide shadow-[0_0_12px_rgba(244,122,25,0.5)] transition-all duration-[250ms]"
             style={{
               transform: tabRipple ? 'scale(0.94)' : 'scale(1)',
               opacity: tabVisible ? 1 : 0,
