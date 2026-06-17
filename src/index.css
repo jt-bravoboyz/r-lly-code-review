@@ -2349,6 +2349,15 @@ body.native {
   transition: all 400ms ease-out;
 }
 
+/* TUTORIAL SPOTLIGHT — pure z-index lift so the highlighted element
+   renders above the z-[50] dim overlay at full brightness, with no
+   color rewrites. Stays applied for the entire duration of the step. */
+.rally-tutorial-spotlight {
+  position: relative !important;
+  z-index: 60 !important;
+  isolation: isolate;
+}
+
 /* HERO HIGHLIGHT — for single-target steps that need persistent dramatic focus */
 .rally-scan-hero {
   position: relative;
