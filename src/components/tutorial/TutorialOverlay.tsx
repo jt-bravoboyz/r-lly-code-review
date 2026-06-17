@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { ChevronRight, X, Target, Shield } from 'lucide-react';
 import { SafetyDashboardPreview } from './SafetyDashboardPreview';
 import InsideRallyPreview from './InsideRallyPreview';
+import SplitCheckPreview from './SplitCheckPreview';
 import { TutorialSpotlightPortal } from './TutorialSpotlightPortal';
 
 import { LiveStatusPreview } from './LiveStatusPreview';
@@ -393,6 +394,7 @@ export function TutorialOverlay() {
           {/* Inline illustration mockups */}
           {currentStep.illustration === 'safety-dashboard' && <SafetyDashboardPreview />}
           {currentStep.illustration === 'inside-rally' && <InsideRallyPreview />}
+          {currentStep.illustration === 'split-check' && <SplitCheckPreview />}
 
           {/* Action button for completion steps */}
           {isCompletionStep && (
