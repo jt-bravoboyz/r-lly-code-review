@@ -116,7 +116,15 @@ export default function Notifications() {
       navigate(`/events/${data.event_id}`);
       return;
     }
-    if (notification.type === 'rally_started' && data?.event_id) {
+    if (notification.type === 'attendee_removed') {
+      if (data?.event_id) {
+        navigate(`/events/${data.event_id}`);
+      } else {
+        toast.error('This event no longer exists.');
+      }
+    } else if (notification.type === 'event_cancelled' && data?.event_id) {
+      navigate(`/events/${data.event_id}`);
+    } else if (notification.type === 'rally_started' && data?.event_id) {
       navigate(`/events/${data.event_id}`);
     } else if ((notification.type === 'squad_chat_unread' || notification.type === 'rally_chat_unread' || notification.type === 'chat_unread') && data?.chat_id) {
       if (data?.event_id) {
