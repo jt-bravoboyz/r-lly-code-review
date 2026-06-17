@@ -113,7 +113,7 @@ export default function SplitCheckPreview() {
         R@LLY TAB
       </div>
 
-      <div className="relative w-full h-[190px] rounded-xl bg-[#0a0a0a] border border-white/10 overflow-hidden">
+      <div className="relative w-full h-[200px] rounded-xl bg-[#0a0a0a] border border-white/10 overflow-hidden">
         {/* Receipt */}
         <div
           className="absolute inset-2 z-10 flex flex-col transition-opacity duration-300"
