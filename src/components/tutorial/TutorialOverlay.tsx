@@ -415,9 +415,17 @@ export function TutorialOverlay() {
                 color: '#FFFFFF',
               }}
             >
-              {currentStepIndex === totalSteps - 1 ? 'BEGIN MISSION' : 'CONTINUE'}
+              {currentStep.id === 'graduation' ? "LET'S R@LLY" : 'CONTINUE'}
               <ChevronRight className="h-5 w-5 ml-1 group-hover:translate-x-1 transition-transform" />
             </Button>
+            {currentStep.id === 'graduation' && (
+              <button
+                onClick={handleReplayBriefing}
+                className="w-full mt-3 py-2.5 rounded-xl border border-white/15 bg-white/[0.03] text-[12px] font-semibold tracking-wide text-white/60 hover:bg-white/5 hover:text-white/80 transition-all duration-200"
+              >
+                Replay Briefing
+              </button>
+            )}
           )}
 
           {/* CTA button for steps that have one */}
