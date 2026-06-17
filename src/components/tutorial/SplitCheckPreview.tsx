@@ -165,7 +165,7 @@ export default function SplitCheckPreview() {
                 transitionDelay: `${i * 100}ms`,
               }}
             >
-              {avatarCircle(p, 12)}
+              {avatarCircle(p, 14)}
             </div>
           ))}
         </div>
