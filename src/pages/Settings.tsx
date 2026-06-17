@@ -831,9 +831,8 @@ export default function Settings() {
             variant="outline" 
             className="w-full border-primary/30 text-primary hover:bg-primary hover:text-primary-foreground"
             onClick={() => {
-              localStorage.removeItem('rally-tutorial-complete');
-              navigate('/');
               startTutorial();
+              requestAnimationFrame(() => navigate('/'));
               toast.success('Basic training restarted!');
             }}
           >
