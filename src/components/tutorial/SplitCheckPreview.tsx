@@ -152,7 +152,7 @@ export default function SplitCheckPreview() {
 
         {/* Avatars row above receipt (pre-drop) */}
         <div
-          className="absolute top-0.5 left-1.5 right-1.5 z-30 flex gap-1 transition-opacity duration-300"
+          className="absolute top-1 left-2 right-2 z-30 flex gap-1 transition-opacity duration-300"
           style={{ opacity: avatarsRowVisible && !allLanded ? 1 : 0 }}
         >
           {(['sko', 'jt', 'nick'] as Picker[]).map((p, i) => (
