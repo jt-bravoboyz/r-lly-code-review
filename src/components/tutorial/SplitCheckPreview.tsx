@@ -187,23 +187,23 @@ export default function SplitCheckPreview() {
         {/* Snap/Upload dialog */}
         {dialogVisible && (
           <div
-            className="absolute bottom-1.5 left-1.5 right-1.5 z-20 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 p-2 flex gap-2 transition-all duration-300"
+            className="absolute bottom-2 left-2 right-2 z-20 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 p-2.5 flex gap-2 transition-all duration-300"
             style={{
               opacity: dialogGone ? 0 : 1,
               transform: dialogGone ? 'translateY(8px)' : 'translateY(0)',
             }}
           >
             <div
-              className="flex-1 flex items-center justify-center gap-1.5 py-1 rounded-lg bg-[#F47A19]/20 border border-[#F47A19]/40 text-[10px] font-bold text-[#F47A19] transition-shadow duration-200"
+              className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-[#F47A19]/20 border border-[#F47A19]/40 text-[10.5px] font-bold text-[#F47A19] transition-shadow duration-200"
               style={{
                 boxShadow: snapGlow ? '0 0 14px 2px rgba(244,122,25,0.7)' : 'none',
               }}
             >
-              <Camera size={12} />
+              <Camera size={14} />
               SNAP
             </div>
-            <div className="flex-1 flex items-center justify-center gap-1.5 py-1 rounded-lg bg-white/5 border border-white/10 text-[10px] font-bold text-white/70">
-              <Upload size={12} />
+            <div className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-white/5 border border-white/10 text-[10.5px] font-bold text-white/70">
+              <Upload size={14} />
               UPLOAD
             </div>
           </div>
