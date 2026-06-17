@@ -18,7 +18,9 @@ export function TutorialOverlay() {
     currentStepIndex, 
     totalSteps, 
     completeAction, 
-    skipTutorial 
+    skipTutorial,
+    endTutorial,
+    startTutorial
   } = useTutorial();
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
   const [targetMissing, setTargetMissing] = useState(false);
@@ -218,6 +220,13 @@ export function TutorialOverlay() {
     }
   }, [currentStep, completeAction]);
 
+  const handleReplayBriefing = () => {
+    endTutorial();
+    setTimeout(() => {
+      startTutorial();
+    }, 300);
+  };
+
   if (!isActive || !currentStep) return null;
 
   const progress = ((currentStepIndex + 1) / totalSteps) * 100;
@@ -398,17 +407,27 @@ export function TutorialOverlay() {
 
           {/* Action button for completion steps */}
           {isCompletionStep && (
-            <Button
-              onClick={() => completeAction('complete')}
-              className={`w-full rounded-full font-bold group transition-all duration-300 ${isCreateRally ? 'h-10 text-sm' : 'h-12 text-base'}`}
-              style={{
-                background: 'linear-gradient(135deg, #FF6A00 0%, #FF8C42 100%)',
-                color: '#FFFFFF',
-              }}
-            >
-              {currentStepIndex === totalSteps - 1 ? 'BEGIN MISSION' : 'CONTINUE'}
-              <ChevronRight className="h-5 w-5 ml-1 group-hover:translate-x-1 transition-transform" />
-            </Button>
+            <>
+              <Button
+                onClick={() => completeAction('complete')}
+                className={`w-full rounded-full font-bold group transition-all duration-300 ${isCreateRally ? 'h-10 text-sm' : 'h-12 text-base'}`}
+                style={{
+                  background: 'linear-gradient(135deg, #FF6A00 0%, #FF8C42 100%)',
+                  color: '#FFFFFF',
+                }}
+              >
+                {currentStep.id === 'graduation' ? "LET'S R@LLY" : 'CONTINUE'}
+                <ChevronRight className="h-5 w-5 ml-1 group-hover:translate-x-1 transition-transform" />
+              </Button>
+              {currentStep.id === 'graduation' && (
+                <button
+                  onClick={handleReplayBriefing}
+                  className="w-full mt-3 py-2.5 rounded-xl border border-white/15 bg-white/[0.03] text-[12px] font-semibold tracking-wide text-white/60 hover:bg-white/5 hover:text-white/80 transition-all duration-200"
+                >
+                  Replay Briefing
+                </button>
+              )}
+            </>
           )}
 
           {/* CTA button for steps that have one */}
