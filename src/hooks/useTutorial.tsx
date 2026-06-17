@@ -33,7 +33,7 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     id: 'command-center',
     title: 'YOUR COMMAND CENTER',
     command: 'NAVIGATION TRAINING',
-    instruction: "Five buttons. One mission. Home. R@lly. Alerts. Wallet. Squads. Everything you need to run the night lives down there.",
+    instruction: "Five buttons. One mission. Home. R@lly. Alerts. Tab. Squads. Everything you need to run the night lives down there.",
     requiredAction: 'complete',
     position: 'above-nav',
     scanTargets: [
@@ -66,16 +66,16 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     illustration: 'inside-rally',
   },
   {
-    id: 'open-wallet',
-    title: 'OPEN THE WALLET',
-    command: 'R@LLY WALLET',
-    instruction: "Every R@lly has a Wallet. Tap it.",
+    id: 'open-tab',
+    title: 'OPEN THE TAB',
+    command: 'R@LLY TAB',
+    instruction: "Every R@lly has a Tab. Tap it.",
     requiredAction: 'navigate',
     position: 'above-nav',
-    targetSelector: '[data-tutorial="nav-wallet"]',
-    targetRoute: '/wallet',
+    targetSelector: '[data-tutorial="nav-tabs"]',
+    targetRoute: '/tabs',
     scanTargets: [
-      '[data-tutorial="nav-wallet"]',
+      '[data-tutorial="nav-tabs"]',
     ],
   },
   {
