@@ -1,31 +1,64 @@
-## Problem
+# Fix: Restart Walkthrough closes immediately after starting
 
-On Step 6 of the walkthrough, the `SplitCheckPreview` mini-frame is taller than the modal can comfortably show on a 390px viewport — the final orange split summary overlaps or pushes past the receipt rows, and the modal's Continue button gets crowded.
+## What's broken
 
-The frame is currently `h-[260px]` with the receipt absolutely positioned at the top and the summary absolutely positioned at the bottom — at small text sizes they collide once all 4 item rows are visible.
+Tapping **Restart Walkthrough** on `/profile` momentarily shows Step 1 then dismisses. Root cause is a race between three things firing on the same click:
 
-## Fix (single file: `src/components/tutorial/SplitCheckPreview.tsx`)
+1. `navigate('/')` — unmounts `/profile`, mounts `Index`, which can briefly flash `AuthLoadingState` and re-evaluate auth/profile.
+2. `setTimeout(startTutorial, 300)` — fires from a closure created on the now-unmounted page.
+3. The auto-start `useEffect` inside `useTutorial` re-runs when `profile` updates after the route change. It only ever calls `startTutorial`, but combined with the timeout it makes the start point unpredictable, and `walkthrough_completed` is still `true` in the DB so the device flag is the only thing protecting us — and we just cleared it.
 
-Tighten the vertical footprint so the whole simulation fits inside ~210px:
+The result: the modal appears for a frame, gets covered by Index's loading state, and the user perceives it as "clicking off."
 
-1. **Frame height**: `h-[260px]` → `h-[210px]`.
-2. **Outer container padding**: `p-3 my-4` → `p-2.5 my-3` to reclaim modal margin.
-3. **Receipt density**:
-   - Header strip padding/margin: `pb-2 mb-2` → `pb-1.5 mb-1.5`.
-   - Item row padding: `py-1.5` → `py-1`.
-   - Item font size: `text-[11px]` → `text-[10.5px]`.
-   - Avatar circle reserved width: `w-[34px]` → `w-[28px]` and avatar size `16` → `14`.
-4. **Summary bar**:
-   - Padding: `p-2` → `p-1.5`.
-   - Avatar size: `12` → `14` (still smaller than receipt avatars, but readable).
-   - Name `text-[10px]` → `text-[9px]`, amount `text-[11px]` → `text-[10px]`.
-5. **Inset gutters**: `inset-3` → `inset-2` on receipt and `bottom-3 left-3 right-3` → `bottom-2 left-2 right-2` on the dialog/summary/new-tab pill so content has more usable height.
-6. **Pre-drop avatar row**: `top-1` → `top-0.5`, gap `gap-1` unchanged.
+## Fix
 
-No timing changes, no structural changes, no other files touched. Total sequence still ~5s, hold on final frame.
+### 1. `src/pages/Profile.tsx` — Restart Walkthrough button (around line 593)
 
-## Acceptance
+Reorder the operations so the tutorial state is set **before** navigation, and let `TutorialOverlay` ride along through the route change (it lives above `Routes`, so it survives):
 
-- On a 390×645 viewport, the entire preview (label + frame + final summary) fits inside the walkthrough modal without scrolling or clipping.
-- All animation phases still trigger at the same timestamps.
-- No other previews, steps, or files are touched.
+```tsx
+onClick={() => {
+  // Clear device + DB completion flags so auto-start logic won't fight us
+  localStorage.removeItem('rally-tutorial-complete');
+  localStorage.removeItem('rally-walkthrough-seen');
+  if (user) {
+    supabase.from('profiles')
+      .update({ walkthrough_completed: false } as any)
+      .eq('user_id', user.id)
+      .then();
+  }
+  // Start FIRST so the overlay is already mounted before the route flips
+  startTutorial();
+  // Then navigate home on the next tick so React commits the active state first
+  requestAnimationFrame(() => navigate('/'));
+}}
+```
+
+(Existing `supabase` and `user` imports are already in Profile.tsx via `useAuth`.)
+
+### 2. `src/pages/Settings.tsx` — mirror the same fix on the Settings restart entry (around line 834)
+
+Same pattern: clear localStorage + DB flag, `startTutorial()`, then `requestAnimationFrame(() => navigate('/'))`.
+
+### 3. `src/hooks/useTutorial.tsx` — make `startTutorial` self-defending
+
+Update `startTutorial` so a manual restart can't be silently suppressed:
+
+```ts
+const startTutorial = useCallback(() => {
+  localStorage.removeItem('rally-tutorial-complete');
+  localStorage.removeItem('rally-walkthrough-seen');
+  setCurrentStepIndex(0);
+  setIsActive(true);
+}, []);
+```
+
+This means future callers (and the existing two) don't have to remember to clear flags, and there's no window where the auto-start guard could re-fire and short-circuit.
+
+## Verification
+
+- Tap **Restart Walkthrough** from `/profile` → Step 1 (`WELCOME TO R@LLY`) appears and stays until **CONTINUE** is tapped.
+- Tap **Restart Walkthrough** from `/settings` → same behavior.
+- Walk through all 9 steps end-to-end without the modal disappearing between route changes (Step 5 `/tabs` transition still works).
+- After completing Step 9, `LET'S R@LLY` closes cleanly and the **Replay Briefing** button restarts from Step 1 without flicker.
+- No new TypeScript or console errors.

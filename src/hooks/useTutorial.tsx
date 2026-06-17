@@ -136,6 +136,8 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
   const currentStep = isActive ? TUTORIAL_STEPS[currentStepIndex] : null;
 
   const startTutorial = useCallback(() => {
+    localStorage.removeItem('rally-tutorial-complete');
+    localStorage.removeItem('rally-walkthrough-seen');
     setCurrentStepIndex(0);
     setIsActive(true);
   }, []);
