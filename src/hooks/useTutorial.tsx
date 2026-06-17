@@ -66,6 +66,19 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     illustration: 'inside-rally',
   },
   {
+    id: 'open-wallet',
+    title: 'OPEN THE WALLET',
+    command: 'R@LLY WALLET',
+    instruction: "Every R@lly has a Wallet. Tap it.",
+    requiredAction: 'navigate',
+    position: 'above-nav',
+    targetSelector: '[data-tutorial="nav-wallet"]',
+    targetRoute: '/wallet',
+    scanTargets: [
+      '[data-tutorial="nav-wallet"]',
+    ],
+  },
+  {
     id: 'split-check',
     title: 'SPLIT THE CHECK',
     command: 'R@LLY WALLET',
