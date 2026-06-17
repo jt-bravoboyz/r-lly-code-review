@@ -220,6 +220,13 @@ export function TutorialOverlay() {
     }
   }, [currentStep, completeAction]);
 
+  const handleReplayBriefing = () => {
+    endTutorial();
+    setTimeout(() => {
+      startTutorial();
+    }, 300);
+  };
+
   if (!isActive || !currentStep) return null;
 
   const progress = ((currentStepIndex + 1) / totalSteps) * 100;
