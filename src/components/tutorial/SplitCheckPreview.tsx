@@ -116,10 +116,10 @@ export default function SplitCheckPreview() {
       <div className="relative w-full h-[190px] rounded-xl bg-[#0a0a0a] border border-white/10 overflow-hidden">
         {/* Receipt */}
         <div
-          className="absolute inset-1.5 z-10 flex flex-col transition-opacity duration-300"
+          className="absolute inset-2 z-10 flex flex-col transition-opacity duration-300"
           style={{ opacity: receiptVisible ? 1 : 0 }}
         >
-          <div className="text-[9px] uppercase tracking-widest text-white/40 pb-1 mb-1 border-b border-dashed border-white/15">
+          <div className="text-[9.5px] uppercase tracking-widest text-white/40 pb-1.5 mb-1.5 border-b border-dashed border-white/15">
             JOHNNIE MACCRACKEN'S · TONIGHT
           </div>
 
