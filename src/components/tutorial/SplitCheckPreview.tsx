@@ -113,7 +113,8 @@ export default function SplitCheckPreview() {
         R@LLY TAB
       </div>
 
-      <div className="relative w-full h-[200px] rounded-xl bg-[#0a0a0a] border border-white/10 overflow-hidden">
+      {/* Mini Tab Frame — receipt + avatar drops */}
+      <div className="relative w-full h-[220px] rounded-xl bg-[#0a0a0a] border border-white/10 overflow-hidden">
         {/* Receipt */}
         <div
           className="absolute inset-2 z-10 flex flex-col transition-opacity duration-300"
@@ -214,24 +215,27 @@ export default function SplitCheckPreview() {
           className="absolute inset-0 z-40 bg-white pointer-events-none transition-opacity duration-200"
           style={{ opacity: flash }}
         />
+      </div>
 
-        {/* Final summary */}
-        <div
-          className="absolute bottom-2 left-2 right-2 z-20 rounded-xl bg-[#F47A19]/15 border border-[#F47A19]/40 p-2 flex items-center justify-around transition-all duration-500"
-          style={{
-            opacity: summaryVisible ? 1 : 0,
-            transform: summaryVisible ? 'translateY(0)' : 'translateY(8px)',
-            pointerEvents: summaryVisible ? 'auto' : 'none',
-          }}
-        >
-          {SUMMARY.map((s) => (
-            <div key={s.key} className="flex flex-col items-center gap-0.5">
-              {avatarCircle(s.key, 14)}
-              <div className="text-[10px] font-bold text-white/90">{s.name}</div>
-              <div className="text-[10.5px] font-bold text-[#F47A19]">{s.amount}</div>
-            </div>
-          ))}
-        </div>
+      {/* Spacer */}
+      <div className="h-2" />
+
+      {/* Final Split Summary */}
+      <div
+        className="rounded-xl bg-[#F47A19]/15 border border-[#F47A19]/40 p-2 flex items-center justify-around transition-all duration-500"
+        style={{
+          opacity: summaryVisible ? 1 : 0,
+          transform: summaryVisible ? 'translateY(0)' : 'translateY(8px)',
+          pointerEvents: summaryVisible ? 'auto' : 'none',
+        }}
+      >
+        {SUMMARY.map((s) => (
+          <div key={s.key} className="flex flex-col items-center gap-0.5">
+            {avatarCircle(s.key, 14)}
+            <div className="text-[10px] font-bold text-white/90">{s.name}</div>
+            <div className="text-[10.5px] font-bold text-[#F47A19]">{s.amount}</div>
+          </div>
+        ))}
       </div>
     </div>
   );
