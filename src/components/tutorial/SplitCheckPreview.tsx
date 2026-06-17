@@ -128,12 +128,12 @@ export default function SplitCheckPreview() {
             return (
               <div
                 key={item.key}
-                className="flex items-center justify-between py-0.5 text-[10px] transition-opacity duration-200"
+                className="flex items-center justify-between py-1 text-[10.5px] transition-opacity duration-200"
                 style={{ opacity: itemRowVisible[item.key] ? 1 : 0 }}
               >
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <div className="flex -space-x-1 w-[24px] justify-start">
-                    {placed.map((p) => avatarCircle(p, 12))}
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="flex -space-x-1 w-[28px] justify-start">
+                    {placed.map((p) => avatarCircle(p, 14))}
                   </div>
                   <span className="text-white/90 font-medium truncate">
                     {itemTyped[item.key] || ''}
