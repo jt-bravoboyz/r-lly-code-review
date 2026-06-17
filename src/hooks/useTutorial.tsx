@@ -60,7 +60,7 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     id: 'inside-rally',
     title: 'RUN THE NIGHT',
     command: 'SITUATIONAL AWARENESS',
-    instruction: "Once it's live, your squad shows up on the map. See who's arrived. Who's en route. Who's running late. Need a ride? Offer a seat, volunteer as DD, or request a pickup. No more chaos in the group chat.",
+    instruction: "Once it's live, your squad shows up on the map. See who's arrived. Who's en route. Who's running late. Need a ride? Volunteer as DD, or request a pickup.",
     requiredAction: 'complete',
     position: 'center',
     illustration: 'inside-rally',
