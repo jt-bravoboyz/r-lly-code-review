@@ -20,7 +20,7 @@ export interface TutorialStep {
     label: string;
     route: string;
   };
-  illustration?: 'safety-dashboard' | 'inside-rally' | 'split-check';
+  illustration?: 'safety-dashboard' | 'inside-rally' | 'split-check' | 'going-rogue';
   scanTargets?: string[];
 }
 
@@ -98,6 +98,7 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     instruction: "Plans change. The night moves. Hit Going Rogue and you're off-script. Your squad knows. The night keeps going. On your terms.",
     requiredAction: 'complete',
     position: 'center',
+    illustration: 'going-rogue',
   },
   {
     id: 'rally-home',
