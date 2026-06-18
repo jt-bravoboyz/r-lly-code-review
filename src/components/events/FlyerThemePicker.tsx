@@ -4,7 +4,7 @@ import { FLYER_THEMES, FLYER_THEME_KEYS, type FlyerThemeKey, getFlyerTheme } fro
 import { cn } from '@/lib/utils';
 
 export interface FlyerThemePickerProps {
-  value: FlyerThemeKey;
+  value: FlyerThemeKey | null;
   customImageUrl?: string | null;
   onChange: (key: FlyerThemeKey) => void;
   onUploadCustom?: (file: File) => Promise<void> | void;
