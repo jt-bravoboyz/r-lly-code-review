@@ -203,7 +203,7 @@ export function useCreateEvent() {
         p_split_check: (event as any).split_check ?? false,
         p_dress_code: (event as any).dress_code ?? null,
         p_song_recs_enabled: (event as any).song_recs_enabled ?? false,
-        p_flyer_theme: (event as any).flyer_theme ?? 'rally_dynamic',
+        p_flyer_theme: (event as any).flyer_theme ?? null,
         p_flyer_custom_image_url: (event as any).flyer_custom_image_url ?? null,
         p_is_quick_rally: (event as any).is_quick_rally ?? false,
       });
