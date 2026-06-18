@@ -25,7 +25,7 @@ export function BottomNav() {
     <nav
       className={cn(
         "fixed bottom-0 left-0 right-0 pb-[env(safe-area-inset-bottom)] bg-card/90 backdrop-blur-xl border-t border-border/60 shadow-[0_-4px_24px_hsl(0_0%_0%/0.06)] dark:bg-card/80 dark:border-white/[0.08] dark:shadow-[0_-8px_32px_hsl(0_0%_0%/0.4),inset_0_1px_0_hsl(0_0%_100%/0.06)]",
-        navTargetsNav ? "z-[120]" : "z-50"
+        navTargetsNav ? "z-[260]" : "z-50"
       )}
       style={{ WebkitBackdropFilter: 'blur(20px)' }}
     >
