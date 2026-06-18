@@ -127,7 +127,7 @@ export function FlyerThemePicker({
         </div>
       </div>
       <div className="text-[10px] text-muted-foreground/70">
-        Showing: <span className="font-semibold">{customImageUrl ? 'Custom photo' : getFlyerTheme(value).label}</span>
+        Showing: <span className="font-semibold">{customImageUrl ? 'Custom photo' : value ? getFlyerTheme(value).label : 'None'}</span>
       </div>
     </div>
   );
