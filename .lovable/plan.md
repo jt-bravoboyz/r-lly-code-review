@@ -1,26 +1,26 @@
 ## Problem
 
-The walkthrough auto-resets to Step 1 ("Orientation Brief") a few seconds in. Root cause is in `src/hooks/useTutorial.tsx`:
+On the boot splash, you sometimes see a plain orange/dark square instead of the R@lly flag. The CSS for the splash is inlined in `index.html` and paints immediately, but the logo `<img src="/rally-icon-192-v6.png">` is a separate HTTP request. On slow networks, cold loads, or PWA cold starts, the splash shows for a moment before the image arrives — so you see the circular stage (which reads as a square/blob of orange-tinted glow) with no flag inside it.
 
-The auto-start effect (lines 218–251) gates on `profile`, `authLoading`, `walkthrough_completed`, name setup, the `SEEN`/`COMPLETE` localStorage keys, and profile age — but **not** on `isActive`. When the tutorial starts, `startTutorial()` clears `TUTORIAL_COMPLETE_KEY` and `TUTORIAL_SEEN_KEY`, so none of those checks block re-entry.
-
-As soon as the `profile` object reference changes mid-tutorial (auth refresh, realtime update, refocus — typically within ~5s of starting), this effect re-runs, all guards pass, and it schedules `startTutorial()` again after 1200ms. That call resets `currentStepIndex` to 0, snapping the user back to the Orientation Brief.
+Preloading (`<link rel="preload" as="image">`) is already in place but it still requires a network round-trip, which is why it loses the race.
 
 ## Fix
 
-In `src/hooks/useTutorial.tsx`, add two early-return guards at the top of the auto-start effect (the one starting at line 218):
+Embed the logo directly inside `index.html` as a base64 data URI. The PNG is only ~20KB, so inlining it adds ~28KB to the HTML — negligible — and the image becomes part of the same byte stream as the splash markup. It is guaranteed to render on the very first paint, with zero network dependency. No more empty square.
 
-1. `if (isActive) return;` — never re-trigger while a tutorial is already running.
-2. `if (sessionStorage.getItem(TUTORIAL_PENDING_START_KEY) === 'true') return;` — don't double-schedule when a start is already pending/in-flight.
+### Steps
 
-Also add `isActive` to that effect's dependency array so it correctly re-evaluates when the tutorial ends.
+1. Base64-encode `public/rally-icon-192-v6.png`.
+2. In `index.html`, replace `<img class="rally-boot-logo" src="/rally-icon-192-v6.png" ...>` with `<img class="rally-boot-logo" src="data:image/png;base64,...." ...>`.
+3. Keep the existing `<link rel="preload">` line (it still helps any other component that references the same URL via the cache).
+4. Leave all CSS, animations, and the `body.rally-booted` fade-out untouched.
 
-No other files change. Behavior for first-time auto-start, manual replay from Profile, and skip/complete remain identical — the only change is that an in-progress walkthrough can no longer be clobbered by a profile re-fetch.
+### Out of scope
 
-## Verification
+- No change to the splash design, sizing, ring/breathe animations, or fade timing.
+- No change to PWA manifest icons or the actual `/rally-icon-192-v6.png` asset.
+- No change to anywhere else the logo is used in the app.
 
-- Start walkthrough, sit on Step 1 for 10+ seconds → stays on Step 1, does not reset.
-- Advance to Step 5, wait 10s → stays on Step 5.
-- Skip tutorial → does not auto-restart.
-- Fresh new-signup flow → still auto-starts once after profile loads.
-- Replay Briefing from Profile → still works end-to-end.
+## Result
+
+The flag renders the instant the splash appears, on every load — cold, warm, slow network, or PWA launch. The "orange square" failure mode goes away.
