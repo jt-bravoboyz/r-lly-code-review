@@ -1,25 +1,26 @@
-## What's happening
-Yes — when you create a R@lly, it auto-assigns the `rally_dynamic` flyer theme. The `CreateEventDialog` initializes `flyerTheme` to `DEFAULT_FLYER_THEME` and saves it on submit, so every new event opens the details screen with a theme already painted on.
+## Problem
+
+The walkthrough auto-resets to Step 1 ("Orientation Brief") a few seconds in. Root cause is in `src/hooks/useTutorial.tsx`:
+
+The auto-start effect (lines 218–251) gates on `profile`, `authLoading`, `walkthrough_completed`, name setup, the `SEEN`/`COMPLETE` localStorage keys, and profile age — but **not** on `isActive`. When the tutorial starts, `startTutorial()` clears `TUTORIAL_COMPLETE_KEY` and `TUTORIAL_SEEN_KEY`, so none of those checks block re-entry.
+
+As soon as the `profile` object reference changes mid-tutorial (auth refresh, realtime update, refocus — typically within ~5s of starting), this effect re-runs, all guards pass, and it schedules `startTutorial()` again after 1200ms. That call resets `currentStepIndex` to 0, snapping the user back to the Orientation Brief.
 
 ## Fix
-Make "no theme" the default. A theme only applies once the host taps a tile in the Flyer Vibe picker.
 
-### Changes
-1. **`src/components/events/CreateEventDialog.tsx`**
-   - Change `flyerTheme` state type to `FlyerThemeKey | null`, initial value `null`.
-   - On submit, pass `flyer_theme: isBarHopType ? null : flyerTheme` (already conditional — just allow null through).
-   - Update `FlyerThemePicker` `value` prop to accept null (show no tile selected until user picks one).
+In `src/hooks/useTutorial.tsx`, add two early-return guards at the top of the auto-start effect (the one starting at line 218):
 
-2. **`src/components/events/FlyerThemePicker.tsx`**
-   - Accept `value: FlyerThemeKey | null`.
-   - When `value` is null and no custom image, render no selected ring and show "Showing: None" (or hide the line).
+1. `if (isActive) return;` — never re-trigger while a tutorial is already running.
+2. `if (sessionStorage.getItem(TUTORIAL_PENDING_START_KEY) === 'true') return;` — don't double-schedule when a start is already pending/in-flight.
 
-3. **`src/hooks/useEvents.tsx`** (line 206)
-   - Pass `(event as any).flyer_theme ?? null` instead of falling back to `'rally_dynamic'`, so the DB stores null when the host didn't pick.
+Also add `isActive` to that effect's dependency array so it correctly re-evaluates when the tutorial ends.
 
-4. **No change needed to `EventThemeProvider`** — it already gracefully handles a missing/unknown key via `getFlyerTheme`, but with null stored it will fall back to the default visual. To make the event detail screen truly themeless when null, wrap the provider usage in `EventDetail.tsx` with `disabled={!event.flyer_theme && !event.flyer_image_url}` (the prop already exists).
+No other files change. Behavior for first-time auto-start, manual replay from Profile, and skip/complete remain identical — the only change is that an in-progress walkthrough can no longer be clobbered by a profile re-fetch.
 
-### Result
-- Brand-new R@lly → details screen renders with the plain app background, no flyer vibe.
-- Host opens the Flyer Vibe picker and taps a tile → that theme is saved and the detail screen adopts it.
-- Custom photo upload path is unchanged.
+## Verification
+
+- Start walkthrough, sit on Step 1 for 10+ seconds → stays on Step 1, does not reset.
+- Advance to Step 5, wait 10s → stays on Step 5.
+- Skip tutorial → does not auto-restart.
+- Fresh new-signup flow → still auto-starts once after profile loads.
+- Replay Briefing from Profile → still works end-to-end.

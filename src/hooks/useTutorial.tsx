@@ -216,6 +216,10 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
 
   // Check if tutorial should auto-start for new users
   useEffect(() => {
+    // Never re-trigger while a tutorial is already running or pending —
+    // prevents profile re-fetches from snapping the user back to Step 1.
+    if (isActive) return;
+    if (sessionStorage.getItem(TUTORIAL_PENDING_START_KEY) === 'true') return;
     if (authLoading) return;
     if (!user || !profile) return;
 
@@ -248,7 +252,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
       }, 1200);
       return () => clearTimeout(timer);
     }
-  }, [user, profile, authLoading, startTutorial]);
+  }, [user, profile, authLoading, startTutorial, isActive, navigate]);
 
   return (
     <TutorialContext.Provider
