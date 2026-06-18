@@ -35,7 +35,7 @@ import { useRecentlyFriended } from '@/hooks/useFriendships';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { FlyerThemePicker } from '@/components/events/FlyerThemePicker';
 import { ThemedFlyerCanvas } from '@/components/events/ThemedFlyerCanvas';
-import { DEFAULT_FLYER_THEME, type FlyerThemeKey } from '@/lib/flyerThemes';
+import { type FlyerThemeKey } from '@/lib/flyerThemes';
 import { supabase } from '@/integrations/supabase/client';
 
 const eventSchema = z.object({
