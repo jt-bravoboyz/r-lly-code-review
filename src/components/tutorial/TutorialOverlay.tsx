@@ -19,7 +19,6 @@ export function TutorialOverlay() {
     totalSteps, 
     completeAction, 
     skipTutorial,
-    endTutorial,
     startTutorial
   } = useTutorial();
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
@@ -221,10 +220,7 @@ export function TutorialOverlay() {
   }, [currentStep, completeAction]);
 
   const handleReplayBriefing = () => {
-    endTutorial();
-    setTimeout(() => {
-      startTutorial();
-    }, 300);
+    startTutorial();
   };
 
   if (!isActive || !currentStep) return null;
@@ -251,7 +247,7 @@ export function TutorialOverlay() {
   const usePortalSpotlight = !!spotlightSelector && !isNavTarget;
 
   return (
-    <div className="fixed inset-0 z-[50]" onClick={handleOverlayClick}>
+    <div className="fixed inset-0 z-[250]" onClick={handleOverlayClick}>
       {/* Dark overlay (no in-overlay ring when using portal — the portal
           renders its own ring above the dim, escaping stacking contexts) */}
       <div className={`absolute inset-0 bg-black/80 ${currentStep.id === 'create-rally' ? 'rally-backdrop-deep' : ''}`}>
@@ -324,6 +320,7 @@ export function TutorialOverlay() {
         <TutorialSpotlightPortal
           selector={spotlightSelector}
           interactive={currentStep.requiredAction === 'tap'}
+          zIndex={260}
           onTap={() => {
             if (currentStep.requiredAction === 'tap') {
               completeAction('tap', spotlightSelector);
