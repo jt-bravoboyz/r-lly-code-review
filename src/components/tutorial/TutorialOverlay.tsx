@@ -19,7 +19,6 @@ export function TutorialOverlay() {
     totalSteps, 
     completeAction, 
     skipTutorial,
-    endTutorial,
     startTutorial
   } = useTutorial();
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
