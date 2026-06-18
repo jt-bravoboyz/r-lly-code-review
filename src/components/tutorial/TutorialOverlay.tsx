@@ -221,10 +221,7 @@ export function TutorialOverlay() {
   }, [currentStep, completeAction]);
 
   const handleReplayBriefing = () => {
-    endTutorial();
-    setTimeout(() => {
-      startTutorial();
-    }, 300);
+    startTutorial();
   };
 
   if (!isActive || !currentStep) return null;
