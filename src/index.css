@@ -2405,6 +2405,13 @@ body.native {
   }
 }
 
+/* Promote any nav containing a tutorial spotlight target above the walkthrough backdrop */
+nav:has(.rally-tutorial-spotlight) {
+  z-index: 9999 !important;
+}
+
+
+
 /* DEEP BACKDROP — for Step 3's cinematic spotlight effect */
 .rally-backdrop-deep {
   background: rgba(0, 0, 0, 0.88) !important;
