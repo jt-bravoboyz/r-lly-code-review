@@ -9,8 +9,6 @@ const AVATARS = {
 
 export default function GoingRoguePreview() {
   const [buttonTapped, setButtonTapped] = useState(false);
-  const [dialogVisible, setDialogVisible] = useState(false);
-  const [confirmGlowing, setConfirmGlowing] = useState(false);
   const [buttonState, setButtonState] = useState<'default' | 'muted'>('default');
   const [momentCardVisible, setMomentCardVisible] = useState(false);
   const [jtVisible, setJtVisible] = useState(false);
@@ -23,15 +21,11 @@ export default function GoingRoguePreview() {
 
     T(() => setButtonTapped(true), 600);
     T(() => setButtonTapped(false), 850);
-    T(() => setDialogVisible(true), 900);
-    T(() => setConfirmGlowing(true), 1700);
-    T(() => setConfirmGlowing(false), 1950);
-    T(() => setDialogVisible(false), 2000);
-    T(() => setButtonState('muted'), 2200);
-    T(() => setMomentCardVisible(true), 2400);
-    T(() => setJtVisible(true), 3100);
-    T(() => setNickVisible(true), 3800);
-    T(() => setBottomTagVisible(true), 4500);
+    T(() => setButtonState('muted'), 900);
+    T(() => setMomentCardVisible(true), 1300);
+    T(() => setJtVisible(true), 2000);
+    T(() => setNickVisible(true), 2700);
+    T(() => setBottomTagVisible(true), 3400);
 
     return () => {
       timeouts.forEach(clearTimeout);
@@ -69,43 +63,6 @@ export default function GoingRoguePreview() {
               <span>Gone Rogue 🔥</span>
             </>
           )}
-        </div>
-
-        {/* Confirmation dialog */}
-        <div
-          className="rounded-xl bg-zinc-900 border border-white/10 overflow-hidden transition-all ease-out"
-          style={{
-            opacity: dialogVisible ? 1 : 0,
-            maxHeight: dialogVisible ? 200 : 0,
-            transform: dialogVisible ? 'translateY(0)' : 'translateY(-8px)',
-            transitionDuration: dialogVisible ? '400ms' : '300ms',
-          }}
-        >
-          <div className="p-3 space-y-2">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-full bg-red-500/15 border border-red-500/30 flex items-center justify-center shrink-0">
-                <Flame size={14} className="text-red-500" />
-              </div>
-              <div>
-                <div className="text-[12px] font-bold text-white">Going Rogue? 🔥</div>
-                <div className="text-[10px] text-white/60">Your whole crew will see this.</div>
-              </div>
-            </div>
-            <div className="flex gap-2 pt-1">
-              <div className="flex-1 py-1.5 rounded-md text-[10px] font-semibold text-white/60 border border-white/10 bg-transparent text-center">
-                Nevermind
-              </div>
-              <div
-                className="flex-1 py-1.5 rounded-md text-[10px] font-bold text-white text-center transition-all duration-200"
-                style={{
-                  backgroundColor: confirmGlowing ? 'rgb(220, 38, 38)' : 'rgb(239, 68, 68)',
-                  boxShadow: confirmGlowing ? '0 0 12px rgba(239,68,68,0.6)' : 'none',
-                }}
-              >
-                Confirm — Go Rogue 🔥
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Moment card */}
