@@ -190,6 +190,14 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     }
   }, [currentStepIndex, endTutorial]);
 
+  useEffect(() => {
+    if (isActive || authLoading || !user) return;
+    if (sessionStorage.getItem(TUTORIAL_PENDING_START_KEY) !== 'true') return;
+
+    setCurrentStepIndex(0);
+    setIsActive(true);
+  }, [isActive, authLoading, user]);
+
   const completeAction = useCallback((actionType: string, targetSelector?: string) => {
     if (!currentStep) return;
 
@@ -219,9 +227,9 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     if (!dn || dn === 'R@lly Member') return;
 
     // Device guard: already seen on this device
-    if (localStorage.getItem('rally-walkthrough-seen') === 'true') return;
+    if (localStorage.getItem(TUTORIAL_SEEN_KEY) === 'true') return;
 
-    const tutorialComplete = localStorage.getItem('rally-tutorial-complete');
+    const tutorialComplete = localStorage.getItem(TUTORIAL_COMPLETE_KEY);
     if (tutorialComplete === 'true') return;
 
     // Profile-age check: auto-start if profile was created within last 24 hours
