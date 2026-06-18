@@ -551,7 +551,7 @@ export default function EventDetail() {
   };
 
   return (
-    <EventThemeProvider themeKey={(event as any).flyer_theme} disabled={showAfterRallyTheme}>
+    <EventThemeProvider themeKey={(event as any).flyer_theme} disabled={showAfterRallyTheme || (!(event as any).flyer_theme && !(event as any).flyer_custom_image_url)}>
     <div className={`min-h-[100dvh] pb-20 overflow-x-hidden ${showAfterRallyTheme ? 'after-rally-mode' : ''}`}>
       <Header afterRallyMode={showAfterRallyTheme} />
       

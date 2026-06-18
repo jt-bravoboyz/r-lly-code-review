@@ -4,7 +4,7 @@ import { FLYER_THEMES, FLYER_THEME_KEYS, type FlyerThemeKey, getFlyerTheme } fro
 import { cn } from '@/lib/utils';
 
 export interface FlyerThemePickerProps {
-  value: FlyerThemeKey;
+  value: FlyerThemeKey | null;
   customImageUrl?: string | null;
   onChange: (key: FlyerThemeKey) => void;
   onUploadCustom?: (file: File) => Promise<void> | void;
@@ -127,7 +127,7 @@ export function FlyerThemePicker({
         </div>
       </div>
       <div className="text-[10px] text-muted-foreground/70">
-        Showing: <span className="font-semibold">{customImageUrl ? 'Custom photo' : getFlyerTheme(value).label}</span>
+        Showing: <span className="font-semibold">{customImageUrl ? 'Custom photo' : value ? getFlyerTheme(value).label : 'None'}</span>
       </div>
     </div>
   );

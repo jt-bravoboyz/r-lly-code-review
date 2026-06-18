@@ -35,7 +35,7 @@ import { useRecentlyFriended } from '@/hooks/useFriendships';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { FlyerThemePicker } from '@/components/events/FlyerThemePicker';
 import { ThemedFlyerCanvas } from '@/components/events/ThemedFlyerCanvas';
-import { DEFAULT_FLYER_THEME, type FlyerThemeKey } from '@/lib/flyerThemes';
+import { type FlyerThemeKey } from '@/lib/flyerThemes';
 import { supabase } from '@/integrations/supabase/client';
 
 const eventSchema = z.object({
@@ -96,7 +96,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
   const actionBarRef = useRef<HTMLDivElement>(null);
   const [selectedSquads, setSelectedSquads] = useState<Squad[]>([]);
   const [selectedFriendIds, setSelectedFriendIds] = useState<string[]>([]);
-  const [flyerTheme, setFlyerTheme] = useState<FlyerThemeKey>(DEFAULT_FLYER_THEME);
+  const [flyerTheme, setFlyerTheme] = useState<FlyerThemeKey | null>(null);
   const [flyerCustomUrl, setFlyerCustomUrl] = useState<string | null>(null);
   const [flyerUploading, setFlyerUploading] = useState(false);
   const { profile } = useAuth();
