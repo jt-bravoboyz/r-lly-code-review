@@ -5,6 +5,7 @@ import { ChevronRight, X, Target, Shield } from 'lucide-react';
 import { SafetyDashboardPreview } from './SafetyDashboardPreview';
 import InsideRallyPreview from './InsideRallyPreview';
 import SplitCheckPreview from './SplitCheckPreview';
+import GoingRoguePreview from './GoingRoguePreview';
 import { TutorialSpotlightPortal } from './TutorialSpotlightPortal';
 
 import { LiveStatusPreview } from './LiveStatusPreview';
@@ -401,6 +402,7 @@ export function TutorialOverlay() {
           {currentStep.illustration === 'safety-dashboard' && <SafetyDashboardPreview />}
           {currentStep.illustration === 'inside-rally' && <InsideRallyPreview />}
           {currentStep.illustration === 'split-check' && <SplitCheckPreview />}
+          {currentStep.illustration === 'going-rogue' && <GoingRoguePreview />}
 
           {/* Action button for completion steps */}
           {isCompletionStep && (
