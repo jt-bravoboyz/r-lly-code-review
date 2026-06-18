@@ -445,13 +445,6 @@ export function TutorialOverlay() {
             </Button>
           )}
 
-          {/* Target hint for action steps */}
-          {!isCompletionStep && currentStep.targetSelector && !targetMissing && (
-            <div className="flex items-center gap-2 text-white/50 text-sm">
-              <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              <span>Locate and tap the highlighted element</span>
-            </div>
-          )}
 
           {/* Fallback when the target element can't be found */}
           {!isCompletionStep && currentStep.targetSelector && targetMissing && (
