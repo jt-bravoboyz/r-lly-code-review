@@ -3,6 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from './useAuth';
 import { supabase } from '@/integrations/supabase/client';
 
+const TUTORIAL_COMPLETE_KEY = 'rally-tutorial-complete';
+const TUTORIAL_SEEN_KEY = 'rally-walkthrough-seen';
+const TUTORIAL_PENDING_START_KEY = 'rally-tutorial-pending-start';
+
 export interface TutorialStep {
   id: string;
   title: string;
@@ -136,8 +140,9 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
   const currentStep = isActive ? TUTORIAL_STEPS[currentStepIndex] : null;
 
   const startTutorial = useCallback(() => {
-    localStorage.removeItem('rally-tutorial-complete');
-    localStorage.removeItem('rally-walkthrough-seen');
+    localStorage.removeItem(TUTORIAL_COMPLETE_KEY);
+    localStorage.removeItem(TUTORIAL_SEEN_KEY);
+    sessionStorage.setItem(TUTORIAL_PENDING_START_KEY, 'true');
     setCurrentStepIndex(0);
     setIsActive(true);
   }, []);
@@ -146,8 +151,9 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
 
   const endTutorial = useCallback(() => {
     setIsActive(false);
-    localStorage.setItem('rally-tutorial-complete', 'true');
-    localStorage.setItem('rally-walkthrough-seen', 'true');
+    localStorage.setItem(TUTORIAL_COMPLETE_KEY, 'true');
+    localStorage.setItem(TUTORIAL_SEEN_KEY, 'true');
+    sessionStorage.removeItem(TUTORIAL_PENDING_START_KEY);
     localStorage.removeItem('rally-is-new-signup');
     
     // Persist to database
@@ -165,8 +171,9 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
 
   const skipTutorial = useCallback(() => {
     setIsActive(false);
-    localStorage.setItem('rally-tutorial-complete', 'true');
-    localStorage.setItem('rally-walkthrough-seen', 'true');
+    localStorage.setItem(TUTORIAL_COMPLETE_KEY, 'true');
+    localStorage.setItem(TUTORIAL_SEEN_KEY, 'true');
+    sessionStorage.removeItem(TUTORIAL_PENDING_START_KEY);
     localStorage.removeItem('rally-is-new-signup');
     
     // Persist to database
