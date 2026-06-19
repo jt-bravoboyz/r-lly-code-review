@@ -70,13 +70,13 @@ export function AuthLoadingState({
     position: 'absolute',
     top: '50%',
     left: '50%',
-    width: 96,
-    height: 96,
-    marginTop: -48,
-    marginLeft: -48,
+    width: 36,
+    height: 36,
+    marginTop: -18,
+    marginLeft: -18,
     borderRadius: '9999px',
     border: `1px solid ${BRAND_ORANGE}`,
-    boxShadow: `0 0 8px rgba(244,122,25,0.5)`,
+    boxShadow: `0 0 6px rgba(244,122,25,0.5)`,
     transform: 'scale(0.5)',
     opacity: prefersReducedMotion ? 0.4 : 0,
     willChange: 'transform, opacity',
@@ -110,7 +110,7 @@ export function AuthLoadingState({
       {/* Flag stage */}
       <div
         className="relative flex items-center justify-center"
-        style={{ width: 220, height: 220 }}
+        style={{ width: 120, height: 120 }}
       >
         <div style={ringStyle('0s')} />
         <div style={ringStyle('1.2s')} />
@@ -118,8 +118,8 @@ export function AuthLoadingState({
 
         <svg
           viewBox="0 0 24 24"
-          width={96}
-          height={96}
+          width={36}
+          height={36}
           fill="none"
           stroke="#ffffff"
           strokeWidth={2}
@@ -129,7 +129,7 @@ export function AuthLoadingState({
           style={{
             position: 'relative',
             display: 'block',
-            filter: 'drop-shadow(0 6px 18px rgba(244,122,25,0.45))',
+            filter: 'drop-shadow(0 3px 10px rgba(244,122,25,0.45))',
             animation: prefersReducedMotion
               ? undefined
               : 'auth-flag-scale 2.4s ease-in-out infinite',
