@@ -60,7 +60,8 @@ export default function GoingRoguePreview() {
           ) : (
             <>
               <Flame size={18} className="opacity-60" />
-              <span>Gone Rogue 🔥</span>
+              <span>Gone Rogue</span>
+              <Flame size={18} className="opacity-60 scale-x-[-1]" />
             </>
           )}
         </div>
