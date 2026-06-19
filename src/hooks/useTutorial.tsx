@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, createContext, useContext } from 'react';
+import { useState, useEffect, useCallback, useRef, createContext, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from './useAuth';
 import { supabase } from '@/integrations/supabase/client';
@@ -136,17 +136,34 @@ const TutorialContext = createContext<TutorialContextType | undefined>(undefined
 export function TutorialProvider({ children }: { children: React.ReactNode }) {
   const [isActive, setIsActive] = useState(false);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const hasAutoStartedRef = useRef(false);
   const { user, profile, loading: authLoading } = useAuth();
 
   const currentStep = isActive ? TUTORIAL_STEPS[currentStepIndex] : null;
 
   const startTutorial = useCallback(() => {
+    // Idempotency guard: if the tutorial is already running, do nothing.
+    // Prevents Profile/Settings buttons or stale effects from resetting
+    // the user back to Step 1 mid-walkthrough.
+    if (isActive) return;
+
+    // Clear completion flags so the walkthrough can run again
     localStorage.removeItem(TUTORIAL_COMPLETE_KEY);
     localStorage.removeItem(TUTORIAL_SEEN_KEY);
+
+    // Set pending start flag, then activate
     sessionStorage.setItem(TUTORIAL_PENDING_START_KEY, 'true');
     setCurrentStepIndex(0);
     setIsActive(true);
-  }, []);
+
+    // Clear the pending flag immediately — we just activated, no need
+    // for the secondary effect to also try to start.
+    sessionStorage.removeItem(TUTORIAL_PENDING_START_KEY);
+
+    // Also reset the auto-start ref so it doesn't block future restarts
+    // that are explicitly triggered (e.g., Profile's Restart Walkthrough)
+    hasAutoStartedRef.current = true;
+  }, [isActive]);
 
   const navigate = useNavigate();
 
@@ -197,6 +214,13 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
 
     setCurrentStepIndex(0);
     setIsActive(true);
+
+    // Clear the pending flag IMMEDIATELY after activating — prevents this
+    // effect from re-firing later if isActive briefly drops to false again.
+    sessionStorage.removeItem(TUTORIAL_PENDING_START_KEY);
+
+    // Also lock the auto-start ref so no other auto-start logic re-fires.
+    hasAutoStartedRef.current = true;
   }, [isActive, authLoading, user]);
 
   const completeAction = useCallback((actionType: string, targetSelector?: string) => {
@@ -216,9 +240,9 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
 
   // Check if tutorial should auto-start for new users
   useEffect(() => {
-    // Never re-trigger while a tutorial is already running or pending —
-    // prevents profile re-fetches from snapping the user back to Step 1.
+    // Never re-trigger while a tutorial is already running or pending
     if (isActive) return;
+    if (hasAutoStartedRef.current) return;
     if (sessionStorage.getItem(TUTORIAL_PENDING_START_KEY) === 'true') return;
     if (authLoading) return;
     if (!user || !profile) return;
@@ -226,7 +250,7 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     // Database truth: walkthrough already completed
     if ((profile as any).walkthrough_completed === true) return;
 
-    // Gate: wait until name setup is done (flag is authoritative)
+    // Gate: wait until name setup is done
     if ((profile as any).needs_name_setup === true) return;
     const dn = (profile.display_name ?? '').trim();
     if (!dn || dn === 'R@lly Member') return;
@@ -242,6 +266,10 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     const isNewProfile = profileCreated > Date.now() - 24 * 60 * 60 * 1000;
 
     if (isNewProfile) {
+      // Mark that auto-start is in progress so no re-firing of this effect
+      // can launch another timer.
+      hasAutoStartedRef.current = true;
+
       // Navigate to home first if not already there
       if (window.location.pathname !== '/') {
         navigate('/');
