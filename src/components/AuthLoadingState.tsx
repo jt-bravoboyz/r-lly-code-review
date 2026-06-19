@@ -116,26 +116,32 @@ export function AuthLoadingState({
         <div style={ringStyle('1.2s')} />
         <div style={ringStyle('2.4s')} />
 
-        <img
-          src="/rally-icon-source.png"
-          alt=""
+        <svg
+          viewBox="0 0 24 24"
           width={96}
           height={96}
-          decoding="sync"
-          draggable={false}
-          {...({ fetchpriority: 'high' } as Record<string, string>)}
+          fill="none"
+          stroke="#ffffff"
+          strokeWidth={2}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
           style={{
             position: 'relative',
-            width: 96,
-            height: 96,
             display: 'block',
-            objectFit: 'contain',
             filter: 'drop-shadow(0 6px 18px rgba(244,122,25,0.45))',
             animation: prefersReducedMotion
               ? undefined
               : 'auth-flag-scale 2.4s ease-in-out infinite',
           }}
-        />
+        >
+          <path
+            d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"
+            fill="#ffffff"
+            fillOpacity={0.96}
+          />
+          <line x1={4} x2={4} y1={22} y2={15} />
+        </svg>
 
       </div>
 

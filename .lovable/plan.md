@@ -1,18 +1,16 @@
-We should replace the loader’s current app-icon image (`/rally-icon-192-v6.png`) with the actual standalone flag source (`/rally-icon-source.png`). The current file is a full orange square icon, which is why the loading screen still appears as an orange block.
+The `public/rally-icon-source.png` file has the checkerboard pattern baked into its pixels — it's not actual transparency. That's why the loader now shows a checkered square instead of a clean flag.
+
+Fix: stop relying on a PNG and render the R@lly flag as inline SVG in both the boot splash and the React loader. Inline SVG paints on the very first frame (zero network, zero decode) and is guaranteed transparent.
 
 Plan:
-1. Update the inline boot splash in `index.html`
-   - Change the loader image from `/rally-icon-192-v6.png` to `/rally-icon-source.png`.
-   - Preload `/rally-icon-source.png` with high priority.
-   - Keep `decoding="sync"` and fixed 96px dimensions so it paints immediately and doesn’t shift.
+1. `index.html` boot splash
+   - Replace the `<img class="rally-boot-flag">` with an inline `<svg>` of a clean white waving-flag glyph (matches the Lucide Flag icon style already used across the app).
+   - Keep the 96px size, drop shadow, and breathe animation on the SVG.
+   - Remove the now-unused `<link rel="preload" as="image" href="/rally-icon-source.png">`.
 
-2. Update the React auth loader in `src/components/AuthLoadingState.tsx`
-   - Use the same `/rally-icon-source.png` image.
-   - Keep the same size, animation timing, beacon rings, and dark background so the handoff stays seamless.
+2. `src/components/AuthLoadingState.tsx`
+   - Replace the `<img>` with the exact same inline SVG markup, same size, same filter, same `auth-flag-scale` animation.
+   - Keep the dark background, beacon rings, and radial breathe untouched so the handoff stays seamless.
 
-3. Preserve the app icon everywhere else
-   - Leave the manifest, Apple touch icon, favicon, and app/PWA icons alone.
-   - Only the loading screen changes from the orange square to the real transparent R@lly flag.
-
-4. Verify visually
-   - Confirm the loader shows the standalone white R@lly flag, centered, with no orange square background.
+3. Leave all other icons alone
+   - Favicon, apple-touch-icon, manifest, and PWA icons keep using the existing orange app icons.
