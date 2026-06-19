@@ -349,7 +349,7 @@ export function TutorialOverlay() {
           e.stopPropagation();
           skipTutorial();
         }}
-        className="absolute top-[40px] right-4 text-white/60 hover:text-white p-2 z-10 flex items-center gap-1 text-sm"
+        className="absolute top-[36px] right-4 text-white/60 hover:text-white p-2 z-10 flex items-center gap-1 text-sm"
       >
         <X className="h-4 w-4" />
         <span>Skip Training</span>
