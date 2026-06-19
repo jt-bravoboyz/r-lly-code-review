@@ -82,8 +82,8 @@ Deno.serve(async (req) => {
     if (!isStandalone && !body.event_id) {
       return new Response(JSON.stringify({ error: "event_id_required" }), { status: 400, headers: corsHeaders });
     }
-    const totalParticipants = body.target_profile_ids.length + body.guest_targets.length;
-    if (totalParticipants < 1) {
+    const requestedParticipants = body.target_profile_ids.length + body.guest_targets.length;
+    if (requestedParticipants < 1) {
       return new Response(JSON.stringify({ error: "no_targets" }), { status: 400, headers: corsHeaders });
     }
 
@@ -119,13 +119,14 @@ Deno.serve(async (req) => {
     const profileTargets = Array.from(new Set(body.target_profile_ids));
     const guestTargets = body.guest_targets;
     const totalTargets = profileTargets.length + guestTargets.length;
+    const splitHeadcount = totalTargets + 1; // the host is always part of the bill split, but is not requested to pay themselves
 
     let total = 0, subtotal = 0, tax = 0, tip = 0;
     let quickShares: number[] = [];
     let perShare: number | null = null;
     if (body.mode === "quick") {
       total = body.total_cents ?? 0;
-      quickShares = exactQuickShares(total, totalTargets);
+      quickShares = exactQuickShares(total, splitHeadcount);
       perShare = quickShares[0] ?? 0;
     } else {
       // itemized + standalone with guests is not yet supported — guests need fixed amounts
