@@ -222,13 +222,9 @@ export function TutorialOverlay() {
   }, [currentStep, completeAction]);
 
   const handleReplayBriefing = () => {
-    console.log('[Replay] 1. Button tapped');
     endTutorial();
-    console.log('[Replay] 2. endTutorial called');
     setTimeout(() => {
-      console.log('[Replay] 3. setTimeout fired — calling startTutorial');
       startTutorial();
-      console.log('[Replay] 4. startTutorial finished');
     }, 350);
   };
 
