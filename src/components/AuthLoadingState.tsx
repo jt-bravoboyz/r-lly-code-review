@@ -70,13 +70,13 @@ export function AuthLoadingState({
     position: 'absolute',
     top: '50%',
     left: '50%',
-    width: 36,
-    height: 36,
-    marginTop: -18,
-    marginLeft: -18,
+    width: 96,
+    height: 96,
+    marginTop: -48,
+    marginLeft: -48,
     borderRadius: '9999px',
     border: `1px solid ${BRAND_ORANGE}`,
-    boxShadow: `0 0 6px rgba(244,122,25,0.5)`,
+    boxShadow: `0 0 12px rgba(244,122,25,0.5)`,
     transform: 'scale(0.5)',
     opacity: prefersReducedMotion ? 0.4 : 0,
     willChange: 'transform, opacity',
@@ -110,7 +110,7 @@ export function AuthLoadingState({
       {/* Flag stage */}
       <div
         className="relative flex items-center justify-center"
-        style={{ width: 120, height: 120 }}
+        style={{ width: 220, height: 220 }}
       >
         <div style={ringStyle('0s')} />
         <div style={ringStyle('1.2s')} />
