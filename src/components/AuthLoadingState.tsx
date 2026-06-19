@@ -116,35 +116,27 @@ export function AuthLoadingState({
         <div style={ringStyle('1.2s')} />
         <div style={ringStyle('2.4s')} />
 
-        <svg
-          viewBox="0 0 96 96"
-          xmlns="http://www.w3.org/2000/svg"
+        <img
+          src="/rally-icon-192-v6.png"
+          alt=""
           width={96}
           height={96}
+          decoding="sync"
+          draggable={false}
+          {...({ fetchpriority: 'high' } as Record<string, string>)}
           style={{
             position: 'relative',
+            width: 96,
+            height: 96,
+            display: 'block',
+            objectFit: 'contain',
             filter: 'drop-shadow(0 6px 18px rgba(244,122,25,0.45))',
             animation: prefersReducedMotion
               ? undefined
               : 'auth-flag-scale 2.4s ease-in-out infinite',
           }}
-        >
-          <title>R@lly</title>
-          <rect x="22" y="14" width="4" height="72" rx="2" fill="#FFFFFF" />
-          <circle cx="24" cy="14" r="3" fill="#FFFFFF" />
-          <path d="M26 20 H78 Q72 32 78 44 H26 Z" fill={BRAND_ORANGE} />
-          <text
-            x="52"
-            y="38"
-            textAnchor="middle"
-            fontFamily="Montserrat, system-ui, -apple-system, Helvetica, sans-serif"
-            fontWeight={900}
-            fontSize={20}
-            fill="#0A0A0A"
-          >
-            @
-          </text>
-        </svg>
+        />
+
       </div>
 
       <style>{`
