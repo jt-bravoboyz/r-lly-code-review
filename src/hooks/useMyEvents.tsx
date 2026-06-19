@@ -65,23 +65,41 @@ export function useMyEvents() {
       const upcoming: Event[] = [];
       const past: Event[] = [];
 
+      const staleLiveIds: string[] = [];
+
       (events || []).forEach((event: any) => {
         const start = new Date(event.start_time);
         const endTime = event.end_time
           ? new Date(event.end_time)
           : new Date(start.getTime() + 4 * 60 * 60 * 1000);
 
-        const isLive =
-          (start <= now && now <= endTime) ||
-          event.status === 'live' ||
-          event.status === 'after_rally';
-
+        const timeWindowEnded = now > endTime;
         const isCompleted =
           event.status === 'completed' || event.status === 'cancelled';
-        const isPast = now > endTime || isCompleted;
-        const isUpcoming = start > now && !isLive;
 
-        if (isLive && !isCompleted) {
+        // Time window is authoritative — a stale status='live' flag can't pin
+        // a rally to Live Now after its end window has passed.
+        const isLive =
+          !timeWindowEnded &&
+          !isCompleted &&
+          ((start <= now && now <= endTime) ||
+            event.status === 'live' ||
+            event.status === 'after_rally');
+
+        const isPast = timeWindowEnded || isCompleted;
+        const isUpcoming = start > now && !isLive && !isPast;
+
+        // Queue background self-heal: window has passed but DB still says live/after_rally
+        if (
+          timeWindowEnded &&
+          (event.status === 'live' || event.status === 'after_rally') &&
+          profileId &&
+          event.creator_id === profileId
+        ) {
+          staleLiveIds.push(event.id);
+        }
+
+        if (isLive) {
           current.push(event);
         } else if (isUpcoming) {
           upcoming.push(event);
@@ -93,6 +111,17 @@ export function useMyEvents() {
           if (isHost || didAttend) past.push(event);
         }
       });
+
+      // Fire-and-forget self-heal so EventDetail, recap, etc. agree with bucketing.
+      if (staleLiveIds.length > 0) {
+        void supabase
+          .from('events')
+          .update({ status: 'completed' })
+          .in('id', staleLiveIds)
+          .then(({ error }) => {
+            if (error) console.warn('[useMyEvents] self-heal failed', error);
+          });
+      }
 
       current.sort(
         (a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
