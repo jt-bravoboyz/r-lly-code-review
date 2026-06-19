@@ -302,10 +302,16 @@ export default function SplitCheckHome() {
         { event: '*', schema: 'public', table: 'tab_settlements', filter: `payer_id=eq.${meId}` },
         () => refetch()
       )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'split_check_requests', filter: `host_id=eq.${meId}` },
+        () => refetch()
+      )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [meId]);
+
 
   const totalOwe = useMemo(
     () => owe.filter((r) => r.p2pStatus !== 'confirmed' && r.status !== 'paid')
