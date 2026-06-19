@@ -254,15 +254,16 @@ export default function SplitCheckHome() {
           settlementByTarget.set(s.split_target_id, s);
         }
       }
-      const enrichedTargets = ts.map((t) => ({
+      const collectableTargets = ts.filter((t) => t.profile_id !== r.host_id);
+      const enrichedTargets = collectableTargets.map((t) => ({
         ...t,
         payer: payerProfiles.get(t.profile_id),
         p2p: settlementByTarget.get(t.id) ?? null,
       }));
-      const collected = ts
+      const collected = collectableTargets
         .filter((t) => t.status === 'paid' || (settlementByTarget.get(t.id)?.status === 'confirmed'))
         .reduce((s, t) => s + (t.share_cents ?? 0), 0);
-      const owedTotal = ts.reduce((s, t) => s + (t.share_cents ?? 0), 0);
+      const owedTotal = collectableTargets.reduce((s, t) => s + (t.share_cents ?? 0), 0);
       const pending = Math.max(0, owedTotal - collected);
       const event = r.event_id ? owedEvents.get(r.event_id) : null;
       const sentToMe = ss.filter((s) => s.status === 'sent').map((s) => ({

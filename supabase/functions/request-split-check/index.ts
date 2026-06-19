@@ -161,7 +161,14 @@ Deno.serve(async (req) => {
       request_id: reqRow.id,
       profile_id: pid,
       share_cents: body.mode === "quick" ? (quickShares[idx] ?? 0) : 0,
+      status: "pending",
     }));
+    profileRows.push({
+      request_id: reqRow.id,
+      profile_id: profile.id,
+      share_cents: body.mode === "quick" ? (quickShares[totalTargets] ?? 0) : 0,
+      status: "paid",
+    });
     if (profileRows.length) await admin.from("split_check_targets").insert(profileRows);
 
     // Itemized items
