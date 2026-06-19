@@ -222,15 +222,13 @@ export function TutorialOverlay() {
   }, [currentStep, completeAction]);
 
   const handleReplayBriefing = () => {
-    // Tear down the current walkthrough completely.
-    // This sets isActive to false, clears the auto-start ref, and writes
-    // the completion flags to localStorage.
+    console.log('[Replay] 1. Button tapped');
     endTutorial();
-
-    // Wait for React to flush the state update from endTutorial,
-    // then start the walkthrough fresh.
+    console.log('[Replay] 2. endTutorial called');
     setTimeout(() => {
+      console.log('[Replay] 3. setTimeout fired — calling startTutorial');
       startTutorial();
+      console.log('[Replay] 4. startTutorial finished');
     }, 350);
   };
 
