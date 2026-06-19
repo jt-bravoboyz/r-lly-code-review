@@ -13,13 +13,14 @@ import { BadgeLadderPreview } from './BadgeLadderPreview';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 export function TutorialOverlay() {
-  const { 
-    isActive, 
-    currentStep, 
-    currentStepIndex, 
-    totalSteps, 
-    completeAction, 
+  const {
+    isActive,
+    currentStep,
+    currentStepIndex,
+    totalSteps,
+    completeAction,
     skipTutorial,
+    endTutorial,
     startTutorial
   } = useTutorial();
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
@@ -221,7 +222,16 @@ export function TutorialOverlay() {
   }, [currentStep, completeAction]);
 
   const handleReplayBriefing = () => {
-    startTutorial();
+    // Tear down the current walkthrough completely.
+    // This sets isActive to false, clears the auto-start ref, and writes
+    // the completion flags to localStorage.
+    endTutorial();
+
+    // Wait for React to flush the state update from endTutorial,
+    // then start the walkthrough fresh.
+    setTimeout(() => {
+      startTutorial();
+    }, 350);
   };
 
   if (!isActive || !currentStep) return null;

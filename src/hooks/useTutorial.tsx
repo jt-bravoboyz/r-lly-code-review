@@ -173,12 +173,16 @@ export function TutorialProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem(TUTORIAL_SEEN_KEY, 'true');
     sessionStorage.removeItem(TUTORIAL_PENDING_START_KEY);
     localStorage.removeItem('rally-is-new-signup');
-    
+
+    // Reset the auto-start ref so that future restarts (e.g., Replay Briefing,
+    // Profile's Restart Walkthrough button) are not blocked.
+    hasAutoStartedRef.current = false;
+
     // Persist to database
     if (user) {
       supabase.from('profiles').update({ walkthrough_completed: true } as any).eq('user_id', user.id).then();
     }
-    
+
     // Check for pending squad redirect
     const pendingSquadRedirect = localStorage.getItem('rally-pending-squad-redirect');
     if (pendingSquadRedirect) {
