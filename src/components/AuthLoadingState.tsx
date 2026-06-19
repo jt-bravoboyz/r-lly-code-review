@@ -117,7 +117,7 @@ export function AuthLoadingState({
         <div style={ringStyle('2.4s')} />
 
         <img
-          src="/rally-icon-192-v6.png"
+          src="/rally-icon-source.png"
           alt=""
           width={96}
           height={96}
