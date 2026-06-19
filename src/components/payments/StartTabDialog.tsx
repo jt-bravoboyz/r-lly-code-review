@@ -86,6 +86,7 @@ export function StartTabDialog({ open, onOpenChange, onCreated }: Props) {
   const tipCents = dollarsToCents(tipDollars);
   const itemizedTotalCents = subtotalCents + taxCents + tipCents;
   const totalParticipants = selectedFriendIds.size + guests.length;
+  const splitHeadcount = totalParticipants + 1;
 
   // ===== Photo handling =====
   const handleFile = async (file: File) => {
@@ -480,7 +481,7 @@ export function StartTabDialog({ open, onOpenChange, onCreated }: Props) {
                 value={manualTotal} onChange={(e) => setManualTotal(e.target.value)} placeholder="0.00" />
               {totalParticipants > 0 && dollarsToCents(manualTotal) > 0 && (
                 <div className="text-xs text-muted-foreground mt-1">
-                  ${centsToDollars(dollarsToCents(manualTotal) / totalParticipants)} per person · {totalParticipants} {totalParticipants === 1 ? 'person' : 'people'}
+                  ${centsToDollars(dollarsToCents(manualTotal) / splitHeadcount)} per person · {splitHeadcount} people including you
                 </div>
               )}
             </div>

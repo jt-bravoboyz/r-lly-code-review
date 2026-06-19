@@ -262,7 +262,8 @@ export default function SplitCheckHome() {
       const collected = ts
         .filter((t) => t.status === 'paid' || (settlementByTarget.get(t.id)?.status === 'confirmed'))
         .reduce((s, t) => s + (t.share_cents ?? 0), 0);
-      const pending = Math.max(0, (r.total_cents ?? 0) - collected);
+      const owedTotal = ts.reduce((s, t) => s + (t.share_cents ?? 0), 0);
+      const pending = Math.max(0, owedTotal - collected);
       const event = r.event_id ? owedEvents.get(r.event_id) : null;
       const sentToMe = ss.filter((s) => s.status === 'sent').map((s) => ({
         ...s,
@@ -273,6 +274,7 @@ export default function SplitCheckHome() {
         eventTitle: event?.title ?? r.title ?? 'R@lly Tab',
         startTime: event?.start_time ?? r.created_at,
         targets: enrichedTargets,
+        owedTotalCents: owedTotal,
         collectedCents: collected,
         pendingCents: pending,
         sentToMe,
@@ -534,7 +536,7 @@ function OwedRequestCard({ request: r, onChanged }: { request: any; onChanged: (
             <p className="text-xs text-muted-foreground">{date}</p>
           </div>
           <div className="text-right shrink-0">
-            <p className="text-base font-black font-montserrat tabular-nums">{fmtUSD(r.total_cents ?? 0)}</p>
+            <p className="text-base font-black font-montserrat tabular-nums">{fmtUSD(r.owedTotalCents ?? 0)}</p>
             <p className="text-[10px] text-muted-foreground">
               {fmtUSD(r.collectedCents)} in · {fmtUSD(r.pendingCents)} open
             </p>
