@@ -1,26 +1,42 @@
-## Problem
+## The Problem
 
-On the boot splash, you sometimes see a plain orange/dark square instead of the R@lly flag. The CSS for the splash is inlined in `index.html` and paints immediately, but the logo `<img src="/rally-icon-192-v6.png">` is a separate HTTP request. On slow networks, cold loads, or PWA cold starts, the splash shows for a moment before the image arrives — so you see the circular stage (which reads as a square/blob of orange-tinted glow) with no flag inside it.
+"Thursday Night Test" (started 2026-06-18 21:30 UTC, ~20 hours ago) still appears in Live Now and is missing from Past Rallies.
 
-Preloading (`<link rel="preload" as="image">`) is already in place but it still requires a network round-trip, which is why it loses the race.
+**Root cause:** In `src/hooks/useMyEvents.tsx` (lines 74-84), the "is this live?" check is:
 
-## Fix
+```
+isLive = (start <= now && now <= endTime) || status === 'live' || status === 'after_rally'
+```
 
-Embed the logo directly inside `index.html` as a base64 data URI. The PNG is only ~20KB, so inlining it adds ~28KB to the HTML — negligible — and the image becomes part of the same byte stream as the splash markup. It is guaranteed to render on the very first paint, with zero network dependency. No more empty square.
+The OR clause means **a stale `status='live'` flag overrides the time window**. If the host never tapped "End Rally" (or End Rally failed), the event's DB status stays `'live'` forever and the rally is pinned to Live Now even though `now > start + 4h`.
 
-### Steps
+I confirmed in the DB: this event has `status='live'`, `end_time=NULL`, so the 4-hour fallback window expired ~16 hours ago — but the stale status keeps it "live".
 
-1. Base64-encode `public/rally-icon-192-v6.png`.
-2. In `index.html`, replace `<img class="rally-boot-logo" src="/rally-icon-192-v6.png" ...>` with `<img class="rally-boot-logo" src="data:image/png;base64,...." ...>`.
-3. Keep the existing `<link rel="preload">` line (it still helps any other component that references the same URL via the cache).
-4. Leave all CSS, animations, and the `body.rally-booted` fade-out untouched.
+## The Fix
+
+Make the time window authoritative. If the event's end window has passed, it's past — regardless of stale status.
+
+### Change 1: `src/hooks/useMyEvents.tsx` (the bucket logic)
+
+Replace the isLive/isPast block so that:
+- `timeWindowEnded = now > endTime` (using `end_time` or `start + 4h` fallback, same as today)
+- `isLive = !timeWindowEnded && ((start <= now && now <= endTime) || status === 'live' || status === 'after_rally')`
+- `isPast = timeWindowEnded || status === 'completed' || status === 'cancelled'`
+
+Net effect: any rally whose end window passed drops out of Live Now and into Past Rallies on next refetch, even if the host never formally ended it.
+
+### Change 2: Self-heal the DB row (so other surfaces agree)
+
+When `useMyEvents` detects a row with `status IN ('live','after_rally')` but `timeWindowEnded === true`, fire a best-effort `supabase.from('events').update({ status: 'completed' }).eq('id', event.id)` in the background. Wrapped in try/catch, no await blocking the UI, RLS will silently no-op for non-hosts.
+
+This keeps EventDetail, Past Rallies, recap flow, and any other consumer that reads `events.status` directly in agreement, without needing to touch every consumer.
 
 ### Out of scope
 
-- No change to the splash design, sizing, ring/breathe animations, or fade timing.
-- No change to PWA manifest icons or the actual `/rally-icon-192-v6.png` asset.
-- No change to anywhere else the logo is used in the app.
+- Not changing `useEndRally` — that path is fine when the user actually taps End Rally; the bug is purely about un-ended events.
+- Not adding a cron/edge function for server-side auto-completion (could be a follow-up; client-side self-heal covers the symptom now).
+- Not touching the "Thursday Night Test" row manually — once the fix ships, the next time you (the host) load the app it will self-heal.
 
-## Result
+## Files Changed
 
-The flag renders the instant the splash appears, on every load — cold, warm, slow network, or PWA launch. The "orange square" failure mode goes away.
+- `src/hooks/useMyEvents.tsx` — bucket logic + background self-heal update
