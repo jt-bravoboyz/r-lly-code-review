@@ -1,41 +1,34 @@
-## Goal
-Surface the same "what's claimed vs. still unclaimed" intelligence on the **host's tab card** in `/tabs` — the collapsible card showing the event total, "$X in · $Y open", and per-person rows (Jenna, Ryan, etc.) — so a host can see at a glance how much of the bill the crew has actually picked up and how much each attendee has currently claimed.
+## Diagnosis
+The claimed/unclaimed strip and per-person "claimed" amounts already exist in code, but they only render **inside the expanded `CollapsibleContent`** and only after the user opens the card. Your screenshot description points at the **collapsed header row** ("$X in · $Y open" / "$X tab total") — that's where you want the info to appear, so it's effectively invisible to you.
+
+Fix: surface bill-status data at the header itself and load it eagerly so it shows the moment the tab card is in view (not only after expanding).
 
 ## Changes — `src/pages/SplitCheckHome.tsx` (`OwedRequestCard` only)
 
-### 1. New lightweight claim summary loader
-Inside `OwedRequestCard`, when `isItemized && open` (collapsed cards stay cheap):
-- Fetch `split_check_items` for `request_id` and `split_check_item_claims` for those item ids (one-shot + realtime subscription on `split_check_item_claims` filtered to this request's items).
-- Compute:
-  - `grandSubtotalC` — Σ `unit_price_cents * quantity`
-  - `claimedSubtotalC` — Σ per item `lineTotal * min(totalClaimed, qty) / qty`
-  - `unclaimedSubtotalC = grandSubtotalC - claimedSubtotalC`
-  - `perPersonClaimedC: Record<profile_id, cents>` — for each item with claimants, distribute `lineTotal` proportionally by each claimer's `qty / totalClaimed`.
+### 1. Load items + claims eagerly
+Drop the `&& open` gate on the existing claim-summary effect so `items` and `claims` populate as soon as the card mounts (still itemized-only). Realtime subscription stays.
 
-No schema changes, no new RPC.
-
-### 2. New "Bill status" strip inside `CollapsibleContent`
-Render above the "Claim your items" button (itemized only) when `grandSubtotalC > 0`:
-
+### 2. Header row gets a claimed/unclaimed micro-strip
+Replace the current single line:
 ```text
-BILL STATUS                        of $TOTAL
-Claimed              $XX.XX  (primary)
-Unclaimed            $XX.XX  (amber) — or green "All claimed" pill when 0
+$X in · $Y open
 ```
-Same visual treatment as the strip already added to `ClaimItemsView` so the two views feel consistent.
+with a two-line stack on itemized cards:
+```text
+[orange] $CLAIMED claimed   [amber] $UNCLAIMED open
+$X in · $Y settled
+```
+- Left chip: `Claimed $X.XX` (primary tint when > 0)
+- Right chip: `Unclaimed $X.XX` (amber tint), or green "All claimed" pill when 0
+- Smaller secondary line keeps the existing "$X in · $Y open" wording so payment progress is still visible
+- Non-itemized cards keep today's single line untouched
 
-### 3. Enrich per-target rows with "claimed" amount
-For each target row (Jenna, Ryan, …) on itemized requests:
-- Replace the single `share_cents` number with a two-line micro-stat:
-  - **Top:** `fmtUSD(perPersonClaimedC[profile_id] ?? 0)` labeled "claimed" (muted)
-  - **Bottom:** existing `share_cents` as "owes" when settlement has run, otherwise hidden
-- Keep the status badge (Pending / Sent / Paid / Disputed) untouched on the right.
-- For non-itemized requests, the row stays exactly as it is today (just `share_cents` + badge).
+### 3. Per-target rows already show "claimed" — leave them
+The "claimed $X / owes $X" micro-stat next to Jenna / Ryan is already wired and will now show real numbers immediately because data loads eagerly.
 
-### 4. Keep header line truthful
-Leave the header `$X in · $Y open` and big total as-is — they already reflect collected/pending in dollars. No math change there.
+### 4. Keep the in-expansion "Bill status" block
+The detailed block inside `CollapsibleContent` stays as the drill-down view — same numbers, more breathing room.
 
 ## Out of scope
-- No edits to `ClaimItemsView`, edge functions, or DB.
-- No change to non-itemized tab cards.
-- No change to settlement, payment, or notification flows.
+- No schema, edge function, or settlement math changes.
+- No edits to `ClaimItemsView` or the "You Owe" tab.

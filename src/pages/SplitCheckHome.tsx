@@ -533,7 +533,7 @@ function OwedRequestCard({ request: r, onChanged }: { request: any; onChanged: (
   const [claims, setClaims] = useState<any[]>([]);
 
   useEffect(() => {
-    if (!isItemized || !open) return;
+    if (!isItemized) return;
     let cancelled = false;
     const load = async () => {
       const { data: it } = await supabase.from('split_check_items').select('id, unit_price_cents, quantity').eq('request_id', r.id);
@@ -550,7 +550,8 @@ function OwedRequestCard({ request: r, onChanged }: { request: any; onChanged: (
       .on('postgres_changes', { event: '*', schema: 'public', table: 'split_check_item_claims' }, () => { load(); })
       .subscribe();
     return () => { cancelled = true; supabase.removeChannel(ch); };
-  }, [isItemized, open, r.id]);
+  }, [isItemized, r.id]);
+
 
   const { grandSubtotalC, claimedSubtotalC, unclaimedSubtotalC, perPersonClaimedC } = useMemo(() => {
     let grand = 0;
@@ -586,10 +587,33 @@ function OwedRequestCard({ request: r, onChanged }: { request: any; onChanged: (
           </div>
           <div className="text-right shrink-0">
             <p className="text-base font-black font-montserrat tabular-nums">{fmtUSD(r.owedTotalCents ?? 0)}</p>
-            <p className="text-[10px] text-muted-foreground">
-              {fmtUSD(r.collectedCents)} in · {fmtUSD(r.pendingCents)} open
-            </p>
+            {isItemized && grandSubtotalC > 0 ? (
+              <>
+                <div className="flex items-center justify-end gap-1.5 mt-1">
+                  <span className="inline-flex items-center rounded-full bg-primary/15 text-primary px-1.5 py-0.5 text-[10px] font-semibold tabular-nums">
+                    {fmtUSD(claimedSubtotalC)} claimed
+                  </span>
+                  {unclaimedSubtotalC === 0 ? (
+                    <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 px-1.5 py-0.5 text-[10px] font-semibold">
+                      <Check className="h-2.5 w-2.5" /> All in
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums">
+                      {fmtUSD(unclaimedSubtotalC)} unclaimed
+                    </span>
+                  )}
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-0.5">
+                  {fmtUSD(r.collectedCents)} in · {fmtUSD(r.pendingCents)} open
+                </p>
+              </>
+            ) : (
+              <p className="text-[10px] text-muted-foreground">
+                {fmtUSD(r.collectedCents)} in · {fmtUSD(r.pendingCents)} open
+              </p>
+            )}
           </div>
+
           <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${open ? 'rotate-180' : ''}`} />
         </CollapsibleTrigger>
 
