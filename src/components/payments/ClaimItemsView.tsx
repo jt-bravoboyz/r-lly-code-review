@@ -114,9 +114,10 @@ export function ClaimItemsView({ requestId, profileId, taxCents = 0, tipCents = 
   };
 
 
-  const { mySubtotalC, grandSubtotalC, myTaxC, myTipC, myTotalC } = useMemo(() => {
+  const { mySubtotalC, grandSubtotalC, claimedSubtotalC, unclaimedSubtotalC, myTaxC, myTipC, myTotalC } = useMemo(() => {
     let mine = 0;
     let grand = 0;
+    let claimed = 0;
     items.forEach(it => {
       const lineTotal = it.unit_price_cents * it.quantity;
       grand += lineTotal;
@@ -126,11 +127,17 @@ export function ClaimItemsView({ requestId, profileId, taxCents = 0, tipCents = 
       if (totalClaimed > 0 && myQty > 0) {
         mine += Math.round(lineTotal * (myQty / totalClaimed));
       }
+      if (totalClaimed > 0 && it.quantity > 0) {
+        const coveredQty = Math.min(totalClaimed, it.quantity);
+        claimed += Math.round(lineTotal * (coveredQty / it.quantity));
+      }
     });
     const tax = grand > 0 ? Math.round(taxCents * (mine / grand)) : 0;
     const tip = participantIds.length > 0 ? Math.round(tipCents / participantIds.length) : 0;
-    return { mySubtotalC: mine, grandSubtotalC: grand, myTaxC: tax, myTipC: tip, myTotalC: mine + tax + tip };
+    const unclaimed = Math.max(0, grand - claimed);
+    return { mySubtotalC: mine, grandSubtotalC: grand, claimedSubtotalC: claimed, unclaimedSubtotalC: unclaimed, myTaxC: tax, myTipC: tip, myTotalC: mine + tax + tip };
   }, [items, claimsByItem, profileId, taxCents, tipCents, participantIds]);
+
 
   useEffect(() => { onTotalsChange?.(myTotalC); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [myTotalC]);
 
