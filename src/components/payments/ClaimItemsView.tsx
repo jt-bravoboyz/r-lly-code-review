@@ -103,6 +103,17 @@ export function ClaimItemsView({ requestId, profileId, taxCents = 0, tipCents = 
     refresh(); onChange?.();
   };
 
+  const shareAll = async (itemId: string, currentlyShared: boolean) => {
+    triggerHaptic('selection');
+    await supabase.from('split_check_item_claims').delete().eq('item_id', itemId);
+    if (!currentlyShared && participantIds.length > 0) {
+      const rows = participantIds.map(pid => ({ item_id: itemId, profile_id: pid, quantity_claimed: 1 }));
+      await supabase.from('split_check_item_claims').insert(rows);
+    }
+    refresh(); onChange?.();
+  };
+
+
   const { mySubtotalC, grandSubtotalC, myTaxTipC, myTotalC } = useMemo(() => {
     let mine = 0;
     let grand = 0;
