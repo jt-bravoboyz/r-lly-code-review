@@ -1,30 +1,41 @@
 ## Goal
-On the claim breakdown ("Live Summary" in the claim sheet), surface two new at-a-glance numbers so the user always knows:
-1. **Your claimed subtotal** (already shown, will be relabeled for clarity)
-2. **Remaining unclaimed on the bill** — how much of the full check no one has picked up yet
+Surface the same "what's claimed vs. still unclaimed" intelligence on the **host's tab card** in `/tabs` — the collapsible card showing the event total, "$X in · $Y open", and per-person rows (Jenna, Ryan, etc.) — so a host can see at a glance how much of the bill the crew has actually picked up and how much each attendee has currently claimed.
 
-## Changes — `src/components/payments/ClaimItemsView.tsx` only
+## Changes — `src/pages/SplitCheckHome.tsx` (`OwedRequestCard` only)
 
-### 1. Compute unclaimed total
-In the existing `useMemo` that derives `mySubtotalC` / `grandSubtotalC`, also compute:
-- `claimedSubtotalC` — sum over items of `min(totalClaimed, qty) / qty * lineTotal` (the portion of each line that has at least one claimer; fully-claimed lines count fully, partially-claimed lines count proportionally, untouched lines count 0).
-- `unclaimedSubtotalC = grandSubtotalC - claimedSubtotalC`.
+### 1. New lightweight claim summary loader
+Inside `OwedRequestCard`, when `isItemized && open` (collapsed cards stay cheap):
+- Fetch `split_check_items` for `request_id` and `split_check_item_claims` for those item ids (one-shot + realtime subscription on `split_check_item_claims` filtered to this request's items).
+- Compute:
+  - `grandSubtotalC` — Σ `unit_price_cents * quantity`
+  - `claimedSubtotalC` — Σ per item `lineTotal * min(totalClaimed, qty) / qty`
+  - `unclaimedSubtotalC = grandSubtotalC - claimedSubtotalC`
+  - `perPersonClaimedC: Record<profile_id, cents>` — for each item with claimants, distribute `lineTotal` proportionally by each claimer's `qty / totalClaimed`.
 
-### 2. Add a "Bill status" block to the sticky Live Summary
-Right above the existing "Your items subtotal" row, insert a compact two-row group with a subtle divider:
+No schema changes, no new RPC.
+
+### 2. New "Bill status" strip inside `CollapsibleContent`
+Render above the "Claim your items" button (itemized only) when `grandSubtotalC > 0`:
 
 ```text
-Bill status
-You've claimed             $XX.XX  ← mySubtotalC, primary color when > 0
-Still unclaimed            $XX.XX  ← unclaimedSubtotalC, amber/warning when > 0, muted "$0.00 · all set" when 0
+BILL STATUS                        of $TOTAL
+Claimed              $XX.XX  (primary)
+Unclaimed            $XX.XX  (amber) — or green "All claimed" pill when 0
 ```
+Same visual treatment as the strip already added to `ClaimItemsView` so the two views feel consistent.
 
-When `unclaimedSubtotalC === 0` and `grandSubtotalC > 0`, show a small success pill ("All items claimed") instead of the dollar amount so the crew knows the tab is fully covered.
+### 3. Enrich per-target rows with "claimed" amount
+For each target row (Jenna, Ryan, …) on itemized requests:
+- Replace the single `share_cents` number with a two-line micro-stat:
+  - **Top:** `fmtUSD(perPersonClaimedC[profile_id] ?? 0)` labeled "claimed" (muted)
+  - **Bottom:** existing `share_cents` as "owes" when settlement has run, otherwise hidden
+- Keep the status badge (Pending / Sent / Paid / Disputed) untouched on the right.
+- For non-itemized requests, the row stays exactly as it is today (just `share_cents` + badge).
 
-### 3. Keep existing rows intact
-"Your share of tax", "Tip (split evenly …)", "Estimated final charge", and the Submit button stay exactly as they are — only the new two-row "Bill status" block is added at the top of Live Summary.
+### 4. Keep header line truthful
+Leave the header `$X in · $Y open` and big total as-is — they already reflect collected/pending in dollars. No math change there.
 
 ## Out of scope
-- No schema changes, no edge-function changes, no math change to tax/tip/final charge.
-- No change to per-item rows (the dashed-border unclaimed indicator stays).
-- No change to host-side settlement views.
+- No edits to `ClaimItemsView`, edge functions, or DB.
+- No change to non-itemized tab cards.
+- No change to settlement, payment, or notification flows.
