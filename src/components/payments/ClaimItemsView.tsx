@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Minus, Plus, Users } from 'lucide-react';
+import { Minus, Plus, Users, Check } from 'lucide-react';
+import { toast } from 'sonner';
 import { useHaptics } from '@/hooks/useHaptics';
 import { Capacitor } from '@capacitor/core';
 import { openExternalLink } from '@/lib/nativeLinks';
@@ -15,6 +16,7 @@ interface Props {
   receiptImageUrl?: string | null;
   onChange?: () => void;
   onTotalsChange?: (myCents: number) => void;
+  onSubmit?: () => void;
 }
 
 interface Claimant {
@@ -28,12 +30,13 @@ function initials(name: string) {
   return name.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]?.toUpperCase() ?? '').join('') || '?';
 }
 
-export function ClaimItemsView({ requestId, profileId, taxCents = 0, tipCents = 0, receiptImageUrl = null, onChange, onTotalsChange }: Props) {
+export function ClaimItemsView({ requestId, profileId, taxCents = 0, tipCents = 0, receiptImageUrl = null, onChange, onTotalsChange, onSubmit }: Props) {
   const [showReceipt, setShowReceipt] = useState(false);
   const [items, setItems] = useState<any[]>([]);
   const [claimsByItem, setClaimsByItem] = useState<Record<string, Claimant[]>>({});
   const [profileCache, setProfileCache] = useState<Record<string, { name: string; avatar: string | null }>>({});
   const [participantIds, setParticipantIds] = useState<string[]>([]);
+  const [submitting, setSubmitting] = useState(false);
   const { triggerHaptic } = useHaptics();
 
   useEffect(() => {
@@ -288,6 +291,29 @@ export function ClaimItemsView({ requestId, profileId, taxCents = 0, tipCents = 
           {grandSubtotalC > 0 && mySubtotalC === 0 && (
             <p className="text-[11px] text-muted-foreground pt-1.5">Tap + on items above to start your tab.</p>
           )}
+          <Button
+            className="w-full mt-3 h-11 rounded-full font-montserrat font-bold uppercase tracking-wider text-[13px] shadow-[0_0_16px_rgba(244,122,25,0.35)]"
+            disabled={mySubtotalC === 0 || submitting}
+            onClick={async () => {
+              if (mySubtotalC === 0) return;
+              setSubmitting(true);
+              triggerHaptic('success');
+              try {
+                const { error } = await supabase.functions.invoke('nudge-claim-items', { body: { request_id: requestId } });
+                if (error) console.error('nudge failed', error);
+                toast.success('Submitted · crew nudged');
+              } catch (e) {
+                console.error(e);
+                toast.success('Submitted');
+              } finally {
+                setSubmitting(false);
+                onSubmit?.();
+              }
+            }}
+          >
+            <Check className="h-4 w-4 mr-1.5" />
+            {mySubtotalC === 0 ? 'Pick at least one item' : `Submit my items · ${fmt(myTotalC)}`}
+          </Button>
         </div>
       )}
     </div>

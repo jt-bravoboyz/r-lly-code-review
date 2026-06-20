@@ -638,6 +638,7 @@ function OwedRequestCard({ request: r, onChanged }: { request: any; onChanged: (
                 tipCents={r.tip_cents ?? 0}
                 receiptImageUrl={r.receipt_image_url ?? null}
                 onChange={onChanged}
+                onSubmit={() => setClaimOpen(false)}
               />
             </div>
           </SheetContent>
