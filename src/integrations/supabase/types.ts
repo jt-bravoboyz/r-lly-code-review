@@ -4835,6 +4835,18 @@ export type Database = {
           title: string
         }[]
       }
+      can_insert_split_check_target: {
+        Args: { _request_id: string }
+        Returns: boolean
+      }
+      can_read_split_check_request: {
+        Args: { _request_id: string }
+        Returns: boolean
+      }
+      can_read_split_check_target: {
+        Args: { _target_id: string }
+        Returns: boolean
+      }
       can_see_destination: {
         Args: {
           attendee_event_id: string
