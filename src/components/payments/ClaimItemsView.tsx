@@ -83,7 +83,7 @@ export function ClaimItemsView({ requestId, profileId, taxCents = 0, tipCents = 
 
   useEffect(() => {
     const ch = supabase.channel(`claim-items-${requestId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'split_check_item_claims' }, () => { refresh(); onChange?.(); })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'split_check_item_claims' }, () => { refresh(); })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
