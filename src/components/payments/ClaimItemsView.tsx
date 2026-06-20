@@ -199,6 +199,21 @@ export function ClaimItemsView({ requestId, profileId, taxCents = 0, tipCents = 
                   {fmt(it.unit_price_cents)} · qty {it.quantity}
                   {mine > 0 && <span className="text-primary font-medium"> · you {fmt(myShareC)}</span>}
                 </p>
+                <button
+                  type="button"
+                  onClick={() => shareAll(it.id, isSharedAll)}
+                  disabled={participantIds.length === 0}
+                  className={[
+                    'mt-2 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium tracking-tight transition-colors',
+                    'border active:scale-95',
+                    isSharedAll
+                      ? 'bg-primary/15 border-primary/40 text-primary'
+                      : 'bg-muted/40 border-border/60 text-foreground/70 hover:bg-muted/60',
+                  ].join(' ')}
+                >
+                  <Users className="h-3 w-3" />
+                  {isSharedAll ? `Shared · ${participantIds.length} people` : 'Share with all'}
+                </button>
                 {claimants.length > 0 && (
                   <div className="flex items-center mt-2">
                     {claimants.slice(0, 6).map(c => (
