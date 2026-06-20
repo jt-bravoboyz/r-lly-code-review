@@ -5200,6 +5200,10 @@ export type Database = {
         Args: { p_event_id: string }
         Returns: boolean
       }
+      is_split_request_participant: {
+        Args: { _request_id: string }
+        Returns: boolean
+      }
       is_squad_member_or_owner: {
         Args: { p_squad_id: string }
         Returns: boolean
