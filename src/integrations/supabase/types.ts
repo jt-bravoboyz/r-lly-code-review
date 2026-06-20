@@ -5080,6 +5080,17 @@ export type Database = {
         Args: { p_other_profile_id: string }
         Returns: string
       }
+      get_payment_handles_for_settlement: {
+        Args: { _target_profile_id: string }
+        Returns: {
+          apple_cash_handle: string
+          cashapp_handle: string
+          display_name: string
+          paypal_handle: string
+          preferred_settlement: string
+          venmo_handle: string
+        }[]
+      }
       get_people_you_may_know: {
         Args: { p_limit?: number }
         Returns: {
