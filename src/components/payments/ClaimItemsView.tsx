@@ -177,6 +177,9 @@ export function ClaimItemsView({ requestId, profileId, taxCents = 0, tipCents = 
           const unclaimed = totalClaimed < it.quantity;
           const lineTotal = it.unit_price_cents * it.quantity;
           const myShareC = totalClaimed > 0 && mine > 0 ? Math.round(lineTotal * (mine / totalClaimed)) : 0;
+          const isSharedAll = participantIds.length > 0
+            && claimants.length === participantIds.length
+            && claimants.every(c => c.qty === 1 && participantIds.includes(c.profile_id));
 
           return (
             <div
