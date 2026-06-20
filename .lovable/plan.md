@@ -1,31 +1,24 @@
-## Add "Share with everyone" to itemized claim view
+## Fix: "Share with all" doesn't add host's portion to their total
 
-Right now each item in `ClaimItemsView` only supports per-person +/- claiming. Shared things (appetizers, a pitcher, the table's fries) force one person to eat the whole cost or for everyone to manually +1. Add a one-tap way to split a single item evenly across all people on the tab.
+### Why it's broken
+RLS on `split_check_item_claims` only lets a user insert/delete rows for their own `profile_id`. When the host taps **Share with all**, the client tries to insert one row per participant — only the host's own row succeeds, all the others fail silently. Realtime then refreshes with the partial state and the host's live summary ends up wrong (and tax/tip prorate against a broken denominator).
 
-### UX
-Per item row, add a small pill button next to the +/- controls:
-- Label: **Share with all** (icon: `Users`)
-- When active: pill turns primary-tinted, label becomes **Shared · N people**, tapping again clears the share.
-- Avatar stack already shows everyone who claimed — sharing populates it with all participants.
-- Live summary at the bottom updates instantly (existing math already handles it — each person's qty / totalClaimed prorates the line).
+### Fix
+Add a `SECURITY DEFINER` RPC so the host can atomically share/unshare an item across every participant on their tab.
 
-### Behavior
-"All people" = the host + every row in `split_check_targets` for this `request_id` (status not `canceled`).
+**Migration** — new function `public.share_split_item(_item_id uuid, _share boolean)`:
+- Looks up the request via the item.
+- Verifies `auth.uid()` maps to a profile equal to `request.host_id` (else raise).
+- Always `DELETE FROM split_check_item_claims WHERE item_id = _item_id`.
+- If `_share = true`: insert one row (`quantity_claimed = 1`) for `host_id` plus every `split_check_targets.profile_id` for that request where `status <> 'canceled'`.
+- `SET search_path = public`, `GRANT EXECUTE ... TO authenticated`.
 
-Tapping **Share with all**:
-1. Delete any existing claims on that item.
-2. Insert one claim row per participant with `quantity_claimed = 1`. Even split falls out of the existing prorate formula (`lineTotal * mine/totalClaimed`).
-3. Mark the item locally as "shared" so the pill renders active. Detect shared state on load by: all participants present with qty 1 and count equals participant count.
+**Client** — `src/components/payments/ClaimItemsView.tsx`:
+- Replace the current `shareAll` body (which does direct delete + insert) with a single `supabase.rpc('share_split_item', { _item_id, _share: !currentlyShared })` call.
+- Keep the optimistic refresh + realtime subscription (already handles UI update for everyone).
 
-Tapping again while active: delete all claims on that item (reset to unclaimed).
-
-If someone later +/- on a shared item, it just adjusts their qty — share pill auto-deactivates since the equal-split signature no longer matches. That's fine; no extra confirmation.
-
-### Files
-- `src/components/payments/ClaimItemsView.tsx` — fetch participants once (host from `split_check_requests.created_by` + targets from `split_check_targets`), add `shareAll(itemId)` handler, render the pill, compute `isSharedAll` per item.
-
-No schema changes, no edge function changes, no impact on Quick mode.
+After this, host's qty=1 row lands alongside everyone else's, `mySubtotalC` picks up `lineTotal / N`, and prorated tax & tip update accordingly.
 
 ### Out of scope
-- Splitting an item between a *subset* of people (would need a picker — flag for later if you want it).
-- Fractional quantities / weights.
+- Non-host claim-on-behalf flows.
+- Subset sharing (still flagged for later).
