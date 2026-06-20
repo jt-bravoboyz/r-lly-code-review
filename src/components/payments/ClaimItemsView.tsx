@@ -111,7 +111,7 @@ export function ClaimItemsView({ requestId, profileId, taxCents = 0, tipCents = 
   };
 
 
-  const { mySubtotalC, grandSubtotalC, myTaxTipC, myTotalC } = useMemo(() => {
+  const { mySubtotalC, grandSubtotalC, myTaxC, myTipC, myTotalC } = useMemo(() => {
     let mine = 0;
     let grand = 0;
     items.forEach(it => {
@@ -124,10 +124,10 @@ export function ClaimItemsView({ requestId, profileId, taxCents = 0, tipCents = 
         mine += Math.round(lineTotal * (myQty / totalClaimed));
       }
     });
-    const pool = taxCents + tipCents;
-    const tt = grand > 0 ? Math.round(pool * (mine / grand)) : 0;
-    return { mySubtotalC: mine, grandSubtotalC: grand, myTaxTipC: tt, myTotalC: mine + tt };
-  }, [items, claimsByItem, profileId, taxCents, tipCents]);
+    const tax = grand > 0 ? Math.round(taxCents * (mine / grand)) : 0;
+    const tip = participantIds.length > 0 ? Math.round(tipCents / participantIds.length) : 0;
+    return { mySubtotalC: mine, grandSubtotalC: grand, myTaxC: tax, myTipC: tip, myTotalC: mine + tax + tip };
+  }, [items, claimsByItem, profileId, taxCents, tipCents, participantIds]);
 
   useEffect(() => { onTotalsChange?.(myTotalC); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [myTotalC]);
 
