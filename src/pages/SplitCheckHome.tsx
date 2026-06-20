@@ -207,7 +207,7 @@ export default function SplitCheckHome() {
     // ── OWED TO YOU ──
     const { data: myReqs } = await supabase
       .from('split_check_requests')
-      .select('id, event_id, host_id, total_cents, created_at, status, mode, title')
+      .select('id, event_id, host_id, total_cents, created_at, status, mode, title, tax_cents, tip_cents, receipt_image_url')
       .eq('host_id', meId)
       .order('created_at', { ascending: false });
 
