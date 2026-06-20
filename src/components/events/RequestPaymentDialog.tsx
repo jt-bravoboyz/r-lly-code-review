@@ -258,7 +258,7 @@ export function RequestPaymentDialog({ open, onOpenChange, eventId, attendees, o
             {AttendeePicker}
             {selected.size > 0 && totalCentsQuick > 0 && (
               <div className="rounded-lg bg-primary/10 px-3 py-2 text-sm">
-                Split <strong>${(totalCentsQuick/100).toFixed(2)}</strong> equally between <strong>{selected.size}</strong> {selected.size === 1 ? 'person' : 'people'} = <strong>${(perShareQuick/100).toFixed(2)}</strong> each
+                Split <strong>${(totalCentsQuick/100).toFixed(2)}</strong> equally between <strong>{quickHeadcount}</strong> people (including you) = <strong>${(perShareQuick/100).toFixed(2)}</strong> each
               </div>
             )}
             <Textarea placeholder="Note (optional)" rows={2} value={note} onChange={e => setNote(e.target.value)} />
