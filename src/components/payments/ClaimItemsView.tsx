@@ -29,12 +29,13 @@ function initials(name: string) {
   return name.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]?.toUpperCase() ?? '').join('') || '?';
 }
 
-export function ClaimItemsView({ requestId, profileId, taxCents = 0, tipCents = 0, receiptImageUrl = null, onChange, onTotalsChange }: Props) {
+export function ClaimItemsView({ requestId, profileId, taxCents = 0, tipCents = 0, receiptImageUrl = null, onChange, onTotalsChange, onSubmit }: Props) {
   const [showReceipt, setShowReceipt] = useState(false);
   const [items, setItems] = useState<any[]>([]);
   const [claimsByItem, setClaimsByItem] = useState<Record<string, Claimant[]>>({});
   const [profileCache, setProfileCache] = useState<Record<string, { name: string; avatar: string | null }>>({});
   const [participantIds, setParticipantIds] = useState<string[]>([]);
+  const [submitting, setSubmitting] = useState(false);
   const { triggerHaptic } = useHaptics();
 
   useEffect(() => {
