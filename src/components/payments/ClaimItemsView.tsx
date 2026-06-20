@@ -83,7 +83,7 @@ export function ClaimItemsView({ requestId, profileId, taxCents = 0, tipCents = 
 
   useEffect(() => {
     const ch = supabase.channel(`claim-items-${requestId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'split_check_item_claims' }, () => { refresh(); onChange?.(); })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'split_check_item_claims' }, () => { refresh(); })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -100,18 +100,18 @@ export function ClaimItemsView({ requestId, profileId, taxCents = 0, tipCents = 
     } else {
       await supabase.from('split_check_item_claims').upsert({ item_id: itemId, profile_id: profileId, quantity_claimed: next }, { onConflict: 'item_id,profile_id' });
     }
-    refresh(); onChange?.();
+    refresh();
   };
 
   const shareAll = async (itemId: string, currentlyShared: boolean) => {
     triggerHaptic('selection');
     const { error } = await supabase.rpc('share_split_item', { _item_id: itemId, _share: !currentlyShared });
     if (error) console.error('share_split_item failed', error);
-    refresh(); onChange?.();
+    refresh();
   };
 
 
-  const { mySubtotalC, grandSubtotalC, myTaxTipC, myTotalC } = useMemo(() => {
+  const { mySubtotalC, grandSubtotalC, myTaxC, myTipC, myTotalC } = useMemo(() => {
     let mine = 0;
     let grand = 0;
     items.forEach(it => {
@@ -124,10 +124,10 @@ export function ClaimItemsView({ requestId, profileId, taxCents = 0, tipCents = 
         mine += Math.round(lineTotal * (myQty / totalClaimed));
       }
     });
-    const pool = taxCents + tipCents;
-    const tt = grand > 0 ? Math.round(pool * (mine / grand)) : 0;
-    return { mySubtotalC: mine, grandSubtotalC: grand, myTaxTipC: tt, myTotalC: mine + tt };
-  }, [items, claimsByItem, profileId, taxCents, tipCents]);
+    const tax = grand > 0 ? Math.round(taxCents * (mine / grand)) : 0;
+    const tip = participantIds.length > 0 ? Math.round(tipCents / participantIds.length) : 0;
+    return { mySubtotalC: mine, grandSubtotalC: grand, myTaxC: tax, myTipC: tip, myTotalC: mine + tax + tip };
+  }, [items, claimsByItem, profileId, taxCents, tipCents, participantIds]);
 
   useEffect(() => { onTotalsChange?.(myTotalC); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [myTotalC]);
 
@@ -268,8 +268,12 @@ export function ClaimItemsView({ requestId, profileId, taxCents = 0, tipCents = 
             <span className="font-medium tabular-nums">{fmt(mySubtotalC)}</span>
           </div>
           <div className="flex items-center justify-between text-[13px] mt-0.5">
-            <span className="text-muted-foreground">Prorated tax &amp; tip</span>
-            <span className="font-medium tabular-nums">+ {fmt(myTaxTipC)}</span>
+            <span className="text-muted-foreground">Your share of tax</span>
+            <span className="font-medium tabular-nums">+ {fmt(myTaxC)}</span>
+          </div>
+          <div className="flex items-center justify-between text-[13px] mt-0.5">
+            <span className="text-muted-foreground">Tip (split evenly{participantIds.length > 0 ? ` · ${participantIds.length} people` : ''})</span>
+            <span className="font-medium tabular-nums">+ {fmt(myTipC)}</span>
           </div>
           <div className="h-px bg-border/40 my-2" />
           <div className="flex items-center justify-between">
