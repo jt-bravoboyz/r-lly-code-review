@@ -55,11 +55,9 @@ export function PaySplitShareDialog({ open, onOpenChange, requestId, profileId, 
       if (r?.mode === 'itemized') refreshItemized();
       if (r?.host_id) {
         const { data: p } = await supabase
-          .from('profiles')
-          .select('display_name, venmo_handle, cashapp_handle, paypal_handle')
-          .eq('id', r.host_id)
-          .maybeSingle();
-        setPayee(p as any);
+          .rpc('get_payment_handles_for_settlement', { _target_profile_id: r.host_id });
+        const row = Array.isArray(p) && p.length ? p[0] : null;
+        setPayee(row as any);
       }
       if (r?.event_id) {
         const { data: e } = await supabase.from('events').select('title').eq('id', r.event_id).maybeSingle();
