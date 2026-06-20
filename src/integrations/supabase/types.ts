@@ -4553,6 +4553,77 @@ export type Database = {
           },
         ]
       }
+      merchant_accounts_public: {
+        Row: {
+          country: string | null
+          created_at: string | null
+          email: string | null
+          id: string | null
+          last_synced_at: string | null
+          legal_name: string | null
+          payouts_enabled: boolean | null
+          profile_id: string | null
+          requirements_due: Json | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          country?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string | null
+          last_synced_at?: string | null
+          legal_name?: string | null
+          payouts_enabled?: boolean | null
+          profile_id?: string | null
+          requirements_due?: Json | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          country?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string | null
+          last_synced_at?: string | null
+          legal_name?: string | null
+          payouts_enabled?: boolean | null
+          profile_id?: string | null
+          requirements_due?: Json | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "merchant_accounts_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "merchant_accounts_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "merchant_accounts_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "safe_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "merchant_accounts_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "safe_profiles_with_connection"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       public_profiles: {
         Row: {
           avatar_url: string | null
@@ -5080,6 +5151,17 @@ export type Database = {
         Args: { p_other_profile_id: string }
         Returns: string
       }
+      get_payment_handles_for_settlement: {
+        Args: { _target_profile_id: string }
+        Returns: {
+          apple_cash_handle: string
+          cashapp_handle: string
+          display_name: string
+          paypal_handle: string
+          preferred_settlement: string
+          venmo_handle: string
+        }[]
+      }
       get_people_you_may_know: {
         Args: { p_limit?: number }
         Returns: {
@@ -5198,6 +5280,10 @@ export type Database = {
       is_event_member: { Args: { p_event_id: string }; Returns: boolean }
       is_event_safety_complete: {
         Args: { p_event_id: string }
+        Returns: boolean
+      }
+      is_split_request_participant: {
+        Args: { _request_id: string }
         Returns: boolean
       }
       is_squad_member_or_owner: {

@@ -85,12 +85,10 @@ export function TabPaySheet({
     setLoading(true);
     (async () => {
       const { data } = await supabase
-        .from('profiles')
-        .select('display_name, venmo_handle, cashapp_handle, paypal_handle, apple_cash_handle, preferred_settlement')
-        .eq('id', payeeId)
-        .maybeSingle();
+        .rpc('get_payment_handles_for_settlement', { _target_profile_id: payeeId });
       if (cancelled) return;
-      setPayee((data as PayeeProfile | null) ?? null);
+      const row = Array.isArray(data) && data.length ? (data[0] as PayeeProfile) : null;
+      setPayee(row);
       setLoading(false);
     })();
     return () => {
