@@ -15,6 +15,7 @@ interface Props {
   receiptImageUrl?: string | null;
   onChange?: () => void;
   onTotalsChange?: (myCents: number) => void;
+  onSubmit?: () => void;
 }
 
 interface Claimant {
