@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Minus, Plus } from 'lucide-react';
+import { Minus, Plus, Users } from 'lucide-react';
 import { useHaptics } from '@/hooks/useHaptics';
 import { Capacitor } from '@capacitor/core';
 import { openExternalLink } from '@/lib/nativeLinks';
@@ -33,7 +33,19 @@ export function ClaimItemsView({ requestId, profileId, taxCents = 0, tipCents = 
   const [items, setItems] = useState<any[]>([]);
   const [claimsByItem, setClaimsByItem] = useState<Record<string, Claimant[]>>({});
   const [profileCache, setProfileCache] = useState<Record<string, { name: string; avatar: string | null }>>({});
+  const [participantIds, setParticipantIds] = useState<string[]>([]);
   const { triggerHaptic } = useHaptics();
+
+  useEffect(() => {
+    (async () => {
+      const { data: req } = await supabase.from('split_check_requests').select('host_id').eq('id', requestId).maybeSingle();
+      const { data: tgts } = await supabase.from('split_check_targets').select('profile_id, status').eq('request_id', requestId);
+      const ids = new Set<string>();
+      if (req?.host_id) ids.add(req.host_id);
+      (tgts ?? []).forEach((t: any) => { if (t.status !== 'canceled' && t.profile_id) ids.add(t.profile_id); });
+      setParticipantIds(Array.from(ids));
+    })();
+  }, [requestId]);
 
   const refresh = async () => {
     const { data: it } = await supabase.from('split_check_items').select('*').eq('request_id', requestId).order('line_no');
@@ -90,6 +102,17 @@ export function ClaimItemsView({ requestId, profileId, taxCents = 0, tipCents = 
     }
     refresh(); onChange?.();
   };
+
+  const shareAll = async (itemId: string, currentlyShared: boolean) => {
+    triggerHaptic('selection');
+    await supabase.from('split_check_item_claims').delete().eq('item_id', itemId);
+    if (!currentlyShared && participantIds.length > 0) {
+      const rows = participantIds.map(pid => ({ item_id: itemId, profile_id: pid, quantity_claimed: 1 }));
+      await supabase.from('split_check_item_claims').insert(rows);
+    }
+    refresh(); onChange?.();
+  };
+
 
   const { mySubtotalC, grandSubtotalC, myTaxTipC, myTotalC } = useMemo(() => {
     let mine = 0;
@@ -154,6 +177,9 @@ export function ClaimItemsView({ requestId, profileId, taxCents = 0, tipCents = 
           const unclaimed = totalClaimed < it.quantity;
           const lineTotal = it.unit_price_cents * it.quantity;
           const myShareC = totalClaimed > 0 && mine > 0 ? Math.round(lineTotal * (mine / totalClaimed)) : 0;
+          const isSharedAll = participantIds.length > 0
+            && claimants.length === participantIds.length
+            && claimants.every(c => c.qty === 1 && participantIds.includes(c.profile_id));
 
           return (
             <div
@@ -173,6 +199,21 @@ export function ClaimItemsView({ requestId, profileId, taxCents = 0, tipCents = 
                   {fmt(it.unit_price_cents)} · qty {it.quantity}
                   {mine > 0 && <span className="text-primary font-medium"> · you {fmt(myShareC)}</span>}
                 </p>
+                <button
+                  type="button"
+                  onClick={() => shareAll(it.id, isSharedAll)}
+                  disabled={participantIds.length === 0}
+                  className={[
+                    'mt-2 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium tracking-tight transition-colors',
+                    'border active:scale-95',
+                    isSharedAll
+                      ? 'bg-primary/15 border-primary/40 text-primary'
+                      : 'bg-muted/40 border-border/60 text-foreground/70 hover:bg-muted/60',
+                  ].join(' ')}
+                >
+                  <Users className="h-3 w-3" />
+                  {isSharedAll ? `Shared · ${participantIds.length} people` : 'Share with all'}
+                </button>
                 {claimants.length > 0 && (
                   <div className="flex items-center mt-2">
                     {claimants.slice(0, 6).map(c => (
