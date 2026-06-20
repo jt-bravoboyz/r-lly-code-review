@@ -291,6 +291,29 @@ export function ClaimItemsView({ requestId, profileId, taxCents = 0, tipCents = 
           {grandSubtotalC > 0 && mySubtotalC === 0 && (
             <p className="text-[11px] text-muted-foreground pt-1.5">Tap + on items above to start your tab.</p>
           )}
+          <Button
+            className="w-full mt-3 h-11 rounded-full font-montserrat font-bold uppercase tracking-wider text-[13px] shadow-[0_0_16px_rgba(244,122,25,0.35)]"
+            disabled={mySubtotalC === 0 || submitting}
+            onClick={async () => {
+              if (mySubtotalC === 0) return;
+              setSubmitting(true);
+              triggerHaptic('success');
+              try {
+                const { error } = await supabase.functions.invoke('nudge-claim-items', { body: { request_id: requestId } });
+                if (error) console.error('nudge failed', error);
+                toast.success('Submitted · crew nudged');
+              } catch (e) {
+                console.error(e);
+                toast.success('Submitted');
+              } finally {
+                setSubmitting(false);
+                onSubmit?.();
+              }
+            }}
+          >
+            <Check className="h-4 w-4 mr-1.5" />
+            {mySubtotalC === 0 ? 'Pick at least one item' : `Submit my items · ${fmt(myTotalC)}`}
+          </Button>
         </div>
       )}
     </div>
