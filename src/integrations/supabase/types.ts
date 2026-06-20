@@ -5385,6 +5385,10 @@ export type Database = {
         Args: { p_referrer_id: string; p_user_id: string }
         Returns: undefined
       }
+      share_split_item: {
+        Args: { _item_id: string; _share: boolean }
+        Returns: undefined
+      }
       transition_event_status: {
         Args: { p_event_id: string; p_new_status: string }
         Returns: {
