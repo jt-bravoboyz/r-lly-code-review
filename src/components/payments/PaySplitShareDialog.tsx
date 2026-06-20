@@ -185,6 +185,7 @@ export function PaySplitShareDialog({ open, onOpenChange, requestId, profileId, 
             receiptImageUrl={request.receipt_image_url ?? null}
             onChange={refreshItemized}
             onTotalsChange={(c) => setComputedTotal(c)}
+            onSubmit={() => { refreshItemized(); }}
           />
         )}
 
