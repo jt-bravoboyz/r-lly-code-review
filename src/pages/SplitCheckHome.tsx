@@ -523,8 +523,11 @@ export default function SplitCheckHome() {
 
 function OwedRequestCard({ request: r, onChanged }: { request: any; onChanged: () => void }) {
   const [open, setOpen] = useState(false);
+  const [claimOpen, setClaimOpen] = useState(false);
+  const { profile } = useAuth();
   const { confirmSettlement, disputeSettlement } = useTabSettlements(r.id);
   const date = r.startTime ? new Date(r.startTime).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '';
+  const isItemized = r.mode === 'itemized';
 
   return (
     <div className="rounded-2xl bg-card/60 border border-white/10 backdrop-blur-xl p-4 space-y-3"
@@ -548,6 +551,18 @@ function OwedRequestCard({ request: r, onChanged }: { request: any; onChanged: (
         </CollapsibleTrigger>
 
         <CollapsibleContent className="pt-3 space-y-2">
+          {isItemized && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="w-full rounded-full h-10 font-semibold border-primary/40 text-primary hover:bg-primary/10"
+              onClick={() => setClaimOpen(true)}
+            >
+              <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+              Claim your items
+            </Button>
+          )}
+
           {r.targets.map((t: any) => {
             const isPaid = t.status === 'paid' || t.p2p?.status === 'confirmed';
             const isSent = t.p2p?.status === 'sent' || t.status === 'settled';
@@ -602,6 +617,32 @@ function OwedRequestCard({ request: r, onChanged }: { request: any; onChanged: (
           )}
         </CollapsibleContent>
       </Collapsible>
+
+      {isItemized && profile?.id && (
+        <Sheet open={claimOpen} onOpenChange={setClaimOpen}>
+          <SheetContent
+            side="bottom"
+            className="p-0 rounded-t-3xl border-t border-border/60 bg-background max-h-[92dvh] flex flex-col"
+          >
+            <SheetHeader className="px-5 pt-5 pb-2 text-left">
+              <SheetTitle className="font-montserrat">Claim your items</SheetTitle>
+              <SheetDescription>
+                Tap the items you had. Your portion gets locked in so the rest splits right.
+              </SheetDescription>
+            </SheetHeader>
+            <div className="flex-1 overflow-y-auto px-5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)]">
+              <ClaimItemsView
+                requestId={r.id}
+                profileId={profile.id}
+                taxCents={r.tax_cents ?? 0}
+                tipCents={r.tip_cents ?? 0}
+                receiptImageUrl={r.receipt_image_url ?? null}
+                onChange={onChanged}
+              />
+            </div>
+          </SheetContent>
+        </Sheet>
+      )}
     </div>
   );
 }
