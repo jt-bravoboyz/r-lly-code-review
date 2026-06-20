@@ -619,7 +619,7 @@ function OwedRequestCard({ request: r, onChanged }: { request: any; onChanged: (
       </Collapsible>
 
       {isItemized && profile?.id && (
-        <Sheet open={claimOpen} onOpenChange={setClaimOpen}>
+        <Sheet open={claimOpen} onOpenChange={(o) => { setClaimOpen(o); if (!o) onChanged(); }}>
           <SheetContent
             side="bottom"
             className="p-0 rounded-t-3xl border-t border-border/60 bg-background max-h-[92dvh] flex flex-col"
