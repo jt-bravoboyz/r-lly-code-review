@@ -1,34 +1,31 @@
-Fix the two host-inclusion bugs in R@lly tab, then walk through the rest of the flow.
+## Add "Share with everyone" to itemized claim view
 
-## Bug 1 — Itemized: host never gets to claim their items
+Right now each item in `ClaimItemsView` only supports per-person +/- claiming. Shared things (appetizers, a pitcher, the table's fries) force one person to eat the whole cost or for everyone to manually +1. Add a one-tap way to split a single item evenly across all people on the tab.
 
-**Root cause:** `supabase/functions/request-split-check/index.ts` (lines 166-172) inserts the host as a `split_check_targets` row with `status: 'paid'` and `share_cents: 0`. The claim UI (`ClaimItemsView` / `PaySplitShareDialog`) only opens for rows the user owes, so the host is locked out. Result: any item the host actually ate stays unclaimed and the math for everyone else is off.
+### UX
+Per item row, add a small pill button next to the +/- controls:
+- Label: **Share with all** (icon: `Users`)
+- When active: pill turns primary-tinted, label becomes **Shared · N people**, tapping again clears the share.
+- Avatar stack already shows everyone who claimed — sharing populates it with all participants.
+- Live summary at the bottom updates instantly (existing math already handles it — each person's qty / totalClaimed prorates the line).
 
-**Fix:**
-1. Edge function — when `mode === 'itemized'`, insert the host target with `status: 'pending'` (not paid) and `share_cents: 0`. They still owe themselves nothing in dollars, but the row exists so the claim UI mounts for them.
-2. `SplitCheckHome` — also surface the host's own itemized request in "You Owe" *only when* there are unclaimed items left for them to claim (otherwise the host sees their own tab and gets confused). Easier alternative: add a small "Claim your items" entry on the "Owed to You" host card for itemized tabs that opens `ClaimItemsView` directly. I'll go with this — cleaner separation between "I host" and "I owe."
-3. `compute_itemized_share` RPC — confirm it already handles the host as a participant; if it excludes the host from tax/tip headcount, update so host counts in the proportional split (the bill always covered the host).
-4. When the host marks themselves done in the claim sheet, write `status='paid'` on their own row so it doesn't keep showing.
+### Behavior
+"All people" = the host + every row in `split_check_targets` for this `request_id` (status not `canceled`).
 
-## Bug 2 — Quick: host not included in even split
+Tapping **Share with all**:
+1. Delete any existing claims on that item.
+2. Insert one claim row per participant with `quantity_claimed = 1`. Even split falls out of the existing prorate formula (`lineTotal * mine/totalClaimed`).
+3. Mark the item locally as "shared" so the pill renders active. Detect shared state on load by: all participants present with qty 1 and count equals participant count.
 
-**Root cause to verify:** standalone `StartTabDialog` already does N+1 ("X people including you") and the edge function divides by N+1. The likely-broken path is the event-side "Request Payment" entry (`SplitCheckSettlementPanel`) — need to read that file and confirm it (a) sends `mode: 'quick'` with the same N+1 expectation and (b) shows a preview that includes the host. If it sends `total_cents` over an attendee-only headcount, the per-person amount comes out higher than the host promised.
+Tapping again while active: delete all claims on that item (reset to unclaimed).
 
-**Fix:**
-1. Read `SplitCheckSettlementPanel` quick-split path and align the preview math + payload with the edge function's N+1 behavior.
-2. Make the preview copy explicit everywhere: "$X / person · N people including you" so the host sees they're counted.
-3. Edge function already inserts a paid host row at `quickShares[totalTargets]` — leave that as-is so the host's portion is recorded against the tab and the "collected" total in `SplitCheckHome` reflects reality (it currently excludes the host row via `t.profile_id !== r.host_id`, which is correct).
+If someone later +/- on a shared item, it just adjusts their qty — share pill auto-deactivates since the equal-split signature no longer matches. That's fine; no extra confirmation.
 
-## Walkthrough plan (after the two fixes land)
+### Files
+- `src/components/payments/ClaimItemsView.tsx` — fetch participants once (host from `split_check_requests.created_by` + targets from `split_check_targets`), add `shareAll(itemId)` handler, render the pill, compute `isSharedAll` per item.
 
-Once these are in, I'll ping you to verify on Maya Maya (or a fresh test tab), then we move down the list together — Phase 3 (claim flow UX), Phase 4 (pay sheet + deep links), Phase 5 (guest pay), Phase 6 (host settlement panel) — fixing as we find issues instead of guessing.
+No schema changes, no edge function changes, no impact on Quick mode.
 
-## Files I'll touch
-
-- `supabase/functions/request-split-check/index.ts` — host row status for itemized
-- `src/pages/SplitCheckHome.tsx` — surface "Claim your items" on host's own itemized tab card
-- `src/components/payments/ClaimItemsView.tsx` — allow host to open, mark-done writes `paid` on host row
-- `src/components/events/SplitCheckSettlementPanel.tsx` — align quick-split preview + payload to include the host
-- Possibly a tiny migration to update `compute_itemized_share` if it excludes the host from tax/tip proration
-
-No schema changes expected beyond that one RPC tweak (if needed).
+### Out of scope
+- Splitting an item between a *subset* of people (would need a picker — flag for later if you want it).
+- Fractional quantities / weights.
