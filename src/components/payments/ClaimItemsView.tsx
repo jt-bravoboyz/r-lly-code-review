@@ -33,7 +33,19 @@ export function ClaimItemsView({ requestId, profileId, taxCents = 0, tipCents = 
   const [items, setItems] = useState<any[]>([]);
   const [claimsByItem, setClaimsByItem] = useState<Record<string, Claimant[]>>({});
   const [profileCache, setProfileCache] = useState<Record<string, { name: string; avatar: string | null }>>({});
+  const [participantIds, setParticipantIds] = useState<string[]>([]);
   const { triggerHaptic } = useHaptics();
+
+  useEffect(() => {
+    (async () => {
+      const { data: req } = await supabase.from('split_check_requests').select('created_by').eq('id', requestId).maybeSingle();
+      const { data: tgts } = await supabase.from('split_check_targets').select('profile_id, status').eq('request_id', requestId);
+      const ids = new Set<string>();
+      if (req?.created_by) ids.add(req.created_by);
+      (tgts ?? []).forEach((t: any) => { if (t.status !== 'canceled' && t.profile_id) ids.add(t.profile_id); });
+      setParticipantIds(Array.from(ids));
+    })();
+  }, [requestId]);
 
   const refresh = async () => {
     const { data: it } = await supabase.from('split_check_items').select('*').eq('request_id', requestId).order('line_no');
