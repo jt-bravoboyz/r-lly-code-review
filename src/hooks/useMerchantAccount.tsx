@@ -4,7 +4,6 @@ import { supabase } from '@/integrations/supabase/client';
 export interface MerchantAccount {
   id: string;
   profile_id: string;
-  fluid_pay_sub_merchant_id: string | null;
   status: 'not_started' | 'pending' | 'active' | 'rejected' | 'disabled';
   legal_name: string | null;
   email: string | null;
@@ -21,7 +20,7 @@ export function useMerchantAccount(profileId: string | null | undefined) {
   const refetch = useCallback(async () => {
     if (!profileId) { setLoading(false); return; }
     const { data } = await supabase
-      .from('merchant_accounts')
+      .from('merchant_accounts_public' as any)
       .select('*')
       .eq('profile_id', profileId)
       .maybeSingle();
