@@ -100,14 +100,14 @@ export function ClaimItemsView({ requestId, profileId, taxCents = 0, tipCents = 
     } else {
       await supabase.from('split_check_item_claims').upsert({ item_id: itemId, profile_id: profileId, quantity_claimed: next }, { onConflict: 'item_id,profile_id' });
     }
-    refresh(); onChange?.();
+    refresh();
   };
 
   const shareAll = async (itemId: string, currentlyShared: boolean) => {
     triggerHaptic('selection');
     const { error } = await supabase.rpc('share_split_item', { _item_id: itemId, _share: !currentlyShared });
     if (error) console.error('share_split_item failed', error);
-    refresh(); onChange?.();
+    refresh();
   };
 
 
