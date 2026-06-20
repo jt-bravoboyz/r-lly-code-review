@@ -529,6 +529,49 @@ function OwedRequestCard({ request: r, onChanged }: { request: any; onChanged: (
   const date = r.startTime ? new Date(r.startTime).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '';
   const isItemized = r.mode === 'itemized';
 
+  const [items, setItems] = useState<any[]>([]);
+  const [claims, setClaims] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!isItemized || !open) return;
+    let cancelled = false;
+    const load = async () => {
+      const { data: it } = await supabase.from('split_check_items').select('id, unit_price_cents, quantity').eq('request_id', r.id);
+      if (cancelled) return;
+      const itemList = it ?? [];
+      setItems(itemList);
+      const ids = itemList.map((x: any) => x.id);
+      if (!ids.length) { setClaims([]); return; }
+      const { data: cls } = await supabase.from('split_check_item_claims').select('item_id, profile_id, quantity_claimed').in('item_id', ids);
+      if (!cancelled) setClaims(cls ?? []);
+    };
+    load();
+    const ch = supabase.channel(`owed-claims-${r.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'split_check_item_claims' }, () => { load(); })
+      .subscribe();
+    return () => { cancelled = true; supabase.removeChannel(ch); };
+  }, [isItemized, open, r.id]);
+
+  const { grandSubtotalC, claimedSubtotalC, unclaimedSubtotalC, perPersonClaimedC } = useMemo(() => {
+    let grand = 0;
+    let claimed = 0;
+    const perPerson: Record<string, number> = {};
+    items.forEach((it: any) => {
+      const lineTotal = it.unit_price_cents * it.quantity;
+      grand += lineTotal;
+      const rows = claims.filter((c: any) => c.item_id === it.id);
+      const totalClaimed = rows.reduce((s: number, c: any) => s + c.quantity_claimed, 0);
+      if (totalClaimed > 0 && it.quantity > 0) {
+        const coveredQty = Math.min(totalClaimed, it.quantity);
+        claimed += Math.round(lineTotal * (coveredQty / it.quantity));
+        rows.forEach((c: any) => {
+          perPerson[c.profile_id] = (perPerson[c.profile_id] ?? 0) + Math.round(lineTotal * (c.quantity_claimed / totalClaimed));
+        });
+      }
+    });
+    return { grandSubtotalC: grand, claimedSubtotalC: claimed, unclaimedSubtotalC: Math.max(0, grand - claimed), perPersonClaimedC: perPerson };
+  }, [items, claims]);
+
   return (
     <div className="rounded-2xl bg-card/60 border border-white/10 backdrop-blur-xl p-4 space-y-3"
       style={{ WebkitBackdropFilter: 'blur(16px)' }}>
@@ -551,6 +594,29 @@ function OwedRequestCard({ request: r, onChanged }: { request: any; onChanged: (
         </CollapsibleTrigger>
 
         <CollapsibleContent className="pt-3 space-y-2">
+          {isItemized && grandSubtotalC > 0 && (
+            <div className="rounded-xl bg-muted/30 border border-border/40 px-2.5 py-2">
+              <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.08em] text-muted-foreground font-semibold mb-1">
+                <span>Bill status</span>
+                <span className="tabular-nums normal-case tracking-normal text-muted-foreground/80">of {fmtUSD(grandSubtotalC)}</span>
+              </div>
+              <div className="flex items-center justify-between text-[13px]">
+                <span className="text-muted-foreground">Claimed</span>
+                <span className={`font-medium tabular-nums ${claimedSubtotalC > 0 ? 'text-primary' : ''}`}>{fmtUSD(claimedSubtotalC)}</span>
+              </div>
+              <div className="flex items-center justify-between text-[13px] mt-0.5">
+                <span className="text-muted-foreground">Unclaimed</span>
+                {unclaimedSubtotalC === 0 ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 text-[11px] font-semibold">
+                    <Check className="h-3 w-3" /> All claimed
+                  </span>
+                ) : (
+                  <span className="font-semibold tabular-nums text-amber-600 dark:text-amber-400">{fmtUSD(unclaimedSubtotalC)}</span>
+                )}
+              </div>
+            </div>
+          )}
+
           {isItemized && (
             <Button
               size="sm"
@@ -567,6 +633,7 @@ function OwedRequestCard({ request: r, onChanged }: { request: any; onChanged: (
             const isPaid = t.status === 'paid' || t.p2p?.status === 'confirmed';
             const isSent = t.p2p?.status === 'sent' || t.status === 'settled';
             const isDisputed = t.p2p?.status === 'disputed';
+            const claimedC = perPersonClaimedC[t.payer?.id ?? t.profile_id] ?? 0;
             return (
               <div key={t.id} className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2 min-w-0">
@@ -579,7 +646,20 @@ function OwedRequestCard({ request: r, onChanged }: { request: any; onChanged: (
                   <span className="truncate">{t.payer?.display_name ?? 'Someone'}</span>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  <span className="text-xs tabular-nums text-muted-foreground">{fmtUSD(t.share_cents ?? 0)}</span>
+                  {isItemized ? (
+                    <div className="text-right leading-tight">
+                      <div className="text-[11px] tabular-nums text-muted-foreground">
+                        <span className="text-[9px] uppercase tracking-wider mr-1">claimed</span>{fmtUSD(claimedC)}
+                      </div>
+                      {(t.share_cents ?? 0) > 0 && (
+                        <div className="text-[11px] tabular-nums text-foreground/80">
+                          <span className="text-[9px] uppercase tracking-wider mr-1">owes</span>{fmtUSD(t.share_cents)}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <span className="text-xs tabular-nums text-muted-foreground">{fmtUSD(t.share_cents ?? 0)}</span>
+                  )}
                   {isDisputed ? (
                     <Badge className="text-[10px] bg-red-500/15 text-red-600 border border-red-500/30">Disputed</Badge>
                   ) : isPaid ? (
@@ -593,6 +673,7 @@ function OwedRequestCard({ request: r, onChanged }: { request: any; onChanged: (
               </div>
             );
           })}
+
 
           {r.sentToMe?.length > 0 && (
             <div className="space-y-2 pt-2 border-t">
