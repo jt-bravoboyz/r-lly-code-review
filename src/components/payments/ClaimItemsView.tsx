@@ -38,10 +38,10 @@ export function ClaimItemsView({ requestId, profileId, taxCents = 0, tipCents = 
 
   useEffect(() => {
     (async () => {
-      const { data: req } = await supabase.from('split_check_requests').select('created_by').eq('id', requestId).maybeSingle();
+      const { data: req } = await supabase.from('split_check_requests').select('host_id').eq('id', requestId).maybeSingle();
       const { data: tgts } = await supabase.from('split_check_targets').select('profile_id, status').eq('request_id', requestId);
       const ids = new Set<string>();
-      if (req?.created_by) ids.add(req.created_by);
+      if (req?.host_id) ids.add(req.host_id);
       (tgts ?? []).forEach((t: any) => { if (t.status !== 'canceled' && t.profile_id) ids.add(t.profile_id); });
       setParticipantIds(Array.from(ids));
     })();
