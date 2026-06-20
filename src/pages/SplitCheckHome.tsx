@@ -533,7 +533,7 @@ function OwedRequestCard({ request: r, onChanged }: { request: any; onChanged: (
   const [claims, setClaims] = useState<any[]>([]);
 
   useEffect(() => {
-    if (!isItemized || !open) return;
+    if (!isItemized) return;
     let cancelled = false;
     const load = async () => {
       const { data: it } = await supabase.from('split_check_items').select('id, unit_price_cents, quantity').eq('request_id', r.id);
@@ -550,7 +550,8 @@ function OwedRequestCard({ request: r, onChanged }: { request: any; onChanged: (
       .on('postgres_changes', { event: '*', schema: 'public', table: 'split_check_item_claims' }, () => { load(); })
       .subscribe();
     return () => { cancelled = true; supabase.removeChannel(ch); };
-  }, [isItemized, open, r.id]);
+  }, [isItemized, r.id]);
+
 
   const { grandSubtotalC, claimedSubtotalC, unclaimedSubtotalC, perPersonClaimedC } = useMemo(() => {
     let grand = 0;
