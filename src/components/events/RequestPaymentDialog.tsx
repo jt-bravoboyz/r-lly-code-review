@@ -70,7 +70,9 @@ export function RequestPaymentDialog({ open, onOpenChange, eventId, attendees, o
   }, [open, attendees]);
 
   const totalCentsQuick = Math.round((parseFloat(totalDollars) || 0) * 100);
-  const perShareQuick = selected.size > 0 ? Math.ceil(totalCentsQuick / selected.size) : 0;
+  // Host is always counted in the even split (matches backend `splitHeadcount = N + 1`).
+  const quickHeadcount = selected.size + 1;
+  const perShareQuick = selected.size > 0 ? Math.ceil(totalCentsQuick / quickHeadcount) : 0;
 
   const itemizedSubtotalCents = useMemo(() => {
     return Math.round((parseFloat(subtotal) || items.reduce((s, i) => s + i.quantity * i.unit_price_cents, 0) / 100) * 100);
