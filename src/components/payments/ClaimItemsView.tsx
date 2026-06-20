@@ -114,9 +114,10 @@ export function ClaimItemsView({ requestId, profileId, taxCents = 0, tipCents = 
   };
 
 
-  const { mySubtotalC, grandSubtotalC, myTaxC, myTipC, myTotalC } = useMemo(() => {
+  const { mySubtotalC, grandSubtotalC, claimedSubtotalC, unclaimedSubtotalC, myTaxC, myTipC, myTotalC } = useMemo(() => {
     let mine = 0;
     let grand = 0;
+    let claimed = 0;
     items.forEach(it => {
       const lineTotal = it.unit_price_cents * it.quantity;
       grand += lineTotal;
@@ -126,11 +127,17 @@ export function ClaimItemsView({ requestId, profileId, taxCents = 0, tipCents = 
       if (totalClaimed > 0 && myQty > 0) {
         mine += Math.round(lineTotal * (myQty / totalClaimed));
       }
+      if (totalClaimed > 0 && it.quantity > 0) {
+        const coveredQty = Math.min(totalClaimed, it.quantity);
+        claimed += Math.round(lineTotal * (coveredQty / it.quantity));
+      }
     });
     const tax = grand > 0 ? Math.round(taxCents * (mine / grand)) : 0;
     const tip = participantIds.length > 0 ? Math.round(tipCents / participantIds.length) : 0;
-    return { mySubtotalC: mine, grandSubtotalC: grand, myTaxC: tax, myTipC: tip, myTotalC: mine + tax + tip };
+    const unclaimed = Math.max(0, grand - claimed);
+    return { mySubtotalC: mine, grandSubtotalC: grand, claimedSubtotalC: claimed, unclaimedSubtotalC: unclaimed, myTaxC: tax, myTipC: tip, myTotalC: mine + tax + tip };
   }, [items, claimsByItem, profileId, taxCents, tipCents, participantIds]);
+
 
   useEffect(() => { onTotalsChange?.(myTotalC); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [myTotalC]);
 
@@ -266,6 +273,30 @@ export function ClaimItemsView({ requestId, profileId, taxCents = 0, tipCents = 
       {items.length > 0 && (
         <div className="sticky bottom-0 left-0 right-0 -mx-6 px-6 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-md bg-background/75 border-t border-border/40 z-10">
           <p className="text-[10px] uppercase tracking-[0.08em] text-muted-foreground font-semibold mb-1.5">Live Summary</p>
+
+          {grandSubtotalC > 0 && (
+            <div className="rounded-xl bg-muted/30 border border-border/40 px-2.5 py-2 mb-2">
+              <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.08em] text-muted-foreground font-semibold mb-1">
+                <span>Bill status</span>
+                <span className="tabular-nums normal-case tracking-normal text-muted-foreground/80">of {fmt(grandSubtotalC)}</span>
+              </div>
+              <div className="flex items-center justify-between text-[13px]">
+                <span className="text-muted-foreground">You've claimed</span>
+                <span className={`font-medium tabular-nums ${mySubtotalC > 0 ? 'text-primary' : ''}`}>{fmt(mySubtotalC)}</span>
+              </div>
+              <div className="flex items-center justify-between text-[13px] mt-0.5">
+                <span className="text-muted-foreground">Still unclaimed</span>
+                {unclaimedSubtotalC === 0 ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 text-[11px] font-semibold">
+                    <Check className="h-3 w-3" /> All claimed
+                  </span>
+                ) : (
+                  <span className="font-semibold tabular-nums text-amber-600 dark:text-amber-400">{fmt(unclaimedSubtotalC)}</span>
+                )}
+              </div>
+            </div>
+          )}
+
           <div className="flex items-center justify-between text-[13px]">
             <span className="text-muted-foreground">Your items subtotal</span>
             <span className="font-medium tabular-nums">{fmt(mySubtotalC)}</span>
@@ -278,6 +309,7 @@ export function ClaimItemsView({ requestId, profileId, taxCents = 0, tipCents = 
             <span className="text-muted-foreground">Tip (split evenly{participantIds.length > 0 ? ` · ${participantIds.length} people` : ''})</span>
             <span className="font-medium tabular-nums">+ {fmt(myTipC)}</span>
           </div>
+
           <div className="h-px bg-border/40 my-2" />
           <div className="flex items-center justify-between">
             <span className="text-[13px] font-medium tracking-tight">Estimated final charge</span>
