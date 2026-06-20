@@ -268,8 +268,12 @@ export function ClaimItemsView({ requestId, profileId, taxCents = 0, tipCents = 
             <span className="font-medium tabular-nums">{fmt(mySubtotalC)}</span>
           </div>
           <div className="flex items-center justify-between text-[13px] mt-0.5">
-            <span className="text-muted-foreground">Prorated tax &amp; tip</span>
-            <span className="font-medium tabular-nums">+ {fmt(myTaxTipC)}</span>
+            <span className="text-muted-foreground">Your share of tax</span>
+            <span className="font-medium tabular-nums">+ {fmt(myTaxC)}</span>
+          </div>
+          <div className="flex items-center justify-between text-[13px] mt-0.5">
+            <span className="text-muted-foreground">Tip (split evenly{participantIds.length > 0 ? ` · ${participantIds.length} people` : ''})</span>
+            <span className="font-medium tabular-nums">+ {fmt(myTipC)}</span>
           </div>
           <div className="h-px bg-border/40 my-2" />
           <div className="flex items-center justify-between">
