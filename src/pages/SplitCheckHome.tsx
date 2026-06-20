@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ChevronDown, Loader2, Receipt, Plus, Wallet, X } from 'lucide-react';
+import { ChevronDown, Loader2, Receipt, Plus, Wallet, X, Sparkles } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { TabPaySheet } from '@/components/payments/TabPaySheet';
@@ -15,6 +15,8 @@ import { SettlementConfirmCard } from '@/components/payments/SettlementConfirmCa
 import { StartTabDialog } from '@/components/payments/StartTabDialog';
 import { SetupHandlesSheet } from '@/components/payments/SetupHandlesSheet';
 import { SplitCheckSettlementPanel } from '@/components/events/SplitCheckSettlementPanel';
+import { ClaimItemsView } from '@/components/payments/ClaimItemsView';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { useTabSettlements, type TabSettlement } from '@/hooks/useTabSettlements';
 
 const HANDLES_BANNER_DISMISSED_KEY = 'rally-handles-banner-dismissed';
