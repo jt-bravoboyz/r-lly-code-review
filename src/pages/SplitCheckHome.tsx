@@ -157,13 +157,18 @@ export default function SplitCheckHome() {
           .select('id, display_name, avatar_url')
           .in('id', creatorIds);
         creatorsMap = new Map((profs ?? []).map((p: any) => [p.id, p]));
-        const { data: handles } = await supabase
-          .from('profiles')
-          .select('id, venmo_handle, cashapp_handle, paypal_handle')
-          .in('id', creatorIds);
-        for (const h of handles ?? []) {
-          const prev = creatorsMap.get(h.id) ?? {};
-          creatorsMap.set(h.id, { ...prev, ...h });
+        // Fetch each creator's payment handles via scoped RPC (only returns
+        // rows where caller has an active settlement relationship).
+        const handleResults = await Promise.all(
+          creatorIds.map((id) =>
+            supabase.rpc('get_payment_handles_for_settlement', { _target_profile_id: id })
+              .then(({ data }) => ({ id, row: Array.isArray(data) && data.length ? data[0] : null }))
+          )
+        );
+        for (const { id, row } of handleResults) {
+          if (!row) continue;
+          const prev = creatorsMap.get(id) ?? {};
+          creatorsMap.set(id, { ...prev, ...row });
         }
       }
     }
