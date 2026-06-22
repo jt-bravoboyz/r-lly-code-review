@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { UserPlus, Check } from 'lucide-react';
 import { useRequestFriend, useFriendships, getFriendshipState } from '@/hooks/useFriendships';
+import { useRallyFriends } from '@/hooks/useRallyFriends';
 import { ProfileTapWrapper } from '@/components/profile/ProfileTapWrapper';
 import { toast } from 'sonner';
 
@@ -29,6 +30,7 @@ function captionFor(row: PymkRow) {
 export function PeopleYouMayKnowCarousel() {
   const { profile } = useAuth();
   const { data: friendships = [] } = useFriendships();
+  const { data: rallyFriends = [] } = useRallyFriends();
   const requestFriend = useRequestFriend();
   const [optimisticSent, setOptimisticSent] = useState<Set<string>>(new Set());
 
@@ -44,20 +46,18 @@ export function PeopleYouMayKnowCarousel() {
     staleTime: 1000 * 60 * 5,
   });
 
-  const currentUserFriendIds = useMemo(() => {
+  const excludedProfileIds = useMemo(() => {
     const ids = new Set<string>();
     if (!profile?.id) return ids;
-    for (const f of friendships) {
-      if (f.status !== 'accepted') continue;
-      const otherId = f.requester_id === profile.id ? f.recipient_id : f.requester_id;
-      if (otherId) ids.add(otherId);
+    for (const friend of rallyFriends) {
+      if (friend?.id) ids.add(friend.id);
     }
     return ids;
-  }, [friendships, profile?.id]);
+  }, [rallyFriends, profile?.id]);
 
   const filteredData = useMemo(
-    () => data.filter((row) => row.profile_id !== profile?.id && !currentUserFriendIds.has(row.profile_id)),
-    [data, currentUserFriendIds, profile?.id]
+    () => data.filter((row) => row.profile_id !== profile?.id && !excludedProfileIds.has(row.profile_id)),
+    [data, excludedProfileIds, profile?.id]
   );
 
   if (isLoading || !filteredData.length) return null;
