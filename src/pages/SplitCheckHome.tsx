@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { App } from '@capacitor/app';
 import { Header } from '@/components/layout/Header';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -56,6 +57,10 @@ export default function SplitCheckHome() {
   const [loading, setLoading] = useState(true);
   const [owe, setOwe] = useState<OwedRow[]>([]);
   const [owedRequests, setOwedRequests] = useState<any[]>([]);
+
+  // Ref keeps the listener closure from going stale when owe list updates.
+  const oweRef = useRef<OwedRow[]>([]);
+  useEffect(() => { oweRef.current = owe; }, [owe]);
 
   const [payTarget, setPayTarget] = useState<OwedRow | null>(null);
   const [tabPayOpen, setTabPayOpen] = useState(false);
@@ -320,9 +325,39 @@ export default function SplitCheckHome() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [meId]);
 
+  // Auto-open TabPaySheet confirm dialog when the user returns from a payment
+  // app (Venmo, CashApp, PayPal, iMessage). Works even though TabPaySheet
+  // unmounts on sheet close — oweRef always has the current owe list.
+  useEffect(() => {
+    const openPending = () => {
+      const raw = localStorage.getItem('rally:pending-settlement');
+      if (!raw) return;
+      try {
+        const stored = JSON.parse(raw);
+        const row = oweRef.current.find((r) => r.targetId === stored.splitTargetId);
+        if (row) {
+          setPayTarget(row);
+          setTabPayOpen(true);
+        }
+      } catch {}
+    };
+
+    const listenerPromise = App.addListener('appStateChange', (state) => {
+      if (state.isActive) openPending();
+    });
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') openPending();
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+
+    return () => {
+      listenerPromise.then((l) => l.remove()).catch(() => {});
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, []);
 
   const totalOwe = useMemo(
-    () => owe.filter((r) => r.p2pStatus !== 'confirmed' && r.status !== 'paid')
+    () => owe.filter((r) => r.p2pStatus !== 'confirmed' && r.p2pStatus !== 'sent' && r.status !== 'paid' && r.status !== 'settled')
       .reduce((s, r) => s + r.shareCents, 0),
     [owe]
   );

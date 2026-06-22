@@ -205,7 +205,7 @@ export function PaySplitShareDialog({ open, onOpenChange, requestId, profileId, 
                 <Send className="h-5 w-5 text-primary" />
               </div>
               <div className="min-w-0">
-                <p className="text-sm font-semibold font-montserrat">Send via Venmo, CashApp, or PayPal</p>
+                <p className="text-sm font-semibold font-montserrat">Send via Venmo, CashApp, PayPal, or Apple Cash</p>
                 <p className="text-xs text-muted-foreground">Opens your payment app — quick and free</p>
               </div>
             </button>
