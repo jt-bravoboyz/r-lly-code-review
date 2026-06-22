@@ -322,15 +322,15 @@ export function TabPaySheet({
             <div className="mt-6 space-y-4">
               <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-sm text-muted-foreground">
                 <span className="text-foreground font-medium">{payeeName}</span>{' '}
-                hasn't added payment handles yet. You can pay by card or remind
-                them to add their Venmo or CashApp in Settings.
+                hasn't added payment handles yet. Remind them to add their
+                Venmo, CashApp, or PayPal in Settings.
               </div>
               <Button
                 variant="ghost"
                 className="w-full text-sm text-muted-foreground"
                 onClick={() => onOpenChange(false)}
               >
-                Pay by card instead
+                Close
               </Button>
             </div>
           ) : (
