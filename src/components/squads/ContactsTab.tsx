@@ -257,11 +257,17 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
                 <ContactRowSkeleton count={3} />
               </section>
             )}
-            {showSearchResults && rallySearchResults.length > 0 && (
+            {showSearchResults && rallySearchResults.filter((r) => {
+              const s = getFriendshipState(r.id, friendships, profile?.id);
+              return s.state !== 'accepted';
+            }).length > 0 && (
 
               <section className="space-y-2">
                 <SectionLabel accent>R@lly Members</SectionLabel>
-                {rallySearchResults.map((result) => {
+                {rallySearchResults.filter((r) => {
+                  const s = getFriendshipState(r.id, friendships, profile?.id);
+                  return s.state !== 'accepted';
+                }).map((result) => {
                   const state = getFriendshipState(result.id, friendships, profile?.id);
                   const isLocked =
                     state.state === 'accepted' || state.state === 'pending_outgoing';
