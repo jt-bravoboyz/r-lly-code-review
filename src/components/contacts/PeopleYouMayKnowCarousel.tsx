@@ -46,20 +46,18 @@ export function PeopleYouMayKnowCarousel() {
     staleTime: 1000 * 60 * 5,
   });
 
-  const currentUserFriendIds = useMemo(() => {
+  const excludedProfileIds = useMemo(() => {
     const ids = new Set<string>();
     if (!profile?.id) return ids;
-    for (const f of friendships) {
-      if (f.status !== 'accepted') continue;
-      const otherId = f.requester_id === profile.id ? f.recipient_id : f.requester_id;
-      if (otherId) ids.add(otherId);
+    for (const friend of rallyFriends) {
+      if (friend?.id) ids.add(friend.id);
     }
     return ids;
-  }, [friendships, profile?.id]);
+  }, [rallyFriends, profile?.id]);
 
   const filteredData = useMemo(
-    () => data.filter((row) => row.profile_id !== profile?.id && !currentUserFriendIds.has(row.profile_id)),
-    [data, currentUserFriendIds, profile?.id]
+    () => data.filter((row) => row.profile_id !== profile?.id && !excludedProfileIds.has(row.profile_id)),
+    [data, excludedProfileIds, profile?.id]
   );
 
   if (isLoading || !filteredData.length) return null;
