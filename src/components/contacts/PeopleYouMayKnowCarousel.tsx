@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { UserPlus, Check } from 'lucide-react';
 import { useRequestFriend, useFriendships, getFriendshipState } from '@/hooks/useFriendships';
+import { useRallyFriends } from '@/hooks/useRallyFriends';
 import { ProfileTapWrapper } from '@/components/profile/ProfileTapWrapper';
 import { toast } from 'sonner';
 
