@@ -88,6 +88,33 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
     [rallyFriends, q]
   );
 
+  const currentUserFriendIds = useMemo(() => {
+    const ids = new Set<string>();
+    rallyFriends.forEach((friend) => ids.add(friend.id));
+    friendships.forEach((friendship) => {
+      if (friendship.status !== 'accepted' || !profile?.id) return;
+      const friendId =
+        friendship.requester_id === profile.id
+          ? friendship.recipient_id
+          : friendship.recipient_id === profile.id
+            ? friendship.requester_id
+            : null;
+      if (friendId) ids.add(friendId);
+    });
+    return ids;
+  }, [friendships, profile?.id, rallyFriends]);
+
+  const rallyMembersResults = useMemo(
+    () =>
+      loadingFriends
+        ? []
+        : rallySearchResults.filter(
+            (member) =>
+              member.id !== profile?.id && !currentUserFriendIds.has(member.id)
+          ),
+    [currentUserFriendIds, loadingFriends, profile?.id, rallySearchResults]
+  );
+
   // Merge phone + cloud contacts, dedup by phone/email
   const unifiedContacts: SelectableContact[] = useMemo(() => {
     const map = new Map<string, SelectableContact>();
@@ -181,7 +208,7 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
     showSearchResults &&
     filteredFriends.length === 0 &&
     filteredContacts.length === 0 &&
-    rallySearchResults.length === 0 &&
+    rallyMembersResults.length === 0 &&
     !loadingRallySearch;
 
   const selectedCount = selectedKeys.size;
@@ -257,17 +284,11 @@ export function ContactsTab({ onInviteToRally, onAddToSquad }: ContactsTabProps)
                 <ContactRowSkeleton count={3} />
               </section>
             )}
-            {showSearchResults && rallySearchResults.filter((r) => {
-              const s = getFriendshipState(r.id, friendships, profile?.id);
-              return s.state !== 'accepted';
-            }).length > 0 && (
+            {showSearchResults && rallyMembersResults.length > 0 && (
 
               <section className="space-y-2">
                 <SectionLabel accent>R@lly Members</SectionLabel>
-                {rallySearchResults.filter((r) => {
-                  const s = getFriendshipState(r.id, friendships, profile?.id);
-                  return s.state !== 'accepted';
-                }).map((result) => {
+                {rallyMembersResults.map((result) => {
                   const state = getFriendshipState(result.id, friendships, profile?.id);
                   const isLocked =
                     state.state === 'accepted' || state.state === 'pending_outgoing';
