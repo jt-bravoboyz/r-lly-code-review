@@ -83,7 +83,7 @@ export function PeopleYouMayKnowCarousel() {
                 key={row.profile_id}
                 className="snap-start shrink-0 w-[170px] rounded-2xl p-3 bg-white/80 dark:bg-white/[0.04] border border-black/[0.05] dark:border-white/[0.08] backdrop-blur-xl shadow-[0_4px_18px_-8px_rgba(0,0,0,0.15)] flex flex-col items-center text-center gap-2"
               >
-                <ProfileTapWrapper profileId={row.profile_id} className="flex flex-col items-center gap-2">
+                <ProfileTapWrapper profileId={row.profile_id} className="flex flex-col items-center gap-2 w-full min-w-0">
                   <Avatar className="h-14 w-14 ring-1 ring-[#F47A19]/30">
                     <AvatarImage src={row.avatar_url || undefined} />
                     <AvatarFallback className="bg-[#F47A19]/15 text-[#F47A19] font-black">
