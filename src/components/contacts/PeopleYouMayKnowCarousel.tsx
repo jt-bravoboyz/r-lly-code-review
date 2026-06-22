@@ -30,6 +30,7 @@ function captionFor(row: PymkRow) {
 export function PeopleYouMayKnowCarousel() {
   const { profile } = useAuth();
   const { data: friendships = [] } = useFriendships();
+  const { data: rallyFriends = [] } = useRallyFriends();
   const requestFriend = useRequestFriend();
   const [optimisticSent, setOptimisticSent] = useState<Set<string>>(new Set());
 
