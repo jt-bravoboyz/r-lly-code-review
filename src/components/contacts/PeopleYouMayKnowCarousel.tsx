@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -44,7 +44,23 @@ export function PeopleYouMayKnowCarousel() {
     staleTime: 1000 * 60 * 5,
   });
 
-  if (isLoading || !data.length) return null;
+  const currentUserFriendIds = useMemo(() => {
+    const ids = new Set<string>();
+    if (!profile?.id) return ids;
+    for (const f of friendships) {
+      if (f.status !== 'accepted') continue;
+      const otherId = f.requester_id === profile.id ? f.recipient_id : f.requester_id;
+      if (otherId) ids.add(otherId);
+    }
+    return ids;
+  }, [friendships, profile?.id]);
+
+  const filteredData = useMemo(
+    () => data.filter((row) => row.profile_id !== profile?.id && !currentUserFriendIds.has(row.profile_id)),
+    [data, currentUserFriendIds, profile?.id]
+  );
+
+  if (isLoading || !filteredData.length) return null;
 
   return (
     <section className="space-y-2 -mx-4 sm:mx-0">
@@ -56,7 +72,7 @@ export function PeopleYouMayKnowCarousel() {
       </div>
       <div className="overflow-x-auto snap-x snap-mandatory scrollbar-none">
         <div className="flex gap-3 px-4 sm:px-0 pb-1">
-          {data.map((row) => {
+          {filteredData.map((row) => {
             const state = getFriendshipState(row.profile_id, friendships, profile?.id);
             const sent = state.state === 'pending_outgoing' || optimisticSent.has(row.profile_id);
             const friends = state.state === 'accepted';
