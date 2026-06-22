@@ -72,7 +72,7 @@ export function PeopleYouMayKnowCarousel() {
       </div>
       <div className="overflow-x-auto snap-x snap-mandatory scrollbar-none">
         <div className="flex gap-3 px-4 sm:px-0 pb-1">
-          {data.map((row) => {
+          {filteredData.map((row) => {
             const state = getFriendshipState(row.profile_id, friendships, profile?.id);
             const sent = state.state === 'pending_outgoing' || optimisticSent.has(row.profile_id);
             const friends = state.state === 'accepted';
