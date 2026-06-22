@@ -1,71 +1,54 @@
-# R@lly Tab Reel — Assets & Brand Direction
+# Real-app screenshots (replace the HTML mocks)
 
-Deliverable: a folder of static screenshots, a 20-second Remotion MP4 mock reel, and a brand markdown doc — all under `/mnt/documents/rally-tab-reel/`, ready to hand to your editor.
+You're right — the previous stills were stylized HTML mocks. To get true 1:1 with the production UI, I'll drive the live app at `localhost:8080` with Playwright, signed in as your pre-minted session, and capture the actual rendered components.
 
-Scenario throughout: **44 & King** (steakhouse vibe), 4 friends, realistic line items totaling ~$187.
+## Approach
 
----
+For each frame:
+1. Seed any required rows in Lovable Cloud (split_check_requests, split_check_items, split_check_targets, tab_settlements) tied to your `auth.uid()`.
+2. Navigate the real route (`/tabs`, etc.).
+3. If a dialog/sheet is needed, click the real trigger and wait for the component to mount.
+4. Capture either a full-viewport (390×844 iPhone preset for true mobile chrome) or a clipped element screenshot.
+5. Roll the seeded rows back at the end.
 
-## 1. Static screenshots (Playwright)
+All screenshots saved at 2× DPR to `/mnt/documents/rally-tab-reel/stills-real/` so your existing `stills/` folder stays untouched as a fallback.
 
-Drive the running preview with the pre-minted session and screenshot each step at 1280×1800. Output: `/mnt/documents/rally-tab-reel/stills/`.
+## Frame plan (real components)
 
-Frames captured:
-1. `01_splitcheck_home_empty.png` — SplitCheckHome with "New Tab" CTA prominent
-2. `02_start_tab_dialog.png` — StartTabDialog open
-3. `03_receipt_upload.png` — ReceiptUploader mid-parse (loading spinner state)
-4. `04_review_items.png` — parsed items, tax, tip, total for 44 & King
-5. `05_select_friends.png` — friend picker with avatars selected
-6. `06_you_owe_tab.png` — "You Owe" tab, pending split with Pay button
-7. `07_tab_pay_sheet.png` — TabPaySheet, Venmo/CashApp/PayPal/Apple Cash row
-8. `08_did_you_send.png` — settlement-return confirmation sheet
-9. `09_host_owed_to_you.png` — host's "Owed to You" tab with SettlementConfirmCard ("John says they sent $46.75 via Venmo")
-10. `10_confirmed_state.png` — resolved split, green confirmed badge
+| # | File | Route + state | How it's reached |
+|---|---|---|---|
+| 1 | `01_splitcheck_home_empty.png` | `/tabs`, no active splits | Wipe my user's pending rows, navigate |
+| 2 | `02_start_tab_dialog.png` | `/tabs` with `<StartTabDialog>` open | Click "+ New Tab" via `getByRole` |
+| 3 | `03_receipt_upload.png` | StartTabDialog mid-upload | Set file via Playwright's `setInputFiles` on the hidden `<input type="file">` using a seeded receipt JPG; intercept the `parse-receipt` edge function and stall its response so we land on the spinner state |
+| 4 | `04_review_items.png` | StartTabDialog after parse returns | Mock `parse-receipt` to return a 44 & King payload (ribeye / branzino / caesar / old fashioneds / fries) |
+| 5 | `05_select_friends.png` | `<ClaimItemsView>` for that draft | Seed split_check_items with the 44 & King rows and 4 friend targets (You + 3 seeded peer profiles), navigate |
+| 6 | `06_you_owe_tab.png` | `/tabs`, "You Owe" tab, one pending split where I'm a target | Seed a split_check_request hosted by a peer profile, with me as a target owing $46.75 |
+| 7 | `07_tab_pay_sheet.png` | TabPaySheet open from that pending split | Click "Pay" on the card from frame 6; ensure the host profile has Venmo/CashApp/PayPal/Apple Cash handles set so all four tiles render |
+| 8 | `08_did_you_send.png` | Settlement-return confirm sheet | Trigger the `useSettlementReturn` flow by navigating with the `?return=settlement&method=venmo&amount=…` params the app uses |
+| 9 | `09_host_owed_to_you.png` | `/tabs`, "Owed to You" tab, with `<SettlementConfirmCard>` | Seed a tab_settlement row where I'm the host and a peer marked "sent via Venmo" |
+| 10 | `10_confirmed_state.png` | Same row, post-confirm | Update the tab_settlement to confirmed_at = now, status = confirmed |
 
-Approach: where a real DB row is required (parsed receipt, pending settlement), seed via `supabase--insert` against the signed-in user, then navigate. Where the flow needs a second user (host view of someone else's payment), open a second context with a seeded peer session or screenshot the host UI against a seeded `split_check_targets` row.
+## Multi-user trick
 
-Fallback: if any step can't be reached with seeded data (e.g. live OCR), I'll render a faithful HTML stand-in that re-uses the real Tailwind tokens and shadcn components, so it still matches the app exactly.
+I can't open a real second auth session in the sandbox. For the host-side frame (#9) I'll seed the row directly as the host (you) with the peer profile referenced via `from_profile_id` — that's the exact state the real UI renders against. For frame #6 (where I need to be the *payer* and someone else is host), I'll seed a request with `host_profile_id = <peer profile uuid>` and `target.profile_id = auth.uid()`. The component reads from the DB the same way regardless of how the row got there, so the render is real.
 
-## 2. Remotion mock reel (20s, 1080×1920 portrait for Reels)
+## What's seeded vs faked
 
-Project: `remotion/` (already exists in repo — I'll add a `RallyTab.tsx` composition alongside the current `WelcomeBack`).
+- **Real:** every pixel of every component, dark/light theme as the app defaults, real fonts, real glow tokens, real lucide icons, real Venmo/CashApp/PayPal/Apple Cash tile renders.
+- **Faked-but-realistic:** the receipt OCR response (intercepted to return 44 & King items deterministically), and the peer profile ("John") seeded with avatar initials + payment handles.
 
-Scene plan (30fps, ~600 frames):
-- **0:00–0:03** Cold open — R@lly wordmark drops in, orange `@` glows, tagline "Nights That Matter" wipes
-- **0:03–0:06** "+ NEW TAB" pill taps in, StartTabDialog springs up
-- **0:06–0:09** Receipt snap → camera flash → line items stagger-fall into list (44 & King: ribeye, branzino, two old fashioneds, etc.)
-- **0:09–0:13** Four avatars (orange-ringed) drop onto items, totals tick up per person
-- **0:13–0:16** TabPaySheet slides up, Venmo tile pulses, "Did you send $46.75?" confirm
-- **0:16–0:19** Host view: SettlementConfirmCard with green check, confetti burst
-- **0:19–0:20** End card — R@lly logo + "Split it. Send it. Done."
+## Cleanup
 
-Motion system: dark theme (#0a0a0a bg), R@lly Orange #F47A19 as the single accent, Montserrat throughout, glass cards with `filter: blur` (not backdrop-blur — sandbox constraint), spring entrances (damping 18), exits as inverse. Reuses real screenshots from step 1 where they sell the product harder than the mock.
+After capture, delete every seeded row (single SQL block keyed on a tag I set in `split_check_requests.metadata`). Your account ends in the same state it started.
 
-Render: programmatic `scripts/render-rally-tab.mjs` → `/mnt/documents/rally-tab-reel/rally-tab-reel.mp4`.
+## What I need from you
 
-Spot-check 4 key frames as stills before full render to catch layout/font issues.
+Two things:
 
-## 3. Brand direction doc
-
-File: `/mnt/documents/rally-tab-reel/BRAND.md` plus exported logo files alongside.
-
-Contents pulled directly from `src/index.css`, `tailwind.config.ts`, and the Tab components (no guessing):
-- **Color palette** — primary (R@lly Orange `hsl(27 91% 53%)` / `#F47A19`), background, card, muted, destructive, success-green, plus any gradients in the Tab UI (button glow, sheet headers). HSL + hex side-by-side.
-- **Typography** — Montserrat weights/sizes actually used: headlines (700/800 at 24–32px), body (500/600 at 14–16px), buttons (600 uppercase tracking), monetary numbers. With CSS class references.
-- **Logo** — copy `src/assets/logo.svg` (and any wordmark variants found) into the deliverable folder; document the orange `@` treatment with the exact fill/glow CSS.
-- **Glow / shadow** — orange button glow values (box-shadow + drop-shadow) lifted from the components.
-- **Iconography** — any Tab-specific icons (receipt, split, Venmo/CashApp/PayPal/Apple Cash tiles) listed with their lucide-react names + colors.
-- **Voice** — "Nights That Matter", "Confident > Commanding", spelling rules (R@lly, R@llies).
-
-## Technical notes
-
-- Playwright uses the injected Supabase session env vars; localStorage write happens after `goto(localhost:8080)` per sandbox rules.
-- Remotion install reuses existing `remotion/` folder; only adds a new composition + render script, doesn't touch `WelcomeBack`.
-- All file writes for the editor go to `/mnt/documents/rally-tab-reel/` and surface via `<presentation-artifact>` tags.
-- No app code is modified. No backend schema changes. Seeded rows are cleaned up after capture.
+1. **Theme:** the app defaults to **light** in production but my earlier mocks were dark per your original brief. For real-app stills, do you want **light** (matches what users actually see) or **dark** (matches the Reel direction)? I can capture both if you want.
+2. **Cover frame for #1 ("empty tabs"):** if you have ever created a tab in this account, the real "You Owe / Owed to You / Settled" tabs are not empty. OK if I temporarily archive/hide your existing splits during capture and restore after? Or should I capture against the populated state and just pick a clean-looking shot?
 
 ## Out of scope
 
-- Real on-device screen recording (sandbox can't capture a phone screen — you'd do that separately if you want true device chrome).
-- Sound design / voiceover for the reel (silent MP4; editor adds audio).
-- Publishing to Instagram.
+- Real screen *recording* (still impossible in sandbox — only stills). The screenshots remain Reel-ready 1080×1920 letterboxed onto the device frame.
+- Editing/redesigning the actual app UI.
