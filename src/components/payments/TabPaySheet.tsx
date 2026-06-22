@@ -397,13 +397,6 @@ export function TabPaySheet({
                 )}
               </Button>
 
-              <button
-                type="button"
-                onClick={() => onOpenChange(false)}
-                className="w-full text-center text-sm text-muted-foreground underline-offset-4 hover:underline py-2"
-              >
-                Pay by card instead
-              </button>
             </div>
           )}
         </SheetContent>
