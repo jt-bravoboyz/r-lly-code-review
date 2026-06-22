@@ -36,7 +36,7 @@ export function PaySplitShareDialog({ open, onOpenChange, requestId, profileId, 
   const [request, setRequest] = useState<any>(null);
   const [target, setTarget] = useState<any>(null);
   const [eventTitle, setEventTitle] = useState<string>('R@lly Tab');
-  const [payee, setPayee] = useState<{ display_name: string | null; venmo_handle: string | null; cashapp_handle: string | null; paypal_handle: string | null } | null>(null);
+  const [payee, setPayee] = useState<{ display_name: string | null; venmo_handle: string | null; cashapp_handle: string | null; paypal_handle: string | null; apple_cash_handle: string | null } | null>(null);
   const [computedTotal, setComputedTotal] = useState<number>(0);
   const [busy, setBusy] = useState(false);
   const [mismatch, setMismatch] = useState<{ from: number; to: number } | null>(null);
@@ -163,7 +163,7 @@ export function PaySplitShareDialog({ open, onOpenChange, requestId, profileId, 
 
   const fmt = (c: number) => `$${(c / 100).toFixed(2)}`;
 
-  const hasAnyHandle = !!(payee?.venmo_handle || payee?.cashapp_handle || payee?.paypal_handle);
+  const hasAnyHandle = !!(payee?.venmo_handle || payee?.cashapp_handle || payee?.paypal_handle || payee?.apple_cash_handle);
   const payeeName = payee?.display_name || 'Host';
   // Skip selection step entirely when payee has no handles
   const effectiveStep: 'select' | 'card' = !hasAnyHandle ? 'card' : step;

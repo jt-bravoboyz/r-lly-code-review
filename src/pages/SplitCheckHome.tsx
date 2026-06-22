@@ -157,8 +157,6 @@ export default function SplitCheckHome() {
           .select('id, display_name, avatar_url')
           .in('id', creatorIds);
         creatorsMap = new Map((profs ?? []).map((p: any) => [p.id, p]));
-        // Fetch each creator's payment handles via scoped RPC (only returns
-        // rows where caller has an active settlement relationship).
         const handleResults = await Promise.all(
           creatorIds.map((id) =>
             supabase.rpc('get_payment_handles_for_settlement', { _target_profile_id: id })
@@ -203,7 +201,7 @@ export default function SplitCheckHome() {
         creatorId: req?.host_id ?? '',
         creatorName: creator?.display_name ?? 'Someone',
         creatorAvatar: creator?.avatar_url ?? null,
-        hasHandles: !!(creator?.venmo_handle || creator?.cashapp_handle || creator?.paypal_handle),
+        hasHandles: !!(creator?.venmo_handle || creator?.cashapp_handle || creator?.paypal_handle || creator?.apple_cash_handle),
         p2pStatus: p2pByTarget.get(t.id) ?? null,
       };
     });
@@ -474,7 +472,7 @@ export default function SplitCheckHome() {
       {payTarget && meId && (
         <TabPaySheet
           open={tabPayOpen}
-          onOpenChange={(o) => { setTabPayOpen(o); if (!o) { setPayTarget(null); refetch(); } }}
+          onOpenChange={(o) => { setTabPayOpen(o); if (!o) refetch(); }}
           splitTargetId={payTarget.targetId}
           splitRequestId={payTarget.requestId}
           eventId={payTarget.eventId}

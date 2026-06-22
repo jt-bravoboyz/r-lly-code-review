@@ -121,15 +121,16 @@ export function SetupHandlesSheet({ open, onOpenChange, onComplete }: Props) {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="sh-applecash">Apple Cash (phone or Apple ID email)</Label>
+            <Label htmlFor="sh-applecash">Apple Cash (your phone number)</Label>
             <Input
               id="sh-applecash"
               value={appleCash}
               onChange={(e) => setAppleCash(e.target.value)}
-              placeholder="+1 (678) 555-1234 or Apple ID email"
+              placeholder="+1 (678) 555-1234"
               autoCapitalize="none"
               autoCorrect="off"
-              inputMode="text"
+              inputMode="tel"
+              type="tel"
             />
           </div>
         </div>

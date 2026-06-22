@@ -74,9 +74,24 @@ export function TabPaySheet({
   } | null>(null);
 
   const { startWatching, stopWatching } = useSettlementReturn((settlementId) => {
-    // appStateChange fires while the sheet is closed — open confirm dialog.
     setConfirmFor((prev) => prev ?? { settlementId, method: selected ?? 'venmo' });
   });
+
+  // Bug #1 fix: recover pending settlement from localStorage when sheet re-opens
+  // (the component unmounts when the sheet closes, so the appStateChange listener
+  // is removed before the user returns from Venmo — we persist the pending state
+  // and restore it here so the confirm dialog appears on the next open).
+  useEffect(() => {
+    if (!open) return;
+    const raw = localStorage.getItem('rally:pending-settlement');
+    if (!raw) return;
+    try {
+      const stored = JSON.parse(raw);
+      if (stored.splitTargetId === splitTargetId && stored.id) {
+        setConfirmFor({ settlementId: stored.id, method: stored.method ?? 'venmo' });
+      }
+    } catch {}
+  }, [open, splitTargetId]);
 
   // Fetch payee profile when opened.
   useEffect(() => {
@@ -135,43 +150,78 @@ export function TabPaySheet({
     if (!handle) return;
 
     setSending(true);
-    const { data: inserted, error } = await supabase
-      .from('tab_settlements')
-      .insert({
-        split_target_id: splitTargetId,
-        split_request_id: splitRequestId,
-        event_id: eventId,
-        payer_id: payerId,
-        payee_id: payeeId,
-        amount_cents: amountCents,
-        method: selected,
-        status: 'link_opened',
-        link_opened_at: new Date().toISOString(),
-      })
-      .select('id')
-      .single();
 
-    if (error || !inserted) {
-      setSending(false);
-      toast.error('Could not start payment', { description: error?.message });
-      return;
+    // Bug #3 fix: reuse an existing pending/link_opened record rather than
+    // creating a duplicate if the user taps Send more than once.
+    const { data: existing } = await supabase
+      .from('tab_settlements')
+      .select('id')
+      .eq('split_target_id', splitTargetId)
+      .eq('payer_id', payerId)
+      .in('status', ['pending', 'link_opened'])
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    let settlementId: string;
+
+    if (existing?.id) {
+      const { error: upErr } = await supabase
+        .from('tab_settlements')
+        .update({ status: 'link_opened', method: selected, link_opened_at: new Date().toISOString() })
+        .eq('id', existing.id);
+      if (upErr) {
+        setSending(false);
+        toast.error('Could not start payment', { description: upErr.message });
+        return;
+      }
+      settlementId = existing.id;
+    } else {
+      const { data: inserted, error } = await supabase
+        .from('tab_settlements')
+        .insert({
+          split_target_id: splitTargetId,
+          split_request_id: splitRequestId,
+          event_id: eventId,
+          payer_id: payerId,
+          payee_id: payeeId,
+          amount_cents: amountCents,
+          method: selected,
+          status: 'link_opened',
+          link_opened_at: new Date().toISOString(),
+        })
+        .select('id')
+        .single();
+
+      if (error || !inserted) {
+        setSending(false);
+        toast.error('Could not start payment', { description: error?.message });
+        return;
+      }
+      settlementId = inserted.id;
     }
 
-    startWatching(inserted.id);
+    // Bug #1 fix: persist pending state so the confirm dialog can be restored
+    // when the user returns from Venmo (the component unmounts on sheet close,
+    // so the appStateChange listener is gone — localStorage survives).
+    localStorage.setItem('rally:pending-settlement', JSON.stringify({
+      id: settlementId,
+      method: selected,
+      splitTargetId,
+    }));
+
+    startWatching(settlementId);
     const note = `R@lly · ${eventTitle}`;
     const url = buildSettlementLink(selected, handle, amountDollars, note);
 
     setSending(false);
 
     if (methodRequiresManualSend(selected)) {
-      // Apple Cash: no pre-filled amount possible. Show overlay with copyable
-      // amount and an "Open iMessage" button instead of auto-navigating.
-      setManualSend({ settlementId: inserted.id, method: selected, handle, url });
+      setManualSend({ settlementId, method: selected, handle, url });
       return;
     }
 
     onOpenChange(false);
-    // Slight delay so the sheet close transition begins before navigation.
     setTimeout(() => {
       window.location.href = url;
     }, 80);
@@ -225,6 +275,7 @@ export function TabPaySheet({
       .invoke('notify-settlement-sent', { body: { settlementId: confirmFor.settlementId } })
       .catch((e) => console.warn('[TabPaySheet] notify-settlement-sent failed', e));
 
+    localStorage.removeItem('rally:pending-settlement');
     setConfirmBusy(false);
     setConfirmFor(null);
     onSettled();
@@ -239,6 +290,7 @@ export function TabPaySheet({
       .from('tab_settlements')
       .update({ status: 'pending', app_returned_at: nowIso })
       .eq('id', confirmFor.settlementId);
+    localStorage.removeItem('rally:pending-settlement');
     setConfirmBusy(false);
     setConfirmFor(null);
     stopWatching();
