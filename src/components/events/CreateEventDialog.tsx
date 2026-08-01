@@ -964,7 +964,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
             ref={actionBarRef}
             className="shrink-0 z-30 px-5 pt-4 bg-background/80 backdrop-blur-2xl border-t border-border/40"
             style={{
-              paddingBottom: 'max(env(safe-area-inset-bottom), 1rem)',
+              paddingBottom: 'max(calc(env(safe-area-inset-bottom) + 4.5rem), 5rem)',
               WebkitBackdropFilter: 'saturate(150%) blur(28px)',
             }}
           >

@@ -171,6 +171,7 @@ export const QuickRallyDialog = forwardRef<HTMLButtonElement, QuickRallyDialogPr
     };
 
     const isSubmittingRef = useRef(false);
+    const touchStartY = useRef(0);
 
     const onSubmit = async (data: QuickRallyFormData) => {
       if (!profile?.id) {
@@ -338,7 +339,11 @@ export const QuickRallyDialog = forwardRef<HTMLButtonElement, QuickRallyDialogPr
         </DialogTrigger>
         <DialogContent className="max-w-md p-0 max-h-[85dvh] flex flex-col gap-0">
           <ErrorBoundary name="QuickRallyDialog">
-          <DialogHeader className="px-6 pt-6 pb-3 shrink-0">
+          <DialogHeader
+            className="px-6 pt-6 pb-3 shrink-0"
+            onTouchStart={(e) => { touchStartY.current = e.touches[0].clientY; }}
+            onTouchEnd={(e) => { if (e.changedTouches[0].clientY - touchStartY.current > 60) handleClose(); }}
+          >
             <DialogTitle className="flex items-center gap-3 font-montserrat text-xl">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-yellow-400 to-primary flex items-center justify-center">
                 <Zap className="h-5 w-5 text-white" strokeWidth={2.5} fill="currentColor" />

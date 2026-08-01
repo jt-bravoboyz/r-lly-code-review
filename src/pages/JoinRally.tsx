@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { BottomNav } from '@/components/layout/BottomNav';
 import { Capacitor } from '@capacitor/core';
 import { Users, Check, Zap, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -314,7 +315,7 @@ export default function JoinRally() {
   }
 
   return (
-    <div className="min-h-[100dvh] bg-background relative overflow-hidden flex flex-col">
+    <div className="min-h-[100dvh] bg-background relative overflow-hidden flex flex-col pb-bottom-nav">
       {/* Ambient brand glow — subtle warmth on light surface */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-[#F47A19]/10 blur-[120px]" />
@@ -577,6 +578,7 @@ export default function JoinRally() {
         />
       )}
       {coverDialog}
+      <BottomNav />
     </div>
   );
 }
