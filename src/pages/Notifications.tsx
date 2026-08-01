@@ -38,8 +38,9 @@ export default function Notifications() {
 
   const { inviteNotifications, regularNotifications } = useMemo(() => {
     if (!notifications) return { inviteNotifications: [], regularNotifications: [] };
-    const invites = notifications.filter(n => INVITE_TYPES.includes(n.type) && !n.read);
-    const regular = notifications.filter(n => !INVITE_TYPES.includes(n.type) || n.read);
+    const unique = [...new Map(notifications.map(n => [n.id, n])).values()];
+    const invites = unique.filter(n => INVITE_TYPES.includes(n.type) && !n.read);
+    const regular = unique.filter(n => !INVITE_TYPES.includes(n.type) || n.read);
     return { inviteNotifications: invites, regularNotifications: regular };
   }, [notifications]);
 
@@ -188,7 +189,7 @@ export default function Notifications() {
           </Link>
           <h1 className="text-xl font-bold text-white font-montserrat drop-shadow-sm flex items-center gap-2">
             <Bell className="h-5 w-5" strokeWidth={2.5} />
-            Command
+            Alerts
           </h1>
           <Link to="/profile" className="relative group">
             <div className="absolute inset-0 rounded-full blur-md scale-110 bg-white/20" />

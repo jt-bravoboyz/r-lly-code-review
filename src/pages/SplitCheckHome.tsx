@@ -474,7 +474,7 @@ export default function SplitCheckHome() {
                     </div>
                     <div className="text-right shrink-0">
                       <p className="text-base font-black font-montserrat tabular-nums">{fmtUSD(row.shareCents)}</p>
-                      {!isClosed && !isSent && (
+                      {!isClosed && !isSent && row.shareCents > 0 && (
                         <Button size="sm"
                           className="mt-1.5 h-8 px-4 rounded-full text-xs font-black uppercase tracking-wider font-montserrat bg-primary shadow-[0_0_16px_rgba(244,122,25,0.35)] hover:bg-primary/90"
                           onClick={() => handlePay(row)}>
@@ -620,11 +620,11 @@ function OwedRequestCard({ request: r, onChanged }: { request: any; onChanged: (
             <Receipt className="h-5 w-5 text-primary" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold font-montserrat truncate">{r.eventTitle}</p>
+            <p className="text-sm font-bold font-montserrat break-words leading-tight">{r.eventTitle}</p>
             <p className="text-xs text-muted-foreground">{date}</p>
           </div>
           <div className="text-right shrink-0">
-            <p className="text-base font-black font-montserrat tabular-nums">{fmtUSD(r.owedTotalCents ?? 0)}</p>
+            <p className="text-base font-black font-montserrat tabular-nums">{fmtUSD(r.owedTotalCents > 0 ? r.owedTotalCents : isItemized && grandSubtotalC > 0 ? grandSubtotalC : (r.total_cents ?? 0))}</p>
             {isItemized && grandSubtotalC > 0 ? (
               <>
                 <div className="flex items-center justify-end gap-1.5 mt-1">

@@ -452,7 +452,7 @@ export function StartTabDialog({ open, onOpenChange, onCreated }: Props) {
               </div>
               {selectedFriendIds.size > 0 && tipCents > 0 && (
                 <div className="text-xs text-muted-foreground mt-1.5">
-                  Headcount: {selectedFriendIds.size} · Even tip share ≈ ${centsToDollars(Math.round(tipCents / selectedFriendIds.size))} each
+                  Headcount: {selectedFriendIds.size + 1} · Even tip share ≈ ${centsToDollars(Math.round(tipCents / (selectedFriendIds.size + 1)))} each
                 </div>
               )}
             </div>
