@@ -44,6 +44,7 @@ import { LiveTracking } from '@/components/tracking/LiveTracking';
 import { AttendeeMap } from '@/components/tracking/AttendeeMap';
 import { LiveUpdates } from '@/components/events/LiveUpdates';
 import { RallyHomeButton } from '@/components/home/RallyHomeButton';
+import { RallyHomeTabs } from '@/components/home/rallyhome/RallyHomeTabs';
 import { HostSafetyDashboard } from '@/components/home/HostSafetyDashboard';
 import { HomeStatusRing } from '@/components/home/HomeStatusRing';
 import { DDArrivedButton } from '@/components/home/DDArrivedButton';
@@ -1264,181 +1265,29 @@ export default function EventDetail() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="rally-home" className="mt-4 space-y-6">
-            {/* Section 1 — Your Status */}
-            {isAttending && (
-              <section className="space-y-3">
-                <h3 className="font-montserrat text-lg text-foreground font-extrabold">Your Status</h3>
-                <RallyHomeButton
-                  eventId={event.id}
-                  eventStatus={event.status}
-                  eventTitle={event.title}
-                  eventLocationName={event.location_name || undefined}
-                  eventLocationLat={event.location_lat || undefined}
-                  eventLocationLng={event.location_lng || undefined}
-                  onHeadingHomeStart={(destination) => updateToHeadingHome(destination)}
-                  onArrived={() => endActivity()}
-                  externalAction={widgetAction}
-                  onExternalActionHandled={() => setWidgetAction(null)}
-                />
-
-              </section>
-            )}
-
-            {/* Section 2 — Getting Around */}
-            {isAttending && (
-              <section className="space-y-4">
-                <h3 className="font-montserrat text-lg text-foreground font-extrabold">Getting Around</h3>
-
-                {/* Live Tracking (live / after rally only) */}
-                {(isLiveEvent || isAfterRally) && (
-                  <div className="space-y-4">
-                    <AttendeeMap
-                      eventId={event.id}
-                      attendees={event.attendees || []}
-                      eventLocation={event.location_lat && event.location_lng ? {
-                        lat: event.location_lat,
-                        lng: event.location_lng,
-                        name: event.location_name || undefined,
-                      } : null}
-                    />
-                    <LiveTracking
-                      eventId={event.id}
-                      destination={{
-                        name: event.location_name || event.title,
-                        address: event.location_name,
-                        lat: event.location_lat ?? undefined,
-                        lng: event.location_lng ?? undefined,
-                      }}
-                      isLive={isLiveEvent}
-                    />
-                    {event.is_barhop && event.stops && event.stops.length > 0 && (
-                      <BarHopStopsMap
-                        stops={event.stops}
-                        eventLocation={{
-                          lat: event.location_lat,
-                          lng: event.location_lng,
-                          name: event.location_name,
-                        }}
-                      />
-                    )}
-                  </div>
-                )}
-
-                {/* Rides */}
-                <RideshareDeepLinkButtons
-                  eventLat={event.location_lat}
-                  eventLng={event.location_lng}
-                  eventName={event.title}
-                  eventAddress={event.location_name}
-                />
-
-                {myDDRequest && profile && (
-                  <DDRequestBanner
-                    request={myDDRequest}
-                    eventId={event.id}
-                    userName={profile.display_name || 'You'}
-                  />
-                )}
-
-                <div className="flex items-center justify-between p-3 rounded-lg border">
-                  <div className="flex items-center gap-3">
-                    <Navigation className="h-5 w-5 text-muted-foreground" />
-                    <div>
-                      <h3 className="font-bold font-montserrat text-sm">Need a Ride?</h3>
-                      <p className="text-muted-foreground text-xs">Request a safe ride to the event</p>
-                    </div>
-                  </div>
-                  <RequestRideDialog eventId={event.id} eventName={event.title} />
-                </div>
-
-                <RiderLine eventId={event.id} />
-                <MyPassengersList eventId={event.id} />
-                <AddPassengerDialog eventId={event.id} />
-
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between">
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <Car className="h-5 w-5 text-primary" />
-                      Designated Drivers
-                    </CardTitle>
-                    {isAttending && (
-                      <DDVolunteerButton
-                        eventId={event.id}
-                        eventLocationName={event.location_name}
-                        eventLocationLat={event.location_lat}
-                        eventLocationLng={event.location_lng}
-                      />
-                    )}
-                  </CardHeader>
-                  <CardContent>
-                    {eventDDs && eventDDs.length > 0 ? (
-                      <div className="flex flex-wrap gap-3">
-                        {eventDDs.map((dd) => (
-                          <div key={dd.id} className="flex items-center gap-2 bg-primary/10 rounded-full pl-1 pr-3 py-1">
-                            <Avatar className="h-8 w-8">
-                              <AvatarImage src={dd.profile?.avatar_url || undefined} />
-                              <AvatarFallback>
-                                {dd.profile?.display_name?.charAt(0)?.toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-                            <span className="text-sm font-medium">{dd.profile?.display_name}</span>
-                            <Badge variant="secondary" className="text-[10px] bg-primary/20 text-primary">
-                              <Car className="h-2.5 w-2.5 mr-0.5" />
-                              DD
-                            </Badge>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-sm text-muted-foreground">
-                        No DDs yet. Volunteer to keep your crew safe!
-                      </p>
-                    )}
-                  </CardContent>
-                </Card>
-
-                {/* DD Arrived (live / after rally) */}
-                {isDD && (isLiveEvent || isAfterRally) && (
-                  <DDArrivedButton eventId={event.id} />
-                )}
-                {/* DD Dropoff (after rally) */}
-                {isDD && isAfterRally && (
-                  <DDDropoffButton eventId={event.id} />
-                )}
-              </section>
-            )}
-
-            {/* Section 3 — Everyone's Status */}
-            {isAttending && (isLiveEvent || isAfterRally) && (
-              <section className="space-y-3">
-                <h3 className="font-montserrat text-lg text-foreground font-extrabold">Everyone's Status</h3>
-                <HomeStatusRing eventId={event.id} />
-                {canManage && (
-                  <HostSafetyDashboard
-                    eventId={event.id}
-                    isAfterRally={isAfterRally}
-                    onRequestRide={() => setShowRideshareDrawer(true)}
-                    onCompleteRally={async () => {
-                      try {
-                        await completeRally.mutateAsync(event.id);
-                        setShowRallyComplete(true);
-                      } catch (error: any) {
-                        toast.error(error.message || 'Failed to complete rally');
-                      }
-                    }}
-                  />
-                )}
-              </section>
-            )}
-
-            {/* Pre-live helper copy */}
-            {isAttending && !(isLiveEvent || isAfterRally) && (
-              <div className="rounded-xl bg-muted/40 px-4 py-3">
-                <p className="text-sm font-medium text-muted-foreground">R@lly Home activates when the night wraps up.</p>
-                <p className="text-xs text-muted-foreground/70 mt-0.5">It activates when you hit R@lly Home or when the host ends the R@lly.</p>
-              </div>
-            )}
+          <TabsContent value="rally-home" className="mt-4">
+            <RallyHomeTabs
+              event={event}
+              isAttending={!!isAttending}
+              canManage={!!canManage}
+              isLiveEvent={!!isLiveEvent}
+              isAfterRally={!!isAfterRally}
+              isDD={!!isDD}
+              myDDRequest={myDDRequest}
+              widgetAction={widgetAction}
+              onWidgetActionHandled={() => setWidgetAction(null)}
+              onHeadingHomeStart={(destination) => updateToHeadingHome(destination)}
+              onArrived={() => endActivity()}
+              onRequestRide={() => setShowRideshareDrawer(true)}
+              onCompleteRally={async () => {
+                try {
+                  await completeRally.mutateAsync(event.id);
+                  setShowRallyComplete(true);
+                } catch (error: any) {
+                  toast.error(error.message || 'Failed to complete rally');
+                }
+              }}
+            />
           </TabsContent>
         </Tabs>}
 
