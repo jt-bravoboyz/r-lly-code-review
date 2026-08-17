@@ -53,12 +53,6 @@ export function PlanTab({
       {/* Your Plan Tonight */}
       {isAttending && (
         <section className="space-y-2">
-          <div className="flex items-center gap-2">
-            <CalendarCheck className="h-4 w-4 text-primary" />
-            <h3 className="font-montserrat text-sm font-extrabold uppercase tracking-wide text-white/90">
-              Your Plan Tonight
-            </h3>
-          </div>
           <RallyHomeButton
             eventId={event.id}
             eventStatus={event.status}
