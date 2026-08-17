@@ -176,7 +176,7 @@ export function RidePlanCard({ myStatus, eventId, onChangePlan, onSetDestination
 
         {!hasDestination && rideState.plan === 'self' && (
           <Button
-            className="w-full mt-1"
+            className="w-full mt-1 text-white border-white/30 hover:bg-white/10"
             variant="outline"
             size="sm"
             onClick={onSetDestination}
