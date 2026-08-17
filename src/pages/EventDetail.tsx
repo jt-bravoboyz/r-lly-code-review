@@ -44,6 +44,7 @@ import { LiveTracking } from '@/components/tracking/LiveTracking';
 import { AttendeeMap } from '@/components/tracking/AttendeeMap';
 import { LiveUpdates } from '@/components/events/LiveUpdates';
 import { RallyHomeButton } from '@/components/home/RallyHomeButton';
+import { RallyHomeTabs } from '@/components/home/rallyhome/RallyHomeTabs';
 import { HostSafetyDashboard } from '@/components/home/HostSafetyDashboard';
 import { HomeStatusRing } from '@/components/home/HomeStatusRing';
 import { DDArrivedButton } from '@/components/home/DDArrivedButton';
