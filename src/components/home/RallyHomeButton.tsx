@@ -613,15 +613,6 @@ export function RallyHomeButton({ eventId, trigger, eventStatus, autoOpen, onAut
             hasDestination={hasDestinationSet}
             eventStatus={eventStatus}
           />
-          {!hasDestinationSet && (
-            <Button
-              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground rounded-full font-montserrat h-14 text-lg shadow-lg"
-              onClick={() => setOpen(true)}
-            >
-              <Navigation className="h-5 w-5 mr-2" />
-              Set R@lly Home Destination
-            </Button>
-          )}
         </div>
       ) : (
         /* No ride plan set yet - show trigger button that opens safety choice */
