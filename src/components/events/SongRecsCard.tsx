@@ -121,7 +121,7 @@ export function SongRecsCard({ eventId, isParticipant, currentProfileId }: Props
                       </Avatar>
                       <div className="flex-1 min-w-0">
                         <p className="text-xs text-muted-foreground truncate">{name}</p>
-                        <p className="text-base font-medium text-foreground truncate">{rec.song_name}</p>
+                        <p className="text-base font-medium text-[#F47A19] truncate">{rec.song_name}</p>
                         <p className="text-sm text-muted-foreground truncate">{rec.artist}</p>
                       </div>
                     </div>
