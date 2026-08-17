@@ -132,14 +132,24 @@ export function PlanTab({
 
       {isAttending && (
         <div className="space-y-2">
-          <RequestRideDialog eventId={event.id} eventName={event.title} fullWidth />
-          <DDVolunteerButton
+          <RequestRideDialog
             eventId={event.id}
-            eventLocationName={event.location_name}
-            eventLocationLat={event.location_lat}
-            eventLocationLng={event.location_lng}
-            fullWidth
+            eventName={event.title}
+            trigger={
+              <Button className="w-full h-12 gap-2 bg-primary text-primary-foreground hover:bg-primary/90 font-montserrat font-bold">
+                <Navigation className="h-4 w-4 shrink-0" />
+                Request a Ride
+              </Button>
+            }
           />
+          <div className="[&>button]:w-full [&>button]:h-12 [&_button]:font-montserrat">
+            <DDVolunteerButton
+              eventId={event.id}
+              eventLocationName={event.location_name}
+              eventLocationLat={event.location_lat}
+              eventLocationLng={event.location_lng}
+            />
+          </div>
         </div>
       )}
     </div>
