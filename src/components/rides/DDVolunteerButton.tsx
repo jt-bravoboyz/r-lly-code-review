@@ -111,9 +111,9 @@ export function DDVolunteerButton({
         variant="outline"
         size="sm"
         onClick={() => setShowSetup(true)}
-        className="border-primary text-primary hover:bg-primary/10"
+        className="border-primary text-primary hover:bg-primary/10 px-3 whitespace-nowrap"
       >
-        <Shield className="h-4 w-4 mr-2" />
+        <Shield className="h-4 w-4 mr-1.5" />
         Volunteer as DD
       </Button>
 
