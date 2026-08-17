@@ -152,8 +152,8 @@ export function MessageBubble({
       );
 
   const bubbleSurface = isOwn
-    ? 'bg-primary/[0.18] border border-primary/35 text-foreground dark:text-white backdrop-blur-md'
-    : 'bg-foreground/[0.06] dark:bg-white/[0.08] border border-border/50 dark:border-white/10 text-foreground backdrop-blur-md';
+    ? 'bg-primary/[0.18] border border-primary/35 text-white backdrop-blur-md'
+    : 'bg-foreground/[0.06] dark:bg-white/[0.08] border border-border/50 dark:border-white/10 text-white backdrop-blur-md';
 
   return (
     <div
