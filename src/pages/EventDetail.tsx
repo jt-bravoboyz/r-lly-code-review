@@ -559,7 +559,7 @@ export default function EventDetail() {
         {/* Back Button — adaptive glass for colorful flyers */}
         <Link
           to="/"
-          className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full bg-foreground/[0.08] dark:bg-black/30 border border-foreground/10 text-foreground backdrop-blur-sm text-sm font-medium hover:bg-foreground/[0.12] transition"
+          className="inline-flex items-center gap-1.5 h-9 px-3 rounded-full bg-black/30 border border-white/10 text-white backdrop-blur-sm text-sm font-medium hover:bg-black/40 transition"
         >
           <ArrowLeft className="h-4 w-4" /> Back to Events
         </Link>
