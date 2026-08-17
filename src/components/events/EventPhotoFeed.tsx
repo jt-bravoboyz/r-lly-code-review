@@ -348,7 +348,7 @@ export function EventPhotoFeed({ eventId, isHost, eventStatus, eventUpdatedAt }:
         <Button
           variant="outline"
           size="sm"
-          className="gap-2"
+          className="gap-2 text-white"
           onClick={() => fileInputRef.current?.click()}
           disabled={uploading}
         >
