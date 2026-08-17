@@ -183,8 +183,11 @@ export function MessageBubble({
       </div>
 
       <div className={cn('max-w-[75%] flex flex-col', isOwn ? 'items-end' : 'items-start')}>
-        {!isOwn && showSenderName && isFirstInGroup && (
-          <div className="flex items-center gap-1.5 mb-1 px-3">
+        {showSenderName && isFirstInGroup && (
+          <div className={cn(
+            "flex items-center gap-1.5 mb-1 px-3",
+            isOwn ? "flex-row-reverse" : "flex-row"
+          )}>
             <Avatar className="h-4 w-4 ring-1 ring-border/60">
               <AvatarImage src={message.sender?.avatar_url || undefined} />
               <AvatarFallback className="bg-primary/20 text-primary text-[8px] font-bold">
@@ -192,13 +195,17 @@ export function MessageBubble({
               </AvatarFallback>
             </Avatar>
             <p className="text-[11px] text-white inline-flex items-center">
-              <button
-                type="button"
-                onClick={() => message.sender_id && openProfile(message.sender_id)}
-                className="hover:underline"
-              >
-                {senderName}
-              </button>
+              {isOwn ? (
+                <span>You</span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => message.sender_id && openProfile(message.sender_id)}
+                  className="hover:underline"
+                >
+                  {senderName}
+                </button>
+              )}
               <MiniFounderGem profileId={message.sender_id} />
             </p>
           </div>
