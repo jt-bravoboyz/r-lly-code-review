@@ -1,38 +1,47 @@
-# Theme Color Audit: 9 Flyer Themes on Event Detail
+# R@lly Home: 4 Mini-Tabs
 
-Goal: verify text and background/surface colors read correctly in every flyer theme on the event detail screen and its sheets, then fix what fails.
+Restructure the R@lly Home tab inside a R@lly into four mini-tabs — Plan, Location, Rides, Status — matching the mockup. No backend changes; this is a reorganization of existing components plus a few new presentational cards.
 
-## How the review works
+## Mini-tab bar
 
-1. Pick one real event and temporarily switch its flyer theme through all 9 keys (rally_dynamic, tequila_sunset, midnight_disco, garden_party, neon_warehouse, sunday_brunch, golden_hour, game_day, beach_club) while capturing screenshots.
-2. For each theme, capture the event detail page plus its key sheets/panels:
-   - Hero + title + date tile + host row
-   - Tabs (Details / Rides / Photos / Chat) in active and inactive state
-   - Primary action bar and CTAs
-   - Location map preview + Directions pill
-   - Rides panel, photo gallery, chat, After R@lly / safety cards
-   - Any modals opened from the page (invite, suggest, claim, ride setup)
-3. Review each capture for: unreadable body text, headings that vanish into the backdrop, muted text below contrast, chips/badges with white-on-light or dark-on-dark text, icons that disappear, and inputs/placeholders that lose contrast.
-4. Produce one findings list grouped by theme, then fix.
+A segmented sub-tab row directly under the R@lly Home tab: `Plan · Location · Rides · Status`, each with its icon, active state underlined in R@lly Orange, glass surface, 44px touch targets, horizontally scroll-safe on small screens. Default tab: Plan (Status when the R@lly is in After R@lly / wrapping up).
 
-## What gets fixed and where
+## 1. Plan
 
-Fixes stay in styling only:
+- **Your Plan Tonight** card — existing `RallyHomeButton` / `RidePlanCard` state, styled as the mockup's chevron row ("You've got a plan" vs. "No plan yet").
+- **Current R@lly Point** card — venue name + address, Live badge, `Directions` and `Share Location` buttons (existing `openDirections` + native share facades).
+- **Ride Options** — existing `RideshareDeepLinkButtons` (Uber / Lyft).
+- **Request a Ride** (primary orange) and **Sign Up as DD** (purple) — same actions as today's `RequestRideDialog` and `DDVolunteerButton`.
 
-- `src/index.css` themed block (`.event-themed*`): correct the token-driven rules for ink, meta, glass tint/border, tab states, accent headings, title gradient contrast.
-- `src/components/events/EventThemeProvider.tsx`: correct the light/dark mode derivation and ink/meta/glass token math when a theme lands on the wrong side of the light/dark split (garden_party, sunday_brunch, beach_club are the light-scrim themes).
-- `src/lib/flyerThemes.ts`: adjust a theme's `archTint`, `titleGradient`, `palette` accent, or button accent only where the palette itself is the cause of the failure.
-- Component-level hardcoded colors (e.g. `text-white`, fixed white/black chips) inside event detail and its sheets get swapped to themed tokens or `ev-ink`/`ev-ink-strong`/`ev-glass` utilities so they follow the theme.
+## 2. Location
 
-The event's theme is restored to its original value after the sweep; no event data is left changed.
+- **Squad Locations** map — existing `AttendeeMap` with live pins, "Live" indicator, recenter control.
+- **Share My Location** toggle row — driven by the existing tracking toggle logic inside `LiveTracking`.
+- **Sharing roster** — attendee rows with avatar, name, last-known area, and a `Sharing` / `Not Sharing` dot.
+- **Invite to Squad** row at the bottom, linking to the existing invite dialog.
+- Bar hop stops map stays here when the R@lly is a bar hop.
 
-## Deliverable
+## 3. Rides
 
-- A per-theme findings + fixes summary in chat.
-- Contrast-safe text on every themed surface for all 9 themes, with light-scrim themes (garden party, brunch, beach club) using dark ink and dark-scrim themes using light ink consistently.
+- **Need a Ride?** card with the orange `Request a Ride` action.
+- **Become a Designated Driver** purple card with `Sign Up as DD`.
+- **Who Needs a Ride Home (N)** — existing `RiderLine` data rendered as compact avatar chips, collapsible.
+- **DD Assignment** — one row per DD car: driver, seat count, `x / y` filled, current passengers as chips, and `+ Add Rider` slots (existing `AddPassengerDialog` / `MyPassengersList` logic). DD-only controls (`DDArrivedButton`, `DDDropoffButton`) appear here for drivers.
+- Existing DD request banner stays at the top of this tab.
+
+## 4. Status
+
+Built to match the mockup exactly:
+
+- **Everyone's Status** header card with shield icon and a 5-cell counter strip: Total · Home Safe · On the Way · Hasn't Left · Didn't Participate.
+- **R@lly Home Command** — 2x2 tile grid: Arrived Safely (green), On the Way Home (orange), Hasn't Left (yellow), Didn't Participate (neutral), each with count and icon.
+- **Squad Roster** — per-person rows: avatar, name, status label in the status color, timestamp, and status icon.
+- Host/co-host `HostSafetyDashboard` and the complete-R@lly action remain at the bottom of this tab.
 
 ## Technical notes
 
-- Themed styling is centralized: `EventThemeProvider` sets `--theme-ink`, `--theme-meta`, `--theme-ink-strong`, `--theme-glass-tint`, `--theme-glass-border`, `--theme-accent*`, `--theme-button*` and a `event-themed--light|dark` class; `src/index.css` maps those to card/tab/heading/CTA surfaces. Most fixes should land on those tokens/rules rather than per-component overrides.
-- Light/dark mode is currently derived from the luminance of `archTint` (>0.6 = light). Themes whose backdrop image is dark but scrim is light (or vice versa) can be misclassified — that check gets validated per theme during the sweep.
-- Contrast target: WCAG AA (4.5:1 body, 3:1 large text/icons) measured against the effective composited surface, not the raw scrim.
+- New `src/components/home/rallyhome/` folder: `RallyHomeTabs.tsx` (mini-tab shell) plus `PlanTab.tsx`, `LocationTab.tsx`, `RidesTab.tsx`, `StatusTab.tsx`, and small presentational pieces (`StatusCounterStrip`, `CommandTile`, `SquadRosterRow`, `DDCarRow`, `SharingRosterRow`).
+- `EventDetail.tsx` R@lly Home `TabsContent` shrinks to `<RallyHomeTabs ... />` with the event/props it already passes down; all current child components are moved, not rewritten.
+- Status counts derive from the existing `useEventSafetyStatus` + `getSafetyStatus()` helper so the tiles, strip, and roster stay consistent with current rules (DD priority over not-participating).
+- Colors use existing semantic tokens and the event theme's `readableAccent`; no hardcoded palette outside the status green/yellow tokens already defined.
+- Bottom app nav is unchanged — the mockup's nav bar is illustrative only.
