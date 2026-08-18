@@ -20,8 +20,6 @@ interface RallyHomeTabsProps {
   onWidgetActionHandled: () => void;
   onHeadingHomeStart: (destination: string) => void;
   onArrived: () => void;
-  onRequestRide: () => void;
-  onCompleteRally: () => void;
   onInvite?: () => void;
 }
 
