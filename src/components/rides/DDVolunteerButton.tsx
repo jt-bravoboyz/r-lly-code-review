@@ -7,12 +7,14 @@ import { useIsDD } from '@/hooks/useDDManagement';
 import { useAuth } from '@/hooks/useAuth';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { cn } from '@/lib/utils';
 
 interface DDVolunteerButtonProps {
   eventId: string;
   eventLocationName?: string;
   eventLocationLat?: number;
   eventLocationLng?: number;
+  className?: string;
 }
 
 export function DDVolunteerButton({ 
@@ -20,6 +22,7 @@ export function DDVolunteerButton({
   eventLocationName,
   eventLocationLat,
   eventLocationLng,
+  className,
 }: DDVolunteerButtonProps) {
   const [showSetup, setShowSetup] = useState(false);
   const { profile } = useAuth();
@@ -111,7 +114,10 @@ export function DDVolunteerButton({
         variant="outline"
         size="sm"
         onClick={() => setShowSetup(true)}
-        className="border-primary text-primary hover:bg-zinc-950 bg-black px-3 whitespace-nowrap"
+        className={cn(
+          'border-primary text-primary hover:bg-primary/10 px-3 whitespace-nowrap',
+          className
+        )}
       >
         <Shield className="h-4 w-4 mr-1.5" />
         Volunteer as DD
