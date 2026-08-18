@@ -1063,18 +1063,20 @@ export default function EventDetail() {
 
         {/* Tabs: Details · R@lly Home · Photos · Chat */}
         {!isCompleted && <Tabs defaultValue={isAfterRally ? 'rally-home' : 'details'} className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="details" className="text-[11px] sm:text-xs">Details</TabsTrigger>
-            <TabsTrigger value="rally-home" className="flex items-center gap-1 text-[11px] sm:text-xs">
-              <Home className="h-3 w-3" />
+          <TabsList className="grid w-full grid-cols-4 gap-1 rounded-2xl border border-white/10 bg-white/5 p-1 backdrop-blur-xl">
+            <TabsTrigger value="details" className="flex min-h-[44px] flex-1 items-center justify-center gap-1 rounded-xl px-2 text-[11px] sm:text-xs font-semibold font-montserrat transition-colors data-[state=active]:bg-rally-cream data-[state=active]:text-primary data-[state=active]:shadow-[0_2px_12px_rgba(244,122,25,0.25)] text-white/60 hover:text-white">
+              Details
+            </TabsTrigger>
+            <TabsTrigger value="rally-home" className="flex min-h-[44px] flex-1 items-center justify-center gap-1 rounded-xl px-2 text-[11px] sm:text-xs font-semibold font-montserrat transition-colors data-[state=active]:bg-rally-cream data-[state=active]:text-primary data-[state=active]:shadow-[0_2px_12px_rgba(244,122,25,0.25)] text-white/60 hover:text-white">
+              <Home className="h-3 w-3 shrink-0" />
               R@lly Home
             </TabsTrigger>
-            <TabsTrigger value="photos" className="flex items-center gap-1 text-[11px] sm:text-xs">
-              <Camera className="h-3 w-3" />
+            <TabsTrigger value="photos" className="flex min-h-[44px] flex-1 items-center justify-center gap-1 rounded-xl px-2 text-[11px] sm:text-xs font-semibold font-montserrat transition-colors data-[state=active]:bg-rally-cream data-[state=active]:text-primary data-[state=active]:shadow-[0_2px_12px_rgba(244,122,25,0.25)] text-white/60 hover:text-white">
+              <Camera className="h-3 w-3 shrink-0" />
               Photos
             </TabsTrigger>
-            <TabsTrigger value="chat" className="flex items-center gap-1 text-[11px] sm:text-xs">
-              <MessageCircle className="h-3 w-3" />
+            <TabsTrigger value="chat" className="flex min-h-[44px] flex-1 items-center justify-center gap-1 rounded-xl px-2 text-[11px] sm:text-xs font-semibold font-montserrat transition-colors data-[state=active]:bg-rally-cream data-[state=active]:text-primary data-[state=active]:shadow-[0_2px_12px_rgba(244,122,25,0.25)] text-white/60 hover:text-white">
+              <MessageCircle className="h-3 w-3 shrink-0" />
               Chat
             </TabsTrigger>
           </TabsList>
