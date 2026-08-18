@@ -1266,15 +1266,6 @@ export default function EventDetail() {
               onWidgetActionHandled={() => setWidgetAction(null)}
               onHeadingHomeStart={(destination) => updateToHeadingHome(destination)}
               onArrived={() => endActivity()}
-              onRequestRide={() => setShowRideshareDrawer(true)}
-              onCompleteRally={async () => {
-                try {
-                  await completeRally.mutateAsync(event.id);
-                  setShowRallyComplete(true);
-                } catch (error: any) {
-                  toast.error(error.message || 'Failed to complete rally');
-                }
-              }}
             />
           </TabsContent>
         </Tabs>}

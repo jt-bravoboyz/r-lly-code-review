@@ -158,15 +158,6 @@ export function StatusTab({ event, canManage, isAfterRally }: StatusTabProps) {
           })}
         </CardContent>
       </Card>
-
-      {canManage && (
-        <HostSafetyDashboard
-          eventId={event.id}
-          isAfterRally={isAfterRally}
-          onRequestRide={onRequestRide}
-          onCompleteRally={onCompleteRally}
-        />
-      )}
     </div>
   );
 }
