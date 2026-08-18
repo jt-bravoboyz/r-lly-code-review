@@ -36,7 +36,7 @@ const BUCKET_TEXT: Record<Bucket, string> = {
   arrived: 'text-green-400',
   on_the_way: 'text-primary',
   not_left: 'text-yellow-400',
-  skipped: 'text-white/50',
+  skipped: 'text-white/70',
 };
 
 function CommandTile({
