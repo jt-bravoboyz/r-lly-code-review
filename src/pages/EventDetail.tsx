@@ -678,21 +678,12 @@ export default function EventDetail() {
                   </div>
                 )}
                 {/* Prominent Date & Time — solid isolation barrier for theme-proof contrast */}
-                <div className="max-w-full overflow-hidden bg-background/80 dark:bg-zinc-900/80 backdrop-blur-2xl border border-white/20 dark:border-zinc-800/50 shadow-xl p-4 rounded-2xl flex items-center gap-4">
-                  <div
-                    className="flex-shrink-0 flex flex-col items-center justify-center rounded-xl px-3 py-2 min-w-[64px] shadow-md"
-                    style={{ background: 'var(--theme-button)' }}
-                  >
-                    <span
-                      className="text-[10px] font-black uppercase tracking-[0.18em] leading-none"
-                      style={{ color: 'var(--theme-button-fg)' }}
-                    >
+                <div className="max-w-full overflow-hidden bg-white/95 dark:bg-zinc-900/95 backdrop-blur-3xl border border-white/40 dark:border-zinc-800/50 shadow-[0_20px_50px_rgba(0,0,0,0.15)] p-4 rounded-2xl flex items-center gap-4">
+                  <div className="flex-shrink-0 flex flex-col items-center justify-center rounded-xl px-3 py-2 min-w-[64px] shadow-md bg-zinc-100 dark:bg-zinc-800 border border-zinc-200/50 dark:border-zinc-700/50">
+                    <span className="text-[10px] font-black uppercase tracking-[0.18em] leading-none text-zinc-500 dark:text-zinc-400">
                       {format(new Date(event.start_time), 'MMM')}
                     </span>
-                    <span
-                      className="text-2xl font-black font-montserrat leading-none mt-1"
-                      style={{ color: 'var(--theme-button-fg)' }}
-                    >
+                    <span className="text-2xl font-black font-montserrat leading-none mt-1 text-zinc-950 dark:text-white">
                       {format(new Date(event.start_time), 'd')}
                     </span>
                   </div>
@@ -700,16 +691,13 @@ export default function EventDetail() {
                     <span className="text-foreground font-black text-xl tracking-wider uppercase font-montserrat leading-tight">
                       {format(new Date(event.start_time), 'EEEE')}
                     </span>
-                    <span
-                      className="font-black text-xl font-montserrat leading-tight"
-                      style={{ color: 'var(--theme-button)' }}
-                    >
+                    <span className="inline-block font-black text-xl font-montserrat leading-tight text-[#F47A19] bg-[#F47A19]/10 px-2 py-0.5 rounded-full w-fit">
                       {format(new Date(event.start_time), 'h:mm a')}
                     </span>
 
                     {event.location_name && (
                       <span
-                        className="text-muted-foreground font-semibold text-base mt-0.5 min-w-0"
+                        className="text-zinc-500 dark:text-zinc-400 font-semibold text-base mt-0.5 min-w-0"
                         style={{
                           display: '-webkit-box',
                           WebkitLineClamp: 2,
