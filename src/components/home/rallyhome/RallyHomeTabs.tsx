@@ -64,7 +64,7 @@ export function RallyHomeTabs({
                 className={cn(
                   'flex min-h-[44px] flex-1 items-center justify-center gap-1.5 rounded-xl px-2 text-xs font-semibold font-montserrat transition-colors',
                   active
-                    ? 'bg-rally-cream text-primary shadow-[0_2px_12px_rgba(244,122,25,0.25)]'
+                    ? 'bg-zinc-800/90 text-white border border-white/10'
                     : 'text-white/60 hover:text-white'
                 )}
               >
