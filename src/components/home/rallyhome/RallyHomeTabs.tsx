@@ -20,8 +20,6 @@ interface RallyHomeTabsProps {
   onWidgetActionHandled: () => void;
   onHeadingHomeStart: (destination: string) => void;
   onArrived: () => void;
-  onRequestRide: () => void;
-  onCompleteRally: () => void;
   onInvite?: () => void;
 }
 
@@ -44,8 +42,6 @@ export function RallyHomeTabs({
   onWidgetActionHandled,
   onHeadingHomeStart,
   onArrived,
-  onRequestRide,
-  onCompleteRally,
   onInvite,
 }: RallyHomeTabsProps) {
   const [tab, setTab] = useState<MiniTab>(isAfterRally ? 'status' : 'plan');
@@ -113,8 +109,6 @@ export function RallyHomeTabs({
           event={event}
           canManage={canManage}
           isAfterRally={isAfterRally}
-          onRequestRide={onRequestRide}
-          onCompleteRally={onCompleteRally}
         />
       )}
     </div>

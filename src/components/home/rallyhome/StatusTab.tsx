@@ -1,7 +1,6 @@
 import { Car, CheckCircle2, Clock, ShieldCheck, Users } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
-import { HostSafetyDashboard } from '@/components/home/HostSafetyDashboard';
 import { useEventSafetyStatus, getSafetyState, type AttendeeWithSafetyStatus } from '@/hooks/useSafetyStatus';
 import { getPrivateName } from '@/lib/identity';
 import { cn } from '@/lib/utils';
@@ -11,8 +10,6 @@ interface StatusTabProps {
   event: any;
   canManage: boolean;
   isAfterRally: boolean;
-  onRequestRide: () => void;
-  onCompleteRally: () => void;
 }
 
 type Bucket = 'arrived' | 'on_the_way' | 'not_left' | 'skipped';
@@ -67,7 +64,7 @@ function CommandTile({
   );
 }
 
-export function StatusTab({ event, canManage, isAfterRally, onRequestRide, onCompleteRally }: StatusTabProps) {
+export function StatusTab({ event, canManage, isAfterRally }: StatusTabProps) {
   const { data: attendees } = useEventSafetyStatus(event.id);
   const list = attendees || [];
 
@@ -161,15 +158,6 @@ export function StatusTab({ event, canManage, isAfterRally, onRequestRide, onCom
           })}
         </CardContent>
       </Card>
-
-      {canManage && (
-        <HostSafetyDashboard
-          eventId={event.id}
-          isAfterRally={isAfterRally}
-          onRequestRide={onRequestRide}
-          onCompleteRally={onCompleteRally}
-        />
-      )}
     </div>
   );
 }
