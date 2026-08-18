@@ -678,12 +678,12 @@ export default function EventDetail() {
                   </div>
                 )}
                 {/* Prominent Date & Time — solid isolation barrier for theme-proof contrast */}
-                <div className="max-w-full overflow-hidden bg-white/95 dark:bg-zinc-900/95 backdrop-blur-3xl border border-white/40 dark:border-zinc-800/50 shadow-[0_20px_50px_rgba(0,0,0,0.15)] p-4 rounded-2xl flex items-center gap-4">
+                <div className="max-w-full overflow-hidden bg-white/80 dark:bg-zinc-900/80 backdrop-blur-3xl border border-white/40 dark:border-zinc-800/50 shadow-[0_20px_50px_rgba(0,0,0,0.15)] p-4 rounded-2xl flex items-center gap-4">
                   <div className="flex-shrink-0 flex flex-col items-center justify-center rounded-xl px-3 py-2 min-w-[64px] shadow-md bg-zinc-100 dark:bg-zinc-800 border border-zinc-200/50 dark:border-zinc-700/50">
                     <span className="text-[10px] font-black uppercase tracking-[0.18em] leading-none text-zinc-500 dark:text-zinc-400">
                       {format(new Date(event.start_time), 'MMM')}
                     </span>
-                    <span className="text-2xl font-black font-montserrat leading-none mt-1 text-zinc-950 dark:text-white">
+                    <span className="text-2xl font-black font-montserrat leading-none mt-1 text-[#F58E5A]">
                       {format(new Date(event.start_time), 'd')}
                     </span>
                   </div>
