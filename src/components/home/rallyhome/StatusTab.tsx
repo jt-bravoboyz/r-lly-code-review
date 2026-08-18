@@ -49,14 +49,14 @@ function CommandTile({
   icon: React.ReactNode;
 }) {
   const skin: Record<Bucket, string> = {
-    arrived: 'border-green-500/40 bg-green-500/10',
-    on_the_way: 'border-primary/40 bg-primary/10',
-    not_left: 'border-yellow-500/40 bg-yellow-500/10',
-    skipped: 'border-white/15 bg-white/5',
+    arrived: 'border-green-500/50 bg-green-500/20',
+    on_the_way: 'border-primary/50 bg-primary/20',
+    not_left: 'border-yellow-500/50 bg-yellow-500/20',
+    skipped: 'border-white/25 bg-white/10',
   };
   return (
     <div className={cn('rounded-2xl border p-3', skin[bucket])}>
-      <p className="text-[11px] font-semibold text-white/70 leading-tight">{BUCKET_LABEL[bucket]}</p>
+      <p className="text-[11px] font-semibold text-white leading-tight">{BUCKET_LABEL[bucket]}</p>
       <div className="mt-1.5 flex items-end justify-between">
         <span className={cn('font-montserrat text-3xl font-extrabold leading-none', BUCKET_TEXT[bucket])}>
           {count}
