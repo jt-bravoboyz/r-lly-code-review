@@ -90,6 +90,10 @@
     --glass-blur: 20px;
     --glass-shadow: 0 8px 32px hsl(220 15% 20% / 0.08);
 
+    /* Brand color extensions */
+    --rally-cream: 30 100% 96%;
+    --rally-cream-foreground: 27 91% 53%;
+
     --sidebar-background: 25 20% 95%;
     --sidebar-foreground: 220 20% 15%;
     --sidebar-primary: 27 91% 53%;
@@ -130,6 +134,10 @@
     --glass-highlight: 0 0% 100% / 0.05;
     --glass-blur: 20px;
     --glass-shadow: 0 8px 32px hsl(0 0% 0% / 0.4);
+
+    /* Brand color extensions - cream stays warm in dark mode */
+    --rally-cream: 30 100% 96%;
+    --rally-cream-foreground: 27 91% 53%;
     --sidebar-background: 220 20% 8%;
     --sidebar-foreground: 0 0% 90%;
     --sidebar-primary: 27 91% 53%;
@@ -152,7 +160,8 @@
   }
 
   /* Custom R@lly colors for direct use - with dark mode support */
-  .bg-rally-cream { @apply bg-secondary; }
+  .bg-rally-cream { background-color: hsl(var(--rally-cream)); }
+  .text-rally-cream-foreground { color: hsl(var(--rally-cream-foreground)); }
   .bg-rally-light { @apply bg-secondary; }
   .bg-rally-light-accent { @apply bg-primary/20; }
   .text-rally-dark { @apply text-foreground; }
