@@ -1,11 +1,11 @@
 import { useRef, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-import { Shield, CheckCircle2, Navigation, HelpCircle, XCircle, Car, PartyPopper, Clock, Train, Footprints } from 'lucide-react';
+import { Shield, CheckCircle2, Navigation, HelpCircle, XCircle, Car, PartyPopper, Clock } from 'lucide-react';
 import { useEventSafetyStatus, useIsEventSafetyComplete, getSafetyState, getSafetyStateLabel, type SafetyState } from '@/hooks/useSafetyStatus';
 import { useSafetyNotifications } from '@/hooks/useSafetyNotifications';
 import { useRides } from '@/hooks/useRides';
@@ -131,51 +131,6 @@ export function HostSafetyDashboard({
     onCompleteRally?.();
   };
   return <>
-    <Card className="rounded-xl border-0 shadow-[0_4px_12px_rgba(0,0,0,0.04)] bg-card">
-      <CardHeader className="pb-3">
-      <CardTitle className="text-lg flex items-center gap-2 font-montserrat">
-          <Shield className="h-5 w-5 text-primary" />
-          R@lly Home Command
-          {safetyComplete && <Badge className="ml-auto bg-green-500 text-white">
-              <CheckCircle2 className="h-3 w-3 mr-1" />
-              All Safe
-            </Badge>}
-        </CardTitle>
-        <p className="text-xs text-muted-foreground mt-1">
-          {arrivedSafely.length} of {attendees.length} confirmed safe
-        </p>
-
-        {/* Arrival Transport Mode Summary */}
-        {(() => {
-          const modeCounts: Record<string, number> = {};
-          attendees.forEach(a => {
-            const mode = (a as any).arrival_transport_mode;
-            if (mode) modeCounts[mode] = (modeCounts[mode] || 0) + 1;
-          });
-          const icons: Record<string, React.ReactNode> = {
-            dd: <Car className="h-3 w-3" />,
-            rideshare: <Navigation className="h-3 w-3" />,
-            driving: <Car className="h-3 w-3" />,
-            walking: <Footprints className="h-3 w-3" />,
-            public_transit: <Train className="h-3 w-3" />,
-          };
-          const entries = Object.entries(modeCounts);
-          if (entries.length === 0) return null;
-          return (
-            <div className="flex flex-wrap gap-2 mt-2">
-              {entries.map(([mode, count]) => (
-                <Badge key={mode} variant="outline" className="text-[10px] gap-1">
-                  {icons[mode] || null} {count}
-                </Badge>
-              ))}
-            </div>
-          );
-        })()}
-      </CardHeader>
-      <CardContent className="space-y-4">
-      </CardContent>
-    </Card>
-
     {/* Request a Ride - for after_rally state */}
     {isAfterRally && onRequestRide && (
       <Button variant="outline" className="w-full" onClick={onRequestRide}>
