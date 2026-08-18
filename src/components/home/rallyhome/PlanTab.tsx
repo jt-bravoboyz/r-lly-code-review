@@ -142,6 +142,7 @@ export function PlanTab({
               eventLocationName={event.location_name}
               eventLocationLat={event.location_lat}
               eventLocationLng={event.location_lng}
+              className="bg-black hover:bg-zinc-950"
             />
           </div>
         </div>
