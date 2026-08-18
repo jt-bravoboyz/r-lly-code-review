@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+
 import { Shield, CheckCircle2, Navigation, HelpCircle, XCircle, Car, PartyPopper, Clock, Train, Footprints } from 'lucide-react';
 import { useEventSafetyStatus, useIsEventSafetyComplete, getSafetyState, getSafetyStateLabel, type SafetyState } from '@/hooks/useSafetyStatus';
 import { useSafetyNotifications } from '@/hooks/useSafetyNotifications';
@@ -173,64 +173,6 @@ export function HostSafetyDashboard({
         })()}
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Summary Stats */}
-        <div className="grid grid-cols-2 gap-3">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="bg-muted rounded-lg p-3 text-center cursor-help">
-                  <p className="text-2xl font-bold text-green-500">{arrivedSafely.length}</p>
-                  <p className="text-xs text-green-600 dark:text-green-400">Arrived Safely</p>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Attendees who have confirmed they arrived at their destination safely</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="bg-muted rounded-lg p-3 text-center cursor-help">
-                  <p className="text-2xl font-bold text-orange-500">{optedIn.length + undecided.length}</p>
-                  <p className="text-xs text-orange-600 dark:text-orange-400">Hasn't Left</p>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Attendees participating in R@lly Home who haven't started heading home yet</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="bg-muted rounded-lg p-3 text-center cursor-help">
-                  <p className="text-2xl font-bold text-orange-500">{participating.length}</p>
-                  <p className="text-xs text-orange-600 dark:text-orange-400">OTW Home</p>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Attendees currently on their way home - waiting for arrival confirmation</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="bg-muted rounded-lg p-3 text-center cursor-help">
-                  <p className="text-2xl font-bold text-muted-foreground">{notParticipating.length}</p>
-                  <p className="text-xs text-muted-foreground">Not Participating in R@lly Home</p>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Attendees who confirmed they're not using R@lly Home tracking</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
       </CardContent>
     </Card>
 
