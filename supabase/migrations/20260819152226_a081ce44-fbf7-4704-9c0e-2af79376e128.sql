@@ -1,0 +1,2 @@
+ALTER TABLE public.events DROP CONSTRAINT IF EXISTS events_flyer_theme_check;
+ALTER TABLE public.events ADD CONSTRAINT events_flyer_theme_check CHECK (flyer_theme IN ('none','rally_dynamic','tequila_sunset','garden_party','sunday_brunch','beach_club'));
