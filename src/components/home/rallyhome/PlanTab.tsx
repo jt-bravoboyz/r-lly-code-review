@@ -74,7 +74,7 @@ export function PlanTab({
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 min-w-0">
               <MapPin className="h-4 w-4 text-primary shrink-0" />
-              <h3 className="font-montserrat font-extrabold text-white truncate">
+              <h3 className="font-montserrat font-extrabold text-primary truncate">
                 Current R@lly Point
               </h3>
             </div>
@@ -84,21 +84,21 @@ export function PlanTab({
           </div>
 
           <div className="space-y-0.5">
-            <p className="text-sm font-semibold text-white truncate">
+            <p className="text-sm font-semibold text-primary truncate">
               {event.location_name || 'Location TBD'}
             </p>
             {event.location_address && (
-              <p className="text-xs text-white/60 truncate">{event.location_address}</p>
+              <p className="text-xs text-primary/60 truncate">{event.location_address}</p>
             )}
           </div>
 
           <div className="grid grid-cols-2 gap-2">
             <Button
               variant="outline"
-              className="h-11 gap-1.5 border-white/20 bg-white/5 text-white hover:bg-white/10"
+              className="h-11 gap-1.5 border-white/20 bg-white/5 text-primary hover:bg-white/10"
               onClick={handleDirections}
             >
-              <Navigation className="h-4 w-4 shrink-0" />
+              <Navigation className="h-4 w-4 shrink-0 text-primary" />
               <span className="text-sm">Directions</span>
             </Button>
             <Button
