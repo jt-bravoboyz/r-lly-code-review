@@ -103,8 +103,8 @@ export function StatusTab({ event, canManage, isAfterRally }: StatusTabProps) {
         <CardContent className="p-4 space-y-3">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <h3 className="font-montserrat font-extrabold text-white">Everyone's Status</h3>
-              <p className="text-xs text-white/60">Real-time overview of your squad.</p>
+              <h3 className="font-montserrat font-extrabold text-zinc-800">Everyone's Status</h3>
+              <p className="text-xs text-muted-foreground">Real-time overview of your squad.</p>
             </div>
             <ShieldCheck className="h-6 w-6 text-green-400 shrink-0" />
           </div>
@@ -115,7 +115,7 @@ export function StatusTab({ event, canManage, isAfterRally }: StatusTabProps) {
                 <p className={cn('font-montserrat text-xl font-extrabold leading-none', s.cls)}>
                   {s.value}
                 </p>
-                <p className="mt-1 text-[9px] leading-tight text-white/50">{s.label}</p>
+                <p className={cn('mt-1 text-[9px] leading-tight', s.cls)}>{s.label}</p>
               </div>
             ))}
           </div>
