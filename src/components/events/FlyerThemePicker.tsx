@@ -1,18 +1,18 @@
 import { useState, useRef } from 'react';
-import { Camera, Check } from 'lucide-react';
-import { FLYER_THEMES, FLYER_THEME_KEYS, type FlyerThemeKey, getFlyerTheme } from '@/lib/flyerThemes';
+import { Ban, Camera, Check } from 'lucide-react';
+import { FLYER_THEMES, FLYER_THEME_KEYS, NO_FLYER_THEME, type FlyerThemeSelection, getFlyerTheme, isThemedFlyerKey } from '@/lib/flyerThemes';
 import { cn } from '@/lib/utils';
 
 export interface FlyerThemePickerProps {
-  value: FlyerThemeKey | null;
+  value: FlyerThemeSelection | null;
   customImageUrl?: string | null;
-  onChange: (key: FlyerThemeKey) => void;
+  onChange: (key: FlyerThemeSelection) => void;
   onUploadCustom?: (file: File) => Promise<void> | void;
   className?: string;
 }
 
 /**
- * Snap-scroll horizontal carousel of 9 themed flyer miniatures + "Upload photo" tile.
+ * Snap-scroll horizontal carousel: No Theme + 5 themed flyer miniatures + "Upload photo" tile.
  * Mounted inside the CreateEventDialog "Optional details" section.
  */
 export function FlyerThemePicker({
@@ -45,6 +45,35 @@ export function FlyerThemePicker({
       </div>
       <div className="-mx-2 overflow-x-auto scrollbar-hide snap-x snap-mandatory">
         <div className="flex gap-3 px-2 pb-1">
+          {/* No Theme tile */}
+          {(() => {
+            const noneSelected = !customImageUrl && (!value || value === NO_FLYER_THEME);
+            return (
+              <button
+                type="button"
+                onClick={() => onChange(NO_FLYER_THEME)}
+                className={cn(
+                  'relative shrink-0 snap-start rounded-2xl overflow-hidden border-2 transition-all',
+                  'w-[120px] h-[160px] flex flex-col items-center justify-center gap-1.5 bg-zinc-900',
+                  noneSelected ? 'border-primary scale-[1.02]' : 'border-white/15',
+                )}
+              >
+                <Ban className="h-5 w-5 text-primary" />
+                <span className="text-[10px] font-montserrat uppercase tracking-wider text-white">
+                  No Theme
+                </span>
+                <span className="text-[8px] font-montserrat uppercase tracking-wider text-white/60">
+                  Classic R@lly
+                </span>
+                {noneSelected && (
+                  <span className="absolute top-2 right-2 rounded-full bg-primary p-1">
+                    <Check className="h-3 w-3 text-primary-foreground" />
+                  </span>
+                )}
+              </button>
+            );
+          })()}
+
           {/* Upload photo tile */}
           <button
             type="button"
@@ -127,7 +156,7 @@ export function FlyerThemePicker({
         </div>
       </div>
       <div className="text-[10px] text-muted-foreground/70">
-        Showing: <span className="font-semibold">{customImageUrl ? 'Custom photo' : value ? getFlyerTheme(value).label : 'None'}</span>
+        Showing: <span className="font-semibold">{customImageUrl ? 'Custom photo' : isThemedFlyerKey(value) ? getFlyerTheme(value).label : 'No Theme'}</span>
       </div>
     </div>
   );

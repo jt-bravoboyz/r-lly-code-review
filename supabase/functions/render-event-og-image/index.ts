@@ -52,15 +52,12 @@ interface FlyerInputs {
 }
 
 // Mirror of src/lib/flyerThemes.ts — kept inline so the edge function is self-contained.
+// 'none' and unknown keys fall back to rally_dynamic (see themeFor below).
 const THEMES: Record<string, { titleColor: string; metaColor: string; archTint: string; bg: string; gradient: string }> = {
   rally_dynamic: { titleColor: '#FFE9D2', metaColor: '#FFE9D2', archTint: 'rgba(20,14,10,0.45)', bg: 'rally-dynamic-bg.jpg', gradient: 'linear-gradient(135deg,#FFE9D2,#F47A19,#FFB178)' },
   tequila_sunset: { titleColor: '#FFE2C2', metaColor: '#FFE7D1', archTint: 'rgba(48,18,12,0.4)', bg: 'tequila-sunset-bg.jpg', gradient: 'linear-gradient(135deg,#FFE2C2,#F58E5A,#C8407A)' },
-  midnight_disco: { titleColor: '#E9E2FF', metaColor: '#D8CFFF', archTint: 'rgba(12,6,26,0.55)', bg: 'midnight-disco-bg.jpg', gradient: 'linear-gradient(135deg,#E9E2FF,#B59BFF,#5C3CFF)' },
   garden_party: { titleColor: '#3A2A1F', metaColor: '#4A3326', archTint: 'rgba(255,248,240,0.5)', bg: 'garden-party-bg.jpg', gradient: 'linear-gradient(135deg,#3A2A1F,#6B4A3A)' },
-  neon_warehouse: { titleColor: '#00F0FF', metaColor: '#E8F5FF', archTint: 'rgba(8,10,14,0.6)', bg: 'neon-warehouse-bg.jpg', gradient: 'linear-gradient(135deg,#F0F8FF,#00F0FF,#FF2E9A)' },
   sunday_brunch: { titleColor: '#2A2419', metaColor: '#3D3221', archTint: 'rgba(255,250,240,0.6)', bg: 'sunday-brunch-bg.jpg', gradient: 'linear-gradient(135deg,#2A2419,#6B5840)' },
-  golden_hour: { titleColor: '#FFF1C9', metaColor: '#FFE7B8', archTint: 'rgba(60,30,10,0.4)', bg: 'golden-hour-bg.jpg', gradient: 'linear-gradient(135deg,#FFF1C9,#FFB04A,#B05E1A)' },
-  game_day: { titleColor: '#FFFFFF', metaColor: '#F0F4FF', archTint: 'rgba(8,14,32,0.6)', bg: 'game-day-bg.jpg', gradient: 'linear-gradient(135deg,#FFFFFF,#FFD24A)' },
   beach_club: { titleColor: '#0E5A6E', metaColor: '#0B3A4A', archTint: 'rgba(220,245,250,0.5)', bg: 'beach-club-bg.jpg', gradient: 'linear-gradient(135deg,#0E5A6E,#1FA8C4)' },
 };
 
