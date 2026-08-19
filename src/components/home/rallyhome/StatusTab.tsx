@@ -33,7 +33,7 @@ const BUCKET_TEXT: Record<Bucket, string> = {
   arrived: 'text-green-400',
   on_the_way: 'text-primary',
   not_left: 'text-yellow-400',
-  skipped: 'text-white/70',
+  skipped: 'text-muted-foreground/70',
 };
 
 function CommandTile({
@@ -53,7 +53,7 @@ function CommandTile({
   };
   return (
     <div className={cn('rounded-2xl border p-3', skin[bucket])}>
-      <p className="text-[11px] font-semibold text-white leading-tight">{BUCKET_LABEL[bucket]}</p>
+      <p className="text-[11px] font-semibold text-muted-foreground leading-tight">{BUCKET_LABEL[bucket]}</p>
       <div className="mt-1.5 flex items-end justify-between">
         <span className={cn('font-montserrat text-3xl font-extrabold leading-none', BUCKET_TEXT[bucket])}>
           {count}
@@ -72,18 +72,18 @@ export function StatusTab({ event, canManage, isAfterRally }: StatusTabProps) {
   list.forEach((a) => { counts[bucketFor(a)] += 1; });
 
   const strip = [
-    { label: 'Total', value: list.length, cls: 'text-white' },
+    { label: 'Total', value: list.length, cls: 'text-muted-foreground' },
     { label: 'Home Safe', value: counts.arrived, cls: 'text-green-400' },
     { label: 'On the Way', value: counts.on_the_way, cls: 'text-primary' },
     { label: "Hasn't Left", value: counts.not_left, cls: 'text-yellow-400' },
-    { label: "Didn't Participate", value: counts.skipped, cls: 'text-white/50' },
+    { label: "Didn't Participate", value: counts.skipped, cls: 'text-muted-foreground/50' },
   ];
 
   const bucketIcon = (b: Bucket) => {
     if (b === 'arrived') return <CheckCircle2 className="h-4 w-4 text-green-400" />;
     if (b === 'on_the_way') return <Car className="h-4 w-4 text-primary" />;
     if (b === 'not_left') return <Clock className="h-4 w-4 text-yellow-400" />;
-    return <Users className="h-4 w-4 text-white/40" />;
+    return <Users className="h-4 w-4 text-muted-foreground/40" />;
   };
 
   const timeFor = (a: AttendeeWithSafetyStatus) => {
@@ -124,7 +124,7 @@ export function StatusTab({ event, canManage, isAfterRally }: StatusTabProps) {
 
       {/* Command grid */}
       <div className="space-y-2">
-        <p className="font-montserrat text-sm font-extrabold text-white">R@lly Home Command</p>
+        <p className="font-montserrat text-sm font-extrabold text-muted-foreground">R@lly Home Command</p>
         <div className="grid grid-cols-2 gap-2">
           <CommandTile bucket="arrived" count={counts.arrived} icon={bucketIcon('arrived')} />
           <CommandTile bucket="on_the_way" count={counts.on_the_way} icon={bucketIcon('on_the_way')} />
@@ -136,8 +136,8 @@ export function StatusTab({ event, canManage, isAfterRally }: StatusTabProps) {
       {/* Roster */}
       <Card className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl">
         <CardContent className="p-2">
-          <p className="px-2 pt-1 pb-2 font-montserrat text-sm font-extrabold text-white">Squad Roster</p>
-          {list.length === 0 && <p className="px-2 pb-3 text-sm text-white/50">No attendees yet.</p>}
+          <p className="px-2 pt-1 pb-2 font-montserrat text-sm font-extrabold text-muted-foreground">Squad Roster</p>
+          {list.length === 0 && <p className="px-2 pb-3 text-sm text-muted-foreground/50">No attendees yet.</p>}
           {list.map((a) => {
             const b = bucketFor(a);
             const name = a.profile ? getPrivateName(a.profile as any) : 'Someone';
@@ -149,9 +149,9 @@ export function StatusTab({ event, canManage, isAfterRally }: StatusTabProps) {
                     {(name || '?').charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
-                <p className="min-w-0 flex-1 truncate text-sm font-semibold text-white">{name}</p>
+                <p className="min-w-0 flex-1 truncate text-sm font-semibold text-muted-foreground">{name}</p>
                 <p className={cn('shrink-0 text-xs font-medium', BUCKET_TEXT[b])}>{BUCKET_LABEL[b]}</p>
-                <p className="w-14 shrink-0 text-right text-[11px] text-white/50">{timeFor(a)}</p>
+                <p className="w-14 shrink-0 text-right text-[11px] text-muted-foreground/50">{timeFor(a)}</p>
                 <span className="shrink-0">{bucketIcon(b)}</span>
               </div>
             );
