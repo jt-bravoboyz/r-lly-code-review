@@ -72,9 +72,9 @@ export function RidesTab({ event, isAttending, isLive, isAfterRally, isDD, myDDR
           <CardContent className="p-4 space-y-3">
             <div className="flex items-center gap-2">
               <Shield className="h-4 w-4 text-purple-300 shrink-0" />
-              <h3 className="font-montserrat font-extrabold text-white">Become a Designated Driver</h3>
+              <h3 className="font-montserrat font-extrabold text-muted-foreground">Become a Designated Driver</h3>
             </div>
-            <p className="text-xs text-white/60">Help your squad get home safe.</p>
+            <p className="text-xs text-muted-foreground">Help your squad get home safe.</p>
             <div className="[&>button]:w-full [&>button]:h-12 [&_button]:font-montserrat">
               <DDVolunteerButton
                 eventId={event.id}
