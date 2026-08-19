@@ -111,7 +111,7 @@ export function FlyerThemePicker({
             );
           })()}
 
-          {/* 9 theme tiles */}
+          {/* 6 theme tiles */}
           {FLYER_THEME_KEYS.map(key => {
             const t = FLYER_THEMES[key];
             const selected = value === key && !customImageUrl;
