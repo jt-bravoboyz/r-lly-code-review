@@ -84,7 +84,7 @@ export function PlanTab({
           </div>
 
           <div className="space-y-0.5">
-            <p className="text-sm font-semibold text-primary truncate">
+            <p className="text-sm font-semibold text-[var(--theme-ink)] truncate">
               {event.location_name || 'Location TBD'}
             </p>
             {event.location_address && (
