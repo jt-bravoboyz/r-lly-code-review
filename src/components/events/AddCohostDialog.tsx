@@ -54,7 +54,7 @@ export function AddCohostDialog({ eventId, creatorId, attendees }: AddCohostDial
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2 text-white border-white/20 bg-black/20 hover:bg-black/30 hover:text-white">
+        <Button variant="outline" size="sm" className="gap-2 text-muted-foreground border-white/20 bg-black/20 hover:bg-black/30 hover:text-muted-foreground">
           <UserPlus className="h-4 w-4" />
           Manage Co-hosts
         </Button>
