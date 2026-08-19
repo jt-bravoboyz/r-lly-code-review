@@ -135,12 +135,12 @@ export function FlyerThemePicker({
                 <div className="absolute inset-x-2 bottom-2 rounded-lg px-2 py-1.5 backdrop-blur-md"
                   style={{ background: 'rgba(255,255,255,0.18)' }}>
                   <div
-                    className="text-[10px] font-bold leading-tight"
+                    className="text-[13px] font-bold leading-tight"
                     style={{ color: t.titleColor, fontFamily: `'${t.headingFont}', serif` }}
                   >
                     {t.label}
                   </div>
-                  <div className="text-[8px] font-montserrat uppercase tracking-wider opacity-80"
+                  <div className="text-[7px] font-montserrat uppercase tracking-wider opacity-80"
                     style={{ color: t.metaColor }}>
                     {t.vibe}
                   </div>
