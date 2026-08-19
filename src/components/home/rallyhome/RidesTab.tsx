@@ -91,92 +91,91 @@ export function RidesTab({ event, isAttending, isLive, isAfterRally, isDD, myDDR
       <RiderLine eventId={event.id} />
 
       {/* DD assignment */}
-      <Card className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl">
-        <CardContent className="p-4 space-y-3">
-          <button
-            className="flex w-full items-center justify-between gap-2"
-            onClick={() => setShowCars((v) => !v)}
-          >
-            <div className="flex items-center gap-2 min-w-0">
-              <Users className="h-4 w-4 text-primary shrink-0" />
-              <h3 className="font-montserrat font-extrabold text-white truncate">DD Assignment</h3>
-            </div>
-            <ChevronDown
-              className={cn('h-4 w-4 text-white/60 transition-transform shrink-0', showCars && 'rotate-180')}
-            />
-          </button>
+      {rides && rides.length > 0 && (
+        <Card className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl">
+          <CardContent className="p-4 space-y-3">
+            <button
+              className="flex w-full items-center justify-between gap-2"
+              onClick={() => setShowCars((v) => !v)}
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <Users className="h-4 w-4 text-zinc-800 shrink-0" />
+                <h3 className="font-montserrat font-extrabold text-zinc-800 truncate">DD Assignment</h3>
+              </div>
+              <ChevronDown
+                className={cn('h-4 w-4 text-white/60 transition-transform shrink-0', showCars && 'rotate-180')}
+              />
+            </button>
 
-          {showCars && (
-            <div className="space-y-2">
-              {(rides || []).length === 0 && (
-                <p className="text-sm text-white/50">No DDs yet. Volunteer to keep your crew safe!</p>
-              )}
-              {(rides || []).map((ride: any, i: number) => {
-                const accepted = (ride.passengers || []).filter(
-                  (p: any) => p.status === 'accepted' || p.status === 'picked_up' || p.status === 'dropped_off'
-                );
-                const seats = ride.available_seats ?? 0;
-                return (
-                  <div
-                    key={ride.id}
-                    className="rounded-xl border border-white/10 bg-white/5 p-3 space-y-2"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <Car className="h-4 w-4 text-white/70 shrink-0" />
-                        <span className="text-sm font-semibold text-white truncate">
-                          Car {i + 1}
-                        </span>
-                        <span className="text-xs text-white/50 shrink-0">· {seats} seats</span>
-                      </div>
-                      <Badge
-                        variant="secondary"
-                        className="shrink-0 bg-primary/20 text-primary border-0 text-[10px]"
-                      >
-                        {accepted.length} / {seats}
-                      </Badge>
-                    </div>
-
-                    <div className="flex flex-wrap gap-1.5">
-                      <span className="flex items-center gap-1.5 rounded-full bg-white/10 pl-1 pr-2.5 py-1">
-                        <Avatar className="h-5 w-5">
-                          <AvatarImage src={ride.driver?.avatar_url || undefined} />
-                          <AvatarFallback className="text-[9px]">
-                            {(ride.driver?.display_name || '?').charAt(0).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="text-xs font-medium text-white">
-                          {getPublicName(ride.driver) || 'Driver'}
-                        </span>
-                        <Badge className="bg-primary/30 text-primary border-0 text-[9px] px-1 py-0">DD</Badge>
-                      </span>
-                      {accepted.map((p: any) => (
-                        <span
-                          key={p.id}
-                          className="flex items-center gap-1.5 rounded-full bg-white/10 pl-1 pr-2.5 py-1"
+            {showCars && (
+              <div className="space-y-2">
+                {(rides || []).map((ride: any, i: number) => {
+                  const accepted = (ride.passengers || []).filter(
+                    (p: any) => p.status === 'accepted' || p.status === 'picked_up' || p.status === 'dropped_off'
+                  );
+                  const seats = ride.available_seats ?? 0;
+                  return (
+                    <div
+                      key={ride.id}
+                      className="rounded-xl border border-white/10 bg-white/5 p-3 space-y-2"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Car className="h-4 w-4 text-white/70 shrink-0" />
+                          <span className="text-sm font-semibold text-white truncate">
+                            Car {i + 1}
+                          </span>
+                          <span className="text-xs text-white/50 shrink-0">· {seats} seats</span>
+                        </div>
+                        <Badge
+                          variant="secondary"
+                          className="shrink-0 bg-primary/20 text-primary border-0 text-[10px]"
                         >
+                          {accepted.length} / {seats}
+                        </Badge>
+                      </div>
+
+                      <div className="flex flex-wrap gap-1.5">
+                        <span className="flex items-center gap-1.5 rounded-full bg-white/10 pl-1 pr-2.5 py-1">
                           <Avatar className="h-5 w-5">
-                            <AvatarImage src={p.passenger?.avatar_url || undefined} />
+                            <AvatarImage src={ride.driver?.avatar_url || undefined} />
                             <AvatarFallback className="text-[9px]">
-                              {(p.passenger?.display_name || '?').charAt(0).toUpperCase()}
+                              {(ride.driver?.display_name || '?').charAt(0).toUpperCase()}
                             </AvatarFallback>
                           </Avatar>
                           <span className="text-xs font-medium text-white">
-                            {getPublicName(p.passenger) || 'Rider'}
+                            {getPublicName(ride.driver) || 'Driver'}
                           </span>
+                          <Badge className="bg-primary/30 text-primary border-0 text-[9px] px-1 py-0">DD</Badge>
                         </span>
-                      ))}
-                      {accepted.length === 0 && (
-                        <span className="text-xs text-white/40 py-1">No riders yet</span>
-                      )}
+                        {accepted.map((p: any) => (
+                          <span
+                            key={p.id}
+                            className="flex items-center gap-1.5 rounded-full bg-white/10 pl-1 pr-2.5 py-1"
+                          >
+                            <Avatar className="h-5 w-5">
+                              <AvatarImage src={p.passenger?.avatar_url || undefined} />
+                              <AvatarFallback className="text-[9px]">
+                                {(p.passenger?.display_name || '?').charAt(0).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="text-xs font-medium text-white">
+                              {getPublicName(p.passenger) || 'Rider'}
+                            </span>
+                          </span>
+                        ))}
+                        {accepted.length === 0 && (
+                          <span className="text-xs text-white/40 py-1">No riders yet</span>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {isDD && (
         <div className="space-y-3">
