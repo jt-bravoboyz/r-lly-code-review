@@ -45,35 +45,6 @@ export function FlyerThemePicker({
       </div>
       <div className="-mx-2 overflow-x-auto scrollbar-hide snap-x snap-mandatory">
         <div className="flex gap-3 px-2 pb-1">
-          {/* No Theme tile */}
-          {(() => {
-            const noneSelected = !customImageUrl && (!value || value === NO_FLYER_THEME);
-            return (
-              <button
-                type="button"
-                onClick={() => onChange(NO_FLYER_THEME)}
-                className={cn(
-                  'relative shrink-0 snap-start rounded-2xl overflow-hidden border-2 transition-all',
-                  'w-[120px] h-[160px] flex flex-col items-center justify-center gap-1.5 bg-zinc-900',
-                  noneSelected ? 'border-primary scale-[1.02]' : 'border-white/15',
-                )}
-              >
-                <Ban className="h-5 w-5 text-primary" />
-                <span className="text-[10px] font-montserrat uppercase tracking-wider text-white">
-                  No Theme
-                </span>
-                <span className="text-[8px] font-montserrat uppercase tracking-wider text-white/60">
-                  Classic R@lly
-                </span>
-                {noneSelected && (
-                  <span className="absolute top-2 right-2 rounded-full bg-primary p-1">
-                    <Check className="h-3 w-3 text-primary-foreground" />
-                  </span>
-                )}
-              </button>
-            );
-          })()}
-
           {/* Upload photo tile */}
           <button
             type="button"
@@ -110,6 +81,35 @@ export function FlyerThemePicker({
             className="hidden"
             onChange={e => handleFile(e.target.files?.[0] ?? null)}
           />
+
+          {/* No Theme tile */}
+          {(() => {
+            const noneSelected = !customImageUrl && (!value || value === NO_FLYER_THEME);
+            return (
+              <button
+                type="button"
+                onClick={() => onChange(NO_FLYER_THEME)}
+                className={cn(
+                  'relative shrink-0 snap-start rounded-2xl overflow-hidden border-2 transition-all',
+                  'w-[120px] h-[160px] flex flex-col items-center justify-center gap-1.5 bg-zinc-900',
+                  noneSelected ? 'border-primary scale-[1.02]' : 'border-white/15',
+                )}
+              >
+                <Ban className="h-5 w-5 text-primary" />
+                <span className="text-[10px] font-montserrat uppercase tracking-wider text-white">
+                  No Theme
+                </span>
+                <span className="text-[8px] font-montserrat uppercase tracking-wider text-white/60">
+                  Classic R@lly
+                </span>
+                {noneSelected && (
+                  <span className="absolute top-2 right-2 rounded-full bg-primary p-1">
+                    <Check className="h-3 w-3 text-primary-foreground" />
+                  </span>
+                )}
+              </button>
+            );
+          })()}
 
           {/* 9 theme tiles */}
           {FLYER_THEME_KEYS.map(key => {
