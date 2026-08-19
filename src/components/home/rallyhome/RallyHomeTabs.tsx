@@ -50,7 +50,7 @@ export function RallyHomeTabs({
     <div className="space-y-4">
       {/* Mini tab bar */}
       <div className="-mx-1 overflow-x-auto">
-        <div className="flex min-w-full gap-1 rounded-2xl border border-white/10 bg-white/5 p-1 backdrop-blur-xl">
+        <div className="flex min-w-full gap-1 rounded-2xl border border-stone-200/30 bg-stone-100/60 p-1 backdrop-blur-xl">
           {TABS.map(({ value, label, icon: Icon }) => {
             const active = tab === value;
             return (
@@ -61,7 +61,7 @@ export function RallyHomeTabs({
                   'flex min-h-[44px] flex-1 items-center justify-center gap-1.5 rounded-xl px-2 text-xs font-semibold font-montserrat transition-colors',
                   active
                     ? 'bg-rally-cream text-primary shadow-[0_2px_12px_rgba(244,122,25,0.25)]'
-                    : 'text-white/60 hover:text-white'
+                    : 'text-stone-700 hover:text-stone-900'
                 )}
               >
                 <Icon className="h-4 w-4 shrink-0" />
