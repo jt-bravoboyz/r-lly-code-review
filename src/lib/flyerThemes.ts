@@ -58,7 +58,7 @@ export const FLYER_THEMES: Record<FlyerThemeKey, FlyerTheme> = {
     metaColor: '#FFE9D2',
     palette: ['#F47A19', '#1A1108', '#FFD9B0', '#FFFFFF'],
     frameGlow: '0 0 80px rgba(244,122,25,0.45)',
-    headingFont: 'Playfair Display',
+    headingFont: 'Instrument Serif',
   },
   tequila_sunset: {
     key: 'tequila_sunset',
@@ -72,7 +72,7 @@ export const FLYER_THEMES: Record<FlyerThemeKey, FlyerTheme> = {
     metaColor: '#FFE7D1',
     palette: ['#F58E5A', '#C8407A', '#FFD08A', '#5B1A2A'],
     frameGlow: '0 0 80px rgba(200,64,122,0.4)',
-    headingFont: 'Playfair Display',
+    headingFont: 'Instrument Serif',
   },
   garden_party: {
     key: 'garden_party',
@@ -86,7 +86,7 @@ export const FLYER_THEMES: Record<FlyerThemeKey, FlyerTheme> = {
     metaColor: '#4A3326',
     palette: ['#F6C6B8', '#A8C49A', '#E8D7C3', '#3A2A1F'],
     frameGlow: '0 0 70px rgba(168,196,154,0.35)',
-    headingFont: 'Playfair Display',
+    headingFont: 'Instrument Serif',
   },
   sunday_brunch: {
     key: 'sunday_brunch',
@@ -100,7 +100,7 @@ export const FLYER_THEMES: Record<FlyerThemeKey, FlyerTheme> = {
     metaColor: '#3D3221',
     palette: ['#E8DCC4', '#B5C9A8', '#F4E8D0', '#2A2419'],
     frameGlow: '0 0 60px rgba(181,201,168,0.3)',
-    headingFont: 'Playfair Display',
+    headingFont: 'Instrument Serif',
   },
   beach_club: {
     key: 'beach_club',
@@ -114,7 +114,7 @@ export const FLYER_THEMES: Record<FlyerThemeKey, FlyerTheme> = {
     metaColor: '#0B3A4A',
     palette: ['#5FE0E8', '#F4FBFD', '#1FA8C4', '#0E5A6E'],
     frameGlow: '0 0 80px rgba(95,224,232,0.45)',
-    headingFont: 'Playfair Display',
+    headingFont: 'Instrument Serif',
   },
 };
 

@@ -94,10 +94,10 @@ export function ThemedFlyerCanvas({
             {dateLabel}
           </div>
           <h1
-            className="font-bold leading-[1.02]"
+            className="font-normal leading-[1.02]"
             style={{
               fontFamily: `'${theme.headingFont}', serif`,
-              fontSize: aspect === 'share' ? '64px' : '40px',
+              fontSize: aspect === 'share' ? '72px' : '46px',
               backgroundImage: theme.titleGradient,
               backgroundClip: 'text',
               WebkitBackgroundClip: 'text',

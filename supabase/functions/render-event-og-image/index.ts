@@ -21,13 +21,13 @@ async function ensureWasm() {
   await wasmReady;
 }
 
-// Lazy-load Playfair Display from a Satori-compatible source. WOFF2 is not
+// Lazy-load Instrument Serif from a Satori-compatible source. WOFF2 is not
 // supported by Satori's OpenType parser, so avoid Google Fonts' woff2 responses.
 let playfairFont: ArrayBuffer | null = null;
 async function getPlayfair(): Promise<ArrayBuffer | null> {
   if (playfairFont) return playfairFont;
   try {
-    playfairFont = await fetch('https://cdn.jsdelivr.net/fontsource/fonts/playfair-display@latest/latin-700-normal.woff')
+    playfairFont = await fetch('https://cdn.jsdelivr.net/fontsource/fonts/instrument-serif@latest/latin-400-normal.woff')
       .then(r => {
         if (!r.ok) throw new Error(`Playfair font failed: ${r.status}`);
         return r.arrayBuffer();
@@ -112,7 +112,7 @@ async function buildPng(inputs: FlyerInputs, bgPublicBase: string): Promise<Uint
         // Center arch
         { type: 'div', props: { style: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '12px', padding: '36px 48px', borderRadius: '32px', background: 'rgba(255,255,255,0.18)', border: '1px solid rgba(255,255,255,0.25)', maxWidth: '88%', alignSelf: 'center', position: 'relative' }, children: [
           { type: 'div', props: { style: { fontSize: '20px', letterSpacing: '5px', textTransform: 'uppercase', color: theme.metaColor, opacity: 0.9, display: 'flex' }, children: inputs.dateLabel } },
-          { type: 'div', props: { style: { display: 'flex', flexDirection: 'column', alignItems: 'center' }, children: titleLines.map(l => ({ type: 'div', props: { style: { fontFamily: 'Playfair Display', fontWeight: 700, fontSize: '96px', lineHeight: 1.02, color: theme.titleColor, backgroundImage: theme.gradient, backgroundClip: 'text', color: 'transparent', display: 'flex' }, children: l } })) } },
+          { type: 'div', props: { style: { display: 'flex', flexDirection: 'column', alignItems: 'center' }, children: titleLines.map(l => ({ type: 'div', props: { style: { fontFamily: 'Instrument Serif', fontWeight: 400, fontSize: '104px', lineHeight: 1.02, color: theme.titleColor, backgroundImage: theme.gradient, backgroundClip: 'text', color: 'transparent', display: 'flex' }, children: l } })) } },
           inputs.location ? { type: 'div', props: { style: { fontSize: '24px', color: theme.metaColor, display: 'flex' }, children: inputs.location } } : null,
         ].filter(Boolean) } },
         // Footer
@@ -135,7 +135,7 @@ async function buildPng(inputs: FlyerInputs, bgPublicBase: string): Promise<Uint
   }
   const svg = await satori(tree, {
     width: 1200, height: 630,
-    fonts: fontData ? [{ name: 'Playfair Display', data: fontData, weight: 700, style: 'normal' }] : [],
+    fonts: fontData ? [{ name: 'Instrument Serif', data: fontData, weight: 400, style: 'normal' }] : [],
   });
 
   await ensureWasm();
