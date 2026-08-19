@@ -35,7 +35,7 @@ import { useRecentlyFriended } from '@/hooks/useFriendships';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { FlyerThemePicker } from '@/components/events/FlyerThemePicker';
 import { ThemedFlyerCanvas } from '@/components/events/ThemedFlyerCanvas';
-import { type FlyerThemeKey } from '@/lib/flyerThemes';
+import { NO_FLYER_THEME, isThemedFlyerKey, type FlyerThemeSelection } from '@/lib/flyerThemes';
 import { supabase } from '@/integrations/supabase/client';
 
 const eventSchema = z.object({
@@ -96,7 +96,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
   const actionBarRef = useRef<HTMLDivElement>(null);
   const [selectedSquads, setSelectedSquads] = useState<Squad[]>([]);
   const [selectedFriendIds, setSelectedFriendIds] = useState<string[]>([]);
-  const [flyerTheme, setFlyerTheme] = useState<FlyerThemeKey | null>(null);
+  const [flyerTheme, setFlyerTheme] = useState<FlyerThemeSelection>(NO_FLYER_THEME);
   const [flyerCustomUrl, setFlyerCustomUrl] = useState<string | null>(null);
   const [flyerUploading, setFlyerUploading] = useState(false);
   const { profile } = useAuth();
@@ -218,7 +218,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
             ? data.dress_code.trim()
             : null,
           song_recs_enabled: isBarHopType ? false : data.song_recs_enabled,
-          flyer_theme: isBarHopType ? null : flyerTheme,
+          flyer_theme: isBarHopType ? NO_FLYER_THEME : flyerTheme,
           flyer_custom_image_url: isBarHopType ? null : flyerCustomUrl,
         } as any);
       } catch (insertErr: any) {
@@ -714,7 +714,7 @@ export function CreateEventDialog({ trigger }: { trigger?: React.ReactNode } = {
                   onChange={(k) => { setFlyerTheme(k); setFlyerCustomUrl(null); }}
                   onUploadCustom={handleFlyerUpload}
                 />
-                {(form.watch('title')?.length ?? 0) >= 3 && (
+                {(form.watch('title')?.length ?? 0) >= 3 && (isThemedFlyerKey(flyerTheme) || !!flyerCustomUrl) && (
                   <div className="mx-auto w-[220px]">
                     <ThemedFlyerCanvas
                       themeKey={flyerTheme}

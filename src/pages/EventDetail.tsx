@@ -96,7 +96,7 @@ import { toast } from 'sonner';
 import { useRenderLoopDetector } from '@/hooks/useRenderLoopDetector';
 import { ProfileTapWrapper } from '@/components/profile/ProfileTapWrapper';
 import { EventThemeProvider } from '@/components/events/EventThemeProvider';
-import { getFlyerButtonAccent } from '@/lib/flyerThemes';
+import { getFlyerButtonAccent, isThemedFlyerKey } from '@/lib/flyerThemes';
 
 
 const VIBE_STYLES: Record<string, string> = {
@@ -552,7 +552,7 @@ export default function EventDetail() {
   };
 
   return (
-    <EventThemeProvider themeKey={(event as any).flyer_theme} disabled={showAfterRallyTheme || (!(event as any).flyer_theme && !(event as any).flyer_custom_image_url)}>
+    <EventThemeProvider themeKey={(event as any).flyer_theme} disabled={showAfterRallyTheme || (!isThemedFlyerKey((event as any).flyer_theme) && !(event as any).flyer_custom_image_url)}>
     <div className={`min-h-[100dvh] pb-20 overflow-x-hidden ${showAfterRallyTheme ? 'after-rally-mode' : ''}`}>
       <Header afterRallyMode={showAfterRallyTheme} />
       
@@ -815,7 +815,7 @@ export default function EventDetail() {
               height="h-40"
               interactive={true}
               showDirections={true}
-              markerColor={getFlyerButtonAccent((event as any).flyer_theme).button}
+              markerColor={isThemedFlyerKey((event as any).flyer_theme) ? getFlyerButtonAccent((event as any).flyer_theme).button : '#F47A19'}
             />
           )}
 

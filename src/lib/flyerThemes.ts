@@ -1,26 +1,27 @@
-// R@lly Themed Flyer Engine — 9-theme registry + Satori-safe title fitter.
+// R@lly Themed Flyer Engine — 5-theme registry + Satori-safe title fitter.
 // Backgrounds are pre-baked transparent-friendly JPEGs in src/assets/flyer-themes/.
 
 import rallyDynamicBg from '@/assets/flyer-themes/rally-dynamic-bg.jpg';
 import tequilaSunsetBg from '@/assets/flyer-themes/tequila-sunset-bg.jpg';
-import midnightDiscoBg from '@/assets/flyer-themes/midnight-disco-bg.jpg';
 import gardenPartyBg from '@/assets/flyer-themes/garden-party-bg.jpg';
-import neonWarehouseBg from '@/assets/flyer-themes/neon-warehouse-bg.jpg';
 import sundayBrunchBg from '@/assets/flyer-themes/sunday-brunch-bg.jpg';
-import goldenHourBg from '@/assets/flyer-themes/golden-hour-bg.jpg';
-import gameDayBg from '@/assets/flyer-themes/game-day-bg.jpg';
 import beachClubBg from '@/assets/flyer-themes/beach-club-bg.jpg';
 
 export type FlyerThemeKey =
   | 'rally_dynamic'
   | 'tequila_sunset'
-  | 'midnight_disco'
   | 'garden_party'
-  | 'neon_warehouse'
   | 'sunday_brunch'
-  | 'golden_hour'
-  | 'game_day'
   | 'beach_club';
+
+/** Sentinel used by the picker when the host wants the plain R@lly look. */
+export const NO_FLYER_THEME = 'none' as const;
+export type FlyerThemeSelection = FlyerThemeKey | typeof NO_FLYER_THEME;
+
+/** True only when the key maps to a real themed backdrop. */
+export function isThemedFlyerKey(key: string | null | undefined): boolean {
+  return !!key && key !== NO_FLYER_THEME && key in FLYER_THEMES;
+}
 
 export interface FlyerTheme {
   key: FlyerThemeKey;
@@ -73,20 +74,6 @@ export const FLYER_THEMES: Record<FlyerThemeKey, FlyerTheme> = {
     frameGlow: '0 0 80px rgba(200,64,122,0.4)',
     headingFont: 'Playfair Display',
   },
-  midnight_disco: {
-    key: 'midnight_disco',
-    label: 'Midnight Disco',
-    vibe: 'Deep purple · chrome · mirrorball',
-    bg: midnightDiscoBg,
-    bgPublicPath: '/flyer-themes/midnight-disco-bg.jpg',
-    archTint: 'rgba(12, 6, 26, 0.5)',
-    titleGradient: 'linear-gradient(135deg, #E9E2FF 0%, #B59BFF 50%, #5C3CFF 100%)',
-    titleColor: '#E9E2FF',
-    metaColor: '#D8CFFF',
-    palette: ['#5C3CFF', '#B59BFF', '#E5E5F0', '#0C0620'],
-    frameGlow: '0 0 90px rgba(92,60,255,0.5)',
-    headingFont: 'Playfair Display',
-  },
   garden_party: {
     key: 'garden_party',
     label: 'Garden Party',
@@ -101,20 +88,6 @@ export const FLYER_THEMES: Record<FlyerThemeKey, FlyerTheme> = {
     frameGlow: '0 0 70px rgba(168,196,154,0.35)',
     headingFont: 'Playfair Display',
   },
-  neon_warehouse: {
-    key: 'neon_warehouse',
-    label: 'Neon Warehouse',
-    vibe: 'Industrial steel · neon spill',
-    bg: neonWarehouseBg,
-    bgPublicPath: '/flyer-themes/neon-warehouse-bg.jpg',
-    archTint: 'rgba(8, 10, 14, 0.55)',
-    titleGradient: 'linear-gradient(135deg, #F0F8FF 0%, #00F0FF 50%, #FF2E9A 100%)',
-    titleColor: '#00F0FF',
-    metaColor: '#E8F5FF',
-    palette: ['#00F0FF', '#FF2E9A', '#1B1F26', '#F0F8FF'],
-    frameGlow: '0 0 100px rgba(0,240,255,0.45)',
-    headingFont: 'Playfair Display',
-  },
   sunday_brunch: {
     key: 'sunday_brunch',
     label: 'Sunday Brunch',
@@ -127,34 +100,6 @@ export const FLYER_THEMES: Record<FlyerThemeKey, FlyerTheme> = {
     metaColor: '#3D3221',
     palette: ['#E8DCC4', '#B5C9A8', '#F4E8D0', '#2A2419'],
     frameGlow: '0 0 60px rgba(181,201,168,0.3)',
-    headingFont: 'Playfair Display',
-  },
-  golden_hour: {
-    key: 'golden_hour',
-    label: 'Golden Hour',
-    vibe: 'Amber lens flare · rooftop glow',
-    bg: goldenHourBg,
-    bgPublicPath: '/flyer-themes/golden-hour-bg.jpg',
-    archTint: 'rgba(60, 30, 10, 0.35)',
-    titleGradient: 'linear-gradient(135deg, #FFF1C9 0%, #FFB04A 60%, #B05E1A 100%)',
-    titleColor: '#FFF1C9',
-    metaColor: '#FFE7B8',
-    palette: ['#FFB04A', '#B05E1A', '#FFF1C9', '#3A1F0A'],
-    frameGlow: '0 0 90px rgba(255,176,74,0.45)',
-    headingFont: 'Playfair Display',
-  },
-  game_day: {
-    key: 'game_day',
-    label: 'Game Day',
-    vibe: 'Stadium flare · varsity split',
-    bg: gameDayBg,
-    bgPublicPath: '/flyer-themes/game-day-bg.jpg',
-    archTint: 'rgba(8, 14, 32, 0.55)',
-    titleGradient: 'linear-gradient(135deg, #FFFFFF 0%, #FFD24A 100%)',
-    titleColor: '#FFFFFF',
-    metaColor: '#F0F4FF',
-    palette: ['#0E1F4D', '#1F6B3A', '#FFD24A', '#FFFFFF'],
-    frameGlow: '0 0 80px rgba(255,210,74,0.4)',
     headingFont: 'Playfair Display',
   },
   beach_club: {
@@ -190,12 +135,8 @@ export function getFlyerTheme(key: string | null | undefined): FlyerTheme {
 export const FLYER_BUTTON_ACCENT: Record<FlyerThemeKey, { button: string; buttonFg: string }> = {
   rally_dynamic:  { button: '#F47A19', buttonFg: '#FFFFFF' }, // keep orange
   tequila_sunset: { button: '#F47A19', buttonFg: '#FFFFFF' }, // keep orange
-  midnight_disco: { button: '#7C5CFF', buttonFg: '#FFFFFF' }, // purple
   garden_party:   { button: '#F4A6B8', buttonFg: '#3A2A1F' }, // light pink
-  neon_warehouse: { button: '#3DDC84', buttonFg: '#0A1A12' }, // green
   sunday_brunch:  { button: '#B07A9E', buttonFg: '#FFFFFF' }, // mauve
-  golden_hour:    { button: '#F47A19', buttonFg: '#FFFFFF' }, // keep orange
-  game_day:       { button: '#F47A19', buttonFg: '#FFFFFF' }, // keep orange
   beach_club:     { button: '#5EC4E6', buttonFg: '#0B3A4A' }, // light blue
 };
 
