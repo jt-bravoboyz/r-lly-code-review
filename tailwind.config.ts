@@ -152,6 +152,15 @@ export default {
           "30%": { opacity: "1" },
           "100%": { transform: "translateX(100%) rotate(12deg)", opacity: "0" },
         },
+        "gradient-x": {
+          "0%": { backgroundPosition: "0% 50%" },
+          "50%": { backgroundPosition: "100% 50%" },
+          "100%": { backgroundPosition: "0% 50%" },
+        },
+        "gradient-read": {
+          "0%": { backgroundPosition: "200% 50%" },
+          "100%": { backgroundPosition: "-200% 50%" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
