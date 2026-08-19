@@ -159,7 +159,8 @@ export default {
         },
         "gradient-read": {
           "0%": { backgroundPosition: "200% 50%" },
-          "100%": { backgroundPosition: "-200% 50%" },
+          "95%": { backgroundPosition: "-100% 50%" },
+          "100%": { backgroundPosition: "-100% 50%" },
         },
       },
       animation: {
