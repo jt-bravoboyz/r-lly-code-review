@@ -68,7 +68,7 @@ export const FLYER_THEMES: Record<FlyerThemeKey, FlyerTheme> = {
     bgPublicPath: '/flyer-themes/tequila-sunset-bg.jpg',
     archTint: 'rgba(48, 18, 12, 0.35)',
     titleGradient: 'linear-gradient(135deg, #FFE2C2 0%, #F58E5A 60%, #C8407A 100%)',
-    titleColor: '#FFE2C2',
+    titleColor: '#C8407A',
     metaColor: '#FFE7D1',
     palette: ['#F58E5A', '#C8407A', '#FFD08A', '#5B1A2A'],
     frameGlow: '0 0 80px rgba(200,64,122,0.4)',
