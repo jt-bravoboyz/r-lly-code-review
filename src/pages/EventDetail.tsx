@@ -96,7 +96,7 @@ import { toast } from 'sonner';
 import { useRenderLoopDetector } from '@/hooks/useRenderLoopDetector';
 import { ProfileTapWrapper } from '@/components/profile/ProfileTapWrapper';
 import { EventThemeProvider } from '@/components/events/EventThemeProvider';
-import { getFlyerButtonAccent } from '@/lib/flyerThemes';
+import { getFlyerButtonAccent, isThemedFlyerKey } from '@/lib/flyerThemes';
 
 
 const VIBE_STYLES: Record<string, string> = {
