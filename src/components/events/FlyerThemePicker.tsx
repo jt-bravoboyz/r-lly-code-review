@@ -12,7 +12,7 @@ export interface FlyerThemePickerProps {
 }
 
 /**
- * Snap-scroll horizontal carousel: No Theme + 5 themed flyer miniatures + "Upload photo" tile.
+ * Snap-scroll horizontal carousel: "Upload photo" tile + No Theme + 5 themed flyer miniatures.
  * Mounted inside the CreateEventDialog "Optional details" section.
  */
 export function FlyerThemePicker({
