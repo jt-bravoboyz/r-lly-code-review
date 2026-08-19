@@ -99,7 +99,7 @@ export function LocationTab({ event, isAttending, showMap, onInvite }: LocationT
             const isSharing = a.share_location === true;
             const name = a.profile ? getPrivateName(a.profile) : 'Someone';
             return (
-              <div key={a.id} className="flex items-center gap-3 px-2 py-2.5">
+              <div key={a.id} className="flex items-center gap-3 px-2 py-2.5 text-muted-foreground">
                 <Avatar className="h-9 w-9 shrink-0">
                   <AvatarImage src={a.profile?.avatar_url || undefined} />
                   <AvatarFallback className="bg-secondary text-secondary-foreground text-xs">
@@ -107,16 +107,16 @@ export function LocationTab({ event, isAttending, showMap, onInvite }: LocationT
                   </AvatarFallback>
                 </Avatar>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-white truncate">
+                  <p className="text-sm font-semibold text-muted-foreground truncate">
                     {a.profile_id === profile?.id ? 'You' : name}
                   </p>
-                  <p className="text-xs text-white/50 truncate flex items-center gap-1">
+                  <p className="text-xs text-muted-foreground truncate flex items-center gap-1">
                     <MapPin className="h-3 w-3 shrink-0" />
                     {isSharing && a.current_lat ? 'Location live' : 'No location'}
                   </p>
                 </div>
                 <div className="flex items-center gap-1.5 shrink-0">
-                  <span className={cn('text-xs font-medium', isSharing ? 'text-green-400' : 'text-white/40')}>
+                  <span className={cn('text-xs font-medium text-muted-foreground')}>
                     {isSharing ? 'Sharing' : 'Not Sharing'}
                   </span>
                   <span
