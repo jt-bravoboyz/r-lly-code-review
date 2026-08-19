@@ -172,6 +172,8 @@ export default {
         "scale-in": "scale-in 0.2s ease-out",
         "pin-breath": "pin-breath 3.5s ease-in-out infinite",
         "rally-beacon-ring": "rally-beacon-ring 3.6s ease-out infinite",
+        "gradient-x": "gradient-x 3s ease infinite",
+        "gradient-read": "gradient-read 4s linear infinite",
       },
     },
   },
