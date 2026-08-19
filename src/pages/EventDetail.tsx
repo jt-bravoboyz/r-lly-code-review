@@ -1179,7 +1179,7 @@ export default function EventDetail() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-xl font-medium text-white">{(event as any).dress_code}</p>
+                  <p className="text-xl font-medium text-primary">{(event as any).dress_code}</p>
                 </CardContent>
               </Card>
             )}
