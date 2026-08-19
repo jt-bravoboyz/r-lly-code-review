@@ -2307,7 +2307,7 @@ body.native {
           background-clip: text;
   color: transparent !important;
   -webkit-text-fill-color: transparent !important;
-  animation: gradient-read 4s linear infinite;
+  animation: gradient-read 8s linear infinite;
   filter: drop-shadow(0 2px 12px rgba(0,0,0,0.25));
 }
 @keyframes gradient-read {
