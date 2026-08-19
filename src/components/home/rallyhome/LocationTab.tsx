@@ -81,10 +81,14 @@ export function LocationTab({ event, isAttending, showMap, onInvite }: LocationT
         <Card className="rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl">
           <CardContent className="flex items-center justify-between gap-3 p-4">
             <div className="min-w-0">
-              <p className="font-montserrat font-bold text-white">Share My Location</p>
-              <p className="text-xs text-white/60">Let your squad see your location</p>
+              <p className="font-montserrat font-bold text-primary">Share My Location</p>
+              <p className="text-xs text-muted-foreground">Let your squad see your location</p>
             </div>
-            <Switch checked={isTracking} onCheckedChange={handleToggle} />
+            <Switch
+              checked={isTracking}
+              onCheckedChange={handleToggle}
+              className="data-[state=unchecked]:bg-primary/40 data-[state=checked]:bg-primary"
+            />
           </CardContent>
         </Card>
       )}
