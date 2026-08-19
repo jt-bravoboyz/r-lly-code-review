@@ -47,16 +47,16 @@ export function RidesTab({ event, isAttending, isLive, isAfterRally, isDD, myDDR
           <CardContent className="p-4 space-y-3">
             <div className="flex items-center gap-2">
               <Navigation className="h-4 w-4 text-primary shrink-0" />
-              <h3 className="font-montserrat font-extrabold text-white">Need a Ride?</h3>
+              <h3 className="font-montserrat font-extrabold text-muted-foreground">Need a Ride?</h3>
             </div>
-            <p className="text-xs text-white/60">
+            <p className="text-xs text-muted-foreground">
               Request a ride from a DD or use a ride service.
             </p>
             <RequestRideDialog
               eventId={event.id}
               eventName={event.title}
               trigger={
-                <Button className="w-full h-12 gap-2 bg-primary text-primary-foreground hover:bg-primary/90 font-montserrat font-bold">
+                <Button className="w-full h-12 gap-2 bg-zinc-900 text-muted-foreground hover:bg-zinc-800 font-montserrat font-bold">
                   <Car className="h-4 w-4 shrink-0" />
                   Request a Ride
                 </Button>
