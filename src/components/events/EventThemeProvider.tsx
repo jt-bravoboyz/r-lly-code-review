@@ -124,6 +124,12 @@ export function EventThemeProvider({ themeKey, disabled, children }: EventThemeP
   const primaryHsl = hexToHslTriple(button);
   const primaryFgHsl = hexToHslTriple(buttonFg);
 
+  // For light themes, force body/gray text to the theme's dark ink so it stays
+  // readable against the light backdrop (e.g. Sunday Brunch linen).
+  const mutedFgHsl = mode === 'light' ? hexToHslTriple(ink) : null;
+  const foregroundHsl = mode === 'light' ? hexToHslTriple(theme.titleColor) : null;
+  const cardFgHsl = mode === 'light' ? hexToHslTriple(theme.titleColor) : null;
+
   const cssVars: React.CSSProperties = {
     ...(primaryHsl ? { ['--primary' as any]: primaryHsl } : {}),
     ...(primaryFgHsl ? { ['--primary-foreground' as any]: primaryFgHsl } : {}),
@@ -144,6 +150,10 @@ export function EventThemeProvider({ themeKey, disabled, children }: EventThemeP
     ['--theme-glow' as any]: theme.frameGlow,
     ['--theme-title-gradient' as any]: theme.titleGradient,
     ['--theme-scrim' as any]: theme.archTint,
+    // High-contrast text overrides for light backdrops
+    ...(mutedFgHsl ? { ['--muted-foreground' as any]: mutedFgHsl } : {}),
+    ...(foregroundHsl ? { ['--foreground' as any]: foregroundHsl } : {}),
+    ...(cardFgHsl ? { ['--card-foreground' as any]: cardFgHsl } : {}),
   };
 
 
