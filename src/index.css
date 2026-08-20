@@ -2256,19 +2256,26 @@ body.native {
     0 8px 30px -16px rgba(0, 0, 0, 0.18);
 }
 
-/* Max-contrast text inside dynamic theme contexts */
-.event-themed .ev-ink-strong { color: var(--theme-ink-strong) !important; }
-
 /* Body text inside themed cards */
 .event-themed [class*="text-muted-foreground"] {
   color: var(--theme-meta) !important;
 }
 
-/* Section headings use the accent */
+.event-themed--light [class*="text-muted-foreground"] {
+  color: var(--theme-ink) !important;
+}
+
+/* Section headings use the accent on dark themes; light themes need dark ink for contrast */
 .event-themed h2,
 .event-themed h3,
 .event-themed .ev-accent {
   color: var(--theme-accent);
+}
+
+.event-themed--light h2,
+.event-themed--light h3,
+.event-themed--light .ev-accent {
+  color: var(--theme-ink);
 }
 
 /* Themed primary action — recolors btn-gradient-primary / gradient-primary
