@@ -683,7 +683,7 @@ export default function EventDetail() {
                     <span className="text-[10px] font-black uppercase tracking-[0.18em] leading-none text-zinc-500 dark:text-zinc-400">
                       {format(new Date(event.start_time), 'MMM')}
                     </span>
-                    <span className="text-2xl font-black font-montserrat leading-none mt-1 text-[#F6C6B8]">
+                    <span className="text-2xl font-black font-montserrat leading-none mt-1 text-primary">
                       {format(new Date(event.start_time), 'd')}
                     </span>
                   </div>
@@ -691,7 +691,7 @@ export default function EventDetail() {
                     <span className="text-foreground font-black text-xl tracking-wider uppercase font-montserrat leading-tight">
                       {format(new Date(event.start_time), 'EEEE')}
                     </span>
-                    <span className="inline-block font-black text-xl font-montserrat leading-tight text-[#F6C6B8] bg-[#F6C6B8]/10 px-2 py-0.5 rounded-full w-fit">
+                    <span className="inline-block font-black text-xl font-montserrat leading-tight text-primary bg-primary/10 px-2 py-0.5 rounded-full w-fit">
                       {format(new Date(event.start_time), 'h:mm a')}
                     </span>
 

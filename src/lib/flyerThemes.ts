@@ -135,7 +135,7 @@ export function getFlyerTheme(key: string | null | undefined): FlyerTheme {
 export const FLYER_BUTTON_ACCENT: Record<FlyerThemeKey, { button: string; buttonFg: string }> = {
   rally_dynamic:  { button: '#F47A19', buttonFg: '#FFFFFF' }, // keep orange
   tequila_sunset: { button: '#F47A19', buttonFg: '#FFFFFF' }, // keep orange
-  garden_party:   { button: '#F4A6B8', buttonFg: '#3A2A1F' }, // light pink
+  garden_party:   { button: '#F6C6B8', buttonFg: '#3A2A1F' }, // garden pink
   sunday_brunch:  { button: '#B07A9E', buttonFg: '#FFFFFF' }, // mauve
   beach_club:     { button: '#5EC4E6', buttonFg: '#0B3A4A' }, // light blue
 };
