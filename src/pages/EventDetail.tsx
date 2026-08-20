@@ -826,7 +826,7 @@ export default function EventDetail() {
               <div className="flex items-center gap-3">
                 <div className="relative">
                   <Avatar
-                    className="cursor-pointer h-12 w-12 ring-2 ring-[#F47A19]/30"
+                    className="cursor-pointer h-12 w-12 ring-2 ring-primary/30"
                     onClick={() => { const id = (event as any).creator_id ?? event.creator?.id; id && openProfile(id); }}
                     aria-label={`View ${event.creator.display_name || 'host'}'s profile`}
                   >
@@ -837,9 +837,9 @@ export default function EventDetail() {
                   </Avatar>
                   <span
                     aria-label="Host"
-                    className="absolute -bottom-0.5 -right-0.5 h-5 w-5 rounded-full bg-[#F47A19] ring-2 ring-background flex items-center justify-center shadow-md"
+                    className="absolute -bottom-0.5 -right-0.5 h-5 w-5 rounded-full bg-primary ring-2 ring-background flex items-center justify-center shadow-md"
                   >
-                    <Crown className="h-3 w-3 text-white" strokeWidth={2.5} />
+                    <Crown className="h-3 w-3 text-primary-foreground" strokeWidth={2.5} />
                   </span>
                 </div>
                 <div>
