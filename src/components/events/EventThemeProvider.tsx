@@ -52,6 +52,25 @@ function luminance(r: number, g: number, b: number): number {
 }
 
 
+/** Convert hex to "H S% L%" for Tailwind/shadcn hsl(var(--token)) tokens. */
+function hexToHslTriple(input: string): string | null {
+  const rgb = hexToRgb(input);
+  if (!rgb) return null;
+  const r = rgb.r / 255, g = rgb.g / 255, b = rgb.b / 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  const l = (max + min) / 2;
+  let h = 0, s = 0;
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    if (max === r) h = ((g - b) / d + (g < b ? 6 : 0));
+    else if (max === g) h = (b - r) / d + 2;
+    else h = (r - g) / d + 4;
+    h *= 60;
+  }
+  return `${Math.round(h)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
+}
+
 /**
  * Wraps the Event Detail screen in the host's selected flyer theme.
  * Injects:
@@ -99,7 +118,15 @@ export function EventThemeProvider({ themeKey, disabled, children }: EventThemeP
     ? `rgba(${buttonRgb.r}, ${buttonRgb.g}, ${buttonRgb.b}, 0.16)`
     : 'rgba(244,122,25,0.16)';
 
+  // Remap the global brand token so every `text-primary` / `bg-primary` inside a
+  // themed event page adopts the theme accent (e.g. pink for Garden Party)
+  // instead of R@lly Orange.
+  const primaryHsl = hexToHslTriple(button);
+  const primaryFgHsl = hexToHslTriple(buttonFg);
+
   const cssVars: React.CSSProperties = {
+    ...(primaryHsl ? { ['--primary' as any]: primaryHsl } : {}),
+    ...(primaryFgHsl ? { ['--primary-foreground' as any]: primaryFgHsl } : {}),
     // Theme tokens consumable by descendants
     ['--theme-accent' as any]: accent,
     ['--theme-accent-2' as any]: accent2,
