@@ -83,25 +83,25 @@ const App = () => (
                       <Route path="/events/:id" element={<EventDetail />} />
                       <Route path="/join" element={<JoinRally />} />
                       <Route path="/join/:code" element={<JoinRally />} />
-                      <Route path="/friends" element={<Friends />} />
-                      <Route path="/rides" element={<Rides />} />
-                      <Route path="/chat" element={<Chat />} />
-                      <Route path="/profile" element={<Profile />} />
-                      <Route path="/notifications" element={<Notifications />} />
-                      <Route path="/squads" element={<Squads />} />
-                      <Route path="/squads/:squadId" element={<SquadDetail />} />
-                      <Route path="/achievements" element={<Achievements />} />
+                      <Route path="/friends" element={<RequireAuth><Friends /></RequireAuth>} />
+                      <Route path="/rides" element={<RequireAuth><Rides /></RequireAuth>} />
+                      <Route path="/chat" element={<RequireAuth><Chat /></RequireAuth>} />
+                      <Route path="/profile" element={<RequireAuth><Profile /></RequireAuth>} />
+                      <Route path="/notifications" element={<RequireAuth><Notifications /></RequireAuth>} />
+                      <Route path="/squads" element={<RequireAuth><Squads /></RequireAuth>} />
+                      <Route path="/squads/:squadId" element={<RequireAuth><SquadDetail /></RequireAuth>} />
+                      <Route path="/achievements" element={<RequireAuth><Achievements /></RequireAuth>} />
                       <Route path="/legal" element={<Legal />} />
-                      <Route path="/settings" element={<Settings />} />
-                      <Route path="/docs" element={<Documentation />} />
+                      <Route path="/settings" element={<RequireAuth><Settings /></RequireAuth>} />
+                      <Route path="/docs" element={<RequireAuth><Documentation /></RequireAuth>} />
                       <Route path="/join-squad/:code" element={<JoinSquad />} />
-                      <Route path="/invite-history" element={<InviteHistory />} />
-                      <Route path="/admin" element={<AdminDashboard />} />
+                      <Route path="/invite-history" element={<RequireAuth><InviteHistory /></RequireAuth>} />
+                      <Route path="/admin" element={<RequireAuth><AdminDashboard /></RequireAuth>} />
                       <Route path="/unsubscribe" element={<Unsubscribe />} />
-                      <Route path="/tabs" element={<SplitCheckHome />} />
+                      <Route path="/tabs" element={<RequireAuth><SplitCheckHome /></RequireAuth>} />
                       <Route path="/tab/pay/:requestId" element={<SplitGuestPay />} />
-                      <Route path="/rallies/past" element={<PastRallies />} />
-                      <Route path="/rallies/upcoming" element={<UpcomingRallies />} />
+                      <Route path="/rallies/past" element={<RequireAuth><PastRallies /></RequireAuth>} />
+                      <Route path="/rallies/upcoming" element={<RequireAuth><UpcomingRallies /></RequireAuth>} />
                       <Route path="/demo" element={<Demo />} />
                       {import.meta.env.DEV && <Route path="/demo/rally-home" element={<DemoRallyHome />} />}
                       <Route path="*" element={<NotFound />} />
