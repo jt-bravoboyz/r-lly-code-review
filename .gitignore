@@ -10,6 +10,7 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+coverage/
 *.local
 
 # iOS native — commit project files but not CocoaPods deps or build artifacts

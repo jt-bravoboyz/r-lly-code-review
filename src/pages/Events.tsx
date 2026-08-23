@@ -1,11 +1,5 @@
-import { BottomNav } from '@/components/layout/BottomNav';
-import { RallyFeedComingSoon } from '@/components/events/RallyFeedComingSoon';
+import { Navigate } from 'react-router-dom';
 
 export default function Events() {
-  return (
-    <div className="relative min-h-[100dvh] overflow-hidden bg-background pb-bottom-nav">
-      <RallyFeedComingSoon />
-      <BottomNav />
-    </div>
-  );
+  return <Navigate to="/" replace />;
 }
