@@ -11,9 +11,11 @@ interface HeaderProps {
   showBack?: boolean;
   icon?: React.ReactNode;
   afterRallyMode?: boolean;
+  /** Hide the profile avatar action (e.g. for signed-out visitors). */
+  showProfile?: boolean;
 }
 
-export function Header({ title, icon, afterRallyMode }: HeaderProps) {
+export function Header({ title, icon, afterRallyMode, showProfile = true }: HeaderProps) {
   const { profile } = useAuth();
 
   return (
