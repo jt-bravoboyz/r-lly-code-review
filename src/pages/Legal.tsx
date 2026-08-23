@@ -78,7 +78,7 @@ export default function Legal() {
         />
       ))}
 
-      <BottomNav />
+      {user && <BottomNav />}
     </div>
   );
 }
