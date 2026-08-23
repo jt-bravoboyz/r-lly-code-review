@@ -4,6 +4,7 @@ import { BottomNav } from '@/components/layout/BottomNav';
 import { Card, CardContent } from '@/components/ui/card';
 import { ChevronRight, Info, Shield, FileText, Users, Wine, Car, BookOpen } from 'lucide-react';
 import { LegalDialog, LegalDocumentType } from '@/components/legal/LegalDialog';
+import { useAuth } from '@/hooks/useAuth';
 
 const legalItems: { type: LegalDocumentType; title: string; icon: React.ElementType; description: string }[] = [
   { type: 'about', title: 'About R@lly', icon: Info, description: 'Learn about our app and mission' },
