@@ -17,16 +17,21 @@ const legalItems: { type: LegalDocumentType; title: string; icon: React.ElementT
 
 export default function Legal() {
   const [openDialog, setOpenDialog] = useState<LegalDocumentType | null>(null);
+  const { user } = useAuth();
 
   return (
-    <div className="min-h-[100dvh] pb-bottom-nav bg-gradient-to-b from-secondary/30 via-background to-secondary/20 relative overflow-hidden">
+    <div className={`min-h-[100dvh] ${user ? 'pb-bottom-nav' : 'pb-10'} bg-gradient-to-b from-secondary/30 via-background to-secondary/20 relative overflow-hidden`}>
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 -right-20 w-60 h-60 bg-primary/5 rounded-full blur-3xl animate-pulse" />
         <div className="absolute top-1/2 -left-20 w-80 h-80 bg-orange-400/5 rounded-full blur-3xl" />
       </div>
 
-      <Header title="Legal & Policies" />
+      <Header
+        title="Legal & Policies"
+        icon={<Shield className="h-5 w-5" strokeWidth={2.5} />}
+        showProfile={!!user}
+      />
       
       <main className="container py-6 space-y-4 relative z-10">
         <p className="text-sm text-muted-foreground mb-4">
