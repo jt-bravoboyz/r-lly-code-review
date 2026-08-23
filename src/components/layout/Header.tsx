@@ -43,22 +43,26 @@ export function Header({ title, icon, afterRallyMode, showProfile = true }: Head
           </h1>
         ) : null}
         
-        <Link to="/profile" data-tutorial="nav-profile" className="relative group">
-          <div className={`absolute inset-0 rounded-full blur-md scale-110 ${afterRallyMode ? 'bg-purple-400/20' : 'bg-white/20'}`} />
-          <Avatar className={`h-11 w-11 ring-2 hover:ring-white transition-all relative shadow-lg ${
-            afterRallyMode ? 'ring-purple-300/40' : 'ring-white/40'
-          }`}>
-            <AvatarImage src={profile?.avatar_url || undefined} />
-            <AvatarFallback className={`text-sm font-bold ${
-              afterRallyMode ? 'bg-purple-900/80 text-purple-200' : 'bg-white/10 text-white backdrop-blur-sm'
+        {showProfile ? (
+          <Link to="/profile" data-tutorial="nav-profile" className="relative group">
+            <div className={`absolute inset-0 rounded-full blur-md scale-110 ${afterRallyMode ? 'bg-purple-400/20' : 'bg-white/20'}`} />
+            <Avatar className={`h-11 w-11 ring-2 hover:ring-white transition-all relative shadow-lg ${
+              afterRallyMode ? 'ring-purple-300/40' : 'ring-white/40'
             }`}>
-              {profile?.display_name?.charAt(0)?.toUpperCase() || '?'}
-            </AvatarFallback>
-          </Avatar>
-          {profile?.id && (
-            <MiniFounderGem profileId={profile.id} className="absolute -bottom-0.5 -right-0.5 z-10 animate-mini-founder-glow" />
-          )}
-        </Link>
+              <AvatarImage src={profile?.avatar_url || undefined} />
+              <AvatarFallback className={`text-sm font-bold ${
+                afterRallyMode ? 'bg-purple-900/80 text-purple-200' : 'bg-white/10 text-white backdrop-blur-sm'
+              }`}>
+                {profile?.display_name?.charAt(0)?.toUpperCase() || '?'}
+              </AvatarFallback>
+            </Avatar>
+            {profile?.id && (
+              <MiniFounderGem profileId={profile.id} className="absolute -bottom-0.5 -right-0.5 z-10 animate-mini-founder-glow" />
+            )}
+          </Link>
+        ) : (
+          <div className="h-11 w-11" aria-hidden="true" />
+        )}
       </div>
     </header>
   );
