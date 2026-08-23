@@ -576,8 +576,10 @@
   .after-rally-glow-border .location-search-overlay button:hover {
     background: hsl(270 28% 18%) !important;
   }
-  .after-rally-glow-border .location-search-overlay .font-medium,
-  .after-rally-glow-border .location-search-overlay p.font-medium {
+  /* Attribute selectors prevent Tailwind from expanding `.font-medium` into
+     every generated variant, which produced invalid selectors in production. */
+  .after-rally-glow-border .location-search-overlay [class~="font-medium"],
+  .after-rally-glow-border .location-search-overlay p[class~="font-medium"] {
     color: hsl(0 0% 95%) !important;
   }
   .after-rally-glow-border .location-search-overlay .text-muted-foreground {
@@ -2489,4 +2491,3 @@ nav:has(.rally-tutorial-spotlight) {
     transform: translate(-50%, -50%) scale(1);
   }
 }
-

@@ -9,11 +9,12 @@ import { MiniFounderGem } from '@/components/badges/MiniFounderGem';
 interface HeaderProps {
   title?: string;
   showBack?: boolean;
+  showProfile?: boolean;
   icon?: React.ReactNode;
   afterRallyMode?: boolean;
 }
 
-export function Header({ title, icon, afterRallyMode }: HeaderProps) {
+export function Header({ title, showProfile = true, icon, afterRallyMode }: HeaderProps) {
   const { profile } = useAuth();
 
   return (
@@ -41,7 +42,7 @@ export function Header({ title, icon, afterRallyMode }: HeaderProps) {
           </h1>
         ) : null}
         
-        <Link to="/profile" data-tutorial="nav-profile" className="relative group">
+        {showProfile ? <Link to="/profile" data-tutorial="nav-profile" className="relative group">
           <div className={`absolute inset-0 rounded-full blur-md scale-110 ${afterRallyMode ? 'bg-purple-400/20' : 'bg-white/20'}`} />
           <Avatar className={`h-11 w-11 ring-2 hover:ring-white transition-all relative shadow-lg ${
             afterRallyMode ? 'ring-purple-300/40' : 'ring-white/40'
@@ -56,7 +57,7 @@ export function Header({ title, icon, afterRallyMode }: HeaderProps) {
           {profile?.id && (
             <MiniFounderGem profileId={profile.id} className="absolute -bottom-0.5 -right-0.5 z-10 animate-mini-founder-glow" />
           )}
-        </Link>
+        </Link> : <div className="h-11 w-11" aria-hidden="true" />}
       </div>
     </header>
   );
